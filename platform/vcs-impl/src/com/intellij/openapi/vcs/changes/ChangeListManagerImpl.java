@@ -122,7 +122,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     myDelayedNotificator = new DelayedNotificator(myProject, this, myScheduler);
     myWorker = new ChangeListWorker(myProject, myDelayedNotificator);
 
-    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, () -> updateImmediately());
+    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     myProject.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
@@ -138,7 +138,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       }
     });
 
-    VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addExtensionPointListener(myProject, () -> {
+    VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(myProject, () -> {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, myProject);
 
@@ -192,7 +192,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
       if (!myEmptyListDeletionScheduled) {
         myEmptyListDeletionScheduled = true;
-        invokeAfterUpdate(() -> deleteEmptyChangeLists(), InvokeAfterUpdateMode.SILENT, null, null);
+        invokeAfterUpdate(this::deleteEmptyChangeLists, InvokeAfterUpdateMode.SILENT, null, null);
       }
     }
   }
@@ -399,7 +399,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   public void waitForUpdate(@Nullable String operationName) {
     assert !ApplicationManager.getApplication().isDispatchThread();
     CountDownLatch waiter = new CountDownLatch(1);
-    invokeAfterUpdate(() -> waiter.countDown(), InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
+    invokeAfterUpdate(waiter::countDown, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
     awaitWithCheckCanceled(waiter);
   }
 
@@ -464,7 +464,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
           }
 
           if (LOG.isDebugEnabled()) {
-            String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
+            String scopeInString = StringUtil.join(scopes, Object::toString, "->\n");
             LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
                       "\nignored: " + myComposite.getIgnoredFileHolder().values().size() +
                       "\nunversioned: " + myComposite.getUnversionedFileHolder().getFiles().size() +
@@ -544,9 +544,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   private static boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
     if (invalidated == null) return true;
     if (invalidated.isEverythingDirty()) return false;
-    if (invalidated.isEmpty()) return true;
-
-    return false;
+    return invalidated.isEmpty();
   }
 
   private void iterateScopes(DataHolder dataHolder,
@@ -1381,7 +1379,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     assert ApplicationManager.getApplication().isUnitTestMode();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    myScheduler.submit(() -> semaphore.up());
+    myScheduler.submit(semaphore::up);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       while (!semaphore.waitFor(100)) {
         UIUtil.dispatchAllInvocationEvents();
@@ -1526,7 +1524,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
     // @TestOnly
     private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    private final ArrayDeque<Future> myFutures = new ArrayDeque<>();
+    private final ArrayDeque<Future<?>> myFutures = new ArrayDeque<>();
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
       ScheduledFuture<?> future = myExecutor.schedule(command, delay, unit);
@@ -1548,7 +1546,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     @TestOnly
     private void cancelAll() {
       synchronized (myFutures) {
-        for (Future future : myFutures) {
+        for (Future<?> future : myFutures) {
           future.cancel(true);
         }
         myFutures.clear();
@@ -1566,7 +1564,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
           throwables.add(new IllegalStateException("Too long waiting for VCS update"));
           break;
         }
-        Future future;
+        Future<?> future;
         synchronized (myFutures) {
           future = myFutures.peek();
         }

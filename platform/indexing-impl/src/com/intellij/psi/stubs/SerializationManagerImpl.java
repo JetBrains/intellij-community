@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
@@ -60,7 +60,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     }
 
-    StubElementTypeHolderEP.EP_NAME.addExtensionPointListener(this::dropSerializerData, this);
+    StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
   }
 
   @NotNull

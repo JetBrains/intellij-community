@@ -19,7 +19,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
   private volatile List<V> myCache;
   private final ExtensionPointAndAreaListener<Extension> myExtensionPointAndAreaListener;
 
-  protected SmartExtensionPoint(final @NotNull Collection<V> explicitExtensions) {
+  protected SmartExtensionPoint(@NotNull Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
 
     myExtensionPointAndAreaListener = new ExtensionPointAdapter<Extension>() {

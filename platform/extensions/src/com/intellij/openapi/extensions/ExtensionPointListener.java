@@ -3,6 +3,9 @@ package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * See {@link ExtensionPointChangeListener}
+ */
 public interface ExtensionPointListener<T> {
   default void extensionAdded(@NotNull T extension, @NotNull PluginDescriptor pluginDescriptor) {
   }

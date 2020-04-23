@@ -103,9 +103,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     appContainer.registerComponentInstance(SchemeManagerFactory.class, new MockSchemeManagerFactory());
     MockEditorFactory editorFactory = new MockEditorFactory();
     appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
-    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(charSequence -> {
-      return editorFactory.createDocument(charSequence);
-    }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(editorFactory::createDocument, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
 
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
@@ -192,7 +190,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(@NotNull ExtensionsAreaImpl extensionArea,
-                                                             @NotNull ExtensionPointName<T> extensionPointName,
+                                                             @NotNull BaseExtensionPointName<T> extensionPointName,
                                                              @NotNull Class<T> extensionClass) {
     // todo get rid of it - registerExtensionPoint should be not called several times
     String name = extensionPointName.getName();

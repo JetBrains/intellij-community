@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -14,7 +14,7 @@ import java.util.Collection;
 
 public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends PsiTreeElementBase<T> {
   static {
-    XmlStructureViewElementProvider.EP_NAME.addExtensionPointListener(() -> ApplicationManager
+    XmlStructureViewElementProvider.EP_NAME.addChangeListener(() -> ApplicationManager
       .getApplication().getMessageBus().syncPublisher(StructureViewWrapperImpl.STRUCTURE_CHANGED).run(), null);
   }
   protected AbstractXmlTagTreeElement(final T psiElement) {

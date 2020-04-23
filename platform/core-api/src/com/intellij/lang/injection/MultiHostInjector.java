@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.injection;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +20,7 @@ import java.util.List;
  * @see MultiHostRegistrar
  */
 public interface MultiHostInjector {
-
-  ExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = ExtensionPointName.create("com.intellij.multiHostInjector");
+  ProjectExtensionPointName<MultiHostInjector> MULTIHOST_INJECTOR_EP_NAME = new ProjectExtensionPointName<>("com.intellij.multiHostInjector");
 
   /**
    * Provides list of places to inject a language to.

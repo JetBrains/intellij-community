@@ -25,7 +25,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     super(name);
   }
 
-  public static @NotNull <T> ExtensionPointName<T> create(@NonNls final @NotNull String name) {
+  public static @NotNull <T> ExtensionPointName<T> create(@NonNls @NotNull String name) {
     return new ExtensionPointName<>(name);
   }
 
@@ -95,8 +95,17 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     return getPointImpl(areaInstance).extensions();
   }
 
+  /**
+   * @deprecated Use application level extension point. Avoid project level - extension should be stateless and operate on passed context.
+   * @see {@link ProjectExtensionPointName}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   public @NotNull ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
+  }
+
+  public @NotNull ExtensionPoint<T> getPoint() {
+    return getPointImpl(null);
   }
 
   public @Nullable <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
@@ -145,8 +154,16 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
   }
 
+  /**
+   * @deprecated Use {@link #addChangeListener(Runnable, Disposable)}
+   */
+  @Deprecated
   public void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, @Nullable Disposable parentDisposable) {
-    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable);
+    getPointImpl(null).addChangeListener(listener::extensionListChanged, parentDisposable);
+  }
+
+  public void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable) {
+    getPointImpl(null).addChangeListener(listener, parentDisposable);
   }
 
   /**

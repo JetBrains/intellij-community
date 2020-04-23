@@ -6,7 +6,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.project.Project;
@@ -68,7 +70,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();
       Collection<BaseExtensionPointName<?>> dependencies = configurable.getDependencies();
-      ExtensionPointChangeListener listener = () -> {
+      Runnable listener = () -> {
         ApplicationManager.getApplication().invokeLater(() -> {
           //dispose resources -> reset nested component
           wrapper.disposeUIResources();
@@ -78,12 +80,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
       for (BaseExtensionPointName dependency : dependencies) {
         if (dependency instanceof ExtensionPointName) {
-          Extensions.getRootArea().getExtensionPoint(dependency.getName()).addExtensionPointListener(listener, false, disposable);
+          ((ExtensionPointName)dependency).addChangeListener(listener, disposable);
         }
         else if (dependency instanceof ProjectExtensionPointName) {
           Project project = wrapper.getProject();
           assert project != null;
-          ((ProjectExtensionPointName)dependency).getPoint(project).addExtensionPointListener(listener, false, disposable);
+          ((ProjectExtensionPointName)dependency).addChangeListener(project, listener, disposable);
         }
       }
 

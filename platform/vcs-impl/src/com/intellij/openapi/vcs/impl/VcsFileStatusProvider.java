@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.diff.DiffContentFactoryImpl;
@@ -53,7 +53,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
       }
     });
 
-    VcsBaseContentProvider.EP_NAME.addExtensionPointListener(myProject, () -> fileStatusesChanged(), myProject);
+    VcsBaseContentProvider.EP_NAME.addChangeListener(myProject, this::fileStatusesChanged, myProject);
   }
 
   private void fileStatusesChanged() {

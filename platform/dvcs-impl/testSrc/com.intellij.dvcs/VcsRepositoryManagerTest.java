@@ -7,6 +7,7 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
@@ -54,9 +55,8 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     myGlobalRepositoryManager = new VcsRepositoryManager(myProject);
   }
 
-  @NotNull
-  private ExtensionPoint<VcsRepositoryCreator> getExtensionPoint() {
-    return VcsRepositoryCreator.EXTENSION_POINT_NAME.getPoint(myProject);
+  private @NotNull static ExtensionPoint<VcsRepositoryCreator> getExtensionPoint() {
+    return VcsRepositoryManager.EP_NAME.getPoint();
   }
 
   @Override
@@ -94,8 +94,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     modify.get();
   }
 
-  @NotNull
-  private VirtualFile createExternalRepository() {
+  private @NotNull VirtualFile createExternalRepository() {
     cd(projectRoot);
     String externalName = "external";
     mkdir(externalName);
@@ -106,18 +105,15 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     return repositoryFile;
   }
 
-  @NotNull
-  private VcsRepositoryCreator createMockRepositoryCreator() {
+  private @NotNull VcsRepositoryCreator createMockRepositoryCreator() {
     return new VcsRepositoryCreator() {
-      @NotNull
       @Override
-      public VcsKey getVcsKey() {
+      public @NotNull VcsKey getVcsKey() {
         return myVcs.getKeyInstanceMethod();
       }
 
-      @Nullable
       @Override
-      public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
+      public @Nullable Repository createRepositoryIfValid(@NotNull Project project, @NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
         READY_TO_READ.countDown();
         try {
           //wait until reading thread gets existing info

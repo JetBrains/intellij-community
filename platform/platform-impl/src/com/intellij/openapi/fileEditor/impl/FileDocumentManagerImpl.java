@@ -55,7 +55,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -83,8 +82,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
-
-  private final MessageBus myBus;
 
   private static final Object lock = new Object();
   private final FileDocumentManagerListener myMultiCaster;
@@ -120,8 +117,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   };
 
   public FileDocumentManagerImpl() {
-    myBus = ApplicationManager.getApplication().getMessageBus();
-
     InvocationHandler handler = (proxy, method, args) -> {
       multiCast(method, args);
       return null;
@@ -130,7 +125,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
 
-    BinaryFileTypeDecompilers.getInstance().addExtensionPointListener(() -> clearCachedDocumentsForBinaryFiles(), null);
+    BinaryFileTypeDecompilers.getInstance().addExtensionPointChangeListener(this::clearCachedDocumentsForBinaryFiles, null);
   }
 
   static final class MyProjectCloseHandler implements ProjectCloseHandler {
@@ -162,7 +157,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
-      method.invoke(myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
     }
     catch (ClassCastException e) {
       LOG.error("Arguments: "+ Arrays.toString(args), e);

@@ -108,7 +108,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
-    ChangesViewModifier.KEY.addExtensionPointListener(project, () -> refreshImmediately(), this);
+    ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {

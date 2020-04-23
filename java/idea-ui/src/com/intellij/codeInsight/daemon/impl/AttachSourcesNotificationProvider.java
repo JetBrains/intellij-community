@@ -9,7 +9,6 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -66,12 +65,9 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   private static final Key<EditorNotificationPanel> KEY = Key.create("add sources to class");
 
   public AttachSourcesNotificationProvider() {
-    EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
-      @Override
-      public void extensionListChanged() {
-        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-          EditorNotifications.getInstance(project).updateNotifications(AttachSourcesNotificationProvider.this);
-        }
+    EXTENSION_POINT_NAME.addChangeListener(() -> {
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        EditorNotifications.getInstance(project).updateNotifications(AttachSourcesNotificationProvider.this);
       }
     }, null);
   }
@@ -311,7 +307,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           }
 
           @Override
-          public PopupStep onChosen(LibraryOrderEntry libraryOrderEntry, boolean finalChoice) {
+          public PopupStep<?> onChosen(LibraryOrderEntry libraryOrderEntry, boolean finalChoice) {
             if (libraryOrderEntry != null) {
               appendSources(libraryOrderEntry.getLibrary(), files);
             }

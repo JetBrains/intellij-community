@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
@@ -42,7 +42,7 @@ public interface XmlChildRole {
       elementTypes = ArrayUtil.mergeArrays(elementTypes, tokenProvider.getTypes());
     }
     return elementTypes;
-  }, value -> StartTagEndTokenProvider.EP_NAME.addExtensionPointListener(() -> value.drop(), null));
+  }, value -> StartTagEndTokenProvider.EP_NAME.addChangeListener(() -> value.drop(), null));
 
   RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
 

@@ -42,8 +42,8 @@ public final class NamedReferenceProviders {
   private final Map<Class<?>, Collection<PsiSymbolReferenceProvider>> myByTargetClass = new ConcurrentHashMap<>();
 
   public NamedReferenceProviders() {
-    EP_NAME.addExtensionPointListener(() -> myByHostClass.clear(), ApplicationManager.getApplication());
-    EP_NAME.addExtensionPointListener(() -> myByTargetClass.clear(), ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(() -> myByHostClass.clear(), ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(() -> myByTargetClass.clear(), ApplicationManager.getApplication());
   }
 
 

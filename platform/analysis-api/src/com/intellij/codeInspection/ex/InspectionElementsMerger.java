@@ -21,10 +21,10 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class InspectionElementsMerger {
   public static final ExtensionPointName<InspectionElementsMerger> EP_NAME = ExtensionPointName.create("com.intellij.inspectionElementsMerger");
   private static Map<String, InspectionElementsMerger> ourMergers;
-  private static final ConcurrentMap<String, InspectionElementsMerger> ourAdditionalMergers = new ConcurrentHashMap<>(); 
-  
+  private static final ConcurrentMap<String, InspectionElementsMerger> ourAdditionalMergers = new ConcurrentHashMap<>();
+
   static {
-    EP_NAME.addExtensionPointListener(InspectionElementsMerger::resetMergers, null);
+    EP_NAME.addChangeListener(InspectionElementsMerger::resetMergers, null);
   }
 
   private static synchronized void resetMergers() {
@@ -36,7 +36,7 @@ public abstract class InspectionElementsMerger {
     InspectionElementsMerger additionalMerger = ourAdditionalMergers.get(shortName);
     return additionalMerger == null ? getMergers().get(shortName) : additionalMerger;
   }
-  
+
   private static synchronized Map<String, InspectionElementsMerger> getMergers() {
     if (ourMergers == null) {
       Map<String, InspectionElementsMerger> mergers = new HashMap<>();
@@ -61,7 +61,7 @@ public abstract class InspectionElementsMerger {
 
   /**
    * @return the shortNames of the inspections whose settings needs to be merged.
-   * 
+   *
    * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
   @Contract(pure = true)

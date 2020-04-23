@@ -60,7 +60,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       scheduleUpdateIndicesList();
     }
 
-    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(this::scheduleUpdateIndicesList, myProject);
+    MavenRepositoryProvider.EP_NAME.addChangeListener(this::scheduleUpdateIndicesList, myProject);
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       @Override

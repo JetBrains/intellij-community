@@ -24,7 +24,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -514,9 +513,9 @@ class DynamicPluginsTest {
     val listenerDisposable = Disposer.newDisposable()
 
     val checked = AtomicInteger()
-    Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(ExtensionPointChangeListener {
+    Configurable.PROJECT_CONFIGURABLE.addChangeListener(project, Runnable {
       checked.incrementAndGet()
-    }, false, listenerDisposable)
+    }, listenerDisposable)
 
     val disposable = loadExtensionWithText("<projectConfigurable instance=\"${MyConfigurable::class.java.name}\" displayName=\"foo\"/>",
                                            DynamicPlugins::class.java.classLoader)

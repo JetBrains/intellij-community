@@ -650,6 +650,11 @@ public class ContainerUtil {
     public int size() {
       return myStore.size();
     }
+
+    @Override
+    public void forEach(java.util.function.Consumer<? super E> action) {
+      myStore.forEach(action);
+    }
   }
 
   private static final class ImmutableListBackedByArray<E> extends ImmutableList<E> {

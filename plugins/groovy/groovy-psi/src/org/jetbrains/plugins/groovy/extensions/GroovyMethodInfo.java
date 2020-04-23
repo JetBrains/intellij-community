@@ -46,8 +46,8 @@ public class GroovyMethodInfo {
   private final GroovyMethodDescriptor myDescriptor;
 
   static {
-    GroovyClassDescriptor.EP_NAME.addExtensionPointListener(GroovyMethodInfo::dropCaches, null);
-    GroovyMethodDescriptorExtension.EP_NAME.addExtensionPointListener(GroovyMethodInfo::dropCaches, null);
+    GroovyClassDescriptor.EP_NAME.addChangeListener(GroovyMethodInfo::dropCaches, null);
+    GroovyMethodDescriptorExtension.EP_NAME.addChangeListener(GroovyMethodInfo::dropCaches, null);
   }
 
   private static void dropCaches() {

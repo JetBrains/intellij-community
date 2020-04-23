@@ -275,10 +275,6 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     this.componentManager = componentManager;
   }
 
-  /**
-   * @deprecated Use {@link #ConfigurableEP(ComponentManager)}
-   */
-  @Deprecated
   @NonInjectable
   public ConfigurableEP(@NotNull Project project) {
     myProject = project;

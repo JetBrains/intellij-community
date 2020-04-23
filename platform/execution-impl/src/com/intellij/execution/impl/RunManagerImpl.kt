@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -222,9 +221,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
       }
     })
 
-    BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addExtensionPointListener(
-      ExtensionPointChangeListener { stringIdToBeforeRunProvider.drop() },
-      true, project)
+    BeforeRunTaskProvider.EXTENSION_POINT_NAME.getPoint(project).addChangeListener(Runnable(stringIdToBeforeRunProvider::drop), project)
   }
 
   private fun clearSelectedConfigurationIcon() {
@@ -811,7 +808,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun runConfigurationFirstLoaded() {
-    if (project.isDefault) return;
+    if (project.isDefault) {
+      return
+    }
 
     if (selectedConfiguration == null) {
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
@@ -981,7 +980,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
       }
       else {
-        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks, true, false)
+        configuration.beforeRunTasks = getEffectiveBeforeRunTaskList(result ?: emptyList(), getConfigurationTemplate(configuration.factory!!).configuration.beforeRunTasks,
+                                                                     ownIsOnlyEnabled = true, isDisableTemplateTasks = false)
         return
       }
     }

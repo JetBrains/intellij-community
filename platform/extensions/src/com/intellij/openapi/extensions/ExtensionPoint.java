@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -109,8 +110,18 @@ public interface ExtensionPoint<@NotNull T> {
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
+  /**
+   * @deprecated Use {@link ExtensionPointName#addChangeListener(Runnable, Disposable)}
+   */
+  @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
+  /**
+   * Consider using {@link ExtensionPointName#addChangeListener}
+   */
+  void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);
+
+  @ApiStatus.Internal
   void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   @NotNull

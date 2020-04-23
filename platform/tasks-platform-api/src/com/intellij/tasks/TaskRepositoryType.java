@@ -2,7 +2,6 @@
 package com.intellij.tasks;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
@@ -22,19 +21,18 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype, Comparable<TaskRepositoryType> {
+  public static final ExtensionPointName<TaskRepositoryType<?>> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.repositoryType");
 
-  public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<>("com.intellij.tasks.repositoryType");
-
-  public static TaskRepositoryType<?> @NotNull [] getRepositoryTypes() {
-    return EP_NAME.getExtensions();
+  public static @NotNull List<TaskRepositoryType<?>> getRepositoryTypes() {
+    return EP_NAME.getExtensionList();
   }
 
   public static @NotNull List<Class<?>> getRepositoryClasses() {
     return ContainerUtil.map(getRepositoryTypes(), TaskRepositoryType::getRepositoryClass);
   }
 
-  public static <T> void addEPListChangeListener(@NotNull Disposable disposable, @NotNull ExtensionPointChangeListener listener) {
-    EP_NAME.addExtensionPointListener(listener, disposable);
+  public static <T> void addEPListChangeListener(@NotNull Disposable disposable, @NotNull Runnable listener) {
+    EP_NAME.addChangeListener(listener, disposable);
   }
 
   @Override

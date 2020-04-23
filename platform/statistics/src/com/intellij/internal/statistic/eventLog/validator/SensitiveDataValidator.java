@@ -12,7 +12,6 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeVal
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,19 +104,14 @@ public class SensitiveDataValidator {
   protected final @NotNull WhitelistGroupRulesStorage myWhiteListStorage;
 
   static {
-    CustomWhiteListRule.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
-      @Override
-      public void extensionListChanged() {
-        ourInstances.clear();
-      }
-    }, ApplicationManager.getApplication());
+    CustomWhiteListRule.EP_NAME.addChangeListener(ourInstances::clear, null);
   }
 
   public static @NotNull SensitiveDataValidator getInstance(@NotNull String recorderId) {
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        final WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.newStorage(recorderId);
+        WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.newStorage(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
                ? new BlindSensitiveDataValidator(whitelistStorage)
                : new SensitiveDataValidator(whitelistStorage);

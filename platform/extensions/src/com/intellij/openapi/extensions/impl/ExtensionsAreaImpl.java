@@ -262,7 +262,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @ApiStatus.Internal
   public boolean registerExtensions(@NotNull String pointName,
-                                    @NotNull List<? extends Element> extensions,
+                                    @NotNull List<Element> extensions,
                                     @NotNull IdeaPluginDescriptor pluginDescriptor,
                                     @NotNull ComponentManager componentManager,
                                     @Nullable List<Runnable> listenerCallbacks)  {
@@ -276,7 +276,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @Override
-  public @Nullable <T> ExtensionPoint<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
+  public @Nullable <T> ExtensionPointImpl<T> getExtensionPointIfRegistered(@NotNull String extensionPointName) {
     //noinspection unchecked
     return (ExtensionPointImpl<T>)myExtensionPoints.get(extensionPointName);
   }

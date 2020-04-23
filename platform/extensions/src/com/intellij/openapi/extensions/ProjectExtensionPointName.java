@@ -14,6 +14,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+/**
+ * Consider using application level extension point. Avoid project level - extension should be stateless and operate on passed context.
+ */
 public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ProjectExtensionPointName(@NotNull @NonNls String name) {
     super(name);
@@ -59,10 +62,8 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
   }
 
-  public void addExtensionPointListener(@NotNull AreaInstance areaInstance,
-                                        @NotNull ExtensionPointChangeListener listener,
-                                        @Nullable Disposable parentDisposable) {
-    getPointImpl(areaInstance).addExtensionPointListener(listener, false, parentDisposable);
+  public void addChangeListener(@NotNull AreaInstance areaInstance, @NotNull Runnable listener, @Nullable Disposable parentDisposable) {
+    getPointImpl(areaInstance).addChangeListener(listener, parentDisposable);
   }
 
   public void processWithPluginDescriptor(@NotNull AreaInstance areaInstance, @NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {

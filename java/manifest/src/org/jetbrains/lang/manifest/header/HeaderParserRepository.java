@@ -25,7 +25,6 @@
 package org.jetbrains.lang.manifest.header;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,7 +41,7 @@ import java.util.Set;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class HeaderParserRepository {
+public final class HeaderParserRepository {
   public static HeaderParserRepository getInstance() {
     return ServiceManager.getService(HeaderParserRepository.class);
   }
@@ -60,12 +59,7 @@ public class HeaderParserRepository {
   };
 
   public HeaderParserRepository() {
-    HeaderParserProvider.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
-      @Override
-      public void extensionListChanged() {
-        myParsers.drop();
-      }
-    }, null);
+    HeaderParserProvider.EP_NAME.addChangeListener(myParsers::drop, null);
   }
 
   @Nullable

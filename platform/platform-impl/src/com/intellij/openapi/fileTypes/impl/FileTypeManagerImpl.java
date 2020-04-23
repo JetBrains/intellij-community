@@ -317,7 +317,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }, this);
-    FileTypeDetector.EP_NAME.addExtensionPointListener(() -> {
+    FileTypeDetector.EP_NAME.addChangeListener(() -> {
       cachedDetectFileBufferSize = -1;
       clearCaches();
     }, this);

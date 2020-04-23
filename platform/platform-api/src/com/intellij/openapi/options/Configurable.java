@@ -4,11 +4,15 @@ package com.intellij.openapi.options;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.*;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -123,7 +127,7 @@ import java.util.Collection;
  */
 public interface Configurable extends UnnamedConfigurable {
   ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = new ExtensionPointName<>("com.intellij.applicationConfigurable");
-  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ExtensionPointName<>("com.intellij.projectConfigurable");
+  ProjectExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ProjectExtensionPointName<>("com.intellij.projectConfigurable");
 
   /**
    * Returns the visible name of the configurable component.

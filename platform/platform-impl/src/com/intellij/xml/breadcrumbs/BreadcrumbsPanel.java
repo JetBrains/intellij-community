@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -163,8 +163,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
     Disposer.register(this, new UiNotifyConnector(breadcrumbs, myQueue));
     Disposer.register(this, myQueue);
 
-    BreadcrumbsProvider.EP_NAME.addExtensionPointListener(() -> updateCrumbsSync(), this);
-    BreadcrumbsPresentationProvider.EP_NAME.addExtensionPointListener(() -> updateCrumbsSync(), this);
+    BreadcrumbsProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
+    BreadcrumbsPresentationProvider.EP_NAME.addChangeListener(() -> updateCrumbsSync(), this);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myQueue.setPassThrough(true);

@@ -78,7 +78,7 @@ public class NewMappings implements Disposable {
         scheduleMappedRootsUpdate();
       }
     };
-    VcsRootChecker.EXTENSION_POINT_NAME.addExtensionPointListener(() -> scheduleMappedRootsUpdate(), project);
+    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(() -> scheduleMappedRootsUpdate(), project);
   }
 
   @TestOnly

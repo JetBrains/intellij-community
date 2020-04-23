@@ -14,7 +14,7 @@ public final class ExtensionPointUtil {
   public static @NotNull <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                                    @NotNull ExtensionPointName<?> extensionPointName,
                                                                                    @Nullable Disposable parentDisposable) {
-    extensionPointName.getPoint(null).addExtensionPointListener(lazyValue::drop, false, parentDisposable);
+    extensionPointName.addChangeListener(lazyValue::drop, parentDisposable);
     return lazyValue;
   }
 

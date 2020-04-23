@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -122,12 +122,12 @@ public abstract class DiffRequestProcessor implements Disposable {
     myForcedDiffTool = myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL);
 
     updateAvailableDiffTools();
-    DiffTool.EP_NAME.addExtensionPointListener(() -> {
+    DiffTool.EP_NAME.addChangeListener(() -> {
       updateAvailableDiffTools();
       updateRequest(true);
     }, this);
-    DiffToolSubstitutor.EP_NAME.addExtensionPointListener(() -> updateRequest(true), this);
-    DiffIgnoredRangeProvider.EP_NAME.addExtensionPointListener(() -> updateRequest(true), this);
+    DiffToolSubstitutor.EP_NAME.addChangeListener(() -> updateRequest(true), this);
+    DiffIgnoredRangeProvider.EP_NAME.addChangeListener(() -> updateRequest(true), this);
 
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();

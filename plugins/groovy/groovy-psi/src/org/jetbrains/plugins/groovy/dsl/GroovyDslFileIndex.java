@@ -245,7 +245,7 @@ public class GroovyDslFileIndex {
   });
 
   static {
-    GdslScriptProvider.EP_NAME.addExtensionPointListener(() -> {
+    GdslScriptProvider.EP_NAME.addChangeListener(() -> {
       bundledGdslFiles.drop();
     }, null);
   }

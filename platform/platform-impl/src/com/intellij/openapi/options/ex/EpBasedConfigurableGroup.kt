@@ -3,9 +3,7 @@ package com.intellij.openapi.options.ex
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPoint
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.Configurable.NoScroll
@@ -50,19 +48,19 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
     if (listeners.isEmpty()) {
       val project = project ?: DefaultProjectFactory.getInstance().defaultProject
       val epListener = createListener()
-      Configurable.APPLICATION_CONFIGURABLE.getPoint(null).addExtensionPointListener(epListener, false, this)
-      Configurable.PROJECT_CONFIGURABLE.getPoint(project).addExtensionPointListener(epListener, false, this)
+      Configurable.APPLICATION_CONFIGURABLE.addChangeListener(epListener, this)
+      Configurable.PROJECT_CONFIGURABLE.getPoint(project).addChangeListener(epListener, this)
       for (wrapper in extendableEp) {
         val ep = wrapper.extensionPoint
         val area = wrapper.project?.extensionArea ?: ApplicationManager.getApplication().extensionArea
         if (ep.childrenEPName != null) {
-          area.getExtensionPointIfRegistered<Any>(ep.childrenEPName)?.addExtensionPointListener(epListener, false, this)
+          area.getExtensionPointIfRegistered<Any>(ep.childrenEPName)?.addChangeListener(epListener, this)
         }
         else if (ep.dynamic) {
           val cast = ConfigurableWrapper.cast(WithEpDependencies::class.java, wrapper)
           if (cast != null) {
             for (it in cast.dependencies) {
-              findExtensionPoint(area, it.name).addExtensionPointListener(epListener, false, this)
+              findExtensionPoint(area, it.name).addChangeListener(epListener, this)
             }
           }
         }
@@ -78,12 +76,12 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
     return if (value is Weighted) (value as Weighted).weight else 0
   }
 
-  private fun createListener(): ExtensionPointChangeListener {
-    return ExtensionPointChangeListener {
+  private fun createListener(): Runnable {
+    return Runnable {
       value.drop()
       extendableEp.clear()
       collect(extendableEp, value.value.configurables)
-      
+
       for (listener in listeners) {
         listener.handleUpdate()
       }

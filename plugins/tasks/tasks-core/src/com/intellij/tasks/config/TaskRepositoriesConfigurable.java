@@ -38,7 +38,6 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public class TaskRepositoriesConfigurable implements Configurable.NoScroll, SearchableConfigurable, Configurable.WithEpDependencies {
-
   public static final String ID = "tasks.servers";
   private static final String EMPTY_PANEL = "empty.panel";
 
@@ -76,8 +75,8 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
     myServersPanel.setMinimumSize(new Dimension(-1, 100));
 
-    TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
-    Arrays.sort(groups);
+    List<TaskRepositoryType<?>> groups = new ArrayList<>(TaskRepositoryType.getRepositoryTypes());
+    groups.sort(null);
 
     final List<AnAction> createActions = new ArrayList<>();
     for (final TaskRepositoryType repositoryType : groups) {
@@ -214,7 +213,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   @Override
   public void apply() {
-    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> taskRepository.clone());
+    List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, TaskRepository::clone);
     myManager.setRepositories(newRepositories);
     myManager.updateIssues(null);
     RecentTaskRepositories.getInstance().addRepositories(myRepositories);
@@ -280,7 +279,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {
 
     AddServerAction(TaskRepositorySubtype subtype) {
-      super(() -> subtype.getName(), TaskBundle.messagePointer("settings.new.server", subtype.getName()), subtype.getIcon());
+      super(subtype::getName, TaskBundle.messagePointer("settings.new.server", subtype.getName()), subtype.getIcon());
     }
 
     AddServerAction(TaskRepository repository) {
