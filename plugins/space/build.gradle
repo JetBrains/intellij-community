@@ -19,9 +19,9 @@ applyKotlinJVM()
 
 if (hasProperty("teamcity")) {
     if (project.hasProperty('pluginChannel')) {
-        version = "2019.internal.${teamcity["build.number"]}"
+        version = "2020.1.internal.${teamcity["build.number"]}"
     } else {
-        version = "2019.${teamcity["build.number"]}"
+        version = "2020.1.${teamcity["build.number"]}"
     }
 }
 
