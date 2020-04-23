@@ -39,7 +39,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
@@ -287,12 +286,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         return null;
       }
     }, this);
-    myMessageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      @Override
-      public void after(@NotNull List<? extends VFileEvent> events) {
-
-      }
-    });
 
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
@@ -586,7 +579,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     final VirtualFile file;
     final @NotNull FileType previousFileType;
 
-    private FileAndPreviousFileType(VirtualFile file, FileType previousFileType) {
+    private FileAndPreviousFileType(VirtualFile file, @NotNull FileType previousFileType) {
       this.file = file;
       this.previousFileType = previousFileType;
     }
