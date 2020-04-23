@@ -1053,7 +1053,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     long start = System.currentTimeMillis();
     FileType fileType = detectFromContent(file, content);
 
-    if (NoAccessDuringPsiEvents.isInsideEventProcessing()) {
+    if (!NoAccessDuringPsiEvents.isInsideEventProcessing()) {
       cacheAutoDetectedFileType(file, fileType);
       counterAutoDetect.incrementAndGet();
       long elapsed = System.currentTimeMillis() - start;
