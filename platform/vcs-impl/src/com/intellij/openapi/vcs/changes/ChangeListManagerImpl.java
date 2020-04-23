@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -273,7 +274,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
                                StringUtil.join(lists, list -> StringUtil.first(list.getName(), 30, true), "<br/>"));
     }
 
-    VcsConfirmationDialog dialog = new VcsConfirmationDialog(project, "Remove Empty Changelist", "Remove", "Cancel", new VcsShowConfirmationOption() {
+    VcsConfirmationDialog dialog =
+      new VcsConfirmationDialog(project, VcsBundle.message("dialog.title.remove.empty.changelist"), VcsBundle.message("button.remove"),
+                                CommonBundle.getCancelButtonText(), new VcsShowConfirmationOption() {
       @Override
       public Value getValue() {
         return config.REMOVE_EMPTY_INACTIVE_CHANGELISTS;
@@ -288,7 +291,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       public boolean isPersistent() {
         return true;
       }
-    }, question, "&Remember my choice");
+    }, question, VcsBundle.message("checkbox.remember.my.choice"));
     return dialog.showAndGet();
   }
 

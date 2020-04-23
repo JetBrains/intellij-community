@@ -611,8 +611,9 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
           fireChangesLoaded(location, Collections.emptyList());
         }
         catch (IOException e) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "Didn't update Repository changes with new message due to error: " + e.getMessage(),
-                                                        MessageType.ERROR);
+          VcsBalloonProblemNotifier
+            .showOverChangesView(myProject, VcsBundle.message("notification.content.didn.t.update.repository.changes", e.getMessage()),
+                                 MessageType.ERROR);
         }
       }
     });

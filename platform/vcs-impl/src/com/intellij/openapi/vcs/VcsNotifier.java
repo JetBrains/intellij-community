@@ -4,6 +4,8 @@ package com.intellij.openapi.vcs;
 import com.intellij.notification.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import org.jetbrains.annotations.Nls;
@@ -39,16 +41,12 @@ public class VcsNotifier {
   }
 
   @NotNull
-  public Notification notifyError(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyError(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notifyError(title, message, (NotificationListener)null);
   }
 
   public Notification notifyError(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     boolean showDetailsAction
   ) {
     if (showDetailsAction) {
@@ -61,8 +59,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyError(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, listener);
@@ -70,126 +67,99 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyError(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     NotificationAction... actions
   ) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.ERROR, actions);
   }
 
   @NotNull
-  public Notification notifyWeakError(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message) {
+  public Notification notifyWeakError(@NotificationContent @NotNull String message) {
     return notifyWeakError("", message);
   }
 
   @NotNull
-  public Notification notifyWeakError(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyWeakError(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR);
   }
 
   @NotNull
-  public Notification notifySuccess(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message) {
+  public Notification notifySuccess(@NotificationContent @NotNull String message) {
     return notifySuccess("", message);
   }
 
   @NotNull
-  public Notification notifySuccess(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifySuccess(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notifySuccess(title, message, null);
   }
 
   @NotNull
   public Notification notifySuccess(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyImportantInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyImportantInfo(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 
   @NotNull
   public Notification notifyImportantInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message) {
+  public Notification notifyInfo(@NotificationContent @NotNull String message) {
     return notifyInfo("", message);
   }
 
   @NotNull
-  public Notification notifyInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyInfo(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notifyInfo(title, message, null);
   }
 
   @NotNull
   public Notification notifyInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
-  public Notification notifyMinorWarning(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyMinorWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notifyMinorWarning(title, message, null);
   }
 
   @NotNull
   public Notification notifyMinorWarning(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyWarning(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notifyWarning(title, message, null);
   }
 
   @NotNull
   public Notification notifyWarning(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(NOTIFICATION_GROUP_ID, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyImportantWarning(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyImportantWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING);
   }
 
@@ -200,25 +170,20 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyImportantWarning(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(IMPORTANT_ERROR_NOTIFICATION, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
-  public Notification notifyMinorInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification notifyMinorInfo(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notifyMinorInfo(title, message, (NotificationListener)null);
   }
 
   @NotNull
   public Notification notifyMinorInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @Nullable NotificationListener listener
   ) {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, listener);
@@ -226,8 +191,7 @@ public class VcsNotifier {
 
   @NotNull
   public Notification notifyMinorInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     NotificationAction... actions
   ) {
     return notify(STANDARD_NOTIFICATION, title, message, NotificationType.INFORMATION, actions);
@@ -236,8 +200,7 @@ public class VcsNotifier {
   @NotNull
   public Notification notifyMinorInfo(
     boolean sticky,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     NotificationAction... actions
   ) {
     return notifyMinorInfo(sticky, null, title, message, actions);
@@ -247,17 +210,13 @@ public class VcsNotifier {
   public Notification notifyMinorInfo(
     boolean sticky,
     @NonNls @Nullable String notificationDisplayId,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     NotificationAction... actions
   ) {
     return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION, notificationDisplayId, title, message, NotificationType.INFORMATION, actions);
   }
 
-  public Notification logInfo(
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message
-  ) {
+  public Notification logInfo(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String message) {
     return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
 
@@ -276,8 +235,7 @@ public class VcsNotifier {
   @NotNull
   private static Notification createNotification(
     @NotNull NotificationGroup notificationGroup,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @NotNull NotificationType type,
     @Nullable NotificationListener listener,
     @Nullable String notificationDisplayId
@@ -294,8 +252,7 @@ public class VcsNotifier {
   @NotNull
   private Notification notify(
     @NotNull NotificationGroup notificationGroup,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @NotNull NotificationType type,
     @Nullable NotificationListener listener
   ) {
@@ -306,8 +263,7 @@ public class VcsNotifier {
   @NotNull
   private Notification notify(
     @NotNull NotificationGroup notificationGroup,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @NotNull NotificationType type,
     NotificationAction... actions
   ) {
@@ -318,8 +274,7 @@ public class VcsNotifier {
   private Notification notify(
     @NotNull NotificationGroup notificationGroup,
     @NonNls @Nullable String notificationDisplayId,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
-    @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+    @NotificationTitle @NotNull String title, @NotificationContent @NotNull String message,
     @NotNull NotificationType type,
     NotificationAction... actions
   ) {

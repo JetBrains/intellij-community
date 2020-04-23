@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.conflicts;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
@@ -39,22 +40,22 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
     final ChangeListManager manager = tracker.getChangeListManager();
     myChangeList = changeList;
     myLabel.setText("File from non-active changelist is modified");
-    createActionLabel("Move changes", () -> ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges(), myFile)).
+    createActionLabel(VcsBundle.message("link.label.move.changes"), () -> ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges(), myFile)).
       setToolTipText("Move changes to active changelist (" + manager.getDefaultChangeList().getName() + ")");
 
-    createActionLabel("Switch changelist", () -> {
+    createActionLabel(VcsBundle.message("link.label.switch.changelist"), () -> {
       Change change = myTracker.getChangeListManager().getChange(myFile);
       if (change == null) {
-        Messages.showInfoMessage("No changes for this file", "Message");
+        Messages.showInfoMessage(VcsBundle.message("dialog.message.no.changes.for.this.file"), VcsBundle.message("dialog.title.message"));
       }
       else {
         ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), Collections.singletonList(change), null);
       }
     }).setToolTipText("Set active changelist to '" + myChangeList.getName() + "'");
 
-    createActionLabel("Ignore", () -> myTracker.ignoreConflict(myFile, true)).setToolTipText("Hide this notification");
+    createActionLabel(VcsBundle.message("link.label.ignore"), () -> myTracker.ignoreConflict(myFile, true)).setToolTipText("Hide this notification");
 
-    myLinksPanel.add(new InplaceButton("Show options dialog", AllIcons.General.Settings, new ActionListener() {
+    myLinksPanel.add(new InplaceButton(VcsBundle.message("tooltip.show.options.dialog"), AllIcons.General.Settings, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
 

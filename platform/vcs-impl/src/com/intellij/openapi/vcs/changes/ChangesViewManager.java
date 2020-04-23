@@ -623,7 +623,8 @@ public class ChangesViewManager implements ChangesViewEx,
       actions.add(Separator.getInstance());
       actions.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-      DefaultActionGroup viewOptionsGroup = DefaultActionGroup.createPopupGroup(() -> "View Options");
+      DefaultActionGroup viewOptionsGroup =
+        DefaultActionGroup.createPopupGroup(() -> VcsBundle.message("action.ChangesViewToolWindowPanel.text"));
       viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
       viewOptionsGroup.add(new ToggleShowIgnoredAction());
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));

@@ -25,7 +25,7 @@ public class RollbackDeletionAction extends AbstractMissingFilesAction {
     if (environment == null) return Collections.emptyList();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(vcs.getDisplayName() + ": performing rollback...");
+      indicator.setText(VcsBundle.message("progress.text.performing.rollback", vcs.getDisplayName()));
     }
     final List<VcsException> result = new ArrayList<>(0);
     try {

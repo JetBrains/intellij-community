@@ -113,7 +113,7 @@ class CompareBranchesLogPanel extends JPanel {
     });
 
     JPanel repoSelectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    JBLabel label = new JBLabel("Repository: ");
+    JBLabel label = new JBLabel(DvcsBundle.message("label.repository"));
     label.setLabelFor(repoSelectorPanel);
     label.setDisplayedMnemonic(KeyEvent.VK_R);
     repoSelectorPanel.add(label);
