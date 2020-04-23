@@ -722,7 +722,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       RelationType constantRelation = getFloatingConstantRelation(leftType, rightType);
       if (constantRelation != null) {
-        return constantRelation == relationType;
+        return relationType.isSubRelation(constantRelation);
       }
       if (canBeNaN(leftType) || canBeNaN(rightType)) {
         if (dfaLeft == dfaRight && dfaLeft instanceof DfaVariableValue && !(dfaLeft.getType() instanceof PsiPrimitiveType)) {
