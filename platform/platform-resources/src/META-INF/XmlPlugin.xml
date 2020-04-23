@@ -39,7 +39,7 @@
                     interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider" dynamic="true"/>
 
     <extensionPoint name="xmlStructureViewElementProvider"
-                    interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider"/>
+                    interface="com.intellij.ide.structureView.xml.XmlStructureViewElementProvider" dynamic="true"/>
 
     <extensionPoint name="xmlStructureViewBuilderProvider"
                     interface="com.intellij.ide.structureView.xml.XmlStructureViewBuilderProvider" dynamic="true"/>
