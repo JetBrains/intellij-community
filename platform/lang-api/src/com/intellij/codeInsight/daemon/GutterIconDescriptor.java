@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts.GutterName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,7 @@ public abstract class GutterIconDescriptor {
    * @return null if no configuration needed
    */
   @Nullable("null means disabled")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @GutterName
   public abstract String getName();
 
   @Nullable
@@ -69,7 +69,7 @@ public abstract class GutterIconDescriptor {
     private final Icon myIcon;
 
     public Option(@NotNull String id,
-                  @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                  @NotNull @GutterName String name,
                   Icon icon) {
       myId = id;
       myName = name;

@@ -90,6 +90,12 @@ public class NlsContexts {
   public @interface ParsingError {
   }
 
+  @NlsContext(prefix = "gutter.name")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface GutterName {
+  }
+
   /**
    * Use it for annotating OS provided notification title, such as "project built" or "tests running finished".
    * See also #SystemNotificationText.
