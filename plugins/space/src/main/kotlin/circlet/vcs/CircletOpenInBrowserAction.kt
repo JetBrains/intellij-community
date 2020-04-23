@@ -126,7 +126,7 @@ class CircletVcsOpenInBrowserActionGroup :
 
     private fun getDataFromVirtualFile(dataContext: DataContext, project: Project, server: String): List<OpenData>? {
         val virtualFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE) ?: return null
-        val gitRepository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(virtualFile, true) ?: return null
+        val gitRepository = VcsRepositoryManager.getInstance(project).getRepositoryForFileQuick(virtualFile) ?: return null
         if (gitRepository !is GitRepository) return null
 
         val changeListManager = ChangeListManager.getInstance(project)
@@ -146,7 +146,7 @@ class CircletVcsOpenInBrowserActionGroup :
         val filePath = dataContext.getData(VcsDataKeys.FILE_PATH) ?: return null
         val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
         if (fileRevision !is VcsFileRevisionEx) return null
-        val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(filePath) ?: return null
+        val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
         val repoKeysInfo = findProjectInfo(gitRepository, project) ?: return null
 
         return repoKeysInfo.second.map { OpenData.FileRevision(project, server, it, repoKeysInfo.first, fileRevision) }
@@ -155,7 +155,7 @@ class CircletVcsOpenInBrowserActionGroup :
     private fun getDataFromLog(dataContext: DataContext, project: Project, server: String): List<OpenData>? {
         val vcsLog = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
         val selectedCommit = vcsLog.selectedCommits.firstOrNull() ?: return null
-        val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForRoot(selectedCommit.root) ?: return null
+        val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(selectedCommit.root) ?: return null
         val repoKeysInfo = findProjectInfo(gitRepository, project) ?: return null
 
         return repoKeysInfo.second.map { OpenData.Commit(project, server, it, repoKeysInfo.first, selectedCommit) }
