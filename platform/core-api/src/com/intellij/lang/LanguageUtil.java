@@ -159,6 +159,10 @@ public final class LanguageUtil {
     return language.putUserDataIfAbsent(MATCHING_LANGUAGES, result);
   }
 
+  static void clearMatchingMetaLanguages(@NotNull Language language) {
+    language.putUserData(MATCHING_LANGUAGES, null);
+  }
+
   @NotNull
   static JBIterable<Language> hierarchy(@NotNull Language language) {
     return JBIterable.generate(language, Language::getBaseLanguage);
