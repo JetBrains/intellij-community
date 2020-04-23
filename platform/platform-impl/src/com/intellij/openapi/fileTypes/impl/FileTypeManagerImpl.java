@@ -29,6 +29,7 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -245,6 +246,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (toLog()) {
           log("F: after() VFS events: " + events+"; files: "+files);
         }
+        ProgressManager.checkCanceled();
         if (!files.isEmpty() && RE_DETECT_ASYNC) {
           if (toLog()) {
             log("F: after() queued to redetect: " + files);
@@ -252,6 +254,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
           List<FileAndPreviousFileType> toRedetect = new SmartList<>();
           for (VirtualFile file : files) {
+            ProgressManager.checkCanceled();
             if (file instanceof VirtualFileWithId && wasAutoDetectedBefore(file) && isDetectable(file)) {
               int fileId = ((VirtualFileWithId)file).getId();
               long oldFlags = packedFlags.get(fileId);
