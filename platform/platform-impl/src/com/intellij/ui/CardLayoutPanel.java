@@ -140,30 +140,31 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     }
   }
 
+  private @Nullable Component getVisibleComponent() {
+    for (Component component : getComponents()) {
+      if (component.isVisible()) return component;
+    }
+    return null;
+  }
+
   @Override
   public Dimension getPreferredSize() {
-    if (isPreferredSizeSet()) {
-      return super.getPreferredSize();
-    }
-    for (Component component : getComponents()) {
-      if (component.isVisible()) {
-        return component.getPreferredSize();
-      }
-    }
-    return super.getPreferredSize();
+    Component component = isPreferredSizeSet() ? null : getVisibleComponent();
+    if (component == null) return super.getPreferredSize();
+    // preferred size of a visible component plus border insets of this panel
+    Dimension size = component.getPreferredSize();
+    JBInsets.addTo(size, getInsets()); // add border of this panel
+    return size;
   }
 
   @Override
   public Dimension getMinimumSize() {
-    if (isMinimumSizeSet()) {
-      return super.getMinimumSize();
-    }
-    for (Component component : getComponents()) {
-      if (component.isVisible()) {
-        return component.getMinimumSize();
-      }
-    }
-    return super.getMinimumSize();
+    Component component = isMinimumSizeSet() ? null : getVisibleComponent();
+    if (component == null) return super.getMinimumSize();
+    // minimum size of a visible component plus border insets of this panel
+    Dimension size = component.getMinimumSize();
+    JBInsets.addTo(size, getInsets());
+    return size;
   }
 
   @Override
