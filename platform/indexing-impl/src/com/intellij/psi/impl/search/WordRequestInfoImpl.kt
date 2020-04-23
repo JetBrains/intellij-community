@@ -22,7 +22,7 @@ internal data class WordRequestInfoImpl internal constructor(
 
   override fun getContainerName(): String? = containerName
 
-  override fun getSession(): SearchSession {
+  override fun getSearchSession(): SearchSession {
     TODO("not implemented")
   }
 }

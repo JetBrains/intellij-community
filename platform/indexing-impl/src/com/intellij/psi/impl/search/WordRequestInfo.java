@@ -22,5 +22,5 @@ interface WordRequestInfo {
   boolean isCaseSensitive();
 
   @NotNull
-  SearchSession getSession();
+  SearchSession getSearchSession();
 }

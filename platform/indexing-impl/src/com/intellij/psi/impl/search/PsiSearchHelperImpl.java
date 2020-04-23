@@ -701,7 +701,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     @Override
-    public @NotNull SearchSession getSession() {
+    public @NotNull SearchSession getSearchSession() {
       return request.getSearchSession();
     }
 
@@ -953,7 +953,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       GlobalSearchScope commonScope = uniteScopes(processors);
       // files which are target of the search
-      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> processors.stream().flatMap(p -> p.getSession().getTargetVirtualFiles().stream()).filter(commonScope::contains).collect(Collectors.toSet()));
+      Set<VirtualFile> thisTargetFiles = ReadAction.compute(() -> processors.stream().flatMap(p -> p.getSearchSession().getTargetVirtualFiles().stream()).filter(commonScope::contains).collect(Collectors.toSet()));
       // directories in which target files are contained
       Set<VirtualFile> thisTargetDirectories = ContainerUtil.map2SetNotNull(thisTargetFiles, f -> f.getParent());
 
