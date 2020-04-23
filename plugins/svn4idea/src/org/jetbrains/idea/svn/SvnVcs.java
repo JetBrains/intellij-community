@@ -126,8 +126,6 @@ public final class SvnVcs extends AbstractVcs {
   private final RootsToWorkingCopies myRootsToWorkingCopies;
   private final SvnAuthenticationNotifier myAuthNotifier;
 
-  private final SvnExecutableChecker myChecker;
-
   private SvnCheckoutProvider myCheckoutProvider;
 
   @NotNull private final ClientFactory cmdClientFactory;
@@ -158,8 +156,6 @@ public final class SvnVcs extends AbstractVcs {
 
       myChangeListListener = new SvnChangelistListener(this);
     }
-
-    myChecker = new SvnExecutableChecker(this);
 
     Application app = ApplicationManager.getApplication();
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
@@ -211,7 +207,7 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   public boolean checkCommandLineVersion() {
-    return getFactory() != cmdClientFactory || myChecker.checkExecutableAndNotifyIfNeeded();
+    return myProject.getService(SvnExecutableChecker.class).checkExecutableAndNotifyIfNeeded();
   }
 
   public void invokeRefreshSvnRoots() {
