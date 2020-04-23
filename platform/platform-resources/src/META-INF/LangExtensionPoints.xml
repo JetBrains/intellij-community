@@ -226,7 +226,7 @@
     </extensionPoint>
     <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
-    <extensionPoint name="structureViewBuilder" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
+    <extensionPoint name="structureViewBuilder" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.structureView.StructureViewBuilder"/>
     </extensionPoint>
 
