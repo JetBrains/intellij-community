@@ -8,7 +8,7 @@
     <extensionPoint qualifiedName="org.jetbrains.binaryRequestHandler" interface="org.jetbrains.ide.BinaryRequestHandler"/>
     <extensionPoint qualifiedName="org.jetbrains.customPortServerManager" interface="org.jetbrains.ide.CustomPortServerManager"/>
 
-    <extensionPoint qualifiedName="org.jetbrains.jsonRpcDomain" beanClass="org.jetbrains.io.jsonRpc.JsonRpcDomainBean">
+    <extensionPoint qualifiedName="org.jetbrains.jsonRpcDomain" beanClass="org.jetbrains.io.jsonRpc.JsonRpcDomainBean" dynamic="true">
       <with attribute="implementation" implements="java.lang.Object"/>
     </extensionPoint>
   </extensionPoints>
