@@ -70,15 +70,15 @@ public class ImportHelper{
   }
 
   @Nullable("null means no need to replace the import list because they are the same")
-  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
-    return prepareOptimizeImportsResult(file, pair -> true);
+  PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file) {
+    return prepareOptimizeImportsResult(file, __ -> true);
   }
 
   /**
    * @param filter pretend some references do not exist so the corresponding imports may be deleted
    */
   @Nullable("null means no need to replace the import list because they are the same")
-  public PsiImportList prepareOptimizeImportsResult(@NotNull final PsiJavaFile file, Predicate<? super Pair<String, Boolean>> filter) {
+  public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file, @NotNull Predicate<? super Pair<String, Boolean>> filter) {
     PsiImportList oldList = file.getImportList();
     if (oldList == null) return null;
 
