@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -33,30 +34,37 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   private final static Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
   private final static int MAX_COMPUTATION_THREADS = 10;
 
-  private final @NotNull PsiFile          myFile;
-  private final @NotNull AsyncComputation myComputation;
-  private final @NotNull Lock             myComputationLock = new ReentrantLock();
+  private final @NotNull WeakReference<PsiFile> myFileRef;
+  private final @NotNull AsyncComputation       myComputation;
+  private final @NotNull Lock                   myComputationLock = new ReentrantLock();
 
   private final static ExecutorService ourExecutorService =
     AppExecutorUtil.createBoundedApplicationPoolExecutor("CodeStyleCachedValueProvider", MAX_COMPUTATION_THREADS);
 
   CodeStyleCachedValueProvider(@NotNull PsiFile file) {
-    myFile = file;
+    myFileRef = new WeakReference<>(file);
     myComputation = new AsyncComputation();
   }
 
   CodeStyleSettings tryGetSettings() {
-    if (myComputationLock.tryLock()) {
-      try {
-        return CachedValuesManager.getCachedValue(myFile, this);
+    try {
+      final PsiFile file = getReferencedPsi();
+      if (myComputationLock.tryLock()) {
+        try {
+          return CachedValuesManager.getCachedValue(file, this);
+        }
+        finally {
+          myComputationLock.unlock();
+        }
       }
-      finally {
-        myComputationLock.unlock();
+      else {
+        //noinspection deprecation
+        return CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
       }
     }
-    else {
-      //noinspection deprecation
-      return CodeStyleSettingsManager.getInstance(myFile.getProject()).getCurrentSettings();
+    catch (OutdatedFileReferenceException e) {
+      LOG.error(e);
+      return CodeStyle.getDefaultSettings();
     }
   }
 
@@ -64,7 +72,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
   @Override
   public Result<CodeStyleSettings> compute() {
     CodeStyleSettings settings = myComputation.getCurrResult();
-    logCached(myFile, settings);
+    logCached(getReferencedPsi(), settings);
     return new Result<>(settings, getDependencies(settings, myComputation));
   }
 
@@ -107,7 +115,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private final             Project                   myProject;
 
     private AsyncComputation() {
-      myProject = myFile.getProject();
+      myProject = getReferencedPsi().getProject();
       mySettingsManager = CodeStyleSettingsManager.getInstance(myProject);
       //noinspection deprecation
       myCurrResult = mySettingsManager.getCurrentSettings();
@@ -116,9 +124,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private void start() {
       if (isRunOnBackground()) {
         ReadAction.nonBlocking(() -> computeSettings())
-          .expireWith(myProject)
-          .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed())
-          .submit(ourExecutorService);
+                  .expireWith(myProject)
+                  .expireWhen(() -> myFileRef.get() == null)
+                  .finishOnUiThread(ModalityState.NON_MODAL, val -> notifyCachedValueComputed())
+                  .submit(ourExecutorService);
       }
       else {
         ReadAction.run((() -> computeSettings()));
@@ -144,16 +153,17 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private void computeSettings() {
       try {
         myComputationLock.lock();
+        final PsiFile file = getReferencedPsi();
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Computation started for " + myFile.getName());
+          LOG.debug("Computation started for " + file.getName());
         }
         @SuppressWarnings("deprecation")
         CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
         if (currSettings != mySettingsManager.getTemporarySettings()) {
-          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(myFile, currSettings);
+          TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
           modifiableSettings.applyIndentOptionsFromProviders();
           for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
-            if (modifier.modifySettings(modifiableSettings, myFile)) {
+            if (modifier.modifySettings(modifiableSettings, file)) {
               LOG.debug("Modifier: " + modifier.getClass().getName());
               modifiableSettings.setModifier(modifier);
               currSettings = modifiableSettings;
@@ -164,7 +174,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         myCurrResult = currSettings;
         myTracker.incModificationCount();
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Computation ended for " + myFile.getName());
+          LOG.debug("Computation ended for " + file.getName());
         }
       }
       finally {
@@ -191,9 +201,24 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     private void notifyCachedValueComputed() {
       if (!myProject.isDisposed()) {
         final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
-        settingsManager.fireCodeStyleSettingsChanged(myFile);
+        settingsManager.fireCodeStyleSettingsChanged(getReferencedPsi());
       }
       myComputation.reset();
+    }
+  }
+
+  @NotNull
+  private PsiFile getReferencedPsi() {
+    PsiFile file = myFileRef.get();
+    if (file == null) {
+      throw new OutdatedFileReferenceException();
+    }
+    return file;
+  }
+
+  static class OutdatedFileReferenceException extends RuntimeException {
+    OutdatedFileReferenceException() {
+      super("Outdated file reference used to obtain settings");
     }
   }
 }
