@@ -69,5 +69,33 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     return getErrorStripeMarkColor(null) != null;
   }
 
+  default void copyFrom(@NotNull RangeHighlighterEx other) {
+    setAfterEndOfLine(other.isAfterEndOfLine());
+    setGreedyToLeft(other.isGreedyToLeft());
+    setGreedyToRight(other.isGreedyToRight());
+    setVisibleIfFolded(other.isVisibleIfFolded());
+
+    if (other.getForcedTextAttributes() != null) {
+      setTextAttributes(other.getForcedTextAttributes());
+    }
+    if (other.getTextAttributesKey() != null) {
+      setTextAttributesKey(other.getTextAttributesKey());
+    }
+
+    setLineMarkerRenderer(other.getLineMarkerRenderer());
+    setCustomRenderer(other.getCustomRenderer());
+    setGutterIconRenderer(other.getGutterIconRenderer());
+
+    setErrorStripeMarkColor(other.getForcedErrorStripeMarkColor());
+    setErrorStripeTooltip(other.getErrorStripeTooltip());
+    setThinErrorStripeMark(other.isThinErrorStripeMark());
+
+    setLineSeparatorColor(other.getLineSeparatorColor());
+    setLineSeparatorPlacement(other.getLineSeparatorPlacement());
+    setLineSeparatorRenderer(other.getLineSeparatorRenderer());
+
+    setEditorFilter(other.getEditorFilter());
+  }
+
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);
 }
