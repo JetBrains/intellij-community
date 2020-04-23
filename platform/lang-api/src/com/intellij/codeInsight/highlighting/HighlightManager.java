@@ -3,6 +3,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -51,14 +52,14 @@ public abstract class HighlightManager {
    *  @param editor           the editor in which the highlighting is performed.
    * @param startOffset      the start offset of the text range to highlight.
    * @param endOffset        the end offset of the text range to highlight.
-   * @param attributes       the attributes to highlight the text with.
+   * @param attributesKey    the attributes key to highlight the text with.
    * @param hideByTextChange if true, the highlighting is removed automatically if the editor text is changed.
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} object is added to this collection.
    */
   public abstract void addRangeHighlight(@NotNull Editor editor,
                                          int startOffset,
                                          int endOffset,
-                                         @NotNull TextAttributes attributes,
+                                         @NotNull TextAttributesKey attributesKey,
                                          boolean hideByTextChange,
                                          @Nullable Collection<? super RangeHighlighter> outHighlighters);
 
@@ -69,7 +70,7 @@ public abstract class HighlightManager {
    *  @param editor           the editor in which the highlighting is performed.
    * @param startOffset      the start offset of the text range to highlight.
    * @param endOffset        the end offset of the text range to highlight.
-   * @param attributes       the attributes to highlight the text with.
+   * @param attributesKey    the attributes key to highlight the text with.
    * @param hideByTextChange if true, the highlighting is removed automatically if the editor text is changed.
    * @param hideByAnyKey     if true, the highlighting is removed automatically when the user presses any key.
    * @param highlighters     if not null, the created {@link RangeHighlighter} object is added to this collection.
@@ -77,7 +78,7 @@ public abstract class HighlightManager {
   public abstract void addRangeHighlight(@NotNull Editor editor,
                                          int startOffset,
                                          int endOffset,
-                                         @NotNull TextAttributes attributes,
+                                         @NotNull TextAttributesKey attributesKey,
                                          boolean hideByTextChange,
                                          boolean hideByAnyKey,
                                          @Nullable Collection<? super RangeHighlighter> highlighters);
@@ -96,13 +97,13 @@ public abstract class HighlightManager {
    * the Esc key, and optionally when the editor text is changed.
    *  @param editor           the editor in which the highlighting is performed.
    * @param occurrences      the references to highlight.
-   * @param attributes       the attributes to highlight the text with.
+   * @param attributesKey    the attributes key to highlight the text with.
    * @param hideByTextChange if true, the highlighting is removed automatically if the editor text is changed.
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} objects are added to this collection.
    */
   public abstract void addOccurrenceHighlights(@NotNull Editor editor,
                                                PsiReference @NotNull [] occurrences,
-                                               @NotNull TextAttributes attributes,
+                                               @NotNull TextAttributesKey attributesKey,
                                                boolean hideByTextChange,
                                                @Nullable Collection<? super RangeHighlighter> outHighlighters);
 
@@ -111,13 +112,13 @@ public abstract class HighlightManager {
    * the Esc key, and optionally when the editor text is changed.
    *  @param editor           the editor in which the highlighting is performed.
    * @param elements         the elements to highlight.
-   * @param attributes       the attributes to highlight the text with.
+   * @param attributesKey    the attributes key to highlight the text with.
    * @param hideByTextChange if true, the highlighting is removed automatically if the editor text is changed.
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} objects are added to this collection.
    */
   public abstract void addOccurrenceHighlights(@NotNull Editor editor,
                                                PsiElement @NotNull [] elements,
-                                               @NotNull TextAttributes attributes,
+                                               @NotNull TextAttributesKey attributesKey,
                                                boolean hideByTextChange,
                                                @Nullable Collection<? super RangeHighlighter> outHighlighters);
 
@@ -128,12 +129,66 @@ public abstract class HighlightManager {
    *  @param editor           the editor in which the highlighting is performed.
    * @param start            the start offset of the text range to highlight.
    * @param end              the end offset of the text range to highlight.
-   * @param attributes       the attributes to highlight the text with.
+   * @param attributesKey    the attributes key to highlight the text with.
    * @param flags            the flags specifying when the highlighting is removed (a combination of
 *                         {@link #HIDE_BY_ESCAPE}, {@link #HIDE_BY_ANY_KEY} and {@link #HIDE_BY_TEXT_CHANGE}).
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} object is added to this collection.
-   * @param scrollMarkColor  if not null, a gutter mark with the specified color is added in addition to the editor highlight.
    */
+  public abstract void addOccurrenceHighlight(@NotNull Editor editor,
+                                              int start,
+                                              int end,
+                                              TextAttributesKey attributesKey,
+                                              @HideFlags int flags,
+                                              @Nullable Collection<? super RangeHighlighter> outHighlighters);
+
+  //<editor-fold> Deprecated
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated
+  public abstract void addRangeHighlight(@NotNull Editor editor,
+                                         int startOffset,
+                                         int endOffset,
+                                         @NotNull TextAttributes attributes,
+                                         boolean hideByTextChange,
+                                         @Nullable Collection<? super RangeHighlighter> outHighlighters);
+
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated
+  public abstract void addRangeHighlight(@NotNull Editor editor,
+                                         int startOffset,
+                                         int endOffset,
+                                         @NotNull TextAttributes attributes,
+                                         boolean hideByTextChange,
+                                         boolean hideByAnyKey,
+                                         @Nullable Collection<? super RangeHighlighter> highlighters);
+
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated
+  public abstract void addOccurrenceHighlights(@NotNull Editor editor,
+                                               PsiReference @NotNull [] occurrences,
+                                               @NotNull TextAttributes attributes,
+                                               boolean hideByTextChange,
+                                               @Nullable Collection<? super RangeHighlighter> outHighlighters);
+
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated
+  public abstract void addOccurrenceHighlights(@NotNull Editor editor,
+                                               PsiElement @NotNull [] elements,
+                                               @NotNull TextAttributes attributes,
+                                               boolean hideByTextChange,
+                                               @Nullable Collection<? super RangeHighlighter> outHighlighters);
+
+  /**
+   * @deprecated Use the overload with TextAttributesKey
+   */
+  @Deprecated
   public abstract void addOccurrenceHighlight(@NotNull Editor editor,
                                               int start,
                                               int end,
@@ -141,4 +196,5 @@ public abstract class HighlightManager {
                                               @HideFlags int flags,
                                               @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollMarkColor);
+  //</editor-fold>
 }
