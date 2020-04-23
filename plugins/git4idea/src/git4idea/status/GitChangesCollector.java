@@ -353,6 +353,9 @@ class GitChangesCollector {
           else if (yStatus == 'D') {
             reportDeleted(filepath, head);
           }
+          else if (yStatus == 'T') {
+            reportConflict(filepath, head, Status.MODIFIED, Status.MODIFIED);
+          }
           else {
             throwYStatus(output, handler, line, xStatus, yStatus);
           }
