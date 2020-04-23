@@ -251,7 +251,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
           project,
           SSRBundle.message("overwrite.message"),
           SSRBundle.message("overwrite.title", name),
-          "Replace",
+          SSRBundle.message("button.replace"),
           Messages.getCancelButton(),
           Messages.getQuestionIcon()
         );

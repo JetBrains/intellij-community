@@ -520,7 +520,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     addTask(task);
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
+        () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, TaskBundle
+          .message("progress.title.updating", task.getPresentableId())) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             updateIssue(task.getId());
@@ -547,7 +548,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     TestConnectionTask task = new TestConnectionTask("Test connection") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Connecting to " + repository.getUrl() + "...");
+        indicator.setText(TaskBundle.message("progress.text.connecting.to", repository.getUrl()));
         indicator.setFraction(0);
         indicator.setIndeterminate(true);
         try {
@@ -594,7 +595,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     Exception e = task.myException;
     if (e == null) {
       myBadRepositories.remove(repository);
-      Messages.showMessageDialog(myProject, "Connection is successful", "Connection", Messages.getInformationIcon());
+      Messages.showMessageDialog(myProject, TaskBundle.message("dialog.message.connection.successful"),
+                                 TaskBundle.message("dialog.title.connection"), Messages.getInformationIcon());
     }
     else if (!(e instanceof ProcessCanceledException)) {
       String message = e.getMessage();
@@ -605,7 +607,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         LOG.error(e);
         message = "Unknown error";
       }
-      Messages.showErrorDialog(myProject, StringUtil.capitalize(message), "Error");
+      Messages.showErrorDialog(myProject, StringUtil.capitalize(message), TaskBundle.message("dialog.title.error"));
     }
     return e == null;
   }

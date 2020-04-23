@@ -160,7 +160,9 @@ public class ExecutionHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
 
+      //noinspection HardCodedStringLiteral
       final String stdOutTitle = "[Stdout]:";
+      //noinspection HardCodedStringLiteral
       final String stderrTitle = "[Stderr]:";
       final ErrorViewPanel errorTreeView = new ErrorViewPanel(myProject);
       try {

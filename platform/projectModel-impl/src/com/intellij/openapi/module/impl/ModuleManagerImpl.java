@@ -273,7 +273,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     ProgressIndicator globalIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator progressIndicator = myProject.isDefault() || globalIndicator == null ? new EmptyProgressIndicator() : globalIndicator;
-    progressIndicator.setText("Loading modules...");
+    progressIndicator.setText(ProjectModelBundle.message("progress.text.loading.modules"));
     progressIndicator.setText2("");
 
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());

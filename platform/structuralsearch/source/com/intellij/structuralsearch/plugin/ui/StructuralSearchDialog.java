@@ -361,7 +361,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.runWriteCommandAction(project, "Adjust line indent", "Structural Search",
+    WriteCommandAction.runWriteCommandAction(project, SSRBundle.message("command.name.adjust.line.indent"), "Structural Search",
                                              () -> CodeStyleManager.getInstance(project)
                                                .adjustLineIndent(file, new TextRange(0, document.getTextLength())), file);
   }
@@ -731,7 +731,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     assert psiFile != null;
     final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
     WriteCommandAction
-      .runWriteCommandAction(getProject(), "Live search template builder", "Structural Search",
+      .runWriteCommandAction(getProject(), SSRBundle.message("command.name.live.search.template.builder"), "Structural Search",
                              () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
