@@ -120,7 +120,7 @@ public final class IdeaTestUtil {
     JavaSdkImpl.addSources(jdkHomeFile, sdkModificator);
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
 
-    return new MockSdk(name, homePath, name, roots, javaSdk);
+    return new MockSdk(name, homePath, name, roots, () -> JavaSdk.getInstance());
   }
 
   public static @NotNull Sdk getMockJdk14() {
