@@ -271,7 +271,7 @@
 
     <!--<extensionPoint qualifiedName="com.intellij.expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
-    <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector"/>
+    <extensionPoint qualifiedName="com.intellij.library.javaSourceRootDetector" interface="com.intellij.openapi.roots.libraries.ui.RootDetector" dynamic="true"/>
     
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
     <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter" dynamic="true"/>
