@@ -692,7 +692,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   /**
-   * @see #runAfterInitialization(Runnable)
+   * @see ProjectLevelVcsManager#runAfterInitialization(Runnable)
    * @see VcsStartupActivity
    */
   public void addInitializationRequest(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {

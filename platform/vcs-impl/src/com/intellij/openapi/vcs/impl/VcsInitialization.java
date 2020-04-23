@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -14,9 +14,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -31,13 +33,15 @@ import java.util.function.Predicate;
 public final class VcsInitialization {
   private static final Logger LOG = Logger.getInstance(VcsInitialization.class);
 
-  private final List<VcsStartupActivity> myCustomActivities = new ArrayList<>();
   private final Object myLock = new Object();
   @NotNull private final Project myProject;
 
-  private enum Status {PENDING, RUNNING, FINISHED}
+  private enum Status {PENDING, RUNNING_INIT, RUNNING_POST, FINISHED}
 
-  private Status myStatus = Status.PENDING; // guarded by myLock
+  // guarded by myLock
+  private Status myStatus = Status.PENDING;
+  private final List<VcsStartupActivity> myInitActivities = new ArrayList<>();
+  private final List<VcsStartupActivity> myPostActivities = new ArrayList<>();
 
   private volatile Future<?> myFuture;
   private final ProgressIndicator myIndicator = new StandardProgressIndicatorBase();
@@ -69,14 +73,26 @@ public final class VcsInitialization {
   void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     if (myProject.isDefault()) return;
     synchronized (myLock) {
-      if (myStatus == Status.PENDING) {
-        myCustomActivities.add(new ProxyVcsStartupActivity(vcsInitObject, runnable));
+      ProxyVcsStartupActivity activity = new ProxyVcsStartupActivity(vcsInitObject, runnable);
+      if (isInitActivity(activity)) {
+        if (myStatus == Status.PENDING) {
+          myInitActivities.add(activity);
+        }
+        else {
+          LOG.warn(String.format("scheduling late initialization: %s", activity));
+          BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+        }
       }
       else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(String.format("scheduling late initialization: init step - %s, runnable - %s", vcsInitObject, runnable));
+        if (myStatus == Status.PENDING || myStatus == Status.RUNNING_INIT) {
+          myPostActivities.add(activity);
         }
-        BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+        else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(String.format("scheduling late post activity: %s", activity));
+          }
+          BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+        }
       }
     }
   }
@@ -84,36 +100,48 @@ public final class VcsInitialization {
   private void execute() {
     LOG.assertTrue(!myProject.isDefault());
     try {
-      List<VcsStartupActivity> activities;
-      synchronized (myLock) {
-        // No new elements will be put into the myCustomActivities list starting from this point
-        assert myStatus == Status.PENDING;
-        myStatus = Status.RUNNING;
-
-        activities = new ArrayList<>(VcsStartupActivity.EP_NAME.getExtensionList());
-
-        activities.addAll(myCustomActivities);
-        myCustomActivities.clear();
-
-        Future<?> future = myFuture;
-        if (future != null && future.isCancelled()) return;
-      }
-
-      Collections.sort(activities, Comparator.comparingInt(VcsStartupActivity::getOrder));
-
-      for (VcsStartupActivity activity : activities) {
-        ProgressManager.checkCanceled();
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(String.format("running initialization: %s", activity));
-        }
-
-        QueueProcessor.runSafely(() -> activity.runActivity(myProject));
-      }
+      runInitStep(Status.PENDING, Status.RUNNING_INIT, it -> isInitActivity(it), myInitActivities);
+      runInitStep(Status.RUNNING_INIT, Status.RUNNING_POST, it -> !isInitActivity(it), myPostActivities);
     }
     finally {
       synchronized (myLock) {
         myStatus = Status.FINISHED;
       }
+    }
+  }
+
+  private void runInitStep(@NotNull Status current,
+                           @NotNull Status next,
+                           @NotNull Condition<VcsStartupActivity> extensionFilter,
+                           @NotNull List<VcsStartupActivity> pendingActivities) {
+    List<VcsStartupActivity> epActivities = ContainerUtil.filter(VcsStartupActivity.EP_NAME.getExtensionList(), extensionFilter);
+
+    List<VcsStartupActivity> activities = new ArrayList<>();
+    synchronized (myLock) {
+      assert myStatus == current;
+      myStatus = next;
+
+      activities.addAll(epActivities);
+      activities.addAll(pendingActivities);
+      pendingActivities.clear();
+    }
+
+    runActivities(activities);
+  }
+
+  private void runActivities(@NotNull List<VcsStartupActivity> activities) {
+    Future<?> future = myFuture;
+    if (future != null && future.isCancelled()) return;
+
+    Collections.sort(activities, Comparator.comparingInt(VcsStartupActivity::getOrder));
+
+    for (VcsStartupActivity activity : activities) {
+      ProgressManager.checkCanceled();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("running activity: %s", activity));
+      }
+
+      QueueProcessor.runSafely(() -> activity.runActivity(myProject));
     }
   }
 
@@ -138,7 +166,7 @@ public final class VcsInitialization {
   }
 
   private void waitNotRunning() {
-    boolean success = waitFor(status -> status != Status.RUNNING);
+    boolean success = waitFor(status -> status == Status.PENDING || status == Status.FINISHED);
     if (!success) {
       LOG.warn("Failed to wait for VCS initialization cancellation for project " + myProject, new Throwable());
     }
@@ -165,6 +193,10 @@ public final class VcsInitialization {
       TimeoutUtil.sleep(10);
     }
     return false;
+  }
+
+  private static boolean isInitActivity(@NotNull VcsStartupActivity activity) {
+    return activity.getOrder() < VcsInitObject.AFTER_COMMON.getOrder();
   }
 
   static final class StartUpActivity implements StartupActivity.DumbAware {
