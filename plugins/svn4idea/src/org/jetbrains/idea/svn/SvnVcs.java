@@ -120,7 +120,6 @@ public final class SvnVcs extends AbstractVcs {
 
   //Consumer<Boolean>
   public static final Topic<Consumer> ROOTS_RELOADED = new Topic<>("ROOTS_RELOADED", Consumer.class);
-  private VcsListener myVcsListener;
 
   private SvnBranchPointsCalculator mySvnBranchPointsCalculator;
 
@@ -158,8 +157,6 @@ public final class SvnVcs extends AbstractVcs {
       upgradeIfNeeded(project.getMessageBus());
 
       myChangeListListener = new SvnChangelistListener(this);
-
-      myVcsListener = () -> invokeRefreshSvnRoots();
     }
 
     myChecker = new SvnExecutableChecker(this);
@@ -300,12 +297,9 @@ public final class SvnVcs extends AbstractVcs {
     MessageBusConnection busConnection = myProject.getMessageBus().connect();
     if (!myProject.isDefault()) {
       busConnection.subscribe(ChangeListListener.TOPIC, myChangeListListener);
-      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, new VcsListener() {
-        @Override
-        public void directoryMappingChanged() {
-          myVcsListener.directoryMappingChanged();
-          myRootsToWorkingCopies.directoryMappingChanged();
-        }
+      busConnection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> {
+        invokeRefreshSvnRoots();
+        myRootsToWorkingCopies.directoryMappingChanged();
       });
     }
 
