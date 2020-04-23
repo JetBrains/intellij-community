@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -20,17 +19,16 @@ public interface FileIntPropertyPusher<T> extends FilePropertyPusher<T> {
   @NotNull
   FileAttribute getAttribute();
 
-  int toInt(@NotNull T property);
+  int toInt(@NotNull T property) throws IOException;
 
   @NotNull
-  T fromInt(int val);
+  T fromInt(int val) throws IOException;
 
   @Override
   default void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull T actualValue) throws IOException {
-    int storedIntValue = -1;
     try (DataInputStream stream = getAttribute().readAttribute(fileOrDir)) {
       if (stream != null) {
-        storedIntValue = DataInputOutputUtil.readINT(stream);
+        int storedIntValue = DataInputOutputUtil.readINT(stream);
         if (storedIntValue == toInt(actualValue)) return;
       }
     }
@@ -39,11 +37,10 @@ public interface FileIntPropertyPusher<T> extends FilePropertyPusher<T> {
       DataInputOutputUtil.writeINT(stream, toInt(actualValue));
     }
 
-    propertyChanged(project, fileOrDir, storedIntValue == -1 ? null : fromInt(storedIntValue), actualValue);
+    propertyChanged(project, fileOrDir, actualValue);
   }
 
   void propertyChanged(@NotNull Project project,
                        @NotNull VirtualFile fileOrDir,
-                       @Nullable T oldProperty,
                        @NotNull T actualProperty);
 }

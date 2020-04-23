@@ -90,7 +90,6 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   @Override
   public void propertyChanged(@NotNull Project project,
                               @NotNull VirtualFile fileOrDir,
-                              @Nullable LanguageLevel oldProperty,
                               @NotNull LanguageLevel actualProperty) {
     // Todo: GwtLanguageLevelPusher changes java language level for single files without firing filePropertiesChanged
     // so code below doesn't work.
