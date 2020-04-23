@@ -121,11 +121,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
 
     myLibrariesToAdd.forEach { library ->
       val componentAsString = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
-      library.libraryEntity?.getCustomProperties()?.let { property ->
-        diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
-          propertiesXmlTag = componentAsString
-        }
-      }
+      library.updatePropertyEntities(diff, componentAsString)
     }
 
     libraryTable.setNewLibraryInstances(myLibrariesToAdd)

@@ -545,11 +545,7 @@ class LegacyBridgeModifiableRootModel(
     override fun commit() {
       librariesToAdd.forEach { library ->
         val componentAsString = modifiableModel.serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
-        library.libraryEntity?.getCustomProperties()?.let { property ->
-          modifiableModel.diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
-            propertiesXmlTag = componentAsString
-          }
-        }
+        library.updatePropertyEntities(modifiableModel.diff, componentAsString)
       }
     }
 

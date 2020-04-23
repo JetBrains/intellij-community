@@ -361,22 +361,6 @@ open class LibraryEntity(
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
 }
 
-class FakeLibraryEntity(name: String) : LibraryEntity(LibraryTableId.ProjectLibraryTableId, name, emptyList(), emptyList()) {
-  override var entitySource: EntitySource
-    get() = throw NotImplementedError()
-    set(value) {
-      throw NotImplementedError()
-    }
-
-  override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
-  override val tableId: LibraryTableId
-    get() = throw NotImplementedError()
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
-  }
-}
-
 data class LibraryId(val name: String, val tableId: LibraryTableId) : PersistentEntityId<LibraryEntity>() {
   override val parentId: PersistentEntityId<*>?
     get() = null

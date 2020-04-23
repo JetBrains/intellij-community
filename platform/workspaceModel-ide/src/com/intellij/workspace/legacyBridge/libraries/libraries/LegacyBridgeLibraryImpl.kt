@@ -72,13 +72,6 @@ internal class LegacyBridgeLibraryImpl(
 
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
 
-  private val libraryEntityCached: CachedValueWithParameter<LibraryId, LibraryEntity?> = CachedValueWithParameter { storage, id: LibraryId ->
-    storage.resolve(id)
-  }
-
-  internal val libraryEntity: LibraryEntity?
-    get() = entityStore.cachedValue(libraryEntityCached, entityId)
-
   private val librarySnapshotCached: CachedValueWithParameter<LibraryId, LibraryViaTypedEntity> = CachedValueWithParameter { storage, id: LibraryId ->
     LibraryViaTypedEntity(
       libraryImpl = this,
@@ -105,6 +98,16 @@ internal class LegacyBridgeLibraryImpl(
       checkDisposed()
       return entityStore.cachedValue(librarySnapshotCached, entityId)
     }
+
+  internal fun updatePropertyEntities(diff: TypedEntityStorageDiffBuilder, propertiesXmlTag: String) {
+    // TODO: 23.04.2020 Maybe just resolve every time? Resolving is a constant time
+    val nonFakeLibraryEntity = if (librarySnapshot.libraryEntity !is FakeLibraryEntity) librarySnapshot.libraryEntity else return
+    nonFakeLibraryEntity.getCustomProperties()?.let { property ->
+      diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+        this.propertiesXmlTag = propertiesXmlTag
+      }
+    }
+  }
 
   override val libraryId: LibraryId
     get() = entityId
@@ -152,10 +155,10 @@ internal class LegacyBridgeLibraryImpl(
 
   override fun equals(other: Any?): Boolean {
     val otherLib = other as? LegacyBridgeLibraryImpl ?: return false
-    return libraryEntity == otherLib.libraryEntity
+    return librarySnapshot.libraryEntity == otherLib.librarySnapshot.libraryEntity
   }
 
-  override fun hashCode(): Int = libraryEntity.hashCode()
+  override fun hashCode(): Int = librarySnapshot.libraryEntity.hashCode()
 
   companion object {
     private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
@@ -197,5 +200,31 @@ internal class LegacyBridgeLibraryImpl(
         index++
       }
     }
+  }
+
+  class FakeLibraryEntity(name: String) : LibraryEntity(LibraryTableId.ProjectLibraryTableId, name, emptyList(), emptyList()) {
+    override var entitySource: EntitySource
+      get() = throw NotImplementedError()
+      set(value) {
+        throw NotImplementedError()
+      }
+
+    override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
+    override val tableId: LibraryTableId
+      get() = throw NotImplementedError()
+
+    override fun hasEqualProperties(e: TypedEntity): Boolean {
+      return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
+    }
+
+    override fun toString(): String = "FakeLibraryEntity($name)"
+
+    override fun equals(other: Any?): Boolean {
+      if (other !is FakeLibraryEntity) return false
+
+      return this.name == other.name
+    }
+
+    override fun hashCode(): Int = name.hashCode()
   }
 }
