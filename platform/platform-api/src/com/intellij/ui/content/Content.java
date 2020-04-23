@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,9 +44,9 @@ public interface Content extends UserDataHolder, ComponentContainer {
   void setIcon(Icon icon);
   Icon getIcon();
 
-  void setDisplayName(@Nls(capitalization = Nls.Capitalization.Title) String displayName);
+  void setDisplayName(@TabTitle String displayName);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @TabTitle
   String getDisplayName();
 
   void setTabName(@TabTitle String tabName);
@@ -55,9 +54,10 @@ public interface Content extends UserDataHolder, ComponentContainer {
   @TabTitle
   String getTabName();
 
+  @TabTitle
   String getToolwindowTitle();
 
-  void setToolwindowTitle(String toolwindowTitle);
+  void setToolwindowTitle(@TabTitle String toolwindowTitle);
 
   @Nullable Disposable getDisposer();
 
