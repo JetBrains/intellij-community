@@ -758,7 +758,21 @@ public class HighlightClassUtil {
             String description = JavaErrorBundle.message("private.symbol",
                                                          HighlightUtil.formatClass(base),
                                                          HighlightUtil.formatClass(baseClass));
-            infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description).create();
+            final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(extendRef)
+              .descriptionAndTooltip(description)
+              .create();
+
+            QuickFixAction.registerQuickFixAction(
+              info,
+              QUICK_FIX_FACTORY.createModifierListFix(base, PsiModifier.PUBLIC, true, false)
+            );
+            QuickFixAction.registerQuickFixAction(
+              info,
+              QUICK_FIX_FACTORY.createModifierListFix(base, PsiModifier.PROTECTED, true, false)
+            );
+
+            infos[0] = info;
             return;
           }
 
