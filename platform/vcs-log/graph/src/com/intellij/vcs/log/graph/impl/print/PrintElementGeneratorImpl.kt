@@ -22,10 +22,6 @@ import com.intellij.vcs.log.graph.utils.NormalEdge
 import gnu.trove.THashSet
 import org.jetbrains.annotations.TestOnly
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToLong
-import kotlin.math.sqrt
 
 class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
                                                       private val printElementManager: PrintElementManager,
@@ -49,7 +45,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
 
   fun getRecommendedWidth(): Int {
     if (recommendedWidth <= 0) {
-      val n = min(SAMPLE_SIZE, linearGraph.nodesCount())
+      val n = Math.min(SAMPLE_SIZE, linearGraph.nodesCount())
 
       var sum = 0.0
       var sumSquares = 0.0
@@ -100,7 +96,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
          * 0 <= K < 1; weight is an arithmetic progression, starting at 2 / ( n * (k + 1)) ending at k * 2 / ( n * (k + 1))
          * this formula ensures that sum of all weights is 1
          */
-        val width = max(edgesCount + upArrows, newEdgesCount + downArrows)
+        val width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows)
         val weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1))
         sum += width * weight
         sumSquares += width.toDouble() * width.toDouble() * weight
@@ -113,8 +109,8 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
       http://stackoverflow.com/questions/30383270/how-do-i-calculate-the-standard-deviation-between-weighted-measurements
        s*/
       val average = sum
-      val deviation = sqrt(sumSquares - average * average)
-      recommendedWidth = (average + deviation).roundToLong().toInt()
+      val deviation = Math.sqrt(sumSquares - average * average)
+      recommendedWidth = Math.round(average + deviation).toInt()
     }
 
     return recommendedWidth
@@ -210,14 +206,14 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     if (edgeSize >= longEdgeSize) {
       if (upOffset == visiblePartSize) {
         LOG.assertTrue(downOffset != visiblePartSize,
-                       "Both up and down arrow at row $rowIndex") // this can not happen due to how constants are picked out, but just in case
+                       "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
         return EdgePrintElement.Type.DOWN
       }
       if (downOffset == visiblePartSize) return EdgePrintElement.Type.UP
     }
     if (edgeSize >= edgeWithArrowSize) {
       if (upOffset == 1) {
-        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row $rowIndex")
+        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex)
         return EdgePrintElement.Type.DOWN
       }
       if (downOffset == 1) return EdgePrintElement.Type.UP
@@ -265,7 +261,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
   }
 
   private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
-    return min(rowIndex - e1.up, e1.down - rowIndex)
+    return Math.min(rowIndex - e1.up, e1.down - rowIndex)
   }
 
   private inner class PrintElementBuilder(private val rowIndex: Int) {
