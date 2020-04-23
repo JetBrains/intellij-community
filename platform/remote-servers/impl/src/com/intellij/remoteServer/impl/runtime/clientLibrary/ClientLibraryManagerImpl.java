@@ -98,7 +98,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   public void checkConfiguration(@NotNull final ClientLibraryDescription description, final @Nullable Project project,
                                  final @Nullable JComponent component) throws RuntimeConfigurationError {
     if (!isDownloaded(description)) {
-      throw new RuntimeConfigurationError("Client libraries were not downloaded", () -> download(description, project, component));
+      throw new RuntimeConfigurationError(CloudBundle.message("dialog.message.client.libraries.were.downloaded"), () -> download(description, project, component));
     }
   }
 
