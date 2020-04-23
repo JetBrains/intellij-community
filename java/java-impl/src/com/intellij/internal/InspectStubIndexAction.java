@@ -103,7 +103,7 @@ public class InspectStubIndexAction extends AnAction {
 
       try {
         SerializedStubTree tree = data.values().iterator().next();
-        for (Map.Entry<StubIndexKey<?, ?>, Map<Object, StubIdList>> entry : tree.readStubIndicesValueMap().entrySet()) {
+        for (Map.Entry<StubIndexKey<?, ?>, Map<Object, StubIdList>> entry : tree.getStubIndicesValueMap().entrySet()) {
           StubIndexKey stubIndexKey = entry.getKey();
           Set<Object> keys = entry.getValue().keySet();
 

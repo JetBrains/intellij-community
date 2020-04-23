@@ -5,13 +5,11 @@
  */
 package com.intellij.psi.stubs;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -117,8 +115,7 @@ public final class SerializedStubTree {
     );
   }
 
-  @VisibleForTesting
-  public void restoreIndexedStubs() throws IOException {
+  void restoreIndexedStubs() throws IOException {
     if (myIndexedStubs == null) {
       myIndexedStubs = myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)));
     }
@@ -132,12 +129,12 @@ public final class SerializedStubTree {
   }
 
   public @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndicesValueMap() {
-    return myIndexedStubs;
-  }
-
-  @TestOnly
-  public Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> readStubIndicesValueMap() throws IOException {
-    restoreIndexedStubs();
+    try {
+      restoreIndexedStubs();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return myIndexedStubs;
   }
 
