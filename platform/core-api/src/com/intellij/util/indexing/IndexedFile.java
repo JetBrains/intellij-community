@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface IndexedFile extends UserDataHolder {
   @NotNull
@@ -18,5 +17,5 @@ public interface IndexedFile extends UserDataHolder {
   @NotNull
   String getFileName();
 
-  @Nullable Project getProject();
+  Project getProject();
 }
