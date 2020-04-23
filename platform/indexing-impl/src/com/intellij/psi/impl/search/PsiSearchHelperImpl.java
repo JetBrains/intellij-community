@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -321,27 +320,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       directories = ContainerUtil.mapNotNull(targets, v -> v.getParent());
 
-      GlobalSearchScope directoryNearTargetScope = new GlobalSearchScope() {
-        @Override
-        public boolean isSearchInModuleContent(@NotNull Module aModule) {
-          return scope.isSearchInModuleContent(aModule);
-        }
-
-        @Override
-        public boolean isSearchInLibraries() {
-          return scope.isSearchInLibraries();
-        }
-
+      GlobalSearchScope directoryNearTargetScope = new DelegatingGlobalSearchScope(scope) {
         @Override
         public boolean contains(@NotNull VirtualFile file) {
-          return scope.contains(file) && directories.contains(file.getParent());
+          return super.contains(file) && directories.contains(file.getParent());
         }
       };
-      Set<VirtualFile> directoryNearTargetFiles = new THashSet<>();
-      getFilesWithText(directoryNearTargetScope, searchContext, caseSensitively, text, directoryNearTargetFiles);
-      directoryNearTargetFiles.removeAll(targets);
+
+      List<VirtualFile> directoryNearTargetFiles =
+        ContainerUtil.filter(allFiles, f -> directoryNearTargetScope.contains(f) && !targets.contains(f));
       if (!directoryNearTargetFiles.isEmpty()) {
-        priorities.add(new ArrayList<>(directoryNearTargetFiles));
+        priorities.add(directoryNearTargetFiles);
         allFiles.removeAll(directoryNearTargetFiles);
       }
     }
