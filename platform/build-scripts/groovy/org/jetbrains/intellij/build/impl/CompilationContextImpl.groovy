@@ -45,13 +45,13 @@ class CompilationContextImpl implements CompilationContext {
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot) {
+  static CompilationContextImpl create(String communityHome, String projectHome, String defaultOutputRoot, String intellijHome = projectHome) {
     //noinspection GroovyAssignabilityCheck
-    return create(communityHome, projectHome,
+    return create(intellijHome, communityHome, projectHome,
                   { p, m -> defaultOutputRoot } as BiFunction<JpsProject, BuildMessages, String>, new BuildOptions())
    }
 
-  static CompilationContextImpl create(String communityHome, String projectHome,
+  static CompilationContextImpl create(String intellijHome, String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
@@ -76,7 +76,7 @@ class CompilationContextImpl implements CompilationContext {
     def model = loadProject(projectHome, kotlinHome, messages, options, ant, gradle)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, gradle, model, intellijHome, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     context.prepareForBuild()
     messages.debugLogPath = "$context.paths.buildOutputRoot/log/debug.log"
@@ -150,7 +150,7 @@ class CompilationContextImpl implements CompilationContext {
     return mapping
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
+  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String intellijHome, String communityHome,
                                  String projectHome, String jdkHome, String kotlinHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
@@ -164,12 +164,12 @@ class CompilationContextImpl implements CompilationContext {
     this.oldToNewModuleName = oldToNewModuleName
     this.newToOldModuleName = oldToNewModuleName.collectEntries { oldName, newName -> [newName, oldName] } as Map<String, String>
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
-    this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome, kotlinHome)
+    this.paths = new BuildPathsImpl(intellijHome, communityHome, projectHome, buildOutputRoot, jdkHome, kotlinHome)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    return new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome, paths.jdkHome,
+    return new CompilationContextImpl(ant, gradle, projectModel, paths.intellijHome, paths.communityHome, paths.projectHome, paths.jdkHome,
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
@@ -470,7 +470,8 @@ class CompilationContextImpl implements CompilationContext {
 
 @CompileStatic
 class BuildPathsImpl extends BuildPaths {
-  BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
+  BuildPathsImpl(String intellijHome, String communityHome, String projectHome, String buildOutputRoot, String jdkHome, String kotlinHome) {
+    this.intellijHome = intellijHome
     this.communityHome = communityHome
     this.projectHome = projectHome
     this.buildOutputRoot = buildOutputRoot

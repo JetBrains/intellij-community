@@ -26,7 +26,7 @@ class BuildContextImpl extends BuildContext {
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHome)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHome)
 
-    def compilationContext = CompilationContextImpl.create(communityHome, projectHome,
+    def compilationContext = CompilationContextImpl.create(projectHome, communityHome, projectHome,
                                                            createBuildOutputRootEvaluator(projectHome, productProperties), options)
     def context = new BuildContextImpl(compilationContext, productProperties,
                                        windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,

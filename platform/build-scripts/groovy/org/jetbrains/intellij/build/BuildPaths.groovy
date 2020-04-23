@@ -33,6 +33,11 @@ abstract class BuildPaths {
   String projectHome
 
   /**
+   * Path to 'intellij' repo. In most cases it's the same as {@link #projectHome}
+   */
+  String intellijHome
+
+  /**
    * Path to a directory where build script will store temporary and resulting files
    */
   String buildOutputRoot

@@ -338,7 +338,7 @@ class TestingTasksImpl extends TestingTasks {
     String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     Map<String, String> defaultSystemProperties = [
       "idea.platform.prefix"                              : options.platformPrefix,
-      "idea.home.path"                                    : context.paths.projectHome,
+      "idea.home.path"                                    : context.paths.intellijHome,
       "idea.config.path"                                  : "$tempDir/config".toString(),
       "idea.system.path"                                  : "$tempDir/system".toString(),
       "intellij.build.compiled.classes.archives.metadata" : System.getProperty("intellij.build.compiled.classes.archives.metadata"),
