@@ -96,6 +96,12 @@ public class NlsContexts {
   public @interface GutterName {
   }
 
+  @NlsContext(prefix = "status.bar.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface StatusBarText {
+  }
+
   /**
    * Use it for annotating OS provided notification title, such as "project built" or "tests running finished".
    * See also #SystemNotificationText.
@@ -171,6 +177,12 @@ public class NlsContexts {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface Tooltip {
+  }
+
+  @NlsContext(prefix = "tooltip.title")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface TooltipTitle {
   }
 
   @NlsContext(prefix = "separator")
