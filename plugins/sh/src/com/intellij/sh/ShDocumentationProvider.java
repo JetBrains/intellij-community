@@ -9,6 +9,7 @@ import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
@@ -92,6 +93,7 @@ public class ShDocumentationProvider implements DocumentationProvider {
           return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
         }, ProgressManager.getInstance().getProgressIndicator());
       }
+      catch (ProcessCanceledException e) { throw  e; }
       catch (Exception e) {
         LOG.warn(e);
         return null;
