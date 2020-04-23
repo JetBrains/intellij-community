@@ -80,6 +80,8 @@ public final class DomApplicationComponent {
     myCachedImplementationClasses.clearCache();
     myTypeChooserManager.clearCache();
 
+    myInvocationCaches.clear();
+
     registerDescriptions();
   }
 
