@@ -62,11 +62,16 @@ public class HighlightData {
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         try {
           // IDEA-53203: add ERASE_MARKER for manually defined attributes
-          view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                    TextAttributes.ERASE_MARKER, myHighlightType, HighlighterTargetArea.EXACT_RANGE);
+          RangeHighlighter erasedHighlighter = view.getMarkupModel()
+            .addRangeHighlighter(myHighlightType, myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                 HighlighterTargetArea.EXACT_RANGE);
+          if (erasedHighlighter instanceof RangeHighlighterEx) {
+            ((RangeHighlighterEx)erasedHighlighter).setTextAttributes(TextAttributes.ERASE_MARKER);
+          }
+
           RangeHighlighter highlighter = view.getMarkupModel()
-            .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                 null, myHighlightType, HighlighterTargetArea.EXACT_RANGE);
+            .addRangeHighlighter(myHighlightType, myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                 HighlighterTargetArea.EXACT_RANGE);
           final Color errorStripeColor = attr.getErrorStripeColor();
           highlighter.setErrorStripeMarkColor(errorStripeColor);
           final String tooltip = displayText.get(myHighlightType);

@@ -238,11 +238,17 @@ public class EditorHyperlinkSupport {
                                            @NotNull final HyperlinkInfo hyperlinkInfo,
                                            @Nullable TextAttributes followedHyperlinkAttributes,
                                            int layer) {
-    final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
-                                                                                       highlightEndOffset,
-                                                                                       layer,
-                                                                                       highlightAttributes, CodeInsightColors.HYPERLINK_ATTRIBUTES,
-                                                                                       HighlighterTargetArea.EXACT_RANGE);
+    final RangeHighlighter highlighter =
+      myEditor.getMarkupModel().addRangeHighlighterAndChangeAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES,
+                                                                       highlightStartOffset,
+                                                                       highlightEndOffset,
+                                                                       layer,
+                                                                       HighlighterTargetArea.EXACT_RANGE,
+                                                                       false, ex -> {
+          if (highlightAttributes != null) {
+            ex.setTextAttributes(highlightAttributes);
+          }
+        });
     associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
   }
@@ -397,7 +403,7 @@ public class EditorHyperlinkSupport {
       }
     }
     //refresh highlighter text attributes
-    markupModel.addRangeHighlighter(0, 0, link.getLayer(), null, CodeInsightColors.HYPERLINK_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE).dispose();
+    markupModel.addRangeHighlighter(CodeInsightColors.HYPERLINK_ATTRIBUTES, 0, 0, link.getLayer(), HighlighterTargetArea.EXACT_RANGE).dispose();
   }
 
 

@@ -265,8 +265,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (nameIdentifier != null) {
       final TextRange textRange = nameIdentifier.getTextRange();
       final RangeHighlighter rangeHighlighter = markupModel.addRangeHighlighter(
-        textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
-        null, attributesKey,
+        attributesKey, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
         HighlighterTargetArea.EXACT_RANGE);
       highlighters.add(rangeHighlighter);
     }

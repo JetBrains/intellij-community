@@ -121,8 +121,8 @@ class ApplyPatchChange {
     TextRange textRange = DiffUtil.getLinesRange(document, line1, line2);
 
     RangeHighlighter highlighter = markupModel
-      .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.LAST,
-                           null, null, HighlighterTargetArea.LINES_IN_RANGE);
+      .addRangeHighlighter(null, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.LAST,
+                           HighlighterTargetArea.LINES_IN_RANGE);
 
     highlighter.setLineMarkerRenderer(new MyGutterRenderer(line1, line2, color, tooltip));
 

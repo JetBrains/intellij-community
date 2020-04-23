@@ -42,7 +42,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
       val start = editor.document.getLineStartOffset(i)
       val end = editor.document.getLineEndOffset(i)
       editor.markupModel
-        .addRangeHighlighterAndChangeAttributes(start, end, HighlighterLayer.LAST, null, null, HighlighterTargetArea.EXACT_RANGE,
+        .addRangeHighlighterAndChangeAttributes(null, start, end, HighlighterLayer.LAST, HighlighterTargetArea.EXACT_RANGE,
                                                 false) { highlighter ->
           highlighter.gutterIconRenderer = gutterIconRendererFactory.createCommentRenderer(i)
         }

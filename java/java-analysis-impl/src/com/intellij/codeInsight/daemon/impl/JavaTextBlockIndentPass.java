@@ -81,7 +81,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       }
       else {
         RangeHighlighter newHighlighter =
-          model.addRangeHighlighter(indent.startOffset, indent.endOffset, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
+          model.addRangeHighlighter(null, indent.startOffset, indent.endOffset, 0, HighlighterTargetArea.EXACT_RANGE);
         newHighlighter.setCustomRenderer(RENDERER);
         StringContentIndentUtil.setIndent(newHighlighter, newIndent);
         newHighlighters.add(newHighlighter);

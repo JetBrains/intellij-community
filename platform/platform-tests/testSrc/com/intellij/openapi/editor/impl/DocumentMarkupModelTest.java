@@ -55,7 +55,7 @@ public class DocumentMarkupModelTest extends BasePlatformTestCase {
   public void testPersistentHighlighterUpdateOnPartialDocumentUpdate() {
     Document document = new DocumentImpl("line0\nline1\nline2");
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(2, 0, null, null);
+    RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(null, 2, 0);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(document.getLineStartOffset(1), document.getTextLength()));
     assertFalse(highlighter.isValid());
   }

@@ -90,18 +90,18 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
       DocumentEx doc = (DocumentEx) editor.getDocument();
       int lineNumber = doc.getLineNumber(startOffset);
       if (lineNumber >= 0 && lineNumber < doc.getLineCount()){
-        mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(doc.getLineStartOffset(lineNumber),
+        mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                           doc.getLineStartOffset(lineNumber),
                                                                            doc.getLineEndOffset(lineNumber) + doc.getLineSeparatorLength(lineNumber),
                                                                            HighlighterLayer.LAST + 1,
-                                                                           null, EditorColors.SEARCH_RESULT_ATTRIBUTES,
                                                                            HighlighterTargetArea.EXACT_RANGE);
       }
     }
     else{
-      mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(startOffset,
+      mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                         startOffset,
                                                                          endOffset,
                                                                          HighlighterLayer.LAST + 1,
-                                                                         null, EditorColors.SEARCH_RESULT_ATTRIBUTES,
                                                                          HighlighterTargetArea.EXACT_RANGE);
     }
     myEditor = editor;

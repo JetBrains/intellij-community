@@ -67,12 +67,10 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
                        int end,
                        int layer,
                        @NotNull HighlighterTargetArea target,
-                       @Nullable TextAttributes textAttributes,
                        @Nullable TextAttributesKey textAttributesKey,
                        boolean greedyToLeft,
                        boolean greedyToRight) {
     super((DocumentEx)model.getDocument(), start, end, false, false);
-    myForcedTextAttributes = textAttributes;
     myTextAttributesKey = textAttributesKey;
     setFlag(TARGET_AREA_IS_EXACT_MASK, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;

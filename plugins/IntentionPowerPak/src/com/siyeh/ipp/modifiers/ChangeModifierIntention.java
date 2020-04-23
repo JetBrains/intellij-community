@@ -161,8 +161,8 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     }
 
     RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.LAST + 1,
-                           null, EditorColors.LIVE_TEMPLATE_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
+      .addRangeHighlighter(EditorColors.LIVE_TEMPLATE_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), HighlighterLayer.LAST + 1,
+                           HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToRight(true);
     highlighter.setGreedyToLeft(true);
     ModifierUpdater updater = new ModifierUpdater(file, document, range, getFamilyName());

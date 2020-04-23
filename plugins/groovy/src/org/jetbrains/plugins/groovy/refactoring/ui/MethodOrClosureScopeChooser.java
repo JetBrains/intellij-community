@@ -165,8 +165,8 @@ public final class MethodOrClosureScopeChooser {
     final MarkupModel markupModel = editor.getMarkupModel();
     final TextRange textRange = selectedMethod.getTextRange();
     final RangeHighlighter rangeHighlighter =
-      markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
-                                      null, attributesKey, HighlighterTargetArea.EXACT_RANGE);
+      markupModel.addRangeHighlighter(attributesKey, textRange.getStartOffset(), textRange.getEndOffset(), HighlighterLayer.SELECTION - 1,
+                                      HighlighterTargetArea.EXACT_RANGE);
     highlighters.add(rangeHighlighter);
     if (selectedMethod instanceof GrMethod) {
       superMethod.setText(USE_SUPER_METHOD_OF);

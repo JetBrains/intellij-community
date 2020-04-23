@@ -18,10 +18,7 @@ public interface MarkupModelEx extends MarkupModel {
 
 
   @Nullable
-  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
-                                                  int layer,
-                                                  @Nullable TextAttributes forcedTextAttributes,
-                                                  @Nullable TextAttributesKey textAttributesKey);
+  RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer);
 
   /**
    * @deprecated Use the overload with TextAttributeKey
@@ -29,7 +26,11 @@ public interface MarkupModelEx extends MarkupModel {
   @Deprecated
   @Nullable
   default RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
-    return addPersistentLineHighlighter(lineNumber, layer, textAttributes, null);
+    RangeHighlighterEx highlighter = addPersistentLineHighlighter(null, lineNumber, layer);
+    if (textAttributes != null && highlighter != null) {
+      highlighter.setTextAttributes(textAttributes);
+    }
+    return highlighter;
   }
 
   void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
@@ -65,11 +66,10 @@ public interface MarkupModelEx extends MarkupModel {
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
-  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
+                                                            int startOffset,
                                                             int endOffset,
                                                             int layer,
-                                                            @Nullable TextAttributes forcedTextAttributes,
-                                                            @Nullable TextAttributesKey textAttributesKey,
                                                             @NotNull HighlighterTargetArea targetArea,
                                                             boolean isPersistent,
                                                             Consumer<? super RangeHighlighterEx> changeAttributesAction);
@@ -86,10 +86,40 @@ public interface MarkupModelEx extends MarkupModel {
                                                                     @NotNull HighlighterTargetArea targetArea,
                                                                     boolean isPersistent,
                                                                     Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    return addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, textAttributes, null, targetArea, isPersistent,
-                                                  changeAttributesAction);
+    return addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, layer, targetArea, isPersistent, ex -> {
+      if (textAttributes != null) {
+        ex.setTextAttributes(textAttributes);
+      }
+      changeAttributesAction.consume(ex);
+    });
   }
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
+
+  @Override
+  @Deprecated
+  @NotNull
+  default RangeHighlighter addRangeHighlighter(int startOffset,
+                                               int endOffset,
+                                               int layer,
+                                               @Nullable TextAttributes textAttributes,
+                                               @NotNull HighlighterTargetArea targetArea) {
+    RangeHighlighterEx highlighter = (RangeHighlighterEx)addRangeHighlighter(null, startOffset, endOffset, layer, targetArea);
+    if (textAttributes != null) {
+      highlighter.setTextAttributes(textAttributes);
+    }
+    return highlighter;
+  }
+
+  @Override
+  @Deprecated
+  @NotNull
+  default RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
+    RangeHighlighterEx highlighter = (RangeHighlighterEx)addLineHighlighter(null, line, layer);
+    if (textAttributes != null) {
+      highlighter.setTextAttributes(textAttributes);
+    }
+    return highlighter;
+  }
 }

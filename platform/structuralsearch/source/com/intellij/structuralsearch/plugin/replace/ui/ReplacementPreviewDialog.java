@@ -63,11 +63,10 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
       return;
     }
     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
+      EditorColors.SEARCH_RESULT_ATTRIBUTES,
       start,
       end,
       HighlighterLayer.SELECTION - 100,
-      null,
-      EditorColors.SEARCH_RESULT_ATTRIBUTES,
       HighlighterTargetArea.EXACT_RANGE
     );
   }

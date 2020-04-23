@@ -197,9 +197,11 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       // highlight injected element in host document textrange
       textRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiElement, textRange);
 
-      RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                                   highlightLayer, null, EditorColors.SEARCH_RESULT_ATTRIBUTES,
-                                                                                   HighlighterTargetArea.EXACT_RANGE);
+      RangeHighlighter highlighter = markupModel.addRangeHighlighter(EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                     textRange.getStartOffset(),
+                                                                     textRange.getEndOffset(),
+                                                                     highlightLayer,
+                                                                     HighlighterTargetArea.EXACT_RANGE);
       highlighter.putUserData(IN_PREVIEW_USAGE_FLAG, Boolean.TRUE);
       if (infoRange != null && findModel != null && findModel.isReplaceState()) {
         RangeHighlighter boxHighlighter

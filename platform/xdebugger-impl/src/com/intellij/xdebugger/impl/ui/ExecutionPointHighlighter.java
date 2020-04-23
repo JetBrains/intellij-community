@@ -191,13 +191,13 @@ public class ExecutionPointHighlighter {
         TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
         if (!range.equals(lineRange)) {
           myRangeHighlighter = markupModel
-            .addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                 null, attributesKey, HighlighterTargetArea.EXACT_RANGE);
+            .addRangeHighlighter(attributesKey, range.getStartOffset(), range.getEndOffset(), DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
+                                 HighlighterTargetArea.EXACT_RANGE);
         }
       }
     }
     if (myRangeHighlighter == null) {
-      myRangeHighlighter = markupModel.addLineHighlighter(line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER, null, attributesKey);
+      myRangeHighlighter = markupModel.addLineHighlighter(attributesKey, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, !myNotTopFrame);
     myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());

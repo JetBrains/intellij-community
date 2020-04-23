@@ -63,7 +63,6 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
                                                                      ind + CARET.length(),
                                                                      HighlighterLayer.ADDITIONAL_SYNTAX,
                                                                      CARET_ATTRIBUTES,
-                                                                     null,
                                                                      HighlighterTargetArea.EXACT_RANGE);
         highlighter.setGutterIconRenderer(ICON_RENDERER);
         highlighter.putUserData(KEY, VALUE);

@@ -89,8 +89,8 @@ class UnifiedEditorRangeHighlighter {
       if (!delegate.isValid()) continue;
 
       model.addRangeHighlighterAndChangeAttributes(
-        piece.getStart(), piece.getEnd(), delegate.getLayer(), delegate.getForcedTextAttributes(),
-        delegate.getTextAttributesKey(), delegate.getTargetArea(), false, ex -> {
+        delegate.getTextAttributesKey(), piece.getStart(), piece.getEnd(), delegate.getLayer(),
+        delegate.getTargetArea(), false, ex -> {
           ex.copyFrom(delegate);
         });
     }

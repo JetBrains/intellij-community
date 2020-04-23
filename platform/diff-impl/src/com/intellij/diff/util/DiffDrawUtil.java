@@ -451,7 +451,7 @@ public class DiffDrawUtil {
                                                                       @NotNull BooleanGetter condition,
                                                                       @Nullable Computable<String> description) {
     RangeHighlighter marker = editor.getMarkupModel()
-      .addRangeHighlighter(offset1, offset2, LINE_MARKER_LAYER, null, null, HighlighterTargetArea.LINES_IN_RANGE);
+      .addRangeHighlighter(null, offset1, offset2, LINE_MARKER_LAYER, HighlighterTargetArea.LINES_IN_RANGE);
 
     DiffLineSeparatorRenderer renderer = new DiffLineSeparatorRenderer(editor, condition, description);
     marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
@@ -641,7 +641,7 @@ public class DiffDrawUtil {
 
       offset = DocumentUtil.getFirstNonSpaceCharOffset(editor.getDocument(), line);
       highlighter = editor.getMarkupModel()
-        .addRangeHighlighter(offset, offset, LINE_MARKER_LAYER, null, null, HighlighterTargetArea.LINES_IN_RANGE);
+        .addRangeHighlighter(null, offset, offset, LINE_MARKER_LAYER, HighlighterTargetArea.LINES_IN_RANGE);
     }
 
     @NotNull

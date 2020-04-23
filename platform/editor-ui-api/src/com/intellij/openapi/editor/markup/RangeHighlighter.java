@@ -14,8 +14,8 @@ import java.awt.*;
  * Represents a range of text in the document which has specific markup (special text attributes,
  * line marker, gutter icon, error stripe marker or line separator).
  *
- * @see MarkupModel#addRangeHighlighter(int, int, int, TextAttributes, TextAttributesKey, HighlighterTargetArea)
- * @see MarkupModel#addLineHighlighter(int, int, TextAttributes, TextAttributesKey)
+ * @see MarkupModel#addRangeHighlighter(TextAttributesKey, int, int, int, HighlighterTargetArea)
+ * @see MarkupModel#addLineHighlighter(TextAttributesKey, int, int)
  * @see com.intellij.lang.annotation.Annotation
  */
 public interface RangeHighlighter extends RangeMarker {

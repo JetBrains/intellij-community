@@ -471,7 +471,7 @@ public class SrcFileAnnotator implements Disposable {
     final int endOffset = document.getLineEndOffset(lineNumberInCurrent);
     final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
     final RangeHighlighter highlighter =
-      markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, null, attributesKey, HighlighterTargetArea.LINES_IN_RANGE);
+      markupModel.addRangeHighlighter(attributesKey, startOffset, endOffset, HighlighterLayer.SELECTION - 1, HighlighterTargetArea.LINES_IN_RANGE);
     final Function<Integer, Integer> newToOldConverter = newLine -> {
       if (editor == null) return -1;
       final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date, editorBean);

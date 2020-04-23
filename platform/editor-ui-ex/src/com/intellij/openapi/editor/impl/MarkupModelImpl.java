@@ -62,24 +62,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   @NotNull
-  public RangeHighlighter addLineHighlighter(int lineNumber,
-                                             int layer,
-                                             @Nullable TextAttributes forcedTextAttributes,
-                                             @Nullable TextAttributesKey textAttributesKey) {
+  public RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
     if (isNotValidLine(lineNumber)) {
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
-    return addRangeHighlighter(offset, offset, layer, forcedTextAttributes, textAttributesKey, HighlighterTargetArea.LINES_IN_RANGE);
+    return addRangeHighlighter(textAttributesKey, offset, offset, layer, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   @Override
   @Nullable
-  public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber,
-                                                         int layer,
-                                                         @Nullable TextAttributes forcedTextAttributes,
-                                                         @Nullable TextAttributesKey textAttributesKey) {
+  public RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
     if (isNotValidLine(lineNumber)) {
       return null;
     }
@@ -87,7 +81,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
     return addRangeHighlighter(
       PersistentRangeHighlighterImpl.create(
-        this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, forcedTextAttributes, textAttributesKey, false),
+        this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false),
       null);
   }
 
@@ -113,18 +107,17 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @NotNull
   @Override
-  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
+  public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
+                                                                   int startOffset,
                                                                    int endOffset,
                                                                    int layer,
-                                                                   @Nullable TextAttributes forcedTextAttributes,
-                                                                   @Nullable TextAttributesKey textAttributesKey,
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     return addRangeHighlighter(isPersistent
-                               ? PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, forcedTextAttributes,
+                               ? PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea,
                                                                        textAttributesKey, true)
-                               : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, forcedTextAttributes, textAttributesKey, false,
+                               : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false,
                                                           false), changeAttributesAction);
   }
 
@@ -169,13 +162,12 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   @NotNull
-  public RangeHighlighter addRangeHighlighter(int startOffset,
+  public RangeHighlighter addRangeHighlighter(@Nullable TextAttributesKey textAttributesKey,
+                                              int startOffset,
                                               int endOffset,
                                               int layer,
-                                              @Nullable TextAttributes forcedTextAttributes,
-                                              @Nullable TextAttributesKey textAttributesKey,
                                               @NotNull HighlighterTargetArea targetArea) {
-    return addRangeHighlighterAndChangeAttributes(startOffset, endOffset, layer, forcedTextAttributes, textAttributesKey, targetArea, false,
+    return addRangeHighlighterAndChangeAttributes(textAttributesKey, startOffset, endOffset, layer, targetArea, false,
                                                   null);
   }
 

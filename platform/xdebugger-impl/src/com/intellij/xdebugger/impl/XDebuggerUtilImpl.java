@@ -231,8 +231,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   }
                   if (!range.isEmpty() && range.intersects(lineRange)) {
                     myHighlighter = editor.getMarkupModel().addRangeHighlighter(
-                      range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
-                      null, DebuggerColors.BREAKPOINT_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
+                      DebuggerColors.BREAKPOINT_ATTRIBUTES, range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER,
+                      HighlighterTargetArea.EXACT_RANGE);
                   }
                 }
               }

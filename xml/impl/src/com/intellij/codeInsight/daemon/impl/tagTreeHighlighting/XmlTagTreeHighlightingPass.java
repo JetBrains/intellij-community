@@ -244,7 +244,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   @NotNull
   private static RangeHighlighter createHighlighter(MarkupModel mm, @NotNull TextRange range, Color color) {
     RangeHighlighter highlighter =
-      mm.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), 0, null, null, HighlighterTargetArea.LINES_IN_RANGE);
+      mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0, HighlighterTargetArea.LINES_IN_RANGE);
 
     highlighter.setLineMarkerRenderer((__, g, r) -> {
       g.setColor(color);
