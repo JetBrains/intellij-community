@@ -65,6 +65,11 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             }
 
             val ideaPlugin = DescriptorUtil.getIdeaPlugin(pluginXmlFile) ?: continue
+            if (ideaPlugin.modules.isNotEmpty()) {
+              // don't analyze product XML files, analyze only plugins
+              continue
+            }
+
             val status = analyzeUnloadable(ideaPlugin, extensionPointOwners, pluginXmlFiles)
             result.add(status)
             pi.text = status.pluginId
