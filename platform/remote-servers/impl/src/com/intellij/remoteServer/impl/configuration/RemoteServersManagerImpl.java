@@ -29,7 +29,7 @@ import java.util.List;
 
 @State(name = "RemoteServers", storages = @Storage("remote-servers.xml"))
 public class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
-  public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+  private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
   private final List<RemoteServer<?>> myServers = new ArrayList<>();
   private final List<RemoteServerState> myUnknownServers = new ArrayList<>();
   private final MessageBus myMessageBus;
@@ -54,6 +54,9 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
           removeServer(nextServer);
           myUnknownServers.add(nextState);
         });
+        if (!removedServers.isEmpty()) {
+          myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
+        }
       }
     }, null);
   }
@@ -153,11 +156,11 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
   }
 
   @NotNull
-  private static RemoteServerState createServerState(@NotNull RemoteServer<?> server) {
+  private RemoteServerState createServerState(@NotNull RemoteServer<?> server) {
     RemoteServerState serverState = new RemoteServerState();
     serverState.myName = server.getName();
     serverState.myTypeId = server.getType().getId();
-    serverState.myConfiguration = XmlSerializer.serialize(server.getConfiguration().getSerializer().getState(), SERIALIZATION_FILTERS);
+    serverState.myConfiguration = XmlSerializer.serialize(server.getConfiguration().getSerializer().getState(), myDefaultValuesFilter);
     return serverState;
   }
 
