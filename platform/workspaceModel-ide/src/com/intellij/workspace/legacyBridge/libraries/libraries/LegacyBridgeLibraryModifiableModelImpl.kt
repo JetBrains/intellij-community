@@ -82,7 +82,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     modelIsCommittedOrDisposed = true
 
     if (reloadKind) {
-      originalLibrary.entityStore.clearCachedValue(originalLibrary.snapshotValue, originalLibrary.entityId)
+      originalLibrary.cleanCachedValue()
     }
     if (isChanged) {
       committer(this, diff)
