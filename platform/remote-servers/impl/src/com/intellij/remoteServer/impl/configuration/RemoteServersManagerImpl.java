@@ -49,7 +49,11 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
       @Override
       public void extensionRemoved(@NotNull ServerType removedType, @NotNull PluginDescriptor pluginDescriptor) {
         @SuppressWarnings("unchecked") List<RemoteServer<?>> removedServers = getServers(removedType);
-        removedServers.forEach(RemoteServersManagerImpl.this::unloadServer);
+        removedServers.forEach(nextServer -> {
+          RemoteServerState nextState = createServerState(nextServer);
+          removeServer(nextServer);
+          myUnknownServers.add(nextState);
+        });
       }
     }, null);
   }
@@ -155,13 +159,6 @@ public class RemoteServersManagerImpl extends RemoteServersManager implements Pe
     serverState.myTypeId = server.getType().getId();
     serverState.myConfiguration = XmlSerializer.serialize(server.getConfiguration().getSerializer().getState(), SERIALIZATION_FILTERS);
     return serverState;
-  }
-
-  private void unloadServer(@NotNull RemoteServer<?> server) {
-    if (myServers.remove(server)) {
-      myMessageBus.syncPublisher(RemoteServerListener.TOPIC).serverRemoved(server);
-      myUnknownServers.add(createServerState(server));
-    }
   }
 
   @NotNull
