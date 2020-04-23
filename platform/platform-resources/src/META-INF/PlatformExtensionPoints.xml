@@ -264,7 +264,7 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider"/>
     </extensionPoint>
 
-    <extensionPoint name="codeInsight.folding.collapseBlockHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint name="codeInsight.folding.collapseBlockHandler" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.folding.CollapseBlockHandler"/>
     </extensionPoint>
 
