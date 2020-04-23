@@ -395,7 +395,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         list.add(RegisterToolWindowTask(
           id = bean.id,
           icon = findIconFromBean(bean, factory),
-          anchor = (factory as? ToolWindowFactoryEx)?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString()),
+          anchor = getToolWindowAnchor(factory, bean),
           sideTool = sideTool,
           canCloseContent = bean.canCloseContents,
           canWorkInDumbMode = DumbService.isDumbAware(factory),
@@ -439,6 +439,9 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }, project)
     }, project.disposed)
   }
+
+  private fun getToolWindowAnchor(factory: ToolWindowFactory?, bean: ToolWindowEP) =
+    (factory as? ToolWindowFactoryEx)?.anchor ?: ToolWindowAnchor.fromText(bean.anchor ?: ToolWindowAnchor.LEFT.toString())
 
   private fun initToolWindows(list: List<RegisterToolWindowTask>, toolWindowsPane: ToolWindowsPane) {
     runActivity("toolwindow creating") {
@@ -486,7 +489,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
 
     val toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project))
-    val anchor = ToolWindowAnchor.fromText(bean.anchor)
+    val anchor = getToolWindowAnchor(factory, bean)
     @Suppress("DEPRECATION")
     val sideTool = bean.secondary || bean.side
     val entry = doRegisterToolWindow(RegisterToolWindowTask(
