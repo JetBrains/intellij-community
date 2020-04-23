@@ -58,6 +58,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
     // Make it explicit that registering and removing ResolveScopeProviders needs to clear the resolve scope cache
     // (even though normally registerRunnableToRunOnChange would be enough to clear the cache)
     ResolveScopeProvider.EP_NAME.addExtensionPointListener(() -> myDefaultResolveScopesCache.clear(), project);
+    ResolveScopeEnlarger.EP_NAME.addExtensionPointListener(() -> myDefaultResolveScopesCache.clear(), project);
   }
 
   private GlobalSearchScope getResolveScopeFromProviders(@NotNull final VirtualFile vFile) {
