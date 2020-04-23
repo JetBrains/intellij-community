@@ -120,7 +120,7 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
-                    interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
+                    interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.externalAnnotation.locationProvider"
                     interface="com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationProvider" dynamic="true"/>
 
