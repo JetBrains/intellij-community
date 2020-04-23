@@ -116,7 +116,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> myProject = null,
       () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> MavenIndicesManager.getInstance().clear(),
-      () -> super.tearDown(),
       () -> {
         FileUtil.delete(myDir);
         // cannot use reliably the result of the com.intellij.openapi.util.io.FileUtil.delete() method
@@ -127,7 +126,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
           myDir.deleteOnExit();
         }
       },
-      () -> resetClassFields(getClass())
+      () -> super.tearDown()
     ).run();
   }
 
@@ -170,29 +169,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
     finally {
       myTestFixture = null;
     }
-  }
-
-  private void resetClassFields(final Class<?> aClass) {
-    if (aClass == null) return;
-
-    final Field[] fields = aClass.getDeclaredFields();
-    for (Field field: fields) {
-      final int modifiers = field.getModifiers();
-      if ((modifiers & Modifier.FINAL) == 0
-          && (modifiers & Modifier.STATIC) == 0
-          && !field.getType().isPrimitive()) {
-        field.setAccessible(true);
-        try {
-          field.set(this, null);
-        }
-        catch (IllegalAccessException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
-    if (aClass == MavenTestCase.class) return;
-    resetClassFields(aClass.getSuperclass());
   }
 
   @Override
