@@ -17,6 +17,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.api.EventAction;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
@@ -105,7 +106,10 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
       // to map to native
       if (supportsChangelists) {
-        SvnVcs.getInstance(myProject).processChangeLists(myBeforeChangeLists);
+        ExclusiveBackgroundVcsAction.run(
+          myProject,
+          () -> SvnVcs.getInstance(myProject).synchronizeToNativeChangeLists(myBeforeChangeLists)
+        );
       }
 
       BackgroundTaskUtil.syncPublisher(SvnVcs.WC_CONVERTED).run();

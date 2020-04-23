@@ -32,7 +32,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Returns the instance for the specified project.
    */
-  public static ProjectLevelVcsManager getInstance(Project project) {
+  public static ProjectLevelVcsManager getInstance(@NotNull Project project) {
     return project.getService(ProjectLevelVcsManager.class);
   }
 

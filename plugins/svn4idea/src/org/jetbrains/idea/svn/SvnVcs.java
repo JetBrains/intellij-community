@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
+import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 import org.jetbrains.idea.svn.annotate.SvnAnnotationProvider;
 import org.jetbrains.idea.svn.api.*;
@@ -73,9 +74,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+import static com.intellij.vcsUtil.VcsUtil.isFileForVcs;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
@@ -232,7 +236,7 @@ public final class SvnVcs extends AbstractVcs {
         ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
 
         if (!myConfiguration.changeListsSynchronized()) {
-          processChangeLists(lists);
+          ExclusiveBackgroundVcsAction.run(myProject, () -> synchronizeToNativeChangeLists(lists));
         }
       }
       catch (ProcessCanceledException e) {
@@ -246,45 +250,26 @@ public final class SvnVcs extends AbstractVcs {
     });
   }
 
-  public void processChangeLists(final List<? extends LocalChangeList> lists) {
-    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    plVcsManager.startBackgroundVcsOperation();
-    try {
-      for (LocalChangeList list : lists) {
-        if (!list.isDefault()) {
-          final Collection<Change> changes = list.getChanges();
-          for (Change change : changes) {
-            correctListForRevision(plVcsManager, change.getBeforeRevision(), list.getName());
-            correctListForRevision(plVcsManager, change.getAfterRevision(), list.getName());
-          }
-        }
-      }
-    }
-    finally {
-      final Application appManager = ApplicationManager.getApplication();
-      if (appManager.isDispatchThread()) {
-        appManager.executeOnPooledThread(() -> plVcsManager.stopBackgroundVcsOperation());
-      }
-      else {
-        plVcsManager.stopBackgroundVcsOperation();
+  public void synchronizeToNativeChangeLists(@NotNull List<? extends LocalChangeList> lists) {
+    for (LocalChangeList list : lists) {
+      if (list.isDefault()) continue;
+
+      for (Change change : list.getChanges()) {
+        setNativeChangeList(getBeforePath(change), list.getName());
+        setNativeChangeList(getAfterPath(change), list.getName());
       }
     }
   }
 
-  private void correctListForRevision(@NotNull final ProjectLevelVcsManager plVcsManager,
-                                      @Nullable final ContentRevision revision,
-                                      @NotNull final String name) {
-    if (revision != null) {
-      final FilePath path = revision.getFile();
-      final AbstractVcs vcs = plVcsManager.getVcsFor(path);
-      if (vcs != null && VCS_NAME.equals(vcs.getName())) {
-        try {
-          getFactory(path.getIOFile()).createChangeListClient().add(name, path.getIOFile(), null);
-        }
-        catch (VcsException e) {
-          // left in default list
-        }
-      }
+  private void setNativeChangeList(@Nullable FilePath path, @NotNull String changeListName) {
+    if (path == null) return;
+    if (!isFileForVcs(path, myProject, this)) return;
+
+    try {
+      getFactory(path.getIOFile()).createChangeListClient().add(changeListName, path.getIOFile(), null);
+    }
+    catch (VcsException e) {
+      // left in default list
     }
   }
 
