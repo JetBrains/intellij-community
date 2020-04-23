@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.ui.EditorTextFieldWithBrowseButton;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 
 import java.awt.*;
@@ -29,10 +29,6 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
 
     fragments.add(CommonTags.parallelRun());
 
-    LabeledComponent<EditorTextFieldWithBrowseButton> mainClass = new LabeledComponent<>();
-    mainClass.setLabelLocation(BorderLayout.WEST);
-    mainClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true));
-
     JrePathEditor jrePathEditor = new JrePathEditor();
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(myProject));
@@ -49,9 +45,9 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
                                                  configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
                                                },
                                                configuration -> true));
-    fragments.add(new SettingsEditorFragment<>("mainClass", null, mainClass, 10,
-                                               (configuration, component) -> component.getComponent().setText(configuration.getMainClassName()),
-                                               (configuration, component) -> configuration.setMainClassName(component.getComponent().getText()),
+    fragments.add(new SettingsEditorFragment<>("mainClass", null, (EditorTextField)ClassEditorField.createClassField(myProject), 10,
+                                               (configuration, component) -> component.setText(configuration.getMainClassName()),
+                                               (configuration, component) -> configuration.setMainClassName(component.getText()),
                                                configuration -> true));
     fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), vmParams,
                                                (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
