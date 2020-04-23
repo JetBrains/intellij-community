@@ -160,6 +160,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     myLexStarts = tokens.lexStarts;
     myLexTypes = tokens.lexTypes;
     myLexemeCount = tokens.lexemeCount;
+    setDebugMode(true);
   }
 
   private TokenSequence performLexing(@Nullable Object parentCachingNode) {
