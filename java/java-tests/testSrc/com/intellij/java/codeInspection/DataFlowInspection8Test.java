@@ -279,4 +279,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testAllowRequireNonNullInCtor() { doTest(); }
   public void testNullableNotNullAssignmentInReturn() { doTest(); }
   public void testTransformMethod() { doTest(); }
+  public void testTernaryExpressionNumericType() { doTest(); }
 }
