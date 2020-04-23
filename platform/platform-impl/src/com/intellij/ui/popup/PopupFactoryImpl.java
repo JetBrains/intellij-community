@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
@@ -134,8 +135,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @NotNull
   @Override
   public ListPopup createConfirmation(@PopupTitle String title,
-                                      final String yesText,
-                                      String noText,
+                                      @NlsContexts.Label String yesText,
+                                      @NlsContexts.Label String noText,
                                       final Runnable onYes,
                                       final Runnable onNo,
                                       int defaultOptionIndex) {

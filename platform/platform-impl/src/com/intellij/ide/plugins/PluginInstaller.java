@@ -212,15 +212,15 @@ public final class PluginInstaller {
     try {
       IdeaPluginDescriptorImpl pluginDescriptor = PluginManager.loadDescriptorFromArtifact(file.toPath(), null);
       if (pluginDescriptor == null) {
-        MessagesEx.showErrorDialog(parent, "Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
+        MessagesEx.showErrorDialog(parent, IdeBundle.message("dialog.message.fail.to.load.plugin.descriptor.from.file", file.getName()), CommonBundle.getErrorTitle());
         return false;
       }
 
       InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
       if (ourState.wasInstalled(pluginDescriptor.getPluginId())) {
-        String message = "Plugin '" + pluginDescriptor.getName() + "' was already installed";
-        MessagesEx.showWarningDialog(parent, message, "Install Plugin");
+        String message = IdeBundle.message("dialog.message.plugin.was.already.installed", pluginDescriptor.getName());
+        MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
         return false;
       }
 
@@ -242,8 +242,8 @@ public final class PluginInstaller {
 
       IdeaPluginDescriptor installedPlugin = PluginManagerCore.getPlugin(pluginDescriptor.getPluginId());
       if (installedPlugin != null && ApplicationInfoEx.getInstanceEx().isEssentialPlugin(installedPlugin.getPluginId())) {
-        String message = "Plugin '" + pluginDescriptor.getName() + "' is a core part of " + ApplicationNamesInfo.getInstance().getFullProductName()
-                         + ". In order to update it to a newer version you should update the IDE.";
+        String message = IdeBundle
+          .message("dialog.message.plugin.core.part", pluginDescriptor.getName(), ApplicationNamesInfo.getInstance().getFullProductName());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return false;
       }
@@ -305,8 +305,8 @@ public final class PluginInstaller {
     if (!notInstalled.isEmpty()) {
       String deps = StringUtil.join(notInstalled, PluginId::toString, ", ");
       String message =
-        "Plugin " + pluginDescriptor.getName() + " depends on unknown plugin" + (notInstalled.size() > 1 ? "s " : " ") + deps;
-      MessagesEx.showWarningDialog(parent, message, "Install Plugin");
+        IdeBundle.message("dialog.message.plugin.depends.on.unknown.plugin", pluginDescriptor.getName(), notInstalled.size(), deps);
+      MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
     }
     if (!disabledIds.isEmpty()) {
       final Set<IdeaPluginDescriptor> dependencies = new HashSet<>();

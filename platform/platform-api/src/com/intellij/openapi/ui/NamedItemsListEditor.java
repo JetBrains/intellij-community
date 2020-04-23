@@ -13,10 +13,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Cloner;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
@@ -94,7 +91,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   @Nullable
-  public String askForProfileName(String titlePattern) {
+  public String askForProfileName(@NlsContexts.DialogTitle String titlePattern) {
     String title = MessageFormat.format(titlePattern, subjDisplayName());
     return Messages.showInputDialog(IdeBundle.message("dialog.message.new.name", subjDisplayName()), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
@@ -279,7 +276,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-      final String profileName = askForProfileName("Copy {0}");
+      final String profileName = askForProfileName(IdeBundle.message("dialog.title.copy"));
       if (profileName == null) return;
 
       @SuppressWarnings("unchecked") final T clone = myCloner.copyOf((T)getSelectedObject());
@@ -322,7 +319,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   @Nullable
   protected T createItem() {
-    final String name = askForProfileName("Create new {0}");
+    final String name = askForProfileName(IdeBundle.message("dialog.title.create.new"));
     if (name == null) return null;
     final T newItem = myFactory.create();
     myNamer.setName(newItem, name);

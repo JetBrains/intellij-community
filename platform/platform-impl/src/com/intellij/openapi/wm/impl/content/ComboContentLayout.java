@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.ContentManager;
@@ -109,22 +111,22 @@ final class ComboContentLayout extends ContentLayout {
   }
 
   @Override
-  public String getCloseActionName() {
-    return "Close View";
+  public @NlsActions.ActionText String getCloseActionName() {
+    return IdeBundle.message("action.ComboContentLayout.close.view.text");
   }
 
   @Override
-  public String getCloseAllButThisActionName() {
-    return "Close Other Views";
+  public @NlsActions.ActionText String getCloseAllButThisActionName() {
+    return IdeBundle.message("action.ComboContentLayout.close.other.views.text");
   }
 
   @Override
-  public String getPreviousContentActionName() {
-    return "Select Previous View";
+  public @NlsActions.ActionText String getPreviousContentActionName() {
+    return IdeBundle.message("action.ComboContentLayout.select.previous.view.text");
   }
 
   @Override
-  public String getNextContentActionName() {
-    return "Select Next View";
+  public @NlsActions.ActionText String getNextContentActionName() {
+    return IdeBundle.message("action.ComboContentLayout.select.next.view.text");
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -411,7 +412,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       @Override
       public void colorChanged(Color color, Object source) {
-        CommandProcessor.getInstance().executeCommand(project, () -> listener.colorChanged(color, source), "Apply Color", groupId);
+        CommandProcessor.getInstance().executeCommand(project, () -> listener.colorChanged(color, source),
+                                                      IdeBundle.message("command.name.apply.color"), groupId);
       }
     };
 
@@ -1040,7 +1042,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       setTitle(caption);
       setResizable(false);
-      setOKButtonText("Choose");
+      setOKButtonText(IdeBundle.message("button.choose"));
       super.init();
     }
 

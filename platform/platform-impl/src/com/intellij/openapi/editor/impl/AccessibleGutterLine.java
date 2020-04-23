@@ -2,10 +2,10 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +28,10 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.function.Consumer;
 import java.util.List;
+import java.util.function.Consumer;
 
-import static com.intellij.util.ObjectUtils.*;
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * A panel which provides a11y for the current line in a gutter.
@@ -155,7 +154,7 @@ class AccessibleGutterLine extends JPanel {
         @NotNull
         @Override
         public String getAccessibleName() {
-          return "line " + (myLogicalLineNum + 1);
+          return IdeBundle.message("accessible.name.line.0", myLogicalLineNum + 1);
         }
         @Override
         public String getAccessibleTooltipText() {
@@ -205,7 +204,7 @@ class AccessibleGutterLine extends JPanel {
             if (renderer instanceof SimpleAccessible) {
               return ((SimpleAccessible)renderer).getAccessibleName();
             }
-            return "icon: " + renderer.getClass().getSimpleName();
+            return IdeBundle.message("accessible.name.icon.0", renderer.getClass().getSimpleName());
           }
           @Override
           public String getAccessibleTooltipText() {
@@ -248,7 +247,7 @@ class AccessibleGutterLine extends JPanel {
         @NotNull
         @Override
         public String getAccessibleName() {
-          return "empty";
+          return IdeBundle.message("accessible.name.empty");
         }
         @Override
         public String getAccessibleTooltipText() {
