@@ -60,8 +60,7 @@ internal val USAGE_PSI_ELEMENT : Key<PsiElement> = Key.create("USAGE_PSI_ELEMENT
 internal fun getOrCreateCachedElement(element: PsiElement,
                                       context: ProcessingContext,
                                       supportedUElementTypes: List<Class<out UElement>>): UElement? {
-  val existingElement = element as? UElement
-  if (existingElement != null) return existingElement
+  if (element is UElement) return element
 
   val cachedUastElements = getCachedUastElements(context)
   val existingValue = cachedUastElements[supportedUElementTypes]
