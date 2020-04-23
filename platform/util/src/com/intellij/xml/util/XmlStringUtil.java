@@ -4,10 +4,7 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import static com.intellij.xml.CommonXmlStrings.*;
 /**
@@ -112,7 +109,7 @@ public class XmlStringUtil {
   }
 
   @NotNull
-  public static String wrapInHtml(@NotNull CharSequence result) {
+  public static String wrapInHtml(@NotNull @Nls CharSequence result) {
     return HTML_START + result + HTML_END;
   }
 
@@ -133,7 +130,7 @@ public class XmlStringUtil {
   }
 
   @NotNull
-  public static String wrapInHtmlTag(@NotNull String text, @NonNls @NotNull String tagWord) {
+  public static String wrapInHtmlTag(@NotNull @Nls String text, @NonNls @NotNull String tagWord) {
     return String.format("<%s>%s</%s>", tagWord, text, tagWord);
   }
 
