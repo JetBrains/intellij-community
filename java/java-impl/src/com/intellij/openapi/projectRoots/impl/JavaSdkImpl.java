@@ -32,12 +32,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
@@ -399,44 +398,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return jdk;
   }
 
-  @NotNull
-  @TestOnly
-  public Sdk createMockJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
-    String homePath = PathUtil.toSystemIndependentName(home);
-    File jdkHomeFile = new File(homePath);
-
-    MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
-    SdkModificator sdkModificator = new SdkModificator() {
-      @NotNull
-      @Override public String getName() { throw new UnsupportedOperationException(); }
-      @Override public void setName(@NotNull String name) { throw new UnsupportedOperationException(); }
-      @Override public String getHomePath() { throw new UnsupportedOperationException(); }
-      @Override public void setHomePath(String path) { throw new UnsupportedOperationException(); }
-      @Override public String getVersionString() { throw new UnsupportedOperationException(); }
-      @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
-      @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
-      @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-      @Override public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
-      @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
-      @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
-      @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
-      @Override public void commitChanges() { throw new UnsupportedOperationException(); }
-      @Override public boolean isWritable() { throw new UnsupportedOperationException(); }
-
-      @Override
-      public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-        roots.putValue(rootType, root);
-      }
-    };
-
-    addClasses(jdkHomeFile, sdkModificator, isJre);
-    addSources(jdkHomeFile, sdkModificator);
-    attachJdkAnnotations(sdkModificator);
-
-    return new MockSdk(jdkName, homePath, jdkName, roots, this);
-  }
-
-  private static void addClasses(@NotNull File file, @NotNull SdkModificator sdkModificator, boolean isJre) {
+  @ApiStatus.Internal
+  public static void addClasses(@NotNull File file, @NotNull SdkModificator sdkModificator, boolean isJre) {
     for (String url : findClasses(file, isJre)) {
       sdkModificator.addRoot(url, OrderRootType.CLASSES);
     }
@@ -504,8 +467,8 @@ public final class JavaSdkImpl extends JavaSdk {
     return result;
   }
 
-
-  private static void addSources(@NotNull File jdkHome, @NotNull SdkModificator sdkModificator) {
+  @ApiStatus.Internal
+  public static void addSources(@NotNull File jdkHome, @NotNull SdkModificator sdkModificator) {
     VirtualFile jdkSrc = findSources(jdkHome, "src");
     if (jdkSrc != null) {
       if (jdkSrc.findChild("java.base") != null) {

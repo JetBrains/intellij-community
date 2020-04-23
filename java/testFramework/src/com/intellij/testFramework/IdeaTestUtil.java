@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.Disposer;
@@ -18,6 +19,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.*;
 import org.junit.Assert;
@@ -76,13 +78,49 @@ public final class IdeaTestUtil {
     return createMockJdk("java " + version, path);
   }
 
-  private static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+    return createMockJdk(name, path, false);
+  }
+
+  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path, boolean isJre) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     if (javaSdk == null) {
       throw new AssertionError("The test uses classes from Java plugin but Java plugin wasn't loaded; make sure that Java plugin " +
                                "classes are included into classpath and that the plugin isn't disabled by using 'idea.load.plugins', 'idea.load.plugins.id', 'idea.load.plugins.category' system properties");
     }
-    return ((JavaSdkImpl)javaSdk).createMockJdk(name, path, false);
+
+    String homePath = PathUtil.toSystemIndependentName(path);
+    File jdkHomeFile = new File(homePath);
+
+    MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
+    SdkModificator sdkModificator = new SdkModificator() {
+      @NotNull
+      @Override public String getName() { throw new UnsupportedOperationException(); }
+      @Override public void setName(@NotNull String name1) { throw new UnsupportedOperationException(); }
+      @Override public String getHomePath() { throw new UnsupportedOperationException(); }
+      @Override public void setHomePath(String path1) { throw new UnsupportedOperationException(); }
+      @Override public String getVersionString() { throw new UnsupportedOperationException(); }
+      @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
+      @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
+      @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
+      @Override public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
+      @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
+      @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
+      @Override public void commitChanges() { throw new UnsupportedOperationException(); }
+      @Override public boolean isWritable() { throw new UnsupportedOperationException(); }
+
+      @Override
+      public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
+        roots.putValue(rootType, root);
+      }
+    };
+
+    JavaSdkImpl.addClasses(jdkHomeFile, sdkModificator, isJre);
+    JavaSdkImpl.addSources(jdkHomeFile, sdkModificator);
+    JavaSdkImpl.attachJdkAnnotations(sdkModificator);
+
+    return new MockSdk(name, homePath, name, roots, javaSdk);
   }
 
   public static @NotNull Sdk getMockJdk14() {
