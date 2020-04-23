@@ -7,14 +7,12 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -86,8 +84,6 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
       return;
     }
 
-    TextAttributes selectionAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-
     releaseAll();
 
     if (toSelectLine){
@@ -97,14 +93,16 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
         mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(doc.getLineStartOffset(lineNumber),
                                                                            doc.getLineEndOffset(lineNumber) + doc.getLineSeparatorLength(lineNumber),
                                                                            HighlighterLayer.LAST + 1,
-                                                                           selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                           null, EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                           HighlighterTargetArea.EXACT_RANGE);
       }
     }
     else{
       mySegmentHighlighter = editor.getMarkupModel().addRangeHighlighter(startOffset,
                                                                          endOffset,
                                                                          HighlighterLayer.LAST + 1,
-                                                                         selectionAttributes, HighlighterTargetArea.EXACT_RANGE);
+                                                                         null, EditorColors.SEARCH_RESULT_ATTRIBUTES,
+                                                                         HighlighterTargetArea.EXACT_RANGE);
     }
     myEditor = editor;
     myEditor.getContentComponent().addFocusListener(this);

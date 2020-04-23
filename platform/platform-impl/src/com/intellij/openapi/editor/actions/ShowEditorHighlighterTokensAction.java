@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -109,8 +108,9 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
 
         HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(0);
         while (!it.atEnd()) {
-          RangeHighlighter h = editor.getMarkupModel().addRangeHighlighter(it.getStart(), it.getEnd(),
-                                                                           0, Holder.OUR_TEXT_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE);
+          RangeHighlighter h = editor.getMarkupModel().addRangeHighlighter(it.getStart(), it.getEnd(), 0,
+                                                                           Holder.OUR_TEXT_ATTRIBUTES, null,
+                                                                           HighlighterTargetArea.EXACT_RANGE);
           IElementType tokenType = it.getTokenType();
           h.putUserData(Holder.TOKEN_NAME, String.valueOf(tokenType));
           it.advance();

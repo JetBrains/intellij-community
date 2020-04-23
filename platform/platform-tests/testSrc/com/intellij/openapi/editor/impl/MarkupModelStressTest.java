@@ -82,8 +82,8 @@ public class MarkupModelStressTest extends AbstractEditorTest {
       int bound = getEditor().getDocument().getTextLength() + 1;
       int offset1 = myRandom.nextInt(bound);
       int offset2 = myRandom.nextInt(bound);
-      getEditor().getMarkupModel()
-        .addRangeHighlighter(Math.min(offset1, offset2), Math.max(offset1, offset2), 0, null, HighlighterTargetArea.EXACT_RANGE);
+      getEditor().getMarkupModel().addRangeHighlighter(Math.min(offset1, offset2), Math.max(offset1, offset2), 0,
+                                                       null, null, HighlighterTargetArea.EXACT_RANGE);
     }
   }
 

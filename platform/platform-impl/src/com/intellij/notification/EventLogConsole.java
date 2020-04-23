@@ -267,10 +267,9 @@ final class EventLogConsole {
     int msgStart = document.getTextLength();
     append(document, pair.message);
 
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
     int layer = HighlighterLayer.CARET_ROW + 1;
     RangeHighlighter highlighter = editor.getMarkupModel()
-      .addRangeHighlighter(msgStart, document.getTextLength(), layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+      .addRangeHighlighter(msgStart, document.getTextLength(), layer, null, key, HighlighterTargetArea.LINES_IN_RANGE);
     GROUP_ID.set(highlighter, notification.getGroupId());
     NOTIFICATION_ID.set(highlighter, notification.id);
 

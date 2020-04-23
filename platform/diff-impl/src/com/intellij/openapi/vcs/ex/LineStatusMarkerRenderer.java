@@ -58,8 +58,8 @@ public abstract class LineStatusMarkerRenderer {
 
     Document document = myTracker.getDocument();
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
-    myHighlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), DiffDrawUtil.LST_LINE_MARKER_LAYER, null,
-                                                    HighlighterTargetArea.LINES_IN_RANGE);
+    myHighlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                    null, null, HighlighterTargetArea.LINES_IN_RANGE);
     myHighlighter.setGreedyToLeft(true);
     myHighlighter.setGreedyToRight(true);
 

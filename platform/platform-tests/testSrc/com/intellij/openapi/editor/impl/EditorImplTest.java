@@ -308,7 +308,7 @@ public class EditorImplTest extends AbstractEditorTest {
     document.addDocumentListener(new DocumentListener() {
       @Override
       public void bulkUpdateFinished(@NotNull Document document) {
-        getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, null, HighlighterTargetArea.EXACT_RANGE);
+        getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
       }
     }, getTestRootDisposable());
     runWriteCommand(() -> DocumentUtil.executeInBulk(document, true, ()-> document.insertString(3, "\n\n")));
@@ -323,7 +323,8 @@ public class EditorImplTest extends AbstractEditorTest {
     addCollapsedFoldRegion(2, 6, "...");
     runFoldingOperation(() -> {
       ((FoldingModelEx)getEditor().getFoldingModel()).clearFoldRegions();
-      getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0, new TextAttributes(null, null, null, null, Font.BOLD),
+      getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0,
+                                                       new TextAttributes(null, null, null, null, Font.BOLD), null,
                                                        HighlighterTargetArea.EXACT_RANGE);
     });
     RangeHighlighter[] highlighters = getEditor().getMarkupModel().getAllHighlighters();

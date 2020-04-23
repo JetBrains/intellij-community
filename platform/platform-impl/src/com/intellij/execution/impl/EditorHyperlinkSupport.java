@@ -238,11 +238,10 @@ public class EditorHyperlinkSupport {
                                            @NotNull final HyperlinkInfo hyperlinkInfo,
                                            @Nullable TextAttributes followedHyperlinkAttributes,
                                            int layer) {
-    TextAttributes textAttributes = highlightAttributes != null ? highlightAttributes : getHyperlinkAttributes();
     final RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(highlightStartOffset,
                                                                                        highlightEndOffset,
                                                                                        layer,
-                                                                                       textAttributes,
+                                                                                       highlightAttributes, CodeInsightColors.HYPERLINK_ATTRIBUTES,
                                                                                        HighlighterTargetArea.EXACT_RANGE);
     associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes);
     return highlighter;
@@ -332,10 +331,6 @@ public class EditorHyperlinkSupport {
                                                   HighlighterTargetArea.EXACT_RANGE);
   }
 
-  private static TextAttributes getHyperlinkAttributes() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-  }
-
   @NotNull
   private static TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
     HyperlinkInfoTextAttributes attrs = HYPERLINK.get(range);
@@ -402,7 +397,7 @@ public class EditorHyperlinkSupport {
       }
     }
     //refresh highlighter text attributes
-    markupModel.addRangeHighlighter(0, 0, link.getLayer(), getHyperlinkAttributes(), HighlighterTargetArea.EXACT_RANGE).dispose();
+    markupModel.addRangeHighlighter(0, 0, link.getLayer(), null, CodeInsightColors.HYPERLINK_ATTRIBUTES, HighlighterTargetArea.EXACT_RANGE).dispose();
   }
 
 

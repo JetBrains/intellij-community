@@ -129,10 +129,14 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     editor.setBorder(JBUI.Borders.empty(0, 4, 6, 0));
 
     if (RecentLocationsAction.getEmptyFileText().equals(editor.getDocument().getText())) {
+      TextAttributes unusedAttributes = colorsScheme.getAttributes(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
+      TextAttributes forcedTextAttributes = unusedAttributes == null
+                                  ? SimpleTextAttributes.GRAYED_ATTRIBUTES.toTextAttributes()
+                                  : null;
       editor.getMarkupModel().addRangeHighlighter(0,
                                                   RecentLocationsAction.getEmptyFileText().length(),
                                                   HighlighterLayer.SYNTAX,
-                                                  createEmptyTextForegroundTextAttributes(colorsScheme),
+                                                  forcedTextAttributes, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES,
                                                   HighlighterTargetArea.EXACT_RANGE);
     }
 
@@ -222,12 +226,6 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     return defaultTextAttributes;
-  }
-
-  @NotNull
-  private static TextAttributes createEmptyTextForegroundTextAttributes(@NotNull EditorColorsScheme colorsScheme) {
-    TextAttributes unusedAttributes = colorsScheme.getAttributes(CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES);
-    return unusedAttributes != null ? unusedAttributes : SimpleTextAttributes.GRAYED_ATTRIBUTES.toTextAttributes();
   }
 
   @Override

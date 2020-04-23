@@ -955,9 +955,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<2; i++) {
-      RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
-      RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, HighlighterTargetArea.EXACT_RANGE);
-      RangeMarker m3 = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+      RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, null,HighlighterTargetArea.EXACT_RANGE);
+      RangeMarker m2 = markupModel.addRangeHighlighter(2, 7, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
+      RangeMarker m3 = markupModel.addRangeHighlighter(1, 6, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
       markupModel.removeAllHighlighters();
       assertFalse(m.isValid());
       assertFalse(m2.isValid());
@@ -1042,7 +1042,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeMarker m = markupModel.addRangeHighlighter(1, 6, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
     assertTrue(m.isValid());
     markupModel.removeAllHighlighters();
     assertFalse(m.isValid());
@@ -1057,9 +1057,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     for (int i=0; i<N-1;i++) {
-      markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, HighlighterTargetArea.EXACT_RANGE);
+      markupModel.addRangeHighlighter(2*i, 2*i+1, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
     }
-    markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, null, HighlighterTargetArea.LINES_IN_RANGE);
 
     PlatformTestUtil.startPerformanceTest("highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
       List<RangeHighlighterEx> list = new ArrayList<>();
@@ -1076,8 +1076,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Document document = EditorFactory.getInstance().createDocument("1234567890");
 
     final MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
-    RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, HighlighterTargetArea.EXACT_RANGE);
-    RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
+    RangeHighlighter exact = markupModel.addRangeHighlighter(3, 6, 0, null, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighter line = markupModel.addRangeHighlighter(4, 5, 0, null, null, HighlighterTargetArea.LINES_IN_RANGE);
     List<RangeHighlighter> list = new ArrayList<>();
     markupModel.processRangeHighlightersOverlappingWith(2, 9, new CommonProcessors.CollectProcessor<>(list));
     assertEquals(Arrays.asList(line, exact), list);
