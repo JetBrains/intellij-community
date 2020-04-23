@@ -142,13 +142,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
 
     context.messages.info('Downloading cache...')
     long start = System.currentTimeMillis()
-    InputStream cacheIS = getClient.doGet("$remoteCacheUrl/caches/$commitHash")
-    try {
-      cacheArchive << cacheIS
-    }
-    finally {
-      cacheIS.close()
-    }
+    getClient.doGet("$remoteCacheUrl/caches/$commitHash", cacheArchive)
     context.messages.info("Cache was downloaded in ${System.currentTimeMillis() - start}ms.")
 
     return cacheArchive
@@ -167,18 +161,12 @@ class CompilationOutputsDownloader implements AutoCloseable {
   }
 
   private File downloadOutput(CompilationOutput compilationOutput) {
-    InputStream outputIS =
-      getClient.doGet("$remoteCacheUrl/${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}")
+    def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
+    FileUtil.createParentDirs(outputArchive)
 
-    try {
-      def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
-      FileUtil.createParentDirs(outputArchive)
-      outputArchive << outputIS
-      return outputArchive
-    }
-    finally {
-      outputIS.close()
-    }
+    getClient.doGet("$remoteCacheUrl/${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}", outputArchive)
+
+    return outputArchive
   }
 
   private List<String> gitLog() {
@@ -222,16 +210,17 @@ class GetClient {
     }, { StreamUtil.closeStream(response) })
   }
 
-  // It's a caller-side responsibility to close the returned stream
-  InputStream doGet(String url) {
-    return getWithRetry(url) { HttpGet request ->
-      CloseableHttpResponse response = httpClient.execute(request)
+  void doGet(String url, File file) {
+    CloseableHttpResponse response = null
+    getWithRetry(url, { HttpGet request ->
+      response = httpClient.execute(request)
       if (response.statusLine.statusCode != HttpStatus.SC_OK) {
         DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
         throwDownloadException(response, downloadException)
       }
-      return response.entity.content
-    }
+      file << response.entity.content
+      return
+    }, { StreamUtil.closeStream(response) })
   }
 
   private static void throwDownloadException(CloseableHttpResponse response, DownloadException downloadException) {
