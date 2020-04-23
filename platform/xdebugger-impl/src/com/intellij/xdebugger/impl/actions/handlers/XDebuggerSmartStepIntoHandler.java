@@ -357,11 +357,11 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       setCurrentVariantHighlighterAttributes(DebuggerColors.SMART_STEP_INTO_SELECTION);
     }
 
-    private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributes) {
+    private void setCurrentVariantHighlighterAttributes(TextAttributesKey attributesKey) {
       int index = myVariants.indexOf(myCurrentVariant);
       if (index != -1) {
         ((RangeHighlighterEx)myHighlighters.get(index))
-          .setTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributes));
+          .setTextAttributesKey(attributesKey);
       }
     }
 
