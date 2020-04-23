@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.psi.tree.TokenSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -15,7 +17,14 @@ import java.util.function.Function;
  * @author vlan
  */
 @Service
-public final class PythonDialectsTokenSetProvider {
+public final class PythonDialectsTokenSetProvider implements Disposable {
+
+  @NotNull
+  private final ConcurrentHashMap<String, TokenSet> myCache = new ConcurrentHashMap<>(7); // number of token types
+
+  public PythonDialectsTokenSetProvider() {
+    PythonDialectsTokenSetContributor.EP_NAME.addExtensionPointListener(() -> myCache.clear(), this);
+  }
 
   @NotNull
   public static PythonDialectsTokenSetProvider getInstance() {
@@ -26,49 +35,58 @@ public final class PythonDialectsTokenSetProvider {
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyStatement}.
    */
   public TokenSet getStatementTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getStatementTokens);
+    return getTokenSet("statement", PythonDialectsTokenSetContributor::getStatementTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyExpression}.
    */
   public TokenSet getExpressionTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getExpressionTokens);
+    return getTokenSet("expression", PythonDialectsTokenSetContributor::getExpressionTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are language keywords.
    */
   public TokenSet getKeywordTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getKeywordTokens);
+    return getTokenSet("keyword", PythonDialectsTokenSetContributor::getKeywordTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyParameter}.
    */
   public TokenSet getParameterTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getParameterTokens);
+    return getTokenSet("parameter", PythonDialectsTokenSetContributor::getParameterTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyFunction}.
    */
   public TokenSet getFunctionDeclarationTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getFunctionDeclarationTokens);
+    return getTokenSet("functionDeclaration", PythonDialectsTokenSetContributor::getFunctionDeclarationTokens);
   }
 
   /**
    * Returns all element types of Python dialects that can be used as unbalanced braces recovery tokens in the lexer.
    */
   public TokenSet getUnbalancedBracesRecoveryTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getUnbalancedBracesRecoveryTokens);
+    return getTokenSet("unbalancedBracesRecovery", PythonDialectsTokenSetContributor::getUnbalancedBracesRecoveryTokens);
   }
 
   /**
    * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyReferenceExpression}.
    */
   public TokenSet getReferenceExpressionTokens() {
-    return orSets(PythonDialectsTokenSetContributor::getReferenceExpressionTokens);
+    return getTokenSet("referenceExpression", PythonDialectsTokenSetContributor::getReferenceExpressionTokens);
+  }
+
+  @Override
+  public void dispose() {
+    myCache.clear();
+  }
+
+  private @NotNull TokenSet getTokenSet(@NotNull String key, @NotNull Function<PythonDialectsTokenSetContributor, TokenSet> getter) {
+    return myCache.computeIfAbsent(key, __ -> orSets(getter));
   }
 
   private static @NotNull TokenSet orSets(@NotNull Function<PythonDialectsTokenSetContributor, TokenSet> getter) {
