@@ -59,7 +59,7 @@ class PortableCompilationCache {
 
   private def compileProject() {
     if (forceRebuild || !downloader.availableForHeadCommit) {
-      context.options.incrementalCompilation = true
+      context.options.incrementalCompilation = !forceRebuild
       CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
     }
     context.options.incrementalCompilation = false
