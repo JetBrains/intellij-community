@@ -317,7 +317,7 @@ class ImmediatePainter {
                                        final TextAttributes attributes,
                                        final List<? extends RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
-      ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
+      ContainerUtil.quickSort(highlighters, IterationState.createByLayerThenByAttributesComparator(editor.getColorsScheme()));
     }
 
     TextAttributes syntax = attributes;
