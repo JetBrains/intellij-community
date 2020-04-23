@@ -20,7 +20,7 @@ public class SnippetsRegistry {
     if (scopeSelector == null) {
       return Collections.emptyList();
     }
-    return new TextMateScopeComparator<TextMateSnippet>(scopeSelector).sortAndFilter(mySnippets.get(key));
+    return new TextMateScopeComparator<>(scopeSelector, TextMateSnippet::getScopeSelector).sortAndFilter(mySnippets.get(key));
   }
 
   @NotNull
@@ -28,7 +28,7 @@ public class SnippetsRegistry {
     if (scopeSelector == null) {
       return Collections.emptyList();
     }
-    return new TextMateScopeComparator<TextMateSnippet>(scopeSelector).sortAndFilter(mySnippets.values());
+    return new TextMateScopeComparator<>(scopeSelector, TextMateSnippet::getScopeSelector).sortAndFilter(mySnippets.values());
   }
 
   public void clear() {

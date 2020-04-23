@@ -84,7 +84,7 @@ public class PreferencesRegistry {
    */
   @NotNull
   public List<Preferences> getPreferences(@NotNull CharSequence scopeSelector) {
-    return new TextMateScopeComparator<Preferences>(scopeSelector).sortAndFilter(myPreferences);
+    return new TextMateScopeComparator<>(scopeSelector, Preferences::getScopeSelector).sortAndFilter(myPreferences);
   }
 
   public void clear() {

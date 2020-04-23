@@ -40,7 +40,7 @@ public class ShellVariablesRegistry {
     if (scopeSelector == null) {
       return null;
     }
-    return new TextMateScopeComparator<TextMateShellVariable>(scopeSelector).max(myVariables.get(name));
+    return new TextMateScopeComparator<>(scopeSelector, TextMateShellVariable::getScopeSelector).max(myVariables.get(name));
   }
 
   public void clear() {

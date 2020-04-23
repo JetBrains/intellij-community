@@ -10,13 +10,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
-import org.jetbrains.plugins.textmate.language.TextMateScopeSelectorOwner;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 public class TextMateHighlighter extends SyntaxHighlighterBase {
   private static final PlainSyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new PlainSyntaxHighlighter();
@@ -40,42 +38,12 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     TextMateService service = TextMateService.getInstance();
     Map<CharSequence, TextMateTextAttributesAdapter> customHighlightingColors = service.getCustomHighlightingColors();
 
-    Set<HighlightingRule> highlightingRules = new HashSet<>();
-    for (CharSequence currentRule : ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules())) {
-      highlightingRules.add(new HighlightingRule(currentRule));
-    }
-
-    return ContainerUtil.map2Array(new TextMateScopeComparator<HighlightingRule>(tokenType.toString()).sortAndFilter(highlightingRules),
-                                   TextAttributesKey.class, rule -> {
-        TextMateTextAttributesAdapter customTextAttributes = customHighlightingColors.get(rule.myName);
-        return customTextAttributes != null ? customTextAttributes.getTextAttributesKey(TextMateTheme.INSTANCE)
-                                            : TextMateTheme.INSTANCE.getTextAttributesKey(rule.myName);
-      });
-  }
-
-  private static class HighlightingRule implements TextMateScopeSelectorOwner {
-    private final CharSequence myName;
-
-    private HighlightingRule(@NotNull CharSequence name) {
-      myName = name;
-    }
-
-    @Override
-    public @NotNull CharSequence getScopeSelector() {
-      return myName;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      HighlightingRule rule = (HighlightingRule)o;
-      return Objects.equals(myName, rule.myName);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myName);
-    }
+    Set<CharSequence> highlightingRules = ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules());
+    return ContainerUtil.map2Array(new TextMateScopeComparator<>(tokenType.toString(), Function.identity())
+                                     .sortAndFilter(highlightingRules), TextAttributesKey.class, rule -> {
+      TextMateTextAttributesAdapter customTextAttributes = customHighlightingColors.get(rule);
+      return customTextAttributes != null ? customTextAttributes.getTextAttributesKey(TextMateTheme.INSTANCE)
+                                          : TextMateTheme.INSTANCE.getTextAttributesKey(rule);
+    });
   }
 }

@@ -12,27 +12,31 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
-public class TextMateScopeComparator<T extends TextMateScopeSelectorOwner> implements Comparator<T> {
+public class TextMateScopeComparator<T> implements Comparator<T> {
   @NotNull
   private static final TextMateSelectorWeigher myWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   @NotNull
   private final CharSequence myScope;
+  private final @NotNull Function<T, CharSequence> myScopeSupplier;
 
-  public TextMateScopeComparator(@NotNull CharSequence scope) {
+  public TextMateScopeComparator(@NotNull CharSequence scope, @NotNull Function<T, CharSequence> scopeSupplier) {
     myScope = scope;
+    myScopeSupplier = scopeSupplier;
   }
 
   @Override
   public int compare(T first, T second) {
-    return myWeigher.weigh(first.getScopeSelector(), myScope).compareTo(myWeigher.weigh(second.getScopeSelector(), myScope));
+    return myWeigher.weigh(myScopeSupplier.apply(first), myScope)
+      .compareTo(myWeigher.weigh(myScopeSupplier.apply(second), myScope));
   }
 
   @NotNull
   public List<T> sortAndFilter(@NotNull Collection<? extends T> objects) {
     return ContainerUtil.reverse(ContainerUtil.sorted(
-      ContainerUtil.filter(objects, (Condition<T>)t -> myWeigher.weigh(t.getScopeSelector(), myScope).weigh > 0), this));
+      ContainerUtil.filter(objects, (Condition<T>)t -> myWeigher.weigh(myScopeSupplier.apply(t), myScope).weigh > 0), this));
   }
 
   @Nullable
@@ -40,7 +44,7 @@ public class TextMateScopeComparator<T extends TextMateScopeSelectorOwner> imple
     TextMateWeigh max = TextMateWeigh.ZERO;
     T result = null;
     for (T object : objects) {
-      TextMateWeigh weigh = myWeigher.weigh(object.getScopeSelector(), myScope);
+      TextMateWeigh weigh = myWeigher.weigh(myScopeSupplier.apply(object), myScope);
       if (weigh.weigh > 0 && weigh.compareTo(max) > 0) {
         max = weigh;
         result = object;
