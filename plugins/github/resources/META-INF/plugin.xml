@@ -159,5 +159,8 @@
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
     </group>
+
+    <action id="Github.Break.Api.Requests" internal="true"
+            class="org.jetbrains.plugins.github.api.GHRequestExecutorBreaker$Action"/>
   </actions>
 </idea-plugin>
