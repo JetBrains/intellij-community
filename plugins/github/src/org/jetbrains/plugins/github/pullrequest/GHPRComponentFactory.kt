@@ -203,7 +203,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsModel = createValueModel(detailsLoadingModel)
 
     val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
-      GHPRDetailsComponent.create(project, dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
+      GHPRDetailsComponent.create(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
     },
                                                     disposable,
                                                     GithubBundle.message("cannot.load.details"),

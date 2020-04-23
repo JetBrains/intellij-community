@@ -2,33 +2,31 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRMetadataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.*
+import org.jetbrains.plugins.github.util.CollectionDelta
+import org.jetbrains.plugins.github.util.GithubUIUtil
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class GHPRMetadataPanelFactory(private val project: Project,
-                               private val model: SingleValueModel<GHPullRequest?>,
+class GHPRMetadataPanelFactory(private val model: SingleValueModel<GHPullRequest?>,
                                private val securityService: GHPRSecurityService,
                                private val metadataService: GHPRMetadataService,
                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) {
@@ -55,27 +53,31 @@ class GHPRMetadataPanelFactory(private val project: Project,
   }
 
   private inner class ReviewersListPanelHandle
-    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model, securityService, GithubBundle.message("pull.request.no.reviewers"),
+    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model, securityService,
+                                                             GithubBundle.message("pull.request.no.reviewers"),
                                                              "${GithubBundle.message("pull.request.reviewers")}:") {
+
     override fun extractItems(details: GHPullRequest): List<GHPullRequestRequestedReviewer> =
       details.reviewRequests.mapNotNull { it.requestedReviewer }
 
     override fun getItemComponent(item: GHPullRequestRequestedReviewer) = createUserLabel(item)
 
-    override fun editList() {
-      val details = model.value ?: return
-      val author = model.value?.author as? GHUser ?: return
+    override fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>>? {
+      val author = model.value?.author as? GHUser ?: return null
       val reviewers = details.reviewRequests.mapNotNull { it.requestedReviewer }
-      GithubUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), editButton, { list ->
+      return GithubUIUtil
+        .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
           GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
         }, reviewers, metadataService.potentialReviewers.thenApply { it - author })
-        .handleOnEdt(getAdjustmentHandler("reviewer") { indicator, delta ->
-          metadataService.adjustReviewers(indicator, details, delta)
-        })
     }
+
+    override fun adjust(indicator: ProgressIndicator,
+                        pullRequestId: GHPRIdentifier,
+                        delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
+      metadataService.adjustReviewers(indicator, pullRequestId, delta)
   }
+
 
   private inner class AssigneesListPanelHandle
     : LabeledListPanelHandle<GHUser>(model, securityService, GithubBundle.message("pull.request.unassigned"),
@@ -85,17 +87,14 @@ class GHPRMetadataPanelFactory(private val project: Project,
 
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
-    override fun editList() {
-      val details = model.value ?: return
-      GithubUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.assignees"), editButton, { list ->
-          val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
-          GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-        }, details.assignees, metadataService.issuesAssignees)
-        .handleOnEdt(getAdjustmentHandler("assignee") { indicator, delta ->
-          metadataService.adjustAssignees(indicator, details, delta)
-        })
-    }
+    override fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>>? = GithubUIUtil
+      .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent, { list ->
+        val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
+        GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
+      }, details.assignees, metadataService.issuesAssignees)
+
+    override fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>) =
+      metadataService.adjustAssignees(indicator, pullRequestId, delta)
   }
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
@@ -112,49 +111,17 @@ class GHPRMetadataPanelFactory(private val project: Project,
 
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
-    override fun editList() {
-      val details = model.value ?: return
-      GithubUIUtil
-        .showChooserPopup(GithubBundle.message("pull.request.labels"), editButton, { GithubUIUtil.SelectionListCellRenderer.Labels() },
-                          details.labels, metadataService.labels)
-        .handleOnEdt(getAdjustmentHandler("label") { indicator, delta ->
-          metadataService.adjustLabels(indicator, details, delta)
-        })
-    }
+    override fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>>? =
+      GithubUIUtil.showChooserPopup(GithubBundle.message("pull.request.labels"), parentComponent,
+                                    { GithubUIUtil.SelectionListCellRenderer.Labels() },
+                                    details.labels, metadataService.labels)
+
+    override fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>) =
+      metadataService.adjustLabels(indicator, pullRequestId, delta)
   }
 
   private fun createLabelLabel(label: GHLabel) = Wrapper(GithubUIUtil.createIssueLabelLabel(label)).apply {
     border = JBUI.Borders.empty(UIUtil.DEFAULT_VGAP + 1, UIUtil.DEFAULT_HGAP / 2, UIUtil.DEFAULT_VGAP + 2, UIUtil.DEFAULT_HGAP / 2)
-  }
-
-  private fun <T> getAdjustmentHandler(@Nls entityName: String,
-                                       adjuster: (ProgressIndicator, CollectionDelta<T>) -> Unit)
-    : (CollectionDelta<T>, Throwable?) -> Unit {
-
-    return handler@{ delta, error ->
-      if (error != null) {
-        if (!GithubAsyncUtil.isCancellation(error))
-          GithubNotifications.showError(project, GithubBundle.message("pull.request.adjustment.failed", StringUtil.pluralize(entityName)),
-                                        error)
-        return@handler
-      }
-      if (delta.isEmpty) {
-        return@handler
-      }
-
-      object : Task.Backgroundable(project, GithubBundle.message("pull.request.adjustment.process.title",
-                                                                 StringUtil.pluralize(entityName).capitalize()),
-                                   true) {
-        override fun run(indicator: ProgressIndicator) {
-          adjuster(indicator, delta)
-        }
-
-        override fun onThrowable(error: Throwable) {
-          GithubNotifications.showError(project, GithubBundle.message("pull.request.adjustment.failed", StringUtil.pluralize(entityName)),
-                                        error)
-        }
-      }.queue()
-    }
   }
 
   companion object {

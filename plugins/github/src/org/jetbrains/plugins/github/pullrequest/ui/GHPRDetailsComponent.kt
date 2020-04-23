@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.ui.PopupHandler
@@ -32,13 +31,11 @@ import javax.swing.JPanel
 
 internal object GHPRDetailsComponent {
 
-  fun create(project: Project,
-             dataContext: GHPRDataContext,
+  fun create(dataContext: GHPRDataContext,
              detailsModel: SingleValueModel<GHPullRequest?>,
              avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
 
-    val metaPanel = createPanel(project, detailsModel,
-                                dataContext.securityService,
+    val metaPanel = createPanel(detailsModel, dataContext.securityService,
                                 dataContext.metadataService,
                                 avatarIconsProviderFactory).apply {
       border = JBUI.Borders.empty(8)
@@ -65,8 +62,7 @@ internal object GHPRDetailsComponent {
     return scrollPane
   }
 
-  private fun createPanel(project: Project,
-                          model: SingleValueModel<GHPullRequest?>,
+  private fun createPanel(model: SingleValueModel<GHPullRequest?>,
                           securityService: GHPRSecurityService,
                           metadataService: GHPRMetadataService,
                           avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
@@ -81,7 +77,7 @@ internal object GHPRDetailsComponent {
       font = font.deriveFont((font.size * 1.1).toFloat())
       foreground = UIUtil.getContextHelpForeground()
     }
-    val metadataPanel = GHPRMetadataPanelFactory(project, model, securityService, metadataService, avatarIconsProviderFactory).create()
+    val metadataPanel = GHPRMetadataPanelFactory(model, securityService, metadataService, avatarIconsProviderFactory).create()
     val timelineLink = LinkLabel<Any>(GithubBundle.message("pull.request.view.conversations.action"), null) { label, _ ->
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@LinkLabel
       ActionUtil.invokeAction(action, label, ActionPlaces.UNKNOWN, null, null)
