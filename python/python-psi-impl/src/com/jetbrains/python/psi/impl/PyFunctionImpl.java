@@ -139,7 +139,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (id == null) {
       ASTNode error = getNode().findChildByType(TokenType.ERROR_ELEMENT);
       if (error != null) {
-        id = error.findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens());
+        id = error.findChildByType(PythonDialectsTokenSetProvider.getInstance().getKeywordTokens());
       }
     }
     return id;

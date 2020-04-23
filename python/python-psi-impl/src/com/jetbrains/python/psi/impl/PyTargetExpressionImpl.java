@@ -477,7 +477,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
   @Override
   public PyExpression getQualifier() {
-    ASTNode qualifier = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    ASTNode qualifier = getNode().findChildByType(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return qualifier != null ? (PyExpression)qualifier.getPsi() : null;
   }
 

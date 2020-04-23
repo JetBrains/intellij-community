@@ -38,7 +38,6 @@ public class PythonParsingTest extends ParsingTestCase {
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
-    PythonDialectsTokenSetProvider.reset();
     getProject().registerService(PyPsiFacade.class, PyPsiFacadeImpl.class);
   }
 

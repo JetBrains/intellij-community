@@ -27,7 +27,7 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
   @Override
   @NotNull
   public PyExpression getTarget() {
-    final PyExpression target = childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    final PyExpression target = childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
     if (target == null) {
       throw new RuntimeException("Target missing in augmented assignment statement");
     }
@@ -37,7 +37,7 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
   @Override
   @Nullable
   public PyExpression getValue() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override

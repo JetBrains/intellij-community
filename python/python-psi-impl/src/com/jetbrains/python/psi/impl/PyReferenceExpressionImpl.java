@@ -93,7 +93,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   @Override
   @Nullable
   public PyExpression getQualifier() {
-    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return (PyExpression)(nodes.length == 1 ? nodes[0].getPsi() : null);
   }
 

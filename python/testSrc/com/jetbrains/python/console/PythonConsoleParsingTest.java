@@ -42,8 +42,6 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     } else {
       myServiceDisposable = null;
     }
-
-    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
