@@ -2,16 +2,17 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType
+import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesProviderImpl
+import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import java.util.concurrent.ExecutorService
 
 class MavenGeneralSettingsWatcher private constructor(
   private val manager: MavenProjectsManager,
   private val watcher: MavenProjectsManagerWatcher,
+  backgroundExecutor: ExecutorService,
   parentDisposable: Disposable
 ) {
 
@@ -42,22 +43,18 @@ class MavenGeneralSettingsWatcher private constructor(
     Disposer.register(parentDisposable, Disposable { generalSettings.removeListener(generalSettingsListener) })
 
     val virtualFileSettingsListener = VirtualFileSettingsListener()
-    val fileManager = VirtualFileManager.getInstance()
-    fileManager.addAsyncFileListener(virtualFileSettingsListener, parentDisposable)
+    AsyncFilesChangesProviderImpl(backgroundExecutor, ::settingsFiles)
+      .subscribeAsAsyncVirtualFilesChangesProvider(false, virtualFileSettingsListener, parentDisposable)
   }
 
-  private inner class VirtualFileSettingsListener : AsyncFileChangeListenerBase() {
+  private inner class VirtualFileSettingsListener : FilesChangesListener {
     private var hasRelevantChanges = false
 
     override fun init() {
       hasRelevantChanges = false
     }
 
-    override fun isRelevant(path: String): Boolean {
-      return path in settingsFiles
-    }
-
-    override fun updateFile(file: VirtualFile, event: VFileEvent) {
+    override fun onFileChange(path: String, modificationStamp: Long, modificationType: ModificationType) {
       hasRelevantChanges = true
     }
 
@@ -73,9 +70,10 @@ class MavenGeneralSettingsWatcher private constructor(
     fun registerGeneralSettingsWatcher(
       manager: MavenProjectsManager,
       watcher: MavenProjectsManagerWatcher,
+      backgroundExecutor: ExecutorService,
       parentDisposable: Disposable
     ) {
-      MavenGeneralSettingsWatcher(manager, watcher, parentDisposable)
+      MavenGeneralSettingsWatcher(manager, watcher, backgroundExecutor, parentDisposable)
     }
   }
 }
