@@ -41,8 +41,7 @@ public class TerminalShellCommandTest extends TestCase {
   }
 
   private static void hasRcConfig(String path, String configName, Map<String, String> envs) {
-    List<String> res = Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path, envs, true));
+    List<String> res = LocalTerminalDirectRunner.getCommand(path, envs, true);
     assertEquals("--rcfile", res.get(1));
     assertTrue(res.get(2).contains(configName));
   }
@@ -53,7 +52,7 @@ public class TerminalShellCommandTest extends TestCase {
   }
 
   private static void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
-    List<String> result = Arrays.asList(LocalTerminalDirectRunner.getCommand(shellPath, envs, shellIntegration));
+    List<String> result = LocalTerminalDirectRunner.getCommand(shellPath, envs, shellIntegration);
     for (String i : item) {
       assertTrue(i + " isn't in " + StringUtil.join(result, " "), result.contains(i));
     }
