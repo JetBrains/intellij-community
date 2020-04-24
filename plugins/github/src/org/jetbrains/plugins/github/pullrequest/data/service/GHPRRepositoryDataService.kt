@@ -14,7 +14,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
-interface GHPRMetadataService : Disposable {
+interface GHPRRepositoryDataService : Disposable {
   val collaboratorsWithPushAccess: CompletableFuture<List<GHUser>>
   val teams: CompletableFuture<List<GHTeam>>
   val potentialReviewers: CompletableFuture<List<GHPullRequestRequestedReviewer>>
@@ -23,16 +23,4 @@ interface GHPRMetadataService : Disposable {
 
   @CalledInAwt
   fun resetData()
-
-  @CalledInAny
-  fun adjustReviewers(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
-    : CompletableFuture<Unit>
-
-  @CalledInAny
-  fun adjustAssignees(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>)
-    : CompletableFuture<Unit>
-
-  @CalledInAny
-  fun adjustLabels(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>)
-    : CompletableFuture<Unit>
 }

@@ -2,8 +2,14 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProgressIndicator
+import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
+import org.jetbrains.plugins.github.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 
 interface GHPRDetailsDataProvider {
@@ -30,4 +36,16 @@ interface GHPRDetailsDataProvider {
 
   @CalledInAwt
   fun addDetailsLoadedListener(disposable: Disposable, listener: () -> Unit)
+
+  @CalledInAwt
+  fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>)
+    : CompletableFuture<Unit>
+
+  @CalledInAwt
+  fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>)
+    : CompletableFuture<Unit>
+
+  @CalledInAwt
+  fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>)
+    : CompletableFuture<Unit>
 }

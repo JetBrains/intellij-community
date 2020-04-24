@@ -24,7 +24,7 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
                                val listLoader: GHPRListLoader,
                                val dataLoader: GHPRDataLoader,
                                val securityService: GHPRSecurityService,
-                               val metadataService: GHPRMetadataService,
+                               val repositoryDataService: GHPRRepositoryDataService,
                                val stateService: GHPRStateService,
                                val reviewService: GHPRReviewService,
                                val commentService: GHPRCommentService) : Disposable {
@@ -33,7 +33,7 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
     Disposer.dispose(messageBus)
     Disposer.dispose(dataLoader)
     Disposer.dispose(listLoader)
-    Disposer.dispose(metadataService)
+    Disposer.dispose(repositoryDataService)
   }
 
   companion object {

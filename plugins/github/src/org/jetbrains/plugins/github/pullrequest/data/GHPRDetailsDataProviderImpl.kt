@@ -2,10 +2,15 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.EventDispatcher
+import org.jetbrains.plugins.github.api.data.GHLabel
+import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.*
@@ -33,6 +38,16 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
   override fun loadDetails(): CompletableFuture<GHPullRequest> = detailsRequestValue.value
 
   override fun reloadDetails() = detailsRequestValue.drop()
+
+  override fun adjustReviewers(indicator: ProgressIndicator,
+                               delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
+    detailsService.adjustReviewers(indicator, pullRequestId, delta)
+
+  override fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
+    detailsService.adjustAssignees(indicator, pullRequestId, delta)
+
+  override fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
+    detailsService.adjustLabels(indicator, pullRequestId, delta)
 
   override fun addDetailsReloadListener(disposable: Disposable, listener: () -> Unit) =
     detailsRequestValue.addDropEventListener(disposable, listener)

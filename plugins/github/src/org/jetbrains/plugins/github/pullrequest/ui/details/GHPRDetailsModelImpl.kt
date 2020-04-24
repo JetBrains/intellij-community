@@ -9,7 +9,8 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRMetadataService
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDetailsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
@@ -18,9 +19,10 @@ import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import java.util.concurrent.CompletableFuture
 
-class GHPRDetailsModelImpl(securityService: GHPRSecurityService,
-                           loadingModel: GHSimpleLoadingModel<GHPullRequest>,
-                           private val metadataService: GHPRMetadataService) : GHPRDetailsModel {
+class GHPRDetailsModelImpl(loadingModel: GHSimpleLoadingModel<GHPullRequest>,
+                           securityService: GHPRSecurityService,
+                           private val repositoryDataService: GHPRRepositoryDataService,
+                           private val detailsDataProvider: GHPRDetailsDataProvider) : GHPRDetailsModel {
 
   private val detailsChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
@@ -70,23 +72,23 @@ class GHPRDetailsModelImpl(securityService: GHPRSecurityService,
 
   override fun loadPotentialReviewers(): CompletableFuture<List<GHPullRequestRequestedReviewer>> {
     val author = details.author as? GHUser
-    return metadataService.potentialReviewers.thenApply { reviewers ->
+    return repositoryDataService.potentialReviewers.thenApply { reviewers ->
       reviewers.mapNotNull { if (it == author) null else it }
     }
   }
 
   override fun adjustReviewers(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
-    metadataService.adjustReviewers(indicator, details, delta)
+    detailsDataProvider.adjustReviewers(indicator, delta)
 
-  override fun loadPotentialAssignees() = metadataService.issuesAssignees
+  override fun loadPotentialAssignees() = repositoryDataService.issuesAssignees
 
   override fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
-    metadataService.adjustAssignees(indicator, details, delta)
+    detailsDataProvider.adjustAssignees(indicator, delta)
 
-  override fun loadAssignableLabels() = metadataService.labels
+  override fun loadAssignableLabels() = repositoryDataService.labels
 
   override fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
-    metadataService.adjustLabels(indicator, details, delta)
+    detailsDataProvider.adjustLabels(indicator, delta)
 
   override fun addAndInvokeDetailsChangedListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(detailsChangeEventDispatcher, listener)

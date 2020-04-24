@@ -119,7 +119,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
                                                   repoWithPermissions)
-    val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
+    val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
     val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus, securityService,
                                             requestExecutor, account.server, repoWithPermissions.path)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
@@ -179,12 +179,12 @@ internal class GHPRDataContextRepository(private val project: Project) {
         }
       }
     })
-    val metadataService = GHPRMetadataServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, account.server,
-                                                  repoWithPermissions.path, repoOwner)
+    val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor, account.server,
+                                                        repoWithPermissions.path, repoOwner)
 
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
                            requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
-                           metadataService, stateService, reviewService, commentService)
+                           repoDataService, stateService, reviewService, commentService)
   }
 
   companion object {

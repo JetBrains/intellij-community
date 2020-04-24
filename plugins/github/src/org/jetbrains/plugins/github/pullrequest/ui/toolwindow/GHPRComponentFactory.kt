@@ -29,11 +29,12 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDetailsDataProvider
-import org.jetbrains.plugins.github.pullrequest.ui.*
+import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
+import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubUIUtil
@@ -162,7 +163,10 @@ internal class GHPRComponentFactory(private val project: Project) {
     val dataProvider = actionDataContext.pullRequestDataProvider
 
     val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
-      val detailsModel = GHPRDetailsModelImpl(dataContext.securityService, detailsLoadingModel, dataContext.metadataService)
+      val detailsModel = GHPRDetailsModelImpl(detailsLoadingModel,
+                                              dataContext.securityService,
+                                              dataContext.repositoryDataService,
+                                              dataProvider.detailsData)
       GHPRDetailsComponent.create(detailsModel, actionDataContext.avatarIconsProviderFactory)
     },
                                                     disposable,

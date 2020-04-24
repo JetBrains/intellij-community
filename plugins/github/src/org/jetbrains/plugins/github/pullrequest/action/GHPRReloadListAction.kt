@@ -21,7 +21,7 @@ class GHPRReloadListAction
   override fun actionPerformed(e: AnActionEvent) {
     e.getRequiredData(GHPRActionKeys.DATA_CONTEXT).apply {
       listLoader.reset()
-      metadataService.resetData()
+      repositoryDataService.resetData()
     }
   }
 }
