@@ -10,7 +10,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -196,14 +195,14 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     tempVDir.refresh(false, true);
     assertEquals(2, tempVDir.getChildren().length);
 
-    File tempDir1 = IoTestUtil.createTestDir(tempDir, "sub1");
+    File tempDir1 = createTestDir(tempDir, "sub1");
     VirtualFile tempVDir1 = lfs.refreshAndFindFileByIoFile(tempDir1);
     assertNotNull(tempVDir1);
     FileUtil.writeToFile(new File(tempDir1, "file.txt"), "hello");
     tempVDir1.refresh(false, false);
     assertEquals(1, tempVDir1.getChildren().length);
 
-    File tempDir2 = IoTestUtil.createTestDir(tempDir, "sub2");
+    File tempDir2 = createTestDir(tempDir, "sub2");
     VirtualFile tempVDir2 = lfs.refreshAndFindFileByIoFile(tempDir2);
     assertNotNull(tempVDir2);
     FileUtil.writeToFile(new File(tempDir2, "file.txt"), "hello");
@@ -253,7 +252,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testUnicodeName() throws IOException {
-    String name = IoTestUtil.getUnicodeName();
+    String name = getUnicodeName();
     assumeTrue(name != null);
     File childFile = tempDir.newFile(name + ".txt");
 
@@ -265,7 +264,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRoot() {
+  public void testFindRoot() throws IOException {
     assertNull(myFS.findFileByPath("wrong_path"));
 
     if (SystemInfo.isWindows) {
@@ -303,7 +302,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     VirtualFile root = myFS.findFileByPath("");
     assertNotNull(root);
 
-    File jarFile = IoTestUtil.createTestJar();
+    File jarFile = createTestJar(tempDir.newFile("test.jar"));
     assertNotNull(myFS.refreshAndFindFileByIoFile(jarFile));
     root = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath() + "!/");
     assertNotNull(root);
@@ -584,9 +583,9 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   public static void doTestPartialRefresh(@NotNull File top) throws IOException {
-    File sub = IoTestUtil.createTestDir(top, "sub");
-    File file1 = IoTestUtil.createTestFile(top, "file1.txt", ".");
-    File file2 = IoTestUtil.createTestFile(sub, "file2.txt", ".");
+    File sub = createTestDir(top, "sub");
+    File file1 = createTestFile(top, "file1.txt", ".");
+    File file2 = createTestFile(sub, "file2.txt", ".");
 
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile topDir = lfs.refreshAndFindFileByIoFile(top);
@@ -626,7 +625,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testSymlinkTargetBlink() throws IOException {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     File target = tempDir.newFolder("target");
     File link = new File(tempDir.getRoot(), "link");
@@ -668,16 +667,16 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   public static void doTestInterruptedRefresh(@NotNull File top) throws IOException {
     for (int i = 1; i <= 3; i++) {
-      File sub = IoTestUtil.createTestDir(top, "sub_" + i);
+      File sub = createTestDir(top, "sub_" + i);
       for (int j = 1; j <= 3; j++) {
-        IoTestUtil.createTestDir(sub, "sub_" + j);
+        createTestDir(sub, "sub_" + j);
       }
     }
     Files.walkFileTree(top.toPath(), new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
         for (int k = 1; k <= 3; k++) {
-          IoTestUtil.createTestFile(dir.toFile(), "file_" + k, ".");
+          createTestFile(dir.toFile(), "file_" + k, ".");
         }
         return FileVisitResult.CONTINUE;
       }
@@ -700,7 +699,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     });
 
     try {
-      files.forEach(f -> IoTestUtil.updateFile(new File(f.getPath()), "+++"));
+      files.forEach(f -> updateFile(new File(f.getPath()), "+++"));
       ((NewVirtualFile)topDir).markDirtyRecursively();
 
       RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);
@@ -759,7 +758,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBrokenSymlinkMove() {
-    IoTestUtil.assumeSymLinkCreationIsSupported();
+    assumeSymLinkCreationIsSupported();
 
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newFolder("src");

@@ -201,17 +201,6 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar() {
-    try {
-      File jarFile = expandWindowsPath(FileUtil.createTempFile("test.", ".jar"));
-      return createTestJar(jarFile);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @NotNull
   public static File createTestJar(File jarFile) {
     return createTestJar(jarFile, JarFile.MANIFEST_NAME, "");
   }
@@ -232,7 +221,7 @@ public class IoTestUtil {
   }
 
   @NotNull
-  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<? extends Pair<String, byte[]>> namesAndContents) {
+  public static File createTestJar(@NotNull File jarFile, @NotNull Collection<Pair<String, byte[]>> namesAndContents) {
     try (ZipOutputStream stream = new ZipOutputStream(new FileOutputStream(jarFile))) {
       for (Pair<String, byte[]> p : namesAndContents) {
         String name = p.first;
