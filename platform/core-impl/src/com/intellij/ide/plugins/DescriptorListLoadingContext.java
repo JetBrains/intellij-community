@@ -131,7 +131,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   public @NotNull String getDefaultVersion() {
     String result = defaultVersion;
     if (result == null) {
-      result = this.result.productBuildNumber.asStringWithoutProductCode();
+      result = this.result.productBuildNumber.get().asStringWithoutProductCode();
       defaultVersion = result;
     }
     return result;

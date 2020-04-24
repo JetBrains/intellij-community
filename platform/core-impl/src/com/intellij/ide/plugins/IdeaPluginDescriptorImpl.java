@@ -371,7 +371,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return true;
     }
 
-    String message = PluginManagerCore.getIncompatibleMessage(context.parentContext.result.productBuildNumber, since, until);
+    String message = PluginManagerCore.getIncompatibleMessage(context.parentContext.result.productBuildNumber.get(), since, until);
     if (message == null) {
       return true;
     }

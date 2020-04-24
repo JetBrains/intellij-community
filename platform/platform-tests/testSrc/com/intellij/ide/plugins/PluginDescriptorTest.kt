@@ -27,18 +27,21 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorListLoadingContext {
-  val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), buildNumber))
+  val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   context.usePluginClassLoader = true
 
   // constant order in tests
-  var paths: List<Path>? = null
-  Files.newDirectoryStream(dir).use { dirStream -> paths = dirStream.sorted() }
+  lateinit var paths: List<Path>
+  Files.newDirectoryStream(dir).use { dirStream ->
+    paths = dirStream.sorted()
+  }
   context.use {
-    for (file in paths!!) {
+    for (file in paths) {
       val descriptor = PluginManagerCore.loadDescriptor(file, false, context) ?: continue
       context.result.add(descriptor, false)
     }

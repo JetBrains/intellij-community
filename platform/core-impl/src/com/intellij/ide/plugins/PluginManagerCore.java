@@ -1094,7 +1094,8 @@ public final class PluginManagerCore {
     throws ExecutionException, InterruptedException {
     Map<URL, String> urlsFromClassPath = new LinkedHashMap<>();
     collectPluginFilesInClassPath(loader, urlsFromClassPath);
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), BuildNumber.currentVersion(), false));
+    BuildNumber buildNumber = BuildNumber.fromString("2042.42");
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, false));
     try (DescriptorLoadingContext loadingContext = new DescriptorLoadingContext(context, true, true, new ClassPathXmlPathResolver(loader))) {
       loadDescriptorsFromClassPath(urlsFromClassPath, loadingContext, null);
     }
@@ -1329,7 +1330,7 @@ public final class PluginManagerCore {
   }
 
   static @NotNull PluginLoadingResult createLoadingResult(@Nullable BuildNumber buildNumber) {
-    return new PluginLoadingResult(getBrokenPluginVersions(), buildNumber == null ? getBuildNumber() : buildNumber);
+    return new PluginLoadingResult(getBrokenPluginVersions(), () -> buildNumber == null ? getBuildNumber() : buildNumber);
   }
 
   private static void mergeOptionalConfigs(@NotNull List<IdeaPluginDescriptorImpl> enabledPlugins,

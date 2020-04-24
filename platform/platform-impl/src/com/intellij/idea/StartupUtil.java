@@ -610,12 +610,9 @@ public final class StartupUtil {
 
   private static void loadSystemLibraries(@NotNull Logger log) {
     Activity activity = StartUpMeasurer.startActivity("system libs loading");
-
     JnaLoader.load(log);
-
     //noinspection ResultOfMethodCallIgnored
     IdeaWin32.isAvailable();
-
     activity.end();
   }
 

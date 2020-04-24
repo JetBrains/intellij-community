@@ -3,7 +3,6 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,8 @@ public abstract class ApplicationInfo {
    * @see org.jetbrains.intellij.build.ApplicationInfoProperties#minorVersionMainPart
    */
   public final String getMinorVersionMainPart() {
-    return ObjectUtils.notNull(StringUtil.substringBefore(getMinorVersion(), "."), getMinorVersion());
+    String value = StringUtil.substringBefore(getMinorVersion(), ".");
+    return value == null ? getMinorVersion() : value;
   }
 
   /**

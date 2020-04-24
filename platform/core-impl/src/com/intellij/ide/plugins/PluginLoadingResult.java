@@ -13,11 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 final class PluginLoadingResult {
   final Map<PluginId, Set<String>> brokenPluginVersions;
-  final @NotNull BuildNumber productBuildNumber;
+  final @NotNull Supplier<BuildNumber> productBuildNumber;
 
   final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = new ConcurrentHashMap<>();
 
@@ -42,11 +43,11 @@ final class PluginLoadingResult {
     return enabledPlugins;
   }
 
-  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber) {
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull Supplier<BuildNumber> productBuildNumber) {
     this(brokenPluginVersions, productBuildNumber, !PlatformUtils.isIntelliJ());
   }
 
-  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber, boolean checkModuleDependencies) {
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull Supplier<BuildNumber> productBuildNumber, boolean checkModuleDependencies) {
     this.brokenPluginVersions = brokenPluginVersions;
     this.productBuildNumber = productBuildNumber;
 
@@ -167,7 +168,7 @@ final class PluginLoadingResult {
   }
 
   private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return PluginManagerCore.getIncompatibleMessage(productBuildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
+    return PluginManagerCore.getIncompatibleMessage(productBuildNumber.get(), descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
   }
 
   @SuppressWarnings("DuplicatedCode")

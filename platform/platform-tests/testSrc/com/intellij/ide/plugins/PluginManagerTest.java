@@ -139,10 +139,15 @@ public class PluginManagerTest {
     IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
     IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
     assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
-    PluginLoadingResult loadingResult = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
+    PluginLoadingResult loadingResult = createPluginLoadingResult(false);
     loadingResult.add(descriptorBundled, false);
     loadingResult.add(descriptorInstalled, false);
     assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
+  }
+
+  private @NotNull static PluginLoadingResult createPluginLoadingResult(boolean checkModuleDependencies) {
+    BuildNumber buildNumber = BuildNumber.fromString("2042.42");
+    return new PluginLoadingResult(Collections.emptyMap(), () -> buildNumber, checkModuleDependencies);
   }
 
   @Test
@@ -152,7 +157,7 @@ public class PluginManagerTest {
     IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
     assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
 
-    PluginLoadingResult resultInReverseOrder = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
+    PluginLoadingResult resultInReverseOrder = createPluginLoadingResult(false);
     resultInReverseOrder.add(descriptorInstalled, false);
     resultInReverseOrder.add(descriptorBundled, false);
     assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
@@ -186,7 +191,7 @@ public class PluginManagerTest {
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, JDOMException {
     Path file = Paths.get(getTestDataPath(), testDataName);
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), true));
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), createPluginLoadingResult(true));
 
     Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
     DescriptorLoadingContext context = new DescriptorLoadingContext(

@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
 import com.intellij.ide.plugins.DynamicPlugins.unloadPlugin
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.write
@@ -13,12 +14,14 @@ import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.Supplier
 import kotlin.math.abs
 
 internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.ourPluginError = null
-  val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), PluginManagerCore.getBuildNumber()))
+  val buildNumber = BuildNumber.fromString("2042.42")
+  val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true,
                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
     PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
