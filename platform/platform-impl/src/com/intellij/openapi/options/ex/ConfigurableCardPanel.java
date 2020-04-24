@@ -20,6 +20,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     });
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
     //for the dynamic configurations we have to update the whole tree
     if (wrapper.getExtensionPoint().dynamic) return;
@@ -142,15 +143,14 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   }
 
   @Override
-  protected void dispose(Configurable configurable) {
+  protected void dispose(Configurable configurable, JComponent component) {
     if (configurable != null) {
       long time = System.currentTimeMillis();
       try {
         configurable.disposeUIResources();
         Disposable disposer = myListeners.remove(configurable);
-        if (disposer != null) {
-          Disposer.dispose(disposer);
-        }
+        if (disposer != null) Disposer.dispose(disposer);
+        autoDispose(configurable, component);
       }
       catch (Exception unexpected) {
         LOG.error("cannot dispose configurable", unexpected);
@@ -159,6 +159,26 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
         warn(configurable, "dispose", time);
       }
     }
+  }
+
+  private static void autoDispose(Configurable configurable, Component component) {
+    UIUtil.uiTraverser(component)
+      .traverse()
+      .filter(Disposable.class)
+      .filter(disposable -> !Disposer.isDisposed(disposable))
+      .forEach(disposable -> {
+        String name = configurable.getDisplayName();
+        String id = ConfigurableVisitor.getId(configurable);
+        LOG.warn("auto-dispose '" + name + "' id=" + id);
+        Disposer.dispose(disposable);
+        if (LOG.isDebugEnabled()) {
+          StringBuilder sb = new StringBuilder("component ").append(disposable.getClass());
+          UIUtil.uiParents((Component)disposable, false).forEach(parent -> {
+            sb.append("\n    in ").append(parent.getClass());
+          });
+          LOG.warn(sb.toString());
+        }
+      });
   }
 
   public static void reset(Configurable configurable) {
@@ -191,9 +211,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   @Override
   public void dispose() {
     super.dispose();
-    for (Disposable value : myListeners.values()) {
-      Disposer.dispose(value);
-    }
+    myListeners.values().forEach(Disposer::dispose);
     myListeners.clear();
   }
 }
