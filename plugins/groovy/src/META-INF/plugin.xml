@@ -649,8 +649,6 @@
     <projectService serviceImplementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.groovy.compiler.GrBuildProcessParametersProvider"/>
 
-    <vetoSPICondition implementation="org.jetbrains.plugins.groovy.dgm.GroovyExtensionVetoSPI"/>
-
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes" externalIdPrefix="gr."/>
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes" externalIdPrefix="Groovy"/>
     <!--Stubs index-->
