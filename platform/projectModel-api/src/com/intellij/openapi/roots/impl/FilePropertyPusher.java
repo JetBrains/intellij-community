@@ -7,7 +7,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +107,10 @@ public interface FilePropertyPusher<T> {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   interface Engine {
+    @SuppressWarnings("unused")
     void pushAll();
+
+    @SuppressWarnings("unused")
     void pushRecursively(@NotNull VirtualFile vile, @NotNull Project project);
   }
 
@@ -118,10 +120,8 @@ public interface FilePropertyPusher<T> {
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   default boolean acceptsFile(@NotNull VirtualFile file) {
-    DeprecatedMethodException.report("Please override FilePropertyPusher#acceptsFile(VirtualFile, Project)");
     return false;
   }
-
 
   /**
    * @deprecated use {@link #initExtra(Project)}
@@ -129,7 +129,6 @@ public interface FilePropertyPusher<T> {
   @Deprecated
   @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
   default void initExtra(@NotNull Project project, @NotNull MessageBus bus) {
-    DeprecatedMethodException.report("Please override FilePropertyPusher#initExtra(Project)");
   }
 
   //</editor-fold>
