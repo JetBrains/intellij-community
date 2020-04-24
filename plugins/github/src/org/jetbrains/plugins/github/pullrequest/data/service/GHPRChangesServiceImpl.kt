@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -16,12 +17,14 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProviderImpl
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.joinCancellable
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.submitIOTask
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 
 class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
                              private val git: Git,
@@ -84,5 +87,19 @@ class GHPRChangesServiceImpl(private val progressManager: ProgressManager,
 
   companion object {
     private val LOG = logger<GHPRChangesService>()
+
+    @Throws(ProcessCanceledException::class)
+    private fun <T> CompletableFuture<T>.joinCancellable(): T {
+      try {
+        return join()
+      }
+      catch (e: CancellationException) {
+        throw ProcessCanceledException(e)
+      }
+      catch (e: CompletionException) {
+        if (GithubAsyncUtil.isCancellation(e)) throw ProcessCanceledException(e)
+        throw GithubAsyncUtil.extractError(e)
+      }
+    }
   }
 }
