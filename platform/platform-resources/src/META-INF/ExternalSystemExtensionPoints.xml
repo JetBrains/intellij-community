@@ -31,9 +31,11 @@
     <extensionPoint qualifiedName="com.intellij.externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemNotificationExtension"
-                    interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"/>
+                    interface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemKeymapProvider"
-                    interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider"/>
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension$ActionsProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemTaskNotificationListener"
                     interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"
                     dynamic="true"/>
