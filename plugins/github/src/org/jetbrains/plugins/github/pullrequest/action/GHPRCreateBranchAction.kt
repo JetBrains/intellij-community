@@ -44,7 +44,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
+          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsData.loadDetails()).headRefOid
           GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.create.task.indicator")
@@ -67,7 +67,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
         private val vcsNotifier = project.service<VcsNotifier>()
 
         override fun run(indicator: ProgressIndicator) {
-          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsRequest).headRefOid
+          val sha = GithubAsyncUtil.awaitFuture(indicator, dataProvider.detailsData.loadDetails()).headRefOid
           GithubAsyncUtil.awaitFuture(indicator, dataProvider.headBranchFetchRequest)
 
           indicator.text = GithubBundle.message("pull.request.branch.checkout.task.indicator")

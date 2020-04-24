@@ -19,6 +19,6 @@ class GHPRReloadDetailsAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider?.reloadDetails()
+    e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider.detailsData.reloadDetails()
   }
 }

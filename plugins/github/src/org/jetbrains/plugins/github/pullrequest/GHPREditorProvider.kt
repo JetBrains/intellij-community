@@ -39,7 +39,10 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
-import org.jetbrains.plugins.github.pullrequest.data.*
+import org.jetbrains.plugins.github.pullrequest.data.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
@@ -73,20 +76,16 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val dataProvider = dataContext.dataLoader.getDataProvider(pullRequest, disposable)
 
-    val detailsModel = SingleValueModel(pullRequest)
+    val detailsModel = SingleValueModel(dataProvider.detailsData.loadedDetails ?: pullRequest)
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
-    fun handleDetails() {
-      dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
+    dataProvider.detailsData.loadDetails(disposable) {
+      it.handleOnEdt(disposable) { pr, _ ->
         if (pr != null) detailsModel.value = pr
       }
     }
-    dataProvider.addRequestsChangesListener(disposable, object : GHPRDataProvider.RequestsChangedListener {
-      override fun detailsRequestChanged() = handleDetails()
-    })
-    handleDetails()
 
     val avatarIconsProviderFactory = CachingGithubAvatarIconsProvider.Factory(CachingGithubUserAvatarLoader.getInstance(),
                                                                               GithubImageResizer.getInstance(),

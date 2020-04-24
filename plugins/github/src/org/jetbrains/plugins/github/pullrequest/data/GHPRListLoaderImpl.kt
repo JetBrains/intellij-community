@@ -88,15 +88,9 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     loadMore()
   }
 
-  override fun reloadData(request: CompletableFuture<out GHPullRequestShort>) {
-    request.handleOnEdt(resetDisposable) { result, error ->
-      if (error == null && result != null) updateData(result)
-    }
-  }
-
   override fun findData(id: GHPRIdentifier) = listModel.items.find { it == id }
 
-  private fun updateData(pullRequest: GHPullRequestShort) {
+  override fun updateData(pullRequest: GHPullRequestShort) {
     val index = listModel.items.indexOfFirst { it.id == pullRequest.id }
     listModel.setElementAt(pullRequest, index)
   }

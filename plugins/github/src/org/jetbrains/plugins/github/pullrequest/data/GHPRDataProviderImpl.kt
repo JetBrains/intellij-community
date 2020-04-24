@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -18,10 +17,8 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
-import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.backgroundProcessValue
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProviderUtil.joinCancellable
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -38,6 +35,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
                                     private val gitRemote: GitRemoteUrlCoordinates,
                                     private val repository: GHRepositoryCoordinates,
                                     override val id: GHPRIdentifier,
+                                    override val detailsData: GHPRDetailsDataProvider,
                                     override val commentsData: GHPRCommentsDataProvider,
                                     override val reviewData: GHPRReviewDataProvider)
   : GHPRDataProvider {
@@ -48,33 +46,29 @@ internal class GHPRDataProviderImpl(private val project: Project,
   private var lastKnownBaseSha: String? = null
   private var lastKnownHeadSha: String? = null
 
-  private val detailsRequestValue: LazyCancellableBackgroundProcessValue<GHPullRequest> =
-    LazyCancellableBackgroundProcessValue.create(progressManager) {
-      val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, id.number))
-                    ?: throw GHNotFoundException("Pull request $id.number does not exist")
-      invokeAndWaitIfNeeded {
-
-        var baseBranchChanged = false
-        lastKnownBaseBranch?.run { if (this != details.baseRefName) baseBranchChanged = true }
-        lastKnownBaseBranch = details.baseRefName
-        if (baseBranchChanged) {
-          baseBranchProtectionRulesRequestValue.drop()
-          reloadMergeabilityState()
-        }
-
-        var hashesChanged = false
-        lastKnownBaseSha?.run { if (this != details.baseRefOid) hashesChanged = true }
-        lastKnownBaseSha = details.baseRefOid
-        lastKnownHeadSha?.run { if (this != details.headRefOid) hashesChanged = true }
-        lastKnownHeadSha = details.headRefOid
-        if (hashesChanged) {
-          reloadChanges()
-          reloadMergeabilityState()
-        }
+  init {
+    detailsData.addDetailsLoadedListener(this) {
+      val details = detailsData.loadedDetails ?: return@addDetailsLoadedListener
+      var baseBranchChanged = false
+      lastKnownBaseBranch?.run { if (this != details.baseRefName) baseBranchChanged = true }
+      lastKnownBaseBranch = details.baseRefName
+      if (baseBranchChanged) {
+        baseBranchProtectionRulesRequestValue.drop()
+        reloadMergeabilityState()
       }
-      details
+
+      var hashesChanged = false
+      lastKnownBaseSha?.run { if (this != details.baseRefOid) hashesChanged = true }
+      lastKnownBaseSha = details.baseRefOid
+      lastKnownHeadSha?.run { if (this != details.headRefOid) hashesChanged = true }
+      lastKnownHeadSha = details.headRefOid
+      if (hashesChanged) {
+        reloadChanges()
+        reloadMergeabilityState()
+      }
+
     }
-  override val detailsRequest by backgroundProcessValue(detailsRequestValue)
+  }
 
   private val headBranchFetchRequestValue = LazyCancellableBackgroundProcessValue.create(progressManager) {
     GitFetchSupport.fetchSupport(project)
@@ -83,7 +77,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
   override val headBranchFetchRequest by backgroundProcessValue(headBranchFetchRequestValue)
 
   private val baseBranchFetchRequestValue = LazyCancellableBackgroundProcessValue.create(progressManager) {
-    val details = detailsRequestValue.value.joinCancellable()
+    val details = detailsData.loadDetails().joinCancellable()
     GitFetchSupport.fetchSupport(project)
       .fetch(gitRemote.repository, gitRemote.remote, details.baseRefName).throwExceptionIfFailed()
     if (!git.getObjectType(gitRemote.repository, details.baseRefOid).outputAsJoinedString.equals("commit", true))
@@ -101,7 +95,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
     val baseFetch = baseBranchFetchRequestValue.value
     val headFetch = headBranchFetchRequestValue.value
 
-    val detailsRequest = detailsRequestValue.value
+    val detailsRequest = detailsData.loadDetails()
     val commitsRequest = apiCommitsRequestValue.value
 
     val details = detailsRequest.joinCancellable()
@@ -131,7 +125,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
   private val baseBranchProtectionRulesRequestValue = LazyCancellableBackgroundProcessValue.create(progressManager) {
     if (!securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) return@create null
 
-    val detailsRequest = detailsRequestValue.value
+    val detailsRequest = detailsData.loadDetails()
     val baseBranch = detailsRequest.joinCancellable().baseRefName
     try {
       requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
@@ -142,7 +136,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
     }
   }
   private val mergeabilityStateRequestValue = LazyCancellableBackgroundProcessValue.create(progressManager) {
-    val detailsRequest = detailsRequestValue.value
+    val detailsRequest = detailsData.loadDetails()
     val baseBranchProtectionRulesRequest = baseBranchProtectionRulesRequestValue.value
 
     val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, id.number))
@@ -172,12 +166,6 @@ internal class GHPRDataProviderImpl(private val project: Project,
   override fun acquireTimelineLoader(disposable: Disposable) = timelineLoaderHolder.acquireTimelineLoader(disposable)
 
   @CalledInAwt
-  override fun reloadDetails() {
-    detailsRequestValue.drop()
-    requestsChangesEventDispatcher.multicaster.detailsRequestChanged()
-  }
-
-  @CalledInAwt
   override fun reloadChanges() {
     baseBranchFetchRequestValue.drop()
     headBranchFetchRequestValue.drop()
@@ -201,7 +189,6 @@ internal class GHPRDataProviderImpl(private val project: Project,
     requestsChangesEventDispatcher.removeListener(listener)
 
   override fun dispose() {
-    detailsRequestValue.drop()
     headBranchFetchRequestValue.drop()
     baseBranchFetchRequestValue.drop()
     apiCommitsRequestValue.drop()

@@ -27,6 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -99,7 +100,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                          disposable: Disposable): JComponent {
 
-    val detailsLoadingModel = createDetailsLoadingModel(dataProvider, disposable)
+    val detailsLoadingModel = createDetailsLoadingModel(dataProvider.detailsData, disposable)
 
     val commitsModel = GHPRCommitsModelImpl()
     val cumulativeChangesModel = GHPRChangesModelImpl(project)
@@ -164,7 +165,7 @@ internal class GHPRComponentFactory(private val project: Project) {
                                                     disposable,
                                                     GithubBundle.message("cannot.load.details"),
                                                     GHLoadingErrorHandlerImpl(project, dataContext.account) {
-                                                      dataProvider.reloadDetails()
+                                                      dataProvider.detailsData.reloadDetails()
                                                     }).also {
       ActionManager.getInstance().getAction("Github.PullRequest.Details.Reload").registerCustomShortcutSet(it, disposable)
     }
@@ -248,17 +249,12 @@ internal class GHPRComponentFactory(private val project: Project) {
     return model
   }
 
-  private fun createDetailsLoadingModel(dataProvider: GHPRDataProvider,
+  private fun createDetailsLoadingModel(detailsProvider: GHPRDetailsDataProvider,
                                         parentDisposable: Disposable): GHCompletableFutureLoadingModel<GHPullRequest> {
-    val model = GHCompletableFutureLoadingModel<GHPullRequest>(parentDisposable).apply {
-      future = dataProvider.detailsRequest
+    val model = GHCompletableFutureLoadingModel<GHPullRequest>(parentDisposable)
+    detailsProvider.loadDetails(parentDisposable) {
+      model.future = it
     }
-    dataProvider.addRequestsChangesListener(parentDisposable, object : GHPRDataProvider.RequestsChangedListener {
-      override fun detailsRequestChanged() {
-        model.future = dataProvider.detailsRequest
-      }
-    })
-
     return model
   }
 

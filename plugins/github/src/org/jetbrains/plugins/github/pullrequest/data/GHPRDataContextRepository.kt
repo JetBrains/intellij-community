@@ -118,6 +118,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
                                                   repoWithPermissions)
+    val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
     val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
                                               repositoryCoordinates)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
@@ -129,12 +130,19 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                         searchHolder)
 
     val dataLoader = GHPRDataLoaderImpl { id ->
+      val detailsData = GHPRDetailsDataProviderImpl(detailsService, id).apply {
+        addDetailsLoadedListener(this) {
+          loadedDetails?.let { listLoader.updateData(it) }
+        }
+      }
       val reviewData = GHPRReviewDataProviderImpl(reviewService, id)
       val commentsData = GHPRCommentsDataProviderImpl(commentService, id)
       GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
                            gitRemoteCoordinates, repositoryCoordinates, id,
+                           detailsData,
                            commentsData,
                            reviewData).also {
+        Disposer.register(it, detailsData)
         Disposer.register(it, reviewData)
       }
     }
@@ -142,8 +150,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
       override fun onPullRequestEdited(id: GHPRIdentifier) {
         runInEdt {
           val dataProvider = dataLoader.findDataProvider(id)
-          dataProvider?.reloadDetails()
-          dataProvider?.detailsRequest?.let { listLoader.reloadData(it) }
+          dataProvider?.detailsData?.reloadDetails()
           dataProvider?.timelineLoader?.loadMore(true)
         }
       }
