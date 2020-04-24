@@ -23,7 +23,6 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
-import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -90,7 +89,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        ? ContainerUtil.newHashSet(MyCommitsHighlighter.Factory.ID,
                                                   CurrentBranchHighlighter.Factory.ID)
                        : Collections.singleton(MyCommitsHighlighter.Factory.ID);
-    VcsLogUiUtil.installHighlighters(myProject, this, f -> isHighlighterEnabled(f.getId()));
+    VcsLogUiUtil.installHighlighters(this, f -> isHighlighterEnabled(f.getId()));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, myRoot));
     }

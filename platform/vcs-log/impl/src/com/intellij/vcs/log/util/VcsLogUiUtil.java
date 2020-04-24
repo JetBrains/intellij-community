@@ -184,10 +184,10 @@ public class VcsLogUiUtil {
     return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
   }
 
-  public static void installHighlighters(@NotNull Project project, @NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
-    LOG_HIGHLIGHTER_FACTORY_EP.getPoint(project).addChangeListener(() -> {
+  public static void installHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
+    LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(() -> {
       logUi.getTable().removeAllHighlighters();
-      for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList(project)) {
+      for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
         if (enabled.test(factory)) {
           logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
         }
