@@ -74,22 +74,25 @@ public class _LastInSuiteTest extends TestCase {
     Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensionPointToNonPlatformExtensions = collectDynamicNonPlatformExtensions(app);
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
     assert corePlugin != null;
-    app.invokeAndWait(() -> {
-      // obey contract that used by DynamicPluginManager - reloading of plugin is done in EDT and write action.
-      // one write action for all - as DynamicPluginManager does (plugin unloaded in one write action)
-      app.runWriteAction(() -> {
-        for (ExtensionPointImpl<?> ep : extensionPointToNonPlatformExtensions.keySet()) {
-          ep.reset();
-        }
+    try {
+      // It doesn't matter what plugin to pass here. Main thing here is firing events.
+      fireBeforePluginUnloadEvent(corePlugin);
+      app.invokeAndWait(() -> {
+        // obey contract that used by DynamicPluginManager - reloading of plugin is done in EDT and write action.
+        // one write action for all - as DynamicPluginManager does (plugin unloaded in one write action)
+        app.runWriteAction(() -> {
+          for (ExtensionPointImpl<?> ep : extensionPointToNonPlatformExtensions.keySet()) {
+            ep.reset();
+          }
+        });
       });
-
-      app.getMessageBus().syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(corePlugin, false);
-    });
-
-    for (Project project : ProjectUtil.getOpenProjects()) {
-      ((CachedValuesManagerImpl)CachedValuesManager.getManager(project)).clearCachedValues();
+      for (Project project : ProjectUtil.getOpenProjects()) {
+        ((CachedValuesManagerImpl)CachedValuesManager.getManager(project)).clearCachedValues();
+      }
     }
-    finishCorePluginUnload();
+    finally {
+      firePluginUnloadedEvent(corePlugin);
+    }
 
     GCUtil.tryGcSoftlyReachableObjects();
     System.gc();
@@ -121,17 +124,20 @@ public class _LastInSuiteTest extends TestCase {
     }
   }
 
-  private static @NotNull String escape(String s) {
-    return MapSerializerUtil.escapeStr(s, MapSerializerUtil.STD_ESCAPER);
+  private static void fireBeforePluginUnloadEvent(@NotNull IdeaPluginDescriptor plugin) {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(plugin, false);
+    });
   }
 
-  private static void finishCorePluginUnload() {
-    IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
-    assert corePlugin != null;
+  private static void firePluginUnloadedEvent(@NotNull IdeaPluginDescriptor plugin) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC)
-        .pluginUnloaded(corePlugin, false);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DynamicPluginListener.TOPIC).pluginUnloaded(plugin, false);
     });
+  }
+
+  private static @NotNull String escape(String s) {
+    return MapSerializerUtil.escapeStr(s, MapSerializerUtil.STD_ESCAPER);
   }
 
   private static @NotNull Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> collectDynamicNonPlatformExtensions(@NotNull Application app) {
