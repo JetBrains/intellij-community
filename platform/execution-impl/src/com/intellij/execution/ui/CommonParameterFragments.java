@@ -25,7 +25,9 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
 
   public CommonParameterFragments(@NotNull Project project) {
-    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, new RawCommandLineEditor(),
+    RawCommandLineEditor commandLineEditor = new RawCommandLineEditor();
+    commandLineEditor.getEditorField().getEmptyText().setText(ExecutionBundle.message("run.configuration.program.hint"));
+    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, commandLineEditor,
                                                  100,
                                                  (settings, component) -> component.setText(settings.getProgramParameters()),
                                                  (settings, component) -> settings.setProgramParameters(component.getText()),
