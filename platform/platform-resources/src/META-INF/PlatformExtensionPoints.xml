@@ -320,7 +320,7 @@
     <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" dynamic="true"/>
     <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider" dynamic="true"/>
 
-    <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider"/>
+    <extensionPoint name="sshCredentialProvider" interface="com.intellij.remote.SshCredentialProvider" dynamic="true"/>
 
     <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" dynamic="true" />
     <extensionPoint name="themeProvider" beanClass="com.intellij.ide.ui.UIThemeProvider" dynamic="true"/>
