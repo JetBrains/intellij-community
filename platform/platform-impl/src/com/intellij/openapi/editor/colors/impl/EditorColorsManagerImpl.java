@@ -9,6 +9,8 @@ import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.TempUIThemeBasedLookAndFeelInfo;
@@ -181,6 +183,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
     initScheme();
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        mySchemeManager.reload();
+      }
+
+      @Override
+      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        mySchemeManager.reload();
+      }
+    });
   }
 
   private void initDefaultSchemes() {
