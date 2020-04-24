@@ -1,6 +1,7 @@
 package com.intellij.workspace.api
 
 import com.intellij.workspace.api.pstorage.*
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
 import com.intellij.workspace.api.pstorage.references.*
 import java.io.Serializable
 
@@ -291,7 +292,7 @@ class SourceRootOrderEntity(
 }
 
 class ModifiableSourceRootOrderEntity : PModifiableTypedEntity<SourceRootOrderEntity>() {
-  var orderOfSourceRoots: List<VirtualFileUrl> by EntityDataDelegation()
+  var orderOfSourceRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 
   var contentRootEntity: ContentRootEntity by MutableOneToOneChild.HardRef.NotNull(SourceRootOrderEntity::class, ContentRootEntity::class,
                                                                                    true)

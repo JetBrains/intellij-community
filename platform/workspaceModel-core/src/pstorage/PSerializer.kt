@@ -9,10 +9,7 @@ import com.esotericsoftware.kryo.serializers.DefaultSerializers
 import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
-import com.intellij.util.containers.BidirectionalMap
-import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.MostlySingularMultiMap
-import com.intellij.util.containers.MultiMap
+import com.intellij.util.containers.*
 import com.intellij.workspace.api.*
 import org.objenesis.instantiator.ObjectInstantiator
 import org.objenesis.strategy.StdInstantiatorStrategy
@@ -20,6 +17,7 @@ import pstorage.containers.LinkedBidirectionalMap
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.*
+import java.util.HashMap
 import kotlin.collections.HashSet
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
@@ -73,6 +71,8 @@ class PSerializer(private val virtualFileManager: VirtualFileUrlManager) : Entit
     kryo.register(HashMap::class.java).instantiator = ObjectInstantiator { HashMap<Any, Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
     kryo.register(BidirectionalMap::class.java).instantiator = ObjectInstantiator { BidirectionalMap<Any, Any>() }
+    kryo.register(HashSet::class.java).instantiator = ObjectInstantiator { HashSet<Any>() }
+    kryo.register(BidirectionalMultiMap::class.java).instantiator = ObjectInstantiator { BidirectionalMultiMap<Any, Any>() }
     kryo.register(HashBiMap::class.java).instantiator = ObjectInstantiator { HashBiMap.create<Any, Any>() }
     kryo.register(LinkedBidirectionalMap::class.java).instantiator = ObjectInstantiator { LinkedBidirectionalMap<Any, Any>() }
     kryo.register(HashMultimap::class.java).instantiator = ObjectInstantiator { HashMultimap.create<Any, Any>() }

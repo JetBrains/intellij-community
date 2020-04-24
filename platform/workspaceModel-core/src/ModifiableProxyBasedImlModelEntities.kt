@@ -2,6 +2,9 @@ package com.intellij.workspace.api
 
 import com.intellij.workspace.api.pstorage.EntityDataDelegation
 import com.intellij.workspace.api.pstorage.PModifiableTypedEntity
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlNullableProperty
+import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlProperty
 import com.intellij.workspace.api.pstorage.references.MutableManyToOne
 import com.intellij.workspace.api.pstorage.references.MutableOneToAbstractMany
 import com.intellij.workspace.api.pstorage.references.MutableOneToAbstractOneChild
@@ -24,8 +27,8 @@ fun TypedEntityStorageDiffBuilder.addModuleEntity(name: String, dependencies: Li
 class ModifiableJavaModuleSettingsEntity : PModifiableTypedEntity<JavaModuleSettingsEntity>() {
   var inheritedCompilerOutput: Boolean by EntityDataDelegation()
   var excludeOutput: Boolean by EntityDataDelegation()
-  var compilerOutput: VirtualFileUrl? by EntityDataDelegation()
-  var compilerOutputForTests: VirtualFileUrl? by EntityDataDelegation()
+  var compilerOutput: VirtualFileUrl? by VirtualFileUrlNullableProperty()
+  var compilerOutputForTests: VirtualFileUrl? by VirtualFileUrlNullableProperty()
 
   var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(JavaModuleSettingsEntity::class, ModuleEntity::class, true)
 }
@@ -74,7 +77,7 @@ fun TypedEntityStorageDiffBuilder.addModuleGroupPathEntity(path: List<String>,
 
 class ModifiableSourceRootEntity : PModifiableTypedEntity<SourceRootEntity>() {
   var module: ModuleEntity by MutableManyToOne.HardRef.NotNull(SourceRootEntity::class, ModuleEntity::class)
-  var url: VirtualFileUrl by EntityDataDelegation()
+  var url: VirtualFileUrl by VirtualFileUrlProperty()
   var tests: Boolean by EntityDataDelegation()
   var rootType: String by EntityDataDelegation()
 }
@@ -133,8 +136,8 @@ fun TypedEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot
 }
 
 class ModifiableContentRootEntity : PModifiableTypedEntity<ContentRootEntity>() {
-  var url: VirtualFileUrl by EntityDataDelegation()
-  var excludedUrls: List<VirtualFileUrl> by EntityDataDelegation()
+  var url: VirtualFileUrl by VirtualFileUrlProperty()
+  var excludedUrls: List<VirtualFileUrl> by VirtualFileUrlListProperty()
   var excludedPatterns: List<String> by EntityDataDelegation()
   var module: ModuleEntity by MutableManyToOne.HardRef.NotNull(ContentRootEntity::class, ModuleEntity::class)
 }
@@ -154,7 +157,7 @@ class ModifiableLibraryEntity : PModifiableTypedEntity<LibraryEntity>() {
   var tableId: LibraryTableId by EntityDataDelegation()
   var name: String by EntityDataDelegation()
   var roots: List<LibraryRoot> by EntityDataDelegation()
-  var excludedRoots: List<VirtualFileUrl> by EntityDataDelegation()
+  var excludedRoots: List<VirtualFileUrl> by VirtualFileUrlListProperty()
 }
 
 fun TypedEntityStorageDiffBuilder.addLibraryEntity(name: String, tableId: LibraryTableId, roots: List<LibraryRoot>,
@@ -183,7 +186,7 @@ fun TypedEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: LibraryEnt
 
 class ModifiableSdkEntity : PModifiableTypedEntity<SdkEntity>() {
   var library: LibraryEntity by MutableOneToOneChild.HardRef.NotNull(SdkEntity::class, LibraryEntity::class, true)
-  var homeUrl: VirtualFileUrl by EntityDataDelegation()
+  var homeUrl: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
 fun TypedEntityStorageDiffBuilder.addSdkEntity(library: LibraryEntity,
@@ -234,7 +237,7 @@ class ModifiableArtifactEntity : PModifiableTypedEntity<ArtifactEntity>() {
   var name: String by EntityDataDelegation()
   var artifactType: String by EntityDataDelegation()
   var includeInProjectBuild: Boolean by EntityDataDelegation()
-  var outputUrl: VirtualFileUrl by EntityDataDelegation()
+  var outputUrl: VirtualFileUrl by VirtualFileUrlProperty()
   var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneChild.HardRef(ArtifactEntity::class,
                                                                                            CompositePackagingElementEntity::class)
 }
@@ -336,14 +339,14 @@ fun TypedEntityStorageDiffBuilder.addModuleTestOutputPackagingElementEntity(modu
   ModifiableModuleTestOutputPackagingElementEntity::class.java, source) { this.module = module }
 
 class ModifiableDirectoryCopyPackagingElementEntity : PModifiableTypedEntity<DirectoryCopyPackagingElementEntity>() {
-  var directory: VirtualFileUrl by EntityDataDelegation()
+  var directory: VirtualFileUrl by VirtualFileUrlProperty()
 }
 
 fun TypedEntityStorageDiffBuilder.addDirectoryCopyPackagingElementEntity(directory: VirtualFileUrl, source: EntitySource) = addEntity(
   ModifiableDirectoryCopyPackagingElementEntity::class.java, source) { this.directory = directory }
 
 class ModifiableExtractedDirectoryPackagingElementEntity : PModifiableTypedEntity<ExtractedDirectoryPackagingElementEntity>() {
-  var archive: VirtualFileUrl by EntityDataDelegation()
+  var archive: VirtualFileUrl by VirtualFileUrlProperty()
   var pathInArchive: String by EntityDataDelegation()
 }
 
@@ -355,7 +358,7 @@ fun TypedEntityStorageDiffBuilder.addExtractedDirectoryPackagingElementEntity(ar
 }
 
 class ModifiableFileCopyPackagingElementEntity : PModifiableTypedEntity<FileCopyPackagingElementEntity>() {
-  var file: VirtualFileUrl by EntityDataDelegation()
+  var file: VirtualFileUrl by VirtualFileUrlProperty()
   var renamedOutputFileName: String? by EntityDataDelegation()
 }
 
