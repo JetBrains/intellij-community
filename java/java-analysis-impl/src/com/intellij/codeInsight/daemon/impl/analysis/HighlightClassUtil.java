@@ -73,11 +73,7 @@ public class HighlightClassUtil {
       return null;
     }
 
-    String baseClassName = HighlightUtil.formatClass(aClass, false);
-    String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
-    String messageKey = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant ?
-                 "class.must.implement.method" : "class.must.be.abstract";
-    String message = JavaErrorBundle.message(messageKey, baseClassName, methodName, HighlightUtil.formatClass(superClass, false));
+    final String message = getMustImplementMethodErrorMessage(aClass, implementsFixElement);
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
@@ -92,6 +88,7 @@ public class HighlightClassUtil {
     }
     if (!(aClass instanceof PsiAnonymousClass) &&
         !aClass.isEnum()
+        && aClass.getModifierList() != null
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
       QuickFixAction.registerQuickFixAction(
         errorResult,
@@ -99,6 +96,47 @@ public class HighlightClassUtil {
       );
     }
     return errorResult;
+  }
+
+  /**
+   * The method generates a error message for a class that has an unimplemented abstract method.
+   *
+   * @param aClass the class to generate the error message for
+   * @param implementsFixElement either enum constant that is being analyzed or the same value as aClass
+   * @return the error message that matches
+   */
+  @NotNull
+  private static String getMustImplementMethodErrorMessage(@NotNull final PsiClass aClass,
+                                                           @NotNull final PsiElement implementsFixElement) {
+    final PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
+    assert abstractMethod != null;
+
+    final PsiClass superClass = abstractMethod.getContainingClass();
+    assert superClass != null;
+
+    final String baseClassName = HighlightUtil.formatClass(aClass, false);
+    final String superClassName = HighlightUtil.formatClass(superClass, false);
+    final String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
+
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      final PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
+      final String name = enumConstant.getEnumConstant().getName();
+
+      return JavaErrorBundle.message("enum.constant.must.implement.method",
+                                     name,
+                                     methodName,
+                                     superClassName);
+    }
+    else if (aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant) {
+      return JavaErrorBundle.message("class.must.implement.method",
+                                     baseClassName,
+                                     methodName,
+                                     superClassName);
+    }
+    return JavaErrorBundle.message("class.must.be.abstract",
+                                   baseClassName,
+                                   methodName,
+                                   superClassName);
   }
 
   static HighlightInfo checkClassMustBeAbstract(@NotNull PsiClass aClass, @NotNull TextRange textRange) {
