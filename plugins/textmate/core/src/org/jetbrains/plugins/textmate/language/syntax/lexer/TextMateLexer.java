@@ -102,7 +102,6 @@ public class TextMateLexer {
     String line = StringUtil.endsWithChar(lineCharSequence, '\n') ? lineCharSequence.toString() : lineCharSequence.toString() + "\n";
 
     StringWithId string = new StringWithId(line);
-    final TObjectIntHashMap<List<TextMateLexerState>> localStates = new TObjectIntHashMap<>();
     while (true) {
       final TextMateLexerState lexerState = myStates.peek();
       if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
@@ -116,6 +115,7 @@ public class TextMateLexer {
       }
     }
 
+    final TObjectIntHashMap<List<TextMateLexerState>> localStates = new TObjectIntHashMap<>();
     while (true) {
       TextMateLexerState lastState = myStates.peek();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
@@ -170,8 +170,9 @@ public class TextMateLexer {
       }
 
       // global looping protection
+      ArrayList<TextMateLexerState> currentStateSnapshot = new ArrayList<>(myStates);
       if (lastSuccessState != null) {
-        if (new ArrayList<>(myStates).equals(lastSuccessState)) {
+        if (currentStateSnapshot.equals(lastSuccessState)) {
           lastSuccessStateOccursCount++;
           if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
             addToken(output, line.length() + startLineOffset);
@@ -181,9 +182,9 @@ public class TextMateLexer {
       }
 
       // local looping protection
-      final int currentStateLocalOccurrencesCount = localStates.get(myStates);
+      final int currentStateLocalOccurrencesCount = localStates.get(currentStateSnapshot);
       if (currentStateLocalOccurrencesCount <= MAX_LOOPS_COUNT) {
-        localStates.put(myStates, currentStateLocalOccurrencesCount + 1);
+        localStates.put(currentStateSnapshot, currentStateLocalOccurrencesCount + 1);
       }
       else {
         addToken(output, line.length() + startLineOffset);
