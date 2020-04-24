@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManagerKt;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.SystemProperties;
@@ -67,6 +68,8 @@ public class _LastInSuiteTest extends TestCase {
     if (app == null) {
       return;
     }
+
+    app.invokeAndWait(() -> PlatformTestUtil.cleanupAllProjects());
 
     Map<ExtensionPointImpl<?>, Collection<WeakReference<Object>>> extensionPointToNonPlatformExtensions = collectDynamicNonPlatformExtensions(app);
     IdeaPluginDescriptor corePlugin = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
