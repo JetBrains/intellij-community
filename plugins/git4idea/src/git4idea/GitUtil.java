@@ -977,6 +977,7 @@ public class GitUtil {
     if (startHash != null) {
       Hash currentHash = getHead(repository);
       if (currentHash != null) {
+        RefreshVFsSynchronously.trace(String.format("changes: %s -> %s", startHash.asString(), currentHash.asString()));
         changes = GitChangeUtils.getDiff(repository, startHash.asString(), currentHash.asString(), false);
       }
     }
