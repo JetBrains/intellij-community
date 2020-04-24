@@ -56,7 +56,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     myEDTQueue.offer(runnable);
   }
 
-  public static HighlightingSession getHighlightingSession(@NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
+  private static HighlightingSession getHighlightingSession(@NotNull PsiFile psiFile, @NotNull ProgressIndicator progressIndicator) {
     Map<PsiFile, HighlightingSession> map = ((DaemonProgressIndicator)progressIndicator).getUserData(HIGHLIGHTING_SESSION);
     return map == null ? null : map.get(psiFile);
   }
@@ -68,7 +68,7 @@ public class HighlightingSessionImpl implements HighlightingSession {
     if (session == null) {
       ConcurrentMap<PsiFile, HighlightingSession> map = progressIndicator.getUserData(HIGHLIGHTING_SESSION);
       if (map == null) {
-        map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, new ConcurrentHashMap<PsiFile, HighlightingSession>());
+        map = progressIndicator.putUserDataIfAbsent(HIGHLIGHTING_SESSION, new ConcurrentHashMap<>());
       }
       session = ConcurrencyUtil.cacheOrGet(map, psiFile,
                                            new HighlightingSessionImpl(psiFile, progressIndicator, editorColorsScheme));

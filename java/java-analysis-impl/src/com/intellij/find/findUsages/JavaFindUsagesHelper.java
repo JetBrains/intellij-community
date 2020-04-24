@@ -301,7 +301,7 @@ public class JavaFindUsagesHelper {
         });
         if (methodClass == null) continue;
         boolean equivalent = ReadAction.compute(() -> manager.areElementsEquivalent(methodClass, aClass));
-        if (equivalent){
+        if (equivalent) {
           if (!addElementUsages(method, options, processor)) return false;
         }
         else {
@@ -483,18 +483,18 @@ public class JavaFindUsagesHelper {
   private static boolean addResult(@NotNull PsiElement element,
                                    @NotNull FindUsagesOptions options,
                                    @NotNull Processor<? super UsageInfo> processor) {
-    return !filterUsage(element, options) || processor.process(new UsageInfo(element));
+    return !acceptUsage(element, options) || processor.process(new UsageInfo(element));
   }
 
   private static boolean addResult(@NotNull PsiReference ref, @NotNull FindUsagesOptions options, @NotNull Processor<? super UsageInfo> processor) {
-    if (filterUsage(ref.getElement(), options)){
+    if (acceptUsage(ref.getElement(), options)) {
       TextRange rangeInElement = ref.getRangeInElement();
       return processor.process(new UsageInfo(ref.getElement(), rangeInElement.getStartOffset(), rangeInElement.getEndOffset(), false));
     }
     return true;
   }
 
-  private static boolean filterUsage(@NotNull PsiElement usage, @NotNull FindUsagesOptions options) {
+  private static boolean acceptUsage(@NotNull PsiElement usage, @NotNull FindUsagesOptions options) {
     if (!(usage instanceof PsiJavaCodeReferenceElement)) {
       return true;
     }
