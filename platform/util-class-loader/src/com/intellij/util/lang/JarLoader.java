@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
@@ -44,10 +44,10 @@ class JarLoader extends Loader {
   private volatile String myClassPathManifestAttribute;
   private static final String NULL_STRING = "<null>";
 
-  JarLoader(@NotNull URL url, int index, @NotNull ClassPath configuration) throws IOException {
+  JarLoader(@NotNull URL url, @NotNull File file, int index, @NotNull ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
-    myFilePath = urlToFilePath(url);
+    myFilePath = file.getPath();
     myConfiguration = configuration;
     myUrl = url;
 
@@ -77,16 +77,6 @@ class JarLoader extends Loader {
     loadManifestAttributes();
     String manifestAttribute = myClassPathManifestAttribute;
     return manifestAttribute != NULL_STRING ? manifestAttribute : null;
-  }
-
-  @NotNull
-  private static String urlToFilePath(@NotNull URL url) {
-    try {
-      return new File(url.toURI()).getPath();
-    }
-    catch (Throwable ignore) { // URISyntaxException or IllegalArgumentException
-      return url.getPath();
-    }
   }
 
   @Nullable
