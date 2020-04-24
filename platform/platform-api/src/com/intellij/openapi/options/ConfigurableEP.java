@@ -285,7 +285,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   protected ObjectProducer createProducer() {
     try {
       if (providerClass != null) {
-        return new ProviderProducer(componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(providerClass, pluginDescriptor));
+        return new ProviderProducer(instantiateConfigurableProvider());
       }
       else if (instanceClass != null) {
         return new ClassProducer(componentManager, instanceClass, pluginDescriptor);
@@ -301,6 +301,13 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       LOG.error(new PluginException(error, pluginDescriptor == null ? null : pluginDescriptor.getPluginId()));
     }
     return new ObjectProducer();
+  }
+
+  @Nullable
+  public final ConfigurableProvider instantiateConfigurableProvider() {
+    return providerClass != null
+           ? componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(providerClass, pluginDescriptor)
+           : null;
   }
 
   public final @Nullable Class<?> findClassOrNull(@NotNull String className) {

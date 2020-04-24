@@ -63,6 +63,13 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
               findExtensionPoint(area, it.name).addChangeListener(epListener, this)
             }
           }
+        } else if (ep.providerClass != null) {
+          val provider = ep.instantiateConfigurableProvider() as? WithEpDependencies
+          if (provider != null) {
+            for (it in provider.dependencies) {
+              findExtensionPoint(area, it.name).addChangeListener(epListener, this)
+            }
+          }
         }
       }
     }
@@ -115,6 +122,14 @@ private fun collect(list: MutableList<ConfigurableWrapper>, configurables: Array
       val ep = configurable.extensionPoint
       if (ep.childrenEPName != null || ep.dynamic) {
         list.add(configurable)
+      }
+      else if (configurable.providerClass != null) {
+        val providerClass = ep.findClassOrNull(configurable.providerClass)
+        if (providerClass != null) {
+          if (WithEpDependencies::class.java.isAssignableFrom(providerClass)) {
+            list.add(configurable)
+          }
+        }
       }
     }
     if (configurable !is Configurable.Composite) {
