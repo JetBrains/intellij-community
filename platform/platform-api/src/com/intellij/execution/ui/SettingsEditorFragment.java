@@ -22,6 +22,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   private final String myId;
   private final String myName;
+  private final String myGroup;
   private final C myComponent;
   private final BiConsumer<Settings, C> myReset;
   private final BiConsumer<Settings, C> myApply;
@@ -30,6 +31,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public SettingsEditorFragment(String id,
                                 String name,
+                                String group,
                                 C component,
                                 int commandLinePosition,
                                 BiConsumer<Settings, C> reset,
@@ -37,6 +39,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                 Predicate<Settings> initialVisibility) {
     myId = id;
     myName = name;
+    myGroup = group;
     myComponent = component;
     myReset = reset;
     myApply = apply;
@@ -44,14 +47,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     myInitialVisibility = initialVisibility;
   }
 
-  public SettingsEditorFragment(String id, String name, C component,
+  public SettingsEditorFragment(String id, String name, String group, C component,
                                 BiConsumer<Settings, C> reset, BiConsumer<Settings, C> apply,
                                 Predicate<Settings> initialVisibility)  {
-    this(id, name, component, -1, reset, apply, initialVisibility);
+    this(id, name, group, component, -1, reset, apply, initialVisibility);
   }
 
-  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, Component<? super S> component) {
-    return new SettingsEditorFragment<>(id, name, (JComponent)component,
+  public static <S> SettingsEditorFragment<S, ?> create(String id, String name, String group, Component<? super S> component) {
+    return new SettingsEditorFragment<>(id, name, group, (JComponent)component,
                                         (settings, c) -> component.reset(settings),
                                         (settings, c) -> component.apply(settings),
                                         s -> component.isVisible(s));
@@ -63,6 +66,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public String getName() {
     return myName;
+  }
+
+  public String getGroup() {
+    return myGroup;
   }
 
   public boolean isTag() { return false; }

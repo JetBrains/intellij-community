@@ -24,10 +24,11 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
 
   @Override
   protected Collection<SettingsEditorFragment<ApplicationConfiguration, ?>> createFragments() {
-    List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments =
-      new ArrayList<>(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
-
+    List<SettingsEditorFragment<ApplicationConfiguration, ?>> fragments = new ArrayList<>();
     fragments.add(CommonTags.parallelRun());
+    fragments.add(CommonParameterFragments.createRedirectFragment());
+
+    fragments.addAll(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
 
     JrePathEditor jrePathEditor = new JrePathEditor();
     jrePathEditor.getLabel().setVisible(false);
@@ -36,7 +37,8 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
     LabeledComponent<RawCommandLineEditor> vmParams = LabeledComponent.create(new RawCommandLineEditor(),
                                                                               ExecutionBundle.message("run.configuration.java.vm.parameters.label"));
     vmParams.setLabelLocation(BorderLayout.WEST);
-    fragments.add(new SettingsEditorFragment<>("jrePath", null, jrePathEditor, 5,
+    String group = ExecutionBundle.message("group.java.options");
+    fragments.add(new SettingsEditorFragment<>("jrePath", null, null, jrePathEditor, 5,
                                                (configuration, editor) -> editor
                                                  .setPathOrName(configuration.getAlternativeJrePath(),
                                                                 configuration.isAlternativeJrePathEnabled()),
@@ -45,18 +47,17 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
                                                  configuration.setAlternativeJrePathEnabled(editor.isAlternativeJreSelected());
                                                },
                                                configuration -> true));
-    fragments.add(new SettingsEditorFragment<>("mainClass", null, (EditorTextField)ClassEditorField.createClassField(myProject), 10,
+    fragments.add(new SettingsEditorFragment<>("mainClass", null, null, (EditorTextField)ClassEditorField.createClassField(myProject), 10,
                                                (configuration, component) -> component.setText(configuration.getMainClassName()),
                                                (configuration, component) -> configuration.setMainClassName(component.getText()),
                                                configuration -> true));
-    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), vmParams,
+    fragments.add(new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmParams,
                                                (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
                                                (configuration, component) -> configuration.setVMParameters(component.getComponent().getText()),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
-    fragments.add(new TagFragment<>("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"),
+    fragments.add(new TagFragment<>("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
                                     configuration -> configuration.isSwingInspectorEnabled(),
                                     (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
-    fragments.add(CommonParameterFragments.createRedirectFragment());
     return fragments;
   }
 

@@ -3,10 +3,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -18,8 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Actions.FindAndShowNextMatches;
@@ -121,10 +118,18 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
       private void showOptions() {
         List<SettingsEditorFragment<Settings, ?>> fragments =
           ContainerUtil.filter(myFragments.getValue(), fragment -> fragment.getName() != null);
-        List<ToggleFragmentAction> actions = ContainerUtil.map(fragments, fragment -> new ToggleFragmentAction(fragment));
+        DefaultActionGroup actionGroup = new DefaultActionGroup();
+        String group = null;
+        for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+          if (!Objects.equals(group, fragment.getGroup())) {
+            group = fragment.getGroup();
+            actionGroup.add(new Separator(group));
+          }
+          actionGroup.add(new ToggleFragmentAction(fragment));
+        }
         DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
         JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.run.options"),
-                                                            new DefaultActionGroup(actions),
+                                                            actionGroup,
                                                             dataContext,
                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).showInBestPositionFor(dataContext);
       }

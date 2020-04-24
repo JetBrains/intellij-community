@@ -25,7 +25,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   private final List<SettingsEditorFragment<Settings, ?>> myFragments = new ArrayList<>();
 
   public CommonParameterFragments(@NotNull Project project) {
-    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, new RawCommandLineEditor(),
+    myFragments.add(new SettingsEditorFragment<>("commandLineParameters", null, null, new RawCommandLineEditor(),
                                                  100,
                                                  (settings, component) -> component.setText(settings.getProgramParameters()),
                                                  (settings, component) -> settings.setProgramParameters(component.getText()),
@@ -40,7 +40,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                                                      ExecutionBundle.message(
                                                                                        "run.configuration.working.directory.label"));
     field.setLabelLocation(BorderLayout.WEST);
-    myFragments.add(new SettingsEditorFragment<>("workingDirectory", null, field,
+    myFragments.add(new SettingsEditorFragment<>("workingDirectory", null, null, field,
                                                  (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
                                                  (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
                                                  settings -> isNotEmpty(settings.getWorkingDirectory())));
@@ -48,7 +48,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
     myFragments.add(SettingsEditorFragment.create("environmentVariables",
-                                                  ExecutionBundle.message("environment.variables.fragment.name"), env));
+                                                  ExecutionBundle.message("environment.variables.fragment.name"), ExecutionBundle.message("group.java.options"), env));
   }
 
   public List<SettingsEditorFragment<Settings, ?>> getFragments() {
@@ -64,7 +64,8 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
     LabeledComponent<TextFieldWithBrowseButton> labeledComponent =
       LabeledComponent.create(inputFile, ExecutionBundle.message("redirect.input.from"));
     labeledComponent.setLabelLocation(BorderLayout.WEST);
-    return new SettingsEditorFragment<>("redirectInput", ExecutionBundle.message("redirect.input.from.name"), labeledComponent,
+    return new SettingsEditorFragment<>("redirectInput", ExecutionBundle.message("redirect.input.from.name"),
+                                        ExecutionBundle.message("group.operating.system"), labeledComponent,
                                         (settings, component) -> component.getComponent().setText(
                                           FileUtil.toSystemDependentName(notNullize(settings.getInputRedirectOptions().getRedirectInputPath()))),
                                         (settings, component) -> {
