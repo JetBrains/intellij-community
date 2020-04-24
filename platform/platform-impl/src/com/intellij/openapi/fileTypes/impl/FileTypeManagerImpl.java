@@ -1250,6 +1250,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       myStandardFileTypes.remove(fileType.getName());
       if (fileType instanceof LanguageFileType) {
         Language.unregisterLanguage(((LanguageFileType) fileType).getLanguage());
+        if ("JavaScript".equals(((LanguageFileType)fileType).getLanguage().getID())) {
+          StdFileTypes.JS = FileTypes.PLAIN_TEXT;
+        }
       }
       fireFileTypesChanged(null, fileType);
     });
