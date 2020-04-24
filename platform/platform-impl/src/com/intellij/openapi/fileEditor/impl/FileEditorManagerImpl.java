@@ -107,7 +107,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   private static final Logger LOG = Logger.getInstance(FileEditorManagerImpl.class);
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
 
-  private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
@@ -752,7 +751,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       // and select the created EditorComposite.
       newProviders = FileEditorProviderManager.getInstance().getProviders(myProject, file);
       if (newProviders.length == 0) {
-        return Pair.createNonNull(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY);
+        return Pair.createNonNull(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
       }
 
       builders = new AsyncFileEditorProvider.Builder[newProviders.length];
@@ -786,7 +785,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
          openFileImpl4Edt(window, file, entry, options, compositeRef, newProviders, builders)));
 
     EditorWithProviderComposite composite = compositeRef.get();
-    return Pair.createNonNull(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
+    return Pair.createNonNull(composite == null ? FileEditor.EMPTY_ARRAY : composite.getEditors(),
                               composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
   }
 
@@ -936,7 +935,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
       if (editorList.isEmpty()) return null;
-      editors = editorList.toArray(new FileEditor[0]);
+      editors = editorList.toArray(FileEditor.EMPTY_ARRAY);
       providers = providerList.toArray(new FileEditorProvider[0]);
     }
     return new EditorWithProviderComposite(file, editors, providers, this);
@@ -1235,7 +1234,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     for (EditorsSplitters splitters : getAllSplitters()) {
       splitters.addSelectedEditorsTo(selectedEditors);
     }
-    return selectedEditors.toArray(EMPTY_EDITOR_ARRAY);
+    return selectedEditors.toArray(FileEditor.EMPTY_ARRAY);
   }
 
   @Override
@@ -1293,7 +1292,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     if (!composites.isEmpty()) {
       return Pair.create(composites.get(0).getEditors(), composites.get(0).getProviders());
     }
-    return Pair.create(EMPTY_EDITOR_ARRAY, EMPTY_PROVIDER_ARRAY);
+    return Pair.create(FileEditor.EMPTY_ARRAY, EMPTY_PROVIDER_ARRAY);
   }
 
   @Override
@@ -1311,7 +1310,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     if (!composites.isEmpty()) {
       return composites.get(0).getEditors();
     }
-    return EMPTY_EDITOR_ARRAY;
+    return FileEditor.EMPTY_ARRAY;
   }
 
   @Override
@@ -1320,7 +1319,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     myOpenedEditors.forEach(composite -> {
       if (composite.getFile().equals(file)) ContainerUtil.addAll(result, composite.myEditors);
     });
-    return result.toArray(new FileEditor[0]);
+    return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -1346,7 +1345,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public FileEditor @NotNull [] getAllEditors() {
     List<FileEditor> result = new ArrayList<>();
     myOpenedEditors.forEach(composite -> ContainerUtil.addAll(result, composite.myEditors));
-    return result.toArray(new FileEditor[0]);
+    return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
 

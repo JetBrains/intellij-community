@@ -29,6 +29,8 @@ public interface FileEditor extends UserDataHolder, Disposable {
    */
   @NonNls String PROP_VALID = "valid";
 
+  FileEditor[] EMPTY_ARRAY = {};
+
   /**
    * @return component which represents editor in the UI.
    * The method should never return {@code null}.

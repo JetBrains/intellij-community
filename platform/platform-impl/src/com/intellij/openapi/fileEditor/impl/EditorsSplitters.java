@@ -367,7 +367,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         editors.add(composite.getSelectedEditor());
       }
     }
-    return editors.toArray(new FileEditor[0]);
+    return editors.toArray(FileEditor.EMPTY_ARRAY);
   }
 
   public void updateFileIcon(@NotNull VirtualFile file) {
