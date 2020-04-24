@@ -22,7 +22,7 @@ public interface CompilerReferenceService extends ProjectComponent {
   RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
 
   static CompilerReferenceService getInstance(@NotNull Project project) {
-    return project.getComponent(CompilerReferenceService.class);
+    return project.getService(CompilerReferenceService.class);
   }
 
   /**
