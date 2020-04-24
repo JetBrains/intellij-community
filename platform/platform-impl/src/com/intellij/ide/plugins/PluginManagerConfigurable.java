@@ -468,7 +468,7 @@ public class PluginManagerConfigurable
           protected List<String> getValues(@NotNull String attribute) {
             switch (attribute) {
               case "/tag:":
-                if (ContainerUtil.isEmpty(myTagsSorted)) {
+                if (ContainerUtil.isEmpty(myTagsSorted)) { // XXX
                   Set<String> allTags = new HashSet<>();
                   for (IdeaPluginDescriptor descriptor : getCustomRepositoryPlugins()) {
                     if (descriptor instanceof PluginNode) {
@@ -492,7 +492,7 @@ public class PluginManagerConfigurable
               case "/sortBy:":
                 return Arrays.asList("downloads", "name", "rating", "updated");
               case "/vendor:":
-                if (ContainerUtil.isEmpty(myVendorsSorted)) {
+                if (ContainerUtil.isEmpty(myVendorsSorted)) { // XXX
                   List<String> customRepositoriesVendors = MyPluginModel.getVendors(getCustomRepositoryPlugins());
                   LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
                   try {
@@ -1524,7 +1524,7 @@ public class PluginManagerConfigurable
         return myCustomRepositoryPluginsList;
       }
     }
-    LOG.error("PluginManagerConfigurable#getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()");
+    LOG.info("PluginManagerConfigurable#getCustomRepoPlugins() has been called before PluginManagerConfigurable#createMarketplaceTab()"); // XXX
     return ContainerUtil.emptyList();
   }
 
