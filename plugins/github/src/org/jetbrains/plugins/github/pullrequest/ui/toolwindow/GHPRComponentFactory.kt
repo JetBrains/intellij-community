@@ -31,6 +31,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.*
 import org.jetbrains.plugins.github.pullrequest.ui.changes.*
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
@@ -159,10 +161,9 @@ internal class GHPRComponentFactory(private val project: Project) {
                                   disposable: Disposable): JComponent {
     val dataProvider = actionDataContext.pullRequestDataProvider
 
-    val detailsModel = createValueModel(detailsLoadingModel)
-
     val detailsLoadingPanel = GHLoadingPanel.create(detailsLoadingModel, {
-      GHPRDetailsComponent.create(dataContext, detailsModel, actionDataContext.avatarIconsProviderFactory)
+      val detailsModel = GHPRDetailsModelImpl(dataContext.securityService, detailsLoadingModel, dataContext.metadataService)
+      GHPRDetailsComponent.create(detailsModel, actionDataContext.avatarIconsProviderFactory)
     },
                                                     disposable,
                                                     GithubBundle.message("cannot.load.details"),
@@ -191,7 +192,7 @@ internal class GHPRComponentFactory(private val project: Project) {
         else when {
           GHPRActionKeys.ACTION_DATA_CONTEXT.`is`(dataId) -> GHPRFixedActionDataContext(dataContext, dataProvider,
                                                                                         actionDataContext.avatarIconsProviderFactory) {
-            detailsModel.value ?: actionDataContext.pullRequestDetails
+            detailsLoadingModel.result ?: actionDataContext.pullRequestDetails
           }
           else -> null
         }
@@ -257,20 +258,6 @@ internal class GHPRComponentFactory(private val project: Project) {
     detailsProvider.loadDetails(parentDisposable) {
       model.future = it
     }
-    return model
-  }
-
-  private fun <T> createValueModel(loadingModel: GHSimpleLoadingModel<T>): SingleValueModel<T?> {
-    val model = SingleValueModel(loadingModel.result)
-    loadingModel.addStateChangeListener(object : GHLoadingModel.StateChangeListener {
-      override fun onLoadingCompleted() {
-        model.value = loadingModel.result
-      }
-
-      override fun onReset() {
-        model.value = loadingModel.result
-      }
-    })
     return model
   }
 }

@@ -16,28 +16,21 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRMetadataService
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDirectionPanel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object GHPRDetailsComponent {
 
-  fun create(dataContext: GHPRDataContext,
-             detailsModel: SingleValueModel<GHPullRequest?>,
+  fun create(detailsModel: GHPRDetailsModel,
              avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
 
-    val metaPanel = createPanel(detailsModel, dataContext.securityService,
-                                dataContext.metadataService,
-                                avatarIconsProviderFactory).apply {
+    val metaPanel = createPanel(detailsModel, avatarIconsProviderFactory).apply {
       border = JBUI.Borders.empty(8)
     }
 
@@ -46,26 +39,17 @@ internal object GHPRDetailsComponent {
       add(metaPanel)
     }
     val actionManager = ActionManager.getInstance()
-    val scrollPane = ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
+
+    return ScrollPaneFactory.createScrollPane(scrollablePanel, true).apply {
       viewport.isOpaque = false
       isOpaque = false
     }.also {
       val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
       PopupHandler.installPopupHandler(it, actionGroup, ActionPlaces.UNKNOWN, actionManager)
     }
-
-    scrollPane.isVisible = detailsModel.value != null
-
-    detailsModel.addValueChangedListener {
-      scrollPane.isVisible = detailsModel.value != null
-    }
-    return scrollPane
   }
 
-  private fun createPanel(model: SingleValueModel<GHPullRequest?>,
-                          securityService: GHPRSecurityService,
-                          metadataService: GHPRMetadataService,
-                          avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
+  private fun createPanel(model: GHPRDetailsModel, avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JComponent {
     val panel = JPanel(VerticalLayout(8)).apply {
       isOpaque = false
     }
@@ -77,7 +61,7 @@ internal object GHPRDetailsComponent {
       font = font.deriveFont((font.size * 1.1).toFloat())
       foreground = UIUtil.getContextHelpForeground()
     }
-    val metadataPanel = GHPRMetadataPanelFactory(model, securityService, metadataService, avatarIconsProviderFactory).create()
+    val metadataPanel = GHPRMetadataPanelFactory(model, avatarIconsProviderFactory).create()
     val timelineLink = LinkLabel<Any>(GithubBundle.message("pull.request.view.conversations.action"), null) { label, _ ->
       val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return@LinkLabel
       ActionUtil.invokeAction(action, label, ActionPlaces.UNKNOWN, null, null)
@@ -96,28 +80,26 @@ internal object GHPRDetailsComponent {
     return panel
   }
 
-  private class Controller(private val model: SingleValueModel<GHPullRequest?>,
+  private class Controller(private val model: GHPRDetailsModel,
                            private val directionPanel: GHPRDirectionPanel,
                            private val title: JBLabel,
                            private val number: JBLabel) {
 
     init {
-      model.addAndInvokeValueChangedListener {
+      model.addAndInvokeDetailsChangedListener {
         update()
       }
     }
 
     private fun update() {
-      val pr = model.value
-      directionPanel.direction = pr?.let { it.headLabel to it.baseRefName }
-      title.icon = when (pr?.state) {
+      directionPanel.direction = model.headBranch to model.baseBranch
+      title.icon = when (model.state) {
         GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
         GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
         GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
-        null -> null
       }
-      title.text = pr?.title
-      number.text = " #${pr?.number}"
+      title.text = model.title
+      number.text = " #${model.number}"
     }
   }
 }

@@ -32,18 +32,6 @@ class GHPullRequest(id: String,
   @JsonIgnore
   val reviewRequests = reviewRequests.nodes
 
-  @get:JsonIgnore
-  val headLabel: String
-    get() {
-      if (headRepository == null) return headRefName
-      if (headRepository.isFork || baseRefName == headRefName) {
-        return headRepository.owner.login + ":" + headRefName
-      }
-      else {
-        return headRefName
-      }
-    }
-
   class Repository(val owner: Owner, val isFork: Boolean)
 
   class Owner(val login: String)

@@ -15,9 +15,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRMetadataService
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.util.concurrent.CompletableFuture
@@ -26,9 +23,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class GHPRMetadataPanelFactory(private val model: SingleValueModel<GHPullRequest?>,
-                               private val securityService: GHPRSecurityService,
-                               private val metadataService: GHPRMetadataService,
+class GHPRMetadataPanelFactory(private val model: GHPRDetailsModel,
                                private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory) {
 
   private val panel = JPanel(null)
@@ -53,48 +48,44 @@ class GHPRMetadataPanelFactory(private val model: SingleValueModel<GHPullRequest
   }
 
   private inner class ReviewersListPanelHandle
-    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model, securityService,
+    : LabeledListPanelHandle<GHPullRequestRequestedReviewer>(model,
                                                              GithubBundle.message("pull.request.no.reviewers"),
                                                              "${GithubBundle.message("pull.request.reviewers")}:") {
 
-    override fun extractItems(details: GHPullRequest): List<GHPullRequestRequestedReviewer> =
-      details.reviewRequests.mapNotNull { it.requestedReviewer }
+    override fun getItems(): List<GHPullRequestRequestedReviewer> = model.reviewers
 
     override fun getItemComponent(item: GHPullRequestRequestedReviewer) = createUserLabel(item)
 
-    override fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>>? {
-      val author = model.value?.author as? GHUser ?: return null
-      val reviewers = details.reviewRequests.mapNotNull { it.requestedReviewer }
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHPullRequestRequestedReviewer>>? {
       return GithubUIUtil
         .showChooserPopup(GithubBundle.message("pull.request.reviewers"), parentComponent, { list ->
           val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
           GithubUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider)
-        }, reviewers, metadataService.potentialReviewers.thenApply { it - author })
+        }, model.reviewers, model.loadPotentialReviewers())
     }
 
-    override fun adjust(indicator: ProgressIndicator,
-                        pullRequestId: GHPRIdentifier,
-                        delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
-      metadataService.adjustReviewers(indicator, pullRequestId, delta)
+    override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHPullRequestRequestedReviewer>) =
+      model.adjustReviewers(indicator, delta)
   }
 
 
   private inner class AssigneesListPanelHandle
-    : LabeledListPanelHandle<GHUser>(model, securityService, GithubBundle.message("pull.request.unassigned"),
+    : LabeledListPanelHandle<GHUser>(model,
+                                     GithubBundle.message("pull.request.unassigned"),
                                      "${GithubBundle.message("pull.request.assignees")}:") {
 
-    override fun extractItems(details: GHPullRequest): List<GHUser> = details.assignees
+    override fun getItems(): List<GHUser> = model.assignees
 
     override fun getItemComponent(item: GHUser) = createUserLabel(item)
 
-    override fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>>? = GithubUIUtil
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHUser>>? = GithubUIUtil
       .showChooserPopup(GithubBundle.message("pull.request.assignees"), parentComponent, { list ->
         val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, list)
         GithubUIUtil.SelectionListCellRenderer.Users(avatarIconsProvider)
-      }, details.assignees, metadataService.issuesAssignees)
+      }, model.assignees, model.loadPotentialAssignees())
 
-    override fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>) =
-      metadataService.adjustAssignees(indicator, pullRequestId, delta)
+    override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>) =
+      model.adjustAssignees(indicator, delta)
   }
 
   private fun createUserLabel(user: GHPullRequestRequestedReviewer) = JLabel(user.shortName,
@@ -104,20 +95,21 @@ class GHPRMetadataPanelFactory(private val model: SingleValueModel<GHPullRequest
   }
 
   private inner class LabelsListPanelHandle
-    : LabeledListPanelHandle<GHLabel>(model, securityService, GithubBundle.message("pull.request.no.labels"),
+    : LabeledListPanelHandle<GHLabel>(model,
+                                      GithubBundle.message("pull.request.no.labels"),
                                       "${GithubBundle.message("pull.request.labels")}:") {
 
-    override fun extractItems(details: GHPullRequest): List<GHLabel>? = details.labels
+    override fun getItems(): List<GHLabel> = model.labels
 
     override fun getItemComponent(item: GHLabel) = createLabelLabel(item)
 
-    override fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>>? =
+    override fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<GHLabel>>? =
       GithubUIUtil.showChooserPopup(GithubBundle.message("pull.request.labels"), parentComponent,
                                     { GithubUIUtil.SelectionListCellRenderer.Labels() },
-                                    details.labels, metadataService.labels)
+                                    model.labels, model.loadAssignableLabels())
 
-    override fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>) =
-      metadataService.adjustLabels(indicator, pullRequestId, delta)
+    override fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>) =
+      model.adjustLabels(indicator, delta)
   }
 
   private fun createLabelLabel(label: GHLabel) = Wrapper(GithubUIUtil.createIssueLabelLabel(label)).apply {

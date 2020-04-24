@@ -5,26 +5,19 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.WrapLayout
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.EDT_EXECUTOR
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.handleOnEdt
-import org.jetbrains.plugins.github.util.submitIOTask
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
@@ -34,8 +27,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.properties.Delegates
 
-internal abstract class LabeledListPanelHandle<T>(private val model: SingleValueModel<GHPullRequest?>,
-                                                  private val securityService: GHPRSecurityService,
+internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetailsModel,
                                                   emptyText: String, notEmptyText: String) {
 
   private var isBusy by Delegates.observable(false) { _, _, _ ->
@@ -91,16 +83,16 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
   }
 
   init {
-    model.addAndInvokeValueChangedListener(::updateList)
+    model.addAndInvokeDetailsChangedListener(::updateList)
     updateControls()
   }
 
   private fun updateList() {
-    list = model.value?.let(::extractItems)
+    list = getItems()
   }
 
   private fun updateControls() {
-    editButton.isVisible = !isBusy && securityService.currentUserCanEditPullRequestsMetadata()
+    editButton.isVisible = !isBusy && model.isMetadataEditingAllowed
     progressLabel.isVisible = isBusy
     errorIcon.isVisible = adjustmentError != null
     //language=html
@@ -114,13 +106,12 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
       isOpaque = false
     }
 
-  abstract fun extractItems(details: GHPullRequest): List<T>?
+  abstract fun getItems(): List<T>?
 
   abstract fun getItemComponent(item: T): JComponent
 
   private fun editList() {
-    val details = model.value ?: return
-    showEditPopup(details, editButton)
+    showEditPopup(editButton)
       ?.thenComposeAsync(Function<CollectionDelta<T>, CompletableFuture<Unit>> { delta ->
         if (delta == null || delta.isEmpty) {
           CompletableFuture.completedFuture(Unit)
@@ -128,7 +119,7 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
         else {
           adjustmentError = null
           isBusy = true
-          adjust(EmptyProgressIndicator(), details, delta)
+          adjust(EmptyProgressIndicator(), delta)
         }
       }, EDT_EXECUTOR)
       ?.handleOnEdt { _, error ->
@@ -138,8 +129,8 @@ internal abstract class LabeledListPanelHandle<T>(private val model: SingleValue
   }
 
   @CalledInAwt
-  abstract fun showEditPopup(details: GHPullRequest, parentComponent: JComponent): CompletableFuture<CollectionDelta<T>>?
+  abstract fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<T>>?
 
   @CalledInAwt
-  abstract fun adjust(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<T>): CompletableFuture<Unit>
+  abstract fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<T>): CompletableFuture<Unit>
 }

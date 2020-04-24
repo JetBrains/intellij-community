@@ -13,7 +13,6 @@ class GHPRSecurityServiceImpl(private val sharedProjectSettings: GithubSharedPro
                               private val currentUserTeams: List<GHTeam>,
                               private val repo: GHRepositoryPermission) : GHPRSecurityService {
   override fun isCurrentUser(user: GithubUser) = user.nodeId == currentUser.id
-  override fun currentUserCanEditPullRequestsMetadata() = currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
 
   override fun currentUserHasPermissionLevel(level: GHRepositoryPermissionLevel) =
     (repo.viewerPermission?.ordinal ?: -1) >= level.ordinal

@@ -15,6 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
@@ -129,12 +130,4 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun addAndInvokeActionErrorChangedListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(actionErrorEventDispatcher, listener)
-
-  companion object {
-    fun <T> observableField(initialValue: T, dispatcher: EventDispatcher<SimpleEventListener>): ObservableProperty<T> {
-      return object : ObservableProperty<T>(initialValue) {
-        override fun afterChange(property: KProperty<*>, oldValue: T, newValue: T) = dispatcher.multicaster.eventOccurred()
-      }
-    }
-  }
 }
