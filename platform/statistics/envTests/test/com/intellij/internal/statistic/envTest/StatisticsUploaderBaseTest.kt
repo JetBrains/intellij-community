@@ -42,8 +42,9 @@ internal abstract class StatisticsUploaderBaseTest : HeavyPlatformTestCase() {
       addSuppressedException(e)
     }
     finally {
+      val disposable = longRunningThreadDisposable
       super.tearDown()
-      Disposer.dispose(longRunningThreadDisposable)
+      Disposer.dispose(disposable)
     }
   }
 }
