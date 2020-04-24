@@ -27,7 +27,7 @@
     <extensionPoint qualifiedName="com.intellij.externalSystem.codeStyleConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.beforeRunTaskImporter"
-                    interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter"/>
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemConfigLocator"
                     interface="com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemNotificationExtension"
