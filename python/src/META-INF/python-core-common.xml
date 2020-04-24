@@ -554,7 +554,9 @@
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyAnnotator" interface="com.jetbrains.python.validation.PyAnnotator" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider" interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
+                    interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager"
                     interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"
@@ -568,9 +570,11 @@
     <extensionPoint qualifiedName="Pythonid.consoleOptionsProvider"
                     interface="com.jetbrains.python.console.PyConsoleOptionsProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
-    <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider" interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider"
+                    interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor"
                     interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"
                     dynamic="true"/>
@@ -586,7 +590,8 @@
     <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager"/>
 
     <extensionPoint qualifiedName="Pythonid.condaSdkCustomizer"
-                    interface="com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer"/>
+                    interface="com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
