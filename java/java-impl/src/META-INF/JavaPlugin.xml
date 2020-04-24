@@ -104,7 +104,7 @@
     <extensionPoint qualifiedName="com.intellij.constructorBodyGenerator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.generation.ConstructorBodyGenerator"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="com.intellij.codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.hierarchy.referenceProcessor" interface="com.intellij.ide.hierarchy.call.CallReferenceProcessor" dynamic="true"/>
