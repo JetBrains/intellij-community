@@ -858,7 +858,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
             return deconame;
           }
-          for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+          for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getIterable()) {
             String name = provider.toKnownDecorator(deconame);
             if (name != null) {
               return name;

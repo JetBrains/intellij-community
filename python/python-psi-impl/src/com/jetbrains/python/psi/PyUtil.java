@@ -958,13 +958,6 @@ public class PyUtil {
     return variables;
   }
 
-  public static class KnownDecoratorProviderHolder {
-    public static final List<PyKnownDecoratorProvider> KNOWN_DECORATOR_PROVIDERS = PyKnownDecoratorProvider.EP_NAME.getExtensionList();
-
-    private KnownDecoratorProviderHolder() {
-    }
-  }
-
   /**
    * If argument is a PsiDirectory, turn it into a PsiFile that points to __init__.py in that directory.
    * If there's no __init__.py there, null is returned, there's no point to resolve to a dir which is not a package.

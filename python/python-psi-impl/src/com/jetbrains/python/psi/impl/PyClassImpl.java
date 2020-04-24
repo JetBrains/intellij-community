@@ -692,7 +692,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
               String decoName = qname.toString();
-              for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+              for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getExtensionList()) {
                 final String knownName = provider.toKnownDecorator(decoName);
                 if (knownName != null) {
                   decoName = knownName;
