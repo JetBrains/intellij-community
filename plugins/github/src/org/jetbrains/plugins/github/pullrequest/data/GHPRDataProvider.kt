@@ -8,7 +8,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-interface GHPRDataProvider : GHPRTimelineLoaderHolder {
+interface GHPRDataProvider : GHPRTimelineLoaderHolder, Disposable {
   val id: GHPRIdentifier
 
   val detailsRequest: CompletableFuture<GHPullRequest>

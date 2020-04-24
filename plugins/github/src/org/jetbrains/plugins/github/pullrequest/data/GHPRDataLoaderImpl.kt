@@ -47,6 +47,7 @@ internal class GHPRDataLoaderImpl(private val dataProviderFactory: (GHPRIdentifi
     }
 
     override fun dispose() {
+      Disposer.dispose(provider)
     }
   }
 }

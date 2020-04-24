@@ -128,10 +128,13 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val listLoader = GHPRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoWithPermissions.path, listModel,
                                         searchHolder)
 
-    val dataLoader = GHPRDataLoaderImpl {
+    val dataLoader = GHPRDataLoaderImpl { id ->
+      val reviewData = GHPRReviewDataProviderImpl(reviewService, id)
       GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
-                           gitRemoteCoordinates, repositoryCoordinates, it,
-                           GHPRReviewDataProviderImpl(reviewService, it))
+                           gitRemoteCoordinates, repositoryCoordinates, id,
+                           reviewData).also {
+        Disposer.register(it, reviewData)
+      }
     }
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(id: GHPRIdentifier) {

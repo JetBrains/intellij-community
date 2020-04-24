@@ -21,7 +21,7 @@ import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, private val pullRequestId: GHPRIdentifier)
-  : GHPRReviewDataProvider {
+  : GHPRReviewDataProvider, Disposable {
 
   private val pendingReviewRequestValue = LazyCancellableBackgroundProcessValue.create {
     reviewService.loadPendingReview(it, pullRequestId)
@@ -170,4 +170,9 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService, p
 
   override fun addPendingReviewListener(disposable: Disposable, listener: () -> Unit) =
     pendingReviewRequestValue.addDropEventListener(disposable, listener)
+
+  override fun dispose() {
+    pendingReviewRequestValue.drop()
+    reviewThreadsRequestValue.drop()
+  }
 }

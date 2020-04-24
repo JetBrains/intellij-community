@@ -6,6 +6,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
@@ -161,6 +162,8 @@ internal class GHPRDataProviderImpl(private val project: Project,
     GHPRTimelineLoader(progressManager, requestExecutor,
                        repository.serverPath, repository.repositoryPath, id.number,
                        timelineModel)
+  }.also {
+    Disposer.register(this, it)
   }
 
   override val timelineLoader get() = timelineLoaderHolder.timelineLoader
@@ -195,4 +198,14 @@ internal class GHPRDataProviderImpl(private val project: Project,
 
   override fun removeRequestsChangesListener(listener: GHPRDataProvider.RequestsChangedListener) =
     requestsChangesEventDispatcher.removeListener(listener)
+
+  override fun dispose() {
+    detailsRequestValue.drop()
+    headBranchFetchRequestValue.drop()
+    baseBranchFetchRequestValue.drop()
+    apiCommitsRequestValue.drop()
+    changesProviderValue.drop()
+    baseBranchProtectionRulesRequestValue.drop()
+    mergeabilityStateRequestValue.drop()
+  }
 }
