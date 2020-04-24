@@ -48,19 +48,19 @@ public class UrlClassLoaderTest {
     UrlClassLoader customCl = UrlClassLoader.build().urls(url).get();
     try (URLClassLoader standardCl = new URLClassLoader(new URL[]{url})) {
       String relativePathToFile = "dir/a.txt";
-      assertNotNull(customCl.getResourceAsStream(relativePathToFile));
+      assertNotNull(customCl.findResource(relativePathToFile));
       assertNotNull(standardCl.findResource(relativePathToFile));
 
       String nonCanonicalPathToFile = "dir/a.txt/../a.txt";
-      assertNotNull(customCl.getResourceAsStream(nonCanonicalPathToFile));
+      assertNotNull(customCl.findResource(nonCanonicalPathToFile));
       assertNotNull(standardCl.findResource(nonCanonicalPathToFile));
 
       String absolutePathToFile = "/dir/a.txt";
-      assertNotNull(customCl.getResourceAsStream(absolutePathToFile));  // non-standard CL behavior
+      assertNotNull(customCl.findResource(absolutePathToFile));  // non-standard CL behavior
       assertNull(standardCl.findResource(absolutePathToFile));
 
       String absoluteNonCanonicalPathToFile = "/dir/a.txt/../a.txt";
-      assertNotNull(customCl.getResourceAsStream(absoluteNonCanonicalPathToFile));  // non-standard CL behavior
+      assertNotNull(customCl.findResource(absoluteNonCanonicalPathToFile));  // non-standard CL behavior
       assertNull(standardCl.findResource(absoluteNonCanonicalPathToFile));
     }
   }
