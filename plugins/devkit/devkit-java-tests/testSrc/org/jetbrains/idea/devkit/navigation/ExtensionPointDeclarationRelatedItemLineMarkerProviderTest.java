@@ -62,6 +62,10 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
     assertSingleEPDeclaration("MyStringProjectEP.java");
   }
 
+  public void testMyStringKeyedLazyInstanceEP() {
+    assertSingleEPDeclaration("MyStringKeyedLazyInstanceEP.java");
+  }
+
   private void assertSingleEPDeclaration(String filePath) {
     PsiFile file = myFixture.configureByFile("plugin.xml");
     String path = file.getVirtualFile().getPath();

@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,10 +52,23 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
   @Nullable
   private static PsiClass resolveExtensionPointClass(PsiField psiField,
                                                      ExtensionPointType epType) {
-    final PsiType typeParameter = PsiUtil.substituteTypeParameter(psiField.getType(),
-                                                                  epType.qualifiedClassName,
-                                                                  0, false);
-    return PsiUtil.resolveClassInClassTypeOnly(typeParameter);
+    final PsiType epNameType = PsiUtil.substituteTypeParameter(psiField.getType(),
+                                                               epType.qualifiedClassName,
+                                                               0, false);
+    if (!(epNameType instanceof PsiClassType)) {
+      return null;
+    }
+    PsiClassType classType = (PsiClassType)epNameType;
+
+    final PsiClass typePsiClass = PsiTypesUtil.getPsiClass(classType);
+    if (classType.getParameterCount() != 1) {
+      return typePsiClass;
+    }
+
+    // ExtensionPointName<KeyedLazyInstance<T>>
+    if (typePsiClass == null || !KeyedLazyInstance.class.getName().equals(typePsiClass.getQualifiedName())) return null;
+    PsiType keyedLazyInstanceType = PsiUtil.substituteTypeParameter(epNameType, typePsiClass, 0, false);
+    return PsiTypesUtil.getPsiClass(keyedLazyInstanceType);
   }
 
   private static String resolveEpName(PsiField psiField) {
