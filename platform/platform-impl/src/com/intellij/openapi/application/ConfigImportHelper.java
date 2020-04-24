@@ -42,6 +42,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
@@ -74,8 +76,6 @@ public final class ConfigImportHelper {
 
   // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil
   public static final String CUSTOM_MARKER_FILE_NAME = "migrate.config";
-
-  private static final long OLD_CONFIG_PERIOD = 1000L * 60 * 60 * 24 * 30 * 6; // 6 months
 
   private ConfigImportHelper() { }
 
@@ -192,9 +192,8 @@ public final class ConfigImportHelper {
   }
 
   private static boolean isConfigOld(@NotNull FileTime time) {
-    long now = System.currentTimeMillis();
-    long then = time.toMillis();
-    return now - then > OLD_CONFIG_PERIOD;
+    Instant deadline = Instant.now().minus(6 * 30, ChronoUnit.DAYS);
+    return time.toInstant().compareTo(deadline) < 0;
   }
 
   private static boolean doesVmOptionFileExist(@NotNull Path configDir) {
