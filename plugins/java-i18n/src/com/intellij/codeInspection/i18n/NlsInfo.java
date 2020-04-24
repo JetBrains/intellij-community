@@ -154,7 +154,10 @@ public abstract class NlsInfo {
    */
   public static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
     NlsInfo info = fromMethodReturn(expression);
-    return info != Unspecified.UNKNOWN ? info : fromArgument(expression);
+    if (info != Unspecified.UNKNOWN) return info;
+    info = fromInitializer(expression);
+    if (info != Unspecified.UNKNOWN) return info;
+    return fromArgument(expression);
   }
 
   public static @NotNull NlsInfo forModifierListOwner(@NotNull PsiModifierListOwner owner) {
@@ -180,6 +183,40 @@ public abstract class NlsInfo {
       return ((Localized)info).getCapitalization();
     }
     return Capitalization.NotSpecified;
+  }
+
+  private static NlsInfo fromInitializer(UExpression expression) {
+    UElement parent;
+    PsiElement var = null;
+    while (true) {
+      parent = expression.getUastParent();
+      if (!(parent instanceof UParenthesizedExpression || parent instanceof UIfExpression ||
+            (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS))) {
+        break;
+      }
+      expression = (UExpression)parent;
+    }
+    if (parent instanceof UBinaryExpression) {
+      UBinaryExpression binOp = (UBinaryExpression)parent;
+      UastBinaryOperator operator = binOp.getOperator();
+      if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
+          expression.equals(binOp.getRightOperand())) {
+        UReferenceExpression lValue = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), 
+                                                          UReferenceExpression.class);
+        if (lValue != null) {
+          var = lValue.resolve();
+        }
+      }
+    }
+    else if (parent instanceof UVariable) {
+      var = parent.getJavaPsi();
+    }
+    if (var instanceof PsiVariable) {
+      NlsInfo info = fromAnnotationOwner(((PsiVariable)var).getModifierList());
+      if (info != Unspecified.UNKNOWN) return info;
+      return fromType(((PsiVariable)var).getType());
+    }
+    return Unspecified.UNKNOWN;
   }
 
   private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
