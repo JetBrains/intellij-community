@@ -12,6 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nls.Capitalization;
 import org.jetbrains.annotations.NonNls;
@@ -407,8 +408,19 @@ public abstract class NlsInfo {
     }
     if (annotation.hasQualifiedName(AnnotationUtil.NLS)) {
       PsiAnnotationMemberValue value = annotation.findAttributeValue("capitalization");
+      String name = null;
       if (value instanceof PsiReferenceExpression) {
-        String name = ((PsiReferenceExpression)value).getReferenceName();
+        // Java plugin returns reference for enum constant in annotation value
+        name = ((PsiReferenceExpression)value).getReferenceName();
+      }
+      else if (value instanceof PsiLiteralExpression) {
+        // But Kotlin plugin returns kotlin.Pair (enumClass : ClassId, constantName : Name) for enum constant in annotation value!
+        Pair<?, ?> pair = ObjectUtils.tryCast(((PsiLiteralExpression)value).getValue(), Pair.class);
+        if (pair != null && pair.getSecond() != null) {
+          name = pair.getSecond().toString();
+        }
+      }
+      if (name != null) {
         if (Capitalization.Title.name().equals(name)) {
           return Localized.NLS_TITLE;
         }
