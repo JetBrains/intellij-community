@@ -68,9 +68,9 @@ class CircletTaskRunner(val project: Project) {
         val batchSize = 1
 
         val logMessageSink = object : LogMessagesSink {
-            override fun invoke(graphExecutionId: Long, stepExecutionId: Long, serviceExecutionId: Long?, batchIndex: Int, data: List<String>) {
+            override fun invoke(graphExecutionId: Long, stepExecutionId: Long, serviceExecutionId: Long?, batchIndex: Int, data: List<LogLine>) {
                 data.forEach {
-                    processHandler.message(it, TraceLevel.INFO)
+                    processHandler.message(it.line, TraceLevel.INFO)
                 }
             }
         }
