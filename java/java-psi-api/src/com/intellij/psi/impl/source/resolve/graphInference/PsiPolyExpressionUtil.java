@@ -164,7 +164,7 @@ public class PsiPolyExpressionUtil {
         type = method.getReturnType();
         if (result instanceof MethodCandidateInfo) {
           // Spec: Note that, for a generic method, this is the type before instantiating the method's type arguments.
-          PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutorExceptMethodTypeArguments();
+          PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutorFromQualifier();
           type = substitutor.substitute(type);
         }
       }

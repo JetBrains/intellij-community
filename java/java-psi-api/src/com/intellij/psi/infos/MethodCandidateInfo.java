@@ -330,7 +330,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
   
   @NotNull
-  public PsiSubstitutor getSubstitutorExceptMethodTypeArguments() {
+  public PsiSubstitutor getSubstitutorFromQualifier() {
     return super.getSubstitutor();
   }
 
