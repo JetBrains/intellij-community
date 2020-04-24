@@ -30,6 +30,8 @@ public interface FileIntPropertyPusher<T> extends FilePropertyPusher<T> {
       if (stream != null) {
         int storedIntValue = DataInputOutputUtil.readINT(stream);
         if (storedIntValue == toInt(actualValue)) return;
+      } else if (actualValue == getDefaultValue()) {
+        return;
       }
     }
 
