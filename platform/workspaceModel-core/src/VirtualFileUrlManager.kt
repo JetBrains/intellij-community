@@ -12,20 +12,22 @@ open class VirtualFileUrlManager {
   private val EMPTY_URL = VirtualFileUrl(0, this)
   private val fileNameStore = VirtualFileNameStore()
   private val id2NodeMapping = THashMap<Int, FilePathNode>()
-  private var segmentId2RootNodeMapping = THashMap<Int, FilePathNode>()
+  private val rootNode = FilePathNode(0, 0)
 
+  @Synchronized
   fun fromUrl(url: String): VirtualFileUrl {
     if (url.isEmpty()) return EMPTY_URL
     return add(url)
   }
 
   fun fromPath(path: String): VirtualFileUrl {
-    if (path.isEmpty()) return EMPTY_URL
     return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
   }
 
+  @Synchronized
   fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping[id]?.parent?.let { VirtualFileUrl(it.nodeId, this) }
 
+  @Synchronized
   fun getUrlById(id: Int): String {
     if (id <= 0) return ""
 
@@ -62,11 +64,11 @@ open class VirtualFileUrlManager {
         id2NodeMapping[nodeId] = newNode
         // If it's the latest name of folder or files, save entity Id as node value
         if (index == latestElement) {
-          segmentId2RootNodeMapping[nameId] = newNode
+          rootNode.addChild(newNode)
           return VirtualFileUrl(nodeId, this)
         }
         latestNode = newNode
-        segmentId2RootNodeMapping[nameId] = newNode
+        rootNode.addChild(newNode)
         continue
       }
 
@@ -110,7 +112,7 @@ open class VirtualFileUrlManager {
         if (currentNode === findRootNode(currentNode.contentId) && currentNode.isEmpty()) {
           removeNameUsage(currentNode.contentId)
           id2NodeMapping.remove(currentNode.nodeId)
-          segmentId2RootNodeMapping.remove(currentNode.contentId)
+          rootNode.removeChild(currentNode)
         }
         return
       }
@@ -160,14 +162,14 @@ open class VirtualFileUrlManager {
 
   private fun findRootNode(segment: String): FilePathNode? {
     val segmentId = fileNameStore.getIdForName(segment) ?: return null
-    return segmentId2RootNodeMapping[segmentId]
+    return rootNode.findChild(segmentId)
   }
 
-  private fun findRootNode(contentId: Int): FilePathNode? = segmentId2RootNodeMapping[contentId]
+  private fun findRootNode(contentId: Int): FilePathNode? = rootNode.findChild(contentId)
 
   private fun splitNames(path: String): List<String> = path.split('/', '\\')
 
-  override fun toString() = segmentId2RootNodeMapping.values.joinToString(separator = "\n") { it.toString() }
+  fun print() = rootNode.print()
 
   fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
     if (parentNodeId == 0 && childNodeId == 0) return true
@@ -218,7 +220,7 @@ open class VirtualFileUrlManager {
       if (children == null) children = SmartList()
     }
 
-    override fun toString(): String {
+    internal fun print(): String {
       val buffer = StringBuilder()
       print(buffer, "", "")
       return buffer.toString()
@@ -226,10 +228,14 @@ open class VirtualFileUrlManager {
 
     private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
       val name = this@VirtualFileUrlManager.fileNameStore.getNameForId(contentId)
-      buffer.append("$prefix $name\n")
+      if (name != null) buffer.append("$prefix $name\n")
       val iterator = children?.iterator() ?: return
       while (iterator.hasNext()) {
         val next = iterator.next()
+        if (name == null) {
+          next.print(buffer, childrenPrefix, childrenPrefix)
+          continue
+        }
         if (iterator.hasNext()) {
           next.print(buffer, "$childrenPrefix |- ", "$childrenPrefix |   ")
         }

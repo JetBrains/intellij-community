@@ -27,7 +27,7 @@ class VirtualFileUrlManagerTest {
       # |    |    '-  d.txt
       # |    '-  b.txt
       # '-  c
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -41,14 +41,14 @@ class VirtualFileUrlManagerTest {
       # '-  a
       #      '-  b
       #           '-  a.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
   fun `check insert and remove same path`() {
     virtualFileManager.add("/a/b/a.txt")
     virtualFileManager.remove("/a/b/a.txt")
-    Assert.assertEquals("", virtualFileManager.toString())
+    Assert.assertEquals("", virtualFileManager.print())
   }
 
   @Test
@@ -61,7 +61,7 @@ class VirtualFileUrlManagerTest {
       # '-  a
       #      '-  c
       #           '-  a.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -69,7 +69,7 @@ class VirtualFileUrlManagerTest {
     virtualFileManager.add("/")
     virtualFileManager.add("/a")
     virtualFileManager.remove("/a")
-    Assert.assertEquals("", virtualFileManager.toString())
+    Assert.assertEquals("", virtualFileManager.print())
   }
 
   @Test
@@ -80,14 +80,14 @@ class VirtualFileUrlManagerTest {
       # '-  a
       #      '-  b
       #           '-  a.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
     virtualFileManager.update("/a/b/a.txt", "/a/b/d.txt")
     Assert.assertEquals("""
       # 
       # '-  a
       #      '-  b
       #           '-  d.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -101,14 +101,14 @@ class VirtualFileUrlManagerTest {
       #      |    '-  c.txt
       #      '-  c
       #           '-  d.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
     virtualFileManager.update("/a/b/c.txt", "/a/c/d.txt")
     Assert.assertEquals("""
       # 
       # '-  a
       #      '-  c
       #           '-  d.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -119,14 +119,14 @@ class VirtualFileUrlManagerTest {
       # '-  a
       #      '-  b
       #           '-  c.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
     virtualFileManager.update("/a/b/c.txt", "/a/b/k.txt")
     Assert.assertEquals("""
       # 
       # '-  a
       #      '-  b
       #           '-  k.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -137,12 +137,12 @@ class VirtualFileUrlManagerTest {
       # '-  a
       #      '-  b
       #           '-  c.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
     virtualFileManager.update("/a/b/c.txt", "/k.txt")
     Assert.assertEquals("""
       # 
       # '-  k.txt
-      #""".trimMargin("#"), virtualFileManager.toString())
+      #""".trimMargin("#"), virtualFileManager.print())
   }
 
   @Test
@@ -185,7 +185,7 @@ class VirtualFileUrlManagerTest {
 
   @Test
   fun testFromPath() {
-    Assert.assertEquals("", virtualFileManager.fromPath("").url)
+    Assert.assertEquals("file://", virtualFileManager.fromPath("").url)
 
     fun assertUrlFromPath(path: String) {
       Assert.assertEquals(VfsUtil.pathToUrl(path), virtualFileManager.fromPath(path).url)
