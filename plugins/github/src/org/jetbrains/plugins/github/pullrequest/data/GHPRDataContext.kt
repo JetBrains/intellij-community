@@ -9,7 +9,8 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import javax.swing.ListModel
@@ -24,10 +25,7 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
                                val listLoader: GHPRListLoader,
                                val dataLoader: GHPRDataLoader,
                                val securityService: GHPRSecurityService,
-                               val repositoryDataService: GHPRRepositoryDataService,
-                               val stateService: GHPRStateService,
-                               val reviewService: GHPRReviewService,
-                               val commentService: GHPRCommentService) : Disposable {
+                               val repositoryDataService: GHPRRepositoryDataService) : Disposable {
 
   override fun dispose() {
     Disposer.dispose(messageBus)

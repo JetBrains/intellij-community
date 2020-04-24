@@ -184,8 +184,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                                         repoWithPermissions.path, repoOwner)
 
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
-                           requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService,
-                           repoDataService, stateService, reviewService, commentService)
+                           requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService, repoDataService)
   }
 
   companion object {

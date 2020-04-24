@@ -18,11 +18,6 @@ class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataConte
   override val gitRepositoryCoordinates = dataContext.gitRepositoryCoordinates
   override val repositoryCoordinates = dataContext.repositoryCoordinates
 
-  override val securityService = dataContext.securityService
-  override val stateService = dataContext.stateService
-  override val reviewService = dataContext.reviewService
-  override val commentService = dataContext.commentService
-
   override val requestExecutor = dataContext.requestExecutor
 
   override val currentUser = dataContext.securityService.currentUser
