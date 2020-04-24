@@ -1412,5 +1412,9 @@
             icon="AllIcons.General.Locate">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
     </action>
+
+    <group id="AnalyzeStacktraceToolbar">
+      <action id="AnnotateStackTraceAction.show.files.modification.info" class="com.intellij.unscramble.AnnotateStackTraceAction" icon="AllIcons.Actions.Annotate"/>
+    </group>
   </actions>
 </idea-plugin>

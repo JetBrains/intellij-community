@@ -127,7 +127,9 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     toolbarActions.add(new SortThreadsAction());
     toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
     toolbarActions.add(new MergeStacktracesAction());
-    add(ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false).getComponent(), BorderLayout.WEST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false);
+    toolbar.setTargetComponent(consoleView.getComponent());
+    add(toolbar.getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myFilterPanel, BorderLayout.NORTH);
