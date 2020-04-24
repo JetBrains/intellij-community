@@ -23,7 +23,7 @@ class NonExtendableApiUsageInspection : LocalInspectionTool() {
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-    if (JavaPsiFacade.getInstance(holder.project).findClass(ANNOTATION_NAME, holder.file.resolveScope) != null) {
+    if (AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(ANNOTATION_NAME, holder.file)) {
       ApiUsageUastVisitor.createPsiElementVisitor(NonExtendableApiUsageProcessor(holder))
     } else {
       PsiElementVisitor.EMPTY_VISITOR
