@@ -130,8 +130,10 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val dataLoader = GHPRDataLoaderImpl { id ->
       val reviewData = GHPRReviewDataProviderImpl(reviewService, id)
+      val commentsData = GHPRCommentsDataProviderImpl(commentService, id)
       GHPRDataProviderImpl(project, ProgressManager.getInstance(), Git.getInstance(), securityService, requestExecutor,
                            gitRemoteCoordinates, repositoryCoordinates, id,
+                           commentsData,
                            reviewData).also {
         Disposer.register(it, reviewData)
       }

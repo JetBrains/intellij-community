@@ -17,6 +17,7 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder, Disposable {
   val apiCommitsRequest: CompletableFuture<List<GHCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
 
+  val commentsData: GHPRCommentsDataProvider
   val reviewData: GHPRReviewDataProvider
 
   fun addRequestsChangesListener(listener: RequestsChangedListener)

@@ -38,6 +38,7 @@ internal class GHPRDataProviderImpl(private val project: Project,
                                     private val gitRemote: GitRemoteUrlCoordinates,
                                     private val repository: GHRepositoryCoordinates,
                                     override val id: GHPRIdentifier,
+                                    override val commentsData: GHPRCommentsDataProvider,
                                     override val reviewData: GHPRReviewDataProvider)
   : GHPRDataProvider {
 

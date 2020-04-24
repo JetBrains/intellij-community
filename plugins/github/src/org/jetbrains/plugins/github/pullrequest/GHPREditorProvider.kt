@@ -31,6 +31,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -38,11 +39,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
+import org.jetbrains.plugins.github.pullrequest.data.*
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
@@ -137,11 +134,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         add(timeline, CC().growX().minWidth(""))
         add(loadingIcon, CC().hideMode(2).alignX("center"))
 
-        with(dataContext.commentService) {
-          if (canComment()) {
-            val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(commentServiceAdapter, avatarIconsProvider, dataContext.securityService.currentUser), CC().growX())
-          }
+        if (dataContext.securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)) {
+          val commentField = createCommentField(dataProvider.commentsData,
+                                                avatarIconsProvider,
+                                                dataContext.securityService.currentUser)
+          add(commentField, CC().growX())
         }
       }
 
@@ -212,7 +209,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  private fun createCommentField(commentService: GHPRCommentServiceAdapter,
+  private fun createCommentField(commentService: GHPRCommentsDataProvider,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
     val model = GHPRSubmittableTextField.Model {
