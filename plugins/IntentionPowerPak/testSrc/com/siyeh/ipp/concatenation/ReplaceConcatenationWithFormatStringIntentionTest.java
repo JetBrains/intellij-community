@@ -36,15 +36,16 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
   }
 
   public void testNarrowingCastTextBlock() {
-    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, getTestRootDisposable());
-    doTest("class X {" +
-           "  String s = (byte)321 +/*_Replace '+' with 'formatted()'*/ \" parsecs\";" +
-           "}",
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, () -> {
+      doTest("class X {" +
+             "  String s = (byte)321 +/*_Replace '+' with 'formatted()'*/ \" parsecs\";" +
+             "}",
 
-           "class X {" +
-           "  String s = \"%s parsecs\".formatted((byte) 321);" +
-           "}"
-    );
+             "class X {" +
+             "  String s = \"%s parsecs\".formatted((byte) 321);" +
+             "}"
+      );
+    });
   }
 
   public void testWideningCast() {

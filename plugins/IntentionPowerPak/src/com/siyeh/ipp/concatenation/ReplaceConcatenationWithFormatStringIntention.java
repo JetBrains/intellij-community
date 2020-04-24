@@ -49,7 +49,9 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
     } else {
       newExpression.append("java.lang.String.format(");
       appendFormatString(expression, formatString, false, newExpression);
-      newExpression.append(", ");
+      if (!formatParameters.isEmpty()) {
+        newExpression.append(", ");
+      }
     }
     newExpression.append(StreamEx.of(formatParameters).map(commentTracker::text).joining(", "));
     newExpression.append(')');

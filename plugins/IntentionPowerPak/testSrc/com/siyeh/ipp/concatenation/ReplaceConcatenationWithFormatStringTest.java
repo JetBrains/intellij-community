@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
@@ -26,7 +28,12 @@ public class ReplaceConcatenationWithFormatStringTest extends IPPTestCase {
     public void testPercentInLiteral() { doTest(); }
     public void testParameters() { doTest(); }
     public void testLineSeparator() { doTest(); }
-    public void testPreserveTextBlock() { doTest(); }
+    public void testPreserveTextBlock() {
+        IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, () -> {
+            doTest(IntentionPowerPackBundle.message(
+              "replace.concatenation.with.format.string.intention.name.formatted"));
+        });
+    }
 
     @Override
     protected String getIntentionName() {
@@ -42,6 +49,6 @@ public class ReplaceConcatenationWithFormatStringTest extends IPPTestCase {
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return JAVA_13;
+        return JAVA_11;
     }
 }
