@@ -394,9 +394,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   private void markAsIncomplete(@NotNull DescriptorLoadingContext context, @Nullable String errorMessage, @Nullable PluginId disabledDependency) {
+    boolean wasIncomplete = incomplete;
     incomplete = true;
     setEnabled(false);
-    if (myId != null) {
+    if (myId != null && !wasIncomplete) {
       PluginError pluginError = errorMessage == null ? null : new PluginError(this, errorMessage, null, false);
       if (pluginError != null && disabledDependency != null) {
         pluginError.setDisabledDependency(disabledDependency);
