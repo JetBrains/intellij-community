@@ -23,6 +23,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHRepositoryOwnerName
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -31,7 +32,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PullRequestEditedListener
-import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
@@ -134,28 +134,18 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val listLoader = GHPRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoWithPermissions.path, listModel,
                                         searchHolder)
 
-    val dataLoader = GHPRDataLoaderImpl { id ->
-      val detailsData = GHPRDetailsDataProviderImpl(detailsService, id).apply {
-        addDetailsLoadedListener(this) {
-          loadedDetails?.let { listLoader.updateData(it) }
-        }
-      }
-      val stateData = GHPRStateDataProviderImpl(stateService, id, detailsData)
-      val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData)
-      val reviewData = GHPRReviewDataProviderImpl(reviewService, id)
-      val commentsData = GHPRCommentsDataProviderImpl(commentService, id)
-      GHPRDataProviderImpl(detailsData, stateData, changesData, commentsData, reviewData) {
-        val timelineModel = GHPRTimelineMergingModel()
-        GHPRTimelineLoader(ProgressManager.getInstance(), requestExecutor,
-                           account.server, repoWithPermissions.path, id.number,
-                           timelineModel)
-      }.also {
-        Disposer.register(it, detailsData)
-        Disposer.register(it, stateData)
-        Disposer.register(it, changesData)
-        Disposer.register(it, reviewData)
+    val dataLoader = GHPRDataLoaderImpl(detailsService, stateService, reviewService, commentService, changesService) { id ->
+      val timelineModel = GHPRTimelineMergingModel()
+      GHPRTimelineLoader(ProgressManager.getInstance(), requestExecutor,
+                         account.server, repoWithPermissions.path, id.number,
+                         timelineModel)
+    }.also {
+      it.addDetailsLoadedListener { details: GHPullRequest ->
+        listLoader.updateData(details)
       }
     }
+
+
     messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
       override fun onPullRequestEdited(id: GHPRIdentifier) {
         runInEdt {
