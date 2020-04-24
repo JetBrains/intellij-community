@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -586,16 +587,17 @@ public final class FormEditingUtil {
   }
 
   @Nullable
-  public static GuiEditor getActiveEditor(final DataContext context) {
+  public static GuiEditor getActiveEditor(@NotNull DataContext context) {
     Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project == null) {
+    if (project == null || project.isDisposed()) {
       return null;
     }
-    final DesignerToolWindowManager toolWindowManager = DesignerToolWindowManager.getInstance(project);
-    if (toolWindowManager == null) {
-      return null;
+    for (FileEditor editor : FileEditorManager.getInstance(project).getSelectedEditors()) {
+      if (editor instanceof UIFormEditor) {
+        return ((UIFormEditor)editor).getEditor();
+      }
     }
-    return toolWindowManager.getActiveFormEditor();
+    return null;
   }
 
   /**
