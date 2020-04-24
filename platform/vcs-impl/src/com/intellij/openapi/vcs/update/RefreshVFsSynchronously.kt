@@ -45,6 +45,15 @@ object RefreshVFsSynchronously {
     markDirtyAndRefresh(false, false, false, *toRefresh.toTypedArray())
   }
 
+  @JvmStatic
+  fun refreshVirtualFiles(files: Collection<VirtualFile>) {
+    if (files.isEmpty()) return
+    if (TRACE_LOG.isDebugEnabled) {
+      TRACE_LOG.debug("RefreshVFsSynchronously#refreshVirtualFiles: $files", Throwable())
+    }
+    markDirtyAndRefresh(false, false, false, *files.toTypedArray())
+  }
+
   private fun refreshDeletedFiles(files: Collection<File>) {
     if (files.isEmpty()) return
     if (TRACE_LOG.isDebugEnabled) {

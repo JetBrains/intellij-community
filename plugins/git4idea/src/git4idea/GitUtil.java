@@ -960,11 +960,16 @@ public class GitUtil {
    */
   public static void refreshVfs(@NotNull VirtualFile root, @Nullable Collection<? extends Change> changes) {
     if (changes == null || Registry.is("git.refresh.vfs.total")) {
-      VfsUtil.markDirtyAndRefresh(false, true, false, root);
+      refreshVfsInRoot(root);
     }
     else {
       RefreshVFsSynchronously.updateChanges(changes);
     }
+  }
+
+  public static void refreshVfsInRoot(@NotNull VirtualFile root) {
+    RefreshVFsSynchronously.trace("refresh root " + root);
+    VfsUtil.markDirtyAndRefresh(false, true, false, root);
   }
 
   public static void updateAndRefreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
