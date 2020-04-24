@@ -48,7 +48,11 @@ public abstract class DuplicatesProfile {
     return null;
   }
 
-  public abstract boolean isMyDuplicate(@NotNull DupInfo info, int index);
+  public boolean isMyDuplicate(@NotNull DupInfo info, int index) {
+    PsiFragment[] fragments = info.getFragmentOccurences(index);
+    Language language = fragments.length > 0 ? fragments[0].getLanguage() : null;
+    return language != null && isMyLanguage(language);
+  }
 
   public boolean supportIndex() {
     return true;
@@ -94,7 +98,6 @@ public abstract class DuplicatesProfile {
 
     return null;
   }
-
 
   @Nullable
   public static DuplicatesProfile findProfileForDuplicate(@NotNull DupInfo dupInfo, int index) {
