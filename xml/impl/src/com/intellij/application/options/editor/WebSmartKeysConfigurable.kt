@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
+import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.BoundCompositeConfigurable
-import com.intellij.openapi.options.ConfigurableEP
-import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
-import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
@@ -36,7 +34,7 @@ private val webEditorOptionDescriptors
     mySelectWholeCssIdentifierOnDoubleClick
   ).map(CheckboxDescriptor::asOptionDescriptor)
 
-internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors {
+internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>("HTML/CSS"), ConfigurableWithOptionDescriptors, Configurable.WithEpDependencies {
   override fun createPanel(): DialogPanel {
     return panel {
       titledRow(XmlBundle.message("xml.editor.options.misc.title")) {
@@ -81,6 +79,10 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
 
   companion object {
     val EP_NAME = ExtensionPointName.create<WebSmartKeysConfigurableEP>("com.intellij.webSmartKeysConfigurable")
+  }
+
+  override fun getDependencies(): Collection<BaseExtensionPointName<*>> {
+    return listOf(EP_NAME)
   }
 }
 

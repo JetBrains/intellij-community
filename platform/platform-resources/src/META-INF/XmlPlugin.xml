@@ -47,7 +47,7 @@
     <extensionPoint name="webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
 
     <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
-    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
+    <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>0
 
     <extensionPoint name="xml.idContributor" interface="com.intellij.xml.util.XmlIdContributor" dynamic="true"/>
     <extensionPoint name="xml.implicitNamespaceDescriptorProvider" interface="com.intellij.javaee.ImplicitNamespaceDescriptorProvider" dynamic="true"/>
@@ -88,7 +88,9 @@
     <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension" dynamic="true"/>
     <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
-    <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP"/>
+    <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
 
     <extensionPoint name="xml.validateHandler" interface="com.intellij.xml.actions.validate.ValidateXmlHandler" dynamic="true"/>
 
