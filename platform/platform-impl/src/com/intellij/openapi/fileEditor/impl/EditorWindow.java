@@ -933,7 +933,7 @@ public class EditorWindow {
   public static int getTabLimit() {
     int limit = UISettings.getInstance().getEditorTabLimit();
     if (ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
-        && UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
+        && ToggleDistractionFreeModeAction.getStandardTabPlacement() == UISettings.TABS_NONE) {
       limit = 1;
     }
     return limit;
