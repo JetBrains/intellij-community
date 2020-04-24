@@ -25,7 +25,8 @@
     <extensionPoint qualifiedName="com.intellij.externalSystem.facetConfigurationImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.codeStyleConfigurationImporter"
-                    interface="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter"/>
+                    interface="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationImporter"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystem.beforeRunTaskImporter"
                     interface="com.intellij.openapi.externalSystem.service.project.settings.BeforeRunTaskImporter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalSystemConfigLocator"
