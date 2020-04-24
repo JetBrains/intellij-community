@@ -64,7 +64,7 @@ public class TempDirectory extends TemporaryFolder {
   @Override
   public File newFolder(String directoryName) throws IOException {
     Path dir = Paths.get(getRoot().getPath(), directoryName);
-    if (dir.toFile().exists()) throw new IOException("Already exists: " + dir);
+    if (Files.exists(dir)) throw new IOException("Already exists: " + dir);
     Files.createDirectories(dir);
     return dir.toFile();
   }
@@ -73,7 +73,7 @@ public class TempDirectory extends TemporaryFolder {
   @Override
   public File newFile(String fileName) throws IOException {
     Path file = Paths.get(getRoot().getPath(), fileName);
-    if (file.toFile().exists()) throw new IOException("Already exists: " + file);
+    if (Files.exists(file)) throw new IOException("Already exists: " + file);
     makeDirectories(file.getParent());
     Files.createFile(file);
     return file.toFile();
