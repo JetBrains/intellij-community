@@ -275,7 +275,6 @@
     <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="scopeTreeExpander" interface="com.intellij.ide.scopeView.ScopeTreeStructureExpander" area="IDEA_PROJECT"/>
 
     <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
       <with attribute="providerClass" implements="com.intellij.psi.PsiReferenceProvider"/>

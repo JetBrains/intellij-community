@@ -980,7 +980,6 @@
     <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"/>
     <lang.implementationTextSelectioner language="JAVA" implementationClass="com.intellij.codeInsight.hint.JavaImplementationTextSelectioner"/>
-    <scopeTreeExpander implementation="com.intellij.ide.scopeView.ClassesScopeTreeStructureExpander"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.JavaModuleNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor"/>
     <gotoSymbolContributor implementation="com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor$JavadocSeparatorContributor"/>
