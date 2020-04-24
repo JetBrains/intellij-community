@@ -13,21 +13,22 @@ class VcsFeatureProvider : ElementFeatureProvider {
 
   override fun calculateFeatures(element: LookupElement,
                                  location: CompletionLocation,
-                                 contextFeatures: ContextFeatures): MutableMap<String, MLFeatureValue> {
+                                 contextFeatures: ContextFeatures): Map<String, MLFeatureValue> {
     val features = mutableMapOf<String, MLFeatureValue>()
     val psi = element.psiElement
     val psiFile = psi?.containingFile
-    val file = psiFile?.viewProvider?.virtualFile
-    if (file != null) {
+
+    psiFile?.viewProvider?.virtualFile?.let { file ->
       val changeListManager = ChangeListManager.getInstance(location.project)
-      val change = changeListManager.getChange(file)
-      if (change != null)
+      changeListManager.getChange(file)?.let { change ->
         features["file_state"] = MLFeatureValue.categorical(change.type)
 
-      if (change != null && change.type == Change.Type.MODIFICATION && psi is PsiNameIdentifierOwner) {
-        val changedRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(location.project, psiFile)
-        if (changedRanges.any { psi.textRange.intersects(it) })
-          features["declaration_is_changed"] = MLFeatureValue.binary(true)
+        if (change.type == Change.Type.MODIFICATION && psi is PsiNameIdentifierOwner) {
+          val changedRanges = FormatChangedTextUtil.getInstance().getChangedTextRanges(location.project, psiFile)
+          if (changedRanges.any { psi.textRange.intersects(it) }) {
+            features["declaration_is_changed"] = MLFeatureValue.binary(true)
+          }
+        }
       }
     }
     return features
