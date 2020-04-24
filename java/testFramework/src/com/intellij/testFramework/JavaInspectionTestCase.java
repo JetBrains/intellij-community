@@ -98,7 +98,12 @@ public abstract class JavaInspectionTestCase extends LightJavaCodeInsightFixture
     final List<InspectionToolWrapper<?, ?>> tools = getTools(runDeadCodeFirst, toolWrapper, additional);
     GlobalInspectionContextImpl context = runTool(folderName, toolWrapper, tools);
 
-    InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
+    try {
+      InspectionTestUtil.compareToolResults(context, checkRange, testDir, ContainerUtil.append(Collections.singletonList(toolWrapper), additional));
+    }
+    finally {
+      context.cleanup();
+    }
 
     if (MIGRATE_TEST) {
       myMigration = new LightTestMigration(getTestName(false), getClass(), testDir, tools);
