@@ -613,9 +613,11 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XML Pull Parser 3", libraryName: "xpp3-1.1.4-min", version: "1.1.4-min", license: "Public"),
     new LibraryLicense(name: "XStream", libraryName: "XStream", license: "BSD License",
                        url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
-
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "JCEF", libraryName: "jcef", license: "Permissive",
+                       licenseUrl: "https://bitbucket.org/chromiumembedded/java-cef/src/master/LICENSE.txt",
+                       url: "https://bitbucket.org/chromiumembedded/java-cef"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-ranking-java"),
