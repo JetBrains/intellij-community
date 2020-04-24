@@ -22,7 +22,7 @@ public abstract class EditorConfigFileSettingsTestCase extends LightPlatformTest
   protected void setUp() throws Exception {
     super.setUp();
     CodeStyle.dropTemporarySettings(getProject());
-    myOriginalSettings = CodeStyle.getSettings(getProject()).clone();
+    myOriginalSettings = CodeStyle.createTestSettings(CodeStyle.getSettings(getProject()));
     EditorConfigCodeStyleSettingsModifier.setEnabledInTests(true);
   }
 

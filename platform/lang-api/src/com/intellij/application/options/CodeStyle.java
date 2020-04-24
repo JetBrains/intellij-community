@@ -380,11 +380,22 @@ public class CodeStyle {
 
 
   /**
-   * Create an instance of {@code CodeStyleSettings} for testing purposes.
+   * Create an instance of {@code CodeStyleSettings} with settings copied from {@code baseSettings}
+   * for testing purposes.
+   * @param baseSettings Base settings to be used for created {@code CodeStyleSettings} instance.
+   * @return Test code style settings.
+   */
+  @TestOnly
+  public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
+    return CodeStyleSettingsManager.createTestSettings(baseSettings);
+  }
+
+  /**
+   * Create a clean instance of {@code CodeStyleSettings} for testing purposes.
    * @return Test code style settings.
    */
   @TestOnly
   public static CodeStyleSettings createTestSettings() {
-    return CodeStyleSettingsManager.getInstance().createTestSettings();
+    return CodeStyleSettingsManager.createTestSettings(null);
   }
 }

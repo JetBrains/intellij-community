@@ -50,28 +50,34 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   private final WeakList<CodeStyleSettings> myReferencedSettings = new WeakList<>();
 
   public final CodeStyleSettings createSettings() {
-    @SuppressWarnings("deprecation") CodeStyleSettings newSettings = new CodeStyleSettings();
-    myReferencedSettings.add(newSettings);
+    CodeStyleSettings newSettings = new CodeStyleSettings(true, false);
+    registerSettings(newSettings);
     return newSettings;
   }
 
+  void registerSettings(CodeStyleSettings newSettings) {
+    myReferencedSettings.add(newSettings);
+  }
+
   public final CodeStyleSettings createTemporarySettings() {
-    //noinspection deprecation
-    myTemporarySettings = new CodeStyleSettings();
+    myTemporarySettings = new CodeStyleSettings(true, false);
     return myTemporarySettings;
   }
 
   public final CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
-    @SuppressWarnings("deprecation") CodeStyleSettings clonedSettings = new CodeStyleSettings();
+    CodeStyleSettings clonedSettings = new CodeStyleSettings(true, false);
     clonedSettings.copyFrom(settings);
-    myReferencedSettings.add(clonedSettings);
+    registerSettings(clonedSettings);
     return clonedSettings;
   }
 
   @TestOnly
-  public final CodeStyleSettings createTestSettings() {
-    //noinspection deprecation
-    return new CodeStyleSettings();
+  public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
+    final CodeStyleSettings testSettings = new CodeStyleSettings(true, false);
+    if (baseSettings != null) {
+      testSettings.copyFrom(baseSettings);
+    }
+    return testSettings;
   }
 
   private Collection<CodeStyleSettings> getAllSettings() {
