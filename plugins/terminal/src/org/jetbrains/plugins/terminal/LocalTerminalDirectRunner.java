@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -111,7 +112,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       result = new File(pluginBaseDir, relativePath);
     }
     else {
-      if (ApplicationManager.getApplication().isInternal()) {
+      Application application = ApplicationManager.getApplication();
+      if (application != null && application.isInternal()) {
         jarPath = StringUtil.trimEnd(jarPath.replace('\\', '/'), '/') + '/';
         String srcDir = jarPath.replace("/out/classes/production/intellij.terminal/",
                                         "/community/plugins/terminal/resources/");

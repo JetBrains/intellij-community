@@ -47,8 +47,7 @@ public class TerminalShellCommandTest extends TestCase {
   }
 
   private static void doTest(String[] expected, String path, Map<String, String> envs) {
-    assertEquals(Arrays.asList(expected), Arrays.asList(
-      LocalTerminalDirectRunner.getCommand(path, envs, true)));
+    assertEquals(Arrays.asList(expected), LocalTerminalDirectRunner.getCommand(path, envs, true));
   }
 
   private static void contains(@NotNull String shellPath, boolean shellIntegration, Map<String, String> envs, String... item) {
