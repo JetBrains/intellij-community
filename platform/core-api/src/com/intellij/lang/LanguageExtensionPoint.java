@@ -29,7 +29,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean<T
   public String implementationClass;
 
   /**
-   * You must pass plugin descriptor. Use {@link LanguageExtensionPoint#LanguageExtensionPoint(String, Object)}
+   * @deprecated You must pass plugin descriptor, use {@link LanguageExtensionPoint#LanguageExtensionPoint(String, Object)}
    */
   @Deprecated
   public LanguageExtensionPoint() {
