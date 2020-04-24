@@ -130,7 +130,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
-    LOG.assertTrue(myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
+    LOG.assertTrue(myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS, "actual state: " + myState.get() + ", project " + getProject());
 
     List<StartupActivity.RequiredForSmartMode> activities = StartupActivity
       .REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
