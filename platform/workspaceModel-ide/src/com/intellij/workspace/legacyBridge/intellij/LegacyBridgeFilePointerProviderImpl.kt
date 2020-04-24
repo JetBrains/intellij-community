@@ -1,8 +1,8 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -121,7 +121,9 @@ internal class LegacyBridgeFilePointerProviderImpl(project: Project) : LegacyBri
     }
   }
 
-  private fun nextDisposable() = Disposer.newDisposable().also { this.attachChild(it) }
+  private fun nextDisposable() = Disposer.newDisposable().also {
+    Disposer.register(this, it)
+  }
 
   private class ReadonlyFilePointerContainer(val container: VirtualFilePointerContainer) : VirtualFilePointerContainer {
     private fun throwReadonly(): Nothing = throw NotImplementedError("Read-Only File Pointer Container")

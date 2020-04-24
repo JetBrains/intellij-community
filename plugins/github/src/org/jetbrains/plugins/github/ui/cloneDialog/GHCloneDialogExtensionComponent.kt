@@ -19,9 +19,9 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -151,7 +151,7 @@ internal class GHCloneDialogExtensionComponent(
       override fun getModalityState() = ModalityState.any()
     }
 
-    this.attachChild(progressManager)
+    Disposer.register(this, progressManager)
 
     ApplicationManager.getApplication().messageBus.connect(this).apply {
       subscribe(GithubAccountManager.ACCOUNT_REMOVED_TOPIC, object : AccountRemovedListener {

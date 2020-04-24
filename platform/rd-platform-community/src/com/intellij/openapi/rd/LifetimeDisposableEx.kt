@@ -19,15 +19,14 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   return lifetimeDefinition
 }
 
-fun Disposable.createLifetime(): Lifetime = this.defineNestedLifetime().lifetime
-
 fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
   val disposableLifetime: Lifetime?
   if(Disposer.isDisposed(this)) return
 
   try {
-    disposableLifetime = this.createLifetime()
-  } catch(t : Throwable){
+    disposableLifetime = defineNestedLifetime(this).lifetime
+  }
+  catch(t : Throwable){
     //do nothing, there is no other way to handle disposables
     return
   }

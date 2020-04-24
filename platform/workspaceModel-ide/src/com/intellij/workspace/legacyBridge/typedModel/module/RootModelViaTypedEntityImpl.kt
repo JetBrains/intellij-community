@@ -1,9 +1,9 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.typedModel.module
 
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.roots.OrderEntry
@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
@@ -149,7 +150,9 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {
-          val modifiableExtension = readOnlyExtension.getModifiableModel(true).also { parentDisposable.attachChild(it) }
+          val modifiableExtension = readOnlyExtension.getModifiableModel(true).also {
+            Disposer.register(parentDisposable, it)
+          }
           result.add(modifiableExtension)
         } else {
           result.add(readOnlyExtension)
@@ -162,7 +165,9 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
     internal fun loadExtension(extension: ModuleExtension,
                                parentDisposable: Disposable,
                                rootManagerElement: @NotNull Element?): @NotNull ModuleExtension {
-      val readOnlyExtension = extension.getModifiableModel(false).also { parentDisposable.attachChild(it) }
+      val readOnlyExtension = extension.getModifiableModel(false).also {
+        Disposer.register(parentDisposable, it)
+      }
 
       if (rootManagerElement != null) {
         if (readOnlyExtension is PersistentStateComponent<*>) {
