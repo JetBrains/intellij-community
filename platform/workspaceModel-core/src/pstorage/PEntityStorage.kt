@@ -195,9 +195,10 @@ internal class PEntityStorageBuilder(
                                                       updatedParents: ParentConnectionsInfo<T>) {
 
     val id = newEntity.createPid()
-    val existingEntity = entityDataById(id)
+    val existingEntityData = entityDataById(id)
+    val existingEntity = existingEntityData?.createEntity(this)
     val beforePersistentId = if (existingEntity is TypedEntityWithPersistentId) existingEntity.persistentId() else null
-    val beforeSoftLinks = if (existingEntity is PSoftLinkable) existingEntity.getLinks() else null
+    val beforeSoftLinks = if (existingEntityData is PSoftLinkable) existingEntityData.getLinks() else null
 
     /// Replace entity data. id should not be changed
     entitiesByType.replaceById(newEntity, clazz)
@@ -255,7 +256,8 @@ internal class PEntityStorageBuilder(
         val updatedIds = mutableListOf(beforePersistentId to afterPersistentId)
         while (updatedIds.isNotEmpty()) {
           val (beforeId, afterId) = updatedIds.removeFirst()
-          softLinks[beforeId]?.forEach { id: PId<*> ->
+          val nonNullSoftLinks = softLinks[beforeId] ?: continue
+          for (id: PId<*> in nonNullSoftLinks) {
             val pEntityData = this.entitiesByType.getEntityDataForModification(id) as PEntityData<TypedEntity>
             val updated = (pEntityData as PSoftLinkable).updateLink(beforeId, afterId, updatedIds)
 
@@ -266,6 +268,8 @@ internal class PEntityStorageBuilder(
               updateChangeLog { it.add(ChangeEntry.ReplaceEntity(pEntityData, softLinkedChildren, softLinkedParents)) }
             }
           }
+          softLinks.putAll(afterId, softLinks[beforeId])
+          softLinks.removeAll(beforeId)
         }
       }
     }
@@ -644,9 +648,6 @@ internal class PEntityStorageBuilder(
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
   override fun addDiff(diff: TypedEntityStorageDiffBuilder): Map<TypedEntity, TypedEntity> {
-
-    // TODO: 08.04.2020 probably we should accept only diffs based on the same or empty snapshot
-
     val replaceMap = HashMap<PId<out TypedEntity>, PId<out TypedEntity>>()
     val builder = diff as PEntityStorageBuilder
     val diffLog = builder.changeLog
@@ -687,10 +688,10 @@ internal class PEntityStorageBuilder(
           newData.id = usedPid.arrayId
 
           updateIndices(outdatedId, newData.createPid(), builder)
+          updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedChildren, updatedParents)) }
           if (this.entityDataById(usedPid) != null) {
             replaceEntityWithRefs(newData, outdatedId.clazz.java, updatedChildren, updatedParents)
           }
-          updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedChildren, updatedParents)) }
         }
       }
     }
