@@ -29,9 +29,8 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
     try (FileContext context = new FileContext(myFile)) {
       FileChannel channel = context.file;
       assert channel != null;
-      channel.position(myPosition);
       ByteBuffer buffer = ByteBuffer.allocateDirect((int)myLength);
-      channel.read(buffer);
+      channel.read(buffer, myPosition);
       return buffer;
     }
   }
@@ -97,9 +96,8 @@ public class ReadWriteDirectBufferWrapper extends DirectBufferWrapper {
   private void doFlush(FileContext fileContext, ByteBuffer buffer) throws IOException {
     FileChannel channel = fileContext.file;
     assert channel != null;
-    channel.position(myPosition);
     buffer.rewind();
-    channel.write(buffer);
+    channel.write(buffer, myPosition);
     myDirty = false;
   }
 
