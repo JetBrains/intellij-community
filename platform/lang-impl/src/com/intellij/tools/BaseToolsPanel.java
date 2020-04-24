@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtilRt;
@@ -21,6 +20,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   enum Direction {
@@ -89,7 +89,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
       @Override
       public void run(AnActionButton button) {
         ToolEditorDialog dlg = createToolEditorDialog(ToolsBundle.message("tools.add.title"));
-        Tool tool = new Tool();
+        Tool tool = dlg.createTool();
         tool.setUseConsole(true);
         tool.setFilesSynchronizedAfterRun(true);
         tool.setShownInMainMenu(true);
@@ -133,7 +133,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
 
         if (originalTool != null) {
           ToolEditorDialog dlg = createToolEditorDialog(ToolsBundle.message("tools.copy.title"));
-          Tool toolCopy = new Tool();
+          Tool toolCopy = dlg.createTool();
           toolCopy.copyFrom(originalTool);
           dlg.setData(toolCopy, getGroups());
           if (dlg.showAndGet()) {
@@ -341,7 +341,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     for (int i = 0; i < getTreeRoot().getChildCount(); i++) {
       CheckedTreeNode node = (CheckedTreeNode)getTreeRoot().getChildAt(i);
       ToolsGroup g = (ToolsGroup)node.getUserObject();
-      if (Comparing.equal(group, g.getName())) return node;
+      if (Objects.equals(group, g.getName())) return node;
     }
 
     return null;
@@ -446,7 +446,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         if (dlg.showAndGet()) {
           selected.copyFrom(dlg.getData());
           String newGroupName = selected.getGroup();
-          if (!Comparing.equal(oldGroupName, newGroupName)) {
+          if (!Objects.equals(oldGroupName, newGroupName)) {
             CheckedTreeNode oldGroupNode = (CheckedTreeNode)node.getParent();
             removeNodeFromParent(node);
             ((ToolsGroup<T>)oldGroupNode.getUserObject()).removeElement(selected);
