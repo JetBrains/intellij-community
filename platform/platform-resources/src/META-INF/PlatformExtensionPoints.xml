@@ -59,7 +59,8 @@
     </extensionPoint>
 
     <extensionPoint name="keymapExtension"
-                    interface="com.intellij.openapi.keymap.KeymapExtension"/>
+                    interface="com.intellij.openapi.keymap.KeymapExtension"
+                    dynamic="true"/>
 
     <extensionPoint name="getDataRule"
                     beanClass="com.intellij.util.KeyedLazyInstanceEP"
