@@ -16,7 +16,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
-    <extensionPoint name="AntMessageCustomizer" interface="com.intellij.lang.ant.config.execution.AntMessageCustomizer"/>
+    <extensionPoint name="AntMessageCustomizer" interface="com.intellij.lang.ant.config.execution.AntMessageCustomizer" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
