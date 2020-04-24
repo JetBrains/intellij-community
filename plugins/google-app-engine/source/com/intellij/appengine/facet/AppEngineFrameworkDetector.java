@@ -43,7 +43,7 @@ public class AppEngineFrameworkDetector extends FacetBasedFrameworkDetector<AppE
   }
 
   @Override
-  public FrameworkType getFrameworkType() {
+  public @NotNull FrameworkType getFrameworkType() {
     return AppEngineFrameworkType.getFrameworkType();
   }
 
