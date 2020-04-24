@@ -562,7 +562,10 @@ public final class IconLoader {
     for (Map.Entry<Pair<String, Object>, CachedImageIcon> entry : new ArrayList<>(ourIconsCache.entrySet())) {
       entry.getValue().detachClassLoader(classLoader);
       if (entry.getKey().second == classLoader) {
-        ourIconsCache.remove(entry.getKey());
+        CachedImageIcon icon = ourIconsCache.remove(entry.getKey());
+        if (icon != null) {
+          ourIcon2DisabledIcon.remove(icon);
+        }
       }
     }
   }
