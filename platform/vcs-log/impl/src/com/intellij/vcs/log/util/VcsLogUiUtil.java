@@ -8,7 +8,6 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -186,13 +185,18 @@ public class VcsLogUiUtil {
 
   public static void installHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
     LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(() -> {
-      logUi.getTable().removeAllHighlighters();
-      for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
-        if (enabled.test(factory)) {
-          logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
-        }
-      }
+      updateHighlighters(logUi, enabled);
     }, logUi);
+    updateHighlighters(logUi, enabled);
+  }
+
+  private static void updateHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
+    logUi.getTable().removeAllHighlighters();
+    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
+      if (enabled.test(factory)) {
+        logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
+      }
+    }
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {
