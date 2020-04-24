@@ -557,13 +557,13 @@
     <extensionPoint qualifiedName="Pythonid.documentationLinkProvider"
                     interface="com.jetbrains.python.documentation.PythonDocumentationLinkProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationExtension" interface="com.jetbrains.python.run.PythonRunConfigurationExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.remoteInterpreterManager"
                     interface="com.jetbrains.python.remote.PythonRemoteInterpreterManager"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory" interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory"/>
-    <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager"/>
-    <extensionPoint qualifiedName="Pythonid.remoteConsoleProcessCreator" interface="com.jetbrains.python.console.PythonConsoleRemoteProcessCreator"/>
+    <extensionPoint qualifiedName="Pythonid.remoteSkeletonGeneratorFactory" interface="com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteProcessStarterManager" interface="com.jetbrains.python.run.PyRemoteProcessStarterManager" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.remoteConsoleProcessCreator" interface="com.jetbrains.python.console.PythonConsoleRemoteProcessCreator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.breakpointHandler"
                     interface="com.jetbrains.python.debugger.PyBreakpointHandlerFactory"
                     dynamic="true"/>
@@ -571,19 +571,19 @@
                     interface="com.jetbrains.python.console.PyConsoleOptionsProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyRootTypeProvider" interface="com.jetbrains.python.module.PyRootTypeProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationEditorExtension" interface="com.jetbrains.python.run.PyRunConfigurationEditorExtension" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyCustomSdkUiProvider"
                     interface="com.jetbrains.python.sdk.PyCustomSdkUiProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pep8ProblemSuppressor"
                     interface="com.jetbrains.python.validation.Pep8ProblemSuppressor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
+    <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider" interface="com.jetbrains.python.packaging.PyPackageManagerProvider"/>
     <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
                     interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"/>
