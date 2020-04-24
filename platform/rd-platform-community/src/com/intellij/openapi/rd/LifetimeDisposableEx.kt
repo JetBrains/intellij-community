@@ -20,6 +20,7 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
 }
 
 fun Disposable.createLifetime(): Lifetime = this.defineNestedLifetime().lifetime
+
 fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
   val disposableLifetime: Lifetime?
   if(Disposer.isDisposed(this)) return

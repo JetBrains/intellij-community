@@ -18,7 +18,6 @@ import com.intellij.util.messages.MessageBusOwner;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -38,7 +37,7 @@ public class MessageBusImpl implements MessageBus {
    */
   private final int[] myOrder;
 
-  private final ConcurrentMap<Topic<?>, Object> myPublishers = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Topic<?>, Object> publisherCache = new ConcurrentHashMap<>();
 
   /**
    * This bus's subscribers
@@ -178,20 +177,15 @@ public class MessageBusImpl implements MessageBus {
   }
 
   @Override
-  public final  @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
+  public final @NotNull <L> L syncPublisher(@NotNull Topic<L> topic) {
     checkNotDisposed();
-    @SuppressWarnings("unchecked")
-    L publisher = (L)myPublishers.get(topic);
-    if (publisher != null) {
-      return publisher;
-    }
-
-    Class<L> listenerClass = topic.getListenerClass();
-
-    Object newInstance = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, createTopicHandler(topic));
-    Object prev = myPublishers.putIfAbsent(topic, newInstance);
     //noinspection unchecked
-    return (L)(prev == null ? newInstance : prev);
+    return (L)publisherCache.computeIfAbsent(topic, this::createPublisher);
+  }
+
+  // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing not worth the code complication
+  public final void clearPublisherCache() {
+    publisherCache.clear();
   }
 
   private <L> void subscribeLazyListeners(@NotNull Topic<L> topic) {
@@ -241,14 +235,16 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private @NotNull <L> InvocationHandler createTopicHandler(@NotNull Topic<L> topic) {
-    return (proxy, method, args) -> {
+  private @NotNull Object createPublisher(@NotNull Topic<?> topic) {
+    Class<?> listenerClass = topic.getListenerClass();
+    return Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, (proxy, method, args) -> {
       if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
         return EventDispatcher.handleObjectMethod(proxy, args, method.getName());
       }
+
       sendMessage(new Message(topic, method, args));
       return NA;
-    };
+    });
   }
 
   public final void disposeConnectionChildren() {

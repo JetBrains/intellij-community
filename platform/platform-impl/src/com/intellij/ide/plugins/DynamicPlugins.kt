@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
+import com.intellij.application.options.RegistryManager
 import com.intellij.configurationStore.StoreUtil.Companion.saveDocumentsAndProjectsAndApp
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
@@ -25,7 +26,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -89,7 +89,7 @@ interface DynamicPluginListener {
 }
 
 object DynamicPlugins {
-  private val LOG = Logger.getInstance(DynamicPlugins::class.java)
+  private val LOG = logger<DynamicPlugins>()
   private val GROUP = NotificationGroup("Dynamic plugin installation", NotificationDisplayType.BALLOON, false)
 
   @JvmStatic
@@ -100,7 +100,7 @@ object DynamicPlugins {
       return false
     }
 
-    if (!Registry.`is`("ide.plugins.allow.unload")) {
+    if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
       return allowLoadUnloadSynchronously(descriptor)
     }
 
@@ -367,8 +367,8 @@ object DynamicPlugins {
           }
           unloadPluginDescriptor(pluginDescriptor, loadedPluginDescriptor)
 
-          for (project in ProjectManager.getInstance().openProjects) {
-            (CachedValuesManager.getManager(project) as CachedValuesManagerImpl).clearCachedValues()
+          for (project in ProjectUtil.getOpenProjects()) {
+            (project.getServiceIfCreated(CachedValuesManager::class.java) as CachedValuesManagerImpl?)?.clearCachedValues()
           }
           jdomSerializer.clearSerializationCaches()
           BeanBinding.clearSerializationCaches()
@@ -379,6 +379,11 @@ object DynamicPlugins {
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
           PresentationFactory.clearPresentationCaches()
           IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
+
+          for (project in ProjectUtil.getOpenProjects()) {
+            (project.messageBus as MessageBusImpl).clearPublisherCache()
+          }
+          (ApplicationManager.getApplication().messageBus as MessageBusImpl).clearPublisherCache()
 
           if (disable) {
             // update list of disabled plugins
