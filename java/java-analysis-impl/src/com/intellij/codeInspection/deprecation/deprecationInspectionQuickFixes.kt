@@ -22,6 +22,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ObjectUtils
 import com.siyeh.InspectionGadgetsBundle
 import org.jetbrains.annotations.Nls
@@ -72,7 +73,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     val method = myReplacementMethodPointer.element
     val expr = startElement as PsiMethodCallExpression?
     if (method == null || expr == null) return null
-    return ReplaceMethodCallFix(expr, method)
+    return ReplaceMethodCallFix(PsiTreeUtil.findSameElementInCopy(expr, target), method)
   }
 }
 
