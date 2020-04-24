@@ -334,8 +334,10 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
   }
 }
 
-suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: suspend (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
+suspend fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false,
+                                                        useDefaultProjectSettings: Boolean = true, task: suspend (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true,
+                      useDefaultProjectSettings = useDefaultProjectSettings)
 }
 
 suspend fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: (suspend (VirtualFile) -> Path)? = null, task: suspend (Project) -> Unit) {
