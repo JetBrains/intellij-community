@@ -37,6 +37,7 @@ public class UrlClassLoaderTest {
 
   @Test
   public void testBootstrapResources() {
+    //noinspection SpellCheckingInspection
     String name = JavaVersion.current().feature > 8 ? "META-INF/services/java.nio.file.spi.FileSystemProvider"
                                                     : "com/sun/xml/internal/messaging/saaj/soap/LocalStrings.properties";
     assertNotNull(ClassLoader.getSystemResourceAsStream(name));
@@ -104,7 +105,7 @@ public class UrlClassLoaderTest {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
         }
 
-        List<Future> futures = new ArrayList<>();
+        List<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < threadCount; i++) {
           futures.add(executor.submit(() -> {
             for (String name : namesToLoad) {
@@ -119,7 +120,7 @@ public class UrlClassLoaderTest {
           }));
         }
 
-        for (Future future : futures) {
+        for (Future<?> future : futures) {
           future.get();
         }
       }
@@ -133,17 +134,17 @@ public class UrlClassLoaderTest {
   @Test
   public void testInvalidJarsInClassPath() throws IOException {
     String entryName = "test_res_dir/test_res.txt";
-    File theGood = createTestJar(createTestFile(tempDir.getRoot(), "1_normal.jar"), entryName, "-");
-    File theBad = createTestFile(tempDir.getRoot(), "2_broken.jar", new String(new char[1024]));
+    File theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-");
+    File theBad = tempDir.newFile("2_broken.jar", new byte[1024]);
 
-    UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).useLazyClassloadingCaches(false).get();
+    UrlClassLoader flat = UrlClassLoader.build().urls(theBad.toURI().toURL(), theGood.toURI().toURL()).get();
     assertNotNull(findResource(flat, entryName, false));
 
     String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
                      Attributes.Name.CLASS_PATH + ": " + theBad.toURI().toURL() + " " + theGood.toURI().toURL() + "\n\n";
-    File theUgly = createTestJar(createTestFile(tempDir.getRoot(), ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
+    File theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content);
 
-    UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).useLazyClassloadingCaches(false).get();
+    UrlClassLoader recursive = UrlClassLoader.build().urls(theUgly.toURI().toURL()).get();
     assertNotNull(findResource(recursive, entryName, false));
   }
 
@@ -151,7 +152,7 @@ public class UrlClassLoaderTest {
   public void testDirEntry() throws IOException {
     String resourceDirName = "test_res_dir";
     String resourceDirName2 = "test_res_dir2";
-    File theGood = createTestJar(createTestFile(tempDir.getRoot(), "1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
+    File theGood = createTestJar(tempDir.newFile("1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
     UrlClassLoader flat = UrlClassLoader.build().urls(theGood.toURI().toURL()).get();
 
     String resourceDirNameWithSlash = resourceDirName + "/";

@@ -33,16 +33,15 @@ class JarLoader extends Loader {
     pair(Resource.Attribute.IMPL_VERSION, Attributes.Name.IMPLEMENTATION_VERSION),
     pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
-  @NotNull
+  private static final String NULL_STRING = "<null>";
+
   private final String myFilePath;
   private final ClassPath myConfiguration;
-  @NotNull
   private final URL myUrl;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private volatile Map<Resource.Attribute, String> myAttributes;
   private volatile String myClassPathManifestAttribute;
-  private static final String NULL_STRING = "<null>";
 
   JarLoader(@NotNull URL url, @NotNull File file, int index, @NotNull ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
@@ -105,8 +104,7 @@ class JarLoader extends Loader {
           Attributes manifestAttributes = myConfiguration.getManifestData(myUrl);
           if (manifestAttributes == null) {
             ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
-            InputStream zipEntryStream = entry != null ? zipFile.getInputStream(entry) : null;
-            manifestAttributes = loadManifestAttributes(zipFile, zipEntryStream);
+            if (entry != null) manifestAttributes = loadManifestAttributes(zipFile.getInputStream(entry));
             if (manifestAttributes == null) manifestAttributes = new Attributes(0);
             myConfiguration.cacheManifestData(myUrl, manifestAttributes);
           }
@@ -126,8 +124,7 @@ class JarLoader extends Loader {
   }
 
   @Nullable
-  protected Attributes loadManifestAttributes(@NotNull ZipFile zipFile, @Nullable InputStream stream) {
-    if (stream == null) return null;
+  private static Attributes loadManifestAttributes(InputStream stream) {
     try {
       try {
         return new Manifest(stream).getMainAttributes();
