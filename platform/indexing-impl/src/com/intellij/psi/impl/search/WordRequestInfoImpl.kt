@@ -23,6 +23,6 @@ internal data class WordRequestInfoImpl internal constructor(
   override fun getContainerName(): String? = containerName
 
   override fun getSearchSession(): SearchSession {
-    TODO("not implemented")
+    return SearchSession() // layered searches optimization is not applicable to model search, continue to search the old way
   }
 }
