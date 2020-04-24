@@ -11,6 +11,7 @@ import org.picocontainer.PicoContainer;
 /**
  * @deprecated Use {@link com.intellij.serviceContainer.LazyExtensionInstance}.
  */
+@Deprecated
 public abstract class AbstractExtensionPointBean implements PluginAware {
   private static final Logger LOG = Logger.getInstance(AbstractExtensionPointBean.class);
 
