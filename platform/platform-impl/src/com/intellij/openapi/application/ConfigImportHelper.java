@@ -27,7 +27,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -390,7 +389,7 @@ public final class ConfigImportHelper {
       return Collections.emptyList();
     }
 
-    Map<Path, FileTime> lastModified = new THashMap<>();
+    List<PathAndFileTime> lastModified = new ArrayList<>();
     for (Path child : candidates) {
       Path candidate = child, config = child.resolve(CONFIG);
       if (Files.isDirectory(config)) candidate = config;
@@ -406,19 +405,17 @@ public final class ConfigImportHelper {
         catch (IOException ignore) { }
       }
 
-      lastModified.put(candidate, max != null ? max : FileTime.fromMillis(0));
+      lastModified.add(new PathAndFileTime(candidate, max != null ? max : FileTime.fromMillis(0)));
     }
 
-    List<PathAndFileTime> result = ContainerUtil.map(lastModified.entrySet(),
-                                                     entry -> new PathAndFileTime(entry.getKey(), entry.getValue()));
-    result.sort((o1, o2) -> {
+    lastModified.sort((o1, o2) -> {
       int diff = o2.fileTime.compareTo(o1.fileTime);
       if (diff == 0) {
         diff = StringUtil.naturalCompare(o2.path.toString(), o1.path.toString());
       }
       return diff;
     });
-    return result;
+    return lastModified;
   }
 
   private static String getNameWithVersion(Path configDir) {
