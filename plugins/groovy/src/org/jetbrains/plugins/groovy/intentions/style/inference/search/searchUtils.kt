@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 
 
 internal fun searchWithClosureAvoidance(element: GrMethod, scope: SearchScope): List<PsiReference> {
-  val requestsCollector = SearchRequestCollector(SearchSession())
+  val requestsCollector = SearchRequestCollector(SearchSession(element))
   val collector: MutableList<PsiReference> = mutableListOf<PsiReference>()
   ReferencesSearch.searchOptimized(element, scope, false, requestsCollector) { ref -> collector.add(ref); true }
   val queries: MutableList<QuerySearchRequest> = requestsCollector.takeQueryRequests().toMutableList()
