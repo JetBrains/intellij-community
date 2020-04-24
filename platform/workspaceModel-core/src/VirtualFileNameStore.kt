@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.ide
+package com.intellij.workspace.api
 
 import gnu.trove.THashMap
 import org.jetbrains.annotations.TestOnly
 
 internal class VirtualFileNameStore {
-  private val generator = IdGenerator()
+  private val generator = IntIdGenerator()
   private val name2IdStore = THashMap<String, IdPerCount>()
   private val id2NameStore = THashMap<Int, String>()
 
@@ -58,7 +58,7 @@ private data class IdPerCount(val id: Int, var usageCount: Long) {
   override fun hashCode() = 31 * id.hashCode()
 }
 
-internal class IdGenerator {
+internal class IntIdGenerator {
   private var generator: Int = 0
   fun generateId() = ++generator
 

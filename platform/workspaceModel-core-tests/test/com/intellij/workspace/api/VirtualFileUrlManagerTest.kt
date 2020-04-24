@@ -1,17 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspace.jps
+package com.intellij.workspace.api
 
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 
 class VirtualFileUrlManagerTest {
-  private lateinit var virtualFileManager: VirtualFileUrlManagerImpl
+  private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager()
   }
 
   @Test

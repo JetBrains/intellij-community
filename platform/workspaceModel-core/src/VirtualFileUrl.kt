@@ -3,14 +3,6 @@ package com.intellij.workspace.api
 import java.io.File
 import java.nio.file.Path
 
-abstract class VirtualFileUrlManager {
-  abstract fun fromUrl(url: String): VirtualFileUrl
-  abstract fun fromPath(path: String): VirtualFileUrl
-  abstract fun getParentVirtualUrlById(id: Int): VirtualFileUrl?
-  abstract fun getUrlById(id: Int): String
-  abstract fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean
-}
-
 // TODO Do we want to make it inline?
 data class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlManager)
 {

@@ -1,6 +1,5 @@
 package com.intellij.workspace.api
 
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -27,7 +26,7 @@ internal fun TypedEntityStorageBuilder.addSampleEntity(stringProperty: String,
                                                        source: EntitySource = SampleEntitySource("test"),
                                                        booleanProperty: Boolean = false,
                                                        stringListProperty: MutableList<String> = ArrayList(),
-                                                       virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+                                                       virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager(),
                                                        fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
   return addEntity<ModifiableSampleEntity, SampleEntity>(source) {
     this.booleanProperty = booleanProperty
@@ -45,7 +44,7 @@ class SimplePropertiesInProxyBasedStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager()
   }
 
   @Test

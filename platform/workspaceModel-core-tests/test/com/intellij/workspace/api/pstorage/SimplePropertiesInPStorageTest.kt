@@ -3,7 +3,6 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.openapi.util.Ref
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -36,7 +35,7 @@ internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
                                                         source: EntitySource = PSampleEntitySource("test"),
                                                         booleanProperty: Boolean = false,
                                                         stringListProperty: MutableList<String> = ArrayList(),
-                                                        virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
+                                                        virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager(),
                                                         fileProperty: VirtualFileUrl = virtualFileManager.fromUrl(
                                                           "file:///tmp")): PSampleEntity {
   return addEntity(ModifiablePSampleEntity::class.java, source) {
@@ -55,7 +54,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager()
   }
 
   @Test

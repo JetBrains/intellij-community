@@ -5,7 +5,6 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.api.pstorage.references.ManyToOne
 import com.intellij.workspace.api.pstorage.references.MutableManyToOne
 import com.intellij.workspace.api.pstorage.references.OneToMany
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -154,7 +153,7 @@ class ReferencesInPStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager()
   }
 
   @Test

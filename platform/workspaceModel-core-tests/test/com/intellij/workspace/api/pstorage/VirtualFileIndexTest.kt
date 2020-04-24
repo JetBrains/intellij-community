@@ -9,7 +9,6 @@ import com.intellij.workspace.api.*
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlListProperty
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlNullableProperty
 import com.intellij.workspace.api.pstorage.indices.VirtualFileUrlProperty
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -91,7 +90,7 @@ class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManagerImpl()
+    virtualFileManager = VirtualFileUrlManager()
   }
 
   @Test
