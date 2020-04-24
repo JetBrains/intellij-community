@@ -1,47 +1,45 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.ide
 
-import com.intellij.util.containers.BidirectionalMap
+import gnu.trove.THashMap
 import org.jetbrains.annotations.TestOnly
 
 internal class VirtualFileNameStore {
   private val generator = IdGenerator()
-  private val nameStore = BidirectionalMap<String, IdPerCount>()
+  private val name2IdStore = THashMap<String, IdPerCount>()
+  private val id2NameStore = THashMap<Int, String>()
 
   fun generateIdForName(name: String): Int {
-    val idPerCount = nameStore[name]
+    val idPerCount = name2IdStore[name]
     if (idPerCount != null) {
       idPerCount.usageCount++
       return idPerCount.id
     } else {
       val id = generator.generateId()
-      nameStore[name] = IdPerCount(id, 1)
+      name2IdStore[name] = IdPerCount(id, 1)
+      id2NameStore[id] = name
       return id
     }
   }
 
   fun removeName(name: String) {
-    val idPerCount = nameStore[name] ?: return
+    val idPerCount = name2IdStore[name] ?: return
     if (idPerCount.usageCount == 1L) {
-      nameStore.remove(name)
-      generator.releaseId(idPerCount.id)
+      name2IdStore.remove(name)
+      id2NameStore.remove(idPerCount.id)
     } else {
       idPerCount.usageCount--
     }
   }
 
-  fun getNameForId(id: Int): String? {
-    val list = nameStore.getKeysByValue(IdPerCount(id, 1)) ?: return null
-    if (list.isEmpty()) return null
-    assert(list.size == 1)
-    return list[0]
-  }
+  fun getNameForId(id: Int): String? = id2NameStore[id]
 
-  fun getIdForName(name: String) = nameStore[name]?.id
+  fun getIdForName(name: String) = name2IdStore[name]?.id
 
   @TestOnly
   fun clear() {
-    nameStore.clear()
+    name2IdStore.clear()
+    id2NameStore.clear()
     generator.clear()
   }
 }
@@ -58,4 +56,14 @@ private data class IdPerCount(val id: Int, var usageCount: Long) {
   }
 
   override fun hashCode() = 31 * id.hashCode()
+}
+
+internal class IdGenerator {
+  private var generator: Int = 0
+  fun generateId() = ++generator
+
+  @TestOnly
+  fun clear() {
+    generator = 0
+  }
 }

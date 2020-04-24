@@ -29,7 +29,7 @@ class VirtualFileNameStoreTest {
     Assert.assertEquals(3, store.generateIdForName("c"))
     store.removeName("b")
     store.removeName("a")
-    Assert.assertEquals(2, store.generateIdForName("e"))
-    Assert.assertEquals(1, store.generateIdForName("f"))
+    Assert.assertEquals(4, store.generateIdForName("e"))
+    Assert.assertEquals(5, store.generateIdForName("f"))
   }
 }
