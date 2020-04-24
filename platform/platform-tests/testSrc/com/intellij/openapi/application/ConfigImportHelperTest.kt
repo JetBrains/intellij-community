@@ -102,14 +102,12 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       cfg173, cfg191, cfg182, cfg183, cfg181, cfg163, cfg172, cfg171, cfg161, cfg162, cfg10)
   }
 
-  @Test
-  fun `set keymap - old version`() {
+  @Test fun `set keymap - old version`() {
     doKeyMapTest("2016.4", isMigrationExpected = true)
     doKeyMapTest("2019.1", isMigrationExpected = true)
   }
 
-  @Test
-  fun `set keymap - new version`() {
+  @Test fun `set keymap - new version`() {
     doKeyMapTest("2019.2", isMigrationExpected = false)
     doKeyMapTest("2019.3", isMigrationExpected = false)
   }
