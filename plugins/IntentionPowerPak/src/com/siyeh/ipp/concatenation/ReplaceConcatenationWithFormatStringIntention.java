@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
@@ -44,13 +44,15 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
     }
     CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
-    if (HighlightingFeature.TEXT_BLOCKS.isAvailable(element)) {
+    if (HighlightUtil.Feature.TEXT_BLOCKS.isAvailable(element)) {
       appendFormatString(expression, formatString, false, newExpression);
       newExpression.append(".formatted(");
     } else {
       newExpression.append("java.lang.String.format(");
       appendFormatString(expression, formatString, false, newExpression);
-      newExpression.append(", ");
+      if (!formatParameters.isEmpty()) {
+        newExpression.append(", ");
+      }
     }
     newExpression.append(StreamEx.of(formatParameters).map(commentTracker::text).joining(", "));
     newExpression.append(')');
@@ -59,7 +61,7 @@ public class ReplaceConcatenationWithFormatStringIntention extends MutablyNamedI
 
   @Override
   protected String getTextForElement(PsiElement element) {
-    return IntentionPowerPackBundle.message(HighlightingFeature.TEXT_BLOCKS.isAvailable(element)
+    return IntentionPowerPackBundle.message(HighlightUtil.Feature.TEXT_BLOCKS.isAvailable(element)
                                             ? "replace.concatenation.with.format.string.intention.name.formatted"
                                             : "replace.concatenation.with.format.string.intention.name");
   }
