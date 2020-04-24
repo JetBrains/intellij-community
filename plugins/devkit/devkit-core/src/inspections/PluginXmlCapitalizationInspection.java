@@ -163,7 +163,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     if (attributeType != String.class) return;
 
     final PsiElement declaration = childrenDescription.getDeclaration(extension.getManager().getProject());
-    if (declaration instanceof PsiField) {
+    if (declaration instanceof PsiModifierListOwner) {
       final Nls.Capitalization capitalization = NlsInfo.getCapitalization((PsiModifierListOwner)declaration);
       if (capitalization == Nls.Capitalization.NotSpecified) return;
 
