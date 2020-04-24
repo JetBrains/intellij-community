@@ -40,8 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
+import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -321,7 +320,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testUncOperations() throws IOException {
     assumeWindows();
-    Path uncRootPath = Paths.get("\\\\127.0.0.1\\" + tempDir.getRoot().getPath().replaceAll("^([A-Z]):", "$1\\$"));
+    Path uncRootPath = Paths.get(toLocalUncPath(tempDir.getRoot().getPath()));
     assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
 
     VirtualFile uncRootFile = myFS.refreshAndFindFileByPath(uncRootPath.toString());

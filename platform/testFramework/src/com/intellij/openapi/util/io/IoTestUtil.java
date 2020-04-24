@@ -355,4 +355,9 @@ public class IoTestUtil {
       return false;
     }
   }
+
+  /* "C:\path" -> "\\127.0.0.1\C$\path" */
+  public static @NotNull String toLocalUncPath(@NotNull String localPath) {
+    return "\\\\127.0.0.1\\" + localPath.charAt(0) + '$' + localPath.substring(2);
+  }
 }
