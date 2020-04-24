@@ -9,7 +9,6 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -17,9 +16,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -27,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableFactory;
 import com.intellij.openapi.util.Segment;
@@ -58,7 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 public class RefManagerImpl extends RefManager {
-  private static final ExtensionPointName<RefGraphAnnotator> EP_NAME = ExtensionPointName.create("com.intellij.refGraphAnnotator");
+  public static final ExtensionPointName<RefGraphAnnotator> EP_NAME = ExtensionPointName.create("com.intellij.refGraphAnnotator");
   private static final Logger LOG = Logger.getInstance(RefManager.class);
 
   private long myLastUsedMask = 0x0800_0000; // guarded by this
@@ -87,10 +83,6 @@ public class RefManagerImpl extends RefManager {
   private final Map<Key, RefManagerExtension> myExtensions = new THashMap<>();
   private final Map<Language, RefManagerExtension> myLanguageExtensions = new HashMap<>();
   private final Interner<String> myNameInterner = new StringInterner();
-  private final Disposable myParentDisposable = new Disposable() {
-    @Override
-    public void dispose() { }
-  };
 
   public RefManagerImpl(@NotNull Project project, @Nullable AnalysisScope scope, @NotNull GlobalInspectionContext context) {
     myProject = project;
@@ -112,13 +104,6 @@ public class RefManagerImpl extends RefManager {
         getRefModule(module);
       }
     }
-
-    EP_NAME.addExtensionPointListener(new ExtensionPointListener<RefGraphAnnotator>() {
-      @Override
-      public void extensionRemoved(@NotNull RefGraphAnnotator graphAnnotator, @NotNull PluginDescriptor pluginDescriptor) {
-        myGraphAnnotators.remove(graphAnnotator);
-      }
-    }, myParentDisposable);
   }
 
   String internName(@NotNull String name) {
@@ -145,7 +130,6 @@ public class RefManagerImpl extends RefManager {
   }
 
   public void cleanup() {
-    Disposer.dispose(myParentDisposable);
     myScope = null;
     myRefProject = null;
     myRefTable.clear();
@@ -213,6 +197,10 @@ public class RefManagerImpl extends RefManager {
         ((RefGraphAnnotatorEx)annotator).initialize(this);
       }
     }
+  }
+
+  public void unregisterAnnotator(RefGraphAnnotator annotator) {
+    myGraphAnnotators.remove(annotator);
   }
 
   @Override
