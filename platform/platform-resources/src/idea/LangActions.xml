@@ -442,7 +442,7 @@
       <add-to-group group-id="EditorPopupMenu2"/>
     </action>
 
-    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup" popup="true">
+    <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
