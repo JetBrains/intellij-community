@@ -118,7 +118,7 @@ public class HelpTooltip {
 
   private BooleanSupplier masterPopupOpenCondition;
 
-  private ComponentPopupBuilder myPopupBuilder;
+  protected ComponentPopupBuilder myPopupBuilder;
   private Dimension myPopupSize;
   private JBPopup myPopup;
   private final Alarm popupAlarm = new Alarm();
