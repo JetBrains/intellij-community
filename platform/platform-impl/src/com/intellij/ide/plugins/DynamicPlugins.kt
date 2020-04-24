@@ -20,9 +20,12 @@ import com.intellij.lang.Language
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
+import com.intellij.notification.NotificationsManager
+import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
@@ -380,6 +383,8 @@ object DynamicPlugins {
           Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
           PresentationFactory.clearPresentationCaches()
           IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
+          ActionToolbarImpl.updateAllToolbarsImmediately()
+          (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
           for (project in ProjectUtil.getOpenProjects()) {
             (project.messageBus as MessageBusImpl).clearPublisherCache()

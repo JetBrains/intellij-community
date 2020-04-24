@@ -95,6 +95,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
 
+  public void expireAll() {
+    for (Notification notification : getNotificationsOfType(Notification.class, null)) {
+      notification.expire();
+    }
+ }
+
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable final Project project) {
     final List<T> result = new ArrayList<>();
