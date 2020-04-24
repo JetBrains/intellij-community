@@ -58,8 +58,6 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
   // todo: file resolving: check that urlToFileCache still needed
   protected val urlToFileCache: ConcurrentMap<Url, VirtualFile> = ConcurrentHashMap()
 
-  var processBreakpointConditionsAtIdeSide: Boolean = false
-
   private val connectedListenerAdded = AtomicBoolean()
   private val breakpointsInitiated = AtomicBoolean()
 
