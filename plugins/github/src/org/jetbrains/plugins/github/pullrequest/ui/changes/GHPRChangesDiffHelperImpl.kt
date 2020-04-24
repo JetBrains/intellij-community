@@ -16,10 +16,10 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImp
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewThreadMapping
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangeDiffData
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 
-class GHPRChangesDiffHelperImpl(private val dataProvider: GHPRDataProvider,
+class GHPRChangesDiffHelperImpl(private val reviewDataProvider: GHPRReviewDataProvider,
                                 private val avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                 private val currentUser: GHUser)
   : GHPRChangesDiffHelper {
@@ -40,7 +40,7 @@ class GHPRChangesDiffHelperImpl(private val dataProvider: GHPRDataProvider,
       val diffData = provider.findChangeDiffData(change) ?: return null
       val createReviewCommentHelper = GHPRCreateDiffCommentParametersHelper(diffData.commitSha, diffData.filePath, diffData.linesMapper)
 
-      return GHPRDiffReviewSupportImpl(dataProvider.reviewData, diffData.diffRanges,
+      return GHPRDiffReviewSupportImpl(reviewDataProvider, diffData.diffRanges,
                                        { mapThread(diffData, it) },
                                        createReviewCommentHelper,
                                        avatarIconsProviderFactory, currentUser)

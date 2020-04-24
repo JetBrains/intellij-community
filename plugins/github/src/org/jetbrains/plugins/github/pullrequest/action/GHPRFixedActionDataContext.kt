@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.EditorFactory
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataContext,
                                                       dataProvider: GHPRDataProvider,

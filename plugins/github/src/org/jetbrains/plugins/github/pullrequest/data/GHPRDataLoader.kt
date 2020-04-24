@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 internal interface GHPRDataLoader : Disposable {
   @CalledInAwt

@@ -10,7 +10,7 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.ui.GithubMergeCommitMessageDialog
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
@@ -19,8 +19,6 @@ import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import org.jetbrains.plugins.github.util.handleOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
-import kotlin.properties.ObservableProperty
-import kotlin.reflect.KProperty
 
 class GHPRStateModelImpl(private val project: Project,
                          private val dataProvider: GHPRDataProvider,

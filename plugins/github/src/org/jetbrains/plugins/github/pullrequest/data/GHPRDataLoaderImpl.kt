@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 internal class GHPRDataLoaderImpl(private val dataProviderFactory: (GHPRIdentifier) -> GHPRDataProvider)
   : GHPRDataLoader {

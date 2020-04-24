@@ -25,10 +25,10 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDetailsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanel
@@ -108,7 +108,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     val commitsModel = GHPRCommitsModelImpl()
     val cumulativeChangesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider, avatarIconsProviderFactory, dataContext.securityService.currentUser)
+    val diffHelper = GHPRChangesDiffHelperImpl(dataProvider.reviewData, avatarIconsProviderFactory, dataContext.securityService.currentUser)
     val changesLoadingModel = createChangesLoadingModel(commitsModel, cumulativeChangesModel, diffHelper, dataProvider.changesData,
                                                         disposable)
 
