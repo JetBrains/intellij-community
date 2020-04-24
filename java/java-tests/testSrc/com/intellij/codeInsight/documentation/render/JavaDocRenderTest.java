@@ -37,11 +37,25 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "  /** doc */\n" +
               "  int a;\n" +
               "}\n", true);
-    verifyFoldingState("[FoldRegion +(10:23), placeholder='']");
+    verifyFoldingState("[FoldRegion +(11:24), placeholder='']");
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
     checkResultByText("class C {\n" +
-                      "<caret>  /** doc */\n" +
-                      "  int a;\n" +
+                      "  /** doc */\n" +
+                      "<caret>  int a;\n" +
+                      "}\n");
+  }
+
+  public void testTypingAtLineStart() {
+    configure("class C {\n" +
+              "/** doc */\n" +
+              "int a;<caret>\n" +
+              "}\n", true);
+    verifyFoldingState("[FoldRegion +(10:21), placeholder='']");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    type(' ');
+    checkResultByText("class C {\n" +
+                      "/** doc */\n" +
+                      " <caret>int a;\n" +
                       "}\n");
   }
 
@@ -53,14 +67,14 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyFoldingState("[]");
     verifyItem(12, 22, null);
     toggleItem();
-    verifyFoldingState("[FoldRegion +(9:22), placeholder='']");
+    verifyFoldingState("[FoldRegion +(10:23), placeholder='']");
     verifyItem(12, 22, "doc");
     toggleItem();
     verifyFoldingState("[]");
     verifyItem(12, 22, null);
     runWriteCommand(() -> getEditor().getDocument().setText(getEditor().getDocument().getText().replace("doc", "another")));
     toggleItem();
-    verifyFoldingState("[FoldRegion +(9:26), placeholder='']");
+    verifyFoldingState("[FoldRegion +(10:27), placeholder='']");
     verifyItem(12, 26, "another");
   }
 

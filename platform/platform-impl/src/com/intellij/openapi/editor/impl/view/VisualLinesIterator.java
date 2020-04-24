@@ -87,6 +87,18 @@ public class VisualLinesIterator {
            myNextLocation.offset;
   }
 
+  public int getDisplayedLogicalLine() {
+    checkEnd();
+    int foldIndex = myLocation.foldRegion;
+    if (foldIndex < myFoldRegions.length) {
+      FoldRegion foldRegion = myFoldRegions[foldIndex];
+      if (foldRegion.getPlaceholderText().isEmpty() && foldRegion.getStartOffset() == myLocation.offset) {
+        return myDocument.getLineNumber(foldRegion.getEndOffset());
+      }
+    }
+    return myLocation.logicalLine - 1;
+  }
+
   public int getStartLogicalLine() {
     checkEnd();
     return myLocation.logicalLine - 1;

@@ -628,8 +628,8 @@ public class EditorImplTest extends AbstractEditorTest {
     addCollapsedFoldRegion(1, 2, "");
     right();
     Caret caret = getEditor().getCaretModel().getPrimaryCaret();
-    assertEquals(1, caret.getOffset());
-    assertEquals(new LogicalPosition(0, 1), caret.getLogicalPosition());
+    assertEquals(2, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 2), caret.getLogicalPosition());
     assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
     right();
     assertEquals(3, caret.getOffset());
