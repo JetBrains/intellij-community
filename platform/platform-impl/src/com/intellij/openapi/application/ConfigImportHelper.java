@@ -228,7 +228,7 @@ public final class ConfigImportHelper {
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
     Path pluginsDir = currentConfig.getFileSystem().getPath(PathManager.getPluginsPath());
-    if (Files.exists(pluginsDir) && !FileUtil.isAncestor(currentConfig.toString(), pluginsDir.toString(), false)) {
+    if (Files.exists(pluginsDir) && !pluginsDir.startsWith(currentConfig)) {
       File pluginsBackup = new File(tempBackupDir, PLUGINS);
       log.info("Backup plugins dir separately from " + pluginsDir + " to " + pluginsBackup);
       if (pluginsBackup.mkdir()) {
