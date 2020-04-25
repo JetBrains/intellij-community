@@ -132,7 +132,7 @@
     <extensionPoint qualifiedName="com.intellij.variableTypeCalculator" interface="com.intellij.codeInsight.template.macro.VariableTypeCalculator" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jreProvider" interface="com.intellij.execution.ui.JreProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.sdkEditorAdditionalOptionsProvider" interface="com.intellij.openapi.SdkEditorAdditionalOptionsProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory"/>
+    <extensionPoint qualifiedName="com.intellij.exceptionFilter" interface="com.intellij.execution.filters.ExceptionFilterFactory" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler.buildTargetScopeProvider"
                     interface="com.intellij.compiler.impl.BuildTargetScopeProvider" dynamic="true"/>
