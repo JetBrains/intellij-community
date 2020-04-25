@@ -72,11 +72,6 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   @Override
-  public TextEditorHighlightingPass @NotNull [] createPassesForVisibleArea() {
-    return createPassesForEditor();
-  }
-
-  @Override
   public TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
     List<TextEditorHighlightingPass> passes = getPasses(ArrayUtilRt.EMPTY_INT_ARRAY);
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
