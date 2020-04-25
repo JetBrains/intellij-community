@@ -9,6 +9,6 @@ import java.nio.file.Path;
 @ApiStatus.Internal
 public interface RestoreDefaultConfigCustomizer {
 
-  void removeCurrentConfigDir(@NotNull Path currentConfig);
+  void removeCurrentConfigDir(@NotNull Path currentConfig) throws Exception;
 
 }
