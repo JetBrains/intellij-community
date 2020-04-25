@@ -187,9 +187,11 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.customTargetExpressionStubType"
-                    interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"/>
+                    interface="com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.customClassStubType"
-                    interface="com.jetbrains.python.psi.impl.stubs.PyCustomClassStubType"/>
+                    interface="com.jetbrains.python.psi.impl.stubs.PyCustomClassStubType"
+                    dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.visitorFilter"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
