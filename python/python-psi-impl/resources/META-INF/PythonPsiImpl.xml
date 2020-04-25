@@ -202,6 +202,9 @@
     <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider"
                     interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.importCandidateProvider"
+                    interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -270,9 +273,5 @@
 
 
   </extensions>
-
-  <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
-  </extensionPoints>
 
 </idea-plugin>
