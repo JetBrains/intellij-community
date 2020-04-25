@@ -15,43 +15,47 @@
  */
 package com.intellij.util.indexing.impl;
 
-import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
-public final class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
-  private final DataExternalizer<Collection<K>> myKeyCollectionExternalizer;
-  private final IndexId<K, ?> myIndexId;
+public final class CollectionDataExternalizer<K> implements DataExternalizer<Collection<K>> {
+  private final DataExternalizer<K> myDataExternalizer;
 
-  public InputIndexDataExternalizer(KeyDescriptor<K> keyDescriptor, IndexId<K, ?> indexId) {
-    myKeyCollectionExternalizer = new CollectionDataExternalizer<>(keyDescriptor);
-    myIndexId = indexId;
+  public CollectionDataExternalizer(@NotNull DataExternalizer<K> dataExternalizer) {
+    myDataExternalizer = dataExternalizer;
   }
 
   @Override
   public void save(@NotNull DataOutput out, @NotNull Collection<K> value) throws IOException {
-    try {
-      myKeyCollectionExternalizer.save(out, value);
-    }
-    catch (IllegalArgumentException e) {
-      throw new IOException("Error saving data for index " + myIndexId, e);
+    DataInputOutputUtil.writeINT(out, value.size());
+    for (K key : value) {
+      myDataExternalizer.save(out, key);
     }
   }
 
   @NotNull
   @Override
   public Collection<K> read(@NotNull DataInput in) throws IOException {
-    try {
-      return myKeyCollectionExternalizer.read(in);
+    int size = DataInputOutputUtil.readINT(in);
+    if (size == 0) {
+      return Collections.emptyList();
     }
-    catch (IllegalArgumentException e) {
-      throw new IOException("Error reading data for index " + myIndexId, e);
+    if (size == 1) {
+      return Collections.singletonList(myDataExternalizer.read(in));
     }
+    List<K> list = new ArrayList<>(size);
+    for (int idx = 0; idx < size; idx++) {
+      list.add(myDataExternalizer.read(in));
+    }
+    return list;
   }
 }
