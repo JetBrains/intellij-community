@@ -115,9 +115,10 @@ public final class ExtensionProcessingHelper {
   @ApiStatus.Internal
   public static <@NotNull K, @NotNull T, @NotNull V> @NotNull V computeIfAbsent(@NotNull ExtensionPointImpl<T> point,
                                                                                 @NotNull K key,
-                                                                                @NotNull Function<@NotNull K, @NotNull V> valueProducer) {
-    ConcurrentMap<K, V> cache = point.getCacheMap();
-    return cache.computeIfAbsent(key, valueProducer);
+                                                                                @NotNull Function<K, V> valueProducer) {
+    // Or to have double look-up (map for valueProducer, map for key), or using of composite key. Java GC is quite good, so, composite key.
+    ConcurrentMap<SimpleImmutableEntry<K, Function<K, V>>, V> cache = point.getCacheMap();
+    return cache.computeIfAbsent(new SimpleImmutableEntry<>(key, valueProducer), entry -> valueProducer.apply(entry.getKey()));
   }
 
   private static <CACHE_KEY, K, T, V> @Nullable V doGetByKey(@NotNull ExtensionPointImpl<T> point,
