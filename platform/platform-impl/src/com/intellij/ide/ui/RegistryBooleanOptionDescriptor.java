@@ -53,7 +53,9 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
     String title = IdeBundle.message("dialog.title.restart.required");
     String message = IdeBundle
       .message("dialog.message.must.be.restarted.for.changes.to.take.effect", ApplicationNamesInfo.getInstance().getFullProductName());
-    String action = app.isRestartCapable() ? "Restart" : "Shutdown";
+    String action = app.isRestartCapable()
+                    ? IdeBundle.message("action.RegistryBooleanOptionDescriptor.restart.text")
+                    : IdeBundle.message("action.RegistryBooleanOptionDescriptor.shutdown.text");
     String okText = IdeBundle.message("button.now", action);
     String cancelText = IdeBundle.message("button.later", action);
 
