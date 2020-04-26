@@ -1589,7 +1589,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         if (errorDescription.equals(description)) {
           errorRemoved[0] = true;
 
-          List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(document);
+          List<ProgressableTextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(document);
           GeneralHighlightingPass ghp = null;
           for (TextEditorHighlightingPass pass : passes) {
             if (pass instanceof GeneralHighlightingPass && pass.getId() == Pass.UPDATE_ALL) {

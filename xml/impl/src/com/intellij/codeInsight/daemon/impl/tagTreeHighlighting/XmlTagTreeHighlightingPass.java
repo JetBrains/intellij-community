@@ -161,10 +161,8 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    if (myDocument != null) {
-      List<HighlightInfo> infos = getHighlights();
-      UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
-    }
+    List<HighlightInfo> infos = getHighlights();
+    UpdateHighlightersUtil.setHighlightersToSingleEditor(myProject, myEditor, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
   }
 
   public List<HighlightInfo> getHighlights() {

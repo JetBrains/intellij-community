@@ -22,8 +22,10 @@ import java.util.List;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
-  @Nullable protected final Document myDocument;
-  @NotNull protected final Project myProject;
+  @NotNull
+  protected final Document myDocument;
+  @NotNull
+  protected final Project myProject;
   private final boolean myRunIntentionPassAfter;
   private final long myInitialDocStamp;
   private final long myInitialPsiStamp;
@@ -33,14 +35,14 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private volatile boolean myDumb;
   private EditorColorsScheme myColorsScheme;
 
-  protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document, boolean runIntentionPassAfter) {
+  protected TextEditorHighlightingPass(@NotNull final Project project, @NotNull final Document document, boolean runIntentionPassAfter) {
     myDocument = document;
     myProject = project;
     myRunIntentionPassAfter = runIntentionPassAfter;
-    myInitialDocStamp = document == null ? 0 : document.getModificationStamp();
+    myInitialDocStamp = document.getModificationStamp();
     myInitialPsiStamp = PsiModificationTracker.SERVICE.getInstance(myProject).getModificationCount();
   }
-  protected TextEditorHighlightingPass(@NotNull final Project project, @Nullable final Document document) {
+  protected TextEditorHighlightingPass(@NotNull final Project project, @NotNull Document document) {
     this(project, document, true);
   }
 
@@ -74,13 +76,9 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
       return false;
     }
 
-    if (myDocument != null) {
-      if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      return file != null && file.isValid();
-    }
-
-    return true;
+    if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    return file != null && file.isValid();
   }
 
   @Override
@@ -88,7 +86,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (!isValid()) return; // Document has changed.
     if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
       Document document = getDocument();
-      PsiFile file = document == null ? null : PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file != null) {
         DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
       }
@@ -121,7 +119,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myCompletionPredecessorIds = completionPredecessorIds;
   }
 
-  @Nullable
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }

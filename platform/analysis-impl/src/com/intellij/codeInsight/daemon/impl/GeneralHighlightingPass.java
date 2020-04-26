@@ -100,13 +100,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myFile;
   }
 
-  @Override
-  public @NotNull Document getDocument() {
-    // this pass always get not-null document
-    //noinspection ConstantConditions
-    return super.getDocument();
-  }
-
   private static final Key<AtomicInteger> HIGHLIGHT_VISITOR_INSTANCE_COUNT = new Key<>("HIGHLIGHT_VISITOR_INSTANCE_COUNT");
   private HighlightVisitor @NotNull [] cloneHighlightVisitors() {
     int oldCount = incVisitorUsageCount(1);
