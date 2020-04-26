@@ -59,7 +59,7 @@ private fun uploadAllFiles(currentState: List<JpsCacheFileInfo>,
       executor.execute {
         val file = File(cachesFolder, fileInfo.path)
         assert(file.exists()) { "can't find $file" }
-        HttpRequests.put(fileInfo.getUrl(baseUrl), null).write(file.readBytes())
+        HttpRequests.put(fileInfo.getUrl(baseUrl), null).write(fileInfo.forUploading(cachesFolder))
         count.decrementAndGet()
       }
     }

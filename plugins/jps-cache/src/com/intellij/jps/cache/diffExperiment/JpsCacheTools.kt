@@ -3,11 +3,14 @@ package com.intellij.jps.cache.diffExperiment
 
 import com.google.common.collect.Maps
 import com.google.common.hash.Hashing
+import com.google.common.io.CountingInputStream
 import com.google.common.io.Files
 import com.google.gson.Gson
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.InputStream
 import java.io.Reader
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
@@ -18,10 +21,39 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 import kotlin.math.ceil
 import java.nio.file.Files as NioFiles
 
 data class JpsCacheFileInfo(val size: Long, val path: String, @Volatile var hash: Long = 0) {
+  companion object {
+    private const val minSizeToZip = 1024
+
+    private fun gzip(input: ByteArray): ByteArray {
+      val output = ByteArrayOutputStream()
+      GZIPOutputStream(output).use { gzip ->
+        gzip.write(input)
+      }
+      return output.toByteArray()
+    }
+  }
+
+  private val shouldArchive = size > minSizeToZip
+
+  fun forUploading(srcFolder: File): ByteArray =
+    File(srcFolder, path).readBytes().let { bytes -> if (shouldArchive) gzip(bytes) else bytes }
+
+  fun afterDownloading(destFolder: File, dataStream: InputStream): Long {
+    val countingDataStream = CountingInputStream(dataStream)
+    val dest = File(destFolder, path).apply {
+      parentFile.mkdirs()
+    }
+    (if (shouldArchive) GZIPInputStream(countingDataStream) else countingDataStream).use { stream ->
+      dest.writeBytes(stream.readBytes())
+    }
+    return countingDataStream.count
+  }
   fun getUrl(baseUrl: String) = "$baseUrl/$path/$hash"
 }
 
