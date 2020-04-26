@@ -48,7 +48,12 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     e.presentation.putClientProperty(PROP_PREFIX, getPrefix(e.place))
 
     if (e.presentation.isEnabledAndVisible) {
-      val review = pendingReviewFuture?.getNow(null)
+      val review = try {
+        pendingReviewFuture?.getNow(null)
+      }
+      catch (e: Exception) {
+        null
+      }
       val pendingReview = review != null
       val comments = review?.comments?.totalCount
 
@@ -71,10 +76,15 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT)
-    val reviewDataProvider = dataContext.pullRequestDataProvider?.reviewData ?: return
+    val reviewDataProvider = dataContext.pullRequestDataProvider.reviewData
     val pendingReviewFuture = reviewDataProvider.loadPendingReview()
     if (!pendingReviewFuture.isDone) return
-    val pendingReview = pendingReviewFuture.getNow(null)
+    val pendingReview = try {
+      pendingReviewFuture.getNow(null)
+    }
+    catch (e: Exception) {
+      null
+    }
     val parentComponent = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: return
 
     var cancelRunnable: (() -> Unit)? = null
