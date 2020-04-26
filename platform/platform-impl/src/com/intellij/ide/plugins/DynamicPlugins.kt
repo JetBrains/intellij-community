@@ -104,10 +104,6 @@ object DynamicPlugins {
       return allowLoadUnloadSynchronously(descriptor)
     }
 
-    val projectManager = ProjectManager.getInstance()
-    val anyProject = projectManager.openProjects.firstOrNull() ?: projectManager.defaultProject
-    val anyModule = projectManager.openProjects.asSequence().flatMap { ModuleManager.getInstance(it).modules.asSequence() }.firstOrNull()
-
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
 
     val app = ApplicationManager.getApplication()
@@ -134,6 +130,10 @@ object DynamicPlugins {
 
     val extensions = descriptor.extensions
     if (extensions != null) {
+      val openedProjects = ProjectUtil.getOpenProjects()
+      val anyProject = openedProjects.firstOrNull() ?: ProjectManager.getInstance().defaultProject
+      val anyModule = openedProjects.firstOrNull()?.let { ModuleManager.getInstance(it).modules.firstOrNull() }
+
       for (epName in extensions.keys) {
         val pluginExtensionPoint = findPluginExtensionPoint(baseDescriptor ?: descriptor, epName)
         if (pluginExtensionPoint != null) {
@@ -147,7 +147,8 @@ object DynamicPlugins {
           continue
         }
 
-        @Suppress("RemoveExplicitTypeArguments") val ep =
+        @Suppress("RemoveExplicitTypeArguments")
+        val ep =
           app.extensionArea.getExtensionPointIfRegistered<Any>(epName)
           ?: anyProject.extensionArea.getExtensionPointIfRegistered<Any>(epName)
           ?: anyModule?.extensionArea?.getExtensionPointIfRegistered<Any>(epName)

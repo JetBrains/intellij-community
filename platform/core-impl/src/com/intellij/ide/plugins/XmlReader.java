@@ -274,25 +274,19 @@ final class XmlReader {
       ContainerDescriptor containerDescriptor;
       switch (qualifiedExtensionPointName) {
         case APPLICATION_SERVICE:
-          containerDescriptor = descriptor.myAppContainerDescriptor;
+          containerDescriptor = descriptor.appContainerDescriptor;
           break;
         case PROJECT_SERVICE:
-          containerDescriptor = descriptor.myProjectContainerDescriptor;
+          containerDescriptor = descriptor.projectContainerDescriptor;
           break;
         case MODULE_SERVICE:
-          containerDescriptor = descriptor.myModuleContainerDescriptor;
+          containerDescriptor = descriptor.moduleContainerDescriptor;
           break;
         default:
           if (epNameToExtensions == null) {
             epNameToExtensions = new LinkedHashMap<>();
           }
-
-          List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
-          if (list == null) {
-            list = new SmartList<>();
-            epNameToExtensions.put(qualifiedExtensionPointName, list);
-          }
-          list.add(extensionElement);
+          epNameToExtensions.computeIfAbsent(qualifiedExtensionPointName, __ -> new SmartList<>()).add(extensionElement);
           continue;
       }
 
@@ -319,14 +313,14 @@ final class XmlReader {
       String area = element.getAttributeValue(ATTRIBUTE_AREA);
       ContainerDescriptor containerDescriptor;
       if (area == null) {
-        containerDescriptor = descriptor.myAppContainerDescriptor;
+        containerDescriptor = descriptor.appContainerDescriptor;
       }
       else {
         if ("IDEA_PROJECT".equals(area)) {
-          containerDescriptor = descriptor.myProjectContainerDescriptor;
+          containerDescriptor = descriptor.projectContainerDescriptor;
         }
         else if ("IDEA_MODULE".equals(area)) {
-          containerDescriptor = descriptor.myModuleContainerDescriptor;
+          containerDescriptor = descriptor.moduleContainerDescriptor;
         }
         else {
           PluginManagerCore.getLogger().error("Unknown area: " + area);

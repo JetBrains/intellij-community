@@ -4,7 +4,6 @@ package com.intellij.ide.plugins;
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.openapi.components.ComponentConfig;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.JDOMUtil;
@@ -65,9 +64,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   // LinkedHashMap for predictable register order
   private @Nullable LinkedHashMap<String, List<Element>> epNameToExtensionElements;
 
-  final ContainerDescriptor myAppContainerDescriptor = new ContainerDescriptor();
-  final ContainerDescriptor myProjectContainerDescriptor = new ContainerDescriptor();
-  final ContainerDescriptor myModuleContainerDescriptor = new ContainerDescriptor();
+  final ContainerDescriptor appContainerDescriptor = new ContainerDescriptor();
+  final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
+  final ContainerDescriptor moduleContainerDescriptor = new ContainerDescriptor();
 
   private List<PluginId> myModules;
   private ClassLoader myLoader;
@@ -81,7 +80,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private boolean myEnabled = true;
   private boolean myDeleted;
-  private boolean isExtensionsCleared = false;
+  private boolean isExtensionsCleared;
 
   boolean incomplete;
 
@@ -93,17 +92,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @ApiStatus.Internal
   public @NotNull ContainerDescriptor getApp() {
-    return myAppContainerDescriptor;
+    return appContainerDescriptor;
   }
 
   @ApiStatus.Internal
   public @NotNull ContainerDescriptor getProject() {
-    return myProjectContainerDescriptor;
+    return projectContainerDescriptor;
   }
 
   @ApiStatus.Internal
   public @NotNull ContainerDescriptor getModule() {
-    return myModuleContainerDescriptor;
+    return moduleContainerDescriptor;
   }
 
   @ApiStatus.Internal
@@ -215,23 +214,23 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         case "application-components":
           // because of x-pointer, maybe several application-components tag in document
-          readComponents(child, myAppContainerDescriptor);
+          readComponents(child, appContainerDescriptor);
           break;
 
         case "project-components":
-          readComponents(child, myProjectContainerDescriptor);
+          readComponents(child, projectContainerDescriptor);
           break;
 
         case "module-components":
-          readComponents(child, myModuleContainerDescriptor);
+          readComponents(child, moduleContainerDescriptor);
           break;
 
         case "applicationListeners":
-          XmlReader.readListeners(this, child, myAppContainerDescriptor);
+          XmlReader.readListeners(this, child, appContainerDescriptor);
           break;
 
         case "projectListeners":
-          XmlReader.readListeners(this, child, myProjectContainerDescriptor);
+          XmlReader.readListeners(this, child, projectContainerDescriptor);
           break;
 
         case "depends":
@@ -518,62 +517,60 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public @NotNull ContainerDescriptor getAppContainerDescriptor() {
-    return myAppContainerDescriptor;
+    return appContainerDescriptor;
   }
 
   public @NotNull ContainerDescriptor getProjectContainerDescriptor() {
-    return myProjectContainerDescriptor;
+    return projectContainerDescriptor;
   }
 
   public @NotNull ContainerDescriptor getModuleContainerDescriptor() {
-    return myModuleContainerDescriptor;
+    return moduleContainerDescriptor;
   }
 
   @ApiStatus.Internal
   public void registerExtensions(@NotNull ExtensionsAreaImpl area,
-                                 @NotNull ComponentManager componentManager,
                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                  @NotNull ContainerDescriptor containerDescriptor,
                                  @Nullable List<Runnable> listenerCallbacks) {
-    LinkedHashMap<String, List<Element>> extensions;
-    if (containerDescriptor == myAppContainerDescriptor) {
-      extensions = containerDescriptor.extensions;
-      if (extensions == null) {
-        if (epNameToExtensionElements == null) {
-          return;
-        }
-
-        Iterator<Map.Entry<String, List<Element>>> iterator = epNameToExtensionElements.entrySet().iterator();
-        while (iterator.hasNext()) {
-          Map.Entry<String, List<Element>> entry = iterator.next();
-          if (area.registerExtensions(entry.getKey(), entry.getValue(), rootDescriptor, componentManager, listenerCallbacks)) {
-            iterator.remove();
-            if (myAppContainerDescriptor.extensions == null) {
-              myAppContainerDescriptor.extensions = new LinkedHashMap<>();
-            }
-            addExtensionList(myAppContainerDescriptor.extensions, entry.getKey(), entry.getValue());
-          }
-        }
-        isExtensionsCleared = true;
-
-        if (epNameToExtensionElements.isEmpty()) {
-          epNameToExtensionElements = null;
-        }
-
-        return;
-      }
-      // else... it means that another application is created for the same set of plugins - at least, this case should be supported for tests
-    }
-    else {
-      extensions = epNameToExtensionElements;
-      if (extensions == null) {
-        return;
-      }
+    Map<String, List<Element>> extensions = containerDescriptor.extensions;
+    if (extensions != null) {
+      area.registerExtensions(extensions, rootDescriptor, listenerCallbacks);
+      return;
     }
 
-    extensions.forEach((name, list) -> {
-      area.registerExtensions(name, list, rootDescriptor, componentManager, listenerCallbacks);
-    });
+    if (epNameToExtensionElements == null) {
+      return;
+    }
+
+    // app container: in most cases will be only app-level extensions - to reduce map copying, assume that all extensions are app-level and then filter out
+    // project container: rest of extensions wil be mostly project level
+    // module container: just use rest, area will not register unrelated extension anyway as no registered point
+    containerDescriptor.extensions = epNameToExtensionElements;
+    if (containerDescriptor == moduleContainerDescriptor) {
+      epNameToExtensionElements = null;
+      area.registerExtensions(containerDescriptor.extensions, rootDescriptor, listenerCallbacks);
+      return;
+    }
+
+    LinkedHashMap<String, List<Element>> other = null;
+    Iterator<Map.Entry<String, List<Element>>> iterator = containerDescriptor.extensions.entrySet().iterator();
+    while (iterator.hasNext()) {
+      Map.Entry<String, List<Element>> entry = iterator.next();
+      if (!area.registerExtensions(entry.getKey(), entry.getValue(), rootDescriptor, listenerCallbacks)) {
+        iterator.remove();
+        if (other == null) {
+          other = new LinkedHashMap<>();
+        }
+        addExtensionList(other, entry.getKey(), entry.getValue());
+      }
+    }
+    isExtensionsCleared = true;
+    epNameToExtensionElements = other;
+
+    if (containerDescriptor.extensions.isEmpty()) {
+      containerDescriptor.extensions = Collections.emptyMap();
+    }
   }
 
   @Override
@@ -879,18 +876,15 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myActionElements.addAll(descriptor.myActionElements);
     }
 
-    myAppContainerDescriptor.merge(descriptor.myAppContainerDescriptor);
-    myProjectContainerDescriptor.merge(descriptor.myProjectContainerDescriptor);
-    myModuleContainerDescriptor.merge(descriptor.myModuleContainerDescriptor);
+    appContainerDescriptor.merge(descriptor.appContainerDescriptor);
+    projectContainerDescriptor.merge(descriptor.projectContainerDescriptor);
+    moduleContainerDescriptor.merge(descriptor.moduleContainerDescriptor);
   }
 
   private static void addExtensionList(@NotNull Map<String, List<Element>> map, @NotNull String name, @NotNull List<Element> list) {
-    List<Element> existingList = map.get(name);
-    if (existingList == null) {
-      map.put(name, list);
-    }
-    else {
-      existingList.addAll(list);
+    List<Element> mapList = map.computeIfAbsent(name, __ -> list);
+    if (mapList != list) {
+      mapList.addAll(list);
     }
   }
 

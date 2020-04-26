@@ -221,8 +221,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    for ((pluginDescriptor, rootDescriptor) in plugins) {
-      pluginDescriptor.registerExtensions(extensionArea, this, rootDescriptor, getContainerDescriptor(pluginDescriptor), listenerCallbacks)
+    for ((subDescriptor, mainDescriptor) in plugins) {
+      subDescriptor.registerExtensions(extensionArea, mainDescriptor, getContainerDescriptor(subDescriptor), listenerCallbacks)
     }
     activity?.end()
 

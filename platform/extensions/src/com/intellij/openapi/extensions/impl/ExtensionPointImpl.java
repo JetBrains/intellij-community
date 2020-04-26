@@ -13,7 +13,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -645,7 +644,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
                                                   @NotNull List<Runnable> listenerCallbacks) {
     boolean found = false;
     ExtensionPointListener<T>[] listeners = myListeners;
-    List<ExtensionComponentAdapter> removedAdapters = listeners.length > 0 ? new SmartList<>() : null;
+    List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = myAdapters;
     for (int i = adapters.size() - 1; i >= 0; i--) {
       ExtensionComponentAdapter adapter = adapters.get(i);
@@ -658,9 +657,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         adapters = new ArrayList<>(adapters);
       }
       adapters.remove(i);
-      if (removedAdapters != null) {
+
+      if (listeners.length != 0) {
+        if (removedAdapters == null) {
+          removedAdapters = new ArrayList<>();
+        }
         removedAdapters.add(adapter);
       }
+
       found = true;
       if (stopAfterFirstMatch) {
         break;
@@ -669,8 +673,9 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     myAdapters = adapters;
 
-    if (removedAdapters != null && !removedAdapters.isEmpty()) {
-      listenerCallbacks.add(() -> notifyListeners(true, removedAdapters, listeners));
+    if (removedAdapters != null) {
+      List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
+      listenerCallbacks.add(() -> notifyListeners(true, finalRemovedAdapters, listeners));
     }
     return found;
   }
@@ -678,7 +683,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
                                      @NotNull List<Element> elements,
-                                     @Nullable List<Runnable> listenerCallbacks);
+                                     @NotNull List<Runnable> listenerCallbacks);
 
   private void notifyListeners(boolean isRemoved,
                                @NotNull List<ExtensionComponentAdapter> adapters,
@@ -875,7 +880,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
    *
    * myAdapters is modified directly without copying - method must be called only during start-up.
    */
-  final synchronized void registerExtensions(@NotNull List<? extends Element> extensionElements,
+  final synchronized void registerExtensions(@NotNull List<Element> extensionElements,
                                              @NotNull IdeaPluginDescriptor pluginDescriptor,
                                              @NotNull ComponentManager componentManager,
                                              @Nullable List<Runnable> listenerCallbacks) {
@@ -897,7 +902,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (Element extensionElement : extensionElements) {
       adapters.add(createAdapterAndRegisterInPicoContainerIfNeeded(extensionElement, pluginDescriptor, componentManager));
     }
-    int newSize = myAdapters.size();
+    int newSize = adapters.size();
 
     ExtensionPointListener<T>[] listeners = myListeners;
     if (listenerCallbacks == null || listeners.length == 0) {

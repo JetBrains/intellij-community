@@ -1891,11 +1891,11 @@ public final class PluginManagerCore {
       return;
     }
 
-    List<ExtensionPointImpl<?>> extensionPoints = descriptor.myAppContainerDescriptor.extensionPoints;
+    List<ExtensionPointImpl<?>> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
     if (extensionPoints != null) {
       ((ExtensionsAreaImpl)area).registerExtensionPoints(extensionPoints, false);
     }
-    descriptor.registerExtensions((ExtensionsAreaImpl)area, ApplicationManager.getApplication(), descriptor, descriptor.myAppContainerDescriptor, null);
+    descriptor.registerExtensions((ExtensionsAreaImpl)area, descriptor, descriptor.appContainerDescriptor, null);
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")

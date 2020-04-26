@@ -12,8 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class ContainerDescriptor {
@@ -22,7 +22,7 @@ public final class ContainerDescriptor {
   @Nullable List<ListenerDescriptor> listeners;
   @Nullable List<ExtensionPointImpl<?>> extensionPoints;
 
-  transient LinkedHashMap<String, List<Element>> extensions;
+  transient Map<String, List<Element>> extensions;
 
   public @NotNull List<ServiceDescriptor> getServices() {
     return ContainerUtil.notNullize(services);
