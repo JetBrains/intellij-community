@@ -106,6 +106,7 @@ class PortableCompilationCache {
       def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
       def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
       def commitHash = require("build.vcs.number", "Repository commit")
+      context.messages.buildStatus(commitHash)
       def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
       context.messages.info("AWS sync folder $syncFolder")
       context.messages.info("Git remote url $remoteGitUrl")
