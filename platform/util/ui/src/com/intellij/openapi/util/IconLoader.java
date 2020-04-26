@@ -59,7 +59,7 @@ public final class IconLoader {
   /**
    * This cache contains mapping between icons and disabled icons.
    */
-  private static final Map<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createWeakMap(200);
+  private static final ConcurrentMap<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createConcurrentWeakMap(200, 0.75f, Math.min(Runtime.getRuntime().availableProcessors(), 4), ContainerUtil.canonicalStrategy());
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -428,8 +428,8 @@ public final class IconLoader {
 
     Icon disabledIcon = ourIcon2DisabledIcon.get(icon);
     if (disabledIcon == null) {
-      disabledIcon = filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, null); // [tav] todo: lack ancestor
-      ourIcon2DisabledIcon.put(icon, disabledIcon);
+      disabledIcon = ConcurrencyUtil.cacheOrGet(ourIcon2DisabledIcon, icon,
+           filterIcon(icon, UIUtil::getGrayFilter/* returns laf-aware instance */, null)); // [tav] todo: lack ancestor
     }
     return disabledIcon;
   }
