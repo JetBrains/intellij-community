@@ -36,7 +36,7 @@ public final class GitConflictsToolWindowManager implements Disposable {
 
   private void scheduleUpdate() {
     if (myRefreshScheduled.compareAndSet(false, true)) {
-      ApplicationManager.getApplication().invokeLater(() -> updateToolWindow());
+      ApplicationManager.getApplication().invokeLater(() -> updateToolWindow(), c -> Disposer.isDisposed(this));
     }
   }
 
