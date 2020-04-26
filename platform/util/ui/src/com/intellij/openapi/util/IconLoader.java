@@ -187,20 +187,20 @@ public final class IconLoader {
    */
   @Nullable
   public static Icon findIcon(@NonNls @NotNull String path) {
-    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
     return findIcon(path, callerClass);
   }
 
   @Nullable
   public static Icon findIcon(@NonNls @NotNull String path, boolean strict) {
-    Class callerClass = ReflectionUtil.getGrandCallerClass();
+    Class<?> callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
     return findIcon(path, callerClass, false, strict);
   }
 
   @NotNull
-  public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
+  public static Icon getIcon(@NotNull String path, @NotNull final Class<?> aClass) {
     Icon icon = findIcon(path, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT_LOCAL.get()), true);
     if (icon == null) {
       LOG.error("Icon cannot be found in '" + path + "', aClass='" + aClass + "'");
@@ -282,7 +282,7 @@ public final class IconLoader {
 
   @Nullable
   private static Icon findIcon(@NotNull String originalPath,
-                               @Nullable Class clazz,
+                               @Nullable Class<?> clazz,
                                @NotNull ClassLoader classLoader,
                                @NotNull HandleNotFound handleNotFound,
                                boolean deferUrlResolve) {
@@ -297,7 +297,7 @@ public final class IconLoader {
 
   @Nullable
   private static Icon findIconImpl(@NotNull String originalPath,
-                                   @Nullable Class clazz,
+                                   @Nullable Class<?> clazz,
                                    @NotNull ClassLoader classLoader,
                                    @NotNull HandleNotFound handleNotFound,
                                    boolean deferUrlResolve) {
@@ -607,7 +607,7 @@ public final class IconLoader {
     static CachedImageIcon create(@NotNull String originalPath,
                                   @Nullable String pathToResolve,
                                   @NotNull ClassLoader classLoader,
-                                  @Nullable Class clazz,
+                                  @Nullable Class<?> clazz,
                                   @NotNull HandleNotFound handleNotFound,
                                   boolean deferUrlResolve) {
       MyUrlResolver resolver = new MyUrlResolver(pathToResolve == null ? originalPath : pathToResolve, clazz, classLoader, handleNotFound);
@@ -759,7 +759,7 @@ public final class IconLoader {
       }
 
       String path = myResolver.getOverriddenPath();
-      Class aClass = myResolver.getOwnerClass();
+      Class<?> aClass = myResolver.getOwnerClass();
       if (aClass != null && path != null) {
         return ImageLoader.loadFromUrl(path, aClass, flags, getFilters(), ctx);
       }
@@ -771,7 +771,7 @@ public final class IconLoader {
       return ImageLoader.loadFromUrl(url, null, flags, getFilters(), ctx);
     }
 
-    public void detachClassLoader(ClassLoader loader) {
+    void detachClassLoader(ClassLoader loader) {
       synchronized (myLock) {
         myResolver = myResolver.detachClassLoader(loader);
       }
@@ -841,7 +841,7 @@ public final class IconLoader {
     private interface IconUrlResolver {
 
       @Nullable
-      Class getOwnerClass();
+      Class<?> getOwnerClass();
 
       @Nullable
       String getOverriddenPath();
@@ -862,7 +862,7 @@ public final class IconLoader {
      * Used to defer URL resolve.
      */
     private static final class MyUrlResolver implements IconUrlResolver {
-      @Nullable private final Class myOwnerClass;
+      @Nullable private final Class<?> myOwnerClass;
       @Nullable private final ClassLoader myClassLoader;
       @Nullable private final String myOverriddenPath;
       @NotNull private final HandleNotFound myHandleNotFound;
@@ -890,7 +890,7 @@ public final class IconLoader {
         isResolved = true;
       }
 
-      MyUrlResolver(@NotNull String path, @Nullable Class clazz, @Nullable ClassLoader classLoader, @NotNull HandleNotFound handleNotFound) {
+      MyUrlResolver(@NotNull String path, @Nullable Class<?> clazz, @Nullable ClassLoader classLoader, @NotNull HandleNotFound handleNotFound) {
         myOverriddenPath = path;
         myOwnerClass = clazz;
         myClassLoader = classLoader;
@@ -901,8 +901,7 @@ public final class IconLoader {
       }
 
       @Override
-      @Nullable
-      public Class getOwnerClass() {
+      public @Nullable Class<?> getOwnerClass() {
         return myOwnerClass;
       }
 
@@ -1006,9 +1005,8 @@ public final class IconLoader {
     }
 
     private static class DummyUrlResolver implements IconUrlResolver {
-      @Nullable
       @Override
-      public Class getOwnerClass() {
+      public @Nullable Class<?> getOwnerClass() {
         return null;
       }
 
@@ -1047,7 +1045,7 @@ public final class IconLoader {
   }
 
   @NotNull
-  public static Icon createLazy(@NotNull Supplier<@NotNull Icon> producer) {
+  public static Icon createLazy(@NotNull Supplier<? extends @NotNull Icon> producer) {
     return new LazyIcon() {
       @Override
       @NotNull
@@ -1227,7 +1225,7 @@ public final class IconLoader {
           ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
           if (contextClassLoader == null) {
             //noinspection deprecation
-            Class contextClass = patcher.getContextClass(path);
+            Class<?> contextClass = patcher.getContextClass(path);
             if (contextClass != null) {
               contextClassLoader = contextClass.getClassLoader();
             }

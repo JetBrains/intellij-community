@@ -89,7 +89,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                    JavaRefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(project, scope, module, element),
                                    AnalysisUIOptions.getInstance(project), false);
     if (dlg.showAndGet()) {
-      AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
+      AnalysisScope selectedScope = dlg.getScope(scope);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, JavaRefactoringBundle.message("locate.duplicates.action.name"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -192,12 +192,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
             }
           }
           if (!matchList.isEmpty()) {
-            List<Match> matches = duplicates.get(method);
-            if (matches == null) {
-              matches = new ArrayList<>();
-              duplicates.put(method, matches);
-            }
-            matches.addAll(matchList);
+            duplicates.computeIfAbsent(method, __ -> new ArrayList<>()).addAll(matchList);
           }
         }
       }
@@ -260,7 +255,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
   }
 
   @Nullable
-  public static DuplicatesFinder createDuplicatesFinder(PsiMember member) {
+  private static DuplicatesFinder createDuplicatesFinder(PsiMember member) {
     PsiElement[] pattern;
     ReturnValue matchedReturnValue = null;
     if (member instanceof PsiMethod) {
@@ -302,7 +297,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                 new ArrayList<>());
   }
 
-  static String getStatusMessage(final int duplicatesNo) {
+  private static @NotNull String getStatusMessage(final int duplicatesNo) {
     return JavaRefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 

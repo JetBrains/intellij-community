@@ -794,7 +794,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                 @Nullable HistoryEntry entry,
                                 @NotNull FileEditorOpenOptions options,
                                 @NotNull Ref<EditorWithProviderComposite> compositeRef,
-                                FileEditorProvider [] newProviders, AsyncFileEditorProvider.Builder [] builders) {
+                                FileEditorProvider [] newProviders,
+                                AsyncFileEditorProvider.Builder [] builders) {
     if (myProject.isDisposed() || !file.isValid()) {
       return;
     }
