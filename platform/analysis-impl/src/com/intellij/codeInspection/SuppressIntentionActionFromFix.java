@@ -87,8 +87,9 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
   @IntentionName
   @Override
   public String getText() {
-    return myFix.getName() +
-           (isShouldBeAppliedToInjectionHost() == ThreeState.NO ? AnalysisBundle.message("intention.name.in.injection") : "");
+    return isShouldBeAppliedToInjectionHost() == ThreeState.NO
+           ? myFix.getName() + AnalysisBundle.message("intention.name.in.injection", myFix.getName())
+           : myFix.getName();
   }
 
   @NotNull
