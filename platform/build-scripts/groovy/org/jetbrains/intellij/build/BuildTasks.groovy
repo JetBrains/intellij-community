@@ -21,6 +21,7 @@ import org.codehaus.gant.GantBinding
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.jps.idea.IdeaProjectLoader
+
 @CompileStatic
 abstract class BuildTasks {
   /**
