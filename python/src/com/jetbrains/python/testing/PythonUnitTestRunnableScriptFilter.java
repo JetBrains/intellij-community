@@ -16,18 +16,19 @@
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.Location;
-import com.intellij.openapi.module.Module;
-import com.intellij.psi.PsiFile;
 import com.jetbrains.python.run.RunnableScriptFilter;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Ilya.Kazakevich
  */
-public class PythonUnitTestRunnableScriptFilter {
+public final class PythonUnitTestRunnableScriptFilter {
+  private PythonUnitTestRunnableScriptFilter(){}
 
   /**
-   * @deprecated Use {@link RunnableUnitTestFilter#isRunnableUnitTest(PsiFile, Module)} instead. Delete after 2017.2
+   * @deprecated Use {@link RunnableScriptFilter#isIfNameMain(Location)} instead.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   public static boolean isIfNameMain(Location location) {
     return RunnableScriptFilter.isIfNameMain(location);
