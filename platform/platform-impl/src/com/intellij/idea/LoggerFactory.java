@@ -23,7 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class LoggerFactory implements Logger.Factory {
+public final class LoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
@@ -38,9 +38,8 @@ public class LoggerFactory implements Logger.Factory {
     }
   }
 
-  @NotNull
   @Override
-  public Logger getLoggerInstance(@NotNull String name) {
+  public @NotNull Logger getLoggerInstance(@NotNull String name) {
     return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
   }
 

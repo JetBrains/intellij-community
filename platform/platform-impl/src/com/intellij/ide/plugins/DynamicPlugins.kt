@@ -461,9 +461,7 @@ object DynamicPlugins {
           }
         }
       }
-    }
 
-    if (pluginDescriptor.extensions != null) {
       // todo clear extension cache granularly
       appExtensionArea.clearUserCache()
       for (project in openProjects) {

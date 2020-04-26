@@ -25,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+@ApiStatus.Internal
 public class MessageBusImpl implements MessageBus {
   private static final Logger LOG = Logger.getInstance(MessageBusImpl.class);
   private static final Comparator<MessageBusImpl> MESSAGE_BUS_COMPARATOR = (bus1, bus2) -> ArrayUtil.lexicographicCompare(bus1.myOrder, bus2.myOrder);
@@ -227,7 +228,6 @@ public class MessageBusImpl implements MessageBus {
     });
   }
 
-  @ApiStatus.Internal
   public final void unsubscribePluginListeners(@NotNull PluginDescriptor pluginDescriptor) {
     MessageBusConnectionImpl connection = myLazyConnections.remove(pluginDescriptor);
     if (connection != null) {

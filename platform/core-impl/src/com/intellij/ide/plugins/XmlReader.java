@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.ServiceDescriptor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.BeanExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -27,6 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 final class XmlReader {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
+
   static final String APPLICATION_SERVICE = "com.intellij.applicationService";
   static final String PROJECT_SERVICE = "com.intellij.projectService";
   static final String MODULE_SERVICE = "com.intellij.moduleService";
@@ -58,8 +61,7 @@ final class XmlReader {
     }
   }
 
-  private static @NotNull ServiceDescriptor readServiceDescriptor(@NotNull Element element,
-                                                                  @NotNull DescriptorListLoadingContext loadingContext) {
+  private static @NotNull ServiceDescriptor readServiceDescriptor(@NotNull Element element) {
     ServiceDescriptor descriptor = new ServiceDescriptor();
     descriptor.serviceInterface = element.getAttributeValue("serviceInterface");
     descriptor.serviceImplementation = StringUtil.nullize(element.getAttributeValue("serviceImplementation"));
@@ -83,7 +85,7 @@ final class XmlReader {
           descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
           break;
         default:
-          loadingContext.getLogger().error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+          LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
           break;
       }
     }
@@ -118,7 +120,7 @@ final class XmlReader {
       String listenerClassName = child.getAttributeValue("class");
       String topicClassName = child.getAttributeValue("topic");
       if (listenerClassName == null || topicClassName == null) {
-        PluginManagerCore.getLogger().error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
+        LOG.error("Listener descriptor is not correct: " + JDOMUtil.writeElement(child));
       }
       else {
         result.add(new ListenerDescriptor(listenerClassName, topicClassName,
@@ -174,7 +176,7 @@ final class XmlReader {
               Integer.parseInt(internalVersionString);
             }
             catch (NumberFormatException e) {
-              PluginManagerCore.getLogger().error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
+              LOG.error(new PluginException("Invalid value in plugin.xml format version: '" + internalVersionString + "'", e, descriptor.myId));
             }
           }
           break;
@@ -211,7 +213,7 @@ final class XmlReader {
       catch (IOException | JDOMException e) {
         String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
         if (context.parentContext.ignoreMissingSubDescriptor) {
-          context.parentContext.getLogger().info(message, e);
+          LOG.info(message, e);
         }
         else {
           throw new RuntimeException(message, e);
@@ -290,7 +292,7 @@ final class XmlReader {
           continue;
       }
 
-      containerDescriptor.addService(readServiceDescriptor(extensionElement, loadingContext));
+      containerDescriptor.addService(readServiceDescriptor(extensionElement));
     }
     return epNameToExtensions;
   }
@@ -323,7 +325,7 @@ final class XmlReader {
           containerDescriptor = descriptor.moduleContainerDescriptor;
         }
         else {
-          PluginManagerCore.getLogger().error("Unknown area: " + area);
+          LOG.error("Unknown area: " + area);
           continue;
         }
       }
