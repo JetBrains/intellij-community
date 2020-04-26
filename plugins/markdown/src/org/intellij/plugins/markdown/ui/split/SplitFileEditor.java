@@ -441,13 +441,12 @@ public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEdit
     }
 
     public String getPresentationText() {
-      //noinspection ConstantConditions
-      return StringUtil.capitalize(StringUtil.substringAfter(presentationName, "Show "));
+      return StringUtil.capitalize(presentationName);
     }
 
     @Override
     public String toString() {
-      return presentationName;
+      return MarkdownBundle.message("markdown.layout.show", presentationName);
     }
   }
 }
