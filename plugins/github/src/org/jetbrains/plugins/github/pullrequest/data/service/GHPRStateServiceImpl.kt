@@ -4,13 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityStateBuilder
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
@@ -18,7 +16,6 @@ import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateServiceImpl internal constructor(private val progressManager: ProgressManager,
-                                                private val messageBus: MessageBus,
                                                 private val securityService: GHPRSecurityService,
                                                 private val requestExecutor: GithubApiRequestExecutor,
                                                 private val serverPath: GithubServerPath,
@@ -66,7 +63,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                               GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository,
                                                                           pullRequestId.number,
                                                                           state = GithubIssueState.closed))
-      messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
+      return@submitIOTask
     }.logError(LOG, "Error occurred while closing PR ${pullRequestId.number}")
 
   override fun reopen(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier) =
@@ -75,7 +72,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                               GithubApiRequests.Repos.PullRequests.update(serverPath, repoPath.owner, repoPath.repository,
                                                                           pullRequestId.number,
                                                                           state = GithubIssueState.open))
-      messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
+      return@submitIOTask
     }.logError(LOG, "Error occurred while reopening PR ${pullRequestId.number}")
 
   override fun merge(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier,
@@ -84,7 +81,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.merge(serverPath, repoPath, pullRequestId.number,
                                                                              commitMessage.first, commitMessage.second,
                                                                              currentHeadRef))
-      messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
+      return@submitIOTask
     }.logError(LOG, "Error occurred while merging PR ${pullRequestId.number}")
 
 
@@ -94,7 +91,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       requestExecutor.execute(it,
                               GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, pullRequestId.number,
                                                                                currentHeadRef))
-      messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
+      return@submitIOTask
     }.logError(LOG, "Error occurred while rebasing PR ${pullRequestId.number}")
 
   override fun squashMerge(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier,
@@ -104,7 +101,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                               GithubApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, pullRequestId.number,
                                                                                commitMessage.first, commitMessage.second,
                                                                                currentHeadRef))
-      messageBus.syncPublisher(PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
+      return@submitIOTask
     }.logError(LOG, "Error occurred while squash-merging PR ${pullRequestId.number}")
 
   companion object {

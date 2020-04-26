@@ -3,14 +3,17 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRStateService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import org.jetbrains.plugins.github.util.completionOnEdt
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
                                 private val pullRequestId: GHPRIdentifier,
+                                private val messageBus: MessageBus,
                                 private val detailsData: GHPRDetailsDataProvider)
   : GHPRStateDataProvider, Disposable {
 
@@ -60,18 +63,26 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
   override fun addMergeabilityStateListener(disposable: Disposable, listener: () -> Unit) =
     mergeabilityStateRequestValue.addDropEventListener(disposable, listener)
 
-  override fun close(progressIndicator: ProgressIndicator): CompletableFuture<Unit> = stateService.close(progressIndicator, pullRequestId)
+  override fun close(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
+    stateService.close(progressIndicator, pullRequestId).notifyState()
 
-  override fun reopen(progressIndicator: ProgressIndicator): CompletableFuture<Unit> = stateService.reopen(progressIndicator, pullRequestId)
+  override fun reopen(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
+    stateService.reopen(progressIndicator, pullRequestId).notifyState()
 
   override fun merge(progressIndicator: ProgressIndicator, commitMessage: Pair<String, String>, currentHeadRef: String)
-    : CompletableFuture<Unit> = stateService.merge(progressIndicator, pullRequestId, commitMessage, currentHeadRef)
+    : CompletableFuture<Unit> = stateService.merge(progressIndicator, pullRequestId, commitMessage, currentHeadRef).notifyState()
 
   override fun rebaseMerge(progressIndicator: ProgressIndicator, currentHeadRef: String): CompletableFuture<Unit> =
-    stateService.rebaseMerge(progressIndicator, pullRequestId, currentHeadRef)
+    stateService.rebaseMerge(progressIndicator, pullRequestId, currentHeadRef).notifyState()
 
   override fun squashMerge(progressIndicator: ProgressIndicator, commitMessage: Pair<String, String>, currentHeadRef: String)
-    : CompletableFuture<Unit> = stateService.squashMerge(progressIndicator, pullRequestId, commitMessage, currentHeadRef)
+    : CompletableFuture<Unit> = stateService.squashMerge(progressIndicator, pullRequestId, commitMessage, currentHeadRef).notifyState()
+
+  private fun <T> CompletableFuture<T>.notifyState(): CompletableFuture<T> =
+    completionOnEdt {
+      detailsData.reloadDetails()
+      messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onStateChanged()
+    }
 
   override fun dispose() {
     mergeabilityStateRequestValue.drop()

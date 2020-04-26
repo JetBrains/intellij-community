@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.messages.MessageBus
 import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -19,7 +18,6 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
                                val repositoryCoordinates: GHRepositoryCoordinates,
                                val account: GithubAccount,
                                val requestExecutor: GithubApiRequestExecutor,
-                               val messageBus: MessageBus,
                                val listModel: ListModel<GHPullRequestShort>,
                                val searchHolder: GithubPullRequestSearchQueryHolder,
                                val listLoader: GHPRListLoader,
@@ -28,7 +26,6 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
                                val repositoryDataService: GHPRRepositoryDataService) : Disposable {
 
   override fun dispose() {
-    Disposer.dispose(messageBus)
     Disposer.dispose(dataLoader)
     Disposer.dispose(listLoader)
     Disposer.dispose(repositoryDataService)

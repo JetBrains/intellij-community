@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -12,9 +11,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
-import com.intellij.util.messages.ListenerDescriptor
-import com.intellij.util.messages.MessageBusFactory
-import com.intellij.util.messages.MessageBusOwner
 import git4idea.commands.Git
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.CalledInBackground
@@ -30,8 +26,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PULL_REQUEST_EDITED_TOPIC
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext.Companion.PullRequestEditedListener
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolderImpl
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
@@ -112,22 +106,15 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     val repositoryCoordinates = GHRepositoryCoordinates(account.server, repoWithPermissions.path)
 
-    val messageBus = MessageBusFactory.getInstance().createMessageBus(object : MessageBusOwner {
-      override fun isDisposed() = project.isDisposed
-
-      override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
-    })
-
     val securityService = GHPRSecurityServiceImpl(GithubSharedProjectSettings.getInstance(project), currentUser, currentUserTeams,
                                                   repoWithPermissions)
-    val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
-    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), messageBus, securityService,
+    val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
+    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), securityService,
                                             requestExecutor, account.server, repoWithPermissions.path)
-    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), messageBus, requestExecutor, repositoryCoordinates)
+    val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, repositoryCoordinates)
     val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), Git.getInstance(), project, requestExecutor,
                                                 gitRemoteCoordinates, repositoryCoordinates)
-    val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), messageBus, securityService, requestExecutor,
-                                              repositoryCoordinates)
+    val reviewService = GHPRReviewServiceImpl(ProgressManager.getInstance(), securityService, requestExecutor, repositoryCoordinates)
 
     val listModel = CollectionListModel<GHPullRequestShort>()
     val searchHolder = GithubPullRequestSearchQueryHolderImpl()
@@ -145,36 +132,11 @@ internal class GHPRDataContextRepository(private val project: Project) {
       }
     }
 
-
-    messageBus.connect().subscribe(PULL_REQUEST_EDITED_TOPIC, object : PullRequestEditedListener {
-      override fun onPullRequestEdited(id: GHPRIdentifier) {
-        runInEdt {
-          val dataProvider = dataLoader.findDataProvider(id)
-          dataProvider?.detailsData?.reloadDetails()
-          dataProvider?.timelineLoader?.loadMore(true)
-        }
-      }
-
-      override fun onPullRequestReviewsEdited(id: GHPRIdentifier) {
-        runInEdt {
-          val dataProvider = dataLoader.findDataProvider(id)
-          dataProvider?.reviewData?.resetReviewThreads()
-          dataProvider?.timelineLoader?.loadMore(true)
-        }
-      }
-
-      override fun onPullRequestCommentsEdited(id: GHPRIdentifier) {
-        runInEdt {
-          val dataProvider = dataLoader.findDataProvider(id)
-          dataProvider?.timelineLoader?.loadMore(true)
-        }
-      }
-    })
     val repoDataService = GHPRRepositoryDataServiceImpl(ProgressManager.getInstance(), requestExecutor, account.server,
                                                         repoWithPermissions.path, repoOwner)
 
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
-                           requestExecutor, messageBus, listModel, searchHolder, listLoader, dataLoader, securityService, repoDataService)
+                           requestExecutor, listModel, searchHolder, listLoader, dataLoader, securityService, repoDataService)
   }
 
   companion object {

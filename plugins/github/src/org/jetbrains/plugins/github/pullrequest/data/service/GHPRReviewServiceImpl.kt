@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.messages.MessageBus
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
@@ -15,16 +14,12 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestCommentWithHtml
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
-import org.jetbrains.plugins.github.util.GithubAsyncUtil.extractError
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
-import java.util.function.BiFunction
 
 class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
-                            private val messageBus: MessageBus,
                             private val securityService: GHPRSecurityService,
                             private val requestExecutor: GithubApiRequestExecutor,
                             private val repository: GHRepositoryCoordinates) : GHPRReviewService {
@@ -51,8 +46,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.create(repository.serverPath, pullRequestId.id, event, body))
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while creating review")
+    }.logError(LOG, "Error occurred while creating review")
 
   override fun submitReview(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
@@ -62,8 +56,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.submit(repository.serverPath, reviewId, event, body))
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while submitting review")
+    }.logError(LOG, "Error occurred while submitting review")
 
   override fun deleteReview(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
@@ -71,8 +64,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.delete(repository.serverPath, reviewId))
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while deleting review")
+    }.logError(LOG, "Error occurred while deleting review")
 
   override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> =
     progressManager.submitIOTask(progressIndicator) {
@@ -86,8 +78,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.Comments.createReply(repository, pullRequestId.number, replyToCommentId, body))
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while adding review thread reply")
+    }.logError(LOG, "Error occurred while adding review thread reply")
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequestId: GHPRIdentifier,
@@ -98,8 +89,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(
         GithubApiRequests.Repos.PullRequests.Comments.create(repository, pullRequestId.number, commitSha, fileName, diffLine, body))
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while creating single comment review")
+    }.logError(LOG, "Error occurred while creating single comment review")
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequestId: GHPRIdentifier, reviewId: String?,
@@ -111,8 +101,7 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                                                                           pullRequestId.id, reviewId,
                                                                           body, commitSha, fileName,
                                                                           diffLine))
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while adding review comment")
+    }.logError(LOG, "Error occurred while adding review comment")
 
   override fun deleteComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, commentId: String) =
     progressManager.submitIOTask(progressIndicator) {
@@ -129,29 +118,14 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                              id: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.PullRequest.Review.resolveThread(repository.serverPath, id))
-    }
-      .logError(LOG, "Error occurred while resolving review thread")
+    }.logError(LOG, "Error occurred while resolving review thread")
 
   override fun unresolveThread(progressIndicator: ProgressIndicator,
                                pullRequestId: GHPRIdentifier,
                                id: String): CompletableFuture<GHPullRequestReviewThread> =
     progressManager.submitIOTask(progressIndicator) {
       requestExecutor.execute(GHGQLRequests.PullRequest.Review.unresolveThread(repository.serverPath, id))
-    }
-      .logError(LOG, "Error occurred while unresolving review thread")
-
-  private fun <T> CompletableFuture<T>.notify(pullRequestId: GHPRIdentifier): CompletableFuture<T> =
-    handle(BiFunction<T, Throwable?, T> { result: T, error: Throwable? ->
-      try {
-        messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestReviewsEdited(pullRequestId)
-      }
-      catch (e: Exception) {
-        LOG.info("Error occurred while updating pull request review data", e)
-      }
-
-      if (error != null) throw extractError(error)
-      result
-    })
+    }.logError(LOG, "Error occurred while unresolving review thread")
 
   companion object {
     private val LOG = logger<GHPRReviewService>()

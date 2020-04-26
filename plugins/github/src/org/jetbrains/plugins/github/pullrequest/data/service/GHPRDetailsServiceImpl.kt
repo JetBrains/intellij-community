@@ -4,8 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.messages.MessageBus
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GHGQLRequests
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -13,17 +15,13 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHTeam
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logError
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.util.concurrent.CompletableFuture
-import java.util.function.BiFunction
 
 class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
-                             private val messageBus: MessageBus,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val repository: GHRepositoryCoordinates) : GHPRDetailsService {
   
@@ -58,7 +56,7 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
                                        newItems.filterIsInstance(GHUser::class.java).map { it.login },
                                        newItems.filterIsInstance(GHTeam::class.java).map { it.slug }))
       }
-    }.notify(pullRequestId)
+    }
       .logError(LOG, "Error occurred while adjusting the list of reviewers")
 
   override fun adjustAssignees(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHUser>) =
@@ -68,7 +66,7 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
                                                                              pullRequestId.number.toString(),
                                                                              delta.newCollection.map { it.login }))
       return@submitIOTask
-    }.notify(pullRequestId)
+    }
       .logError(LOG, "Error occurred while adjusting the list of assignees")
 
   override fun adjustLabels(indicator: ProgressIndicator, pullRequestId: GHPRIdentifier, delta: CollectionDelta<GHLabel>) =
@@ -78,21 +76,7 @@ class GHPRDetailsServiceImpl(private val progressManager: ProgressManager,
                                 .replace(serverPath, repoPath.owner, repoPath.repository, pullRequestId.number.toString(),
                                          delta.newCollection.map { it.name }))
       return@submitIOTask
-    }.notify(pullRequestId)
-      .logError(LOG, "Error occurred while adjusting the list of labels")
-
-  private fun <T> CompletableFuture<T>.notify(pullRequestId: GHPRIdentifier): CompletableFuture<T> =
-    handle(BiFunction<T, Throwable?, T> { result: T, error: Throwable? ->
-      try {
-        messageBus.syncPublisher(GHPRDataContext.PULL_REQUEST_EDITED_TOPIC).onPullRequestEdited(pullRequestId)
-      }
-      catch (e: Exception) {
-        LOG.info("Error occurred while updating pull data", e)
-      }
-
-      if (error != null) throw GithubAsyncUtil.extractError(error)
-      result
-    })
+    }.logError(LOG, "Error occurred while adjusting the list of labels")
 
   companion object {
     private val LOG = logger<GHPRDetailsService>()

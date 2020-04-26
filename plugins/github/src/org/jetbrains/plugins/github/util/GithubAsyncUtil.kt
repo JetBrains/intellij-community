@@ -139,6 +139,19 @@ fun <T> CompletableFuture<T>.errorOnEdt(handler: (Throwable) -> Unit): Completab
     result as T
   }, EDT_EXECUTOR)
 
+fun <T> CompletableFuture<T>.completionOnEdt(handler: () -> Unit): CompletableFuture<T> =
+  handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
+    @Suppress("UNCHECKED_CAST")
+    if (error != null) {
+      if (!isCancellation(error)) handler()
+      throw extractError(error)
+    }
+    else {
+      handler()
+      result as T
+    }
+  }, EDT_EXECUTOR)
+
 fun <T> CompletableFuture<T>.cancellationOnEdt(handler: (ProcessCanceledException) -> Unit): CompletableFuture<T> =
   handleAsync(BiFunction<T?, Throwable?, T> { result: T?, error: Throwable? ->
     if (error != null) {
