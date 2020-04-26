@@ -569,7 +569,12 @@ public final class StartupUtil {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static @NotNull Logger setupLogger() {
-    Logger.setFactory(new LoggerFactory());
+    try {
+      Logger.setFactory(new LoggerFactory());
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
     Logger log = Logger.getInstance(Main.class);
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
