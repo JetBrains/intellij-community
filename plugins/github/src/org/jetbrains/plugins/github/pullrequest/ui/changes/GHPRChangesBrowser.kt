@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -83,9 +84,12 @@ object GHPRChangesBrowser {
     val loadingPanel = GHLoadingPanel.create(loadingModel, {
       createTree(project, changesModel, diffAction, diffHelper, reloadAction, it, disposable).apply {
         emptyText.text = panelEmptyText
-        ScrollPaneFactory.createScrollPane(this, SideBorder.TOP)
+      }.let { tree ->
+        ScrollPaneFactory.createScrollPane(tree, true)
       }
-    }, disposable, GithubBundle.message("cannot.load.changes"))
+    }, disposable, GithubBundle.message("cannot.load.changes")).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    }
 
     val toolbar = createToolbar(actionManager, diffAction, loadingPanel)
 
