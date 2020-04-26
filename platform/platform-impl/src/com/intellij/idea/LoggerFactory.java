@@ -47,7 +47,7 @@ public final class LoggerFactory implements Logger.Factory {
 
   @Override
   public @NotNull Logger getLoggerInstance(@NotNull String name) {
-    return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
+    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
   }
 
   private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {

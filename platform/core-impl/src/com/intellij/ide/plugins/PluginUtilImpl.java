@@ -19,9 +19,8 @@ import java.util.StringTokenizer;
 public final class PluginUtilImpl implements PluginUtil {
   private static final Logger LOG = Logger.getInstance(PluginUtilImpl.class);
 
-  @Nullable
   @Override
-  public PluginId getCallerPlugin(int stackFrameCount) {
+  public @Nullable PluginId getCallerPlugin(int stackFrameCount) {
     Class<?> aClass = ReflectionUtil.getCallerClass(stackFrameCount + 1);
     if (aClass == null) return null;
     ClassLoader classLoader = aClass.getClassLoader();
@@ -29,13 +28,11 @@ public final class PluginUtilImpl implements PluginUtil {
   }
 
   @Override
-  @Nullable
-  public PluginId findPluginId(@NotNull Throwable t) {
+  public @Nullable PluginId findPluginId(@NotNull Throwable t) {
     return doFindPluginId(t);
   }
 
-  @Nullable
-  public static PluginId doFindPluginId(@NotNull Throwable t) {
+  public static @Nullable PluginId doFindPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
     }
