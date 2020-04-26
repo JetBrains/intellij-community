@@ -3,6 +3,7 @@ package git4idea.rebase;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
@@ -61,8 +62,10 @@ public class GitRebaseEditorService implements Disposable {
 
   @Override
   public void dispose() {
-    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
-    xmlRpcServer.removeHandler(GitRebaseEditorMain.HANDLER_NAME);
+    XmlRpcServer xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer.class);
+    if (xmlRpcServer != null) {
+      xmlRpcServer.removeHandler(GitRebaseEditorMain.HANDLER_NAME);
+    }
   }
 
   /**
