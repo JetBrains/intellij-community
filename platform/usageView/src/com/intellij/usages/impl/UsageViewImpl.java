@@ -1080,8 +1080,8 @@ public class UsageViewImpl implements UsageViewEx {
       try {
         description = configurableUsageTarget == null
                       ? null
-                      : UsageViewBundle.message("action.ShowSettings.show.settings.for.description") + " " +
-                        configurableUsageTarget.getLongDescriptiveName();
+                      : UsageViewBundle
+                        .message("action.ShowSettings.show.settings.for.description", configurableUsageTarget.getLongDescriptiveName());
       }
       catch (IndexNotReadyException ignored) {
       }
