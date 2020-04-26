@@ -90,12 +90,6 @@ public class NlsContexts {
   public @interface ParsingError {
   }
 
-  @NlsContext(prefix = "gutter.name")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface GutterName {
-  }
-
   @NlsContext(prefix = "status.bar.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.openapi.util.NlsContexts.GutterName;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
