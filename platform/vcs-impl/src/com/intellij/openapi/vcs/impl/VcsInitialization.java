@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -11,7 +12,9 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +44,12 @@ public final class VcsInitialization {
 
   VcsInitialization(@NotNull Project project) {
     myProject = project;
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // Fix "MessageBusImpl is already disposed: (disposed temporarily)" during LightPlatformTestCase
+      Disposable disposable = ((ProjectEx)project).getEarlyDisposable();
+      Disposer.register(disposable, () -> cancelBackgroundInitialization());
+    }
   }
 
   public static VcsInitialization getInstance(Project project) {
