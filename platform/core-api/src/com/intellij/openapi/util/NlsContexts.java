@@ -128,6 +128,9 @@ public class NlsContexts {
   public @interface TabTitle {
   }
 
+  /**
+   * Annotate by {@code #AttributeDescriptor} text attribute keys, see {@link com.intellij.openapi.options.colors.AttributesDescriptor}
+   */
   @NlsContext(prefix = "attribute.descriptor")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
