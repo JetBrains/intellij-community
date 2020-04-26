@@ -18,7 +18,7 @@ object ExtensionTestUtil {
                          newExtensions: List<T>,
                          parentDisposable: Disposable,
                          fireEvents: Boolean = true) {
-    (pointName.getPoint(null) as ExtensionPointImpl<T>).maskAll(newExtensions, parentDisposable, fireEvents)
+    (pointName.point as ExtensionPointImpl<T>).maskAll(newExtensions, parentDisposable, fireEvents)
   }
 
   @JvmStatic

@@ -59,7 +59,7 @@ public final class VcsRepositoryManager implements Disposable {
   public VcsRepositoryManager(@NotNull Project project) {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::scheduleUpdate);
+    project.getMessageBus().connect(this).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::scheduleUpdate);
 
     EP_NAME.addChangeListener(() -> {
       disposeAllRepositories(false);
