@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.configurationStore.*
@@ -201,6 +202,7 @@ open class ProjectInspectionProfileManager(val project: Project) : BaseInspectio
         state.projectProfile = name
       }
     }
+    DaemonCodeAnalyzer.getInstance(project).restart()
   }
 
   @Synchronized
