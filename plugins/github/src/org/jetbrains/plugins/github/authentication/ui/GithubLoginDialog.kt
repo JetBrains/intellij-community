@@ -34,7 +34,7 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
                                                     GithubBundle.message("login.to.github"),
                                                   @Nls(capitalization = Nls.Capitalization.Sentence) private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
-  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique, project).apply {
+  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique).apply {
     putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
   }
 

@@ -7,8 +7,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.plugins.github.util.GithubAsyncUtil.extractError
@@ -75,32 +73,9 @@ object GithubAsyncUtil {
 }
 
 fun <T> ProgressManager.submitIOTask(progressIndicator: ProgressIndicator,
-                                     task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> {
-  return CompletableFuture.supplyAsync(Supplier { runProcess(Computable { task(progressIndicator) }, progressIndicator) },
-                                       ProcessIOExecutorService.INSTANCE)
-}
-
-fun <T> ProgressManager.submitBackgroundTask(project: Project?,
-                                             title: String,
-                                             canBeCancelled: Boolean,
-                                             progressIndicator: ProgressIndicator,
-                                             process: (indicator: ProgressIndicator) -> T): CompletableFuture<T> {
-  val future = CompletableFuture<T>()
-  runProcessWithProgressAsynchronously(object : Task.Backgroundable(project, title, canBeCancelled) {
-    override fun run(indicator: ProgressIndicator) {
-      future.complete(process(indicator))
-    }
-
-    override fun onCancel() {
-      future.cancel(true)
-    }
-
-    override fun onThrowable(error: Throwable) {
-      future.completeExceptionally(error)
-    }
-  }, progressIndicator)
-  return future
-}
+                                     task: (indicator: ProgressIndicator) -> T): CompletableFuture<T> =
+  CompletableFuture.supplyAsync(Supplier { runProcess(Computable { task(progressIndicator) }, progressIndicator) },
+                                ProcessIOExecutorService.INSTANCE)
 
 fun <T> CompletableFuture<T>.handleOnEdt(parentDisposable: Disposable, handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> {
   val handlerReference = AtomicReference(handler)

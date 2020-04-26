@@ -395,7 +395,6 @@ internal class GHCloneDialogExtensionComponent(
     return GithubLoginPanel(
       apiExecutorFactory,
       if (account == null) authenticationManager::isAccountUnique else alwaysUnique,
-      project,
       false
     ).apply {
       if (account != null) {

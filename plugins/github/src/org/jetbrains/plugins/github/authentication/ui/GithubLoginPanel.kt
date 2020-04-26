@@ -5,7 +5,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -18,14 +17,13 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.submitBackgroundTask
+import org.jetbrains.plugins.github.util.submitIOTask
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
 import javax.swing.JTextField
 
 class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
                        isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                       val project: Project?,
                        isDialogMode: Boolean = true) : Wrapper() {
   private var clientName: String = GHSecurityUtil.DEFAULT_CLIENT_NAME
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
@@ -103,7 +101,7 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
     val executor = currentUi.createExecutor()
 
     return service<ProgressManager>()
-      .submitBackgroundTask(project, "Not Visible", true, progressIndicator) {
+      .submitIOTask(progressIndicator) {
         currentUi.acquireLoginAndToken(server, executor, it)
       }.whenComplete { _, throwable ->
         runInEdt {
