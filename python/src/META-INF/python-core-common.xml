@@ -548,7 +548,9 @@
     <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"  interface="com.jetbrains.python.testing.PyTestConfigurationSelector" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.magicLiteral" interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"/>
+    <extensionPoint qualifiedName="Pythonid.magicLiteral"
+                    interface="com.jetbrains.python.magicLiteral.PyMagicLiteralExtensionPoint"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.runnableScriptFilter" interface="com.jetbrains.python.run.RunnableScriptFilter" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.unresolvedReferenceQuickFixProvider"
                     interface="com.jetbrains.python.inspections.PyUnresolvedReferenceQuickFixProvider"
