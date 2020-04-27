@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
+import org.apache.http.Consts
 import org.apache.http.HttpStatus
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
@@ -154,8 +155,14 @@ class CompilationPartsUploader implements Closeable {
 
       response = myHttpClient.execute(request)
 
+      def statusCode = response.statusLine.statusCode
+      if (statusCode < 200  || statusCode >= 400) {
+        def responseString = EntityUtils.toString(response.getEntity(), Consts.UTF_8)
+        myMessages.error("PUT $url failed with $statusCode: $responseString")
+      }
+
       EntityUtils.consume(response.getEntity())
-      return response.getStatusLine().getStatusCode()
+      return statusCode
     }
     catch (Exception e) {
       throw new UploadException("Failed to PUT file to $path: " + e.getMessage(), e)
