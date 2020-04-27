@@ -195,6 +195,9 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         analysisErrors.add("Failed to resolve dependency descriptor file $configFileName")
         continue
       }
+      for (nestedDependency in depIdeaPlugin.dependencies) {
+        analysisErrors.add("Unsupported nested dependency on " + nestedDependency.value?.id + " in " + configFileName)
+      }
       componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, extensionPointOwners, true)
     }
 
