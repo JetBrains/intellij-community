@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ResourceHandle;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class ZipHandlerBase extends ArchiveHandler {
+  private static final boolean IGNORE_TIMESTAMPS = SystemProperties.is("zip.handler.ignores.timestamps");
+
   public ZipHandlerBase(@NotNull String path) {
     super(path);
   }
@@ -68,7 +71,8 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     if (".".equals(path.second)) {
       return parentInfo;
     }
-    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), getEntryFileStamp(), path.third);
+    long fileStamp = IGNORE_TIMESTAMPS ? DEFAULT_TIMESTAMP : getEntryFileStamp();
+    info = store(map, parentInfo, path.second, isDirectory, entry.getSize(), fileStamp, path.third);
     return info;
   }
 
