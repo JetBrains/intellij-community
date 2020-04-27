@@ -81,11 +81,6 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
   }
 
   @Override
-  public boolean hasSnapshotMapping() {
-    return true;
-  }
-
-  @Override
   public int getVersion() {
     return 8;
   }
