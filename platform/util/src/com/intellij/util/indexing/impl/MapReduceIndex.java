@@ -20,9 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -236,12 +234,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @NotNull
   @Override
   public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
-    final UpdateData<Key, Value> updateData = calculateUpdateData(inputId, content);
-    return createIndexUpdateComputation(updateData);
-  }
-
-  @NotNull
-  protected Computable<Boolean> createIndexUpdateComputation(@NotNull AbstractUpdateData<Key, Value> updateData) {
+    final InputData<Key, Value> data = mapInput(inputId, content);
+    final UpdateData<Key, Value> updateData = new UpdateData<>(inputId,
+                                                               data.getKeyValues(),
+                                                               () -> getKeysDiffBuilder(inputId), myIndexId,
+                                                               () -> updateForwardIndex(inputId, data));
     return () -> {
       try {
         updateWithMap(updateData);
@@ -260,15 +257,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
       return Boolean.TRUE;
     };
-  }
-
-  @NotNull
-  protected UpdateData<Key, Value> calculateUpdateData(final int inputId, @Nullable Input content) {
-    final InputData<Key, Value> data = mapInput(inputId, content);
-    return createUpdateData(inputId,
-                            data.getKeyValues(),
-                            () -> getKeysDiffBuilder(inputId),
-                            () -> updateForwardIndex(inputId, data));
   }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
@@ -291,14 +279,6 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       }
     }
     return new EmptyInputDataDiffBuilder<>(inputId);
-  }
-
-  @NotNull
-  private UpdateData<Key, Value> createUpdateData(int inputId,
-                                                  @NotNull Map<Key, Value> data,
-                                                  @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> keys,
-                                                  @NotNull ThrowableRunnable<IOException> forwardIndexUpdate) {
-    return new UpdateData<>(inputId, data, keys, myIndexId, forwardIndexUpdate);
   }
 
   @NotNull
