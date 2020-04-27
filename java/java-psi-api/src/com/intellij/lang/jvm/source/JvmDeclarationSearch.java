@@ -16,8 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public final class JvmDeclarationSearch {
-  private static final LanguageExtension<JvmDeclarationSearcher> EP = new LanguageExtension<>("com.intellij.jvm.declarationSearcher");
-
   private JvmDeclarationSearch() {}
 
   /**
@@ -62,7 +60,7 @@ public final class JvmDeclarationSearch {
   }
 
   private static @NotNull Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement) {
-    List<JvmDeclarationSearcher> searchers = EP.allForLanguage(declaringElement.getLanguage());
+    List<JvmDeclarationSearcher> searchers = JvmDeclarationSearcher.EP.allForLanguage(declaringElement.getLanguage());
     return searchers.isEmpty() ? Collections.emptyIterator() : iterateDeclarations(declaringElement, searchers);
   }
 
@@ -93,7 +91,7 @@ public final class JvmDeclarationSearch {
    * (because in class file there will be two methods).
    */
   public static @NotNull Iterable<JvmElement> getImmediatelyContainingElements(@NotNull PsiElement place) {
-    List<JvmDeclarationSearcher> extensions = EP.allForLanguage(place.getLanguage());
+    List<JvmDeclarationSearcher> extensions = JvmDeclarationSearcher.EP.allForLanguage(place.getLanguage());
     if (extensions.isEmpty()) {
       return Collections.emptyList();
     }

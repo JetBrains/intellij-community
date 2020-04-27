@@ -49,6 +49,7 @@ public final class JvmMetaLanguage extends MetaLanguage {
 
   private @Nullable static ExtensionPointImpl<LanguageExtensionPoint<JvmDeclarationSearcher>> getPoint() {
     ExtensionsAreaImpl area = (ExtensionsAreaImpl)ApplicationManager.getApplication().getExtensionArea();
-    return area.getExtensionPointIfRegistered("com.intellij.jvm.declarationSearcher");
+
+    return area.getExtensionPointIfRegistered(JvmDeclarationSearcher.EP.getName());
   }
 }
