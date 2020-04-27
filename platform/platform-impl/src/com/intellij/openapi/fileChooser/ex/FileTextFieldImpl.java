@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -172,6 +172,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
 
   @Override
   public void dispose() {
+    myUiUpdater = null;
   }
 
   private void processTextChanged() {
