@@ -238,7 +238,7 @@ object DynamicPlugins {
     val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
     val context = DescriptorLoadingContext(listContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)
     val pathResolver = PluginEnabler.createPathResolverForPlugin(descriptor, context)
-    val element = try {
+    try {
       val jarPair = URLUtil.splitJarUrl(descriptor.basePath.toUri().toString())
       val newBasePath = if (jarPair == null) {
         descriptor.basePath
@@ -246,7 +246,13 @@ object DynamicPlugins {
       else {
         context.open(Paths.get(jarPair.first)).getPath(jarPair.second)
       }
-      pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
+      val element = pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
+      val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, newBasePath, false)
+      if (!subDescriptor.readExternal(element, pathResolver, context, descriptor)) {
+        LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
+        return null
+      }
+      return subDescriptor
     }
     catch (e: Exception) {
       LOG.error("Can't resolve optional dependency on plugin being loaded/unloaded: config file $dependencyConfigFile", e)
@@ -255,13 +261,6 @@ object DynamicPlugins {
     finally {
       context.close()
     }
-
-    val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, descriptor.basePath, false)
-    if (!subDescriptor.readExternal(element, pathResolver, context, descriptor)) {
-      LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
-      return null
-    }
-    return subDescriptor
   }
 
   private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointImpl<*>? {
