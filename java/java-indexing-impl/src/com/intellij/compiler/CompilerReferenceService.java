@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -18,12 +17,17 @@ import org.jetbrains.annotations.Nullable;
  * by {@link com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter} extension. Any result provided by this service should be valid even if some part of a given project was
  * modified after compilation.
  */
-public interface CompilerReferenceService extends ProjectComponent {
+public interface CompilerReferenceService {
   RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
 
   static CompilerReferenceService getInstance(@NotNull Project project) {
-    return project.getComponent(CompilerReferenceService.class);
+    return project.getService(CompilerReferenceService.class);
   }
+
+  /**
+   * Must be called once upon project opening 
+   */
+  void projectOpened();
 
   /**
    * @return a scope where given element has no references in code. This scope might be not a strict scope where element is not occurred.
