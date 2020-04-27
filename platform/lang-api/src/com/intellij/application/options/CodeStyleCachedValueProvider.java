@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -200,8 +201,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
 
     private void notifyCachedValueComputed() {
       if (!myProject.isDisposed()) {
-        final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
-        settingsManager.fireCodeStyleSettingsChanged(getReferencedPsi());
+        ObjectUtils.consumeIfNotNull(myFileRef.get(), file -> {
+          final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
+          settingsManager.fireCodeStyleSettingsChanged(file);
+        });
       }
       myComputation.reset();
     }
