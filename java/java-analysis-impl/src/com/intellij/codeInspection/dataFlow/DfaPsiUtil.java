@@ -104,7 +104,7 @@ public class DfaPsiUtil {
     }
 
     if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
-      return Nullability.UNKNOWN;
+      return getTypeNullability(resultType) == Nullability.NULLABLE ? Nullability.NULLABLE : Nullability.UNKNOWN;
     }
 
     Nullability fromType = getTypeNullability(resultType);
