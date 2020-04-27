@@ -53,10 +53,13 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
   }
 
   public void setText(@NlsContexts.Label String text) {
-    if (!StringUtil.isEmpty(text) && !StringUtil.endsWithChar(text, ':')) {
-      text += ':';
-    }
+    text = handleSemicolon(text);
     TextWithMnemonic.fromTextWithMnemonic(text).setToLabel(myLabel);
+  }
+
+  @Nullable
+  public @NlsContexts.Label String handleSemicolon(@NlsContexts.Label String text) {
+    return StringUtil.isEmpty(text) || StringUtil.endsWithChar(text, ':') || StringUtil.endsWithChar(text, '：') ? text : text + ':';
   }
 
   public String getText() {
