@@ -100,10 +100,8 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
 
     List<String> editorTabs = getEditorTabsToClose();
-    for (String tabId : editorTabs) {
-      boolean closed = VcsLogEditorUtilKt.closeLogTab(myProject, tabId);
-      LOG.assertTrue(closed, "Could not find editor for tab " + tabId + "\nTabs to close: " + editorTabs);
-    }
+    boolean closed = VcsLogEditorUtilKt.closeLogTabs(myProject, editorTabs);
+    LOG.assertTrue(closed, "Could not close tabs: " + editorTabs);
   }
 
   private @NotNull List<String> getToolWindowTabsToClose() {
@@ -215,8 +213,7 @@ public final class VcsLogTabsWatcher implements Disposable {
     public void selectionChanged(@NotNull FileEditorManagerEvent e) {
       FileEditor editor = e.getNewEditor();
       if (editor != null) {
-        String tabId = VcsLogEditorUtilKt.getLogId(editor);
-        if (tabId != null) {
+        for (String tabId : VcsLogEditorUtilKt.getLogIds(editor)) {
           VcsLogTabsWatcher.this.selectionChanged(tabId);
         }
       }

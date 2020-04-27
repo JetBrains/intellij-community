@@ -25,9 +25,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -37,31 +36,26 @@ import java.util.function.Supplier;
 public final class VcsLogContentUtil {
   @Nullable
   public static VcsLogUiEx getLogUi(@NotNull JComponent c) {
-    VcsLogPanel vcsLogPanel = null;
-    if (c instanceof VcsLogPanel) {
-      vcsLogPanel = (VcsLogPanel)c;
-    }
-    else if (c instanceof JPanel) {
-      vcsLogPanel = recursiveFindLogPanelInstance(c);
-    }
-
-    if (vcsLogPanel != null) {
-      return vcsLogPanel.getUi();
-    }
-    return null;
+    return ContainerUtil.getFirstItem(getLogUis(c));
   }
 
-  @Nullable
-  private static VcsLogPanel recursiveFindLogPanelInstance(@NotNull JComponent component) {
-    VcsLogPanel instance = ContainerUtil.findInstance(component.getComponents(), VcsLogPanel.class);
-    if (instance != null) return instance;
+  public static List<VcsLogUiEx> getLogUis(@NotNull JComponent c) {
+    Set<VcsLogPanel> panels = new HashSet<>();
+    collectLogPanelInstances(c, panels);
+
+    return ContainerUtil.map(panels, VcsLogPanel::getUi);
+  }
+
+  private static void collectLogPanelInstances(@NotNull JComponent component, @NotNull Set<VcsLogPanel> result) {
+    if (component instanceof VcsLogPanel) {
+      result.add((VcsLogPanel)component);
+      return;
+    }
     for (Component childComponent : component.getComponents()) {
       if (childComponent instanceof JComponent) {
-        instance = recursiveFindLogPanelInstance((JComponent)childComponent);
-        if (instance != null) return instance;
+        collectLogPanelInstances((JComponent)childComponent, result);
       }
     }
-    return null;
   }
 
   @Nullable

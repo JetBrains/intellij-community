@@ -10,43 +10,72 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.editor.VCS_LOG_FILE_DISPLAY_NAME_GENERATOR
 import com.intellij.vcs.log.ui.editor.VcsLogEditor
 import com.intellij.vcs.log.ui.editor.VcsLogFile
+import javax.swing.JComponent
 
-internal fun getLogId(editor: FileEditor): String? = VcsLogContentUtil.getLogUi(editor.component)?.id
+internal fun getLogIds(editor: FileEditor): Set<String> =
+  VcsLogContentUtil.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
 
 internal fun findSelectedLogIds(project: Project): Set<String> {
-  return FileEditorManager.getInstance(project).selectedEditors.mapNotNullTo(mutableSetOf(), ::getLogId)
+  return FileEditorManager.getInstance(project).selectedEditors.flatMapTo(mutableSetOf(), ::getLogIds)
 }
 
 internal fun getExistingLogIds(project: Project): Set<String> {
-  return FileEditorManager.getInstance(project).allEditors.mapNotNullTo(mutableSetOf(), ::getLogId)
+  return FileEditorManager.getInstance(project).allEditors.flatMapTo(mutableSetOf(), ::getLogIds)
 }
 
 internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
   val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-  val file = fileEditorManager.allEditors.first { getLogId(it) == ui.id }?.file
+  val file = fileEditorManager.allEditors.first { getLogIds(it).contains(ui.id) }?.file
   file?.let { fileEditorManager.updateFilePresentation(it) }
 }
 
 internal fun <U : VcsLogUiEx> openLogTab(project: Project, logManager: VcsLogManager, name: String,
-                                factory: VcsLogManager.VcsLogUiFactory<U>, focus: Boolean): U {
+                                         factory: VcsLogManager.VcsLogUiFactory<U>, focus: Boolean): U =
+  openLogTab(project, logManager, name, VcsLogTabsManager::generateDisplayName, factory, focus)
+
+internal fun <U : VcsLogUiEx> openLogTab(project: Project,
+                                         logManager: VcsLogManager,
+                                         name: String,
+                                         generateDisplayName: (U) -> String,
+                                         factory: VcsLogManager.VcsLogUiFactory<U>,
+                                         focus: Boolean): U {
   val logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.EDITOR)
 
-  val file = VcsLogFile(VcsLogPanel(logManager, logUi), name)
-  invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, focus) }
-
-  logManager.scheduleInitialization()
+  createAndOpenLogFile(project, logManager, VcsLogPanel(logManager, logUi), listOf(logUi), name, { generateDisplayName(logUi) }, focus)
   return logUi
 }
 
-internal fun closeLogTab(project: Project, tabId: String): Boolean {
+fun <U : VcsLogUiEx> createAndOpenLogFile(project: Project,
+                                          logManager: VcsLogManager,
+                                          rootComponent: JComponent,
+                                          logUis: List<U>,
+                                          name: String,
+                                          generateDisplayName: (List<VcsLogUiEx>) -> String,
+                                          focus: Boolean) {
+  val file = VcsLogFile(rootComponent, logUis, name).apply {
+    putUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR, generateDisplayName)
+  }
+  invokeLater(ModalityState.NON_MODAL) { FileEditorManager.getInstance(project).openFile(file, focus) }
+
+  logManager.scheduleInitialization()
+}
+
+internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean {
+  if (editorTabIds.isEmpty()) return true
+
   val editorManager = FileEditorManager.getInstance(project)
 
-  val logEditor = editorManager.allEditors.find { getLogId(it) == tabId } ?: return false
-  val logFile = logEditor.file ?: return false
+  val logEditors = editorManager.allEditors.filter { editorTabIds.containsAll(getLogIds(it))  }
+  if (logEditors.isEmpty()) return false
 
-  (logEditor as? VcsLogEditor)?.beforeEditorClose()
-  ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logFile) }, ModalityState.NON_MODAL, { project.isDisposed })
+  for (logEditor in logEditors) {
+    val logFile = logEditor.file ?: return false
+
+    (logEditor as? VcsLogEditor)?.beforeEditorClose()
+    ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logFile) }, ModalityState.NON_MODAL, { project.isDisposed })
+  }
   return true
 }

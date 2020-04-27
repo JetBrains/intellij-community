@@ -13,11 +13,11 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.impl.VcsLogTabsManager
-import com.intellij.vcs.log.ui.VcsLogPanel
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -37,7 +37,13 @@ class VcsLogFileType : FileType {
   }
 }
 
-class VcsLogFile(internal val vcsLogPanel: VcsLogPanel, name: String) : LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
+val VCS_LOG_FILE_DISPLAY_NAME_GENERATOR = Key.create<(List<VcsLogUiEx>) -> String>("VCS_LOG_FILE_GENERATE_DISPLAY_NAME")
+
+class VcsLogFile(
+  internal val rootComponent: JComponent,
+  internal val logUis: List<VcsLogUiEx>,
+  name: String
+) : LightVirtualFile(name, VcsLogFileType.INSTANCE, "") {
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
   }
@@ -51,27 +57,23 @@ class VcsLogEditor(file: VcsLogFile) : FileEditorBase() {
   private val container: JComponent = JPanel(BorderLayout())
 
   private var vcsLogFile: VcsLogFile? = file
-  private val vcsLogPanel: VcsLogPanel?
-    get() = vcsLogFile?.vcsLogPanel
 
   init {
-    container.add(file.vcsLogPanel, BorderLayout.CENTER)
-    Disposer.register(this, file.vcsLogPanel.getUi())
-  }
-
-  fun beforeEditorClose() {
-    val ui = vcsLogPanel?.getUi()
-
-    container.removeAll()
-    vcsLogFile = null
-
-    if (ui != null) {
-      Disposer.dispose(ui)
+    container.add(file.rootComponent, BorderLayout.CENTER)
+    for (logUi in file.logUis) {
+      Disposer.register(this, logUi)
     }
   }
 
+  fun beforeEditorClose() {
+    container.removeAll()
+    vcsLogFile = null
+
+    vcsLogFile?.logUis?.forEach(Disposer::dispose)
+  }
+
   override fun getComponent(): JComponent = container
-  override fun getPreferredFocusedComponent(): JComponent? = vcsLogPanel
+  override fun getPreferredFocusedComponent(): JComponent? = vcsLogFile?.logUis?.firstOrNull()?.mainComponent
   override fun getName(): String = "Vcs Log Editor"
   override fun getFile(): VirtualFile? = vcsLogFile
 }
@@ -88,7 +90,8 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
 }
 
 class VcsLogEditorTabTitleProvider : EditorTabTitleProvider {
-  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
-    return (file as? VcsLogFile)?.vcsLogPanel?.getUi()?.let { VcsLogTabsManager.generateDisplayName(it) }
-  }
+  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? =
+    file.getUserData(VCS_LOG_FILE_DISPLAY_NAME_GENERATOR)
+      ?.let { displayNameGenerator -> (file as? VcsLogFile)?.logUis?.run(displayNameGenerator) }
+    ?: file.name
 }
