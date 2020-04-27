@@ -306,7 +306,7 @@ public final class JdkUtil {
       TargetValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters);
+        List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, classPath);
         classPathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(classPathParameter.getTargetValue());
       }
@@ -317,7 +317,7 @@ public final class JdkUtil {
       TargetValue<String> modulePathParameter;
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters);
+        List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, modulePath);
         modulePathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(modulePathParameter.getTargetValue());
       }
@@ -428,7 +428,7 @@ public final class JdkUtil {
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       commandLine.addFileToDeleteOnTermination(classpathFile);
 
-      Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters);
+      Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(pathList -> {
         try {
           CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
@@ -563,7 +563,7 @@ public final class JdkUtil {
       TargetValue<String> jarFileValue = classPathVolume.createUpload(jarFilePath);
       commandLine.addParameter(jarFileValue);
 
-      Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters);
+      Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(targetClassPathParameters -> {
         try {
           boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
@@ -597,6 +597,7 @@ public final class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
+    appendModulePath(commandLine, request, classPathVolume, runtimeConfiguration, javaParameters, vmParameters);
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -620,15 +621,26 @@ public final class JdkUtil {
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
-      List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters);
+      List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, classPath);
       String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
       commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
 
+    appendModulePath(commandLine, request, classPathVolume, runtimeConfiguration, javaParameters, vmParameters);
+  }
+
+  private static void appendModulePath(TargetedCommandLineBuilder commandLine,
+                                       TargetEnvironmentRequest request,
+                                       TargetEnvironmentRequest.Volume classPathVolume,
+                                       @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                                       SimpleJavaParameters javaParameters,
+                                       ParametersList vmParameters) {
     PathsList modulePath = javaParameters.getModulePath();
     if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
       commandLine.addParameter("-p");
-      commandLine.addParameter(modulePath.getPathsString());
+      List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, modulePath);
+      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
+      commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
   }
 
@@ -678,12 +690,13 @@ public final class JdkUtil {
   @NotNull
   private static List<TargetValue<String>> getClassPathValues(TargetEnvironmentRequest.Volume classPathVolume,
                                                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                                              SimpleJavaParameters javaParameters) {
+                                                              SimpleJavaParameters javaParameters,
+                                                              PathsList classPath) {
     String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
     String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : null;
 
     ArrayList<TargetValue<String>> result = new ArrayList<>();
-    for (String path : javaParameters.getClassPath().getPathList()) {
+    for (String path : classPath.getPathList()) {
       if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
         result.add(classPathVolume.createUpload(path));
       }

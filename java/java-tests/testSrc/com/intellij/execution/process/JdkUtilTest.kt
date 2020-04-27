@@ -17,6 +17,8 @@ import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.nio.charset.StandardCharsets
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class JdkUtilTest : BareTestFixtureTestCase() {
   companion object {
@@ -93,6 +95,10 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   @Test fun dynamicClasspathWithArgFile() {
     setModuleMode()
     doTest("-Xmx256m", "-Dan.option=1", "#arg_file#", "-m", "hello/hello.Main", "hello")
+    val content = filesToDelete?.find { it.name.contains("idea_arg_file") }?.readLines()?.dropWhile { it.contains("-p") }
+    val modulePath = content?.first()
+    assertNotNull(modulePath)
+    assertTrue { modulePath.isNotEmpty() }
   }
 
   @Test fun dynamicClasspathWithArgFileAndParameters() {
