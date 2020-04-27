@@ -277,6 +277,11 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       DataManager.getInstance().getDataContextFromFocusAsync()
                  .onSuccess(dataContext -> {
