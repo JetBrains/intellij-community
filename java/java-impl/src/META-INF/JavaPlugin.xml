@@ -181,7 +181,7 @@
     <extensionPoint qualifiedName="com.intellij.java.compiler" area="IDEA_PROJECT"
                     interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
 
-    <extensionPoint qualifiedName="com.intellij.configuration.ModuleStructureExtension"
+    <extensionPoint qualifiedName="com.intellij.configuration.ModuleStructureExtension" dynamic="true"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
 
     <extensionPoint qualifiedName="com.intellij.projectStructureValidator"
