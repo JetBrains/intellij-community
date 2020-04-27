@@ -3,6 +3,8 @@ package com.jetbrains.python.psi.impl;
 
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
+import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -55,7 +57,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   private static final Key<String> KEY = new Key<>("python.language.level");
   /* It so happens that no single language level is compatible with more than one other.
      So a map suffices for representation*/
-  public static final Map<LanguageLevel, LanguageLevel> COMPATIBLE_LEVELS;
+  private static final Map<LanguageLevel, LanguageLevel> COMPATIBLE_LEVELS;
 
   static {
     Map<LanguageLevel, LanguageLevel> compatLevels = Maps.newEnumMap(LanguageLevel.class);
@@ -106,7 +108,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   }
 
   @Nullable
-  public static LanguageLevel getFileLanguageLevel(@NotNull Project project, @Nullable VirtualFile file) {
+  private static LanguageLevel getFileLanguageLevel(@NotNull Project project, @Nullable VirtualFile file) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
@@ -305,7 +307,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   }
 
   @NotNull
-  public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
+  private static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
     LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(KEY));
     if (languageLevel == null) {
       languageLevel = guessLanguageLevel(project);
@@ -338,6 +340,46 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
       }
     }
     return LanguageLevel.getDefault();
+  }
+
+  /**
+   * Returns Python language level for a virtual file.
+   *
+   * @see LanguageLevel#forElement
+   */
+  @NotNull
+  public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    if (virtualFile instanceof VirtualFileWindow) {
+      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
+    }
+    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
+
+    // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
+    final VirtualFile folder = virtualFile.getParent();
+    if (folder != null) {
+      final LanguageLevel folderLevel = specifiedFileLanguageLevel(folder);
+      if (folderLevel != null) {
+        return folderLevel;
+      }
+      final LanguageLevel fileLevel = getFileLanguageLevel(project, virtualFile);
+      if (fileLevel != null) {
+        return fileLevel;
+      }
+    }
+    else {
+      // However this allows us to setup language level per file manually
+      // in case when it is LightVirtualFile
+      final LanguageLevel level = specifiedFileLanguageLevel(virtualFile);
+      if (level != null) return level;
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        final LanguageLevel languageLevel = LanguageLevel.FORCE_LANGUAGE_LEVEL;
+        if (languageLevel != null) {
+          return languageLevel;
+        }
+      }
+    }
+    return guessLanguageLevelWithCaching(project);
   }
 
   private final class UpdateRootTask implements Runnable {
@@ -404,7 +446,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   }
 
   @Nullable
-  public static LanguageLevel specifiedFileLanguageLevel(@NotNull VirtualFile file) {
+  private static LanguageLevel specifiedFileLanguageLevel(@NotNull VirtualFile file) {
     return LanguageLevel.fromPythonVersion(file.getUserData(KEY));
   }
 

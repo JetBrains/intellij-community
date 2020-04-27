@@ -6,11 +6,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
-import com.intellij.notebook.editor.BackedVirtualFile;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -40,7 +37,10 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -564,47 +564,6 @@ public class PyUtil {
   @Nullable
   public static PyFunction getInitMethod(@NotNull final PyClass pyClass) {
     return pyClass.findMethodByName(PyNames.INIT, false, null);
-  }
-
-  /**
-   * Returns Python language level for a virtual file.
-   *
-   * @see LanguageLevel#forElement
-   */
-  @NotNull
-  public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
-                                                             @NotNull VirtualFile virtualFile) {
-    if (virtualFile instanceof VirtualFileWindow) {
-      virtualFile = ((VirtualFileWindow)virtualFile).getDelegate();
-    }
-    virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
-
-    // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
-    final VirtualFile folder = virtualFile.getParent();
-    if (folder != null) {
-      final LanguageLevel folderLevel = PythonLanguageLevelPusher.specifiedFileLanguageLevel(folder);
-      if (folderLevel != null) {
-        return folderLevel;
-      }
-      final LanguageLevel fileLevel = PythonLanguageLevelPusher.getFileLanguageLevel(project, virtualFile);
-      if (fileLevel != null) {
-        return fileLevel;
-      }
-    }
-    else {
-      // However this allows us to setup language level per file manually
-      // in case when it is LightVirtualFile
-      final LanguageLevel level = PythonLanguageLevelPusher.specifiedFileLanguageLevel(virtualFile);
-      if (level != null) return level;
-
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final LanguageLevel languageLevel = LanguageLevel.FORCE_LANGUAGE_LEVEL;
-        if (languageLevel != null) {
-          return languageLevel;
-        }
-      }
-    }
-    return PythonLanguageLevelPusher.guessLanguageLevelWithCaching(project);
   }
 
   /**

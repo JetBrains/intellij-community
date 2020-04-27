@@ -15,7 +15,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyStatementList
-import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 import java.awt.Font
 
 open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageConsoleView,
@@ -51,7 +51,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
   override fun checkSingleLine(text: String): Boolean {
-    val languageLevel = PyUtil.getLanguageLevelForVirtualFile(project, myConsoleView.virtualFile)
+    val languageLevel = PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(project, myConsoleView.virtualFile)
     val pyFile = PyElementGenerator.getInstance(project).createDummyFile(languageLevel, text) as PyFile
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
   }

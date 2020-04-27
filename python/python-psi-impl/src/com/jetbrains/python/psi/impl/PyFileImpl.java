@@ -237,7 +237,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (virtualFile == null) {
       virtualFile = getViewProvider().getVirtualFile();
     }
-    return PyUtil.getLanguageLevelForVirtualFile(getProject(), virtualFile);
+    return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(getProject(), virtualFile);
   }
 
   @Override
