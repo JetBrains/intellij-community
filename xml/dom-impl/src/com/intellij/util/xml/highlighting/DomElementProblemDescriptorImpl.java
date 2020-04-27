@@ -18,6 +18,7 @@ package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,26 +52,26 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public static final Pair<TextRange,PsiElement> NO_PROBLEM = new Pair<>(null, null);
   private final ProblemHighlightType myHighlightType;
 
-  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, final String message, final HighlightSeverity type) {
+  public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement, @InspectionMessage String message, final HighlightSeverity type) {
     this(domElement, message, type, LocalQuickFix.EMPTY_ARRAY);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         final String message,
+                                         @InspectionMessage String message,
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange) {
     this(domElement, message, type, textRange, null, LocalQuickFix.EMPTY_ARRAY);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         final String message,
+                                         @InspectionMessage String message,
                                          final HighlightSeverity type,
                                          LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
-                                         final String message,
+                                         @InspectionMessage String message,
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
                                          ProblemHighlightType highlightType,
