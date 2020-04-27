@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -207,22 +209,24 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       return Collections.emptyList();
     }
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
-      List<PsiClass> result = new ArrayList<>();
-      GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+      Set<PsiClass> result = new HashSet<>(getPossiblyUnresolvedJavaNicknameUsages());
+      GlobalSearchScope scope = new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(myProject)) {
+        @Override
+        public boolean contains(@NotNull VirtualFile file) {
+          return super.contains(file) && file.getFileType() != JavaFileType.INSTANCE;
+        }
+      };
       PsiClass[] nickDeclarations = JavaPsiFacade.getInstance(myProject).findClasses(Jsr305Support.TYPE_QUALIFIER_NICKNAME, scope);
       for (PsiClass tqNick : nickDeclarations) {
         result.addAll(ContainerUtil.findAll(MetaAnnotationUtil.getChildren(tqNick, scope), Jsr305Support::isNullabilityNickName));
       }
-      if (nickDeclarations.length == 0) {
-        result.addAll(getUnresolvedNicknameUsages());
-      }
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(new ArrayList<>(result), PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
   // some frameworks use jsr305 annotations but don't have them in classpath
   @NotNull
-  private List<PsiClass> getUnresolvedNicknameUsages() {
+  private List<PsiClass> getPossiblyUnresolvedJavaNicknameUsages() {
     List<PsiClass> result = new ArrayList<>();
     Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(
       Jsr305Support.TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
