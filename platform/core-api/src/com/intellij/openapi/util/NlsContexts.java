@@ -176,12 +176,6 @@ public class NlsContexts {
   public @interface Tooltip {
   }
 
-  @NlsContext(prefix = "tooltip.title")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface TooltipTitle {
-  }
-
   @NlsContext(prefix = "separator")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
