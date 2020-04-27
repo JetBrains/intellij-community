@@ -169,7 +169,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
     ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
-    PatchProjectUtil.patchProject(project);
+    ApplicationManager.getApplication().invokeAndWait(() -> PatchProjectUtil.patchProject(project));
 
     reportMessage(1, InspectionsBundle.message("inspection.done"));
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
