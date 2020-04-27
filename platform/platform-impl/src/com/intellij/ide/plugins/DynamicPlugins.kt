@@ -98,13 +98,26 @@ object DynamicPlugins {
   @JvmStatic
   @JvmOverloads
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
+    val reason = checkCanUnloadWithoutRestart(descriptor, baseDescriptor)
+    if (reason != null) {
+      LOG.info(reason)
+    }
+    return reason == null
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun checkCanUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): String? {
     if (InstalledPluginsState.getInstance().isRestartRequired) {
-      LOG.info("Not allowing load/unload without restart because of pending restart operation")
-      return false
+      return "Not allowing load/unload without restart because of pending restart operation"
     }
 
     if (!RegistryManager.getInstance().`is`("ide.plugins.allow.unload")) {
-      return allowLoadUnloadSynchronously(descriptor)
+      val canLoadSynchronously = allowLoadUnloadSynchronously(descriptor)
+      if (!canLoadSynchronously) {
+        return "ide.plugins.allow.unload is disabled and synchronous load/unload is not possible for ${descriptor.pluginId}"
+      }
+      return null
     }
 
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
@@ -114,9 +127,7 @@ object DynamicPlugins {
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(descriptor)
     }
     catch (e: CannotUnloadPluginException) {
-      val localizedMessage = e.cause?.localizedMessage
-      LOG.info(localizedMessage)
-      return false
+      return e.cause?.localizedMessage
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
@@ -124,9 +135,8 @@ object DynamicPlugins {
         val pluginClassLoader = loadedPluginDescriptor.pluginClassLoader
         if (pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
           val loader = baseDescriptor ?: descriptor
-          LOG.info("Plugin ${loader.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
-                   "For example, the IDE is started from the sources with the plugin.")
-          return false
+          return "Plugin ${loader.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
+                   "For example, the IDE is started from the sources with the plugin."
         }
       }
     }
@@ -143,9 +153,8 @@ object DynamicPlugins {
           // descriptor.pluginId is null when we check the optional dependencies of the plugin which is being loaded
           // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
           if (baseDescriptor != null && descriptor.pluginId != null && !pluginExtensionPoint.isDynamic) {
-            LOG.info("Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName" +
-                     " in optional dependency on it: ${descriptor.pluginId}")
-            return false
+            return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName" +
+                     " in optional dependency on it: ${descriptor.pluginId}"
           }
           continue
         }
@@ -158,13 +167,11 @@ object DynamicPlugins {
         if (ep != null) {
           if (!ep.isDynamic) {
             if (baseDescriptor != null) {
-              LOG.info(
-                "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
+              return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
             }
             else {
-              LOG.info("Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName")
+              return "Plugin ${descriptor.pluginId} is not unload-safe because of extension to non-dynamic EP $epName"
             }
-            return false
           }
           continue
         }
@@ -173,42 +180,41 @@ object DynamicPlugins {
           val baseEP = findPluginExtensionPoint(baseDescriptor, epName)
           if (baseEP != null) {
             if (!baseEP.isDynamic) {
-              LOG.info(
-                "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it")
-              return false
+              return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName in optional dependencies on it"
             }
             continue
           }
         }
 
-        LOG.info("Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName")
-        return false
+        return "Plugin ${descriptor.pluginId} is not unload-safe because of unresolved extension $epName"
       }
     }
 
     val pluginId = loadedPluginDescriptor?.pluginId ?: baseDescriptor?.pluginId
-    if (!hasNoComponentsOrServiceOverrides(pluginId, descriptor) || !ActionManagerImpl.canUnloadActions(descriptor)) {
-      return false
-    }
+    checkNoComponentsOrServiceOverrides(pluginId, descriptor)?.let { return it }
+    ActionManagerImpl.checkUnloadActions(descriptor)?.let { return it }
 
     descriptor.pluginDependencies?.forEach { dependency ->
-      if (isPluginOrModuleLoaded(dependency.id) && !allowLoadUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, descriptor)) {
-        return false
+      if (isPluginOrModuleLoaded(dependency.id)) {
+        val message = checkCanUnloadWithoutRestart(dependency.subDescriptor ?: return@forEach, descriptor)
+        if (message != null) {
+          return message
+        }
       }
     }
 
-    var canUnload = true
+    var optionalDependencyMessage: String? = null
     // if not a sub plugin descriptor, then check that any dependent plugin also reloadable
     if (descriptor.pluginId != null) {
       processOptionalDependenciesOnPlugin(descriptor.pluginId) { _, subDescriptor ->
-        if (subDescriptor != null && !allowLoadUnloadWithoutRestart(subDescriptor, descriptor)) {
-          canUnload = false
+        if (subDescriptor != null) {
+          optionalDependencyMessage = checkCanUnloadWithoutRestart(subDescriptor, descriptor)
         }
-        canUnload
+        optionalDependencyMessage == null
       }
     }
 
-    return canUnload
+    return optionalDependencyMessage
   }
 
   private fun processOptionalDependenciesOnPlugin(dependencyPluginId: PluginId,
@@ -280,24 +286,22 @@ object DynamicPlugins {
         it.key == BundledKeymapBean.EP_NAME.name}) {
       return false
     }
-    return hasNoComponentsOrServiceOverrides(pluginDescriptor.pluginId, pluginDescriptor) && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
+    return checkNoComponentsOrServiceOverrides(pluginDescriptor.pluginId, pluginDescriptor) == null && pluginDescriptor.actionDescriptionElements.isNullOrEmpty()
   }
 
-  private fun hasNoComponentsOrServiceOverrides(pluginId: PluginId?, pluginDescriptor: IdeaPluginDescriptorImpl): Boolean =
-    hasNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.appContainerDescriptor) &&
-    hasNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.projectContainerDescriptor) &&
-    hasNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.moduleContainerDescriptor)
+  private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, pluginDescriptor: IdeaPluginDescriptorImpl): String? =
+    checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.appContainerDescriptor) ?:
+    checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.projectContainerDescriptor) ?:
+    checkNoComponentsOrServiceOverrides(pluginId, pluginDescriptor.moduleContainerDescriptor)
 
-  private fun hasNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): Boolean {
+  private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
     if (!containerDescriptor.components.isNullOrEmpty()) {
-      LOG.info("Plugin $pluginId is not unload-safe because it declares components")
-      return false
+      return "Plugin $pluginId is not unload-safe because it declares components"
     }
     if (containerDescriptor.services?.any { it.overrides } == true) {
-      LOG.info("Plugin $pluginId is not unload-safe because it overrides services")
-      return false
+      return "Plugin $pluginId is not unload-safe because it overrides services"
     }
-    return true
+    return null
   }
 
   @JvmStatic
