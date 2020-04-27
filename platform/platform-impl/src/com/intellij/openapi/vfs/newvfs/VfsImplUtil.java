@@ -15,6 +15,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -306,5 +307,12 @@ public class VfsImplUtil {
         RefreshQueue.getInstance().refresh(async, true, null, myRootsToRefresh);
       }
     }
+  }
+
+  @TestOnly
+  public static void releaseHandler(@NotNull String localPath) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
+    InvalidationState state = invalidate(null, localPath);
+    if (state == null) throw new IllegalArgumentException(localPath + " not in " + ourHandlers.keySet());
   }
 }
