@@ -170,13 +170,13 @@ internal class PEntityStorageBuilder(
     }
   }
 
-  private fun addChangesToIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+  private fun addChangesToIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: AbstractPEntityStorage) {
     builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
     builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
     builder.persistentIdIndex.getPersistentId(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
-  private fun updateIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: PEntityStorageBuilder) {
+  private fun updateIndices(oldEntityId: PId<out TypedEntity>, newEntityId: PId<out TypedEntity>, builder: AbstractPEntityStorage) {
     builder.virtualFileIndex.getVirtualFiles(oldEntityId)?.forEach { virtualFileIndex.index(newEntityId, listOf(it)) }
     builder.entitySourceIndex.getEntitySource(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
     builder.persistentIdIndex.getPersistentId(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
@@ -473,8 +473,9 @@ internal class PEntityStorageBuilder(
         rightMatchedNodes.put(matchedEntityData.identificator(replaceWith), matchedEntityData)
 
         val leftNode = leftMatchedNodes.find(matchedEntityData, replaceWith)
+        val oldPid = matchedEntityData.createPid()
         if (leftNode != null) {
-          replaceMap[leftNode.createPid()] = matchedEntityData.createPid()
+          replaceMap[leftNode.createPid()] = oldPid
           if (leftNode.hasPersistentId() && leftNode != matchedEntityData) {
             val clonedEntity = matchedEntityData.clone()
             clonedEntity.id = leftNode.id
@@ -482,16 +483,18 @@ internal class PEntityStorageBuilder(
             val pid = clonedEntity.createPid()
             val parents = this.refs.getParentRefsOfChild(pid)
             val children = this.refs.getChildrenRefsOfParentBy(pid)
+            updateIndices(oldPid, pid, replaceWith)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
           leftMatchedNodes.remove(leftNode.identificator(this), leftNode)
         }
         else {
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, clazz as Class<TypedEntity>)
-          val pid = newEntity.createPid()
-          replaceMap[pid] = matchedEntityData.createPid()
-          val parents = this.refs.getParentRefsOfChild(pid)
-          val children = this.refs.getChildrenRefsOfParentBy(pid)
+          val newPid = newEntity.createPid()
+          replaceMap[newPid] = oldPid
+          val parents = this.refs.getParentRefsOfChild(newPid)
+          val children = this.refs.getChildrenRefsOfParentBy(newPid)
+          addChangesToIndices(oldPid, newPid, replaceWith)
           updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, children, parents)) }
         }
       }
@@ -501,7 +504,9 @@ internal class PEntityStorageBuilder(
     for (leftEntity in leftMatchedNodes.values()) {
       // XXX do not create entity
       this.entitiesByType.remove(leftEntity.id, leftEntity.createEntity(this).javaClass)
-      updateChangeLog { it.add(ChangeEntry.RemoveEntity(leftEntity.createPid())) }
+      val entityId = leftEntity.createPid()
+      removeFromIndices(entityId)
+      updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
     }
 
     // 4) Restore references between matched and unmatched entities
