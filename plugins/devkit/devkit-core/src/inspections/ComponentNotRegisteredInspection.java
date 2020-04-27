@@ -119,7 +119,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
 
     if (checkedClass.isInheritor(actionClass, true)) {
       if (!isActionRegistered(checkedClass, project) && canFix(checkedClass)) {
-        LocalQuickFix fix = new RegisterActionFix(org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+        LocalQuickFix fix = new RegisterActionFix(checkedClass);
         sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
                                             DevKitBundle.message("new.menu.action.text")), fix);
       }
@@ -162,7 +162,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
       return true;
     }
 
-    LocalQuickFix fix = new RegisterComponentFix(componentType, org.jetbrains.idea.devkit.util.PsiUtil.createPointer(checkedClass));
+    LocalQuickFix fix = new RegisterComponentFix(componentType, checkedClass);
     sink.highlight(DevKitBundle.message("inspections.component.not.registered.message",
                                         DevKitBundle.message(componentType.myPropertyKey)), fix);
     return false;
