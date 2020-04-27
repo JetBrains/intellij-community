@@ -115,7 +115,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
 
     if (needsRegistration) {
-      CodeStyleSettingsManager.getInstance().registerSettings(this);
+      CodeStyleSettingsManager.registerSettings(this);
     }
   }
 

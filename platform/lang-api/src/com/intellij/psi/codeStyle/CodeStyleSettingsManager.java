@@ -47,16 +47,16 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   private final List<CodeStyleSettingsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  private final WeakList<CodeStyleSettings> myReferencedSettings = new WeakList<>();
+  private final static WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
-  public final CodeStyleSettings createSettings() {
+  public CodeStyleSettings createSettings() {
     CodeStyleSettings newSettings = new CodeStyleSettings(true, false);
     registerSettings(newSettings);
     return newSettings;
   }
 
-  void registerSettings(CodeStyleSettings newSettings) {
-    myReferencedSettings.add(newSettings);
+  static void registerSettings(CodeStyleSettings newSettings) {
+    ourReferencedSettings.add(newSettings);
   }
 
   public final CodeStyleSettings createTemporarySettings() {
@@ -64,6 +64,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return myTemporarySettings;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public final CodeStyleSettings cloneSettings(@NotNull CodeStyleSettings settings) {
     CodeStyleSettings clonedSettings = new CodeStyleSettings(true, false);
     clonedSettings.copyFrom(settings);
@@ -82,7 +83,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   private Collection<CodeStyleSettings> getAllSettings() {
     List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
-    allSettings.addAll(myReferencedSettings.toStrongList());
+    allSettings.addAll(ourReferencedSettings.toStrongList());
     return allSettings;
   }
 
