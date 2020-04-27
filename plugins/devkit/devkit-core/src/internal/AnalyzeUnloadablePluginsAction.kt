@@ -226,7 +226,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
   }
 
   private fun resolvePluginDependency(dependency: Dependency): IdeaPlugin? {
-    var xmlFile = DescriptorUtil.resolveDependencyToXmlFile(dependency)
+    var xmlFile = dependency.resolvedConfigFile
     val configFileName = dependency.configFile.stringValue
     if (xmlFile == null && configFileName != null) {
       val project = dependency.manager.project

@@ -56,6 +56,8 @@
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForGroup"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Dependency"
+                        implementationClass="org.jetbrains.idea.devkit.dom.impl.DependencyImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.ExtensionPoint"
