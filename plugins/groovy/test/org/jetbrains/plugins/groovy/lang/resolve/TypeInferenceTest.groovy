@@ -1907,4 +1907,21 @@ def foo() {
   <caret>x
 ''', "A"
   }
+
+  void 'test shadowed field'() {
+    doNestedDfaTest '''
+class A {
+
+    def counter = 200
+
+    def foo() {
+        1.with {
+            counter = "s"
+            def counter = new ArrayList<Integer>()
+        }
+        <caret>counter
+    }
+}
+''', JAVA_LANG_STRING
+  }
 }

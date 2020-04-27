@@ -8,6 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
@@ -51,8 +52,10 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
     val parentFlowOwner = this.parentFlowOwner ?: return null
     val parentCache = TypeInferenceHelper.getInferenceCache(parentFlowOwner)
     val resolvedDescriptor = descriptor.run {
-      if (this is ResolvedVariableDescriptor) this
-      else parentCache.findDescriptor(getName())
+      if (this is ResolvedVariableDescriptor) return@run this
+      val blockInParentCache: Instruction = ControlFlowUtils.findInstruction(start, parentFlowOwner.controlFlow) ?: return@run this
+      val nestedFlowStart = blockInParentCache.allPredecessors().firstOrNull() ?: return@run this
+      ControlFlowUtils.findNearestVariableDescriptor(nestedFlowStart, getName(), false, false)
     } ?: descriptor
     val instruction = parentInstruction ?: return null
     return parentCache.getInferredType(resolvedDescriptor, instruction, false)

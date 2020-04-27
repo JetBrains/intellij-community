@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
@@ -843,6 +844,42 @@ public final class ControlFlowUtils {
             return createDescriptor(targetField);
           }
         }
+      }
+    }
+    return null;
+  }
+
+  public static @Nullable VariableDescriptor findNearestVariableDescriptor(@NotNull Instruction startInstruction,
+                                                                           @NotNull String name,
+                                                                           boolean isForward,
+                                                                           boolean visitNested) {
+    Deque<Instruction> instructionQueue = new ArrayDeque<>();
+    instructionQueue.add(startInstruction);
+    while (!instructionQueue.isEmpty()) {
+      Instruction rootInstruction = instructionQueue.poll();
+      if (rootInstruction instanceof ReadWriteVariableInstruction) {
+        VariableDescriptor descriptor = ((ReadWriteVariableInstruction)rootInstruction).getDescriptor();
+        if (name.equals(descriptor.getName())) {
+          return descriptor;
+        }
+      }
+      if (visitNested && rootInstruction.getElement() instanceof GrFunctionalExpression) {
+        GrControlFlowOwner nestedOwner =
+          FunctionalExpressionFlowUtil.getControlFlowOwner((GrFunctionalExpression)rootInstruction.getElement());
+        if (nestedOwner != null) {
+          Instruction nestedStartInstruction =
+            isForward ? nestedOwner.getControlFlow()[0] : nestedOwner.getControlFlow()[nestedOwner.getControlFlow().length - 1];
+          VariableDescriptor nestedDescriptor = findNearestVariableDescriptor(nestedStartInstruction, name, isForward, true);
+          if (nestedDescriptor != null) {
+            return nestedDescriptor;
+          }
+        }
+      }
+      if (isForward) {
+        rootInstruction.allSuccessors().forEach(instructionQueue::add);
+      }
+      else {
+        rootInstruction.allPredecessors().forEach(instructionQueue::add);
       }
     }
     return null;

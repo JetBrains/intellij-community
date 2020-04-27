@@ -15,7 +15,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
@@ -172,26 +171,6 @@ class InferenceCache {
   private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult,
                               Set<Instruction> storingInstructions) {
     myVarTypes.accumulateAndGet(dfaResult, (oldState, newState) -> addDfaResult(oldState, newState, storingInstructions));
-  }
-
-  @Nullable
-  VariableDescriptor findDescriptor(@NotNull String name) {
-    VariableDescriptor result = null;
-    for (Object descr : myVarIndexes.getValue().keys()) {
-      VariableDescriptor descriptor = (VariableDescriptor)descr;
-      if (descriptor.getName().equals(name) && !(result instanceof ResolvedVariableDescriptor)) {
-        result = descriptor;
-      }
-    }
-    if (result == null) {
-      result = Arrays.stream(myFlow)
-        .map(Instruction::getElement)
-        .filter(element -> element instanceof GrControlFlowOwner)
-        .map(element -> TypeInferenceHelper.getInferenceCache((GrControlFlowOwner)element).findDescriptor(name))
-        .filter(Objects::nonNull)
-        .findFirst().orElse(null);
-    }
-    return result;
   }
 
   @NotNull SharedVariableTypeProvider getSharedVariableTypeProvider() {

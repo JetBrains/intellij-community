@@ -27,6 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
+import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.findNearestVariableDescriptor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableDescriptors;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
@@ -238,7 +239,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     Instruction[] blockFlow = block.getControlFlow();
     Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
     for (VariableDescriptor outerDescriptor : interestingDescriptors) {
-      VariableDescriptor innerDescriptor = blockCache.findDescriptor(outerDescriptor.getName());
+      VariableDescriptor innerDescriptor = findNearestVariableDescriptor(blockFlow[0], outerDescriptor.getName(), true, true);
       if (innerDescriptor == null) {
         continue;
       }
