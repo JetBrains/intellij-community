@@ -47,10 +47,9 @@ internal class JpsLibrariesExternalFileSerializer(private val externalFile: JpsF
   override val entityFilter: (LibraryEntity) -> Boolean
     get() = { it.tableId == LibraryTableId.ProjectLibraryTableId && (it.entitySource as? JpsImportedEntitySource)?.storedExternally == true }
 
-  override fun createEntitySource(libraryTag: Element): EntitySource {
-    val externalSystemId = libraryTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
+  override fun createEntitySource(libraryTag: Element): EntitySource? {
+    val externalSystemId = libraryTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) ?: return null
     val internalEntitySource = JpsFileEntitySource.FileInDirectory(internalLibrariesDirUrl, externalFile.projectLocation)
-    if (externalSystemId == null) return internalEntitySource
     return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
   }
 
@@ -69,13 +68,13 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
                             reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager) {
     val libraryTableTag = reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) ?: return
     for (libraryTag in libraryTableTag.getChildren(LIBRARY_TAG)) {
-      val source = createEntitySource(libraryTag)
+      val source = createEntitySource(libraryTag) ?: continue
       val name = libraryTag.getAttributeValueStrict(JpsModuleRootModelSerializer.NAME_ATTRIBUTE)
       loadLibrary(name, libraryTag, libraryTableId, builder, source, virtualFileManager)
     }
   }
 
-  protected open fun createEntitySource(libraryTag: Element): EntitySource = internalEntitySource
+  protected open fun createEntitySource(libraryTag: Element): EntitySource? = internalEntitySource
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out TypedEntity>, List<TypedEntity>>,
