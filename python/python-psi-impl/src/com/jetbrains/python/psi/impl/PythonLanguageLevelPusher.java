@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -105,19 +106,6 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   @Nullable
   public String getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
     return null;
-  }
-
-  @Nullable
-  private static LanguageLevel getFileLanguageLevel(@NotNull Project project, @Nullable VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
-      return LanguageLevel.FORCE_LANGUAGE_LEVEL;
-    }
-    if (file == null) return null;
-    final Sdk sdk = getFileSdk(project, file);
-    if (sdk != null) {
-      return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-    }
-    return guessLanguageLevelWithCaching(project);
   }
 
   @Nullable
@@ -354,31 +342,15 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
     }
     virtualFile = BackedVirtualFile.getOriginFileIfBacked(virtualFile);
 
-    // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
-    final VirtualFile folder = virtualFile.getParent();
-    if (folder != null) {
-      final LanguageLevel folderLevel = specifiedFileLanguageLevel(folder);
-      if (folderLevel != null) {
-        return folderLevel;
-      }
-      final LanguageLevel fileLevel = getFileLanguageLevel(project, virtualFile);
-      if (fileLevel != null) {
-        return fileLevel;
-      }
-    }
-    else {
-      // However this allows us to setup language level per file manually
-      // in case when it is LightVirtualFile
-      final LanguageLevel level = specifiedFileLanguageLevel(virtualFile);
-      if (level != null) return level;
+    final LanguageLevel forced = LanguageLevel.FORCE_LANGUAGE_LEVEL;
+    if (ApplicationManager.getApplication().isUnitTestMode() && forced != null) return forced;
 
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final LanguageLevel languageLevel = LanguageLevel.FORCE_LANGUAGE_LEVEL;
-        if (languageLevel != null) {
-          return languageLevel;
-        }
-      }
-    }
+    final LanguageLevel specified = specifiedFileLanguageLevel(virtualFile);
+    if (specified != null) return specified;
+
+    final Sdk sdk = virtualFile instanceof LightVirtualFile ? null : getFileSdk(project, virtualFile);
+    if (sdk != null) return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+
     return guessLanguageLevelWithCaching(project);
   }
 
@@ -446,8 +418,16 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   }
 
   @Nullable
-  private static LanguageLevel specifiedFileLanguageLevel(@NotNull VirtualFile file) {
-    return LanguageLevel.fromPythonVersion(file.getUserData(KEY));
+  private static LanguageLevel specifiedFileLanguageLevel(@Nullable VirtualFile file) {
+    if (file == null) return null;
+
+    final LanguageLevel specified = LanguageLevel.fromPythonVersion(file.getUserData(KEY));
+    if (file.isDirectory()) {
+      return specified;
+    }
+    else {
+      return specified == null ? specifiedFileLanguageLevel(file.getParent()) : specified;
+    }
   }
 
   public void flushLanguageLevelCache() {
