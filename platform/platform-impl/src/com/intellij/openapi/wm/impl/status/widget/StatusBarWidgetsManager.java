@@ -4,13 +4,13 @@ package com.intellij.openapi.wm.impl.status.widget;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NotNull;
@@ -56,16 +56,10 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }, true, this);
   }
 
-  public void updateAllWidgets() {
-    for (StatusBarWidgetFactory factory : myWidgetFactories.keySet()) {
-      updateWidget(factory);
-    }
-  }
-
   public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
     StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
-    if (factory == null) {
-      LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
+    if (factory == null || !myWidgetFactories.containsKey(factory)) {
+      LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
       return;
     }
     updateWidget(factory);
@@ -174,6 +168,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       return;
     }
     myWidgetFactories.put(factory, null);
+    ApplicationManager.getApplication().invokeLater(() -> updateWidget(factory));
     incModificationCount();
   }
 
