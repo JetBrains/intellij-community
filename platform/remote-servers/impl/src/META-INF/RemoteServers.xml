@@ -9,6 +9,11 @@
     <extensionPoint name="remoteServer.runConfigurationExtension"
                     interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfigurationExtension"
                     dynamic="true"/>
+    <extensionPoint name="remoteServer.defaultConfigurable.includeServerType"
+                    beanClass="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurableProvider$IncludeServerType"
+                    dynamic="true">
+      <with attribute="serverType" implements="com.intellij.remoteServer.ServerType"/>
+    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

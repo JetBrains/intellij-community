@@ -26,6 +26,7 @@
                      implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
 
     <remoteServer.type implementation="com.intellij.appengine.cloud.AppEngineCloudType"/>
+    <remoteServer.defaultConfigurable.includeServerType serverType="com.intellij.appengine.cloud.AppEngineCloudType"/>
 
     <pluginReplacement implementation="com.intellij.appengine.converter.AppEnginePluginReplacement"/>
     <postStartupActivity implementation="com.intellij.appengine.converter.MigrateToCloudToolsNotification"/>
