@@ -38,7 +38,6 @@ public interface KeyDescriptor<T> extends EqualityPolicy<T>, DataExternalizer<T>
   /**
    * @implNote The implementation may use this method together
    * with {@link #getHashCode(Object)} to persist key objects on disk.
-   * Make sure implementations are synchronized
    *
    * @see #getHashCode(Object)
    */
