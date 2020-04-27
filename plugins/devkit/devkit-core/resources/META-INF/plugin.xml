@@ -352,7 +352,8 @@
 
   <extensionPoints >
     <extensionPoint name="lang.goodCodeRedVisitor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
     </extensionPoint>
   </extensionPoints>
