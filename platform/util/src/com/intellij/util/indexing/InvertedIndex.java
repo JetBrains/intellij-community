@@ -16,7 +16,6 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +27,12 @@ public interface InvertedIndex<Key, Value, Input> {
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
   /**
+   * Update the current index with the given content.
+   *
    * @param inputId *positive* id of content.
+   * @return true if success, false if error occurred.
    */
-  @NotNull
-  Computable<Boolean> update(int inputId, @Nullable Input content);
+  boolean update(int inputId, @Nullable Input content);
 
   void flush() throws StorageException;
 

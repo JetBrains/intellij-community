@@ -18,7 +18,6 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.indexing.*;
@@ -231,32 +230,29 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
-  @NotNull
   @Override
-  public final Computable<Boolean> update(final int inputId, @Nullable final Input content) {
+  public final boolean update(int inputId, @Nullable Input content) {
     final InputData<Key, Value> data = mapInput(inputId, content);
     final UpdateData<Key, Value> updateData = new UpdateData<>(inputId,
                                                                data.getKeyValues(),
                                                                () -> getKeysDiffBuilder(inputId), myIndexId,
                                                                () -> updateForwardIndex(inputId, data));
-    return () -> {
-      try {
-        updateWithMap(updateData);
-      }
-      catch (StorageException | ProcessCanceledException ex) {
-        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
-        //noinspection InstanceofCatchParameter
-        if (ex instanceof ProcessCanceledException) {
-          LOG.error(message, ex);
-        } else {
-          LOG.info(message, ex);
-        }
-        requestRebuild(ex);
-        return Boolean.FALSE;
-      }
 
-      return Boolean.TRUE;
-    };
+    try {
+      updateWithMap(updateData);
+    }
+    catch (StorageException | ProcessCanceledException ex) {
+      String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+      //noinspection InstanceofCatchParameter
+      if (ex instanceof ProcessCanceledException) {
+        LOG.error(message, ex);
+      } else {
+        LOG.info(message, ex);
+      }
+      requestRebuild(ex);
+      return false;
+    }
+    return true;
   }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
