@@ -39,7 +39,9 @@ data class IntellijUpdateMetadata(
   val dependencies: Set<String> = emptySet(),
   val since: String? = null,
   val until: String? = null,
-  val productCode: String? = null
+  val productCode: String? = null,
+  val url: String? = null,
+  val size: Int = 0
 ) {
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode()
@@ -53,6 +55,8 @@ data class IntellijUpdateMetadata(
     pluginNode.untilBuild = until
     pluginNode.productCode = productCode
     pluginNode.version = version
+    pluginNode.url = url
+    pluginNode.size = size.toString()
     for (dep in dependencies) pluginNode.addDepends(dep)
     return pluginNode
   }
