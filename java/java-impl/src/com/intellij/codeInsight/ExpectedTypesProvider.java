@@ -1074,6 +1074,9 @@ public class ExpectedTypesProvider {
           if (params.length <= index) continue;
           PsiParameter param = params[index];
           PsiType paramType = getParameterType(param, substitutor);
+          if (method.hasTypeParameters() && PsiTypesUtil.mentionsTypeParameters(paramType, ContainerUtil.newHashSet(method.getTypeParameters()))) {
+            continue;
+          }
           TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, params);
           ExpectedTypeInfoImpl info = createInfoImpl(paramType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, paramType,
                                                      tailType, method, getPropertyName(param));
