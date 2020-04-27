@@ -588,7 +588,8 @@
     <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.packageManagerProvider" interface="com.jetbrains.python.packaging.PyPackageManagerProvider"/>
     <extensionPoint qualifiedName="Pythonid.projectSynchronizerProvider"
-                    interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"/>
+                    interface="com.jetbrains.python.remote.PyProjectSynchronizerProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.sshInterpreterManager" interface="com.jetbrains.python.remote.PythonSshInterpreterManager" dynamic="true"/>
 
     <extensionPoint qualifiedName="Pythonid.condaSdkCustomizer"
