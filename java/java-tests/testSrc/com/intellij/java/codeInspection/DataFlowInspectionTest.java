@@ -354,24 +354,24 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testTypeQualifierNickname() {
     myFixture.addClass("package javax.annotation.meta; public @interface TypeQualifierNickname {}");
     addJavaxNullabilityAnnotations(myFixture);
-    addNullableNick();
+    myFixture.addClass(barNullableNick());
 
     doTest();
   }
 
   public void testTypeQualifierNicknameWithoutDeclarations() {
     addJavaxNullabilityAnnotations(myFixture);
-    addNullableNick();
+    myFixture.addClass(barNullableNick());
 
     myFixture.enableInspections(new DataFlowInspection());
     myFixture.testHighlighting(true, false, true, "TypeQualifierNickname.java");
   }
 
-  private void addNullableNick() {
-    myFixture.addClass("package bar;" +
-                       "@javax.annotation.meta.TypeQualifierNickname() " +
-                       "@javax.annotation.Nonnull(when = javax.annotation.meta.When.MAYBE) " +
-                       "public @interface NullableNick {}");
+  static String barNullableNick() {
+    return "package bar;" +
+           "@javax.annotation.meta.TypeQualifierNickname() " +
+           "@javax.annotation.Nonnull(when = javax.annotation.meta.When.MAYBE) " +
+           "public @interface NullableNick {}";
   }
 
   public static void addJavaxDefaultNullabilityAnnotations(final JavaCodeInsightTestFixture fixture) {
