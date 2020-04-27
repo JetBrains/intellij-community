@@ -63,7 +63,8 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
               findExtensionPoint(area, it.name).addChangeListener(epListener, this)
             }
           }
-        } else if (ep.providerClass != null) {
+        }
+        if (ep.providerClass != null) {
           val provider = ep.instantiateConfigurableProvider() as? WithEpDependencies
           if (provider != null) {
             for (it in provider.dependencies) {
