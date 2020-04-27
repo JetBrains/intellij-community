@@ -309,7 +309,7 @@ public final class JdkUtil {
       TargetValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
+        List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
         classPathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(classPathParameter.getTargetValue());
       }
@@ -320,7 +320,7 @@ public final class JdkUtil {
       TargetValue<String> modulePathParameter;
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
+        List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters, modulePath);
         modulePathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(modulePathParameter.getTargetValue());
       }
@@ -429,7 +429,7 @@ public final class JdkUtil {
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       commandLine.addFileToDeleteOnTermination(classpathFile);
 
-      Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
+      Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(pathList -> {
         try {
           CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
@@ -560,7 +560,7 @@ public final class JdkUtil {
       TargetValue<String> jarFileValue = request.createUpload(jarFilePath);
       commandLine.addParameter(jarFileValue);
 
-      Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters);
+      Collection<TargetValue<String>> classPathParameters = getClassPathValues(request, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(targetClassPathParameters -> {
         try {
           boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
@@ -590,6 +590,7 @@ public final class JdkUtil {
         }
       });
 
+      appendModulePath(commandLine, request, runtimeConfiguration, javaParameters, vmParameters);
     }
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
@@ -615,15 +616,25 @@ public final class JdkUtil {
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
-      List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters);
+      List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
       String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
       commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
 
+    appendModulePath(commandLine, request, runtimeConfiguration, javaParameters, vmParameters);
+  }
+
+  private static void appendModulePath(@NotNull TargetedCommandLineBuilder commandLine,
+                                       @NotNull TargetEnvironmentRequest request,
+                                       @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                                       @NotNull SimpleJavaParameters javaParameters,
+                                       @NotNull ParametersList vmParameters) {
     PathsList modulePath = javaParameters.getModulePath();
     if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
       commandLine.addParameter("-p");
-      commandLine.addParameter(modulePath.getPathsString());
+      List<TargetValue<String>> pathValues = getClassPathValues(request, runtimeConfiguration, javaParameters, modulePath);
+      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
+      commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
   }
 
@@ -673,12 +684,13 @@ public final class JdkUtil {
   @NotNull
   private static List<TargetValue<String>> getClassPathValues(@NotNull TargetEnvironmentRequest request,
                                                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                                              @NotNull SimpleJavaParameters javaParameters) {
+                                                              @NotNull SimpleJavaParameters javaParameters,
+                                                              PathsList classPath) {
     String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
     String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : null;
 
     ArrayList<TargetValue<String>> result = new ArrayList<>();
-    for (String path : javaParameters.getClassPath().getPathList()) {
+    for (String path : classPath.getPathList()) {
       if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
         result.add(request.createUpload(path));
       }
