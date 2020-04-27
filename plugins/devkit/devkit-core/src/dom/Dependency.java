@@ -10,6 +10,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.DependencyConfigFileConverter;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 
 @Stubbed
