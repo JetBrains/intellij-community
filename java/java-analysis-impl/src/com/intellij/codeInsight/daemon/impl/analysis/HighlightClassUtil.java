@@ -73,9 +73,27 @@ public class HighlightClassUtil {
       return null;
     }
 
-    final String superClassName = HighlightUtil.formatClass(superClass, false);
-    final String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
-    final String message = getMustImplementMethodErrorMessage(aClass, implementsFixElement, superClassName, methodName);
+    final String messageKey;
+    final String referenceName;
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      messageKey = "enum.constant.must.implement.method";
+
+      final PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
+      referenceName = enumConstant.getEnumConstant().getName();
+    }
+    else if (aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant) {
+      messageKey = "class.must.implement.method";
+      referenceName = HighlightUtil.formatClass(aClass, false);
+    }
+    else {
+      messageKey = "class.must.be.abstract";
+      referenceName = HighlightUtil.formatClass(aClass, false);
+    }
+
+    final String message = JavaErrorBundle.message(messageKey,
+                                                   referenceName,
+                                                   JavaHighlightUtil.formatMethod(abstractMethod),
+                                                   HighlightUtil.formatClass(superClass, false));
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
@@ -98,43 +116,6 @@ public class HighlightClassUtil {
       );
     }
     return errorResult;
-  }
-
-  /**
-   * The method generates a error message for a class that has an unimplemented abstract method.
-   *
-   * @param aClass               the class to generate the error message for
-   * @param implementsFixElement either an enum constant that is being analyzed or the same value as aClass
-   * @param superClassName       the name of the superclass that contains the method that needs to be implemented
-   * @param methodName           the name of the method that is not implemented in the aClass class
-   * @return the error message
-   */
-  @NotNull
-  private static String getMustImplementMethodErrorMessage(@NotNull final PsiClass aClass,
-                                                           @NotNull final PsiElement implementsFixElement,
-                                                           @NotNull final String superClassName,
-                                                           @NotNull final String methodName) {
-    final String baseClassName = HighlightUtil.formatClass(aClass, false);
-
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      final PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
-      final String name = enumConstant.getEnumConstant().getName();
-
-      return JavaErrorBundle.message("enum.constant.must.implement.method",
-                                     name,
-                                     methodName,
-                                     superClassName);
-    }
-    else if (aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant) {
-      return JavaErrorBundle.message("class.must.implement.method",
-                                     baseClassName,
-                                     methodName,
-                                     superClassName);
-    }
-    return JavaErrorBundle.message("class.must.be.abstract",
-                                   baseClassName,
-                                   methodName,
-                                   superClassName);
   }
 
   static HighlightInfo checkClassMustBeAbstract(@NotNull PsiClass aClass, @NotNull TextRange textRange) {
