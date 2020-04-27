@@ -437,7 +437,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
     }
     if (isCountFilterEnabled() && isConditionEnabled()) {
-      Long hitCount = ObjectUtils.notNull((Long)event.request().getProperty(HIT_COUNTER), 0L) + 1;
+      long hitCount = ObjectUtils.notNull((Long)event.request().getProperty(HIT_COUNTER), 0L) + 1;
       event.request().putProperty(HIT_COUNTER, hitCount);
       return hitCount % getCountFilter() == 0;
     }
