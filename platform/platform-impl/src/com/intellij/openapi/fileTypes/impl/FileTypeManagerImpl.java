@@ -91,7 +91,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // cached auto-detected file type. If the file was auto-detected as plain text or binary
   // then the value is null and AUTO_DETECTED_* flags stored in packedFlags are used instead.
-  static final Key<FileType> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
+  static final Key<String> DETECTED_FROM_CONTENT_FILE_TYPE_KEY = Key.create("DETECTED_FROM_CONTENT_FILE_TYPE_KEY");
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
@@ -260,7 +260,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
               long oldFlags = packedFlags.get(fileId);
 
               FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(oldFlags),
-                                                    ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY),
+                                                    ObjectUtils.notNull(getFileTypeDetectedFromContent(file),
                                                                         PlainTextFileType.INSTANCE));
 
               file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
@@ -321,6 +321,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       cachedDetectFileBufferSize = -1;
       clearCaches();
     }, this);
+  }
+
+  private FileType getFileTypeDetectedFromContent(VirtualFile file) {
+    String fileTypeName = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
+    return fileTypeName == null ? null : findFileTypeByName(fileTypeName);
   }
 
   private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
@@ -893,7 +898,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }
-    FileType fileType = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
+    FileType fileType = getFileTypeDetectedFromContent(file);
     if (toLog()) {
       log("F: getOrDetectFromContent("+file.getName()+"): " +
           "getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY) = "+(fileType == null ? null : fileType.getName()));
@@ -1002,7 +1007,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         return;
       }
     }
-    file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, fileType);
+    file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, fileType.getName());
     if (toLog()) {
       log("F: cacheAutoDetectedFileType("+file.getName()+") " +
           "cached to " + fileType.getName() +
