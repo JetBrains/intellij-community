@@ -30,7 +30,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
   public StatusBarWidgetsManager(@NotNull Project project) {
     myProject = project;
 
-    StatusBarWidgetFactory.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetFactory>() {
+    StatusBarWidgetFactory.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetFactory>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
         addWidgetFactory(factory);
@@ -43,7 +43,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }, true, this);
 
     //noinspection deprecation
-    StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
+    StatusBarWidgetProvider.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         addWidgetFactory(new StatusBarWidgetProviderToFactoryAdapter(myProject, provider));
@@ -87,11 +87,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
   @Override
   public void dispose() {
-    myWidgetFactories.forEach((factory, createdWidget) -> {
-      if (createdWidget != null) {
-        factory.disposeWidget(createdWidget);
-      }
-    });
+    myWidgetFactories.forEach((factory, createdWidget) -> disableWidget(factory));
     myWidgetFactories.clear();
   }
 
@@ -127,7 +123,6 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     myWidgetFactories.put(factory, widget);
     myWidgetIdsMap.put(widget.ID(), factory);
     statusBar.addWidget(widget, getAnchor(factory), this);
-    Disposer.register(this, () -> disableWidget(factory));
   }
 
   @NotNull
