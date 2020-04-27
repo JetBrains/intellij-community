@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.resolve.reference;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -41,18 +42,29 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
         public void extensionAdded(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
           Language language = Language.findLanguageByID(extension.getKey());
+          PsiReferenceContributor instance = extension.getInstance();
           if (language == Language.ANY) {
             for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
-              registerContributedReferenceProviders(registrar, extension.getInstance());
+              registerContributedReferenceProviders(registrar, instance);
             }
           }
           else if (language != null) {
-            Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
-            for (Language languageOrDialect : languageAndDialects) {
-              final PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
-              if (registrar != null) {
-                registerContributedReferenceProviders(registrar, extension.getInstance());
+            registerContributorForLanguageAndDialects(language, instance);
+            if (language instanceof MetaLanguage) {
+              Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
+              for (Language matchingLanguage : matchingLanguages) {
+                registerContributorForLanguageAndDialects(matchingLanguage, instance);
               }
+            }
+          }
+        }
+
+        private void registerContributorForLanguageAndDialects(Language language, PsiReferenceContributor instance) {
+          Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
+          for (Language languageOrDialect : languageAndDialects) {
+            final PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
+            if (registrar != null) {
+              registerContributedReferenceProviders(registrar, instance);
             }
           }
         }
