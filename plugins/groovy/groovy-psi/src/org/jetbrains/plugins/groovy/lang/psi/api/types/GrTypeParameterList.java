@@ -24,7 +24,6 @@ import com.intellij.psi.PsiTypeParameterList;
  * @author ilyas
  */
 public interface GrTypeParameterList extends GroovyPsiElement, PsiTypeParameterList {
-  @NotNull
   @Override
-  GrTypeParameter[] getTypeParameters();
+  GrTypeParameter @NotNull [] getTypeParameters();
 }

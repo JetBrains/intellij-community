@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CommandLineUtil;
@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.IllegalEnvVarException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
@@ -16,8 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.CommandLineArgumentEncoder;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
@@ -93,7 +92,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(@NotNull String... command) {
+  public GeneralCommandLine(String @NotNull ... command) {
     this(Arrays.asList(command));
   }
 
@@ -228,7 +227,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return env;
   }
 
-  public void addParameters(@NotNull String... parameters) {
+  public void addParameters(String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
@@ -237,7 +236,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(@NotNull String... parameters) {
+  public GeneralCommandLine withParameters(String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
@@ -286,6 +285,10 @@ public class GeneralCommandLine implements UserDataHolder {
     withRedirectErrorStream(redirectErrorStream);
   }
 
+  public File getInputFile() {
+    return myInputFile;
+  }
+
   @NotNull
   public GeneralCommandLine withInput(@Nullable File file) {
     myInputFile = file;
@@ -312,15 +315,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public String getCommandLineString(@Nullable String exeName) {
-    return getCommandLineString(exeName, CommandLineArgumentEncoder.DEFAULT_ENCODER);
-  }
-
-  /**
-   * @see GeneralCommandLine#getCommandLineString(String)
-   * @param commandLineArgumentEncoder used to handle (quote or escape) special characters in command line argument
-   */
-  public String getCommandLineString(@Nullable String exeName, @NotNull CommandLineArgumentEncoder commandLineArgumentEncoder) {
-    return ParametersListUtil.join(getCommandLineList(exeName), commandLineArgumentEncoder);
+    return ParametersListUtil.join(getCommandLineList(exeName));
   }
 
   @NotNull
@@ -379,15 +374,15 @@ public class GeneralCommandLine implements UserDataHolder {
     try {
       if (myWorkDirectory != null) {
         if (!myWorkDirectory.exists()) {
-          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
         }
         if (!myWorkDirectory.isDirectory()) {
-          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
+          throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
         }
       }
 
       if (StringUtil.isEmptyOrSpaces(myExePath)) {
-        throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
+        throw new ExecutionException(IdeUtilIoBundle.message("run.configuration.error.executable.not.specified"));
       }
     }
     catch (ExecutionException e) {
@@ -397,8 +392,8 @@ public class GeneralCommandLine implements UserDataHolder {
 
     for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
       String name = entry.getKey(), value = entry.getValue();
-      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.name", name));
-      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.value", name, value));
+      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.name", name));
+      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeUtilIoBundle.message("run.configuration.invalid.env.value", name, value));
     }
 
     String exePath = myExePath;

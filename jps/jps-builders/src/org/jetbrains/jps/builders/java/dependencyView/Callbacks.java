@@ -27,10 +27,36 @@ import java.util.concurrent.Future;
  */
 public class Callbacks {
 
+  public interface ConstantRef {
+    String getOwner();
+    String getName();
+    String getDescriptor();
+  }
+
   public interface Backend {
     void associate(String classFileName, String sourceFileName, ClassReader cr);
     void associate(String classFileName, Collection<String> sources, ClassReader cr);
     void registerImports(String className, Collection<String> classImports, Collection<String> staticImports);
+    void registerConstantReferences(String className, Collection<ConstantRef> cRefs);
+  }
+
+  public static ConstantRef createConstantReference(String ownerClass, String fieldName, String descriptor) {
+    return new ConstantRef() {
+      @Override
+      public String getOwner() {
+        return ownerClass;
+      }
+
+      @Override
+      public String getName() {
+        return fieldName;
+      }
+
+      @Override
+      public String getDescriptor() {
+        return descriptor;
+      }
+    };
   }
 
   public static class ConstantAffection {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.push.*;
@@ -6,7 +6,6 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.util.ObjectUtils;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitStandardRemoteBranch;
@@ -18,6 +17,8 @@ import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static git4idea.GitUtil.findRemoteBranch;
 import static git4idea.GitUtil.getDefaultOrFirstRemote;
@@ -121,7 +122,7 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     GitLocalBranch currentBranch = repository.getCurrentBranch();
     return currentBranch != null
            ? GitPushSource.create(currentBranch)
-           : GitPushSource.create(ObjectUtils.assertNotNull(repository.getCurrentRevision())); // fresh repository is on branch
+           : GitPushSource.create(Objects.requireNonNull(repository.getCurrentRevision())); // fresh repository is on branch
   }
 
   @NotNull

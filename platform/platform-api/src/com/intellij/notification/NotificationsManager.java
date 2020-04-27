@@ -13,6 +13,5 @@ public abstract class NotificationsManager {
 
   public abstract void expire(@NotNull Notification notification);
 
-  @NotNull
-  public abstract <T extends Notification> T[] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project);
+  public abstract <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project);
 }

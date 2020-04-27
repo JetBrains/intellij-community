@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
@@ -35,7 +35,7 @@ public class FieldsFilter implements Filter{
   @Override
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.fields"), null, PlatformIcons.FIELD_ICON);
+    return new ActionPresentationData(StructureViewBundle.message("action.structureview.show.fields"), null, PlatformIcons.FIELD_ICON);
   }
 
   @Override

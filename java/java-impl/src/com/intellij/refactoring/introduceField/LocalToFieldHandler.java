@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPresele
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,7 +36,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.EnumConstantsUtil;
@@ -74,7 +74,7 @@ public abstract class LocalToFieldHandler {
         classes.add((PsiClass)parent);
       }
       if (parent instanceof PsiFile && FileTypeUtils.isInServerPageFile(parent)) {
-        String message = RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
+        String message = JavaRefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
         CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.LOCAL_TO_FIELD);
         return false;
       }
@@ -401,6 +401,6 @@ public abstract class LocalToFieldHandler {
   }
 
   private static String getRefactoringName() {
-    return RefactoringBundle.message("convert.local.to.field.title");
+    return JavaRefactoringBundle.message("convert.local.to.field.title");
   }
 }

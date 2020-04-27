@@ -25,9 +25,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public abstract class LayoutElementBuilderService<E extends JpsPackagingElement> {
   private final Class<E> myElementClass;
 

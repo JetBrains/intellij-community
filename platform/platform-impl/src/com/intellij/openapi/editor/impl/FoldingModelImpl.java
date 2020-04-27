@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -33,7 +34,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FoldingModelImpl extends InlayModel.SimpleAdapter
-  implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
+  implements FoldingModelEx, PrioritizedDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance(FoldingModelImpl.class);
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
@@ -185,6 +186,8 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
                                 boolean moveCaret,
                                 boolean adjustScrollingPosition) {
     assertIsDispatchThreadForEditor();
+    if (myEditor.getInlayModel().isInBatchMode()) LOG.error("Folding operations shouldn't be performed during inlay batch update");
+
     boolean oldDontCollapseCaret = myDoNotCollapseCaret;
     myDoNotCollapseCaret |= dontCollapseCaret;
     boolean oldBatchFlag = myIsBatchFoldingProcessing;
@@ -210,8 +213,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  @NotNull
-  public FoldRegion[] getAllFoldRegions() {
+  public FoldRegion @NotNull [] getAllFoldRegions() {
     assertReadAccess();
     return myFoldTree.fetchAllRegions();
   }
@@ -232,8 +234,13 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   @Nullable
   public FoldRegion getFoldingPlaceholderAt(@NotNull Point p) {
-    assertReadAccess();
-    LogicalPosition pos = myEditor.xyToLogicalPosition(p);
+    VisualPosition visualPosition = myEditor.xyToVisualPosition(p);
+    int visualLineStartY = myEditor.visualLineToY(visualPosition.line);
+    if (p.y < visualLineStartY || p.y >= visualLineStartY + myEditor.getLineHeight()) {
+      // block inlay area
+      return null;
+    }
+    LogicalPosition pos = myEditor.visualToLogicalPosition(visualPosition);
     int line = pos.line;
 
     if (line >= myEditor.getDocument().getLineCount()) return null;
@@ -458,13 +465,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  @Nullable
-  public FoldRegion[] fetchTopLevel() {
+  public FoldRegion @Nullable [] fetchTopLevel() {
     return myFoldTree.fetchTopLevel();
   }
 
-  @NotNull
-  FoldRegion[] fetchCollapsedAt(int offset) {
+  FoldRegion @NotNull [] fetchCollapsedAt(int offset) {
     return myFoldTree.fetchCollapsedAt(offset);
   }
 
@@ -473,8 +478,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myFoldTree.intersectsRegion(startOffset, endOffset);
   }
 
-  @Nullable
-  FoldRegion[] fetchVisible() {
+  FoldRegion @Nullable [] fetchVisible() {
     return myFoldTree.fetchVisible();
   }
 
@@ -513,19 +517,16 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
     try {
-      if (!event.getDocument().isInBulkUpdate()) {
+      if (event.getDocument().isInBulkUpdate()) return;
+      if (DocumentEventUtil.isMoveInsertion(event)) {
+        myFoldTree.rebuild();
+      }
+      else {
         updateCachedOffsets();
       }
     }
     finally {
       myDocumentChangeProcessed = true;
-    }
-  }
-
-  @Override
-  public void moveTextHappened(@NotNull Document document, int start, int end, int base) {
-    if (!myEditor.getDocument().isInBulkUpdate()) {
-      myFoldTree.rebuild();
     }
   }
 
@@ -739,18 +740,19 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @Override
     boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
-                                                   @NotNull DocumentEvent e,
+                                                   int start, int end, int lengthDelta,
                                                    @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
-      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
       inCollectCall = true;
       boolean result;
       try {
-        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+        result = super.collectAffectedMarkersAndShiftSubtrees(root, start, end, lengthDelta, affected);
       }
       finally {
         inCollectCall = false;
       }
-      if (e.getOldLength() > 0 /* document change can cause regions to become equal*/) {
+      final int oldLength = end - start;
+      if (oldLength > 0 /* document change can cause regions to become equal*/) {
         for (Object o : affected) {
           //noinspection unchecked
           Node<FoldRegionImpl> node = (Node<FoldRegionImpl>)o;

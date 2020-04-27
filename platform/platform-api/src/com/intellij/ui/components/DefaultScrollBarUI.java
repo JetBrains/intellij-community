@@ -19,9 +19,6 @@ import java.beans.PropertyChangeListener;
 
 import static java.awt.Adjustable.VERTICAL;
 
-/**
- * @author Sergey.Malenkov
- */
 class DefaultScrollBarUI extends ScrollBarUI {
   static final Key<Component> LEADING = Key.create("JB_SCROLL_BAR_LEADING_COMPONENT");
   static final Key<Component> TRAILING = Key.create("JB_SCROLL_BAR_TRAILING_COMPONENT");

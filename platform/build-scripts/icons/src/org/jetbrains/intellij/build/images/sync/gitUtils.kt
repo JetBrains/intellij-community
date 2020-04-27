@@ -107,14 +107,15 @@ internal fun findGitRepoRoot(dir: File, silent: Boolean = false): File = when {
   else -> error("No git repo found in $dir")
 }
 
-internal fun resetToPreviousCommit(repo: File) {
-  execute(repo, GIT, "reset", "--hard", "HEAD^")
+internal fun cleanup(repo: File) {
+  execute(repo, GIT, "reset", "--hard")
+  execute(repo, GIT, "clean", "-xfd")
 }
 
 internal fun stageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
   splitAndTry(1000, files, repo) {
-    execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
+    execute(repo, GIT, "add", "--no-ignore-removal", "--ignore-errors", *it.toTypedArray())
   }
 }
 
@@ -224,11 +225,11 @@ internal fun latestChangeCommit(path: String, repo: File): CommitInfo? {
 }
 
 private fun monoRepoMergeAwareCommitInfo(repo: File, path: String) =
-  commitInfo(repo, "--", path)?.let { commitInfo ->
+  pathInfo(repo, "--", path)?.let { commitInfo ->
     if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
       val strippedPath = path.stripMergedRepoPrefix()
       commitInfo.parents.asSequence().mapNotNull {
-        commitInfo(repo, it, "--", strippedPath)
+        pathInfo(repo, it, "--", strippedPath)
       }.firstOrNull()
     }
     else commitInfo
@@ -319,24 +320,31 @@ internal fun head(repo: File): String {
   return heads.getValue(repo)
 }
 
-internal fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%cn/%ce/%s", "--date=raw", *args)
-    .splitNotBlank("/")
-  // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
-  return if (output.size >= 6) {
-    CommitInfo(
-      repo = repo,
-      hash = output[0],
-      timestamp = output[1].splitWithSpace()[0].toLong(),
-      parents = output[2].splitWithSpace(),
-      committer = Committer(name = output[3], email = output[4]),
-      subject = output.subList(5, output.size)
-        .joinToString(separator = "/")
-        .removeSuffix(System.lineSeparator())
-    )
-  }
-  else null
-}
+internal fun commitInfo(repo: File, vararg args: String) = gitLog(repo, *args).singleOrNull()
+private fun pathInfo(repo: File, vararg args: String) = gitLog(repo, "--follow", *args).singleOrNull()
+private fun gitLog(repo: File, vararg args: String): List<CommitInfo> =
+  execute(
+    repo, GIT, "log",
+    "--max-count", "1",
+    "--format=%H/%cd/%P/%cn/%ce/%s",
+    "--date=raw", *args
+  ).lineSequence().mapNotNull {
+    val output = it.splitNotBlank("/")
+    // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
+    if (output.size >= 6) {
+      CommitInfo(
+        repo = repo,
+        hash = output[0],
+        timestamp = output[1].splitWithSpace()[0].toLong(),
+        parents = output[2].splitWithSpace(),
+        committer = Committer(name = output[3], email = output[4]),
+        subject = output.subList(5, output.size)
+          .joinToString(separator = "/")
+          .removeSuffix(System.lineSeparator())
+      )
+    }
+    else null
+  }.toList()
 
 internal data class CommitInfo(
   val hash: String,
@@ -349,15 +357,24 @@ internal data class CommitInfo(
 
 internal data class Committer(val name: String, val email: String)
 
-internal fun gitStatus(repo: File, includeUntracked: Boolean = false) =
+internal fun gitStatus(repo: File, includeUntracked: Boolean = false) = Changes().apply {
   execute(repo, GIT, "status", "--short", "--untracked-files=${if (includeUntracked) "all" else "no"}", "--ignored=no")
     .lineSequence()
-    .map(String::trim)
-    .filter(String::isNotEmpty)
-    .map { if (it.contains("->")) it.split("->").last() else it }
-    .map { if (it.contains(" ")) it.split(" ").last() else it }
-    .map(String::trim)
-    .toList()
+    .filter(String::isNotBlank)
+    .forEach {
+      val (status, path) = it.splitToSequence("->", " ")
+        .filter(String::isNotBlank)
+        .map(String::trim)
+        .toList()
+      val type = when(status) {
+        "A", "??" -> Changes.Type.ADDED
+        "M" -> Changes.Type.MODIFIED
+        "D" -> Changes.Type.DELETED
+        else -> error("Unknown change type: $status. Git status line: $it")
+      }
+      register(type, listOf(path))
+    }
+}
 
 internal fun gitStage(repo: File) = execute(repo, GIT, "diff", "--cached", "--name-status")
 

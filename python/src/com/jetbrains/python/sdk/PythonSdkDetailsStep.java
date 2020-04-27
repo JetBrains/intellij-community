@@ -32,7 +32,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   public static void show(@Nullable final Project project,
                           @Nullable final Module module,
-                          @NotNull final Sdk[] existingSdks,
+                          final Sdk @NotNull [] existingSdks,
                           @NotNull final DialogWrapper showAllDialog,
                           @NotNull JComponent ownerComponent,
                           @NotNull final Point popupPoint,
@@ -45,7 +45,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   public PythonSdkDetailsStep(@Nullable final Project project,
                               @Nullable final Module module,
                               @Nullable final DialogWrapper showAllDialog,
-                              @NotNull final Sdk[] existingSdks,
+                              final Sdk @NotNull [] existingSdks,
                               @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author max
- */
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance(RedundantCastUtil.class);
 
@@ -347,9 +344,9 @@ public class RedundantCastUtil {
               newResult = newCall.resolveMethodGenerics();
             }
 
-            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() && 
+            if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() &&
                 (ExpressionUtils.isNullLiteral(cast.getOperand()) ||
-                 oldResult instanceof MethodCandidateInfo && newResult instanceof MethodCandidateInfo && 
+                 oldResult instanceof MethodCandidateInfo && newResult instanceof MethodCandidateInfo &&
                  ((MethodCandidateInfo)oldResult).getApplicabilityLevel() != ((MethodCandidateInfo)newResult).getApplicabilityLevel())) {
               //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
@@ -728,7 +725,7 @@ public class RedundantCastUtil {
         }
         else if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
                  (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
-          if (parent instanceof PsiSwitchBlock && 
+          if (parent instanceof PsiSwitchBlock &&
               opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             PsiClass aClass = ((PsiClassType)opType).resolve();
             if (aClass != null && !aClass.isEnum()) {
@@ -805,9 +802,9 @@ public class RedundantCastUtil {
       if (opType instanceof PsiPrimitiveType) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
         if ((parent instanceof PsiReturnStatement || parent instanceof PsiExpressionList || parent instanceof PsiVariable ||
-            parent instanceof PsiAssignmentExpression) && 
+            parent instanceof PsiAssignmentExpression) &&
             castType.equals(ExpectedTypeUtils.findExpectedType(typeCast, false))) {
-          return !TypeConversionUtil.isSafeConversion(castType, opType); // let's suppose that casts losing precision are important 
+          return !TypeConversionUtil.isSafeConversion(castType, opType); // let's suppose that casts losing precision are important
         } else {
           return !castType.equals(opType); // cast might be necessary (e.g. ((double)1)/5)
         }

@@ -68,7 +68,7 @@ public class UtilityClassWithPublicConstructorInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make constructors private";
+      return InspectionGadgetsBundle.message("utility.class.with.public.constructor.fix.family.name");
     }
 
     @Override

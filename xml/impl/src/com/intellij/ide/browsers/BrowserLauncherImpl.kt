@@ -3,14 +3,16 @@ package com.intellij.ide.browsers
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.ui.AppUIUtil
 import com.intellij.util.Urls
+import com.intellij.xml.XmlBundle
 import org.jetbrains.ide.BuiltInServerManager
 
 class BrowserLauncherImpl : BrowserLauncherAppless() {
@@ -61,8 +63,8 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, fix: (() -> Unit)?) {
-    AppUIUtil.invokeOnEdt(Runnable {
-      if (showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project,
+    AppUIExecutor.onUiThread().expireWith(project ?: Disposable {}).submit {
+      if (showOkNoDialog(title ?: XmlBundle.message("browser.error"), error ?: IdeBundle.message("unknown.error"), project,
                          okText = IdeBundle.message("button.fix"),
                          noText = Messages.getOkButton())) {
         val browserSettings = BrowserSettings()
@@ -70,6 +72,6 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
           fix?.invoke()
         }
       }
-    }, project?.disposed)
+    }
   }
 }

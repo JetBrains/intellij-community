@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
   private final RemoteServerConfigurable myConfigurable;
   private final RemoteServer<?> myServer;

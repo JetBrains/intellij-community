@@ -115,7 +115,7 @@ public class RenamePsiPackageProcessor extends RenamePsiElementProcessor {
   @Override
   public void renameElement(@NotNull final PsiElement element,
                             @NotNull final String newName,
-                            @NotNull final UsageInfo[] usages,
+                            final UsageInfo @NotNull [] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     final PsiPackage psiPackage = (PsiPackage)element;
     final String shortName = StringUtil.getShortName(newName);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -28,7 +28,11 @@ public class CopyClassTest extends LightMultiFileTestCase {
   public void testReplaceAllOccurrences() throws Exception {
     doTest("Foo", "Bar");
   }
-  
+
+  public void testPrivateMethodsInInterfaces() throws Exception {
+    doTest("Foo", "Bar");
+  }
+
   public void testReplaceAllOccurrences1() throws Exception {
     doTest("Foo", "Bar");
   }
@@ -46,7 +50,7 @@ public class CopyClassTest extends LightMultiFileTestCase {
   private void doTest(final String oldName, final String copyName) throws Exception {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     performAction(oldName, copyName);
-  
+
     VirtualFile fileAfter = myFixture.findFileInTempDir(copyName + ".java");
     VirtualFile fileExpected = myFixture.findFileInTempDir(copyName + ".expected.java");
 
@@ -64,7 +68,7 @@ public class CopyClassTest extends LightMultiFileTestCase {
                                                  Collections.singletonMap(oldClass.getNavigationElement().getContainingFile(),
                                                                           new PsiClass[]{oldClass});
                                                CopyClassesHandler.doCopyClasses(sourceClasses, copyName, targetDirectory, getProject());
-                                               getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+                                               PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
                                              });
   }
 

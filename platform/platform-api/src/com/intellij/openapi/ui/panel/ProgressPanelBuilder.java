@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -334,13 +335,13 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
           if (state == State.PLAYING) {
             button.setIcons(resumeIcon);
             state = State.PAUSED;
-            setCommentText("Paused", true);
+            setCommentText(IdeBundle.message("comment.text.paused"), true);
             pauseAction.run();
           }
           else {
             button.setIcons(pauseIcon);
             state = State.PLAYING;
-            setCommentText("Pause", true);
+            setCommentText(IdeBundle.message("comment.text.pause"), true);
             resumeAction.run();
           }
         }).setFillBg(false);
@@ -378,7 +379,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
           setCommentText(cancelText, true);
         }
         else if (resumeAction != null && pauseAction != null) {
-          setCommentText(state == State.PLAYING ? "Pause" : "Resume", true);
+          setCommentText(state == State.PLAYING ? IdeBundle.message("comment.text.pause") : IdeBundle.message("comment.text.resume"), true);
         }
         else {
           setCommentText(null, true);
@@ -387,7 +388,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setCommentText(state != State.PAUSED ? null : "Paused", true);
+        setCommentText(state != State.PAUSED ? null : IdeBundle.message("comment.text.paused"), true);
       }
     }
   }

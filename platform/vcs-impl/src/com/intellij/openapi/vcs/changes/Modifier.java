@@ -55,7 +55,7 @@ public class Modifier {
     impl(command);
   }
 
-  public void moveChangesTo(@NotNull String name, @NotNull Change[] changes) {
+  public void moveChangesTo(@NotNull String name, Change @NotNull [] changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
   }

@@ -17,6 +17,7 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -36,8 +37,7 @@ public interface ColorAndFontDescriptorsProvider {
    *
    * @return the list of attribute descriptors.
    */
-  @NotNull
-  AttributesDescriptor[] getAttributeDescriptors();
+  AttributesDescriptor @NotNull [] getAttributeDescriptors();
 
   /**
    * Returns the list of descriptors specifying the {@link com.intellij.openapi.editor.colors.ColorKey}
@@ -46,8 +46,7 @@ public interface ColorAndFontDescriptorsProvider {
    *
    * @return the list of color descriptors.
    */
-  @NotNull
-  ColorDescriptor[] getColorDescriptors();
+  ColorDescriptor @NotNull [] getColorDescriptors();
 
   /**
    * Returns the title of the page, shown as text in the dialog tab.
@@ -55,5 +54,6 @@ public interface ColorAndFontDescriptorsProvider {
    * @return the title of the custom page.
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 }

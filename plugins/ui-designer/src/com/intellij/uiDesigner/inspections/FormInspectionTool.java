@@ -36,8 +36,7 @@ public interface FormInspectionTool {
   void startCheckForm(IRootContainer radRootContainer);
   void doneCheckForm(IRootContainer radRootContainer);
 
-  @Nullable
-  ErrorInfo[] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component);
+  ErrorInfo @Nullable [] checkComponent(@NotNull GuiEditor editor, @NotNull RadComponent component);
 
   boolean isActive(PsiElement psiRoot);
 

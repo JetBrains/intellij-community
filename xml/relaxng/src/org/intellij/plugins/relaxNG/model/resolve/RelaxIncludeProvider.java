@@ -39,9 +39,8 @@ public class RelaxIncludeProvider extends FileIncludeProvider {
     fileTypeSink.consume(RncFileType.getInstance());
   }
 
-  @NotNull
   @Override
-  public FileIncludeInfo[] getIncludeInfos(FileContent content) {
+  public FileIncludeInfo @NotNull [] getIncludeInfos(FileContent content) {
     final ArrayList<FileIncludeInfo> infos;
 
     if (content.getFileType() == XmlFileType.INSTANCE) {

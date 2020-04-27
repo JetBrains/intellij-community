@@ -6,12 +6,13 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.HierarchicalMethodSignatureImpl;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -36,26 +37,22 @@ public class PsiSuperMethodImplUtil {
   private PsiSuperMethodImplUtil() {
   }
 
-  @NotNull
-  public static PsiMethod[] findSuperMethods(@NotNull PsiMethod method) {
+  public static PsiMethod @NotNull [] findSuperMethods(@NotNull PsiMethod method) {
     return findSuperMethods(method, null);
   }
 
-  @NotNull
-  public static PsiMethod[] findSuperMethods(@NotNull PsiMethod method, boolean checkAccess) {
+  public static PsiMethod @NotNull [] findSuperMethods(@NotNull PsiMethod method, boolean checkAccess) {
     if (!canHaveSuperMethod(method, checkAccess, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, null);
   }
 
-  @NotNull
-  public static PsiMethod[] findSuperMethods(@NotNull PsiMethod method, PsiClass parentClass) {
+  public static PsiMethod @NotNull [] findSuperMethods(@NotNull PsiMethod method, PsiClass parentClass) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     return findSuperMethodsInternal(method, parentClass);
   }
 
 
-  @NotNull
-  private static PsiMethod[] findSuperMethodsInternal(@NotNull PsiMethod method, PsiClass parentClass) {
+  private static PsiMethod @NotNull [] findSuperMethodsInternal(@NotNull PsiMethod method, PsiClass parentClass) {
     List<MethodSignatureBackedByPsiMethod> outputMethods = findSuperMethodSignatures(method, parentClass, false);
 
     return MethodSignatureUtil.convertMethodSignaturesToMethods(outputMethods);
@@ -89,8 +86,7 @@ public class PsiSuperMethodImplUtil {
     return DeepestSuperMethodsSearch.search(method).findFirst();
   }
 
-  @NotNull
-  public static PsiMethod[] findDeepestSuperMethods(@NotNull PsiMethod method) {
+  public static PsiMethod @NotNull [] findDeepestSuperMethods(@NotNull PsiMethod method) {
     if (!canHaveSuperMethod(method, true, false)) return PsiMethod.EMPTY_ARRAY;
     Collection<PsiMethod> collection = DeepestSuperMethodsSearch.search(method).findAll();
     return collection.toArray(PsiMethod.EMPTY_ARRAY);
@@ -163,13 +159,6 @@ public class PsiSuperMethodImplUtil {
     });
 
     PsiMethod[] methods = nameHint == null ? aClass.getMethods() : aClass.findMethodsByName(nameHint, false);
-    if ((nameHint == null || "values".equals(nameHint)) && aClass instanceof PsiClassImpl) {
-      final PsiMethod valuesMethod = ((PsiClassImpl)aClass).getValuesMethod();
-      if (valuesMethod != null) {
-        methods = ArrayUtil.append(methods, valuesMethod);
-      }
-    }
-
     for (PsiMethod method : methods) {
       if (!method.isValid()) {
         throw new PsiInvalidElementAccessException(method, "class.valid=" + aClass.isValid() + "; name=" + method.getName());

@@ -18,7 +18,6 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
 
   @NotNull private final JBTabsImpl myTabs;
   private int mySideTabsLimit = JBTabsImpl.DEFAULT_MAX_TAB_WIDTH;
-  private boolean myDragging;
   private final OnePixelDivider myDivider;
 
 
@@ -56,9 +55,7 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
     if (mySideTabsLimit != sideTabsLimit) {
       mySideTabsLimit = sideTabsLimit;
       ComponentUtil.putClientProperty(myTabs, JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY, mySideTabsLimit);
-      myTabs.resetLayout(true);
-      myTabs.doLayout();
-      myTabs.repaint();
+      myTabs.relayout(true,true);
       TabInfo info = myTabs.getSelectedInfo();
       JComponent page = info != null ? info.getComponent() : null;
       if (page != null) {
@@ -80,11 +77,7 @@ class TabsSideSplitter implements Splittable, PropertyChangeListener {
 
   @Override
   public void setDragging(boolean dragging) {
-    myDragging = dragging;
-  }
-
-  boolean isDragging() {
-    return myDragging;
+    // ignore
   }
 
   @NotNull

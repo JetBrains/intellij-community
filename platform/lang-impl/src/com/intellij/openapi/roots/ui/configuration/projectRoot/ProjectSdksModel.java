@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -49,9 +49,8 @@ public class ProjectSdksModel implements SdkModel {
     return mySdkEventsDispatcher.getMulticaster();
   }
 
-  @NotNull
   @Override
-  public Sdk[] getSdks() {
+  public Sdk @NotNull [] getSdks() {
     return myProjectSdks.values().toArray(new Sdk[0]);
   }
 
@@ -72,6 +71,26 @@ public class ProjectSdksModel implements SdkModel {
   @Override
   public void removeListener(@NotNull Listener listener) {
     mySdkEventsDispatcher.removeListener(listener);
+  }
+
+  public void syncSdks() {
+    final Sdk[] projectSdks = ProjectJdkTable.getInstance().getAllJdks();
+    for (Sdk sdk : projectSdks) {
+      if (myProjectSdks.containsKey(sdk) || myProjectSdks.containsValue(sdk)) continue;
+
+      Sdk editableCopy;
+      try {
+        editableCopy = (Sdk)sdk.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        LOG.error(e);
+        continue;
+      }
+
+      myProjectSdks.put(sdk, editableCopy);
+      SdkDownloadTracker.getInstance().registerEditableSdk(sdk, editableCopy);
+      getMulticaster().sdkAdded(editableCopy);
+    }
   }
 
   public void reset(@Nullable Project project) {
@@ -162,7 +181,7 @@ public class ProjectSdksModel implements SdkModel {
     });
   }
 
-  private boolean canApply(@NotNull String[] errorString, @Nullable MasterDetailsComponent rootConfigurable, boolean addedOnly) throws ConfigurationException {
+  private boolean canApply(String @NotNull [] errorString, @Nullable MasterDetailsComponent rootConfigurable, boolean addedOnly) throws ConfigurationException {
     Map<Sdk, Sdk> sdks = new LinkedHashMap<>(myProjectSdks);
     if (addedOnly) {
       Sdk[] allJdks = ProjectJdkTable.getInstance().getAllJdks();

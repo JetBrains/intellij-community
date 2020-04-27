@@ -484,8 +484,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   public class MockConfiguration implements ModuleRunConfiguration {
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return myModule == null ? Module.EMPTY_ARRAY : new Module[]{myModule};
     }
 

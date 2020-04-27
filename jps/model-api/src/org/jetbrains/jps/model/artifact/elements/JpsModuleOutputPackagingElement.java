@@ -22,8 +22,6 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 /**
  * Represents 'module output' node in the output layout tree. When the artifact is being built the output of the specified module will be copied or
  * packed to the corresponding place under the artifact output directory.
- *
- * @author nik
  */
 public interface JpsModuleOutputPackagingElement extends JpsPackagingElement {
   @NotNull

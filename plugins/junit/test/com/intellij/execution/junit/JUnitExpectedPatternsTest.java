@@ -59,13 +59,21 @@ public class JUnitExpectedPatternsTest {
     Assert.assertNotNull(notification);
     Assert.assertEquals("is <2>", notification.getExpected());
   }
-  
+
   @Test
   public void testNonGreedyGt() {
     ComparisonFailureData notification = createNotification("expected:<<foo>> but was:<hi with <brackets>>");
     Assert.assertNotNull(notification);
     Assert.assertEquals("<foo>", notification.getExpected());
     Assert.assertEquals("hi with <brackets>", notification.getActual());
+  }
+
+  @Test
+  public void testJunitGuava() {
+    ComparisonFailureData notification = createNotification("expected: com.google.common.collect.SingletonImmutableList<[1]> but was: com.google.common.collect.SingletonImmutableList<[1]>");
+    Assert.assertNotNull(notification);
+    Assert.assertEquals("com.google.common.collect.SingletonImmutableList<[1]>", notification.getExpected());
+    Assert.assertEquals("com.google.common.collect.SingletonImmutableList<[1]>", notification.getActual());
   }
 
   private static ComparisonFailureData createNotification(String message) {

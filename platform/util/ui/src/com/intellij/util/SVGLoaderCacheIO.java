@@ -27,7 +27,7 @@ public class SVGLoaderCacheIO {
 
   @Nullable
   @ApiStatus.Internal
-  public static BufferedImage readImageFile(@NotNull byte[] bytes,
+  public static BufferedImage readImageFile(byte @NotNull [] bytes,
                                             @NotNull ImageLoader.Dimension2DDouble docSize) {
     ByteBuffer buff = ByteBuffer.wrap(bytes);
 

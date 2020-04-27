@@ -9,10 +9,7 @@ import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -268,23 +265,43 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
         initializeMatchers(extension);
-        FileType fileType = instantiateFileTypeBean(extension);
-        fireFileTypesChanged(fileType, null);
+        FileType fileType = mergeOrInstantiateFileTypeBean(extension);
+
+        fileTypeChanged(fileType, ApplicationManager.getApplication().isUnitTestMode());
       }
 
       @Override
       public void extensionRemoved(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
-        final FileType fileType = findFileTypeByName(extension.name);
-        if (fileType == null) return;
-        unregisterFileType(fileType);
-        if (fileType instanceof LanguageFileType) {
-          final LanguageFileType languageFileType = (LanguageFileType)fileType;
-          if (!languageFileType.isSecondary()) {
-            Language.unregisterLanguage(languageFileType.getLanguage());
+        if (extension.implementationClass != null) {
+          final FileType fileType = findFileTypeByName(extension.name);
+          if (fileType == null) return;
+          unregisterFileType(fileType);
+        }
+        else {
+          StandardFileType stdFileType = myStandardFileTypes.get(extension.name);
+          if (stdFileType != null) {
+            unregisterMatchers(stdFileType, extension);
           }
         }
       }
     }, this);
+  }
+
+  private void unregisterMatchers(@NotNull StandardFileType stdFileType, @NotNull FileTypeBean extension) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      stdFileType.matchers.removeAll(extension.getMatchers());
+      fileTypeChanged(stdFileType.fileType, ApplicationManager.getApplication().isUnitTestMode());
+    });
+  }
+
+  private void fileTypeChanged(@NotNull FileType stdFileType, boolean later) {
+    if (later) {
+      //avoid PCE when reloading file type
+      ApplicationManager.getApplication().invokeLater(
+        () -> WriteAction.run(() -> fireFileTypesChanged(stdFileType, null)));
+    } else {
+      fireFileTypesChanged(stdFileType, null);
+    }
   }
 
   @VisibleForTesting
@@ -303,7 +320,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       @Override
-      public void consume(@NotNull final FileType fileType, @NotNull final FileNameMatcher... matchers) {
+      public void consume(@NotNull final FileType fileType, final FileNameMatcher @NotNull ... matchers) {
         register(fileType, new ArrayList<>(Arrays.asList(matchers)));
       }
 
@@ -437,13 +454,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private void instantiatePendingFileTypes() {
     final Collection<FileTypeBean> fileTypes = new ArrayList<>(myPendingFileTypes.values());
     for (FileTypeBean fileTypeBean : fileTypes) {
-      final StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
-      if (type != null) {
-        type.matchers.addAll(fileTypeBean.getMatchers());
-      }
-      else {
-        instantiateFileTypeBean(fileTypeBean);
-      }
+      mergeOrInstantiateFileTypeBean(fileTypeBean);
+    }
+  }
+
+  @NotNull
+  private FileType mergeOrInstantiateFileTypeBean(@NotNull FileTypeBean fileTypeBean) {
+    final StandardFileType type = myStandardFileTypes.get(fileTypeBean.name);
+    if (type != null) {
+      type.matchers.addAll(fileTypeBean.getMatchers());
+      return type.fileType;
+    }
+    else {
+      return instantiateFileTypeBean(fileTypeBean);
     }
   }
 
@@ -719,7 +742,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   @Override
   @NotNull
-  public FileType getFileTypeByFile(@NotNull VirtualFile file, @Nullable byte[] content) {
+  public FileType getFileTypeByFile(@NotNull VirtualFile file, byte @Nullable [] content) {
     FileType overriddenFileType = FileTypeOverrider.EP_NAME.computeSafeIfAny((overrider) -> overrider.getOverriddenFileType(file));
     if (overriddenFileType != null) {
       return overriddenFileType;
@@ -783,7 +806,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType getOrDetectFromContent(@NotNull VirtualFile file, @Nullable byte[] content) {
+  private FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     if (!isDetectable(file)) return UnknownFileType.INSTANCE;
     if (file instanceof VirtualFileWithId) {
       int id = ((VirtualFileWithId)file).getId();
@@ -953,7 +976,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return file.getFileSystem() instanceof FileSystemInterface;
   }
 
-  private int readSafely(@NotNull InputStream stream, @NotNull byte[] buffer, int offset, int length) throws IOException {
+  private int readSafely(@NotNull InputStream stream, byte @NotNull [] buffer, int offset, int length) throws IOException {
     int n = stream.read(buffer, offset, length);
     if (n <= 0) {
       // maybe locked because someone else is writing to it
@@ -970,7 +993,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContentAndCache(@NotNull final VirtualFile file, @Nullable byte[] content) throws IOException {
+  private FileType detectFromContentAndCache(@NotNull final VirtualFile file, byte @Nullable [] content) throws IOException {
     long start = System.currentTimeMillis();
     FileType fileType = detectFromContent(file, content, FileTypeDetector.EP_NAME.getExtensionList());
 
@@ -983,7 +1006,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detectFromContent(@NotNull VirtualFile file, @Nullable byte[] content, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
+  private FileType detectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, @NotNull Iterable<? extends FileTypeDetector> detectors) throws IOException {
     FileType fileType;
     if (content != null) {
       fileType = detect(file, content, content.length, detectors);
@@ -1028,7 +1051,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType detect(@NotNull VirtualFile file, @NotNull byte[] bytes, int length, @NotNull Iterable<? extends FileTypeDetector> detectors) {
+  private FileType detect(@NotNull VirtualFile file, byte @NotNull [] bytes, int length, @NotNull Iterable<? extends FileTypeDetector> detectors) {
     if (length <= 0) return UnknownFileType.INSTANCE;
 
     // use PlainTextFileType because it doesn't supply its own charset detector
@@ -1159,8 +1182,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @NotNull
-  public FileType[] getRegisteredFileTypes() {
+  public FileType @NotNull [] getRegisteredFileTypes() {
     synchronized (PENDING_INIT_LOCK) {
       instantiatePendingFileTypes();
     }
@@ -1210,8 +1232,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Override
-  @NotNull
-  public String[] getAssociatedExtensions(@NotNull FileType type) {
+  public String @NotNull [] getAssociatedExtensions(@NotNull FileType type) {
     synchronized (PENDING_INIT_LOCK) {
       instantiatePendingFileTypeByName(type.getName());
 

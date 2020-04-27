@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jrt;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ class JrtHandler extends ArchiveHandler {
     if (fs == null) {
       String path = getFile().getPath();
       try {
-        if (SystemInfo.IS_AT_LEAST_JAVA9) {
+        if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
           fs = FileSystems.newFileSystem(ROOT_URI, Collections.singletonMap("java.home", path));
         }
         else {
@@ -116,9 +116,8 @@ class JrtHandler extends ArchiveHandler {
     return map;
   }
 
-  @NotNull
   @Override
-  public byte[] contentsToByteArray(@NotNull String relativePath) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull String relativePath) throws IOException {
     EntryInfo entry = getEntryInfo(relativePath);
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);

@@ -61,6 +61,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     registerParserDefinition(new JavaParserDefinition());
     addExplicitExtension(LanguageConstantExpressionEvaluator.INSTANCE, JavaLanguage.INSTANCE, new PsiExpressionEvaluator());
 
+    registerApplicationExtensionPoint(ContainerProvider.EP_NAME, ContainerProvider.class);
     addExtension(ContainerProvider.EP_NAME, new JavaContainerProvider());
 
     myApplication.registerService(PsiPackageImplementationHelper.class, new CorePsiPackageImplementationHelper());

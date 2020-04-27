@@ -134,8 +134,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   public BackgroundEditorHighlighter createDomHighlighter(final Project project, final PerspectiveFileEditor editor, final DomElement element) {
     return new BackgroundEditorHighlighter() {
       @Override
-      @NotNull
-      public HighlightingPass[] createPassesForEditor() {
+      public HighlightingPass @NotNull [] createPassesForEditor() {
         if (!element.isValid()) return HighlightingPass.EMPTY_ARRAY;
 
         final XmlFile psiFile = DomUtil.getFile(element);
@@ -155,8 +154,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
       }
 
       @Override
-      @NotNull
-      public HighlightingPass[] createPassesForVisibleArea() {
+      public HighlightingPass @NotNull [] createPassesForVisibleArea() {
         return createPassesForEditor();
       }
     };

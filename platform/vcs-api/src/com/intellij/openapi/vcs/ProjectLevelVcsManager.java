@@ -124,8 +124,7 @@ public abstract class ProjectLevelVcsManager {
   /**
    * Returns the list of VCSes used by at least one module in the project.
    */
-  @NotNull
-  public abstract AbstractVcs[] getAllActiveVcss();
+  public abstract AbstractVcs @NotNull [] getAllActiveVcss();
 
   public abstract boolean hasActiveVcss();
 
@@ -196,8 +195,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VirtualFile[] getAllVersionedRoots();
 
-  @NotNull
-  public abstract VcsRoot[] getAllVcsRoots();
+  public abstract VcsRoot @NotNull [] getAllVcsRoots();
 
   /**
    * @deprecated Use just {@link #setDirectoryMappings(List)}.

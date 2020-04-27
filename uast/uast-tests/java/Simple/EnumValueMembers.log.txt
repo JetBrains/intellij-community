@@ -16,3 +16,8 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     ULiteralExpression (value = null)
+        UMethod (name = values)
+            UBlockExpression
+        UMethod (name = valueOf)
+            UParameter (name = name)
+            UBlockExpression

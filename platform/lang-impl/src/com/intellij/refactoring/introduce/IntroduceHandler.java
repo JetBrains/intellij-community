@@ -71,13 +71,13 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
           public void pass(final Target target) {
             invokeOnTarget(target, file, editor, project);
           }
-        }, "Expressions", targetInfo.getSecond());
+        }, RefactoringBundle.message("introduce.target.chooser.expressions.title"), targetInfo.getSecond());
       }
     }
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     //not supported
   }
 

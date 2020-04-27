@@ -19,9 +19,6 @@ import com.intellij.openapi.fileTypes.impl.IgnoredPatternSet;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.model.JpsModel;
 
-/**
- * @author nik
- */
 public class IgnoredFileIndexImpl implements IgnoredFileIndex {
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
 

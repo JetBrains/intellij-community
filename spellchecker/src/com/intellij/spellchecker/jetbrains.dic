@@ -1,7 +1,9 @@
 accessor
 accessors
 additivity
+agentlib
 agentmain
+agentpath
 aggregator
 ajax
 akka
@@ -277,6 +279,7 @@ goto
 gradle
 grapheme
 graphemes
+graphql
 grayscale
 greenplum
 greyscale
@@ -350,6 +353,7 @@ isnull
 iterable
 iterables
 jacoco
+jaeger
 javabean
 javabeans
 javac
@@ -360,7 +364,6 @@ javascript
 javax
 jaxb
 jaxen
-jetbrains
 jibx
 jira
 jndi
@@ -457,6 +460,7 @@ metadata
 metas
 metaspace
 micronaut
+microprofile
 microservice
 microservices
 middleint
@@ -706,6 +710,8 @@ rubymine
 runtime
 rvalue
 rvalues
+rxkotlin
+rxjava
 samskivert
 savepoint
 sbin
@@ -919,6 +925,7 @@ upsource
 urlencoded
 urowid
 username
+userprofile
 utf
 util
 utils

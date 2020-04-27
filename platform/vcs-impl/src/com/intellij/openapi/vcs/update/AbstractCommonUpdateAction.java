@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -48,7 +48,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
-import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class AbstractCommonUpdateAction extends AbstractVcsAction implements UpdateInBackground {
   private final boolean myAlwaysVisible;
@@ -176,7 +175,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     return envToConfMap;
   }
 
-  private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(@NotNull FilePath[] roots, @NotNull Project project) {
+  private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(FilePath @NotNull [] roots, @NotNull Project project) {
     MultiMap<AbstractVcs, FilePath> resultPrep = MultiMap.createSet();
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
@@ -196,8 +195,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
     return result;
   }
 
-  @NotNull
-  private FilePath[] filterRoots(FilePath[] roots, VcsContext vcsContext) {
+  private FilePath @NotNull [] filterRoots(FilePath[] roots, VcsContext vcsContext) {
     final ArrayList<FilePath> result = new ArrayList<>();
     final Project project = vcsContext.getProject();
     assert project != null;
@@ -602,8 +600,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
       restoreUpdateTree.registerUpdateInformation(myUpdatedFiles, myActionInfo);
       final String text = getTemplatePresentation().getText() + ((willBeContinued || (myUpdateNumber > 1)) ? ("#" + myUpdateNumber) : "");
-      UpdateInfoTree updateInfoTree = notNull(myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles, text, myActionInfo,
-                                                                                             wasCanceled));
+      UpdateInfoTree updateInfoTree =
+        Objects.requireNonNull(myProjectLevelVcsManager.showUpdateProjectInfo(myUpdatedFiles, text, myActionInfo,
+                                                                              wasCanceled));
       updateInfoTree.setBefore(myBefore);
       updateInfoTree.setAfter(myAfter);
       updateInfoTree.setCanGroupByChangeList(canGroupByChangelist(myVcsToVirtualFiles.keySet()));

@@ -20,7 +20,7 @@ PyFile:IncompleteFor.py
           PsiWhiteSpace(' ')
           PyReferenceExpression: ba
             PsiElement(Py:IDENTIFIER)('ba')
-          PsiErrorElement:Colon expected
+          PsiErrorElement:':' expected
             <empty list>
           PyStatementList
             PsiErrorElement:Indent expected

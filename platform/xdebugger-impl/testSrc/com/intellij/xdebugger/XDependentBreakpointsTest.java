@@ -22,9 +22,6 @@ import org.jdom.Element;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XDependentBreakpointsTest extends XBreakpointsTestCase {
   private XDependentBreakpointManager myDependentBreakpointManager;
 

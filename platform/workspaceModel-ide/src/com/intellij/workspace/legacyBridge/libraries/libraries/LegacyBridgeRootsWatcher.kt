@@ -3,9 +3,16 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
@@ -29,9 +36,11 @@ class LegacyBridgeRootsWatcher(
 
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
 
+  private val rootFilePointers = LegacyModelRootsFilePointers(project)
+
   init {
     val messageBusConnection = project.messageBus.connect()
-    messageBusConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(messageBusConnection, object : WorkspaceModelChangeListener {
       override fun changed(event: EntityStoreChanged) = LOG.bracket("LibraryRootsWatcher.EntityStoreChange") {
         // TODO It's also possible to calculate it on diffs
 
@@ -57,12 +66,55 @@ class LegacyBridgeRootsWatcher(
           }
         }
         s.entities(SdkEntity::class.java).forEach { roots.add(it.homeUrl) }
+        s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutput?.let { roots.add(it) } }
+        s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutputForTests?.let { roots.add(it) } }
 
+        rootFilePointers.onModelChange(s)
         syncNewRootsToContainer(
           newRoots = roots,
           newJarDirectories = jarDirectories,
           newRecursiveJarDirectories = recursiveJarDirectories
         )
+      }
+    })
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun before(events: MutableList<out VFileEvent>): Unit = events.forEach { event ->
+        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+
+        rootFilePointers.onVfsChange(oldUrl, newUrl)
+      }
+
+      override fun after(events: MutableList<out VFileEvent>) = events.forEach { event ->
+        val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
+
+        updateRoots(currentRoots, oldUrl, newUrl)
+        updateRoots(currentJarDirectories, oldUrl, newUrl)
+        updateRoots(currentRecursiveJarDirectories, oldUrl, newUrl)
+      }
+
+      private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String) {
+        map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
+          map.remove(url)
+          map[VirtualFileUrlManager.fromUrl(newUrl)] = disposable
+        }
+      }
+
+      /** Update stored urls after folder movement */
+      private fun getUrls(event: VFileEvent): Pair<String, String>? {
+        val oldUrl: String
+        val newUrl: String
+        when (event) {
+          is VFilePropertyChangeEvent -> {
+            oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
+            newUrl = VfsUtilCore.pathToUrl(event.newPath)
+          }
+          is VFileMoveEvent -> {
+            oldUrl = VfsUtilCore.pathToUrl(event.oldPath)
+            newUrl = VfsUtilCore.pathToUrl(event.newPath)
+          }
+          else -> return null
+        }
+        return oldUrl to newUrl
       }
     })
   }
@@ -77,27 +129,24 @@ class LegacyBridgeRootsWatcher(
     }
 
     for (removed in currentRoots.keys - newRoots) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Removed root $removed")
-      }
+      LOG.debug { "Removed root $removed" }
 
       Disposer.dispose(currentRoots.getValue(removed))
+      currentRoots.remove(removed)
     }
 
     for (removedJarDirectory in currentJarDirectories.keys - newJarDirectories) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Removed jar directory root $removedJarDirectory")
-      }
+      LOG.debug { "Removed jar directory root $removedJarDirectory" }
 
       Disposer.dispose(currentJarDirectories.getValue(removedJarDirectory))
+      currentJarDirectories.remove(removedJarDirectory)
     }
 
     for (removedRecursiveJarDirectory in currentRecursiveJarDirectories.keys - newRecursiveJarDirectories) {
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Removed recursive jar directory root $removedRecursiveJarDirectory")
-      }
+      LOG.debug { "Removed recursive jar directory root $removedRecursiveJarDirectory" }
 
       Disposer.dispose(currentRecursiveJarDirectories.getValue(removedRecursiveJarDirectory))
+      currentRecursiveJarDirectories.remove(removedRecursiveJarDirectory)
     }
 
     for (added in newRoots - currentRoots.keys) {
@@ -105,9 +154,7 @@ class LegacyBridgeRootsWatcher(
       currentRoots[added] = dispose
       virtualFilePointerManager.create(added.url, dispose, rootsValidityChangedListener)
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Added root $added")
-      }
+      LOG.debug { "Added root $added" }
     }
 
     for (addedJarDirectory in newJarDirectories - currentJarDirectories.keys) {
@@ -115,9 +162,7 @@ class LegacyBridgeRootsWatcher(
       currentRoots[addedJarDirectory] = dispose
       virtualFilePointerManager.createDirectoryPointer(addedJarDirectory.url, false, dispose, rootsValidityChangedListener)
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Added jar directory $addedJarDirectory")
-      }
+      LOG.debug { "Added jar directory $addedJarDirectory" }
     }
 
     for (addedRecursiveJarDirectory in newRecursiveJarDirectories - currentRecursiveJarDirectories.keys) {
@@ -125,9 +170,7 @@ class LegacyBridgeRootsWatcher(
       currentRoots[addedRecursiveJarDirectory] = dispose
       virtualFilePointerManager.createDirectoryPointer(addedRecursiveJarDirectory.url, true, dispose, rootsValidityChangedListener)
 
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Added recursive jar directory $addedRecursiveJarDirectory")
-      }
+      LOG.debug { "Added recursive jar directory $addedRecursiveJarDirectory" }
     }
   }
 
@@ -139,6 +182,8 @@ class LegacyBridgeRootsWatcher(
     currentRoots.clear()
     currentJarDirectories.clear()
     currentRecursiveJarDirectories.clear()
+
+    rootFilePointers.clear()
   }
 
   override fun dispose() {

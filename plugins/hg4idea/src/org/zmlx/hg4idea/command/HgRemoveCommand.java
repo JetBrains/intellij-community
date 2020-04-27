@@ -37,7 +37,7 @@ public class HgRemoveCommand {
    * Removes given files from their Mercurial repositories.
    * @param hgFiles files to be removed.
    */
-  public void executeInCurrentThread(@NotNull HgFile... hgFiles) {
+  public void executeInCurrentThread(HgFile @NotNull ... hgFiles) {
     executeInCurrentThread(Arrays.asList(hgFiles));
   }
 

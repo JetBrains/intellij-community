@@ -2707,13 +2707,23 @@
     </annotation>
   </item>
   <item name="java.util.Map java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
   </item>
+  <item name='java.util.Map void clear()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Map void putAll(java.util.Map&lt;? extends K,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Map void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.Map void replaceAll(java.util.function.BiFunction&lt;? super K,? super V,? extends V&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>

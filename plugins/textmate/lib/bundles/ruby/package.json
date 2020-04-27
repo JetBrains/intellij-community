@@ -12,9 +12,29 @@
 	"contributes": {
 		"languages": [{
 			"id": "ruby",
-			"extensions": [ ".rb", ".rbx", ".rjs", ".gemspec", ".rake", ".ru", ".erb", ".podspec", ".rbi" ],
-			"filenames": [ "rakefile", "gemfile", "guardfile", "podfile", "capfile" ],
-			"aliases": [ "Ruby", "rb" ],
+			"extensions": [
+				".rb",
+				".rbx",
+				".rjs",
+				".gemspec",
+				".rake",
+				".ru",
+				".erb",
+				".podspec",
+				".rbi"
+			],
+			"filenames": [
+				"rakefile",
+				"gemfile",
+				"guardfile",
+				"podfile",
+				"capfile",
+				".simplecov"
+			],
+			"aliases": [
+				"Ruby",
+				"rb"
+			],
 			"firstLine": "^#!\\s*/.*\\bruby\\b",
 			"configuration": "./language-configuration.json"
 		}],

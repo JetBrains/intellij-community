@@ -66,8 +66,8 @@ public abstract class TextEditorHighlightingPassRegistrar {
   }
 
   public abstract int registerTextEditorHighlightingPass(@NotNull TextEditorHighlightingPassFactory factory,
-                                                         @Nullable final int[] runAfterCompletionOf,
-                                                         @Nullable int[] runAfterStartingOf,
+                                                         final int @Nullable [] runAfterCompletionOf,
+                                                         int @Nullable [] runAfterStartingOf,
                                                          boolean runIntentionsPassAfter,
                                                          int forcedPassId);
 }

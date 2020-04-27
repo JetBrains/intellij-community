@@ -58,11 +58,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   @Override
   public abstract ProgressIndicator getProgressIndicator();
 
-  public static void progress(@NotNull String text) throws ProcessCanceledException {
+  public static void progress(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) throws ProcessCanceledException {
     progress(text, "");
   }
 
-  public static void progress2(@NotNull final String text) throws ProcessCanceledException {
+  public static void progress2(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -70,7 +70,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
-  public static void progress(@NotNull String text, @Nullable String text2) throws ProcessCanceledException {
+  public static void progress(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String text,
+                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String text2) throws ProcessCanceledException {
     final ProgressIndicator pi = getInstance().getProgressIndicator();
     if (pi != null) {
       pi.checkCanceled();
@@ -79,7 +80,21 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     }
   }
 
+  /**
+   * Runs the specified operation in non-cancellable manner synchronously on the same thread were it was called.
+   *
+   * @see ProgressManager#computeInNonCancelableSection(ThrowableComputable)
+   * @param runnable the operation to execute
+   */
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
+
+  /**
+   * Runs the specified operation and return its result in non-cancellable manner synchronously on the same thread were it was called.
+   *
+   * @see ProgressManager#executeNonCancelableSection(Runnable)
+   * @param computable the operation to execute
+   */
+  public abstract <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E;
 
   /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
@@ -150,7 +165,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable);
@@ -170,7 +185,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @Deprecated
   public abstract void runProcessWithProgressAsynchronously(@NotNull Project project,
-                                                            @NotNull @Nls String progressTitle,
+                                                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
                                                             @NotNull Runnable process,
                                                             @Nullable Runnable successRunnable,
                                                             @Nullable Runnable canceledRunnable,

@@ -68,7 +68,7 @@ public class FileCopyPasteUtil {
            event.isDataFlavorSupported(LinuxDragAndDropSupport.gnomeFileListFlavor);
   }
 
-  public static boolean isFileListFlavorAvailable(@NotNull DataFlavor[] transferFlavors) {
+  public static boolean isFileListFlavorAvailable(DataFlavor @NotNull [] transferFlavors) {
     for (DataFlavor flavor : transferFlavors) {
       if (flavor != null && (flavor.equals(DataFlavor.javaFileListFlavor) ||
                              flavor.equals(LinuxDragAndDropSupport.uriListFlavor) ||

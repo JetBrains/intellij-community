@@ -20,9 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 //todo[nik,anyone] feel free to rename this class
 public abstract class ListCellRendererWithRightAlignedComponent<T> implements ListCellRenderer<T> {
   private final ListCellRenderer<T> myLeftRenderer;

@@ -45,11 +45,12 @@ internal fun findCommitsToSync(context: Context) {
   }
 }
 
-internal fun Map<File, Collection<CommitInfo>>.commitMessage() = entries.joinToString("\n\n") { entry ->
-  entry.value.joinToString("\n") {
-    "'${it.subject}' from ${it.hash.substring(0..8)}"
-  } + " from ${getOriginUrl(entry.key)}"
-}
+internal fun Map<File, Collection<CommitInfo>>.commitMessage() =
+  entries.joinToString("\n\n") { entry ->
+    entry.value.joinToString("\n") {
+      "'${it.subject}' from ${it.hash.substring(0..8)}"
+    } + " from ${getOriginUrl(entry.key)}"
+  }
 
 internal fun commitAndPush(context: Context) {
   if (context.iconsCommitsToSync.isEmpty()) return
@@ -69,13 +70,9 @@ internal fun commitAndPush(context: Context) {
 }
 
 private fun verifyDevIcons(context: Context, repos: Collection<File>) {
-  callSafely {
-    context.verifyDevIcons(repos)
-  }
+  context.verifyDevIcons(repos)
   repos.forEach { repo ->
-    gitStatus(repo).forEach {
-      stageFiles(listOf(it), repo)
-    }
+    stageFiles(gitStatus(repo).all(), repo)
   }
 }
 
@@ -98,7 +95,7 @@ internal fun pushToIconsRepo(context: Context): Collection<CommitInfo> {
       }
       else {
         commitAndPush(master, committer.name, committer.email,
-                                                               commits.groupBy(CommitInfo::repo).commitMessage(), repos)
+                      commits.groupBy(CommitInfo::repo).commitMessage(), repos)
       }
     }
 }

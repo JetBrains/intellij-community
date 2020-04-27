@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author oleg
- */
 public class ScopeImpl implements Scope {
   private volatile Instruction[] myFlow;
   private volatile List<DFAMap<ScopeVariable>> myCachedScopeVariables;

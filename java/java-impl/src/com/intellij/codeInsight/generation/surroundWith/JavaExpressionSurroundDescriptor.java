@@ -31,7 +31,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   };
 
   @Override
-  @NotNull public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     PsiExpression expr = CodeInsightUtil.findExpressionInRange(file, startOffset, endOffset);
     if (expr == null) {
       expr = IntroduceVariableBase.getSelectedExpression(file.getProject(), file, startOffset, endOffset);
@@ -44,7 +44,7 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     if (mySurrounders == null) {
       final ArrayList<Surrounder> list = new ArrayList<>();
       Collections.addAll(list, SURROUNDERS);

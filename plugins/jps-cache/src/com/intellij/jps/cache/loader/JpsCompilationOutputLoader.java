@@ -10,7 +10,6 @@ import com.intellij.jps.cache.model.OutputLoadResult;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,13 +38,13 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
   private static final String PRODUCTION = "production";
   private static final String TEST = "test";
   private final JpsServerClient myClient;
-  private final String myProjectPath;
+  private final String myBuildDirPath;
   private List<File> myOldModulesPaths;
   private Map<File, String> myTmpFolderToModuleName;
 
-  JpsCompilationOutputLoader(@NotNull JpsServerClient client, Project project) {
+  JpsCompilationOutputLoader(@NotNull JpsServerClient client, @NotNull String buildDirPath) {
     myClient = client;
-    myProjectPath = project.getBasePath();
+    myBuildDirPath = buildDirPath;
   }
 
   @Override
@@ -171,7 +170,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     if (currentModulesState == null) {
       commitModulesState.forEach((type, map) -> {
         map.forEach((name, state) -> {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), getProjectRelativeFile(state.getRelativePath())));
+          affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
         });
       });
       LOG.warn("Project doesn't contain metadata, force to download " + affectedModules.size() + " modules.");
@@ -186,7 +185,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     newBuildTypes.removeAll(currentModulesState.keySet());
     newBuildTypes.forEach(type -> {
       commitModulesState.get(type).forEach((name, state) -> {
-        affectedModules.add(new AffectedModule(type, name, state.getHash(), getProjectRelativeFile(state.getRelativePath())));
+        affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
       });
     });
 
@@ -210,7 +209,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       newBuildModules.removeAll(currentTypeState.keySet());
       newBuildModules.forEach(name -> {
         BuildTargetState state = map.get(name);
-        affectedModules.add(new AffectedModule(type, name, state.getHash(), getProjectRelativeFile(state.getRelativePath())));
+        affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
       });
 
       // Calculate old modules paths for remove
@@ -225,11 +224,11 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       map.forEach((name, state) -> {
         BuildTargetState currentTargetState = currentTypeState.get(name);
         if (currentTargetState == null || !state.equals(currentTargetState)) {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), getProjectRelativeFile(state.getRelativePath())));
+          affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
           return;
         }
 
-        File outFile = getProjectRelativeFile(state.getRelativePath());
+        File outFile = getBuildDirRelativeFile(state.getRelativePath());
         if (checkExistance && (!outFile.exists() || ArrayUtil.isEmpty(outFile.listFiles()))) {
           affectedModules.add(new AffectedModule(type, name, state.getHash(), outFile));
         }
@@ -243,7 +242,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
         if (targetState != null && targetState.getRelativePath().equals(entry.getValue())) return false;
       }
       return true;
-    }).map(entry -> getProjectRelativeFile(entry.getValue()))
+    }).map(entry -> getBuildDirRelativeFile(entry.getValue()))
       .collect(Collectors.toList());
     List<AffectedModule> result = mergeAffectedModules(affectedModules, commitModulesState);
     long total = System.currentTimeMillis() - start;
@@ -299,8 +298,8 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     return new ArrayList<>(result);
   }
 
-  private File getProjectRelativeFile(String projectRelativePath) {
-    return new File(projectRelativePath.replace("$PROJECT_DIR$", myProjectPath));
+  private File getBuildDirRelativeFile(String buildDirRelativePath) {
+    return new File(buildDirRelativePath.replace("$BUILD_DIR$", myBuildDirPath));
   }
 
   private static String calculateStringHash(String content) {

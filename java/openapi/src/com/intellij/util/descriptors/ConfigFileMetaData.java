@@ -22,9 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Arrays;
 
-/**
- * @author nik
- */
 public class ConfigFileMetaData {
   private static final Logger LOG = Logger.getInstance(ConfigFileMetaData.class);
   private final String myTitle;

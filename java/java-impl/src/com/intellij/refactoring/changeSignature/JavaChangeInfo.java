@@ -37,18 +37,15 @@ public interface JavaChangeInfo extends ChangeInfo {
   CanonicalTypes.Type getNewReturnType();
 
   @Override
-  @NotNull
-  JavaParameterInfo[] getNewParameters();
+  JavaParameterInfo @NotNull [] getNewParameters();
 
   @PsiModifier.ModifierConstant
   @NotNull
   String getNewVisibility();
 
-  @NotNull
-  String[] getOldParameterNames();
+  String @NotNull [] getOldParameterNames();
 
-  @NotNull
-  String[] getOldParameterTypes();
+  String @NotNull [] getOldParameterTypes();
 
   ThrownExceptionInfo[] getNewExceptions();
 

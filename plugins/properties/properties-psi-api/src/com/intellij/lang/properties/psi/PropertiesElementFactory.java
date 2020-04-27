@@ -33,7 +33,16 @@ public class PropertiesElementFactory {
                                          @NonNls @NotNull String name,
                                          @NonNls @NotNull String value,
                                          @Nullable Character delimiter) {
-    String text = getPropertyText(name, value, delimiter, project, true);
+    return createProperty(project, name, value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
+  }
+
+  @NotNull
+  public static IProperty createProperty(@NotNull Project project,
+                                         @NonNls @NotNull String name,
+                                         @NonNls @NotNull String value,
+                                         @Nullable Character delimiter,
+                                         @NotNull PropertyKeyValueFormat format) {
+    String text = getPropertyText(name, value, delimiter, project, format);
     final PropertiesFile dummyFile = createPropertiesFile(project, text);
     return dummyFile.getProperties().get(0);
   }
@@ -54,11 +63,11 @@ public class PropertiesElementFactory {
                                        @NonNls @NotNull String value,
                                        @NonNls @Nullable Character delimiter,
                                        @Nullable Project project,
-                                       boolean escape) {
+                                       @NotNull PropertyKeyValueFormat format) {
     if (delimiter == null) {
       delimiter = project == null ? '=' : PropertiesCodeStyleSettings.getInstance(project).getDelimiter();
     }
-    return (escape ? escape(name) : name) + delimiter + (escape ? escapeValue(value, delimiter) : value);
+    return (format != PropertyKeyValueFormat.FILE ? escape(name) : name) + delimiter + escapeValue(value, delimiter, format);
   }
 
   @NotNull
@@ -96,14 +105,14 @@ public class PropertiesElementFactory {
   }
 
   /**
-   * @deprecated use {@link #escapeValue(String, char)}
+   * @deprecated use {@link #escapeValue(String, char, PropertyKeyValueFormat)} instead
    */
   @Deprecated
-  public static String escapeValue(String value) {
-    return escapeValue(value, '=');
+  public static String escapeValue(String value, char delimiter) {
+    return escapeValue(value, delimiter, PropertyKeyValueFormat.PRESENTABLE);
   }
 
-  public static String escapeValue(String value, char delimiter) {
-    return PropertiesResourceBundleUtil.fromValueEditorToPropertyValue(value, delimiter);
+  public static String escapeValue(String value, char delimiter, PropertyKeyValueFormat format) {
+    return PropertiesResourceBundleUtil.convertValueToFileFormat(value, delimiter, format);
   }
 }

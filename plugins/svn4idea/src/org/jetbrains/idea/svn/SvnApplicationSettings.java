@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.PathManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
@@ -25,8 +24,6 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
     @Storage("other.xml")}
 )
 public class SvnApplicationSettings implements PersistentStateComponent<SvnApplicationSettings.ConfigurationBean> {
-  private SvnFileSystemListener myVFSHandler;
-  private int mySvnProjectCount;
   private LimitedStringsList myLimitedStringsList;
 
   public static class ConfigurationBean {
@@ -77,23 +74,6 @@ public class SvnApplicationSettings implements PersistentStateComponent<SvnAppli
   private void checkFillTypedFromCheckout() {
     if (myConfigurationBean.myTypedURLs.isEmpty() && (! myConfigurationBean.myCheckoutURLs.isEmpty())) {
       myConfigurationBean.myTypedURLs.addAll(myConfigurationBean.myCheckoutURLs);
-    }
-  }
-
-  public void svnActivated() {
-    if (myVFSHandler == null) {
-      myVFSHandler = new SvnFileSystemListener();
-    }
-    mySvnProjectCount++;
-  }
-
-  public void svnDeactivated() {
-    mySvnProjectCount--;
-    if (mySvnProjectCount == 0) {
-      Disposer.dispose(myVFSHandler);
-      myVFSHandler = null;
-      // todo what should be done instead?
-      //SVNSSHSession.shutdown();
     }
   }
 

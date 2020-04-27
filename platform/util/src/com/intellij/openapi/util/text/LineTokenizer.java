@@ -16,13 +16,11 @@ public class LineTokenizer {
   private boolean atEnd;
   private final CharSequence myText;
 
-  @NotNull
-  public static String[] tokenize(CharSequence chars, boolean includeSeparators) {
+  public static String @NotNull [] tokenize(CharSequence chars, boolean includeSeparators) {
     return tokenize(chars, includeSeparators, true);
   }
 
-  @NotNull
-  public static String[] tokenize(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
+  public static String @NotNull [] tokenize(CharSequence chars, final boolean includeSeparators, final boolean skipLastEmptyLine) {
     final List<String> strings = tokenizeIntoList(chars, includeSeparators, skipLastEmptyLine);
     return strings.isEmpty() ? ArrayUtilRt.EMPTY_STRING_ARRAY : ArrayUtilRt.toStringArray(strings);
   }
@@ -74,19 +72,16 @@ public class LineTokenizer {
     return lineCount;
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, boolean includeSeparators) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, boolean includeSeparators) {
     return tokenize(chars, includeSeparators, true);
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, boolean includeSeparators, boolean skipLastEmptyLine) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, boolean includeSeparators, boolean skipLastEmptyLine) {
     return tokenize(chars, 0, chars.length, includeSeparators, skipLastEmptyLine);
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, int startOffset, int endOffset, boolean includeSeparators,
-                                  boolean skipLastEmptyLine) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, int startOffset, int endOffset, boolean includeSeparators,
+                                            boolean skipLastEmptyLine) {
     return tokenize(new CharArrayCharSequence(chars, startOffset, endOffset), includeSeparators, skipLastEmptyLine);
   }
 
@@ -94,8 +89,7 @@ public class LineTokenizer {
     return tokenizer.getLineSeparatorLength() > 0;
   }
 
-  @NotNull
-  public static String[] tokenize(@NotNull char[] chars, int startOffset, int endOffset, boolean includeSeparators) {
+  public static String @NotNull [] tokenize(char @NotNull [] chars, int startOffset, int endOffset, boolean includeSeparators) {
     return tokenize(chars, startOffset, endOffset, includeSeparators, true);
   }
 
@@ -105,7 +99,7 @@ public class LineTokenizer {
     advance();
   }
 
-  public LineTokenizer(@NotNull char[] text, int startOffset, int endOffset) {
+  public LineTokenizer(char @NotNull [] text, int startOffset, int endOffset) {
     this(new CharArrayCharSequence(text, startOffset, endOffset));
   }
 

@@ -137,7 +137,8 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       // It's Long
       is EntityPropertyKind.EntityValue -> Unit
       is EntityPropertyKind.SealedKotlinDataClassHierarchy -> {
-        kind.subclasses.forEach { subclass ->
+        kind.subclassesKinds.forEach { subclassProperty ->
+          val subclass = subclassProperty.key
           when {
             subclass.isData -> recursiveDataClass(subclass.java, metaDataRegistry)
             subclass.objectInstance != null -> {
@@ -148,7 +149,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
                 })
               }
             }
-            else -> error("Unsupported subclass: $subclass")
+            else -> error("Unsupported subclass: ${subclassProperty.key}")
           }
 
         }

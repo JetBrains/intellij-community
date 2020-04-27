@@ -14,7 +14,7 @@ public abstract class CompoundPackageSet extends PackageSetBase {
 
   String myText;
 
-  CompoundPackageSet(@NotNull PackageSet... sets) {
+  CompoundPackageSet(PackageSet @NotNull ... sets) {
     mySets = sets;
     for (PackageSet set : sets) {
       if (set == null) throw new IllegalArgumentException("null set in " + Arrays.toString(sets));
@@ -46,8 +46,7 @@ public abstract class CompoundPackageSet extends PackageSetBase {
     return myText;
   }
 
-  @NotNull
-  public PackageSet[] getSets() {
+  public PackageSet @NotNull [] getSets() {
     return mySets;
   }
 }

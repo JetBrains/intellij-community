@@ -8,9 +8,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathsList;
 
-/**
- * @author nik
- */
 public class OrderEntriesTest extends ModuleRootManagerTestCase {
   public void testLibrary() {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());

@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.io.File;
 
 public class PatchFileType implements FileType {
-  public static final String NAME = "PATCH";
+  public static final String NAME = "PATCH"; //NON-NLS
 
   @Override
   @NotNull
@@ -58,7 +58,7 @@ public class PatchFileType implements FileType {
   @Override
   @Nullable
   @NonNls
-  public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, final byte @NotNull [] content) {
     return null;
   }
 

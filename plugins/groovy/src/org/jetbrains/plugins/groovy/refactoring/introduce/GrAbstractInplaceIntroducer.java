@@ -163,15 +163,14 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     runRefactoring(new IntroduceContextAdapter(), getSettings(), true);
   }
 
-  @NotNull
-  protected PsiElement[] restoreOccurrences() {
+  protected PsiElement @NotNull [] restoreOccurrences() {
     List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), marker -> PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class));
     return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Nullable
   @Override
-  protected GrVariable createFieldToStartTemplateOn(boolean replaceAll, @NotNull String[] names) {
+  protected GrVariable createFieldToStartTemplateOn(boolean replaceAll, String @NotNull [] names) {
 
     final Settings settings = getInitialSettingsForInplace(myContext, myReplaceChoice, names);
     if (settings == null) return null;
@@ -247,9 +246,8 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       return null;
     }
 
-    @NotNull
     @Override
-    public PsiElement[] getOccurrences() {
+    public PsiElement @NotNull [] getOccurrences() {
       return restoreOccurrences();
     }
 

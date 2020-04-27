@@ -24,7 +24,7 @@ public final class PlatformVirtualFileManager extends VirtualFileManagerImpl {
   @Override
   protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ApplicationManager.getApplication().assertIsWriteThread();
     }
 
     // todo: get an idea how to deliver changes from local FS to jar fs before they go refresh

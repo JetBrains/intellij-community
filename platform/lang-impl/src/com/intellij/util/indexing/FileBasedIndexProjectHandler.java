@@ -43,7 +43,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
 
   static final class FileBasedIndexProjectHandlerStartupActivity implements StartupActivity {
     FileBasedIndexProjectHandlerStartupActivity() {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC,  new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
           FileBasedIndexProjectHandler handler = project.getServiceIfCreated(FileBasedIndexProjectHandler.class);
@@ -71,7 +71,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
 
       // schedule dumb mode start after the read action we're currently in
       if (fileBasedIndex instanceof FileBasedIndexImpl) {
-        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended()));
       }
 
       FileBasedIndexProjectHandler handler = project.getService(FileBasedIndexProjectHandler.class);

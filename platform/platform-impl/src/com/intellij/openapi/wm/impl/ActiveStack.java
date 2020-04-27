@@ -61,8 +61,7 @@ final class ActiveStack {
     return myStack.get(getSize() - i - 1);
   }
 
-  @NotNull
-  ToolWindowEntry[] getStack() {
+  ToolWindowEntry @NotNull [] getStack() {
     ToolWindowEntry[] result = new ToolWindowEntry[getSize()];
     for (int i = 0; i < getSize(); i++) {
       result[i] = peek(i);
@@ -70,8 +69,7 @@ final class ActiveStack {
     return result;
   }
 
-  @NotNull
-  ToolWindowEntry[] getPersistentStack() {
+  ToolWindowEntry @NotNull [] getPersistentStack() {
     ToolWindowEntry[] result = new ToolWindowEntry[getPersistentSize()];
     for (int i = 0; i < getPersistentSize(); i++) {
       result[i] = peekPersistent(i);

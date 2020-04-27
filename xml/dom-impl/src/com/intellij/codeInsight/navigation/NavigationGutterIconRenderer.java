@@ -48,12 +48,12 @@ import java.util.List;
  */
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
-  private final String myPopupTitle;
+  protected final String myPopupTitle;
   private final String myEmptyText;
-  private final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
+  protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer>> myPointers;
 
-  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<? extends PsiElementListCellRenderer> cellRenderer,
+  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
     @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;
@@ -107,14 +107,13 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     final List<PsiElement> list;
 
     DumbService dumbService = elt != null ? DumbService.getInstance(elt.getProject()) : null;
-    if (dumbService != null) dumbService.setAlternativeResolveEnabled(true);
-    try {
+    if (dumbService != null) {
+      list = dumbService.computeWithAlternativeResolveEnabled(() -> getTargetElements());
+    }
+    else {
       list = getTargetElements();
     }
-    finally {
-      if (dumbService != null) dumbService.setAlternativeResolveEnabled(false);
-    }
-    
+
     if (list.isEmpty()) {
       if (myEmptyText != null) {
         if (event != null) {
@@ -129,12 +128,16 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
       }
       return;
     }
+    navigateToItems(event, list);
+  }
+
+  protected void navigateToItems(@Nullable MouseEvent event, @NotNull List<PsiElement> list) {
     if (list.size() == 1) {
       PsiNavigateUtil.navigate(list.iterator().next());
     }
     else {
       if (event != null) {
-        final JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list), myCellRenderer.compute(), myPopupTitle);
+        JBPopup popup = NavigationUtil.getPsiElementPopup(PsiUtilCore.toPsiElementArray(list), myCellRenderer.compute(), myPopupTitle);
         popup.show(new RelativePoint(event));
       }
     }

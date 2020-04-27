@@ -20,6 +20,7 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.facet.ui.libraries.FrameworkLibraryValidator;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraries.AddCustomLibraryDialog;
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription;
@@ -30,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
   private final CustomLibraryDescription myLibraryDescription;
   private final LibrariesValidatorContext myContext;
@@ -63,7 +61,7 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
     });
     if (found.get()) return ValidationResult.OK;
 
-    return new ValidationResult(IdeBundle.message("label.missed.libraries.text", myLibraryCategoryName), new LibrariesQuickFix(myLibraryDescription));
+    return new ValidationResult(JavaUiBundle.message("label.missed.libraries.text", myLibraryCategoryName), new LibrariesQuickFix(myLibraryDescription));
   }
 
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {

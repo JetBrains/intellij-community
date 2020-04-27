@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -13,13 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
-public class Place implements ComparableObject {
-
+public final class Place implements ComparableObject {
   private LinkedHashMap<String, Object> myPath = new LinkedHashMap<>();
 
   @Override
-  @NotNull
-  public final Object[] getEqualityObjects() {
+  public final Object @NotNull [] getEqualityObjects() {
     return new Object[] {myPath};
   }
 
@@ -81,7 +76,10 @@ public class Place implements ComparableObject {
     default void setHistory(History history) {
     }
 
-    ActionCallback navigateTo(@Nullable Place place, final boolean requestFocus);
+    @Nullable
+    default ActionCallback navigateTo(@Nullable Place place, boolean requestFocus) {
+      return null;
+    }
 
     default void queryPlace(@NotNull Place place) {
     }
@@ -99,5 +97,4 @@ public class Place implements ComparableObject {
       ((Navigator)object).queryPlace(place);
     }
   }
-
 }

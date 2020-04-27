@@ -43,9 +43,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-* @author nik
-*/
 public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStructureConfigurableContext {
   private ModifiableArtifactModel myModifiableModel;
   private final ManifestFilesInfo myManifestFilesInfo = new ManifestFilesInfo();

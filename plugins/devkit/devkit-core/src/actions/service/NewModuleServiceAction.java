@@ -18,11 +18,6 @@ package org.jetbrains.idea.devkit.actions.service;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 public class NewModuleServiceAction extends NewServiceActionBase {
-  public NewModuleServiceAction() {
-    super(DevKitBundle.message("new.menu.module.service.text"),
-          DevKitBundle.message("new.menu.module.service.description"));
-  }
-
   @Override
   protected String getTagName() {
     return "moduleService";

@@ -46,8 +46,8 @@ class StackFrameList extends XDebuggerFramesList {
               separator = true;
             }
             else {
-              StackFrameItem.CapturedStackFrame frame = frameInfo.createFrame(myDebugProcess);
-              frame.setWithSeparator(separator);
+              XStackFrame frame = frameInfo.createFrame(myDebugProcess);
+              StackFrameItem.setWithSeparator(frame, separator);
               DebuggerUIUtil.invokeLater(() -> getModel().add(frame));
               separator = false;
             }

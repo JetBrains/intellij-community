@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,7 @@ public class RncParser implements PsiParser {
     new PatternParsing(builder).parse();
 
     while (!builder.eof()) {
-      builder.error("Unexpected token");
+      builder.error(RelaxngBundle.message("unexpected.token"));
       builder.advanceLexer();
     }
 

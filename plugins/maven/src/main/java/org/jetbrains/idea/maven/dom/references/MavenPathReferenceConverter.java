@@ -157,15 +157,13 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     return set.getAllReferences();
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue genericDomValue, PsiElement element, ConvertContext context) {
     return createReferences(genericDomValue, element, myCondition);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] createReferences(@NotNull PsiElement psiElement, boolean soft) {
+  public PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement, boolean soft) {
     throw new UnsupportedOperationException();
   }
 }

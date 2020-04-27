@@ -15,9 +15,9 @@
  */
 package com.intellij.testIntegration.intention;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.impl.BaseMoveInitializerToMethodAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -46,7 +46,7 @@ public class MoveInitializerToSetUpMethodAction extends BaseMoveInitializerToMet
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.move.initializer.to.set.up");
+    return JavaBundle.message("intention.move.initializer.to.set.up");
   }
 
   @Override

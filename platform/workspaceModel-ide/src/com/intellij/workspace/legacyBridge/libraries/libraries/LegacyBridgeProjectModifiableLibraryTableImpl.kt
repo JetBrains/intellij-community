@@ -2,6 +2,7 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -118,6 +119,15 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
   override fun commit() {
     assertModelIsLive()
     modelIsCommittedOrDisposed = true
+
+    myLibrariesToAdd.forEach { library ->
+      val componentAsString = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
+      library.libraryEntity?.getCustomProperties()?.let { property ->
+        diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+          propertiesXmlTag = componentAsString
+        }
+      }
+    }
 
     libraryTable.setNewLibraryInstances(myLibrariesToAdd)
     WorkspaceModel.getInstance(project).updateProjectModel {

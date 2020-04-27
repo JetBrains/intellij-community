@@ -32,4 +32,5 @@ public interface ToolWindowId {
   String PREVIEW = "Preview";
   String RUN_DASHBOARD = "Run Dashboard";
   String SERVICES = "Services";
+  String PROJECT_PROBLEMS_VIEW = "Project problems";
 }

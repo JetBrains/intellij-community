@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
@@ -7,22 +7,23 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.Consumer
 import com.intellij.util.EventDispatcher
-import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
-import git4idea.history.GitLogUtil
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GHCommit
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
+import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.GHNotFoundException
+import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRTimelineMergingModel
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
@@ -36,6 +37,7 @@ import kotlin.reflect.KProperty
 internal class GHPRDataProviderImpl(private val project: Project,
                                     private val progressManager: ProgressManager,
                                     private val git: Git,
+                                    private val securityService: GHPRSecurityService,
                                     private val requestExecutor: GithubApiRequestExecutor,
                                     private val gitRemote: GitRemoteUrlCoordinates,
                                     private val repository: GHRepositoryCoordinates,
@@ -44,19 +46,32 @@ internal class GHPRDataProviderImpl(private val project: Project,
 
   private val requestsChangesEventDispatcher = EventDispatcher.create(GHPRDataProvider.RequestsChangedListener::class.java)
 
+  private var lastKnownBaseBranch: String? = null
   private var lastKnownBaseSha: String? = null
   private var lastKnownHeadSha: String? = null
 
-  private val detailsRequestValue = backingValue {
+  private val detailsRequestValue: LazyCancellableBackgroundProcessValue<GHPullRequest> = backingValue {
     val details = requestExecutor.execute(it, GHGQLRequests.PullRequest.findOne(repository, number))
                   ?: throw GHNotFoundException("Pull request $number does not exist")
     invokeAndWaitIfNeeded {
-      var needReload = false
-      lastKnownBaseSha?.run { if (this != details.baseRefOid) needReload = true }
+
+      var baseBranchChanged = false
+      lastKnownBaseBranch?.run { if (this != details.baseRefName) baseBranchChanged = true }
+      lastKnownBaseBranch = details.baseRefName
+      if (baseBranchChanged) {
+        baseBranchProtectionRulesRequestValue.drop()
+        reloadMergeabilityState()
+      }
+
+      var hashesChanged = false
+      lastKnownBaseSha?.run { if (this != details.baseRefOid) hashesChanged = true }
       lastKnownBaseSha = details.baseRefOid
-      lastKnownHeadSha?.run { if (this != details.headRefOid) needReload = true }
+      lastKnownHeadSha?.run { if (this != details.headRefOid) hashesChanged = true }
       lastKnownHeadSha = details.headRefOid
-      if (needReload) reloadChanges()
+      if (hashesChanged) {
+        reloadChanges()
+        reloadMergeabilityState()
+      }
     }
     details
   }
@@ -82,24 +97,6 @@ internal class GHPRDataProviderImpl(private val project: Project,
     }).loadAll(indicator).map { it.commit }
   }
   override val apiCommitsRequest by backgroundProcessValue(apiCommitsRequestValue)
-
-  private val logCommitsRequestValue = backingValue<List<GitCommit>> {
-    val baseFetch = baseBranchFetchRequestValue.value
-    val headFetch = headBranchFetchRequestValue.value
-    val detailsRequest = detailsRequestValue.value
-
-    baseFetch.joinCancellable()
-    headFetch.joinCancellable()
-    val details = detailsRequest.joinCancellable()
-
-    val gitCommits = mutableListOf<GitCommit>()
-    GitLogUtil.readFullDetails(project, gitRemote.repository.root, Consumer {
-      gitCommits.add(it)
-    }, "${details.baseRefOid}..${details.headRefOid}")
-
-    gitCommits.asReversed()
-  }
-  override val logCommitsRequest by backgroundProcessValue(logCommitsRequestValue)
 
   private val changesProviderValue = backingValue {
     val baseFetch = baseBranchFetchRequestValue.value
@@ -139,6 +136,36 @@ internal class GHPRDataProviderImpl(private val project: Project,
   }
   override val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>> by backgroundProcessValue(reviewThreadsRequestValue)
 
+  private val baseBranchProtectionRulesRequestValue = backingValue {
+    if (!securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.WRITE)) return@backingValue null
+
+    val detailsRequest = detailsRequestValue.value
+    val baseBranch = detailsRequest.joinCancellable().baseRefName
+    try {
+      requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
+    }
+    catch (e: GithubStatusCodeException) {
+      if (e.statusCode == 404) null
+      else throw e
+    }
+  }
+  private val mergeabilityStateRequestValue = backingValue {
+    val detailsRequest = detailsRequestValue.value
+    val baseBranchProtectionRulesRequest = baseBranchProtectionRulesRequestValue.value
+
+    val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, number))
+                           ?: error("Could not find pull request $number")
+    val builder = GHPRMergeabilityStateBuilder(detailsRequest.joinCancellable(),
+                                               mergeabilityData)
+    val protectionRules = baseBranchProtectionRulesRequest.joinCancellable()
+    if (protectionRules != null) {
+      builder.withRestrictions(securityService, protectionRules)
+    }
+    builder.build()
+  }
+  override val mergeabilityStateRequest: CompletableFuture<GHPRMergeabilityState>
+    by backgroundProcessValue(mergeabilityStateRequestValue)
+
   private val timelineLoaderHolder = GHPRCountingTimelineLoaderHolder {
     val timelineModel = GHPRTimelineMergingModel()
     GHPRTimelineLoader(progressManager, requestExecutor,
@@ -160,10 +187,14 @@ internal class GHPRDataProviderImpl(private val project: Project,
   override fun reloadChanges() {
     baseBranchFetchRequestValue.drop()
     headBranchFetchRequestValue.drop()
-    logCommitsRequestValue.drop()
     changesProviderValue.drop()
     requestsChangesEventDispatcher.multicaster.commitsRequestChanged()
     reloadReviewThreads()
+  }
+
+  override fun reloadMergeabilityState() {
+    mergeabilityStateRequestValue.drop()
+    requestsChangesEventDispatcher.multicaster.mergeabilityStateRequestChanged()
   }
 
   @CalledInAwt

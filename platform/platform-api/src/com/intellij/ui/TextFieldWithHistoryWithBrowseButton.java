@@ -20,6 +20,7 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +30,8 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable String title,
-                                      @Nullable String description,
+  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor) {
@@ -39,8 +40,8 @@ public class TextFieldWithHistoryWithBrowseButton extends ComponentWithBrowseBut
   }
 
   @Override
-  public void addBrowseFolderListener(@Nullable String title,
-                                      @Nullable String description,
+  public void addBrowseFolderListener(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                      @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super TextFieldWithHistory> accessor,

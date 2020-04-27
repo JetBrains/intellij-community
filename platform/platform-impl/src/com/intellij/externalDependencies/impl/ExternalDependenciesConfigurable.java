@@ -36,9 +36,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ExternalDependenciesConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ExternalDependenciesConfigurable.class);
   private final ExternalDependenciesManager myDependenciesManager;
@@ -135,8 +132,8 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
       })
       .createPanel();
 
-    String text = XmlStringUtil.wrapInHtml("Specify a list of plugins required for your project. " +
-                                           ApplicationNamesInfo.getInstance().getFullProductName() + " will notify you if a required plugin is missing or needs an update. ");
+    String text = XmlStringUtil
+      .wrapInHtml(IdeBundle.message("settings.required.plugins.title", ApplicationNamesInfo.getInstance().getFullProductName()));
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(dependenciesPanel).addToTop(new JBLabel(text));
   }
 
@@ -205,16 +202,16 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
 
     final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getMinVersion()));
     final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getMaxVersion()));
-    minVersionField.getEmptyText().setText("<any>");
+    minVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
     minVersionField.setColumns(10);
-    maxVersionField.getEmptyText().setText("<any>");
+    maxVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
     maxVersionField.setColumns(10);
     JPanel panel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Plugin:", pluginChooser)
-      .addLabeledComponent("Minimum version:", minVersionField)
-      .addLabeledComponent("Maximum version:", maxVersionField)
+      .addLabeledComponent(IdeBundle.message("label.plugin"), pluginChooser)
+      .addLabeledComponent(IdeBundle.message("label.minimum.version"), minVersionField)
+      .addLabeledComponent(IdeBundle.message("label.maximum.version"), maxVersionField)
       .getPanel();
-    final DialogBuilder dialogBuilder = new DialogBuilder(parent).title("Required Plugin").centerPanel(panel);
+    final DialogBuilder dialogBuilder = new DialogBuilder(parent).title(IdeBundle.message("dialog.title.required.plugin")).centerPanel(panel);
     dialogBuilder.setPreferredFocusComponent(pluginChooser);
     pluginChooser.addActionListener(new ActionListener() {
       @Override

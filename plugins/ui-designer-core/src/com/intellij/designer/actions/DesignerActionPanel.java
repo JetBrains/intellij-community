@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,9 +101,10 @@ public class DesignerActionPanel implements DataProvider {
 
   @NotNull
   private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
-    final DefaultActionGroup group = new DefaultActionGroup("_Select", true);
+    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> "_Select");
 
-    AnAction selectParent = new AnAction("Select Parent", "Select Parent", null) {
+    AnAction selectParent = new AnAction(UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.text.select.parent"),
+                                         UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.description.select.parent"), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myDesigner.getToolProvider().processKeyEvent(new KeyEvent(myDesigner.getSurfaceArea().getNativeComponent(),

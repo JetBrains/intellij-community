@@ -20,8 +20,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
     Project project = e.getProject();
     if (project == null) return AnAction.EMPTY_ARRAY;

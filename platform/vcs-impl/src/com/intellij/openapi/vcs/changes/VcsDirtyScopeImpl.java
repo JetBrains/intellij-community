@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 /**
@@ -30,30 +30,15 @@ import static com.intellij.util.containers.ContainerUtil.notNullize;
  * @author yole
  */
 public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
-  private static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
-    new TObjectHashingStrategy<FilePath>() {
-      @Override
-      public int computeHashCode(@Nullable FilePath path) {
-        if (path == null) return 0;
-        return Objects.hash(path.getPath(), path.isDirectory(), path.isNonLocal());
-      }
-
-      @Override
-      public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
-        if (path1 == null || path2 == null) return path1 == path2;
-        return path1.isDirectory() == path2.isDirectory() &&
-               path1.isNonLocal() == path2.isNonLocal() &&
-               path1.getPath().equals(path2.getPath());
-      }
-    };
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyFiles = new HashMap<>();
   private final Map<VirtualFile, THashSet<FilePath>> myDirtyDirectoriesRecursively = new HashMap<>();
   private final Set<VirtualFile> myAffectedContentRoots = new THashSet<>();
   @NotNull private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final AbstractVcs myVcs;
-  private final VcsDirtyScopeModifier myVcsDirtyScopeModifier;
   private final boolean myWasEverythingDirty;
+
+  @NotNull private final TObjectHashingStrategy<FilePath> myHashingStrategy;
 
   public VcsDirtyScopeImpl(@NotNull AbstractVcs vcs) {
     this(vcs, false);
@@ -64,39 +49,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myProject = vcs.getProject();
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myWasEverythingDirty = wasEverythingDirty;
-    myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
-      @NotNull
-      @Override
-      public Iterator<FilePath> getDirtyFilesIterator() {
-        return iterateMap(myDirtyFiles);
-      }
-
-      @NotNull
-      @Override
-      public Iterator<FilePath> getDirtyDirectoriesIterator() {
-        return iterateMap(myDirtyDirectoriesRecursively);
-      }
-
-      @Override
-      public void recheckDirtyKeys() {
-        recheckMap(myDirtyDirectoriesRecursively);
-        recheckMap(myDirtyFiles);
-      }
-
-      @NotNull
-      private Iterator<FilePath> iterateMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
-        return ContainerUtil.concatIterators(ContainerUtil.map(map.values(), THashSet::iterator));
-      }
-
-      private void recheckMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
-        for (Iterator<THashSet<FilePath>> iterator = map.values().iterator(); iterator.hasNext();) {
-          final THashSet<FilePath> next = iterator.next();
-          if (next.isEmpty()) {
-            iterator.remove();
-          }
-        }
-      }
-    };
+    myHashingStrategy = getDirtyScopeHashingStrategy(myVcs);
   }
 
   @Override
@@ -153,21 +106,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return result;
   }
 
-  @Override
-  public boolean isRecursivelyDirty(final VirtualFile vf) {
-    for(THashSet<FilePath> dirsByRoot: myDirtyDirectoriesRecursively.values()) {
-      for (FilePath dir : dirsByRoot) {
-        final VirtualFile dirVf = dir.getVirtualFile();
-        if (dirVf != null) {
-          if (VfsUtilCore.isAncestor(dirVf, vf, false)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
   public void addDirtyData(@NotNull Collection<? extends FilePath> dirs, @NotNull Collection<? extends FilePath> files) {
     Map<VirtualFile, THashSet<FilePath>> perRootDirs = new HashMap<>(); // recursive
     Map<VirtualFile, THashSet<FilePath>> perRootFiles = new HashMap<>(); // non-recursive
@@ -210,7 +148,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<? extends FilePath> dirs) {
+  private THashSet<FilePath> removeAncestorsRecursive(@NotNull Collection<? extends FilePath> dirs) {
     List<FilePath> paths = ContainerUtil.sorted(dirs, Comparator.comparingInt(it -> it.getPath().length()));
 
     THashSet<FilePath> result = newFilePathsSet();
@@ -222,7 +160,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> removeAncestorsNonRecursive(@NotNull Set<? extends FilePath> dirs, @NotNull Set<? extends FilePath> files) {
+  private THashSet<FilePath> removeAncestorsNonRecursive(@NotNull Set<? extends FilePath> dirs, @NotNull Set<? extends FilePath> files) {
     THashSet<FilePath> result = newFilePathsSet();
     for (FilePath file : files) {
       if (hasAncestor(dirs, file)) continue;
@@ -241,8 +179,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @NotNull
-  private static THashSet<FilePath> newFilePathsSet() {
-    return new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
+  private THashSet<FilePath> newFilePathsSet() {
+    return new THashSet<>(myHashingStrategy);
   }
 
   /**
@@ -320,7 +258,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       if (newcomer.isDirectory()) {
         for (Iterator<FilePath> iterator = dirtyFiles.iterator(); iterator.hasNext(); ) {
           final FilePath oldBoy = iterator.next();
-          if (!oldBoy.isDirectory() && CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(oldBoy.getParentPath(), newcomer)) {
+          if (!oldBoy.isDirectory() && myHashingStrategy.equals(oldBoy.getParentPath(), newcomer)) {
             iterator.remove();
           }
         }
@@ -414,12 +352,9 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   @Override
-  public boolean belongsTo(final FilePath path, final Consumer<? super AbstractVcs> vcsConsumer) {
+  public boolean belongsTo(final FilePath path) {
     if (myProject.isDisposed()) return false;
     final VcsRoot rootObject = myVcsManager.getVcsRootObjectFor(path);
-    if (vcsConsumer != null && rootObject != null) {
-      vcsConsumer.consume(rootObject.getVcs());
-    }
     if (rootObject == null || rootObject.getVcs() != myVcs) {
       return false;
     }
@@ -461,11 +396,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     return files != null && files.contains(path);
   }
 
-  @Override
-  public boolean belongsTo(final FilePath path) {
-    return belongsTo(path, null);
-  }
-
   @Override @NonNls
   public String toString() {
     @NonNls StringBuilder result = new StringBuilder("VcsDirtyScope[");
@@ -491,11 +421,6 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     }
     result.append("]");
     return result.toString();
-  }
-
-  @Override
-  public VcsDirtyScopeModifier getModifier() {
-    return myVcsDirtyScopeModifier;
   }
 
   @Override

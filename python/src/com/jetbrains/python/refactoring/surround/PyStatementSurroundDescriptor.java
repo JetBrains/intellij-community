@@ -21,8 +21,7 @@ public class PyStatementSurroundDescriptor implements SurroundDescriptor {
   };
 
   @Override
-  @NotNull
-  public PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
+  public PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset) {
     final PsiElement[] statements = PyRefactoringUtil.findStatementsInRange(file, startOffset, endOffset);
     if (statements.length == 0) {
       return PsiElement.EMPTY_ARRAY;
@@ -31,8 +30,7 @@ public class PyStatementSurroundDescriptor implements SurroundDescriptor {
   }
 
   @Override
-  @NotNull
-  public Surrounder[] getSurrounders() {
+  public Surrounder @NotNull [] getSurrounders() {
     return SURROUNDERS;
   }
 

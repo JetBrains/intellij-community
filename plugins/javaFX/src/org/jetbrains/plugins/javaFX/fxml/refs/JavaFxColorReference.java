@@ -46,9 +46,8 @@ public class JavaFxColorReference extends PsiReferenceBase<XmlAttributeValue> {
     return null;
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final ColorSampleLookupValue[] lookupValues = ColorSampleLookupValue.getColors();
     final Object[] vars = new Object[lookupValues.length + 1];
     for (int i = 0; i < lookupValues.length; i++) {

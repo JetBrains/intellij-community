@@ -44,9 +44,8 @@ public final class CommandLineCommandReference extends CommandLineElementReferen
   }
 
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final CommandLineFile file = getCommandLineFile();
     if (file == null) {
       return EMPTY_ARRAY;

@@ -92,7 +92,7 @@ public class Util {
     return element;
   }
 
-  public static boolean canBeMigrated(@NotNull final PsiElement[] es) {
+  public static boolean canBeMigrated(final PsiElement @NotNull [] es) {
     return Arrays.stream(es).allMatch(Util::canBeMigrated);
   }
 

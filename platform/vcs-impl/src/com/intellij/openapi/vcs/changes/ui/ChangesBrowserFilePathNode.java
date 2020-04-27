@@ -55,7 +55,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       appendCount(renderer);
     }
 
-    renderer.setIcon(path.getFileType(), path.isDirectory() || !isLeaf());
+    renderer.setIcon(path, path.isDirectory() || !isLeaf());
   }
 
   @NotNull

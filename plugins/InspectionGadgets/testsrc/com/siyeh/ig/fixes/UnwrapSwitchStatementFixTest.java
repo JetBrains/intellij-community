@@ -7,9 +7,8 @@ import com.siyeh.ig.controlflow.SwitchStatementWithTooFewBranchesInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class UnwrapSwitchStatementFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {new SwitchStatementWithTooFewBranchesInspection()};
   }
 

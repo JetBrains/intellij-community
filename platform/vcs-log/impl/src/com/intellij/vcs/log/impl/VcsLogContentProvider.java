@@ -13,15 +13,18 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -30,8 +33,7 @@ import java.awt.*;
  */
 public class VcsLogContentProvider implements ChangesViewContentProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogContentProvider.class);
-  @SuppressWarnings("StaticNonFinalField") //might be changed in other IDEs
-  public static String TAB_NAME = "Log";
+  @NonNls public static String TAB_NAME = "Log"; // used as tab id, not user-visible
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
@@ -78,8 +80,6 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     content.setComponent(myContainer);
     content.setDisposer(() -> {
       disposeContent();
-
-      myContent.setDisplayName(TAB_NAME);
       myContent = null;
     });
   }
@@ -164,6 +164,13 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @Override
     public Boolean fun(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();
+    }
+  }
+
+  public static class DisplayNameSupplier implements Supplier<String> {
+    @Override
+    public String get() {
+      return VcsLogBundle.message("vcs.log.tab.name");
     }
   }
 }

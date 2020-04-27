@@ -17,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public final class DeployToServerConfigurationType extends ConfigurationTypeBase {
   private final ServerType<?> myServerType;
   private final MultiSourcesConfigurationFactory myMultiSourcesFactory;
@@ -82,7 +79,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
   }
 
   // todo do not extends ConfigurationFactoryEx once Google Cloud Tools plugin will get rid of getFactory() usage
-  public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> {
+  public abstract class DeployToServerConfigurationFactory extends ConfigurationFactoryEx<DeployToServerRunConfiguration<?, ?>> {
     public DeployToServerConfigurationFactory() {
       super(DeployToServerConfigurationType.this);
     }
@@ -106,7 +103,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
     @Override
     public String getId() {
       //compatibility reasons, before 173 it was the only configuration factory stored with this ID
-      return DeployToServerConfigurationType.this.getDisplayName();
+      return DeployToServerConfigurationType.this.getServerType().getDeploymentConfigurationFactoryId();
     }
   }
 

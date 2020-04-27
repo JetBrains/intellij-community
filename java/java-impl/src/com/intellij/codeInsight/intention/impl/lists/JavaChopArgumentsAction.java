@@ -2,8 +2,11 @@
 package com.intellij.codeInsight.intention.impl.lists;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +44,7 @@ public class JavaChopArgumentsAction extends AbstractJavaChopListAction<PsiExpre
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Put arguments on separate lines";
+    return JavaBundle.message("intention.family.put.arguments.on.separate.lines");
   }
 
   @NotNull

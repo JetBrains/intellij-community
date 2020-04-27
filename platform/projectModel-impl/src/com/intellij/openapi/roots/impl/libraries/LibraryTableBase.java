@@ -78,8 +78,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   @Override
-  @NotNull
-  public Library[] getLibraries() {
+  public Library @NotNull [] getLibraries() {
     return myModel.getLibraries();
   }
 
@@ -270,8 +269,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
 
     @Override
-    @NotNull
-    public Library[] getLibraries() {
+    public Library @NotNull [] getLibraries() {
       return myLibraries.toArray(Library.EMPTY_ARRAY);
     }
 

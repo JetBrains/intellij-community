@@ -31,13 +31,15 @@ package com.intellij.vcs.log.ui.actions;
  * limitations under the License.
  */
 
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class ShowTagNamesAction extends BooleanPropertyToggleAction {
 
   public ShowTagNamesAction() {
-    super("Show Tag Names", "Show Tag Names in the Table", null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.tag.names"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.tag.names"), null);
   }
 
   @Override

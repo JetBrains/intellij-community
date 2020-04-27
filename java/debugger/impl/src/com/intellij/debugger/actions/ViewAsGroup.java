@@ -29,7 +29,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   private volatile AnAction[] myChildren = AnAction.EMPTY_ARRAY;
 
   public ViewAsGroup() {
-    super(null, true);
+    super(Presentation.NULL_STRING, true);
   }
 
   private static class RendererAction extends ToggleAction {
@@ -84,8 +84,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
     return myChildren;
   }
 

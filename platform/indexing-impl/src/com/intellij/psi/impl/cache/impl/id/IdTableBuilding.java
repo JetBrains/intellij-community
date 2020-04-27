@@ -26,7 +26,7 @@ public class IdTableBuilding {
   }
 
   public interface ScanWordProcessor {
-    void run(CharSequence chars, @Nullable char[] charsArray, int start, int end);
+    void run(CharSequence chars, char @Nullable [] charsArray, int start, int end);
   }
 
   public static boolean isIdIndexerRegistered(@NotNull FileType fileType) {
@@ -95,7 +95,7 @@ public class IdTableBuilding {
 
   public static void scanWords(final ScanWordProcessor processor,
                                final CharSequence chars,
-                               @Nullable final char[] charArray,
+                               final char @Nullable [] charArray,
                                final int startOffset,
                                final int endOffset,
                                final boolean mayHaveEscapes) {

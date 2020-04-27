@@ -64,9 +64,8 @@ public class PsiLabelReference implements PsiReference {
     return resolve() == element;
   }
 
-  @NotNull
   @Override
-  public String[] getVariants() {
+  public String @NotNull [] getVariants() {
     return ArrayUtil.toStringArray(PsiImplUtil.findAllEnclosingLabels(myStatement));
   }
 

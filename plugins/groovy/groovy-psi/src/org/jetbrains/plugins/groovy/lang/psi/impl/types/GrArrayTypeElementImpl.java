@@ -43,9 +43,8 @@ public class GrArrayTypeElementImpl extends GroovyPsiElementImpl implements GrAr
     return getComponentTypeElement().getType().createArrayType();
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

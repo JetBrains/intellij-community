@@ -67,8 +67,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return null;
   }
 
-  @NotNull
-  public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
+  public static XmlAttributeDescriptor @NotNull [] getCommonAttributeDescriptors(XmlTag context) {
     final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
     if (descriptor != null) {
       return descriptor.getAttributesDescriptors(context);
@@ -122,8 +121,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  @NotNull
-  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     if (myDelegate == null) return XmlElementDescriptor.EMPTY_ARRAY;
     if (document != null) return myDelegate.getRootElementsDescriptors(document);
 
@@ -160,9 +158,8 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myDelegate.init(element);
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     return myDelegate == null ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : myDelegate.getDependencies();
   }
 

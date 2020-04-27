@@ -31,7 +31,7 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
   public static final ExtensionPointName<JavaExpressionSurrounder> EP_NAME = ExtensionPointName.create("com.intellij.javaExpressionSurrounder");
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     return elements.length == 1 &&
            elements[0] instanceof PsiExpression &&
            isApplicable((PsiExpression)elements[0]);
@@ -42,7 +42,7 @@ public abstract class JavaExpressionSurrounder implements Surrounder {
   @Override
   public TextRange surroundElements(@NotNull Project project,
                                     @NotNull Editor editor,
-                                    @NotNull PsiElement[] elements) throws IncorrectOperationException {
+                                    PsiElement @NotNull [] elements) throws IncorrectOperationException {
     if (elements.length != 1 || !(elements[0] instanceof PsiExpression)) {
       throw new IllegalArgumentException(Arrays.toString(elements));
     }

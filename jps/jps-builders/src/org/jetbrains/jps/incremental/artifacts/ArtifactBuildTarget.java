@@ -40,9 +40,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
 
   public ArtifactBuildTarget(@NotNull JpsArtifact artifact) {

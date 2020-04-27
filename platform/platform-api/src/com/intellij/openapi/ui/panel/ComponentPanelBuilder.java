@@ -279,12 +279,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
-    if (SystemInfo.isMac) {
-      Font font = component.getFont();
-      float size = font.getSize2D();
-      Font smallFont = font.deriveFont(size - 2.0f);
-      component.setFont(smallFont);
-    }
+    setCommentFont(component);
 
     if (isCopyable) {
       setCommentText(component, commentText, isCommentBelow, maxLineLength);
@@ -292,6 +287,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     else {
       component.setText(commentText);
     }
+    return component;
+  }
+
+  public static JLabel createNonWrappingCommentComponent(@NotNull String commentText) {
+    JBLabel component = new JBLabel(commentText);
+    component.setForeground(UIUtil.getContextHelpForeground());
+    setCommentFont(component);
     return component;
   }
 
@@ -311,6 +313,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       else {
         component.setText(String.format("<html>" + css + "<body><div>%s</div></body></html>", commentText));
       }
+    }
+  }
+
+  private static void setCommentFont(@NotNull JLabel component) {
+    if (SystemInfo.isMac) {
+      Font font = component.getFont();
+      float size = font.getSize2D();
+      Font smallFont = font.deriveFont(size - 2.0f);
+      component.setFont(smallFont);
     }
   }
 

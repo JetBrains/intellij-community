@@ -19,9 +19,8 @@ public class JqlOrderByImpl extends JqlElementImpl implements JqlOrderBy {
     visitor.visitJqlOrderBy(this);
   }
 
-  @NotNull
   @Override
-  public JqlSortKey[] getSortKeys() {
+  public JqlSortKey @NotNull [] getSortKeys() {
     return findChildrenByClass(JqlSortKey.class);
   }
 }

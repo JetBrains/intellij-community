@@ -15,7 +15,9 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.framework.FrameworkOrGroup;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -34,9 +36,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FrameworksTree extends CheckboxTree {
   private boolean myProcessingMouseEventOnCheckbox;
 

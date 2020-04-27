@@ -4,6 +4,7 @@ package com.intellij.sh.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 
 public interface ShLiteralExpression extends ShExpression {
 
@@ -27,5 +28,7 @@ public interface ShLiteralExpression extends ShExpression {
 
   @NotNull
   List<ShVariable> getVariableList();
+
+  PsiReference[] getReferences();
 
 }

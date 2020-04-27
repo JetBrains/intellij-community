@@ -34,10 +34,10 @@ class B1:
     z: float = 0.0
 
 B1()
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1)</warning>
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1, "a")</warning>
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1, "a", 1.0)</warning>
-B1<warning descr="Unexpected argument(s)Possible callees:object(self: object)object.__new__(cls: object)">(1, "a", 1.0, "b")</warning>
+B1(<warning descr="Unexpected argument">1</warning>)
+B1(<warning descr="Unexpected argument">1</warning>, <warning descr="Unexpected argument">"a"</warning>)
+B1(<warning descr="Unexpected argument">1</warning>, <warning descr="Unexpected argument">"a"</warning>, <warning descr="Unexpected argument">1.0</warning>)
+B1(<warning descr="Unexpected argument">1</warning>, <warning descr="Unexpected argument">"a"</warning>, <warning descr="Unexpected argument">1.0</warning>, <warning descr="Unexpected argument">"b"</warning>)
 
 
 @dataclasses.dataclass(init=False)

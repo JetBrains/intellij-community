@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.reset;
 
 import com.intellij.notification.Notification;
@@ -40,21 +26,21 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitCommitEditingAction;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
-import static com.intellij.util.ObjectUtils.notNull;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
 public class GitUncommitAction extends GitCommitEditingAction {
   private static final Logger LOG = Logger.getInstance(GitUncommitAction.class);
-  private static final String FAILURE_TITLE = "Can't Undo Commit";
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -75,17 +61,17 @@ public class GitUncommitAction extends GitCommitEditingAction {
       }
       else {
         e.getPresentation().setEnabled(false);
-        e.getPresentation().setDescription("The selected commit is not the last in the current branch");
+        e.getPresentation().setDescription(GitBundle.message("git.undo.action.description"));
       }
     }
   }
 
   @Override
   public void actionPerformedAfterChecks(@NotNull AnActionEvent e) {
-    Project project = notNull(e.getProject());
+    Project project = Objects.requireNonNull(e.getProject());
     VcsShortCommitDetails commit = getSelectedCommit(e);
     ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),
-                                                      null, "Select Target Changelist", commit.getSubject());
+                                                      null, GitBundle.message("git.undo.action.select.target.changelist.title"), commit.getSubject());
     chooser.show();
     LocalChangeList selectedList = chooser.getSelectedList();
     if (selectedList != null) {
@@ -95,8 +81,8 @@ public class GitUncommitAction extends GitCommitEditingAction {
 
   @NotNull
   @Override
-     protected String getFailureTitle() {
-    return FAILURE_TITLE;
+  protected String getFailureTitle() {
+    return GitBundle.message("git.undo.action.cant.undo.commit.failure");
   }
 
   private static void resetInBackground(@NotNull VcsLogData data,
@@ -104,7 +90,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
                                         @NotNull VcsShortCommitDetails commit,
                                         @NotNull LocalChangeList changeList) {
     Project project = repository.getProject();
-    new Task.Backgroundable(project, "Undoing Last Commit...", true) {
+    new Task.Backgroundable(project, GitBundle.message("git.undo.action.undoing.last.commit.process"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Collection<Change> changesInCommit;
@@ -112,7 +98,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
           changesInCommit = getChangesInCommit(data, commit);
         }
         catch (VcsException e) {
-          String message = "Couldn't load changes of " + commit.getId().asString();
+          String message = GitBundle.message("git.undo.action.could.not.load.changes.of.commit", commit.getId().asString());
           LOG.warn(message, e);
           Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.ERROR, null);
           VcsNotifier.getInstance(project).notify(notification);
@@ -126,7 +112,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
         changeListManager.invokeAfterUpdate(() -> {
           Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
           changeListManager.moveChangesTo(changeList, changes.toArray(new Change[0]));
-        }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Refreshing Changes...", ModalityState.defaultModalityState());
+        }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, GitBundle.message("git.undo.action.refreshing.changes.process"), ModalityState.defaultModalityState());
       }
     }.queue();
   }

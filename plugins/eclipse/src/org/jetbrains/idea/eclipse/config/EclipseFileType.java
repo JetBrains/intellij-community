@@ -53,7 +53,7 @@ public class EclipseFileType implements FileType {
   }
 
   @Override
-  public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
+  public String getCharset(@NotNull final VirtualFile file, final byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

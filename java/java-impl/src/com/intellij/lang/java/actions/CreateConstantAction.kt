@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
+import com.intellij.psi.util.JavaElementKind
 
 /**
  * This action renders a static final field.
@@ -22,7 +23,8 @@ internal class CreateConstantAction(
 
   override fun getActionGroup(): JvmActionGroup = CreateConstantActionGroup
 
-  override fun getText(): String = message("create.constant.from.usage.full.text", request.fieldName, getNameForClass(target, false))
+  override fun getText(): String = message("create.element.in.class", JavaElementKind.CONSTANT.`object`(),
+                                           request.fieldName, getNameForClass(target, false))
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     JavaFieldRenderer(project, true, target, request).doRender()

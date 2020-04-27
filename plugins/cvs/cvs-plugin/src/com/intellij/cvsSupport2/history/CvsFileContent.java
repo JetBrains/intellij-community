@@ -42,8 +42,7 @@ public abstract class CvsFileContent implements VcsFileContent{
   }
 
   @Override
-  @Nullable
-  public byte[] getContent() throws IOException, VcsException {
+  public byte @Nullable [] getContent() throws IOException, VcsException {
     if (! isLoaded()) return null;
     return myComparableCvsRevisionOnOperation.getContent();
   }
@@ -51,8 +50,7 @@ public abstract class CvsFileContent implements VcsFileContent{
   public abstract VcsRevisionNumber getRevisionNumber();
 
   @Override
-  @NotNull
-  public byte[] loadContent() throws IOException, VcsException {
+  public byte @NotNull [] loadContent() throws IOException, VcsException {
     myComparableCvsRevisionOnOperation.loadContent();
     if (!isLoaded()) {
       throw new VcsException(CvsBundle.message("exception.text.cannot.load.revision", getRevisionNumber()));

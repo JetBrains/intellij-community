@@ -86,8 +86,7 @@ public class UpdateJavaFileCopyright extends UpdatePsiFileCopyright
     checkComments(topclass.getModifierList(), location == JavaOptions.LOCATION_BEFORE_CLASS, comments);
   }
 
-  @Nullable
-  protected PsiElement[] getImportsList() {
+  protected PsiElement @Nullable [] getImportsList() {
     final PsiJavaFile javaFile = (PsiJavaFile)getFile();
     assert javaFile != null;
     final PsiImportList importList = javaFile.getImportList();

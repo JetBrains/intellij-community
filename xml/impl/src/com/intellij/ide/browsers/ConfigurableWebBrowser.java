@@ -1,10 +1,10 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,7 +158,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
   @Override
   @NotNull
   public String getBrowserNotFoundMessage() {
-    return IdeBundle.message("error.0.browser.path.not.specified", getName());
+    return XmlBundle.message("error.0.browser.path.not.specified", getName());
   }
 
   @Override

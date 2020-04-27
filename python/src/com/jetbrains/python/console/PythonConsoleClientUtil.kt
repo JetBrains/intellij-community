@@ -4,6 +4,7 @@
 package com.jetbrains.python.console
 
 import com.intellij.util.concurrency.SequentialTaskExecutor
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeoutException
 fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     delegate: PythonConsoleBackendService.Iface,
                                     pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
-  val executorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Python Console Command Executor")
+  val executorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(PyBundle.message("console.command.executor"))
   // make the `PythonConsoleBackendService.Iface` process-aware and thread-safe
   val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(
     PythonConsoleBackendService.Iface::class.java),

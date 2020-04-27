@@ -25,10 +25,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +55,7 @@ public class GenericPatchApplier {
   @NotNull private final List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
   private static final IntPair EMPTY_OFFSET = new IntPair(0, 0);
 
-  private static void debug(final String s) {
+  private static void debug(@NonNls final String s) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(s);
     }
@@ -141,7 +143,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private void printTransformations(final String comment) {
+  private void printTransformations(@NonNls final String comment) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(comment + " GenericPatchApplier.printTransformations ---->");
       int cnt = 0;
@@ -273,7 +275,7 @@ public class GenericPatchApplier {
 
   @NotNull
   private static String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
-    return String.format("Can't detect hunk modification lines for: -%d,%d +%d,%d", startLineBefore, sizeBefore,
+    return VcsBundle.message("patch.apply.hunk.warning", startLineBefore, sizeBefore,
                          startLineAfter, sizeAfter);
   }
 

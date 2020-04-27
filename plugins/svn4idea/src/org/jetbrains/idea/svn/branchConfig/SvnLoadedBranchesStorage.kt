@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -15,16 +17,22 @@ import java.io.File
 import java.io.IOException
 import java.lang.String.CASE_INSENSITIVE_ORDER
 
-class SvnLoadedBranchesStorage(private val myProject: Project) {
+@Service
+internal class SvnLoadedBranchesStorage(private val project: Project) {
   private val myLock = Any()
   private var myState: SmallMapSerializer<String, Map<Url, Collection<SvnBranchItem>>>? = null
   private val myFile: File
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<SvnLoadedBranchesStorage>()
+  }
 
   init {
     val vcsFile = File(PathManager.getSystemPath(), "vcs")
     val file = File(vcsFile, "svn_branches")
     file.mkdirs()
-    myFile = File(file, myProject.locationHash)
+    myFile = File(file, project.locationHash)
   }
 
   operator fun get(url: Url): Collection<SvnBranchItem>? = synchronized(myLock) {
@@ -37,7 +45,7 @@ class SvnLoadedBranchesStorage(private val myProject: Project) {
 
   fun deactivate() {
     val branchLocations = mutableMapOf<Url, Collection<SvnBranchItem>>()
-    val branchConfigurations = SvnBranchConfigurationManager.getInstance(myProject).svnBranchConfigManager.mapCopy
+    val branchConfigurations = SvnBranchConfigurationManager.getInstance(project).svnBranchConfigManager.mapCopy
 
     for (configuration in branchConfigurations.values) {
       for ((branchLocation, branches) in configuration.branchMap) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.TableUtil;
+import com.jetbrains.python.PyBundle;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public final class CreateTestDialog extends DialogWrapper {
     init();
     myClassRequired = StringUtil.isNotEmpty(model.getClassName());
     myModel = model;
-    myTargetDir.addBrowseFolderListener("Select target directory", null, project,
+    myTargetDir.addBrowseFolderListener(PyBundle.message("code.insight.select.target.directory"), null, project,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myTargetDir.setEditable(false);
 
@@ -51,7 +52,7 @@ public final class CreateTestDialog extends DialogWrapper {
       }
     });
 
-    setTitle("Create test");
+    setTitle(PyBundle.message("code.insight.create.test"));
 
     addUpdater(myFileName);
     addUpdater(myClassName);

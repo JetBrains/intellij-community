@@ -52,25 +52,23 @@ public class SubstitutorComputer {
   protected final PsiElement myPlace;
 
   private final Lazy<PsiType> myThisType;
-  @Nullable
-  private final PsiType[] myArgumentTypes;
-  @Nullable
-  private final PsiType[] myTypeArguments;
+  private final PsiType @Nullable [] myArgumentTypes;
+  private final PsiType @Nullable [] myTypeArguments;
   private final PsiElement myPlaceToInferContext;
   private final NotNullLazyValue<Collection<PsiElement>> myExitPoints;
   private final PsiResolveHelper myHelper;
 
   public SubstitutorComputer(@Nullable PsiType thisType,
-                             @Nullable PsiType[] argumentTypes,
-                             @Nullable PsiType[] typeArguments,
+                             PsiType @Nullable [] argumentTypes,
+                             PsiType @Nullable [] typeArguments,
                              PsiElement place,
                              PsiElement placeToInferContext) {
     this(LazyKt.lazyOf(thisType), argumentTypes, typeArguments, place, placeToInferContext);
   }
 
   public SubstitutorComputer(@NotNull Lazy<PsiType> thisType,
-                             @Nullable PsiType[] argumentTypes,
-                             @Nullable PsiType[] typeArguments,
+                             PsiType @Nullable [] argumentTypes,
+                             PsiType @Nullable [] typeArguments,
                              PsiElement place,
                              PsiElement placeToInferContext) {
     myThisType = thisType;
@@ -158,8 +156,8 @@ public class SubstitutorComputer {
 
   private PsiSubstitutor inferMethodTypeParameters(@NotNull PsiMethod method,
                                                    @NotNull PsiSubstitutor partialSubstitutor,
-                                                   @NotNull PsiTypeParameter[] typeParameters,
-                                                   @NotNull PsiType[] argTypes) {
+                                                   PsiTypeParameter @NotNull [] typeParameters,
+                                                   PsiType @NotNull [] argTypes) {
     if (typeParameters.length == 0 || myArgumentTypes == null) return partialSubstitutor;
 
     final GrSignature erasedSignature = GrClosureSignatureUtil.createSignature(method, partialSubstitutor, true);
@@ -193,7 +191,7 @@ public class SubstitutorComputer {
 
   @NotNull
   private Deque<InferenceStep> buildInferenceQueue(@NotNull PsiMethod method,
-                                                   @NotNull PsiTypeParameter[] typeParameters,
+                                                   PsiTypeParameter @NotNull [] typeParameters,
                                                    GrClosureParameter[] params,
                                                    GrClosureSignatureUtil.ArgInfo<PsiType>[] argInfos) {
     Deque<InferenceStep> inferenceQueue = new ArrayDeque<>();
@@ -247,7 +245,7 @@ public class SubstitutorComputer {
                                                LanguageLevel.JDK_1_8);
   }
 
-  private InferenceStep handleClosure(PsiType targetType, PsiType argType, @NotNull PsiTypeParameter[] typeParameters) {
+  private InferenceStep handleClosure(PsiType targetType, PsiType argType, PsiTypeParameter @NotNull [] typeParameters) {
     if (targetType instanceof PsiClassType && TypesUtil.isClassType(targetType, GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
       PsiType[] parameters = ((PsiClassType)targetType).getParameters();
       if (parameters.length != 1) return InferenceStep.EMPTY;

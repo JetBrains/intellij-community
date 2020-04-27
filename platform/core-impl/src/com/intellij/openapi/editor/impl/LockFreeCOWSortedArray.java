@@ -31,7 +31,7 @@ class LockFreeCOWSortedArray<T> {
   private final ArrayFactory<T> arrayFactory;
   /** changed by {@link #UPDATER} only */
   @SuppressWarnings("FieldMayBeFinal")
-  @NotNull private volatile T[] listeners;
+  private volatile T @NotNull [] listeners;
   private static final AtomicFieldUpdater<LockFreeCOWSortedArray, Object[]> UPDATER = AtomicFieldUpdater.forFieldOfType(LockFreeCOWSortedArray.class, Object[].class);
 
   LockFreeCOWSortedArray(@NotNull Comparator<? super T> comparator, @NotNull ArrayFactory<T> arrayFactory) {
@@ -61,7 +61,7 @@ class LockFreeCOWSortedArray<T> {
     return true;
   }
 
-  private int insertionIndex(@NotNull T[] elements, @NotNull T e) {
+  private int insertionIndex(T @NotNull [] elements, @NotNull T e) {
     for (int i=0; i<elements.length; i++) {
       T element = elements[i];
       if (comparator.compare(e, element) < 0) {
@@ -71,8 +71,7 @@ class LockFreeCOWSortedArray<T> {
     return elements.length;
   }
 
-  @NotNull
-  T[] getArray() {
+  T @NotNull [] getArray() {
     return listeners;
   }
 }

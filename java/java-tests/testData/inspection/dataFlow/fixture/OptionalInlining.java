@@ -237,4 +237,12 @@ public class OptionalInlining {
     }
     return result;
   }
+
+  private static void testPrimitive(int x) {
+    final OptionalInt o = getOptionalInt();
+    if(o.isPresent() && x == o.getAsInt()) {}
+    if(<warning descr="Condition 'o.getAsInt() < 5 && o.getAsInt() > 6' is always 'false'">o.getAsInt() < 5 && <warning descr="Condition 'o.getAsInt() > 6' is always 'false' when reached">o.getAsInt() > 6</warning></warning>) {}
+  }
+
+  native static OptionalInt getOptionalInt();
 }

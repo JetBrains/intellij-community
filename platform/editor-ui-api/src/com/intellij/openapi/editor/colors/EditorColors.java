@@ -22,6 +22,7 @@ public interface EditorColors {
   ColorKey READONLY_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_BACKGROUND");
   ColorKey READONLY_FRAGMENT_BACKGROUND_COLOR = ColorKey.createColorKey("READONLY_FRAGMENT_BACKGROUND");
   ColorKey WHITESPACES_COLOR = ColorKey.createColorKey("WHITESPACES");
+  ColorKey TABS_COLOR = ColorKey.createColorKeyWithFallback("TABS", WHITESPACES_COLOR);
   ColorKey INDENT_GUIDE_COLOR = ColorKey.createColorKey("INDENT_GUIDE");
   ColorKey STRING_CONTENT_INDENT_GUIDE_COLOR = ColorKey.createColorKey("STRING_CONTENT_INDENT_GUIDE");
   ColorKey SOFT_WRAP_SIGN_COLOR = ColorKey.createColorKey("SOFT_WRAP_SIGN_COLOR");

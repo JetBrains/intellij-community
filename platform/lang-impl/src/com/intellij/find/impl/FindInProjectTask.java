@@ -118,7 +118,7 @@ class FindInProjectTask {
 
     try {
       myProgress.setIndeterminate(true);
-      myProgress.setText("Scanning indexed files...");
+      myProgress.setText(FindBundle.message("progress.text.scanning.indexed.files"));
       Set<VirtualFile> filesForFastWordSearch = ReadAction.nonBlocking(this::getFilesForFastWordSearch).executeSynchronously();
       myProgress.setIndeterminate(false);
       if (LOG.isDebugEnabled()) {
@@ -128,7 +128,7 @@ class FindInProjectTask {
       searchInFiles(filesForFastWordSearch, processPresentation, consumer);
 
       myProgress.setIndeterminate(true);
-      myProgress.setText("Scanning non-indexed files...");
+      myProgress.setText(FindBundle.message("progress.text.scanning.non.indexed.files"));
       boolean canRelyOnIndices = canRelyOnIndices();
       final Collection<VirtualFile> otherFiles = collectFilesInScope(filesForFastWordSearch, canRelyOnIndices);
       myProgress.setIndeterminate(false);
@@ -362,7 +362,7 @@ class FindInProjectTask {
     return iterator.getFiles();
   }
 
-  private static void iterateAll(@NotNull VirtualFile[] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
+  private static void iterateAll(VirtualFile @NotNull [] files, @NotNull final GlobalSearchScope searchScope, @NotNull final ContentIterator iterator) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     final VirtualFileFilter contentFilter = file -> file.isDirectory() ||
            !fileTypeManager.isFileIgnored(file) && !file.getFileType().isBinary() && searchScope.contains(file);
@@ -440,8 +440,8 @@ class FindInProjectTask {
       return resultFiles;
     }
 
-    PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.getInstance(myProject);
-    helper.processFilesWithText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
+    PsiSearchHelper helper = PsiSearchHelper.getInstance(myProject);
+    helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
       if (myFileMask.value(file)) {
         ContainerUtil.addIfNotNull(resultFiles, file);
       }

@@ -24,11 +24,11 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
   protected final int myStart;
   protected final int myEnd;
 
-  public CharArrayCharSequence(@NotNull char... chars) {
+  public CharArrayCharSequence(char @NotNull ... chars) {
     this(chars, 0, chars.length);
   }
 
-  public CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
+  public CharArrayCharSequence(char @NotNull [] chars, int start, int end) {
     if (start < 0 || end > chars.length || start > end) {
       throw new IndexOutOfBoundsException("chars.length:" + chars.length + ", start:" + start + ", end:" + end);
     }
@@ -60,8 +60,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
   }
 
   @Override
-  @NotNull
-  public char[] getChars() {
+  public char @NotNull [] getChars() {
     if (myStart == 0) return myChars;
     char[] chars = new char[length()];
     getChars(chars, 0);
@@ -69,7 +68,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
   }
 
   @Override
-  public void getChars(@NotNull char[] dst, int dstOffset) {
+  public void getChars(char @NotNull [] dst, int dstOffset) {
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }
 

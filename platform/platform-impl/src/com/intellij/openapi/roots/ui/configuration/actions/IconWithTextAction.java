@@ -9,22 +9,32 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 
 public abstract class IconWithTextAction extends AnAction implements CustomComponentAction {
 
   protected IconWithTextAction() {
-    this(null, null, null);
+    this(Presentation.NULL_STRING, Presentation.NULL_STRING, null);
   }
 
   protected IconWithTextAction(String text) {
     this(text, null, null);
   }
 
+  protected IconWithTextAction(@NotNull Supplier<String> dynamicText) {
+    this(dynamicText, Presentation.NULL_STRING, null);
+  }
+
   protected IconWithTextAction(String text, String description, Icon icon) {
-    super(text, description, icon);
+    this(() -> text, () -> description, icon);
+  }
+
+  protected IconWithTextAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
     if (icon == null) {
       getTemplatePresentation().setIcon(EmptyIcon.ICON_0);
       getTemplatePresentation().setDisabledIcon(EmptyIcon.ICON_0);

@@ -39,8 +39,7 @@ public interface ExtensionsArea  {
   @NotNull
   <T> ExtensionPoint<T> getExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName);
 
-  @NotNull
-  ExtensionPoint<?>[] getExtensionPoints();
+  ExtensionPoint<?> @NotNull [] getExtensionPoints();
 
   /**
    * Registers a new extension.

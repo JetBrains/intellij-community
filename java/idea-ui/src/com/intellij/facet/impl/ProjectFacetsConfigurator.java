@@ -39,9 +39,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class ProjectFacetsConfigurator implements FacetsProvider {
   private static final Logger LOG = Logger.getInstance(ProjectFacetsConfigurator.class);
   private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<>();
@@ -305,8 +302,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
   }
 
   @Override
-  @NotNull
-  public Facet[] getAllFacets(final Module module) {
+  public Facet @NotNull [] getAllFacets(final Module module) {
     return getFacetModel(module).getAllFacets();
   }
 

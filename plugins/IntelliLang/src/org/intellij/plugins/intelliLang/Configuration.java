@@ -245,8 +245,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     importPlaces(getDefaultInjections());
   }
 
-  @Nullable
-  private static InjectionPlace[] dropKnownInvalidPlaces(InjectionPlace[] places) {
+  private static InjectionPlace @Nullable [] dropKnownInvalidPlaces(InjectionPlace[] places) {
     InjectionPlace[] result = places;
     for (InjectionPlace place : places) {
       if (place.getText().contains("matches(\"[^${}/\\\\]+\")")) {

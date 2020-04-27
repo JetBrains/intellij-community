@@ -15,11 +15,11 @@
  */
 package org.jetbrains.java.generate;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.UIBundle;
 import org.jetbrains.java.generate.config.Config;
 import org.jetbrains.java.generate.view.ConfigUI;
 
@@ -40,7 +40,7 @@ public class GenerateToStringConfigurable implements Configurable {
 
   @Override
   public String getDisplayName() {
-    return UIBundle.message("configurable.GenerateToStringConfigurable.display.name");
+    return JavaBundle.message("configurable.GenerateToStringConfigurable.display.name");
   }
 
   @Override

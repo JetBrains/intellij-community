@@ -894,7 +894,7 @@ public class FindUtil {
   }
 
   public static <T> UsageView showInUsageView(@Nullable PsiElement sourceElement,
-                                              @NotNull T[] targets,
+                                              T @NotNull [] targets,
                                               @NotNull Function<? super T, ? extends Usage> usageConverter,
                                               @NotNull String title,
                                               @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
@@ -911,7 +911,7 @@ public class FindUtil {
 
     UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View...") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, FindBundle.message("progress.title.updating.usage.view")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         UsageViewImpl impl = (UsageViewImpl)view;
@@ -934,7 +934,7 @@ public class FindUtil {
 
   @Nullable
   public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
-                                          @NotNull PsiElement[] targets,
+                                          PsiElement @NotNull [] targets,
                                           @NotNull String title,
                                           @NotNull Project project) {
     if (targets.length == 0) return null;
@@ -998,7 +998,7 @@ public class FindUtil {
     LogicalPosition caretPosition = editor.offsetToLogicalPosition(caretOffset);
     if (caretShiftFromSelectionStart == 0) caretPosition = caretPosition.leanForward(true);
     EditorActionUtil.makePositionVisible(editor, caretOffset);
-    Caret newCaret = editor.getCaretModel().addCaret(editor.logicalToVisualPosition(caretPosition));
+    Caret newCaret = editor.getCaretModel().addCaret(caretPosition, true);
     if (newCaret == null) {
       return false;
     }

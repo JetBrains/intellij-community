@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Service for validating and parsing Java identifiers.
@@ -63,8 +60,7 @@ public abstract class PsiNameHelper {
    */
   public abstract boolean isQualifiedName(@Nullable String text);
 
-  @NotNull
-  public static String getShortClassName(@NotNull String referenceText) {
+  public static @NotNull String getShortClassName(@NotNull String referenceText) {
     int lessPos = referenceText.length();
     int bracesBalance = 0;
     int i;
@@ -102,15 +98,32 @@ public abstract class PsiNameHelper {
     return referenceText.substring(i + 1, lessPos).trim();
   }
 
-  @NotNull
-  public static String getPresentableText(@NotNull PsiJavaCodeReferenceElement ref) {
+  /**
+   * @param ref reference to get presentable text for
+   * @return presentable text that contains a reference name and presentable text of type parameters, if any.
+   * No annotations are displayed
+   */
+  public static @NotNull String getPresentableText(@NotNull PsiJavaCodeReferenceElement ref) {
     String name = ref.getReferenceName();
-    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
-    return getPresentableText(name, notNull(annotations, PsiAnnotation.EMPTY_ARRAY), ref.getTypeParameters());
+    PsiType[] types = ref.getTypeParameters();
+    if (types.length == 0) {
+      return name != null ? name : "";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+    buffer.append(name);
+    appendTypeArgs(buffer, types, false, false);
+    return buffer.toString();
   }
 
-  @NotNull
-  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] types) {
+  /**
+   * @param refName name of a reference to get presentable text for
+   * @param annotations reference annotations
+   * @param types reference type parameters
+   * @return presentable text that contains supplied annotations, a reference name and presentable text of type parameters, if any,
+   * including their annotations.
+   */
+  public static @NotNull String getPresentableText(@Nullable String refName, PsiAnnotation @NotNull [] annotations, PsiType @NotNull [] types) {
     if (types.length == 0 && annotations.length == 0) {
       return refName != null ? refName : "";
     }
@@ -122,8 +135,7 @@ public abstract class PsiNameHelper {
     return buffer.toString();
   }
 
-  @NotNull
-  public static String getQualifiedClassName(@NotNull String referenceText, boolean removeWhitespace) {
+  public static @NotNull String getQualifiedClassName(@NotNull String referenceText, boolean removeWhitespace) {
     if (removeWhitespace) {
       referenceText = removeWhitespace(referenceText);
     }
@@ -152,8 +164,7 @@ public abstract class PsiNameHelper {
   }
 
   private static final Pattern WHITESPACE_PATTERN = Pattern.compile("(?:\\s)|(?:/\\*.*\\*/)|(?://[^\\n]*)");
-  @NotNull
-  private static String removeWhitespace(@NotNull String referenceText) {
+  private static @NotNull String removeWhitespace(@NotNull String referenceText) {
     boolean needsChange = false;
     for (int i = 0; i < referenceText.length(); i++) {
       char c = referenceText.charAt(i);
@@ -176,8 +187,7 @@ public abstract class PsiNameHelper {
    * @param referenceText the text of the reference to calculate type parameters for.
    * @return the calculated array of type parameters.
    */
-  @NotNull
-  public static String[] getClassParametersText(@NotNull String referenceText) {
+  public static String @NotNull [] getClassParametersText(@NotNull String referenceText) {
     if (referenceText.indexOf('<') < 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     final char[] chars = referenceText.toCharArray();
     int afterLastDotIndex = 0;
@@ -249,7 +259,7 @@ public abstract class PsiNameHelper {
            subpackageName.startsWith(packageName) && subpackageName.charAt(packageName.length()) == '.';
   }
 
-  public static void appendTypeArgs(@NotNull StringBuilder sb, @NotNull PsiType[] types, boolean canonical, boolean annotated) {
+  public static void appendTypeArgs(@NotNull StringBuilder sb, PsiType @NotNull [] types, boolean canonical, boolean annotated) {
     if (types.length == 0) return;
 
     sb.append('<');
@@ -263,13 +273,13 @@ public abstract class PsiNameHelper {
         sb.append(type.getCanonicalText(annotated));
       }
       else {
-        sb.append(type.getPresentableText());
+        sb.append(type.getPresentableText(annotated));
       }
     }
     sb.append('>');
   }
 
-  public static boolean appendAnnotations(@NotNull StringBuilder sb, @NotNull PsiAnnotation[] annotations, boolean canonical) {
+  public static boolean appendAnnotations(@NotNull StringBuilder sb, PsiAnnotation @NotNull [] annotations, boolean canonical) {
     return appendAnnotations(sb, Arrays.asList(annotations), canonical);
   }
 

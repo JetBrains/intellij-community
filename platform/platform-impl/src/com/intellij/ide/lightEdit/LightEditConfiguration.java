@@ -2,5 +2,5 @@
 package com.intellij.ide.lightEdit;
 
 class LightEditConfiguration {
-  public boolean autosaveMode = false;
+  public boolean             autosaveMode       = false;
 }

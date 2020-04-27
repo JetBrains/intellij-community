@@ -26,7 +26,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
 
   public ChooseLocaleAction() {
     getTemplatePresentation().setText("");
-    getTemplatePresentation().setDescription(UIDesignerBundle.message("choose.locale.description"));
+    getTemplatePresentation().setDescription(UIDesignerBundle.messagePointer("choose.locale.description"));
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
   }
 

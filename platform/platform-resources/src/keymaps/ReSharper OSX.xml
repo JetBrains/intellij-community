@@ -193,6 +193,9 @@
     <keyboard-shortcut first-keystroke="PAGE_UP"/>
     <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
 </keymap>
 
 

@@ -16,8 +16,7 @@ abstract class XsltTemplateInvocationBase extends XsltElementImpl implements Xsl
     }
 
     @Override
-    @NotNull
-    public XsltWithParam[] getArguments() {
+    public XsltWithParam @NotNull [] getArguments() {
         return convertArray(ResolveUtil.collect(new ArgumentMatcher(this) {
             @Override
             protected PsiElement transform(XmlTag element) {

@@ -46,7 +46,7 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
     private Icon myIcon;
     private final Set<Component> myComponents = new HashSet<>();
 
-    private LazyIcon(@NotNull boolean[] state) {
+    private LazyIcon(boolean @NotNull [] state) {
       myState = state;
     }
 

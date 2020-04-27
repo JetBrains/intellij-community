@@ -70,7 +70,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param consumer        a callback to be called after sending is finished (or failed).
    * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
    */
-  public boolean submit(@NotNull IdeaLoggingEvent[] events,
+  public boolean submit(IdeaLoggingEvent @NotNull [] events,
                         @Nullable String additionalInfo,
                         @Nullable Component parentComponent,  // Android Studio: b/127990038
                         @NotNull Consumer<SubmittedReportInfo> consumer) {

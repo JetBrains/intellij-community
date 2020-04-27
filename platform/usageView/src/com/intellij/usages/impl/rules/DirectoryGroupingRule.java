@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -45,7 +46,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
 
   @Nullable
   @Override
-  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     if (usage instanceof UsageInFile) {
       UsageInFile usageInFile = (UsageInFile)usage;
       VirtualFile file = usageInFile.getFile();
@@ -66,7 +67,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   public String getActionTitle() {
-    return "Group by directory";
+    return IdeBundle.message("action.title.group.by.directory") ;
   }
 
   private class DirectoryGroup implements UsageGroup, TypeSafeDataProvider {

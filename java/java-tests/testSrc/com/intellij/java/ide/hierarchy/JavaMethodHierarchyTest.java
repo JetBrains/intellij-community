@@ -16,8 +16,8 @@
 package com.intellij.java.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserBaseEx;
-import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserManager;
+import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
+import com.intellij.ide.hierarchy.HierarchyBrowserManager;
 import com.intellij.ide.hierarchy.method.MethodHierarchyTreeStructure;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.JavaPsiFacade;
@@ -74,6 +74,10 @@ public class JavaMethodHierarchyTest extends HierarchyViewTestBase {
 
   public void testExtendsImplementsChain() throws Exception {
     doTest("C", "foo", "X.java");
+  }
+
+  public void testTwoParentsPreferClass() throws Exception {
+    doTest("C3", "m", "X.java");
   }
 
   private void doTest(final String classFqn, final String methodName, final String... fileNames) throws Exception {

@@ -67,8 +67,7 @@ public interface KeyFMap {
   /**
    * @return an array of all keys present in this {@code KeyFMap}, in no particular order. The length of the array equals to KeyFMap size.
    */
-  @NotNull
-  Key[] getKeys();
+  Key @NotNull [] getKeys();
 
   /**
    * @return true if this {@code KeyFMap} is empty.

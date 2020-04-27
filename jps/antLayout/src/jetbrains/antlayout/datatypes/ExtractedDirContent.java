@@ -25,9 +25,6 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ExtractedDirContent extends Content {
   private String jarPath;
   private String pathInJar = "";

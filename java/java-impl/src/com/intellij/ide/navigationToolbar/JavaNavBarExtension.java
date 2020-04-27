@@ -1,33 +1,35 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
-import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.lang.LangBundle;
+import com.google.common.collect.ImmutableList;
+import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
+import com.intellij.ide.structureView.impl.java.JavaLambdaNodeProvider;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.treeView.smartTree.NodeProvider;
+import com.intellij.java.JavaBundle;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewShortNameLocation;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import java.util.List;
+
 import static com.intellij.psi.util.PsiFormatUtilBase.*;
-import static com.intellij.psi.util.PsiFormatUtilBase.SHOW_TYPE;
 
 /**
  * @author anna
  */
-public class JavaNavBarExtension extends AbstractNavBarModelExtension {
+public class JavaNavBarExtension extends StructureAwareNavBarModelExtension {
+  private final List<NodeProvider<?>> myNodeProviders = ImmutableList.of(new JavaLambdaNodeProvider(), new JavaAnonymousClassesNodeProvider());
+
   @Nullable
   @Override
   public String getPresentableText(Object object) {
@@ -47,10 +49,13 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
     }
     else if (object instanceof PsiPackage) {
       final String name = ((PsiPackage)object).getName();
-      return name != null ? name : AnalysisScopeBundle.message("dependencies.tree.node.default.package.abbreviation");
+      return name != null ? name : JavaBundle.message("dependencies.tree.node.default.package.abbreviation");
     }
     else if (object instanceof PsiDirectory && JrtFileSystem.isRoot(((PsiDirectory)object).getVirtualFile())) {
-      return LangBundle.message("jrt.node.short");
+      return JavaBundle.message("jrt.node.short");
+    }
+    else if (object instanceof PsiLambdaExpression) {
+      return "Lambda";
     }
     return null;
   }
@@ -63,10 +68,7 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
         return parentPackage;
       }
     }
-    if (psiElement instanceof PsiMember) {
-      return PsiTreeUtil.getParentOfType(psiElement, PsiClass.class, PsiMethod.class);
-    }
-    return null;
+    return super.getParent(psiElement);
   }
 
   @Nullable
@@ -87,55 +89,34 @@ public class JavaNavBarExtension extends AbstractNavBarModelExtension {
             }
           }
         }
-        if (!Registry.is("navBar.show.members") && psiElement instanceof PsiClass) {
+        if (!UISettings.getInstance().getShowMembersInNavigationBar() && psiElement instanceof PsiClass) {
           return psiElement;
         }
       }
-      if (!Registry.is("navBar.show.members")) {
+      if (!UISettings.getInstance().getShowMembersInNavigationBar()) {
         return containingFile;
       }
     }
     return psiElement;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public PsiElement getLeafElement(@NotNull DataContext dataContext) {
-    if (Registry.is("navBar.show.members")) {
-      PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      if (psiFile == null || editor == null) return null;
-      PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
-      if (psiElement != null && psiElement.getLanguage() == JavaLanguage.INSTANCE) {
-        PsiMember member = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class);
-        return member instanceof PsiField ? member.getContainingClass() : member;
-      }
-    }
-    return null;
+  protected Language getLanguage() {
+    return JavaLanguage.INSTANCE;
+  }
+
+  @NotNull
+  @Override
+  protected List<NodeProvider<?>> getApplicableNodeProviders() {
+    return myNodeProviders;
   }
 
   @Override
-  public boolean processChildren(Object object, Object rootElement, Processor<Object> processor) {
-    if (object instanceof PsiClass) {
-      PsiClass psiClass = (PsiClass)object;
-      for (PsiMethod method : psiClass.getMethods()) {
-        if (!processor.process(method)) {
-          return false;
-        }
-      }
-      for (PsiClass innerClass : psiClass.getInnerClasses()) {
-        if (!processor.process(innerClass)) {
-          return false;
-        }
-      }
-
-      return true;
+  protected boolean acceptParentFromModel(@Nullable PsiElement psiElement) {
+    if (psiElement instanceof PsiJavaFile) {
+      return ((PsiJavaFile) psiElement).getClasses().length > 1;
     }
-    return super.processChildren(object, rootElement, processor);
-  }
-
-  @Override
-  public boolean normalizeChildren() {
-    return false;
+    return true;
   }
 }

@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class ExecutionPointHighlighter {
   private final Project myProject;
   private RangeHighlighter myRangeHighlighter;
@@ -209,16 +206,16 @@ public class ExecutionPointHighlighter {
   }
 
   private static void disableMouseHoverPopups(@NotNull final Editor editor, final boolean disable) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    Project project = editor.getProject();
+    if (ApplicationManager.getApplication().isUnitTestMode() || project == null) return;
 
     // need to always invoke later to maintain order of enabling/disabling
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       if (disable) {
-        EditorMouseHoverPopupControl.disablePopups(editor.getDocument());
+        EditorMouseHoverPopupControl.disablePopups(project);
       }
       else {
-        EditorMouseHoverPopupControl.enablePopups(editor.getDocument());
+        EditorMouseHoverPopupControl.enablePopups(project);
       }
     });
   }

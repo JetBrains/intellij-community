@@ -28,9 +28,8 @@ public class Java8MapApiInspectionMerger extends InspectionElementsMerger {
     return Java8MapApiInspection.SHORT_NAME;
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {COLLECTION_API_INSPECTION, REPLACE_MAP_GET_INSPECTION};
   }
 }

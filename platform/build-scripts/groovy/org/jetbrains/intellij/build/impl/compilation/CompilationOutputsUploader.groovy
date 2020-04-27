@@ -1,48 +1,47 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.google.common.hash.Hashing
 import com.google.common.io.Files
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.entity.ContentType
+import org.apache.http.util.EntityUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
+import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
+import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 
 import java.lang.reflect.Type
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
 class CompilationOutputsUploader {
-  private static final String SOURCES_STATE_FILE_NAME = "target_sources_state.json"
-  private static final List<String> PRODUCTION_TYPES = ["java-production", "resources-production"]
-  private static final List<String> TEST_TYPES = ["java-test", "resources-test"]
-  private static final String IDENTIFIER = "\$PROJECT_DIR\$"
-  private static final String PRODUCTION = "production"
-  private static final String TEST = "test"
+  private final String commitHistoryFile = "commit_history.json"
   private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
-  private final String commitHash
-  private final Type myTokenType
-  private final Gson gson
+  private final Map<String, String> remotePerCommitHash
+  private final SourcesStateProcessor sourcesStateProcessor
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, String commitHash, String agentPersistentStorage) {
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
+                             String agentPersistentStorage) {
     this.agentPersistentStorage = agentPersistentStorage
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
-    this.commitHash = commitHash
+    this.remotePerCommitHash = remotePerCommitHash
     this.context = context
-    gson = new Gson()
 
-    myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType()
+    sourcesStateProcessor = new SourcesStateProcessor(context)
   }
 
   def upload() {
@@ -55,14 +54,14 @@ class CompilationOutputsUploader {
     try {
       def start = System.nanoTime()
       def dataStorageRoot = context.compilationData.dataStorageRoot
-      def sourceStateFile = new File(dataStorageRoot, SOURCES_STATE_FILE_NAME)
+      def sourceStateFile = sourcesStateProcessor.sourceStateFile
       if (!sourceStateFile.exists()) {
         context.messages.
           warning("Compilation outputs doesn't contain source state file, please enable 'org.jetbrains.jps.portable.caches' flag")
         return
       }
-      Map<String, Map<String, BuildTargetState>> currentSourcesState = (Map<String, Map<String, BuildTargetState>>)gson
-        .fromJson(FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8), myTokenType)
+      Map<String, Map<String, BuildTargetState>> currentSourcesState = sourcesStateProcessor.parseSourcesStateFile()
+      def commitHash = getCommitHash()
 
       executor.submit {
         // Upload jps caches started first because of the significant size of the output
@@ -80,8 +79,7 @@ class CompilationOutputsUploader {
         return
       }
 
-      def projectHome = new File(context.paths.projectHome)
-      uploadCompilationOutputs(projectHome, currentSourcesState, uploader, executor)
+      uploadCompilationOutputs(currentSourcesState, uploader, executor)
 
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
@@ -91,8 +89,9 @@ class CompilationOutputsUploader {
       def metadataFile = new File("$agentPersistentStorage/metadata.json")
       Files.copy(sourceStateFile, metadataFile)
       messages.artifactBuilt(metadataFile.absolutePath)
-      // Dirty hack to have fresh state of sources on each build. For now there are a couple of bugs in this area IDEA-228483, IDEA-227783
       FileUtil.delete(sourceStateFile)
+
+      updateCommitHistory(uploader)
     }
     finally {
       executor.close()
@@ -100,72 +99,23 @@ class CompilationOutputsUploader {
     }
   }
 
-  def uploadCompilationOutputs(File root, Map<String, Map<String, BuildTargetState>> currentSourcesState,
-                               JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
-    currentSourcesState.each { type, map ->
-      if (PRODUCTION_TYPES.contains(type) || TEST_TYPES.contains(type)) return
-      map.each { name, state ->
-        def outputPath = state.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-        uploadCompilationOutput(name, type, state.hash, new File(outputPath), uploader, executor)
-      }
-    }
-
-    uploadCompilationOutputsByParams(PRODUCTION, PRODUCTION_TYPES[0], PRODUCTION_TYPES[1], root, currentSourcesState, uploader, executor)
-    uploadCompilationOutputsByParams(TEST, TEST_TYPES[0], TEST_TYPES[1], root, currentSourcesState, uploader, executor)
-  }
-
-  private void uploadCompilationOutputsByParams(String prefix, String firstUploadParam, String secondUploadParam, File root,
-                                               Map<String, Map<String, BuildTargetState>> currentSourcesState,
-                                               JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
-    def firstParamMap = currentSourcesState.get(firstUploadParam)
-    def secondParamMap = currentSourcesState.get(secondUploadParam)
-
-    def firstParamKeys = new HashSet<>(firstParamMap.keySet())
-    def secondParamKeys = new HashSet<>(secondParamMap.keySet())
-    def intersection = firstParamKeys.intersect(secondParamKeys)
-
-    intersection.each { buildTargetName ->
-      def firstParamState = firstParamMap.get(buildTargetName)
-      def secondParamState = secondParamMap.get(buildTargetName)
-      def outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-      def hash = calculateStringHash(firstParamState.hash + secondParamState.hash)
-      uploadCompilationOutput(buildTargetName, prefix, hash, new File(outputPath), uploader, executor)
-    }
-
-    firstParamKeys.removeAll(intersection)
-    firstParamKeys.each { buildTargetName ->
-      def firstParamState = firstParamMap.get(buildTargetName)
-      def outputPath = firstParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-      uploadCompilationOutput(buildTargetName, firstUploadParam, firstParamState.hash, new File(outputPath), uploader, executor)
-    }
-
-    secondParamKeys.removeAll(intersection)
-    secondParamKeys.each { buildTargetName ->
-      def secondParamState = secondParamMap.get(buildTargetName)
-      def outputPath = secondParamState.relativePath.replace(IDENTIFIER, root.getAbsolutePath())
-
-      uploadCompilationOutput(buildTargetName, secondUploadParam, secondParamState.hash, new File(outputPath), uploader, executor)
+  void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
+                                JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+    sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEach { CompilationOutput it ->
+      uploadCompilationOutput(it, uploader, executor)
     }
   }
 
-  private void uploadCompilationOutput(String buildTargetName, String prefix, String hash, File outputFolder,
-                                       JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+  private void uploadCompilationOutput(CompilationOutput compilationOutput, JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
     executor.submit {
-      def sourcePath = "$prefix/$buildTargetName/$hash"
+      def sourcePath = "${compilationOutput.type}/${compilationOutput.name}/${compilationOutput.hash}"
       if (uploader.isExist(sourcePath)) return
-      File zipFile = new File(outputFolder.getParent(), hash)
+      def outputFolder = new File(compilationOutput.path)
+      File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
       uploader.upload(sourcePath, zipFile)
       FileUtil.delete(zipFile)
     }
-  }
-
-  private static String calculateStringHash(String content) {
-    def hasher = Hashing.murmur3_128().newHasher()
-    return hasher.putString(content, StandardCharsets.UTF_8).hash().toString()
   }
 
   private void zipBinaryData(File zipFile, File dir) {
@@ -177,6 +127,48 @@ class CompilationOutputsUploader {
         context.messages.error("Couldn't compress binary data: $dir", e)
       }
     }
+  }
+
+  private void updateCommitHistory(JpsCompilationPartsUploader uploader) {
+    if (remotePerCommitHash.size() == 1) return
+    Map<String, List<String>> commitHistory = new HashMap<>()
+    if (uploader.isExist(commitHistoryFile)) {
+      def content = uploader.getAsString(commitHistoryFile)
+      if (!content.isEmpty()) {
+        Type type = new TypeToken<Map<String, List<String>>>(){}.getType();
+        commitHistory = new Gson().fromJson(content, type) as Map<String, List<String>>
+      }
+    }
+
+    remotePerCommitHash.each { key, value ->
+      def listOfCommits = commitHistory.get(key)
+      if (listOfCommits == null) {
+        def newList = new ArrayList()
+        newList.add(value)
+        commitHistory.put(key, newList)
+      }
+      else {
+        listOfCommits.add(value)
+      }
+    }
+
+    // Upload and publish file with commits history
+    def jsonAsString = new Gson().toJson(commitHistory)
+    def file = new File("$agentPersistentStorage/$commitHistoryFile")
+    file.write(jsonAsString)
+    messages.artifactBuilt(file.absolutePath)
+    uploader.upload(commitHistoryFile, file)
+    FileUtil.delete(file)
+  }
+
+  private String getCommitHash() {
+    if (remotePerCommitHash.size() == 1) return remotePerCommitHash.values().first()
+    StringBuilder commitHashBuilder = new StringBuilder()
+    int hashLength = (remotePerCommitHash.values().first().length() / remotePerCommitHash.size()) as int
+    remotePerCommitHash.each { key, value ->
+      commitHashBuilder.append(value.substring(0, hashLength))
+    }
+    return commitHashBuilder.toString()
   }
 
   @CompileStatic
@@ -197,18 +189,27 @@ class CompilationOutputsUploader {
       return false
     }
 
+    String getAsString(@NotNull final String path) throws UploadException {
+      CloseableHttpResponse response = null
+      try {
+        String url = myServerUrl + StringUtil.trimStart(path, '/')
+        debug("GET " + url)
+
+        def request = new HttpGet(url)
+        response = myHttpClient.execute(request)
+
+        return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
+      }
+      catch (Exception e) {
+        throw new UploadException("Failed to GET $path: " + e.getMessage(), e)
+      }
+      finally {
+        StreamUtil.closeStream(response)
+      }
+    }
+
     boolean upload(@NotNull final String path, @NotNull final File file) {
       return super.upload(path, file, false)
-    }
-  }
-
-  private class BuildTargetState {
-    private final String hash
-    private final String relativePath
-
-    private BuildTargetState(String hash, String relativePath) {
-      this.hash = hash
-      this.relativePath = relativePath
     }
   }
 }

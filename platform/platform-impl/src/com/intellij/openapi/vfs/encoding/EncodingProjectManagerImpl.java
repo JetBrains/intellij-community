@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,6 +64,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     new TObjectHashingStrategy<VirtualFilePointer>() {
       @Override
       public int computeHashCode(VirtualFilePointer pointer) {
+        // Hashcode is not stable, because pointer URL can change.
+        // Access keys with caution.
         return FileUtil.PATH_HASHING_STRATEGY.computeHashCode(pointer.getUrl());
       }
 
@@ -95,10 +98,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public Element getState() {
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
-      List<VirtualFilePointer> files = new ArrayList<>(myMapping.keySet());
-      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFilePointer::getUrl));
-      for (VirtualFilePointer file : files) {
-        Charset charset = myMapping.get(file);
+      List<Map.Entry<VirtualFilePointer, Charset>> mappings = new ArrayList<>(myMapping.entrySet());
+      ContainerUtil.quickSort(mappings, Comparator.comparing(e -> e.getKey().getUrl()));
+      for (Map.Entry<VirtualFilePointer, Charset> mapping : mappings) {
+        VirtualFilePointer file = mapping.getKey();
+        Charset charset = mapping.getValue();
         Element child = new Element("file");
         element.addContent(child);
         child.setAttribute("url", file.getUrl());
@@ -263,11 +267,11 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     return myMapping.entrySet().stream()
       .map(e -> Pair.create(e.getKey().getFile(), e.getValue()))
       .filter(e -> e.getFirst() != null)
-      .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
+      .collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond(), (c1, c2) -> c1));
   }
 
   public void setMapping(@NotNull Map<? extends VirtualFile, ? extends Charset> mapping) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
     final Map<VirtualFilePointer, Charset> newMap = new THashMap<>(mapping.size());
     final Map<VirtualFilePointer, Charset> oldMap = new THashMap<>(myMapping);
@@ -364,7 +368,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
         }
         return true;
       }
-      ProgressManager.progress("Reloading files...", file.getPresentableUrl());
+      ProgressManager.progress(IdeBundle.message("progress.text.reloading.files"), file.getPresentableUrl());
       TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> clearAndReload(file, project));
       return true;
     };
@@ -416,7 +420,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     Boolean suppress = SUPPRESS_RELOAD.get();
     if (suppress == Boolean.TRUE) return;
     FileDocumentManager.getInstance().saveAllDocuments();  // consider all files as unmodified
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction), "Reload Files", false, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> suppressReloadDuring(reloadAction),
+                                                                      IdeBundle.message("progress.title.reload.files"), false, myProject);
   }
 
   private void reloadAllFilesUnder(@Nullable final VirtualFile root) {
@@ -424,7 +429,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
       if (!(file instanceof VirtualFileSystemEntry)) return true;
       Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file);
       if (cachedDocument != null) {
-        ProgressManager.progress("Reloading file...", file.getPresentableUrl());
+        ProgressManager.progress(IdeBundle.message("progress.text.reloading.file"), file.getPresentableUrl());
         TransactionGuard.submitTransaction(myProject, () -> reload(file, myProject, (FileDocumentManagerImpl)FileDocumentManager.getInstance()));
       }
       // for not loaded files deep under project, reset encoding to give them chance re-detect the right one later

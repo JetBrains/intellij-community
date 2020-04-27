@@ -153,7 +153,7 @@ public class OrderEntryUtil {
     rootModel.commit();
   }
 
-  private static int findLibraryOrderEntry(@NotNull OrderEntry[] entries, @NotNull Library library) {
+  private static int findLibraryOrderEntry(OrderEntry @NotNull [] entries, @NotNull Library library) {
     for (int i = 0; i < entries.length; i++) {
       OrderEntry entry = entries[i];
       if (entry instanceof LibraryOrderEntry && library.equals(((LibraryOrderEntry)entry).getLibrary())) {
@@ -232,6 +232,6 @@ public class OrderEntryUtil {
   }
 
   public static boolean isModuleLibraryOrderEntry(@Nullable OrderEntry orderEntry) {
-    return orderEntry instanceof ModuleLibraryOrderEntryImpl;
+    return orderEntry instanceof LibraryOrderEntry && ((LibraryOrderEntry)orderEntry).isModuleLevel();
   }
 }

@@ -16,8 +16,8 @@
 
 package com.intellij.packageDependencies;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -67,12 +67,12 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
 
   @Override
   public String getRootNodeNameInUsageView(){
-    return AnalysisScopeBundle.message("forward.dependencies.usage.view.root.node.text");
+    return AnalysisBundle.message("forward.dependencies.usage.view.root.node.text");
   }
 
   @Override
   public String getInitialUsagesPosition(){
-    return AnalysisScopeBundle.message("forward.dependencies.usage.view.initial.text");
+    return AnalysisBundle.message("forward.dependencies.usage.view.initial.text");
   }
 
   @Override
@@ -108,7 +108,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
       if (indicator.isCanceled()) {
         throw new ProcessCanceledException();
       }
-      indicator.setText(AnalysisScopeBundle.message("package.dependencies.progress.text"));
+      indicator.setText(AnalysisBundle.message("package.dependencies.progress.text"));
 
       if (virtualFile != null) {
         indicator.setText2(getRelativeToProjectPath(virtualFile));

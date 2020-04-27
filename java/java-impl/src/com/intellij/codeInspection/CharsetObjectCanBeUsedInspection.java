@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteMultiCatchFix;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -111,7 +112,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         String charsetString = getCharsetString(charset);
         if (charsetString == null) return;
         String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
-        holder.registerProblem(place, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
+        holder.registerProblem(place, JavaBundle.message("inspection.charset.object.can.be.used.message", constantName),
                                new CharsetObjectCanBeUsedFix(constantName));
       }
 
@@ -140,10 +141,10 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
 
   abstract static class CharsetCallMatcher {
     @NotNull final String myClassName;
-    @NotNull final String[] myParameters;
+    final String @NotNull [] myParameters;
     final int myCharsetParameterIndex;
 
-    CharsetCallMatcher(@NotNull String className, @NotNull String... parameters) {
+    CharsetCallMatcher(@NotNull String className, String @NotNull ... parameters) {
       myClassName = className;
       myParameters = parameters;
       int index = -1;
@@ -198,7 +199,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   }
 
   static class CharsetConstructorMatcher extends CharsetCallMatcher {
-    CharsetConstructorMatcher(@NotNull String className, @NotNull String... parameters) {
+    CharsetConstructorMatcher(@NotNull String className, String @NotNull ... parameters) {
       super(className, parameters);
     }
 
@@ -217,7 +218,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   static class CharsetMethodMatcher extends CharsetCallMatcher {
     @NotNull private final String myMethodName;
 
-    CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, @NotNull String... parameters) {
+    CharsetMethodMatcher(@NotNull String className, @NotNull String methodName, String @NotNull ... parameters) {
       super(className, parameters);
       myMethodName = methodName;
     }
@@ -258,14 +259,14 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
+      return JavaBundle.message("inspection.charset.object.can.be.used.fix.name", myConstantName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.charset.object.can.be.used.fix.family.name");
+      return JavaBundle.message("inspection.charset.object.can.be.used.fix.family.name");
     }
 
     @Override

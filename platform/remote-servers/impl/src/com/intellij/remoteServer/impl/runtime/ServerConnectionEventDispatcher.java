@@ -22,9 +22,6 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 
-/**
- * @author nik
- */
 public class ServerConnectionEventDispatcher {
   private final MessageBus myMessageBus;
   private final MergingUpdateQueue myEventsQueue;

@@ -681,7 +681,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
                                                   final boolean headlessEnvironment,
                                                   @NotNull final BlockingQueue<? super PsiFile> outFilesToInspect,
                                                   @NotNull final ProgressIndicator progressIndicator) {
-    Task.Backgroundable task = new Task.Backgroundable(getProject(), "Scanning Files to Inspect") {
+    Task.Backgroundable task = new Task.Backgroundable(getProject(), InspectionsBundle.message("scanning.files.to.inspect.progress.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -887,7 +887,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase {
                                                                       @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     return new ProblemDescriptionsProcessor() {
       @Override
-      public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+      public void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
           if (!(problemDescriptor instanceof ProblemDescriptor)) {
             continue;

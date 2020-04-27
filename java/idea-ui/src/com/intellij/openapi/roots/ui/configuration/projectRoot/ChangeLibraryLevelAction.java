@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class ChangeLibraryLevelAction extends ChangeLibraryLevelActionBase {
   private static final Logger LOG = Logger.getInstance(ChangeLibraryLevelAction.class);
   private final JComponent myParentComponent;

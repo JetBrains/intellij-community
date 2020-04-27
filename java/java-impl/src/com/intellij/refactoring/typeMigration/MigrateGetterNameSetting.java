@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiMethod;
@@ -71,7 +72,7 @@ class MigrateGetterNameSetting {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return messageText.contains("dontMigrateName") ? 3 : 1;
     } else {
-      return Messages.showIdeaMessageDialog(null, messageText, "Type Migration", CODES, 0, null, null);
+      return Messages.showIdeaMessageDialog(null, messageText, JavaRefactoringBundle.message("type.migration.action.name"), CODES, 0, null, null);
     }
   }
 }

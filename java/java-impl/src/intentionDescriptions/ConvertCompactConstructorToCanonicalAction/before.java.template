@@ -1,0 +1,7 @@
+record Range(int from, int to) {
+  <spot>public Range {
+    if (from > to) {
+      from = to;
+    }
+  }</spot>
+}

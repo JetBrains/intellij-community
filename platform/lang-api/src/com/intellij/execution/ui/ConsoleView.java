@@ -31,6 +31,8 @@ public interface ConsoleView extends ExecutionConsole {
 
   void attachToProcess(ProcessHandler processHandler);
 
+  default void requestScrollingToEnd() {}
+
   void setOutputPaused(boolean value);
 
   boolean isOutputPaused();
@@ -49,8 +51,7 @@ public interface ConsoleView extends ExecutionConsole {
 
   boolean canPause();
 
-  @NotNull
-  AnAction[] createConsoleActions();
+  AnAction @NotNull [] createConsoleActions();
 
   void allowHeavyFilters();
 }

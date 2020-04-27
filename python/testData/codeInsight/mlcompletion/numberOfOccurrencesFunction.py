@@ -1,2 +1,3 @@
 a = min(1, 2)
-b = m<caret>
+b = min(2, 3)
+c = m<caret>

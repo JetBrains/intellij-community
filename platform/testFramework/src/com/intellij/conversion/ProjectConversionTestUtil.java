@@ -8,9 +8,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectConversionTestUtil {
   private ProjectConversionTestUtil() {
   }

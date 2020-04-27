@@ -26,8 +26,6 @@ import java.awt.*;
  * Supports asynchronous fetching full text of a value. If full text is already computed use {@link ImmediateFullValueEvaluator}
  * @see XValueNode#setFullValueEvaluator
  * @see ImmediateFullValueEvaluator
- *
- * @author nik
  */
 public abstract class XFullValueEvaluator {
   private final String myLinkText;

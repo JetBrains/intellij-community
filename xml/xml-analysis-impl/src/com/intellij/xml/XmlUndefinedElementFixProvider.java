@@ -34,8 +34,7 @@ public abstract class XmlUndefinedElementFixProvider {
    * @return null if this provider doesn't know anything about this file; empty array if no fixes are available and no other
    * providers should be asked
    */
-  @Nullable
-  public IntentionAction[] createFixes(@NotNull final XmlAttribute attribute) {
+  public IntentionAction @Nullable [] createFixes(@NotNull final XmlAttribute attribute) {
     return null;
   }
 
@@ -44,8 +43,7 @@ public abstract class XmlUndefinedElementFixProvider {
    * @return null if this provider doesn't know anything about this file; empty array if no fixes are available and no other
    * providers should be asked
    */
-  @Nullable
-  public LocalQuickFix[] createFixes(@NotNull final XmlTag tag) {
+  public LocalQuickFix @Nullable [] createFixes(@NotNull final XmlTag tag) {
     return null;
   }
 }

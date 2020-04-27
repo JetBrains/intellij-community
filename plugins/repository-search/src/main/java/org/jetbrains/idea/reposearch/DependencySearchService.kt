@@ -2,6 +2,9 @@ package org.jetbrains.idea.reposearch
 
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.progress.ProgressIndicatorProvider
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
@@ -44,10 +47,15 @@ class DependencySearchService(private val myProject: Project) {
       }, myProject)
   }
 
-  fun updateProviders() { remoteProviders.clear()
+  fun updateProviders() {
+    remoteProviders.clear()
     localProviders.clear()
-    DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList.filter { it.isApplicable(myProject) }.forEach { f ->
-      f.getProviders(myProject).forEach { provider ->
+    for (f in DependencySearchProvidersFactory.EXTENSION_POINT_NAME.extensionList) {
+      if (!f.isApplicable(myProject)) {
+        continue
+      }
+
+      for (provider in f.getProviders(myProject)) {
         if (provider.isLocal) {
           localProviders.add(provider)
         }
@@ -62,6 +70,7 @@ class DependencySearchService(private val myProject: Project) {
                             parameters: SearchParameters,
                             consumer: ResultConsumer,
                             searchMethod: (DependencySearchProvider, ResultConsumer) -> Unit): Promise<Int> {
+
     if (parameters.useCache()) {
       val cachedValue = foundInCache(cacheKey, parameters, consumer)
       if (cachedValue != null) {
@@ -74,26 +83,29 @@ class DependencySearchService(private val myProject: Project) {
     localResultSet.forEach(consumer)
 
 
-
     if (parameters.isLocalOnly || remoteProviders.size == 0) {
       return resolvedPromise(0)
     }
 
     val promises: MutableList<Promise<Void>> = ArrayList(remoteProviders.size)
-    val resultSet = Collections.synchronizedSet(localResultSet);
+    val resultSet = Collections.synchronizedSet(localResultSet)
     for (provider in remoteProviders) {
       val promise = AsyncPromise<Void>()
       promises.add(promise)
-      myExecutorService.execute {
+      val wrapper = ProgressWrapper.wrap(ProgressIndicatorProvider.getInstance().progressIndicator)
+      myExecutorService.submit {
         try {
-          searchMethod(provider) { if (resultSet.add(it)) consumer(it) }
-          promise.setResult(null)
+          ProgressManager.getInstance().runProcess({
+                                                     searchMethod(provider) { if (resultSet.add(it)) consumer(it) }
+                                                     promise.setResult(null)
+                                                   }, wrapper);
         }
         catch (e: Exception) {
           promise.setError(e)
         }
       }
     }
+
     return promises.all(resultSet, ignoreErrors = true).then {
       if (!resultSet.isEmpty()) {
         cache[cacheKey] = completedFuture<Collection<RepositoryArtifactData>>(resultSet)
@@ -130,9 +142,7 @@ class DependencySearchService(private val myProject: Project) {
     }
   }
 
-  private fun foundInCache(searchString: String,
-                           parameters: SearchParameters,
-                           consumer: ResultConsumer): Promise<Int>? {
+  private fun foundInCache(searchString: String, parameters: SearchParameters, consumer: ResultConsumer): Promise<Int>? {
     val future = cache[searchString]
     if (future != null) {
       val p: AsyncPromise<Int> = AsyncPromise()
@@ -183,6 +193,5 @@ class DependencySearchService(private val myProject: Project) {
 
     remoteProviders.addAll(remote)
     localProviders.addAll(local)
-
   }
 }

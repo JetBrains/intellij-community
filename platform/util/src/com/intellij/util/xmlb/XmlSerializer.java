@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.URL;
 
-public class XmlSerializer {
+public final class XmlSerializer {
   private static final SerializationFilter TRUE_FILTER = new SerializationFilter() {
     @Override
     public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {

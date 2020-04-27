@@ -16,7 +16,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.facet.*;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.StandardTargetWeights;
@@ -42,9 +42,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Iterator;
 
-/**
- * @author nik
- */
 public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware {
   @Override
   public boolean canSelect(final SelectInContext context) {
@@ -130,7 +127,7 @@ public class ProjectStructureSelectInTarget implements SelectInTarget, DumbAware
   }
 
   public String toString() {
-    return IdeBundle.message("select.in.project.settings");
+    return JavaUiBundle.message("select.in.project.settings");
   }
 
   @Override

@@ -34,7 +34,7 @@ class OutputStreamLogger extends OutputStream {
   }
 
   @Override
-  public void write(@NotNull byte[] b, int off, int len) {
+  public void write(byte @NotNull [] b, int off, int len) {
     myOriginalStream.write(b, off, len);
     for (int i = 0; i < len; i++) {
       processByte(b[off + i]);

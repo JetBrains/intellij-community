@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.psi.PsiAnnotation;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 * @author Eugene.Kudelevsky
 */
 public class JavaCompiledPattern extends CompiledPattern {
-  private static final String TYPED_VAR_PREFIX = "__$_";
+  public static final String TYPED_VAR_PREFIX = "__$_";
 
   private boolean requestsSuperFields;
   private boolean requestsSuperMethods;
@@ -22,9 +22,8 @@ public class JavaCompiledPattern extends CompiledPattern {
     setStrategy(JavaMatchingStrategy.getInstance());
   }
 
-  @NotNull
   @Override
-  public String[] getTypedVarPrefixes() {
+  public String @NotNull [] getTypedVarPrefixes() {
     return new String[] {TYPED_VAR_PREFIX};
   }
 

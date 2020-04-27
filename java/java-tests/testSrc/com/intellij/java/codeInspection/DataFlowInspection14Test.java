@@ -18,4 +18,7 @@ public class DataFlowInspection14Test extends DataFlowInspectionTestCase {
   }
 
   public void testInstanceOfPattern() { doTest(); }
+  public void testSwitchStatements() { doTest(); }
+  public void testSwitchExpressions() { doTest(); }
+  public void testSwitchExpressionsNullability() { doTest(); }
 }

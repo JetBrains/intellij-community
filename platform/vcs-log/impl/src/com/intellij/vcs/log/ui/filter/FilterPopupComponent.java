@@ -4,8 +4,12 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Base class for components which allow to set up filter for the VCS Log, by displaying a popup with available choices.
@@ -15,18 +19,18 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   /**
    * Special value that indicates that no filtering is on.
    */
-  protected static final String ALL = "All";
+  protected static final Supplier<@Nls String> ALL = VcsBundle.messagePointer("vcs.log.filter.all");
   @NotNull protected final Model myFilterModel;
 
-  FilterPopupComponent(@NotNull String filterName, @NotNull Model filterModel) {
-    super(filterName);
+  FilterPopupComponent(@NotNull Supplier<String> displayName, @NotNull Model filterModel) {
+    super(displayName);
     myFilterModel = filterModel;
   }
 
   @Override
   public String getCurrentText() {
     Filter filter = myFilterModel.getFilter();
-    return filter == null ? ALL : getText(filter);
+    return filter == null ? ALL.get() : getText(filter);
   }
 
   @Override
@@ -35,9 +39,11 @@ abstract class FilterPopupComponent<Filter, Model extends FilterModel<Filter>> e
   }
 
   @NotNull
+  @Nls
   protected abstract String getText(@NotNull Filter filter);
 
   @Nullable
+  @Nls
   protected abstract String getToolTip(@NotNull Filter filter);
 
   @Override

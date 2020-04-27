@@ -18,9 +18,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
 public class YamlJsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
-  @Nullable
   @Override
-  public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
+  public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
     if (elementType != YAMLTokenTypes.SCALAR_KEY) return null;
     final YAMLKeyValue literal = PsiTreeUtil.getParentOfType(sourceElement, YAMLKeyValue.class);

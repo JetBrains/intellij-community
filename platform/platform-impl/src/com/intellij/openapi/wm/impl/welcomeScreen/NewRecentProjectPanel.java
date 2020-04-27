@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.*;
@@ -141,7 +141,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
   }
 
   @Override
-  protected ListCellRenderer createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
+  protected ListCellRenderer<AnAction> createRenderer(UniqueNameBuilder<ReopenProjectAction> pathShortener) {
     return new RecentProjectItemRenderer() {
        private GridBagConstraints nameCell;
        private GridBagConstraints pathCell;
@@ -201,13 +201,13 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
       };
 
       @Override
-      public Component getListCellRendererComponent(JList list, final Object value, int index, final boolean isSelected, boolean cellHasFocus) {
-        final Color fore = getListForeground(isSelected, list.hasFocus());
-        final Color back = getListBackground(isSelected, list.hasFocus());
+      public Component getListCellRendererComponent(JList<? extends AnAction> list, AnAction value, int index, boolean selected, boolean focused) {
+        final Color fore = getListForeground(selected, list.hasFocus());
+        final Color back = getListBackground(selected, list.hasFocus());
         final JLabel name = new JLabel();
         final JLabel path = new JLabel();
         name.setForeground(fore);
-        path.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());
+        path.setForeground(selected ? fore : UIUtil.getInactiveTextColor());
 
         setBackground(back);
 
@@ -247,7 +247,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
               int i = isInsideGroup ? 80 : 60;
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUIScale.scale(i)));
               if (!realPath.equals(path.getText())) {
-                projectsWithLongPathes.add((ReopenProjectAction)value);
+                projectsWithLongPaths.add((ReopenProjectAction)value);
               }
               if (!isPathValid((((ReopenProjectAction)value).getProjectPath()))) {
                 path.setForeground(ColorUtil.mix(path.getForeground(), JBColor.red, .5));

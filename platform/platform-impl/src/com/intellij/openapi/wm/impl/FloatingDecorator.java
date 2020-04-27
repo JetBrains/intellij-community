@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -147,7 +148,7 @@ public final class FloatingDecorator extends JDialog {
   }
 
   void apply(@NotNull WindowInfo info) {
-    LOG.assertTrue(info.isFloating());
+    LOG.assertTrue(info.getType() == ToolWindowType.FLOATING);
     myInfo = info;
     // set alpha mode
     UISettings uiSettings = UISettings.getInstance();

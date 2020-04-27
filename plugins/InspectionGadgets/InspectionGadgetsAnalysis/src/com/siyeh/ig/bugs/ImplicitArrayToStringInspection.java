@@ -82,7 +82,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make Array.toString() implicit";
+      return InspectionGadgetsBundle.message("implicit.array.to.string.fix.family.name");
     }
 
     @Override

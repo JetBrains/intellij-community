@@ -87,7 +87,7 @@ public interface TransformationContext {
 
   void addMethod(@NotNull PsiMethod method, boolean prepend);
 
-  void addMethods(@NotNull PsiMethod[] methods);
+  void addMethods(PsiMethod @NotNull [] methods);
 
   void addMethods(@NotNull Collection<? extends PsiMethod> methods);
 

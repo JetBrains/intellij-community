@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInspection.InspectionsBundle.message;
+import static com.intellij.java.JavaBundle.message;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static javax.swing.SwingConstants.TOP;
 

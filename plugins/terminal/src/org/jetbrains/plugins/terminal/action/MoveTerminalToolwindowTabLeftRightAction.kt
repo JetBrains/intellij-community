@@ -4,33 +4,29 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
 
 open class MoveTerminalToolwindowTabLeftRightAction(private val moveLeft: Boolean) : TerminalSessionContextMenuActionBase(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    move(content, e.project)
+  override fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content) {
+    move(content, project)
   }
 
-  override fun update(e: AnActionEvent, activeToolWindow: ToolWindow, selectedContent: Content?) {
-    super.update(e, activeToolWindow, selectedContent)
-    if (e.presentation.isEnabledAndVisible) {
-      e.presentation.isEnabled = isAvailable(selectedContent) && e.project != null
-    }
+  override fun updateInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content) {
+    e.presentation.isEnabled = isAvailable(content)
   }
 
-  fun isAvailable(content: Content?) : Boolean {
-    val manager = content?.manager ?: return false
+  fun isAvailable(content: Content) : Boolean {
+    val manager = content.manager ?: return false
     val ind = manager.getIndexOfContent(content)
     return if (moveLeft) ind > 0 else ind >= 0 && ind < manager.contentCount - 1
   }
 
-  fun move(content: Content?, project: Project?) {
-    val manager = content?.manager ?: return
+  fun move(content: Content, project: Project) {
+    val manager = content.manager ?: return
     val ind = manager.getIndexOfContent(content)
     val otherInd = if (moveLeft) ind - 1 else ind + 1
-    if (ind >= 0 && otherInd >= 0 && otherInd < manager.contentCount && project != null) {
+    if (ind >= 0 && otherInd >= 0 && otherInd < manager.contentCount) {
       val otherContent = manager.getContent(otherInd)!!
       TerminalTabCloseListener.executeContentOperationSilently(otherContent) {
         manager.removeContent(otherContent, false, false, false).doWhenDone {

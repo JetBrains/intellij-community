@@ -43,9 +43,8 @@ public final class TemporaryPlacesRegistry {
       return true;
     }
 
-    @NotNull
     @Override
-    public Class<?>[] getPatternClasses() {
+    public Class<?> @NotNull [] getPatternClasses() {
       return ArrayUtil.EMPTY_CLASS_ARRAY;
     }
 

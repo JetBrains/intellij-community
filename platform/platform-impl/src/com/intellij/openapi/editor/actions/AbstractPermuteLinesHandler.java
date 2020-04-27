@@ -76,5 +76,5 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     return startLine < endLine ? Couple.of(startLine, endLine) : null;
   }
 
-  public abstract void permute(@NotNull String[] lines);
+  public abstract void permute(String @NotNull [] lines);
 }

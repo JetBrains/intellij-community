@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -270,9 +271,9 @@ public class IndexDataGetter {
     TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = new TIntObjectHashMap<>();
 
     VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
-    if (myRoots.contains(root)) {
+    if (myRoots.contains(root) && root != null) {
       executeAndCatch(() -> {
-        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
+        myIndexStorage.paths.iterateCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
           List<Integer> parents = myIndexStorage.parents.get(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
@@ -333,7 +334,10 @@ public class IndexDataGetter {
     @Nullable
     @Override
     public EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
-      return executeAndCatch(() -> myIndexStorage.paths.findRename(parent, child, path, isChildPath));
+      VirtualFile root = ObjectUtils.notNull(VcsLogUtil.getActualRoot(myProject, path));
+      return executeAndCatch(() -> {
+        return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
+      });
     }
   }
 

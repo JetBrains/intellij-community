@@ -8,12 +8,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.sh.ShSupport;
 import com.intellij.sh.highlighting.ShTextOccurrencesUtil;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.psi.ShFunctionDefinition;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,10 +49,15 @@ public class ShRenameHandler implements RenameHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    if (element instanceof ShFunctionDefinition) {
+      PsiElementRenameHandler.invoke(element, project, file, editor);
+    } else {
+      ShRenameAllOccurrencesHandler.INSTANCE.execute(editor, editor.getCaretModel().getPrimaryCaret(), null);
+    }
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
   }
 }

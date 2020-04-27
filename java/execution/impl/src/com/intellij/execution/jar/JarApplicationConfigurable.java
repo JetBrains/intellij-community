@@ -16,6 +16,7 @@
 package com.intellij.execution.jar;
 
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
@@ -79,7 +80,7 @@ public class JarApplicationConfigurable extends SettingsEditor<JarApplicationCon
   private void createUIComponents() {
     myJarPathComponent = new LabeledComponent<>();
     TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
-    textFieldWithBrowseButton.addBrowseFolderListener("Choose JAR File", null, myProject,
+    textFieldWithBrowseButton.addBrowseFolderListener(ExecutionBundle.message("choose.jar.file"), null, myProject,
                                                       new FileChooserDescriptor(false, false, true, true, false, false));
     myJarPathComponent.setComponent(textFieldWithBrowseButton);
   }

@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
 import com.intellij.ide.plugins.DynamicPlugins.unloadPlugin
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.assertions.Assertions
 import java.io.File
@@ -11,10 +12,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.math.abs
 
-fun loadDescriptorInTest(dir: Path): IdeaPluginDescriptorImpl {
+fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
   Assertions.assertThat(dir).exists()
   PluginManagerCore.ourPluginError = null
-  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(emptySet())
+  val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins)
   val result = DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true,
                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
     PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
@@ -28,7 +29,11 @@ fun loadDescriptorInTest(dir: Path): IdeaPluginDescriptorImpl {
 }
 
 @JvmOverloads
-fun loadExtensionWithText(extensionTag: String, loader: ClassLoader, ns: String = "com.intellij"): Disposable {
+fun loadExtensionWithText(
+  extensionTag: String,
+  loader: ClassLoader = DynamicPlugins::class.java.classLoader,
+  ns: String = "com.intellij"
+): Disposable {
   val name = "test" + abs(extensionTag.hashCode())
   val text = """<idea-plugin>
   <name>$name</name>
@@ -56,7 +61,10 @@ fun loadPluginWithText(pluginXml: String, loader: ClassLoader): Disposable {
 
   return Disposable {
     descriptor = loadDescriptorInTest(plugin.toPath().parent.parent)
+    val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)
     unloadPlugin(descriptor, false)
+
+    Assertions.assertThat(canBeUnloaded).isTrue()
   }
 }
 

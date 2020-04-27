@@ -1,15 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.GraphCommit;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 /**
@@ -20,7 +20,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
  */
 public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
-  public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
+  @NonNls public final static String ILLEGAL_DATA_RELOAD_ALL = "All data is illegal - request reload all";
 
   /**
    * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
@@ -191,7 +191,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void insertAllUseStack() {
       while (!newCommitsMap.isEmpty()) {
-        visitCommit(notNull(getFirstItem(newCommitsMap.values())));
+        visitCommit(Objects.requireNonNull(getFirstItem(newCommitsMap.values())));
         while (!commitsStack.isEmpty()) {
           Commit currentCommit = commitsStack.peek();
           boolean allParentsWereAdded = true;

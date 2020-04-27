@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectStructureProblemDescription {
   public enum ProblemLevel {PROJECT, GLOBAL}
   @NotNull

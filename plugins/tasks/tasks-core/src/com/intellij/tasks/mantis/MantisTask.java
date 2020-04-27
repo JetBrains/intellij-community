@@ -92,9 +92,8 @@ public class MantisTask extends Task {
     return myDescription;
   }
 
-  @NotNull
   @Override
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return myComments;
   }
 

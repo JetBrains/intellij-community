@@ -1,2 +1,2 @@
 /**
- * Copyright &copy; 2000-2010 JetBrains s.r.o.
+ * Copyright &copy; 2000&#x22EF; JetBrains s.r.o.

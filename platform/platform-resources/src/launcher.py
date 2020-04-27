@@ -102,7 +102,7 @@ def try_activate_instance(args):
         return False
 
     paths = read_sequence_from_sock(s)
-    found = CONFIG_PATH in paths
+    found = CONFIG_PATH in paths or os.path.realpath(CONFIG_PATH) in paths
 
     if found:
         write_to_sock(s, 'activate ' + token + '\0' + os.getcwd() + '\0' + '\0'.join(args))

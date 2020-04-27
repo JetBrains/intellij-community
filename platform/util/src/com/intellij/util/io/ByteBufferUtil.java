@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Cleaner;
@@ -15,7 +15,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 
-public class ByteBufferUtil {
+public final class ByteBufferUtil {
   /**
    * Please use with care. In most cases leaving the job to the GC is enough.
    */
@@ -23,7 +23,7 @@ public class ByteBufferUtil {
   public static boolean cleanBuffer(@NotNull ByteBuffer buffer) {
     if (!buffer.isDirect()) return true;
 
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       // in Java 9+, the "official" dispose method is sun.misc.Unsafe#invokeCleaner
       Unsafe unsafe = AtomicFieldUpdater.getUnsafe();
       try {

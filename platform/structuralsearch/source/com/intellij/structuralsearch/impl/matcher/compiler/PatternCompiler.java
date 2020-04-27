@@ -195,7 +195,7 @@ public class PatternCompiler {
                                                        MatchOptions options,
                                                        CompiledPattern pattern,
                                                        CompileContext context,
-                                                       @NotNull String[] applicablePrefixes,
+                                                       String @NotNull [] applicablePrefixes,
                                                        boolean checkForErrors) throws MalformedPatternException {
     if (applicablePrefixes.length == 0) {
       return Collections.emptyList();
@@ -310,8 +310,7 @@ public class PatternCompiler {
            null;
   }
 
-  @NotNull
-  private static int[] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
+  private static int @NotNull [] findAllTypedVarOffsets(final PsiFile file, final Pattern[] substitutionPatterns) {
     final TIntHashSet result = new TIntHashSet();
 
     file.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -401,7 +400,7 @@ public class PatternCompiler {
   private static class ArrayPrefixProvider implements PrefixProvider {
     private final String[] myPrefixes;
 
-    ArrayPrefixProvider(@NotNull String[] prefixes) {
+    ArrayPrefixProvider(String @NotNull [] prefixes) {
       myPrefixes = prefixes;
     }
 
@@ -546,8 +545,11 @@ public class PatternCompiler {
 
     final PsiElement[] patternElements;
     try {
-      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), PatternTreeContext.Block, options.getFileType(),
-                                                           options.getDialect(), options.getPatternContext(), project, false);
+      PatternContextInfo contextInfo = new PatternContextInfo(PatternTreeContext.Block,
+                                                              options.getPatternContext(),
+                                                              constraint != null ? constraint.getContextConstraint() : null);
+      patternElements = MatcherImplUtil.createTreeFromText(buf.toString(), contextInfo, options.getFileType(),
+                                                           options.getDialect(), project, false);
       if (patternElements.length == 0 && checkForErrors) throw new MalformedPatternException();
     }
     catch (IncorrectOperationException e) {

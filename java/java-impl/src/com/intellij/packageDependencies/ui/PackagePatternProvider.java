@@ -3,8 +3,8 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.GroupByScopeTypeAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -115,7 +115,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
 
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("title.packages");
+    return JavaBundle.message("title.packages");
   }
 
   @Override

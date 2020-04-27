@@ -68,8 +68,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     return new Result<>(settings, getDependencies(settings, myComputation));
   }
 
-  @NotNull
-  Object[] getDependencies(@NotNull CodeStyleSettings settings, @NotNull AsyncComputation computation) {
+  Object @NotNull [] getDependencies(@NotNull CodeStyleSettings settings, @NotNull AsyncComputation computation) {
     List<Object> dependencies = new ArrayList<>();
     if (settings instanceof TransientCodeStyleSettings) {
       dependencies.addAll(((TransientCodeStyleSettings)settings).getDependencies());

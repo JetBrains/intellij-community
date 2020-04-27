@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console.completion;
 
 import com.google.common.base.Strings;
@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author oleg
- */
 public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferenceExpression> {
 
   private final ConsoleCommunication myCommunication;
@@ -46,8 +43,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     if (!myAllowRemoteResolve) {
       return RatedResolveResult.EMPTY_ARRAY;
     }
@@ -105,8 +101,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     Map<String, LookupElement> variants = Maps.newHashMap();
     try {
       final List<PydevCompletionVariant> completions = myCommunication.getCompletions(getText(), myPrefix);

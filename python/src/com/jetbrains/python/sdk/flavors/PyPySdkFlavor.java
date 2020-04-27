@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -17,17 +17,21 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author traff
- */
 public class PyPySdkFlavor extends PythonSdkFlavor {
-  public static PyPySdkFlavor INSTANCE = new PyPySdkFlavor();
+  public static PyPySdkFlavor getInstance() {
+    return PythonSdkFlavor.EP_NAME.findExtension(PyPySdkFlavor.class);
+  }
 
   private static final Pattern VERSION_RE = Pattern.compile("\\[(PyPy \\S+).*\\]");
   private static final Pattern PYTHON_VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Pattern VERSION_STRING_RE = Pattern.compile("PyPy (\\S+)( \\[Python (\\S+)\\])?");
 
   private PyPySdkFlavor() {
+  }
+
+  @Override
+  public boolean isPlatformIndependent() {
+    return true;
   }
 
   @Override

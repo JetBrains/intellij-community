@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
@@ -26,6 +26,16 @@ object GHGQLRequests {
                                         "organization", "teams")
       }
 
+      fun findByUserLogins(server: GithubServerPath, organization: String, logins: List<String>,
+                           pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHTeam>> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findOrganizationTeams,
+                                 mapOf("organization" to organization,
+                                       "logins" to logins,
+                                       "pageSize" to pagination?.pageSize,
+                                       "cursor" to pagination?.afterCursor),
+                                 TeamsConnection::class.java,
+                                 "organization", "teams")
+
       private class TeamsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHTeam>)
         : GHConnection<GHTeam>(pageInfo, nodes)
     }
@@ -50,6 +60,16 @@ object GHGQLRequests {
                                               GHPullRequest::class.java,
                                               "repository", "pullRequest")
     }
+
+    fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
+      GQLQuery.OptionalTraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestMergeabilityData,
+                                       mapOf("repoOwner" to repository.repositoryPath.owner,
+                                             "repoName" to repository.repositoryPath.repository,
+                                             "number" to number),
+                                       GHPullRequestMergeabilityData::class.java,
+                                       "repository", "pullRequest").apply {
+        acceptMimeType = "application/vnd.github.antiope-preview+json,application/vnd.github.merge-info-preview+json"
+      }
 
     fun search(server: GithubServerPath, query: String, pagination: GHGQLRequestPagination? = null)
       : GQLQuery<GHGQLSearchQueryResponse<GHPullRequestShort>> {
@@ -112,6 +132,26 @@ object GHGQLRequests {
 
       private class TimelineConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPRTimelineItem>)
         : GHConnection<GHPRTimelineItem>(pageInfo, nodes)
+    }
+
+    object Review {
+
+      fun getCommentBody(server: GithubServerPath, commentId: String): GQLQuery<String> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.getReviewCommentBody,
+                                 mapOf("id" to commentId),
+                                 String::class.java,
+                                 "node", "body")
+
+      fun deleteComment(server: GithubServerPath, commentId: String): GQLQuery<Any> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.deleteReviewComment,
+                                 mapOf("id" to commentId), Any::class.java)
+
+      fun updateComment(server: GithubServerPath, commentId: String, newText: String): GQLQuery<GHPullRequestReviewComment> =
+        GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.updateReviewComment,
+                                 mapOf("id" to commentId,
+                                       "body" to newText),
+                                 GHPullRequestReviewComment::class.java,
+                                 "updatePullRequestReviewComment", "pullRequestReviewComment")
     }
   }
 }

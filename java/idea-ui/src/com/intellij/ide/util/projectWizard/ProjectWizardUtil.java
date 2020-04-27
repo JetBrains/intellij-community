@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -31,8 +32,8 @@ public class ProjectWizardUtil {
     if (!dir.exists()) {
       if (promptUser) {
         String ide = ApplicationNamesInfo.getInstance().getFullProductName();
-        String message = IdeBundle.message("prompt.project.wizard.directory.does.not.exist", promptPrefix, dir, ide);
-        int answer = Messages.showOkCancelDialog(message, IdeBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
+        String message = JavaUiBundle.message("prompt.project.wizard.directory.does.not.exist", promptPrefix, dir, ide);
+        int answer = Messages.showOkCancelDialog(message, JavaUiBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
         if (answer != Messages.OK) {
           return false;
         }
@@ -45,7 +46,7 @@ public class ProjectWizardUtil {
     }
 
     if (SystemInfo.isUnix && !dir.canWrite()) {
-      Messages.showErrorDialog(IdeBundle.message("error.directory.read.only", dir.getPath()), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(JavaUiBundle.message("error.directory.read.only", dir.getPath()), CommonBundle.getErrorTitle());
       return false;
     }
 

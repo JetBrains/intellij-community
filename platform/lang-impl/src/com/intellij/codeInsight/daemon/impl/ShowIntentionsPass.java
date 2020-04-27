@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -190,7 +191,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
                                @Nullable PsiFile psiFile,
-                               @NotNull IntentionActionFilter[] filters) {
+                               IntentionActionFilter @NotNull [] filters) {
       for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext(); ) {
         HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
         for (IntentionActionFilter filter : filters) {
@@ -330,7 +331,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
 
       if (indicator != null) {
-        indicator.setText("Searching for additional intention actions & quick fixes");
+        indicator.setText(CodeInsightBundle.message("progress.text.searching.for.additional.intention.actions.quick.fixes"));
       }
       for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
         try {

@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
@@ -71,9 +71,9 @@ public class CreateRendererAction extends AnAction {
           final UserRenderersConfigurable ui = new UserRenderersConfigurable();
           ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings> configurable =
             new ConfigurableBase<UserRenderersConfigurable, NodeRendererSettings>(
-                                                                    "reference.idesettings.debugger.typerenderers",
-                                                                    DebuggerBundle.message("user.renderers.configurable.display.name"),
-                                                                    "reference.idesettings.debugger.typerenderers") {
+              "reference.idesettings.debugger.typerenderers",
+              JavaDebuggerBundle.message("user.renderers.configurable.display.name"),
+              "reference.idesettings.debugger.typerenderers") {
               @NotNull
               @Override
               protected NodeRendererSettings getSettings() {

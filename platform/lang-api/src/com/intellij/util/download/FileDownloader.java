@@ -28,8 +28,6 @@ import java.util.List;
 
 /**
  * Use {@link DownloadableFileService} to create instances of this interface
- *
- * @author nik
  */
 public interface FileDownloader {
   /**
@@ -74,8 +72,7 @@ public interface FileDownloader {
    * @deprecated use {@link #downloadFilesWithProgress} instead
    */
   @Deprecated
-  @Nullable
-  VirtualFile[] download();
+  VirtualFile @Nullable [] download();
 
   /**
    * @deprecated use {@link #downloadWithProgress} instead

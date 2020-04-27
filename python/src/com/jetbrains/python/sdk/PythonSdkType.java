@@ -45,7 +45,6 @@ import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -59,8 +58,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -75,8 +76,6 @@ public final class PythonSdkType extends SdkType {
   @NonNls private static final String SKELETONS_TOPIC = "Skeletons";
 
   private static final Key<WeakReference<Component>> SDK_CREATOR_COMPONENT_KEY = Key.create("#com.jetbrains.python.sdk.creatorComponent");
-
-  private static final Key<Map<String, String>> ENVIRONMENT_KEY = Key.create("ENVIRONMENT_KEY");
 
   /**
    * Note that <i>\w+.*</i> pattern is not sufficient because we need also the
@@ -142,7 +141,7 @@ public final class PythonSdkType extends SdkType {
     final boolean isWindows = SystemInfo.isWindows;
     return new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
             throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
@@ -411,13 +410,18 @@ public final class PythonSdkType extends SdkType {
   /**
    * Returns skeletons location on the local machine. Independent of SDK credentials type (e.g. ssh, Vagrant, Docker or else).
    */
+  @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static String getSkeletonsPath(String basePath, String sdkHome) {
-    String sep = File.separator;
-    return getSkeletonsRootPath(basePath) + sep + FileUtil.toSystemIndependentName(sdkHome).hashCode() + sep;
+    return PythonSdkUtil.getSkeletonsPath(basePath, sdkHome);
   }
 
+  @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static String getSkeletonsRootPath(String basePath) {
-    return basePath + File.separator + PythonSdkUtil.SKELETON_DIR_NAME;
+    return PythonSdkUtil.getSkeletonsRootPath(basePath);
   }
 
   @NotNull
@@ -546,31 +550,17 @@ public final class PythonSdkType extends SdkType {
   }
 
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static Map<String, String> activateVirtualEnv(@NotNull Sdk sdk) {
-    final Map<String, String> cached = sdk.getUserData(ENVIRONMENT_KEY);
-    if (cached != null) return cached;
-
-    final String sdkHome = sdk.getHomePath();
-    if (sdkHome == null) return Collections.emptyMap();
-
-    final Map<String, String> environment = activateVirtualEnv(sdkHome);
-    sdk.putUserData(ENVIRONMENT_KEY, environment);
-    return environment;
+    return PySdkUtil.activateVirtualEnv(sdk);
   }
 
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public static Map<String, String> activateVirtualEnv(@NotNull String sdkHome) {
-    PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-    if (reader.getActivate() != null) {
-      try {
-        return Collections.unmodifiableMap(PyVirtualEnvReader.Companion.filterVirtualEnvVars(reader.readPythonEnv()));
-      }
-      catch (Exception e) {
-        LOG.error("Couldn't read virtualenv variables", e);
-      }
-    }
-
-    return Collections.emptyMap();
+    return PySdkUtil.activateVirtualEnv(sdkHome);
   }
 
   @Nullable

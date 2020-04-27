@@ -33,7 +33,7 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Remove modifier";
+    return InspectionGadgetsBundle.message("remove.modifier.fix.family.name");
   }
 
   @Override

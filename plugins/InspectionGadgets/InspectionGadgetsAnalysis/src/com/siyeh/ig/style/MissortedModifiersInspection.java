@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -28,11 +28,14 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MissortedModifiersInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
@@ -41,10 +44,17 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
    */
   public boolean m_requireAnnotationsFirst = true;
 
+  public boolean typeUseWithType = false;
+
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor");
+    final PsiModifierList modifierList = (PsiModifierList)infos[0];
+    final String text = Stream.of(modifierList.getChildren())
+      .filter(e -> !(e instanceof PsiWhiteSpace) && !(e instanceof PsiComment))
+      .map(PsiElement::getText)
+      .collect(Collectors.joining(" "));
+    return InspectionGadgetsBundle.message("missorted.modifiers.problem.descriptor", text);
   }
 
   @Override
@@ -58,12 +68,21 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
-                                          this, "m_requireAnnotationsFirst");
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "typeUseWithType");
+    writeBooleanOption(node, "typeUseWithType", false);
   }
 
-  private static class SortModifiersFix extends InspectionGadgetsFix {
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    final JCheckBox box = panel.addCheckboxEx(InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
+                                              "m_requireAnnotationsFirst");
+    panel.addDependentCheckBox(InspectionGadgetsBundle.message("missorted.modifiers.typeuse.before.type.option"), "typeUseWithType", box);
+    return panel;
+  }
+
+  private class SortModifiersFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -73,7 +92,12 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiModifierList modifierList = (PsiModifierList)descriptor.getPsiElement();
+      PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiModifierList)) {
+        element = element.getParent();
+        if (!(element instanceof PsiModifierList)) return;
+      }
+      final PsiModifierList modifierList = (PsiModifierList)element;
       final List<String> modifiers = new SmartList<>();
       final List<String> typeAnnotations = new SmartList<>();
       final List<String> annotations = new SmartList<>();
@@ -85,7 +109,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           final PsiAnnotation annotation = (PsiAnnotation)child;
           if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
             final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-            if (!modifiers.isEmpty() ||
+            if (typeUseWithType || !modifiers.isEmpty() ||
                 AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
               typeAnnotations.add(child.getText());
               continue;
@@ -161,7 +185,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       if (!isModifierListMissorted(modifierList)) {
         return;
       }
-      registerError(modifierList);
+      registerError(isVisibleHighlight(modifierList) ? modifierList.getFirstChild() : modifierList, modifierList);
     }
 
     private boolean isModifierListMissorted(PsiModifierList modifierList) {
@@ -185,9 +209,11 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
             if (AnnotationTargetUtil.isTypeAnnotation(annotation) && !isMethodWithVoidReturnType(modifierList.getParent())) {
               // type annotations go next to the type
               // see e.g. https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html
+              if (typeUseWithType || currentModifier != null) {
+                typeAnnotationSeen = true;
+              }
               final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-              if (currentModifier != null ||
-                  AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
+              if (AnnotationTargetUtil.findAnnotationTarget(annotation, targets[0]) == PsiAnnotation.TargetType.UNKNOWN) {
                 typeAnnotationSeen = true;
               }
               continue;

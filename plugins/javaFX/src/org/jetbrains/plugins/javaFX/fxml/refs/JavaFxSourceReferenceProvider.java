@@ -24,10 +24,9 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 class JavaFxSourceReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
-                                               @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element,
+                                                         @NotNull ProcessingContext context) {
     final FileReferenceSet set = new FileReferenceSet(((XmlAttributeValue)element).getValue(), element, 1, null, true);
     return set.getAllReferences();
   }

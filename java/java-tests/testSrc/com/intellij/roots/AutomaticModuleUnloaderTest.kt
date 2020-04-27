@@ -25,9 +25,6 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
-/**
- * @author nik
- */
 @RunsInEdt
 class AutomaticModuleUnloaderTest {
   @Rule

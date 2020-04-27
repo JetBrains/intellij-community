@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JavaDeploymentSourceUtilImpl extends JavaDeploymentSourceUtil {
   @NotNull
   @Override

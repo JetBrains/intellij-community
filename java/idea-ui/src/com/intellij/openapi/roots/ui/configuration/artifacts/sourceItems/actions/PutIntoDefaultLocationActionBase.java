@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class PutIntoDefaultLocationActionBase extends AnAction {
   protected final SourceItemsTree mySourceItemsTree;
   protected final ArtifactEditorEx myArtifactEditor;

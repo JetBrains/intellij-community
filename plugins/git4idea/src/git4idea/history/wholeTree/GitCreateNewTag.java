@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 
 import java.util.Collections;
@@ -38,7 +39,9 @@ public class GitCreateNewTag {
   }
 
   public void execute() {
-    final String name = Messages.showInputDialog(myProject, "Enter the name of new tag", "Create New Tag On " + myReference,
+    final String name = Messages.showInputDialog(myProject,
+                                                 GitBundle.message("git.new.tag.dialog.tag.name.label"),
+                                                 GitBundle.message("git.new.tag.dialog.title", myReference),
                                                  Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {

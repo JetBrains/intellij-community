@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
@@ -140,7 +141,7 @@ public class ClassGenerator {
 
   private void writeAllMethods(StringBuilder text, Collection<PsiMethod> methods, PsiClass aClass) {
     for (PsiMethod method : methods) {
-      if (!shouldBeGenerated(method)) continue;
+      if (!shouldBeGenerated(method, aClass)) continue;
 
       if (method.isConstructor()) {
         classItemGenerator.writeConstructor(text, method, aClass.isEnum());
@@ -153,7 +154,12 @@ public class ClassGenerator {
   }
 
 
-  private static boolean shouldBeGenerated(PsiMethod method) {
+  private static boolean shouldBeGenerated(PsiMethod method, PsiClass containingClass) {
+    if (containingClass instanceof GrEnumTypeDefinitionImpl &&
+        ((GrEnumTypeDefinitionImpl)containingClass).isPredefinedEnumMethod(method)) {
+      return false;
+    }
+
     for (PsiMethod psiMethod : method.findSuperMethods()) {
       if (!psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final PsiType type = method.getReturnType();

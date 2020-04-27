@@ -16,21 +16,21 @@ public class ChildInfoImpl implements ChildInfo {
   private final int id;
   private final int nameId;
   private final String symLinkTarget;
-  private final @Nullable("null means children are unknown") ChildInfo[] children;
+  private final ChildInfo @Nullable("null means children are unknown") [] children;
 
   private final byte fileAttributesType;  // inlined FileAttributes to reduce memory
   private final @FileAttributes.Flags byte flags; // -1 means getFileAttributes == null
   private final long length;
   private final long lastModified;
 
-  public ChildInfoImpl(int id, @NotNull String name, @Nullable FileAttributes attributes, @Nullable ChildInfo[] children, @Nullable String symLinkTarget) {
+  public ChildInfoImpl(int id, @NotNull String name, @Nullable FileAttributes attributes, ChildInfo @Nullable [] children, @Nullable String symLinkTarget) {
     this(id, FileNameCache.storeName(name), attributes, children, symLinkTarget);
   }
 
   public ChildInfoImpl(int id,
                        int nameId,
                        @Nullable FileAttributes attributes,
-                       @Nullable ChildInfo[] children,
+                       ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
     this.nameId = nameId;
     this.id = id;
@@ -72,9 +72,8 @@ public class ChildInfoImpl implements ChildInfo {
     return symLinkTarget;
   }
 
-  @Nullable
   @Override
-  public ChildInfo[] getChildren() {
+  public ChildInfo @Nullable [] getChildren() {
     return children;
   }
 

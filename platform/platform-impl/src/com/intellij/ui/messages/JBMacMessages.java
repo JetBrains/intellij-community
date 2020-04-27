@@ -55,7 +55,7 @@ public class JBMacMessages extends MacMessagesEmulation {
   @Override
   public int showMessageDialog(@NotNull String title,
                                String message,
-                               @NotNull String[] buttons,
+                               String @NotNull [] buttons,
                                boolean errorStyle,
                                @Nullable Window window,
                                int defaultOptionIndex,
@@ -113,6 +113,10 @@ public class JBMacMessages extends MacMessagesEmulation {
       if (focusOwner != null) {
         _window = SwingUtilities.getWindowAncestor(focusOwner);
       }
+    }
+
+    if (_window == null) {
+      _window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     }
 
     if (_window == null) {

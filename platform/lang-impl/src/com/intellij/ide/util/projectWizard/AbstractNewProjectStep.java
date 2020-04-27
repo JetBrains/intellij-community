@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.RecentProjectsManager;
@@ -8,6 +8,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
@@ -44,9 +45,10 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   private final Customization<T> myCustomization;
 
   protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
-    super(null, true);
+    super(Presentation.NULL_STRING, true);
     myCustomization = customization;
     updateActions();
+    DirectoryProjectGenerator.EP_NAME.addExtensionPointListener(() -> updateActions(), null);
   }
 
   @Override
@@ -98,12 +100,11 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
                                                                                     @NotNull AbstractCallback<T> callback);
 
 
-    @NotNull
-    protected DirectoryProjectGenerator<T>[] getProjectGenerators() {
+    protected DirectoryProjectGenerator<T> @NotNull [] getProjectGenerators() {
       return DirectoryProjectGenerator.EP_NAME.getExtensions();
     }
 
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T>[] generators, @NotNull AbstractCallback<T> callback) {
+    public AnAction[] getActions(DirectoryProjectGenerator<T> @NotNull [] generators, @NotNull AbstractCallback<T> callback) {
       final List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<T> projectGenerator : generators) {
         try {
@@ -115,8 +116,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
 
-    @NotNull
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback<T> callback) {
+    public AnAction @NotNull [] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback<T> callback) {
       if (shouldIgnore(generator)) {
         return AnAction.EMPTY_ARRAY;
       }
@@ -196,7 +196,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       ((TemplateProjectDirectoryGenerator<?>)generator).generateProject(baseDir.getName(), locationString);
     }
     else if (generator != null) {
-      options.callback = (p, module) -> generator.generateProject(p, baseDir, settings, module);
+      options.setCallback((p, module) -> generator.generateProject(p, baseDir, settings, module));
     }
     return PlatformProjectOpenProcessor.openExistingProject(location, location, options);
   }

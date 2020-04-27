@@ -139,7 +139,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     context.showHint(place, place.getTextRange().getStartOffset(), this);
   }
 
-  private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, @NotNull GroovyResolveResult[] variants) {
+  private static void addMethodAndClosureVariants(@NotNull List<Object> elementToShow, GroovyResolveResult @NotNull [] variants) {
     for (GroovyResolveResult variant : variants) {
       final PsiElement element = variant.getElement();
       if (element instanceof PsiMethod) {
@@ -443,9 +443,8 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     }
   }
 
-  @NotNull
   @Override
-  public GroovyPsiElement[] getActualParameters(@NotNull GroovyPsiElement o) {
+  public GroovyPsiElement @NotNull [] getActualParameters(@NotNull GroovyPsiElement o) {
     if (o instanceof GrArgumentList) return ((GrArgumentList)o).getAllArguments();
     return GroovyPsiElement.EMPTY_ARRAY;
   }

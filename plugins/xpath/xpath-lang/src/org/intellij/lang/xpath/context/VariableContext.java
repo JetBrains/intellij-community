@@ -25,16 +25,14 @@ import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 
 public interface VariableContext<VarType> {
-    @NotNull
-    VarType[] getVariablesInScope(XPathElement element);
+    VarType @NotNull [] getVariablesInScope(XPathElement element);
 
     boolean canResolve();
 
     @Nullable
     XPathVariable resolve(XPathVariableReference reference);
 
-    @NotNull
-    IntentionAction[] getUnresolvedVariableFixes(XPathVariableReference reference);
+    IntentionAction @NotNull [] getUnresolvedVariableFixes(XPathVariableReference reference);
 
     boolean isReferenceTo(PsiElement element, XPathVariableReference reference);
 }

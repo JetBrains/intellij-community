@@ -106,6 +106,7 @@ interface TypedEntityWithPersistentId : TypedEntity {
 interface TypedEntityStorage {
   fun <E : TypedEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : TypedEntity, R : TypedEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
+  fun <E : TypedEntityWithPersistentId, R : TypedEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>>
 }
@@ -133,7 +134,7 @@ interface TypedEntityStorageBuilder : TypedEntityStorage, TypedEntityStorageDiff
   fun toStorage(): TypedEntityStorage
 
   companion object {
-    fun create(): TypedEntityStorageBuilder = TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
+    fun create(): TypedEntityStorageBuilder = TypedEntityStorageBuilderImpl(HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), HashMap(), EntityMetaDataRegistry())
     fun from(storage: TypedEntityStorage): TypedEntityStorageBuilder {
       return TypedEntityStorageBuilderImpl(storage as ProxyBasedEntityStorage)
     }

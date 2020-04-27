@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class DataSharingOptionsAction extends DumbAwareAction {
   public DataSharingOptionsAction() {
-    super("Data Sharing Options...", "Data Sharing Options", null);
+    super(IdeBundle.messagePointer("action.DataSharingOptionsAction.text"),
+          IdeBundle.messagePointer("action.DataSharingOptionsAction.description"), null);
   }
 
   @Override

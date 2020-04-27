@@ -21,9 +21,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 @ApiStatus.Experimental
 public interface ExternalProjectSystemRegistry {
   static ExternalProjectSystemRegistry getInstance() {

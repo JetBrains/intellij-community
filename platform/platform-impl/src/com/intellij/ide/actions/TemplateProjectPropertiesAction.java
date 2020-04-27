@@ -2,22 +2,19 @@
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 
 public class TemplateProjectPropertiesAction extends AnAction implements DumbAware {
   public TemplateProjectPropertiesAction() {
-    String projectConceptName = StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName());
-    getTemplatePresentation().setText(ActionsBundle.message("action.TemplateProjectProperties.text.template", CommonBundle.settingsTitle(), projectConceptName));
-    getTemplatePresentation().setDescription(ActionsBundle.message("action.TemplateProjectProperties.description.template", projectConceptName));
+    getTemplatePresentation().setText(() -> IdeUICustomization.getInstance().projectMessage("action.TemplateProjectProperties.text.template", CommonBundle.settingsTitle()));
+    getTemplatePresentation().setDescription(() -> IdeUICustomization.getInstance().projectMessage("action.TemplateProjectProperties.description.template"));
   }
 
   @Override

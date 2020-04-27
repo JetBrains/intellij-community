@@ -110,10 +110,14 @@ if sys.version_info >= (3, 7):
     )
 
 if sys.platform != 'win32':
-    # This is already imported above on Windows.
-    SelectorEventLoop: Type[AbstractEventLoop]
-
-# TODO: AbstractChildWatcher (UNIX only)
+    from .unix_events import (
+        AbstractChildWatcher as AbstractChildWatcher,
+        BaseChildWatcher as BaseChildWatcher,
+        SafeChildWatcher as SafeChildWatcher,
+        SelectorEventLoop as SelectorEventLoop,
+    )
+    if sys.version_info >= (3, 8):
+        from .unix_events import MultiLoopChildWatcher as MultiLoopChildWatcher, ThreadedChildWatcher as ThreadedChildWatcher
 
 if sys.version_info >= (3, 8):
     from asyncio.exceptions import (
@@ -125,9 +129,10 @@ if sys.version_info >= (3, 8):
         TimeoutError as TimeoutError,
     )
 else:
-    from asyncio.events import (
-        SendfileNotAvailableError as SendfileNotAvailableError
-    )
+    if sys.version_info >= (3, 7):
+        from asyncio.events import (
+            SendfileNotAvailableError as SendfileNotAvailableError
+        )
     from asyncio.futures import (
         CancelledError as CancelledError,
         TimeoutError as TimeoutError,

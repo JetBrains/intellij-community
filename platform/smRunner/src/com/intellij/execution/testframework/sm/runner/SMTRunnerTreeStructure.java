@@ -55,9 +55,8 @@ public class SMTRunnerTreeStructure extends TestTreeViewStructure<SMTestProxy>
                                        (NodeDescriptor<SMTestProxy>)parentDesc);
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull final Object element) {
+  public Object @NotNull [] getChildElements(@NotNull final Object element) {
     final List<? extends SMTestProxy> results =
         ((SMTestProxy)element).getChildren(getFilter());
 

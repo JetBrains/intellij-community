@@ -2,6 +2,7 @@
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.JavaModuleType;
@@ -16,7 +17,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.light.LightJavaModule;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
@@ -100,18 +100,18 @@ public class JavaModuleRenameListener implements ModuleListener {
     @Nls(capitalization = Nls.Capitalization.Title)
     @Override
     public String getDialogTitle() {
-      return RefactoringBundle.message("auto.rename.module.dialog.title");
+      return JavaRefactoringBundle.message("auto.rename.module.dialog.title");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public String getDialogDescription() {
-      return RefactoringBundle.message("auto.rename.module.dialog.description");
+      return JavaRefactoringBundle.message("auto.rename.module.dialog.description");
     }
 
     @Override
     public String entityName() {
-      return RefactoringBundle.message("auto.rename.module.entity");
+      return JavaRefactoringBundle.message("auto.rename.module.entity");
     }
   }
 }

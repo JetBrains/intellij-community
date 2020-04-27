@@ -78,6 +78,15 @@ class _SingleDispatchCallable(Generic[_T]):
 def singledispatch(func: Callable[..., _T]) -> _SingleDispatchCallable[_T]: ...
 
 if sys.version_info >= (3, 8):
+    class singledispatchmethod(Generic[_T]):
+        dispatcher: _SingleDispatchCallable[_T]
+        func: Callable[..., _T]
+        def __init__(self, func: Callable[..., _T]) -> None: ...
+        @overload
+        def register(self, cls: Any, method: None = ...) -> Callable[[Callable[..., _T]], Callable[..., _T]]: ...
+        @overload
+        def register(self, cls: Any, method: Callable[..., _T]) -> Callable[..., _T]: ...
+
     class cached_property(Generic[_T]):
         func: Callable[[Any], _T]
         attrname: Optional[str]

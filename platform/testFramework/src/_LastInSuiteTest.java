@@ -95,7 +95,7 @@ public class _LastInSuiteTest extends TestCase {
 
       List<Object> alive = ContainerUtil.mapNotNull(references, WeakReference::get);
       if (!alive.isEmpty()) {
-        String aliveExtensions = StringUtil.join(alive, o -> o.getClass().getName(), "\n");
+        String aliveExtensions = StringUtil.join(alive, o -> o +" ("+o.getClass()+")", "\n");
         System.out.printf("##teamcity[%s name='%s' message='%s']%n", MapSerializerUtil.TEST_FAILED, testName,
                           escape("Not unloaded extensions:\n" + aliveExtensions + "\n\n" + "See testDynamicExtensions output to find a heapDump"));
         System.out.flush();

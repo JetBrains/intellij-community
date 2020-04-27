@@ -184,8 +184,7 @@ public class MavenSourceFoldersModuleExtension extends ModuleExtension {
     return null;
   }
 
-  @NotNull
-  public String[] getSourceRootUrls(boolean includingTests) {
+  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
     List<String> result = new SmartList<>();
     for (JpsSourceFolder eachFolder : myJpsSourceFolders) {
       if (includingTests || !eachFolder.isTestSource()) {

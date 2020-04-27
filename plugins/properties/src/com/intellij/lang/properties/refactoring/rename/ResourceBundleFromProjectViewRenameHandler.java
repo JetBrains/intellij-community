@@ -40,7 +40,7 @@ public class ResourceBundleFromProjectViewRenameHandler implements RenameHandler
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     invoke(project, null, null, dataContext);
   }
 }

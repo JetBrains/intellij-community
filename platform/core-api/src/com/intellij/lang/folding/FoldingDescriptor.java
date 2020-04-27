@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.folding;
 
 import com.intellij.lang.ASTNode;
@@ -6,22 +6,22 @@ import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.BitUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * Defines a single folding region in the code.
  *
  * <p><a name="Dependencies"><b>Dependencies</b></a></p>
- * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker}, 
- * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}), 
- * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass). 
- * 
+ * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker},
+ * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}),
+ * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass).
+ *
  * @author max
  * @see FoldingBuilder
  */
@@ -54,7 +54,7 @@ public class FoldingDescriptor {
   }
 
   public FoldingDescriptor(@NotNull PsiElement element, @NotNull TextRange range) {
-    this(ObjectUtils.assertNotNull(element.getNode()), range, null);
+    this(Objects.requireNonNull(element.getNode()), range, null);
   }
 
   /**

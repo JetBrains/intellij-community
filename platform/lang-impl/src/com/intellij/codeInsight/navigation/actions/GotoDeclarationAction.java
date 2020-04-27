@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
@@ -46,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
@@ -69,50 +71,45 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
+      try {
+        int offset = editor.getCaretModel().getOffset();
+        Pair<PsiElement[], PsiElement> pair = ActionUtil
+          .underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"), () -> doSelectCandidate(project, editor, offset));
+        FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
-    DumbService.getInstance(project).setAlternativeResolveEnabled(true);
-    try {
-      int offset = editor.getCaretModel().getOffset();
-      Pair<PsiElement[], PsiElement> pair = ActionUtil
-        .underModalProgress(project, "Resolving Reference...", () -> doSelectCandidate(project, editor, offset));
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
+        PsiElement[] elements = pair.first;
+        PsiElement usage = pair.second;
 
-      PsiElement[] elements = pair.first;
-      PsiElement usage = pair.second;
-
-      if (elements.length != 1) {
-        if (elements.length == 0) {
-          if (usage != null) {
-            startFindUsages(editor, project, usage);
-            return;
+        if (elements.length != 1) {
+          if (elements.length == 0) {
+            if (usage != null) {
+              startFindUsages(editor, project, usage);
+              return;
+            }
           }
+
+          chooseAmbiguousTarget(project, editor, offset, elements, file);
+          return;
         }
 
-        //disable 'no declaration found' notification for keywords
-        if (isKeywordUnderCaret(project, file, offset)) return;
+        PsiElement element = elements[0];
+        if (element == usage) {
+          startFindUsages(editor, project, element);
+          return;
+        }
 
-        chooseAmbiguousTarget(project, editor, offset, elements, file);
-        return;
+        PsiElement navElement = element.getNavigationElement();
+        navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
+        if (navElement != null) {
+          gotoTargetElement(navElement, editor, file);
+        }
       }
-
-      PsiElement element = elements[0];
-      if (element == usage) {
-        startFindUsages(editor, project, element);
-        return;
+      catch (IndexNotReadyException e) {
+        DumbService.getInstance(project).showDumbModeNotification(
+          CodeInsightBundle.message("message.navigation.is.not.available.here.during.index.update"));
       }
-
-      PsiElement navElement = element.getNavigationElement();
-      navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
-      if (navElement != null) {
-        gotoTargetElement(navElement, editor, file);
-      }
-    }
-    catch (IndexNotReadyException e) {
-      DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
-    }
-    finally {
-      DumbService.getInstance(project).setAlternativeResolveEnabled(false);
-    }
+    });
   }
 
   @NotNull
@@ -131,14 +128,21 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   public static void startFindUsages(@NotNull Editor editor, @NotNull Project project, @NotNull PsiElement element) {
+    startFindUsages(editor, project, element, null);
+  }
+
+  public static void startFindUsages(@NotNull Editor editor,
+                                     @NotNull Project project,
+                                     @NotNull PsiElement element,
+                                     @Nullable RelativePoint point) {
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
       DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
     }
     else {
-      RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
+      RelativePoint popupPosition = point != null ? point : JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      ShowUsagesAction.startFindUsages(element, popupPosition, editor);
     }
   }
 
@@ -159,9 +163,16 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     boolean found =
       chooseAmbiguousTarget(project, editor, offset, navigateProcessor, CodeInsightBundle.message("declaration.navigation.title"),
                             elements);
-    if (!found) {
+
+    // Disable the 'no declaration found' notification for keywords
+    if (!found && !isUnderDoubleClick() && !isKeywordUnderCaret(project, currentFile, offset)) {
       HintManager.getInstance().showErrorHint(editor, "Cannot find declaration to go to");
     }
+  }
+
+  private static boolean isUnderDoubleClick() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    return event instanceof MouseEvent && ((MouseEvent)event).getClickCount() == 2;
   }
 
   private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
@@ -200,7 +211,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
-                                              @Nullable PsiElement[] elements) {
+                                              PsiElement @Nullable [] elements) {
     Project project = editor.getProject();
     if (project == null) {
       return false;
@@ -214,14 +225,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
-                                              @Nullable PsiElement[] elements) {
+                                              PsiElement @Nullable [] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;
     }
 
     final PsiElement[] finalElements = elements;
     Pair<PsiElement[], PsiReference> pair =
-      ActionUtil.underModalProgress(project, "Resolving Reference...", () -> doChooseAmbiguousTarget(editor, offset, finalElements));
+      ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference"), () -> doChooseAmbiguousTarget(editor, offset, finalElements));
 
     elements = pair.first;
     PsiReference reference = pair.second;
@@ -256,7 +267,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   @NotNull
   private static Pair<PsiElement[], PsiReference> doChooseAmbiguousTarget(@NotNull Editor editor,
                                                                           int offset,
-                                                                          @Nullable PsiElement[] elements) {
+                                                                          PsiElement @Nullable [] elements) {
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
@@ -286,9 +297,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return targets.length == 1 ? targets[0] : null;
   }
 
-  @NotNull
   @VisibleForTesting
-  public static PsiElement[] findAllTargetElements(Project project, Editor editor, int offset) {
+  public static @NotNull PsiElement @NotNull [] findAllTargetElements(Project project, Editor editor, int offset) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return PsiElement.EMPTY_ARRAY;
     }
@@ -297,8 +307,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return targets != null ? targets : PsiElement.EMPTY_ARRAY;
   }
 
-  @Nullable
-  static PsiElement[] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
+  static @NotNull PsiElement @Nullable [] findTargetElementsFromProviders(@NotNull Project project, @NotNull Editor editor, int offset) {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -306,8 +315,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     return GotoDeclarationUtil.findTargetElementsFromProviders(editor, offset, file);
   }
 
-  @Nullable
-  public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
+  public static @NotNull PsiElement @Nullable [] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
     PsiElement[] fromProviders = findTargetElementsFromProviders(project, editor, offset);
     if (fromProviders == null || fromProviders.length > 0) {
       return fromProviders;

@@ -120,7 +120,7 @@ public class StringExpressionHelper {
   @Nullable
   private static Pair<PsiElement, String> evaluatePolyadicExpressions(@NotNull PsiElement expression,
                                                                       @NotNull Collection<PsiElement> visited,
-                                                                      @NotNull PsiExpression... operands) {
+                                                                      PsiExpression @NotNull ... operands) {
     StringBuilder sb = new StringBuilder();
     for (PsiExpression operand : operands) {
       Pair<PsiElement, String> pair = evaluateExpression(operand, visited);

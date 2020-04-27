@@ -16,6 +16,9 @@
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.psi.PyCallSiteExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,5 +61,24 @@ public interface PyCallableType extends PyType {
   @Nullable
   default List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return null;
+  }
+
+  @Nullable
+  default PyCallable getCallable() {
+    return null;
+  }
+
+  @Nullable
+  default PyFunction.Modifier getModifier() {
+    return null;
+  }
+
+  /**
+   * @return number of implicitly passed positional parameters; 0 means no parameters are passed implicitly.
+   * Note that a <tt>*args</tt> is never marked as passed implicitly.
+   * E.g. for a function like <tt>foo(a, b, *args)</tt> always holds <tt>getImplicitOffset() < 2</tt>.
+   */
+  default int getImplicitOffset() {
+    return 0;
   }
 }

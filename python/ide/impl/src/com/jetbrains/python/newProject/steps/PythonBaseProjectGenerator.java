@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
@@ -42,7 +43,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
   @Nls
   @Override
   public String getName() {
-    return "Pure Python";
+    return PyBundle.message("pure.python.project");
   }
 
   @Override

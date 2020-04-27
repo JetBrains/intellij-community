@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 * @author Konstantin Bulenkov
 */
 public class SpeedSearchComparator {
+  protected String myRecentSearchText;
   private MinusculeMatcher myMinusculeMatcher;
-  private String myRecentSearchText;
   private final boolean myShouldMatchFromTheBeginning;
   private final boolean myShouldMatchCamelCase;
 

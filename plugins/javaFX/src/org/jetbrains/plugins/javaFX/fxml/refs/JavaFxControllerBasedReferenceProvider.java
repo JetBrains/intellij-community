@@ -23,9 +23,8 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 public abstract class JavaFxControllerBasedReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public final PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public final PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue xmlAttrVal = (XmlAttributeValue)element;
     final PsiFile containingFile = xmlAttrVal.getContainingFile();
     if (!JavaFxFileTypeFactory.isFxml(containingFile)) return PsiReference.EMPTY_ARRAY;

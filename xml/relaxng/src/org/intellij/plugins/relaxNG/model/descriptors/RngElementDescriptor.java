@@ -350,9 +350,8 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     return myElementPattern.hashCode();
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies() {
+  public Object @NotNull [] getDependencies() {
     return myNsDescriptor.getDependencies();
   }
 

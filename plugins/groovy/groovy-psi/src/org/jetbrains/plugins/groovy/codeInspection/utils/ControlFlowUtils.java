@@ -441,7 +441,7 @@ public class ControlFlowUtils {
   }
 
   @NotNull
-  public static List<GrStatement> collectReturns(@NotNull Instruction[] flow, final boolean allExitPoints) {
+  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
     final List<GrStatement> res = new ArrayList<>();
     visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {

@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress;
 
-import com.intellij.CommonBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.EdtReplacementThread;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -50,10 +37,10 @@ public abstract class Task implements TaskInfo, Progressive {
   protected String myTitle;
   private final boolean myCanBeCancelled;
 
-  private String myCancelText = CommonBundle.getCancelButtonText();
-  private String myCancelTooltipText = CommonBundle.getCancelButtonText();
+  private String myCancelText = CoreBundle.message("button.cancel");
+  private String myCancelTooltipText = CoreBundle.message("button.cancel");
 
-  private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+  private Task(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title, boolean canBeCancelled) {
     myProject = project;
     myTitle = title;
     myCanBeCancelled = canBeCancelled;
@@ -106,6 +93,14 @@ public abstract class Task implements TaskInfo, Progressive {
   public void onFinished() {
   }
 
+  /**
+   * Specifies the thread to run callbacks on. See {@link EdtReplacementThread} documentation for more info.
+   */
+  @NotNull
+  public EdtReplacementThread whereToRunCallbacks() {
+    return EdtReplacementThread.EDT_WITH_IW;
+  }
+
   public final Project getProject() {
     return myProject;
   }
@@ -121,7 +116,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+  public final Task setTitle(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title) {
     myTitle = title;
     return this;
   }
@@ -132,7 +127,7 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @NotNull
-  public final Task setCancelText(@Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
+  public final Task setCancelText(@Nls(capitalization = Nls.Capitalization.Sentence) String cancelText) {
     myCancelText = cancelText;
     return this;
   }
@@ -151,9 +146,8 @@ public abstract class Task implements TaskInfo, Progressive {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
-  public final Task setCancelTooltipText(String cancelTooltipText) {
+  public final Task setCancelTooltipText(@Nls(capitalization = Nls.Capitalization.Sentence) String cancelTooltipText) {
     myCancelTooltipText = cancelTooltipText;
     return this;
   }
@@ -189,16 +183,16 @@ public abstract class Task implements TaskInfo, Progressive {
   public abstract static class Backgroundable extends Task implements PerformInBackgroundOption {
     protected final PerformInBackgroundOption myBackgroundOption;
 
-    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title) {
+    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title) {
       this(project, title, true);
     }
 
-    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title, boolean canBeCancelled) {
+    public Backgroundable(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title, boolean canBeCancelled) {
       this(project, title, canBeCancelled, null);
     }
 
     public Backgroundable(@Nullable Project project,
-                          @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                          @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
                           boolean canBeCancelled,
                           @Nullable PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled);
@@ -236,7 +230,6 @@ public abstract class Task implements TaskInfo, Progressive {
       super(project, title, canBeCancelled);
     }
 
-
     @Override
     public final boolean isModal() {
       return true;
@@ -245,7 +238,7 @@ public abstract class Task implements TaskInfo, Progressive {
 
   public abstract static class ConditionalModal extends Backgroundable {
     public ConditionalModal(@Nullable Project project,
-                            @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                            @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String title,
                             boolean canBeCancelled,
                             @NotNull PerformInBackgroundOption backgroundOption) {
       super(project, title, canBeCancelled, backgroundOption);
@@ -263,15 +256,15 @@ public abstract class Task implements TaskInfo, Progressive {
     private final String myNotificationText;
     private final boolean myShowWhenFocused;
 
-    public NotificationInfo(@NotNull final String notificationName,
-                            @NotNull final String notificationTitle,
-                            @NotNull final String notificationText) {
+    public NotificationInfo(@NotNull String notificationName,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Title) String notificationTitle,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String notificationText) {
       this(notificationName, notificationTitle, notificationText, false);
     }
 
-    public NotificationInfo(@NotNull final String notificationName,
-                            @NotNull final String notificationTitle,
-                            @NotNull final String notificationText,
+    public NotificationInfo(@NotNull String notificationName,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String notificationTitle,
+                            @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String notificationText,
                             final boolean showWhenFocused) {
       myNotificationName = notificationName;
       myNotificationTitle = notificationTitle;
@@ -285,11 +278,13 @@ public abstract class Task implements TaskInfo, Progressive {
     }
 
     @NotNull
+    @Nls(capitalization = Nls.Capitalization.Title)
     public String getNotificationTitle() {
       return myNotificationTitle;
     }
 
     @NotNull
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     public String getNotificationText() {
       return myNotificationText;
     }

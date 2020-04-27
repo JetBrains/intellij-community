@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -25,9 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author max
- */
 public final class PropertiesReferenceManager {
   private final PsiManager myPsiManager;
   private final DumbService myDumbService;

@@ -118,7 +118,7 @@ public class InvokeIntention extends ActionOnFile {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
-    Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
+    Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor);
 
     Disposable disposable = Disposer.newDisposable();
     try {

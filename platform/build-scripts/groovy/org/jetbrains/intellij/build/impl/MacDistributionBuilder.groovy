@@ -13,9 +13,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDate
 
-/**
- * @author nik
- */
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
@@ -49,19 +46,22 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </dict>
 """ : "")
     def associations = ""
-    if (!customizer.fileAssociations.empty) {
-      associations = """<dict>
+    for (FileAssociation fileAssociation : customizer.fileAssociations) {
+        def iconFileName = targetIcnsFileName
+        def iconFile = fileAssociation.iconPath
+        if (!iconFile.isEmpty()) {
+          iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
+        }
+        associations += """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
 """
-      customizer.fileAssociations.each {
-        associations += "          <string>${it}</string>\n"
-      }
-      associations +=  """        </array>
+          associations += "          <string>${fileAssociation.extension}</string>\n"
+          associations +=  """        </array>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
         <key>CFBundleTypeIconFile</key>
-        <string>$targetIcnsFileName</string>        
+        <string>$iconFileName</string>        
       </dict>
 """
     }
@@ -107,22 +107,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         buildContext.executeStep("Build .dmg artifact for macOS", BuildOptions.MAC_DMG_STEP) {
           boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
                              !SystemProperties.getBooleanProperty("build.is.personal", false)
-          // With second JRE
           def jreManager = buildContext.bundledJreManager
-          if (jreManager.doBundleSecondJre()) {
-            buildMacZip(buildContext.bundledJreManager.extractSecondBundledJre("mac"), osSpecificDistPath)  // Android Studio: added by Change I22bfabed
-/* Android Studio: removed by Change I22bfabed
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                          jreManager.findSecondBundledJreArchiveForMac(), jreManager.isSecondBundledJreModular(),
-                                          jreManager.secondJreSuffix(),
-                                          false) // Disabled because JBR 8 cannot be notarized successfully
-          }
-          // With first aka main JRE
+          // With JRE
           File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                           jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)
-Android Studio: removed by Change I22bfabed */
           }
           else {
             buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
@@ -154,6 +144,12 @@ Android Studio: removed by Change I22bfabed */
 
     String icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
     buildContext.ant.copy(file: icnsPath, tofile: "$target/Resources/$targetIcnsFileName")
+
+    customizer.fileAssociations.each {
+      if (!it.iconPath.empty) {
+        buildContext.ant.copy(file: it.iconPath, todir: "$target/Resources", overwrite: "true")
+      }
+    }
 
     String fullName = buildContext.applicationInfo.productName
 

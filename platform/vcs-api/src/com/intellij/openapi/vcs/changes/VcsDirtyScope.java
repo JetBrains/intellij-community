@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,8 +71,6 @@ public abstract class VcsDirtyScope {
    */
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
 
-  public abstract boolean isRecursivelyDirty(final VirtualFile vf);
-
   /**
    * Invoke the {@code iterator} for all files in the dirty scope.
    * For recursively dirty directories all children are processed.
@@ -93,8 +90,6 @@ public abstract class VcsDirtyScope {
    * @return true if path belongs to the dirty scope.
    */
   public abstract boolean belongsTo(final FilePath path);
-
-  public abstract boolean belongsTo(final FilePath path, final Consumer<? super AbstractVcs> vcsConsumer);
 
   public boolean wasEveryThingDirty() {
     return false;

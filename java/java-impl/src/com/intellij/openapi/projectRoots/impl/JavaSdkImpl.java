@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -16,6 +17,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +32,8 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.io.DigestUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +46,11 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -148,6 +157,14 @@ public final class JavaSdkImpl extends JavaSdk {
     };
   }
 
+  @NotNull
+  @Override
+  public Comparator<String> versionStringComparator() {
+    return (sdk1, sdk2) -> {
+      return Comparing.compare(getJavaVersion(sdk1), getJavaVersion(sdk2));
+    };
+  }
+
   @Override
   public String getBinPath(@NotNull Sdk sdk) {
     return getConvertedHomePath(sdk) + "bin";
@@ -234,8 +251,8 @@ public final class JavaSdkImpl extends JavaSdk {
     setupSdkPaths(sdk);
 
     if (sdk.getSdkModificator().getRoots(OrderRootType.CLASSES).length == 0) {
-      String title = ProjectBundle.message("sdk.cannot.create");
-      String message = ProjectBundle.message("sdk.java.no.classes", sdk.getHomePath());
+      String title = JavaBundle.message("sdk.cannot.create");
+      String message = JavaBundle.message("sdk.java.no.classes", sdk.getHomePath());
       Messages.showMessageDialog(message, title, Messages.getErrorIcon());
       return false;
     }
@@ -341,9 +358,17 @@ public final class JavaSdkImpl extends JavaSdk {
     return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
   }
 
-  private JavaVersion getJavaVersion(Sdk sdk) {
+  @Nullable
+  public JavaVersion getJavaVersion(@NotNull Sdk sdk) {
     String versionString = sdk.getVersionString();
-    return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
+    return getJavaVersion(versionString);
+  }
+
+  @Nullable
+  private JavaVersion getJavaVersion(@Nullable String versionString) {
+    return versionString != null
+           ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse)
+           : null;
   }
 
   @Override
@@ -397,7 +422,7 @@ public final class JavaSdkImpl extends JavaSdk {
       @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
       @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
       @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-      @Override public @NotNull VirtualFile[] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
+      @Override public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
       @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
       @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
@@ -484,6 +509,7 @@ public final class JavaSdkImpl extends JavaSdk {
     Collections.sort(result);
     return result;
   }
+
 
   private static void addSources(@NotNull File jdkHome, @NotNull SdkModificator sdkModificator) {
     VirtualFile jdkSrc = findSources(jdkHome, "src");

@@ -26,9 +26,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class DetectedRootData {
   private final File myDirectory;
   private final MultiMap<DetectedProjectRoot, ProjectStructureDetector> myRoots = MultiMap.createLinked();

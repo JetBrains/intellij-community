@@ -1,4 +1,4 @@
-// "Replace addAll(objs) with java.util.Collections.addAll(this, objs)" "true"
+// "Replace 'addAll(objs)' with 'java.util.Collections.addAll(this, objs)'" "true"
 import java.util.List;
 
 class A implements List {

@@ -21,7 +21,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
-import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
@@ -64,7 +63,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       }
 
       //can types be specified
-      if (LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) == null) {
+      if (LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) == null) {
         return false;
       }
 
@@ -102,7 +101,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
 
       String parameters =
-        LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) + "{}";
+        LambdaUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) + "{}";
       String targetMethodName = getUniqueMethodName(targetClass, elementFactory, functionalInterfaceType, parameters);
 
       PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);

@@ -1,5 +1,5 @@
--org-jetbrains-python-concurrency-visualiser-
 + com.intellij
+  -org-jetbrains-python-concurrency-visualiser-
 + -HtmlTools-
 + -PerforceDirectPlugin-
 + -Refactor-X-
@@ -64,6 +64,7 @@
 + -DevKit-
 + -com-intellij-velocity-
 + -com-intellij-micronaut-
++ -com-intellij-microservices-config-
 + -com-intellij-stats-completion-
 + -com-jetbrains-plugins-asp-
 + -com-jetbrains-plugins-ini4idea-

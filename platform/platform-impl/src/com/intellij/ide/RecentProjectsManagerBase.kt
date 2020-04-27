@@ -23,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
@@ -134,13 +133,30 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
       @Suppress("DEPRECATION")
-      if (state.recentPaths.isNotEmpty()) {
-        if (state.recentPaths.size != state.additionalInfo.size) {
-          convertToSystemIndependentPaths(state.recentPaths)
-          val existingPaths = state.recentPaths.toSet()
-          state.additionalInfo.keys.removeIf {
-            !existingPaths.contains(it)
+      val recentPaths = state.recentPaths
+      if (recentPaths.isNotEmpty()) {
+        convertToSystemIndependentPaths(recentPaths)
+
+        // replace system-dependent paths to system-independent
+        for (key in state.additionalInfo.keys.toList()) {
+          val normalizedKey = FileUtilRt.toSystemIndependentName(key)
+          if (normalizedKey != key) {
+            state.additionalInfo.remove(key)?.let {
+              state.additionalInfo.put(normalizedKey, it)
+            }
           }
+        }
+
+        // ensure that additionalInfo contains entries in a reversed order of recentPaths (IDEA <= 2019.2 order of additionalInfo maybe not correct)
+        val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
+        for (recentPath in recentPaths.asReversed()) {
+          val value = state.additionalInfo.get(recentPath) ?: continue
+          newAdditionalInfo.put(recentPath, value)
+        }
+
+        if (newAdditionalInfo != state.additionalInfo) {
+          state.additionalInfo.clear()
+          state.additionalInfo.putAll(newAdditionalInfo)
         }
       }
     }
@@ -377,24 +393,18 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     }
   }
 
-  override fun reopenLastProjectsOnStart() {
+  override fun reopenLastProjectsOnStart(): Boolean {
     val openPaths = lastOpenedProjects
     var someProjectWasOpened = false
     for ((key, value) in openPaths) {
-      val options = OpenProjectTask(forceOpenInNewFrame = true, projectToClose = null)
-      options.frame = value.frame
-      options.projectWorkspaceId = value.projectWorkspaceId
-      options.showWelcomeScreen = false
-      options.sendFrameBack = someProjectWasOpened
+      val options = OpenProjectTask(forceOpenInNewFrame = true, sendFrameBack = someProjectWasOpened, showWelcomeScreen = false, frame = value.frame, projectWorkspaceId = value.projectWorkspaceId)
       val project = openProject(Paths.get(key), options)
       if (!someProjectWasOpened) {
         someProjectWasOpened = project != null
       }
     }
 
-    if (!someProjectWasOpened) {
-      WelcomeFrame.showIfNoProjectOpened()
-    }
+    return someProjectWasOpened
   }
 
   protected val lastOpenedProjects: List<Entry<String, RecentProjectMetaInfo>>

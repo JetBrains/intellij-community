@@ -38,7 +38,7 @@ public class ChooseTypeExpression extends Expression {
   private final boolean myAddDefType;
   private final boolean mySelectDef;
 
-  public ChooseTypeExpression(@NotNull TypeConstraint[] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
+  public ChooseTypeExpression(TypeConstraint @NotNull [] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
     this(constraints, manager, resolveScope, true);
   }
 
@@ -64,7 +64,7 @@ public class ChooseTypeExpression extends Expression {
   }
 
   @NotNull
-  private static List<SmartTypePointer> createItems(@NotNull TypeConstraint[] constraints, @NotNull SmartTypePointerManager typePointerManager) {
+  private static List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
     List<SmartTypePointer> result = new ArrayList<>();
 
     for (TypeConstraint constraint : constraints) {
@@ -89,7 +89,7 @@ public class ChooseTypeExpression extends Expression {
   }
 
   @NotNull
-  private static PsiType chooseType(@NotNull TypeConstraint[] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
+  private static PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
     return PsiType.getJavaLangObject(manager, scope);
   }

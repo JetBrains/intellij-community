@@ -35,7 +35,7 @@ public class TestLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     t = checkException(t);
     LoggedErrorProcessor.getInstance().processError(message, t, details, myLogger);
   }

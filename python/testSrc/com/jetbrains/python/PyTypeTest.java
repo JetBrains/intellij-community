@@ -2096,6 +2096,79 @@ public class PyTypeTest extends PyTestCase {
            "expr = min(l)");
   }
 
+  // PY-37755
+  public void testGlobalType() {
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    global expr\n" +
+           "    expr");
+
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    def nuf():\n" +
+           "        global expr\n" +
+           "        expr");
+
+    doTest("list",
+           "expr = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    expr = True\n" +
+           "    \n" +
+           "    def nuf():\n" +
+           "        global expr\n" +
+           "        expr");
+
+    doTest("Union[bool, int]",
+           "if True:\n" +
+           "    a = True\n" +
+           "else:\n" +
+           "    a = 5\n" +
+           "\n" +
+           "def fun():\n" +
+           "    def nuf():\n" +
+           "        global a\n" +
+           "        expr = a");
+  }
+
+  // PY-37755
+  public void testNonLocalType() {
+    doTest("bool",
+           "def fun():\n" +
+           "    expr = True\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal expr\n" +
+           "        expr");
+
+    doTest("bool",
+           "a = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    a = True\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal a\n" +
+           "        expr = a");
+
+    doTest("Union[bool, int]",
+           "a = []\n" +
+           "\n" +
+           "def fun():\n" +
+           "    if True:\n" +
+           "        a = True\n" +
+           "    else:\n" +
+           "        a = 5\n" +
+           "\n" +
+           "    def nuf():\n" +
+           "        nonlocal a\n" +
+           "        expr = a");
+  }
+
   // PY-21906
   public void testSOFOnTransitiveNamedTupleFields() {
     final PyExpression expression = parseExpr("from collections import namedtuple\n" +
@@ -2315,14 +2388,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-24323
   public void testMethodQualifiedWithUnknownGenericsInstance() {
-    doTest("(object: Any) -> int",
+    doTest("(__value: Any) -> int",
            "my_list = []\n" +
            "expr = my_list.count");
   }
 
   // PY-24323
   public void testMethodQualifiedWithKnownGenericsInstance() {
-    doTest("(object: int) -> int",
+    doTest("(__value: int) -> int",
            "my_list = [1, 2, 2, 3, 3]\n" +
            "expr = my_list.count");
   }

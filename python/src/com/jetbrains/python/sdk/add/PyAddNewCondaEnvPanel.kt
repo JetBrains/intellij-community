@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.psi.LanguageLevel
@@ -43,7 +44,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
                             newProjectPath: String?,
                             context: UserDataHolder) : PyAddNewEnvPanel() {
   override val envName: String = "Conda"
-  override val panelName: String = "New environment"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Anaconda
 
   private val languageLevelsField: JComboBox<String>
@@ -52,7 +53,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     path?.let {
       text = it
     }
-    addBrowseFolderListener("Select Path to Conda Executable", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.conda.path.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor())
     textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -61,10 +62,10 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     })
   }
   private val pathField = TextFieldWithBrowseButton().apply {
-    addBrowseFolderListener("Select Location for Conda Environment", null, project,
+    addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.conda.title"), null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
-  private val makeSharedField = JBCheckBox("Make available to all projects")
+  private val makeSharedField = JBCheckBox(PyBundle.message("available.to.all.projects"))
 
   override var newProjectPath: String? = newProjectPath
     set(value) {
@@ -85,9 +86,9 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     updatePathField()
 
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Location:", pathField)
-      .addLabeledComponent("Python version:", languageLevelsField)
-      .addLabeledComponent("Conda executable:", condaPathField)
+      .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.location"), pathField)
+      .addLabeledComponent(PyBundle.message("sdk.create.venv.conda.dialog.label.python.version"), languageLevelsField)
+      .addLabeledComponent(PyBundle.message("python.sdk.conda.path"), condaPathField)
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
@@ -98,7 +99,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text
-    val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Conda Environment", false) {
+    val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.conda.environment.title"), false) {
       override fun compute(indicator: ProgressIndicator): String {
         indicator.isIndeterminate = true
         return PyCondaPackageManagerImpl.createVirtualEnv(condaPath, pathField.text, selectedLanguageLevel)

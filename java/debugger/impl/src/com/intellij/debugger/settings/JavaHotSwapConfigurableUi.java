@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -85,12 +85,12 @@ class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
   public JComponent getComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
 
-    myCbCompileBeforeHotswap = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.compile.before.hotswap"));
-    myCbHangWarningEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.enable.vm.hang.warning"));
-    myHotswapInBackground = new JCheckBox(DebuggerBundle.message("label.debugger.hotswap.configurable.hotswap.background"));
-    myRbAlways = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.always"));
-    myRbNever = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.never"));
-    myRbAsk = new JRadioButton(DebuggerBundle.message("label.debugger.hotswap.configurable.ask"));
+    myCbCompileBeforeHotswap = new JCheckBox(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.compile.before.hotswap"));
+    myCbHangWarningEnabled = new JCheckBox(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.enable.vm.hang.warning"));
+    myHotswapInBackground = new JCheckBox(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.hotswap.background"));
+    myRbAlways = new JRadioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.always"));
+    myRbNever = new JRadioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.never"));
+    myRbAsk = new JRadioButton(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.ask"));
 
     panel.add(myCbCompileBeforeHotswap, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, NONE, JBUI.emptyInsets(), 0, 0));
     panel.add(myCbHangWarningEnabled, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, NONE, JBUI.insetsTop(4), 0, 0));
@@ -118,7 +118,7 @@ class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
     box.add(myRbAsk);
     final JPanel reloadPanel = new JPanel(new BorderLayout());
     reloadPanel.add(box, BorderLayout.CENTER);
-    reloadPanel.add(new JLabel(DebuggerBundle.message("label.debugger.hotswap.configurable.reload.classes")), BorderLayout.WEST);
+    reloadPanel.add(new JLabel(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.reload.classes")), BorderLayout.WEST);
     panel.add(reloadPanel, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 1.0, NORTHWEST, NONE, JBUI.insets(4, cbLeftOffset, 0, 0), 0, 0));
 
     return panel;

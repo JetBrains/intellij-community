@@ -3,10 +3,10 @@ package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils.AllowedValues;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -72,7 +72,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.BUGS_GROUP_NAME;
+    return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @NotNull
@@ -486,7 +486,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
   private static class ReplaceWithMagicConstantFix extends LocalQuickFixOnPsiElement {
     private final List<SmartPsiElementPointer<PsiAnnotationMemberValue>> myMemberValuePointers;
 
-    ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, @NotNull PsiAnnotationMemberValue... values) {
+    ReplaceWithMagicConstantFix(@NotNull PsiExpression argument, PsiAnnotationMemberValue @NotNull ... values) {
       super(argument);
       myMemberValuePointers =
         ContainerUtil.map(values, SmartPointerManager.getInstance(argument.getProject())::createSmartPsiElementPointer);
@@ -496,7 +496,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with magic constant";
+      return JavaBundle.message("quickfix.family.replace.with.magic.constant");
     }
 
     @NotNull

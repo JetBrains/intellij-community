@@ -90,8 +90,7 @@ public class EmptyMarkupModel implements MarkupModelEx {
   }
 
   @Override
-  @NotNull
-  public RangeHighlighter[] getAllHighlighters() {
+  public RangeHighlighter @NotNull [] getAllHighlighters() {
     return RangeHighlighter.EMPTY_ARRAY;
   }
 

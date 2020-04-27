@@ -4,7 +4,7 @@ package com.intellij.javadoc.actions;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
-import com.intellij.javadoc.JavadocBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.javadoc.JavadocConfigurable;
 import com.intellij.javadoc.JavadocGenerationManager;
 import com.intellij.openapi.project.Project;
@@ -18,7 +18,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
   private JavadocConfigurable myConfigurable;
 
   public GenerateJavadocAction() {
-    super(JavadocBundle.message("javadoc.generate.title"), JavadocBundle.message("javadoc.generate.title"));
+    super(JavaBundle.messagePointer("javadoc.generate.title"), JavaBundle.messagePointer("javadoc.generate.title"));
   }
 
   @Override
@@ -62,7 +62,7 @@ public final class GenerateJavadocAction extends BaseAnalysisAction{
 
   @Override
   protected @NotNull String getDialogTitle() {
-    return JavadocBundle.message("javadoc.generate.title");
+    return JavaBundle.message("javadoc.generate.title");
   }
 
   @Override

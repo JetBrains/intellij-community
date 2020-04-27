@@ -20,9 +20,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElem
 import com.intellij.packaging.ui.TreeNodePresentation;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author nik
-*/
 public class LayoutTreeNavigateAction extends ArtifactEditorNavigateActionBase {
   private final LayoutTreeComponent myLayoutTreeComponent;
 

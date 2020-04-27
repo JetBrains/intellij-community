@@ -75,7 +75,7 @@ public class ParamHelper {
   }
 
   @NotNull
-  public static String getPresentableText(@NotNull PyParameter[] parameters,
+  public static String getPresentableText(PyParameter @NotNull [] parameters,
                                           boolean includeDefaultValue,
                                           @Nullable TypeEvalContext context) {
     return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::psi), includeDefaultValue, context);

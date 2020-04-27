@@ -15,33 +15,50 @@
  */
 package org.jetbrains.jps.incremental.storage;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ThrowableConsumer;
+
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public abstract class CompositeStorageOwner implements StorageOwner {
+  private static final Logger LOG = Logger.getInstance(CompositeStorageOwner.class);
+
   protected abstract Iterable<? extends StorageOwner> getChildStorages();
 
   @Override
   public void flush(boolean memoryCachesOnly) {
-    for (StorageOwner child : getChildStorages()) {
-      if (child != null) {
-        child.flush(memoryCachesOnly);
-      }
+    try {
+      applyBulkOperation(getChildStorages(), storageOwner -> storageOwner.flush(memoryCachesOnly));
+    }
+    catch (IOException ignored) { // handled 
     }
   }
 
   @Override
   public void clean() throws IOException {
+    applyBulkOperation(getChildStorages(), StorageOwner::clean);
+  }
+
+  @Override
+  public void close() throws IOException {
+    applyBulkOperation(getChildStorages(), StorageOwner::close);
+  }
+
+  protected <T extends StorageOwner> void applyBulkOperation(Iterable<T> storages, ThrowableConsumer<? super T, IOException> action) throws IOException{
     IOException exc = null;
-    for (StorageOwner child : getChildStorages()) {
+    for (T child : storages) {
       if (child != null) {
         try {
-          child.clean();
+          action.consume(child);
         }
         catch (IOException e) {
-          exc = e;
+          LOG.info(e);
+          if (exc == null) {
+            exc = e;
+          }
+        }
+        catch (Throwable e) {
+          LOG.info(e);
         }
       }
     }
@@ -50,21 +67,4 @@ public abstract class CompositeStorageOwner implements StorageOwner {
     }
   }
 
-  @Override
-  public void close() throws IOException {
-    IOException exc = null;
-    for (StorageOwner child : getChildStorages()) {
-      if (child != null) {
-        try {
-          child.close();
-        }
-        catch (IOException e) {
-          exc = e;
-        }
-      }
-    }
-    if (exc != null) {
-      throw exc;
-    }
-  }
 }

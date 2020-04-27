@@ -38,6 +38,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import gnu.trove.THashMap;
@@ -658,6 +659,16 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitImportStaticStatement(PsiImportStaticStatement statement) {
     myHolder.add(checkFeature(statement, Feature.STATIC_IMPORTS));
     if (!myHolder.hasErrorResults()) myHolder.add(ImportsHighlightUtil.checkStaticOnDemandImportResolvesToClass(statement));
+    if (!myHolder.hasErrorResults()) {
+      PsiJavaCodeReferenceElement importReference = statement.getImportReference();
+      PsiClass targetClass = statement.resolveTargetClass();
+      if (importReference != null) {
+        PsiElement referenceNameElement = importReference.getReferenceNameElement();
+        if (referenceNameElement != null && targetClass != null) {
+          myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(targetClass, referenceNameElement));
+        }
+      }
+    }
   }
 
   @Override
@@ -698,8 +709,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
-      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
-        myHolder.add(HighlightClassUtil.checkVarClassConflict(aClass, identifier));
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(HighlightClassUtil.checkClassRestrictedKeyword(myLanguageLevel, identifier));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         myHolder.add(GenericsHighlightUtil.checkUnrelatedDefaultMethods(aClass, identifier));
@@ -819,7 +830,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     super.visitInstanceOfExpression(expression);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInstanceOfApplicable(expression));
-    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(expression));
+    if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkInstanceOfGenericType(myLanguageLevel, expression));
   }
 
   @Override
@@ -1260,10 +1271,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
     }
 
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
-    if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) myHolder.add(HighlightUtil.checkLegalVarReference(ref, (PsiClass)resolved));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile, myInsideConstructorOfClass));
-
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkPackageAndClassConflict(ref, myFile));
+    }
+    if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) {
+      myHolder.add(HighlightUtil.checkRestrictedIdentifierReference(ref, (PsiClass)resolved, myLanguageLevel));
+    }
+    if (!myHolder.hasErrorResults()) {
+      myHolder.add(HighlightUtil.checkMemberReferencedBeforeConstructorCalled(ref, resolved, myFile, myInsideConstructorOfClass));
+    }
 
     return result;
   }
@@ -1285,8 +1301,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
-  @Nullable
-  private JavaResolveResult[] resolveOptimised(@NotNull PsiReferenceExpression expression) {
+  private JavaResolveResult @Nullable [] resolveOptimised(@NotNull PsiReferenceExpression expression) {
     try {
       if (expression instanceof PsiReferenceExpressionImpl) {
         PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
@@ -1369,21 +1384,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkClassReferenceAfterQualifier(expression, resolved));
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
     myHolder.add(HighlightUtil.checkUnqualifiedSuperInDefaultMethod(myLanguageLevel, expression, qualifierExpression));
-    if (!myHolder.hasErrorResults() && qualifierExpression != null && myJavaModule == null) {
-      PsiType type = qualifierExpression.getType();
-      if (type instanceof PsiCapturedWildcardType) {
-        type = ((PsiCapturedWildcardType)type).getUpperBound();
-      }
-      PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (psiClass == null && qualifierExpression instanceof PsiReferenceExpression) {
-        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
-        if (resolve instanceof PsiClass) {
-          psiClass = (PsiClass)resolve;
+    if (!myHolder.hasErrorResults() && myJavaModule == null && qualifierExpression != null) {
+      if (parent instanceof PsiMethodCallExpression) {
+        PsiClass psiClass = RefactoringChangeUtil.getQualifierClass(expression);
+        if (psiClass != null) {
+          myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
         }
       }
-      if (psiClass != null) {
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
-        if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
       }
     }
   }

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiMethod;
@@ -28,12 +28,12 @@ public class CopyAbstractMethodImplementationAction extends ImplementAbstractMet
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Copy abstract method implementation";
+    return JavaBundle.message("intention.family.copy.abstract.method.implementation");
   }
 
   @Override
   protected String getIntentionName(final PsiMethod method) {
-    return CodeInsightBundle.message("copy.abstract.method.intention.name", method.getName());
+    return JavaBundle.message("copy.abstract.method.intention.name", method.getName());
   }
 
   @Override

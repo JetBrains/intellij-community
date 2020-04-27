@@ -16,7 +16,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   final boolean myShowAbove;
   final int myPriority;
   private int myHeightInPixels;
-  private GutterIconRenderer myGutterIconProvider;
+  private GutterIconRenderer myGutterIconRenderer;
 
   BlockInlayImpl(@NotNull EditorImpl editor,
                  int offset,
@@ -46,7 +46,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
     if (myHeightInPixels < 0) {
       throw new IllegalArgumentException("Non-negative height should be defined for a block element");
     }
-    myGutterIconProvider = myRenderer.calcGutterIconProvider(this);
+    myGutterIconRenderer = myRenderer.calcGutterIconRenderer(this);
   }
 
   @Override
@@ -90,8 +90,8 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
 
   @Nullable
   @Override
-  public GutterIconRenderer getGutterIconProvider() {
-    return myGutterIconProvider;
+  public GutterIconRenderer getGutterIconRenderer() {
+    return myGutterIconRenderer;
   }
 
   @Override

@@ -62,7 +62,7 @@ public class OpenTHashSet<T> extends THashSet<T> {
     super(ts, strategy);
   }
 
-  public OpenTHashSet(@NotNull TObjectHashingStrategy<T> strategy, @NotNull T... ts) {
+  public OpenTHashSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... ts) {
     super(Arrays.asList(ts), strategy);
   }
 

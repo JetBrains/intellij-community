@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -44,7 +45,8 @@ public class JavaFilePasteProvider implements PasteProvider {
       }
     }
     final PsiClass mainClass = publicClass;
-    WriteCommandAction.writeCommandAction(project).withName("Paste class '" + mainClass.getName() + "'").run(() -> {
+    WriteCommandAction.writeCommandAction(project).withName(
+      JavaBundle.message("paste.class.command.name", mainClass.getName())).run(() -> {
       PsiFile file;
       try {
         file = targetDir.createFile(mainClass.getName() + ".java");
@@ -88,7 +90,7 @@ public class JavaFilePasteProvider implements PasteProvider {
         catch (IncorrectOperationException e) {
           // ignore
         }
-      }, "Updating package statement", null);
+      }, JavaBundle.message("command.name.updating.package.statement"), null);
     }
   }
 

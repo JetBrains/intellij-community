@@ -658,7 +658,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       hideLookup(false);
       return false;
     }
-    if (isVisible()) {
+    if (isVisible() && myEditor.getContentComponent().isShowing()) {
       HintManagerImpl.updateLocation(this, myEditor, myUi.calculatePosition().getLocation());
     }
     checkValid();
@@ -1220,7 +1220,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   @NotNull
-  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items, boolean hideSingleValued) {
+  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items, boolean hideSingleValued) {
     return withLock(() -> myPresentableArranger.getRelevanceObjects(items, hideSingleValued));
   }
 

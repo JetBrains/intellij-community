@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -14,8 +14,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -38,8 +36,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
-import static com.intellij.util.containers.UtilKt.getIfSingle;
-import static com.intellij.util.containers.UtilKt.stream;
+import static com.intellij.util.containers.UtilKt.*;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 import static java.util.stream.Collectors.toList;
 
@@ -57,16 +54,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     super(project, showCheckboxes, true);
 
     setDragEnabled(true);
-  }
-
-  @Override
-  protected void installEnterKeyHandler() {
-    EditSourceOnEnterKeyHandler.install(this);
-  }
-
-  @Override
-  protected void installDoubleClickHandler() {
-    EditSourceOnDoubleClickHandler.install(this);
   }
 
   @NotNull
@@ -156,6 +143,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
     if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(dataId)) {
       return getSelectedFiles();
+    }
+    if (VcsDataKeys.FILE_PATH_STREAM.is(dataId)) {
+      return getSelectedFilePaths();
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
@@ -272,7 +262,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<VirtualFile> getVirtualFiles(@Nullable TreePath[] paths, @Nullable Object tag) {
+  static Stream<VirtualFile> getVirtualFiles(TreePath @Nullable [] paths, @Nullable Object tag) {
     return stream(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
@@ -282,7 +272,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<FilePath> getFilePaths(@Nullable TreePath[] paths, @Nullable Object tag) {
+  static Stream<FilePath> getFilePaths(TreePath @Nullable [] paths, @Nullable Object tag) {
     return stream(paths)
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
@@ -302,7 +292,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
-  static Stream<Change> getChanges(@NotNull Project project, @Nullable TreePath[] paths) {
+  static Stream<Change> getChanges(@NotNull Project project, TreePath @Nullable [] paths) {
     Stream<Change> changes = stream(paths)
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
@@ -339,18 +329,29 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
+  private Stream<FilePath> getSelectedFilePaths() {
+    return concat(
+      getSelectedChanges().map(ChangesUtil::getFilePath),
+      getSelectedVirtualFiles(null).map(VcsUtil::getFilePath),
+      getSelectedFilePaths(null)
+    ).distinct();
+  }
+
+  @NotNull
   private Stream<VirtualFile> getSelectedFiles() {
-    return Stream.concat(
+    return concat(
       getAfterRevisionsFiles(getSelectedChanges()),
-      Stream.concat(getSelectedVirtualFiles(null), getFilesFromPaths(getSelectedFilePaths(null)))
+      getSelectedVirtualFiles(null),
+      getFilesFromPaths(getSelectedFilePaths(null))
     ).distinct();
   }
 
   @NotNull
   private Stream<VirtualFile> getNavigatableFiles() {
-    return Stream.concat(
+    return concat(
       getFiles(getSelectedChanges()),
-      Stream.concat(getSelectedVirtualFiles(null), getFilesFromPaths(getSelectedFilePaths(null)))
+      getSelectedVirtualFiles(null),
+      getFilesFromPaths(getSelectedFilePaths(null))
     ).distinct();
   }
 

@@ -3,9 +3,6 @@ package com.intellij.conversion;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public final class CannotConvertException extends Exception {
   public CannotConvertException(@NotNull String message) {
     super(message);

@@ -8,7 +8,7 @@
     </padding>
     <Rectangle width="100" height="100">
         <VBox.vgrow>
-            <<error descr="Unable to coerce java.lang.Double to javafx.scene.layout.Priority">Double</error> fx:value="20"/>
+            <Double fx:value="20"/>
         </VBox.vgrow>
     </Rectangle>
 </fx:root>

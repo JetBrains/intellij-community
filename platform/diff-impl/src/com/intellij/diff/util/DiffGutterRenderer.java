@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public abstract class DiffGutterRenderer extends GutterIconRenderer implements N
   @NotNull private final Icon myIcon;
   @Nullable private final String myTooltip;
 
-  public DiffGutterRenderer(@NotNull Icon icon, @Nullable String tooltip) {
+  public DiffGutterRenderer(@NotNull Icon icon, @Nullable @Nls String tooltip) {
     myIcon = icon;
     myTooltip = tooltip;
   }

@@ -27,7 +27,7 @@ import java.util.Collections;
  */
 public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNameContributorEx {
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex fileIndex = FileBasedIndex.getInstance();
     StubIndex stubIndex = StubIndex.getInstance();
     if (!fileIndex.processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter)) return;
@@ -39,7 +39,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     Project project = parameters.getProject();
     GlobalSearchScope scope = PySearchUtilBase.excludeSdkTestScope(parameters.getSearchScope());

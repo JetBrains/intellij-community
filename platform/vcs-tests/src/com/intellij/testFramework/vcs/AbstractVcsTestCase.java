@@ -11,7 +11,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -166,15 +169,6 @@ public abstract class AbstractVcsTestCase {
       line = line.replace("  ", " ");
     }
     return line.trim();
-  }
-
-  protected VcsDirtyScope getDirtyScopeForFile(VirtualFile file) {
-    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    dirtyScopeManager.retrieveScopes();  // ensure that everything besides the file is clean
-    dirtyScopeManager.fileDirty(file);
-    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes().getScopes();
-    Assert.assertEquals(1, scopes.size());
-    return scopes.get(0);
   }
 
   protected void renameFileInCommand(final VirtualFile file, final String newName) {

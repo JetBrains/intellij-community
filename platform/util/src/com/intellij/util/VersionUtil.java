@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class VersionUtil {
   @Nullable
-  public static Version parseVersion(@NotNull String version, @NotNull Pattern... patterns) {
+  public static Version parseVersion(@NotNull String version, Pattern @NotNull ... patterns) {
     String[] versions = null;
 
     for (Pattern pattern : patterns) {

@@ -18,7 +18,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     super(model);
   }
 
-  public ComboBoxWithWidePopup(@NotNull E[] items) {
+  public ComboBoxWithWidePopup(E @NotNull [] items) {
     super(items);
   }
 

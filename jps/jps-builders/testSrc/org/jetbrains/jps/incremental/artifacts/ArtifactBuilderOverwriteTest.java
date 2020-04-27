@@ -29,9 +29,6 @@ import java.util.zip.ZipOutputStream;
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
-/**
- * @author nik
- */
 public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testOverwriteArchives() {
     final String aFile = createFile("aaa.txt", "a");

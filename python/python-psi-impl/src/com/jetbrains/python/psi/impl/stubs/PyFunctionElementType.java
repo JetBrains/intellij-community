@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author max
- */
 public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyFunction> {
   public PyFunctionElementType() {
     this("FUNCTION_DECLARATION");

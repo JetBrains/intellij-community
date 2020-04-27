@@ -45,6 +45,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,6 +101,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     myContextComponent = component;
     myEditor = editor;
     myModality = modalityState;
+    buildActions();
+  }
+
+  private void buildActions() {
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     ActionGroup keymapOthers = (ActionGroup)myActionManager.getActionOrStub("Other.KeymapGroup");
     assert mainMenu != null && keymapOthers != null;
@@ -158,6 +163,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Override
   public void saveInitialCheckBoxState(boolean state) {
+  }
+
+  @ApiStatus.Internal
+  public void rebuildActions() {
+    myActionGroups.clear();
+    buildActions();
   }
 
   public static class MatchedValue {
@@ -320,14 +331,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @Override
-  @NotNull
-  public String[] getNames(boolean checkBoxState) {
+  public String @NotNull [] getNames(boolean checkBoxState) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
   @Override
-  @NotNull
-  public Object[] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
+  public Object @NotNull [] getElementsByName(@NotNull String id, boolean checkBoxState, @NotNull String pattern) {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
@@ -388,8 +397,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   @Override
-  @NotNull
-  public String[] getSeparators() {
+  public String @NotNull [] getSeparators() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -690,6 +698,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
   }
 
+  @DirtyUI
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
     public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
     private final Function<? super OptionDescription, String> myGroupNamer;

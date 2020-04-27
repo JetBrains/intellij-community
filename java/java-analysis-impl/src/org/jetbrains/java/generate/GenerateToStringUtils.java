@@ -43,8 +43,7 @@ public class GenerateToStringUtils {
      * @param pattern        the filter pattern to filter out unwanted fields
      * @return fields available for this action after the filter process.
      */
-    @NotNull
-    public static PsiField[] filterAvailableFields(PsiClass clazz, FilterPattern pattern) {
+    public static PsiField @NotNull [] filterAvailableFields(PsiClass clazz, FilterPattern pattern) {
         return filterAvailableFields(clazz, false, pattern);
     }
 
@@ -55,10 +54,9 @@ public class GenerateToStringUtils {
      * @param pattern        the filter pattern to filter out unwanted fields
      * @return fields available for this action after the filter process.
      */
-    @NotNull
-    public static PsiField[] filterAvailableFields(PsiClass clazz,
-                                                   boolean includeSuperClass,
-                                                   FilterPattern pattern) {
+    public static PsiField @NotNull [] filterAvailableFields(PsiClass clazz,
+                                                             boolean includeSuperClass,
+                                                             FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
         List<PsiField> availableFields = new ArrayList<>();
         collectAvailableFields(clazz, clazz, includeSuperClass, pattern, availableFields, new HashSet<>());
@@ -107,8 +105,7 @@ public class GenerateToStringUtils {
      * @param pattern        the filter pattern to filter out unwanted fields
      * @return methods available for this action after the filter process.
      */
-    @NotNull
-    public static PsiMethod[] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
+    public static PsiMethod @NotNull [] filterAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern) {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<>();
         collectAvailableMethods(clazz, clazz, pattern, availableMethods, new HashSet<>());

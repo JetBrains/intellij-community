@@ -5,9 +5,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ResourcesGenerator
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-/**
- * @author nik
- */
 class PythonCommunityPluginModules {
   static List<String> COMMUNITY_MODULES = [
     "intellij.python.community",
@@ -20,14 +17,18 @@ class PythonCommunityPluginModules {
     "intellij.python.langInjection",
     "intellij.python.copyright",
     "intellij.python.terminal",
+    "intellij.python.grazie",
     "intellij.python.reStructuredText",
+    "intellij.python.sdk",
   ]
+  static String pythonCommunityName = "python-ce"
+
   static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     def communityOnlyModules = [
       "intellij.python.community.plugin",
       "intellij.python.community.plugin.minor",
     ]
-    pythonPlugin("intellij.python.community.plugin", "python-ce", COMMUNITY_MODULES + communityOnlyModules) {
+    pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) {
       body.delegate = delegate
       body()
     }

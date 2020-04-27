@@ -42,9 +42,6 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.ArrayUtil.contains;
 
-/**
-* @author nik
-*/
 public class CreateModuleLibraryChooser implements ClasspathElementChooser<Library> {
   private final JComponent myParentComponent;
   private final Module myModule;

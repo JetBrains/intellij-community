@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -37,13 +39,13 @@ public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntenti
   @NotNull
   @Override
   public String getText() {
-    return "Convert '" + myPrimitiveName + "' to '" + myBoxedTypeName + "'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", myPrimitiveName, myBoxedTypeName);
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert primitive to boxed type";
+    return QuickFixBundle.message("convert.primitive.to.boxed.type");
   }
 
   @Override

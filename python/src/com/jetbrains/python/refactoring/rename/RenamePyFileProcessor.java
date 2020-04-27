@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
@@ -70,8 +71,8 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
           result.add(new UnresolvableCollisionUsageInfo(importStatement, element) {
             @Override
             public String getDescription() {
-              return "The name '" + newFileName + "' is not a valid Python identifier. Cannot update import statement in '" +
-                     importStatement.getContainingFile().getName() + "'";
+              return PyBundle
+                .message("refactoring.rename.not.valid.identifier", newFileName, importStatement.getContainingFile().getName());
             }
           });
         }

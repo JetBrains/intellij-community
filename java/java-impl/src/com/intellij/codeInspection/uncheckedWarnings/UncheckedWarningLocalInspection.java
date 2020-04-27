@@ -47,9 +47,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
   public boolean IGNORE_UNCHECKED_CAST;
   public boolean IGNORE_UNCHECKED_OVERRIDING;
 
-  @NotNull
-
-  protected LocalQuickFix[] createFixes() {
+  protected LocalQuickFix @NotNull [] createFixes() {
     return new LocalQuickFix[]{new GenerifyFileFix()};
   }
 
@@ -108,8 +106,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     return uncheckedCb;
   }
 
-  @NotNull
-  private static LocalQuickFix[] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
+  private static LocalQuickFix @NotNull [] getChangeVariableTypeFixes(@NotNull PsiVariable parameter, @Nullable PsiType itemType, LocalQuickFix[] generifyFixes) {
     if (itemType instanceof PsiMethodReferenceType) return generifyFixes;
     LOG.assertTrue(parameter.isValid());
     final List<LocalQuickFix> result = new ArrayList<>();
@@ -179,7 +176,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       protected void registerProblem(@NotNull String message,
                                      @Nullable PsiElement callExpression,
                                      @NotNull PsiElement psiElement,
-                                     @NotNull LocalQuickFix[] quickFixes) {
+                                     LocalQuickFix @NotNull [] quickFixes) {
         final String rawExpression = isMethodCalledOnRawType(callExpression);
         if (rawExpression != null) {
           final String referenceName = ((PsiMethodCallExpression)callExpression).getMethodExpression().getReferenceName();
@@ -229,7 +226,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     protected abstract void registerProblem(@NotNull String message,
                                             PsiElement callExpression,
                                             @NotNull PsiElement psiElement,
-                                            @NotNull LocalQuickFix[] quickFixes);
+                                            LocalQuickFix @NotNull [] quickFixes);
 
 
     @Override

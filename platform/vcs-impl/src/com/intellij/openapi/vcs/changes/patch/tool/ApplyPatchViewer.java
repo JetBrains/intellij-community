@@ -37,6 +37,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
@@ -254,7 +255,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   @NotNull
   public TextDiffSettings getTextSettings() {
-    return TextDiffSettings.getSettings("ApplyPatch");
+    return TextDiffSettings.getSettings("ApplyPatch"); //NON-NLS
   }
 
   @NotNull
@@ -270,12 +271,13 @@ class ApplyPatchViewer implements DataProvider, Disposable {
   protected void initPatchViewer() {
   myPanel.setPersistentNotifications(DiffUtil.getCustomNotifications(myContext, myPatchRequest));
     final Document outputDocument = myResultEditor.getDocument();
-    boolean success = DiffUtil.executeWriteCommand(outputDocument, myProject, "Init merge content", () -> {
-      outputDocument.setText(myPatchRequest.getLocalContent());
-      if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
-    });
+    boolean success =
+      DiffUtil.executeWriteCommand(outputDocument, myProject, DiffBundle.message("message.init.merge.content.command"), () -> {
+        outputDocument.setText(myPatchRequest.getLocalContent());
+        if (!isReadOnly()) DiffUtil.putNonundoableOperation(myProject, outputDocument);
+      });
     if (!success && !StringUtil.equals(outputDocument.getText(), myPatchRequest.getLocalContent())) {
-      myPanel.setErrorContent("Failed to display patch applier - local content was modified");
+      myPanel.setErrorContent(VcsBundle.message("patch.apply.display.local.content.was.modified.error"));
       return;
     }
 
@@ -453,7 +455,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ApplySelectedChangesAction extends ApplySelectedChangesActionBase {
     private ApplySelectedChangesAction() {
-      getTemplatePresentation().setText("Accept");
+      getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.ApplySelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Checked);
       copyShortcutFrom(ActionManager.getInstance().getAction("Diff.ApplyRightSide"));
     }
@@ -473,7 +475,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class IgnoreSelectedChangesAction extends ApplySelectedChangesActionBase {
     private IgnoreSelectedChangesAction() {
-      getTemplatePresentation().setText("Ignore");
+      getTemplatePresentation().setText(VcsBundle.messagePointer("action.presentation.IgnoreSelectedChangesAction.text"));
       getTemplatePresentation().setIcon(AllIcons.Diff.Remove);
       setShortcutSet(new CompositeShortcutSet(ActionManager.getInstance().getAction("Diff.IgnoreRightSide").getShortcutSet(),
                                               ActionManager.getInstance().getAction("Diff.ApplyLeftSide").getShortcutSet()));
@@ -523,7 +525,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       final List<ApplyPatchChange> selectedChanges = getSelectedChanges(side);
       if (selectedChanges.isEmpty()) return;
 
-      String title = e.getPresentation().getText() + " in patch resolve";
+      String title = VcsBundle.message("patch.apply.changes.in.patch.resolve", e.getPresentation().getText());
 
       executeCommand(title, () -> apply(selectedChanges));
     }
@@ -557,7 +559,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ApplyNonConflictsAction extends DumbAwareAction {
     ApplyNonConflictsAction() {
-      ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts");
+      ActionUtil.copyFrom(this, "Diff.ApplyNonConflicts"); //NON-NLS
     }
 
     @Override
@@ -575,7 +577,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
       List<ApplyPatchChange> changes = myModelChanges;
       if (changes.isEmpty()) return;
 
-      executeCommand("Apply Non Conflicted Changes", () -> {
+      executeCommand(DiffBundle.message("merge.dialog.apply.non.conflicted.changes.command"), () -> {
         for (int i = changes.size() - 1; i >= 0; i--) {
           ApplyPatchChange change = changes.get(i);
           switch (change.getStatus()) {
@@ -622,7 +624,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
   private class ShowDiffWithLocalAction extends DumbAwareAction {
     ShowDiffWithLocalAction() {
-      super("Compare with local content", null, AllIcons.Actions.Diff);
+      super(VcsBundle.messagePointer("action.DumbAwareAction.text.compare.with.local.content"), AllIcons.Actions.Diff);
     }
 
     @Override

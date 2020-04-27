@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Eugene.Kudelevsky
@@ -13,6 +14,8 @@ public abstract class EquivalenceDescriptorProvider {
   public static final ExtensionPointName<EquivalenceDescriptorProvider> EP_NAME = ExtensionPointName.create("com.intellij.equivalenceDescriptorProvider");
 
   // for using in tests only !!!
+  @SuppressWarnings("StaticNonFinalField")
+  @TestOnly
   public static boolean ourUseDefaultEquivalence = false;
 
   public abstract boolean isMyContext(@NotNull PsiElement context);
@@ -27,6 +30,7 @@ public abstract class EquivalenceDescriptorProvider {
 
   @Nullable
   public static EquivalenceDescriptorProvider getInstance(@NotNull PsiElement context) {
+    //noinspection TestOnlyProblems
     if (ourUseDefaultEquivalence) {
       return null;
     }

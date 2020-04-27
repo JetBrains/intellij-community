@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -21,7 +22,7 @@ final class PluginOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
     IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
     List<OptionDescription> options = new ArrayList<>(plugins.length);
-    boolean hideImplDetails = PluginManagerCore.hideImplementationDetails();
+    boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
 
     for (IdeaPluginDescriptor descriptor : plugins) {
       if (applicationInfo.isEssentialPlugin(descriptor.getPluginId())) {

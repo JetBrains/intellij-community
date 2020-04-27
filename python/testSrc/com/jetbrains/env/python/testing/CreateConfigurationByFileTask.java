@@ -37,15 +37,14 @@ import java.util.stream.Collectors;
  * @author Ilya.Kazakevich
  */
 class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration<?>> extends CreateConfigurationTestTask<T> {
-  @NotNull
-  private final String[] myFileNames;
+  private final String @NotNull [] myFileNames;
 
   /**
    * @see CreateConfigurationTestTask#CreateConfigurationTestTask(String, Class)
    */
   CreateConfigurationByFileTask(@Nullable final String testRunnerName,
                                 @NotNull final Class<T> expectedConfigurationType,
-                                @NotNull final String...fileNames) {
+                                final String @NotNull ... fileNames) {
     super(testRunnerName, expectedConfigurationType);
     myFileNames = fileNames.clone();
   }

@@ -73,15 +73,13 @@ public interface ContentManager extends Disposable, BusyObject {
   @Nullable
   Content getSelectedContent();
 
-  @NotNull
-  Content[] getSelectedContents();
+  Content @NotNull [] getSelectedContents();
 
   void removeAllContents(boolean dispose);
 
   int getContentCount();
 
-  @NotNull
-  Content[] getContents();
+  Content @NotNull [] getContents();
 
   Content findContent(String displayName);
 

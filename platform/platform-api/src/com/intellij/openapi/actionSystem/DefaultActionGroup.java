@@ -6,10 +6,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * A default implementation of {@link ActionGroup}. Provides the ability
@@ -40,10 +42,10 @@ public class DefaultActionGroup extends ActionGroup {
    * Contains instances of Pair
    */
   private final List<Pair<AnAction, Constraints>> myPairs = ContainerUtil.createLockFreeCopyOnWriteList();
-  private int myModificationStamp = 0;
+  private int myModificationStamp;
 
   public DefaultActionGroup() {
-    this(null, false);
+    this(Presentation.NULL_STRING, false);
   }
 
   /**
@@ -51,7 +53,7 @@ public class DefaultActionGroup extends ActionGroup {
    *
    * @param actions the actions to add to the group
    */
-  public DefaultActionGroup(@NotNull AnAction... actions) {
+  public DefaultActionGroup(AnAction @NotNull ... actions) {
     this(Arrays.asList(actions));
   }
 
@@ -61,16 +63,36 @@ public class DefaultActionGroup extends ActionGroup {
    * @param actions the actions to add to the group
    */
   public DefaultActionGroup(@NotNull List<? extends AnAction> actions) {
-    this(null, actions);
+    this(Presentation.NULL_STRING, actions);
   }
 
-  public DefaultActionGroup(@Nullable String name, @NotNull List<? extends AnAction> actions) {
+  public DefaultActionGroup(@NotNull Supplier<@Nls String> name, @NotNull List<? extends AnAction> actions) {
     this(name, false);
     addActions(actions);
   }
 
-  public DefaultActionGroup(@Nullable String shortName, boolean popup) {
+  public DefaultActionGroup(@Nullable @Nls String name, @NotNull List<? extends AnAction> actions) {
+    this(() -> name, actions);
+  }
+
+  public DefaultActionGroup(@Nullable @Nls String shortName, boolean popup) {
+    this(() -> shortName, popup);
+  }
+
+  protected DefaultActionGroup(@NotNull Supplier<@Nls String> shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  public static DefaultActionGroup createPopupGroup(@NotNull Supplier<@Nls String> shortName) {
+    return new DefaultActionGroup(shortName, true);
+  }
+
+  public static DefaultActionGroup createFlatGroup(@NotNull Supplier<@Nls String> shortName) {
+    return new DefaultActionGroup(shortName, false);
+  }
+
+  public static DefaultActionGroup createPopupGroupWithEmptyText() {
+    return createPopupGroup(() -> "");
   }
 
   private void incrementModificationStamp() {
@@ -243,10 +265,10 @@ public class DefaultActionGroup extends ActionGroup {
   public final void remove(@NotNull AnAction action, @Nullable String id) {
     if (!mySortedChildren.remove(action) &&
         !mySortedChildren.removeIf(oldAction ->
-                                     oldAction instanceof ActionStub && ((ActionStub)oldAction).getId().equals(id))) {
+                                     oldAction instanceof ActionStubBase && ((ActionStubBase)oldAction).getId().equals(id))) {
       for (int i = 0; i < myPairs.size(); i++) {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (pair.first.equals(action) || (pair.first instanceof ActionStub && ((ActionStub)pair.first).getId().equals(id))) {
+        if (pair.first.equals(action) || (pair.first instanceof ActionStubBase && ((ActionStubBase)pair.first).getId().equals(id))) {
           myPairs.remove(i);
           incrementModificationStamp();
           break;
@@ -303,9 +325,8 @@ public class DefaultActionGroup extends ActionGroup {
     incrementModificationStamp();
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return getChildren(e, e != null ? e.getActionManager() : ActionManager.getInstance());
   }
 
@@ -316,8 +337,7 @@ public class DefaultActionGroup extends ActionGroup {
    * @return An array of children actions
    */
   @Override
-  @NotNull
-  public final AnAction[] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     boolean hasNulls = false;
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
@@ -395,8 +415,7 @@ public class DefaultActionGroup extends ActionGroup {
     return mySortedChildren.size() + myPairs.size();
   }
 
-  @NotNull
-  public final AnAction[] getChildActionsOrStubs() {
+  public final AnAction @NotNull [] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
     AnAction[] children = new AnAction[sortedSize + myPairs.size()];
@@ -427,7 +446,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public final void addAll(@NotNull AnAction... actions) {
+  public final void addAll(@NotNull AnAction @NotNull ... actions) {
     if (actions.length == 0) {
       return;
     }
@@ -438,7 +457,7 @@ public class DefaultActionGroup extends ActionGroup {
     }
   }
 
-  public void addSeparator(@Nullable String separatorText) {
+  public void addSeparator(@Nullable @Nls String separatorText) {
     add(Separator.create(separatorText));
   }
 

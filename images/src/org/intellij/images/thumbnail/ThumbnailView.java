@@ -61,8 +61,7 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
 
   boolean isSelected(@NotNull VirtualFile file);
 
-  @NotNull
-  VirtualFile[] getSelection();
+  VirtualFile @NotNull [] getSelection();
 
   /**
    * Scroll to selection. If ToolWindow is not active, then
@@ -89,8 +88,7 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
   /**
    * null means all files accepted
    */
-  @Nullable
-  TagFilter[] getTagFilters();
+  TagFilter @Nullable [] getTagFilters();
 
   /**
    * update UI: preview visibility, etc

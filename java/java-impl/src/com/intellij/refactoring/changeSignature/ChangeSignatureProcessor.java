@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -9,7 +10,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CanonicalTypes;
@@ -22,12 +22,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.*;
 
 /**
  * @author Jeka
@@ -42,7 +37,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   PsiType newType,
-                                  @NotNull ParameterInfoImpl[] parameterInfo) {
+                                  ParameterInfoImpl @NotNull [] parameterInfo) {
     this(project, method, generateDelegate, newVisibility, newName,
          newType != null ? CanonicalTypes.createTypeWrapper(newType) : null,
          parameterInfo, null, null, null);
@@ -69,7 +64,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                   @PsiModifier.ModifierConstant String newVisibility,
                                   String newName,
                                   CanonicalTypes.Type newType,
-                                  @NotNull ParameterInfoImpl[] parameterInfo,
+                                  ParameterInfoImpl @NotNull [] parameterInfo,
                                   ThrownExceptionInfo[] thrownExceptions,
                                   Set<PsiMethod> propagateParametersMethods,
                                   Set<PsiMethod> propagateExceptionsMethods) {
@@ -88,7 +83,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
                                                    @PsiModifier.ModifierConstant String newVisibility,
                                                    String newName,
                                                    CanonicalTypes.Type newType,
-                                                   @NotNull ParameterInfoImpl[] parameterInfo,
+                                                   ParameterInfoImpl @NotNull [] parameterInfo,
                                                    ThrownExceptionInfo[] thrownExceptions,
                                                    Set<PsiMethod> propagateParametersMethods,
                                                    Set<PsiMethod> propagateExceptionsMethods) {
@@ -115,7 +110,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ChangeSignatureViewDescriptor(getChangeInfo().getMethod());
   }
 
@@ -125,7 +120,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
     getChangeInfo().updateMethod((PsiMethod) elements[0]);
@@ -172,7 +167,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       for (UsageInfo usageInfo : usages) {
         if (usageInfo instanceof OverriderUsageInfo) {
           final OverriderUsageInfo info = (OverriderUsageInfo)usageInfo;
-          PsiMethod overrider = assertNotNull(info.getOverridingMethod());
+          PsiMethod overrider = Objects.requireNonNull(info.getOverridingMethod());
           PsiMethod baseMethod = info.getBaseMethod();
           PsiSubstitutor substitutor = calculateSubstitutor(overrider, baseMethod);
           PsiType type;
@@ -207,7 +202,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   }
 
   protected boolean isProcessCovariantOverriders() {
-    String message = RefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type");
+    String message = JavaRefactoringBundle.message("do.you.want.to.process.overriding.methods.with.covariant.return.type");
     return Messages.showYesNoDialog(myProject, message, ChangeSignatureHandler.REFACTORING_NAME, Messages.getQuestionIcon()) == Messages.YES;
   }
 

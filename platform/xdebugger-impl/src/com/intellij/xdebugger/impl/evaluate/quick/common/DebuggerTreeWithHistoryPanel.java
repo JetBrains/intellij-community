@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class DebuggerTreeWithHistoryPanel<D> extends DebuggerTreeWithHistoryContainer<D> {
   private final BorderLayoutPanel myMainPanel;
   private final Disposable myDisposable;

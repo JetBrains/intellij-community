@@ -18,9 +18,6 @@ package org.jetbrains.jps.builders
 import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
 
-/**
- * @author nik
- */
 class JavacFileEncodingTest: JpsRebuildTestCase() {
   fun test() {
     doTest("javacFileEncoding/javacFileEncoding.ipr", directoryContent {

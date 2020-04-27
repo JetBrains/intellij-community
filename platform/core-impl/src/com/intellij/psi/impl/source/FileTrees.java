@@ -48,12 +48,12 @@ final class FileTrees {
   private final Getter<FileElement> myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
   
   /** Keeps references to all alive stubbed PSI (using {@link SpineRef}) to ensure PSI identity is preserved after AST/stubs are gc-ed and reloaded */
-  @Nullable private final Reference<StubBasedPsiElementBase>[] myRefToPsi;
+  private final Reference<StubBasedPsiElementBase> @Nullable [] myRefToPsi;
 
   private FileTrees(@NotNull PsiFileImpl file,
                     @Nullable Reference<StubTree> stub,
                     @Nullable Getter<FileElement> ast,
-                    @Nullable Reference<StubBasedPsiElementBase>[] refToPsi) {
+                    Reference<StubBasedPsiElementBase> @Nullable [] refToPsi) {
     myFile = file;
     myStub = stub;
     myTreeElementPointer = ast;

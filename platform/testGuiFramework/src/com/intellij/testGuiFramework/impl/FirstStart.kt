@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -30,7 +30,7 @@ import org.fest.swing.timing.Timeout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Frame
-import java.io.File
+import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
 import kotlin.concurrent.thread
@@ -73,7 +73,7 @@ abstract class FirstStart(val ideType: IdeType) {
   private val newConfigFolder: Boolean by lazy {
     if (ApplicationManager.getApplication() != null) throw Exception(
       "Cannot get status (new or not) of config folder because IDE has been already started")
-    !File(PathManager.getConfigPath()).exists() || System.getProperty("intellij.first.ide.session") == "true"
+    !Files.exists(PathManager.getConfigDir()) || System.getProperty("intellij.first.ide.session") == "true"
   }
 
 

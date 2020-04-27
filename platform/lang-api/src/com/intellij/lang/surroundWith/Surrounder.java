@@ -47,7 +47,7 @@ public interface Surrounder {
    * @param elements the elements to be surrounded
    * @return true if the template is applicable to the elements, false otherwise.
    */
-  boolean isApplicable(@NotNull PsiElement[] elements);
+  boolean isApplicable(PsiElement @NotNull [] elements);
 
   /**
    * Performs the Surround With action on the specified range of elements.
@@ -60,5 +60,5 @@ public interface Surrounder {
   @Nullable
   TextRange surroundElements(@NotNull Project project,
                              @NotNull Editor editor,
-                             @NotNull PsiElement[] elements) throws IncorrectOperationException;
+                             PsiElement @NotNull [] elements) throws IncorrectOperationException;
 }

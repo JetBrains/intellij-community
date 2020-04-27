@@ -39,44 +39,35 @@ public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember,
   GrTypeDefinition[] EMPTY_ARRAY = new GrTypeDefinition[0];
   ArrayFactory<GrTypeDefinition> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new GrTypeDefinition[count];
 
-  @NotNull
   @Override
-  default PsiClassType[] getImplementsListTypes() {
+  default PsiClassType @NotNull [] getImplementsListTypes() {
     return getImplementsListTypes(true);
   }
 
-  @NotNull
   @Override
-  default PsiClassType[] getExtendsListTypes() {
+  default PsiClassType @NotNull [] getExtendsListTypes() {
     return getExtendsListTypes(true);
   }
 
-  @NotNull
   @Override
-  default PsiClass[] getSupers() {
+  default PsiClass @NotNull [] getSupers() {
     return getSupers(true);
   }
 
-  @NotNull
   @Override
-  default PsiClassType[] getSuperTypes() {
+  default PsiClassType @NotNull [] getSuperTypes() {
     return getSuperTypes(true);
   }
 
-  @NotNull
-  PsiClassType[] getImplementsListTypes(boolean includeSynthetic);
+  PsiClassType @NotNull [] getImplementsListTypes(boolean includeSynthetic);
 
-  @NotNull
-  PsiClassType[] getExtendsListTypes(boolean includeSynthetic);
+  PsiClassType @NotNull [] getExtendsListTypes(boolean includeSynthetic);
 
-  @NotNull
-  PsiClass[] getSupers(boolean includeSynthetic);
+  PsiClass @NotNull [] getSupers(boolean includeSynthetic);
 
-  @NotNull
-  PsiClassType[] getSuperTypes(boolean includeSynthetic);
+  PsiClassType @NotNull [] getSuperTypes(boolean includeSynthetic);
 
-  @NotNull
-  default GrTypeDefinition[] getCodeInnerClasses() {
+  default GrTypeDefinition @NotNull [] getCodeInnerClasses() {
     return EMPTY_ARRAY;
   }
 
@@ -86,24 +77,19 @@ public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember,
   GrTypeDefinitionBody getBody();
 
   @Override
-  @NotNull
-  GrField[] getFields();
+  GrField @NotNull [] getFields();
 
-  @NotNull
-  GrField[] getCodeFields();
+  GrField @NotNull [] getCodeFields();
 
-  @NotNull
-  GrMethod[] getCodeConstructors();
+  GrMethod @NotNull [] getCodeConstructors();
 
   @Nullable
   PsiField findCodeFieldByName(String name, boolean checkBases);
 
   @Override
-  @NotNull
-  GrClassInitializer[] getInitializers();
+  GrClassInitializer @NotNull [] getInitializers();
 
-  @NotNull
-  GrMembersDeclaration[] getMemberDeclarations();
+  GrMembersDeclaration @NotNull [] getMemberDeclarations();
 
   @Override
   @Nullable
@@ -115,14 +101,11 @@ public interface GrTypeDefinition extends PsiClass, GrDocCommentOwner, GrMember,
   @Nullable
   GrImplementsClause getImplementsClause();
 
-  @NotNull
-  GrMethod[] getCodeMethods();
+  GrMethod @NotNull [] getCodeMethods();
 
-  @NotNull
-  PsiMethod[] findCodeMethodsByName(@NonNls String name, boolean checkBases);
+  PsiMethod @NotNull [] findCodeMethodsByName(@NonNls String name, boolean checkBases);
 
-  @NotNull
-  PsiMethod[] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
+  PsiMethod @NotNull [] findCodeMethodsBySignature(PsiMethod patternMethod, boolean checkBases);
 
   boolean isAnonymous();
 

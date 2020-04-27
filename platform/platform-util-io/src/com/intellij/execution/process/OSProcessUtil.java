@@ -20,8 +20,7 @@ public final class OSProcessUtil {
   private static final Logger LOG = Logger.getInstance(OSProcessUtil.class);
   private static String ourPid;
 
-  @NotNull
-  public static ProcessInfo[] getProcessList() {
+  public static ProcessInfo @NotNull [] getProcessList() {
     return ProcessListUtil.getProcessList();
   }
 

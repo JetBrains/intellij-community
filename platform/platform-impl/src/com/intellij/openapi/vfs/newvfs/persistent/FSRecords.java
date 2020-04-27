@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -26,10 +27,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,9 +41,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * @author max
- */
 public class FSRecords {
   private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
@@ -60,7 +55,8 @@ public class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old` and use it's value for `ourSymlinkTargetAttr`
+  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old`, use it's value for `ourSymlinkTargetAttr`,
+  //             and drop path conversion from `readSymlinkTarget`
   private static final int VERSION = 53 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
@@ -293,7 +289,7 @@ public class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath()) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
@@ -351,7 +347,7 @@ public class FSRecords {
               final String message = "Files in " + basePath.getPath() + " are locked.\n" +
                                      ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
               if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, "Fatal Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, IdeBundle.message("dialog.title.fatal.error"), JOptionPane.ERROR_MESSAGE);
               }
               else {
                 //noinspection UseOfSystemOutOrSystemErr
@@ -557,7 +553,11 @@ public class FSRecords {
     }
   }
 
-  private FSRecords() {
+  private FSRecords() { }
+
+  @ApiStatus.Internal
+  public static int getVersion() {
+    return VERSION;
   }
 
   static void connect() {
@@ -705,9 +705,8 @@ public class FSRecords {
 
   private static final int ROOT_RECORD_ID = 1;
 
-  @NotNull
   @TestOnly
-  static int[] listRoots() {
+  static int @NotNull [] listRoots() {
     return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
         TIntArrayList result = new TIntArrayList();
@@ -888,8 +887,7 @@ public class FSRecords {
     });
   }
 
-  @NotNull
-  static int[] list(int id) {
+  static int @NotNull [] list(int id) {
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
         if (input == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
@@ -935,8 +933,7 @@ public class FSRecords {
   }
 
   // returns NameId[] sorted by NameId.id
-  @NotNull
-  public static NameId[] listAll(int parentId) {
+  public static NameId @NotNull [] listAll(int parentId) {
     assert parentId > 0 : parentId;
     return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(parentId, ourChildrenAttr)) {
@@ -1004,7 +1001,7 @@ public class FSRecords {
     }
   }
 
-  static void updateList(int id, @NotNull int[] childIds) {
+  static void updateList(int id, int @NotNull [] childIds) {
     assert id > 0 : id;
     Arrays.sort(childIds);
     writeAndHandleErrors(() -> {
@@ -1029,9 +1026,8 @@ public class FSRecords {
     });
   }
 
-  @Nullable
-  static String readSymlinkTarget(int id) {
-    return readAndHandleErrors(() -> {
+  static @Nullable String readSymlinkTarget(int id) {
+    String result = readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
       }
@@ -1040,6 +1036,7 @@ public class FSRecords {
       }
       return null;
     });
+    return result != null ? FileUtil.toSystemIndependentName(result) : null;
   }
 
   static void storeSymlinkTarget(int id, @Nullable String symlinkTarget) {

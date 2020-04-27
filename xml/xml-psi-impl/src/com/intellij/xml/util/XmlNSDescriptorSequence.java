@@ -54,8 +54,7 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   }
 
   @Override
-  @NotNull
-  public XmlElementDescriptor[] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
     final List<XmlElementDescriptor> descriptors = new ArrayList<>();
     for (XmlNSDescriptor descriptor : sequence) {
       ContainerUtil.addAll(descriptors, descriptor.getRootElementsDescriptors(document));
@@ -111,9 +110,8 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
     }
   }
 
-  @NotNull
   @Override
-  public Object[] getDependencies(){
+  public Object @NotNull [] getDependencies(){
     List<Object> ret = new ArrayList<>();
     for (XmlNSDescriptor descriptor : sequence) {
       ContainerUtil.addAll(ret, descriptor.getDependencies());

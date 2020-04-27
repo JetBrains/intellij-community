@@ -58,10 +58,10 @@ public class GraphLayoutBuilder {
   }
 
   @NotNull private final LinearGraph myGraph;
-  @NotNull private final int[] myLayoutIndex;
+  private final int @NotNull [] myLayoutIndex;
 
   @NotNull private final List<Integer> myHeadNodeIndex;
-  @NotNull private final int[] myStartLayoutIndexForHead;
+  private final int @NotNull [] myStartLayoutIndexForHead;
 
   private int currentLayoutIndex = 1;
 

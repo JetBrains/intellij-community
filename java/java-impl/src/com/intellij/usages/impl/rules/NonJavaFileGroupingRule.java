@@ -32,7 +32,7 @@ public class NonJavaFileGroupingRule extends FileGroupingRule {
 
   @Nullable
   @Override
-  public UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  public UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     final FileUsageGroup usageGroup = (FileUsageGroup)super.getParentGroupFor(usage, targets);
     if (usageGroup != null) {
       final PsiFile psiFile = usageGroup.getPsiFile();

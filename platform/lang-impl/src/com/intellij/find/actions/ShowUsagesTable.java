@@ -1,24 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TableUtil;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
@@ -48,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 class ShowUsagesTable extends JBTable implements DataProvider {
@@ -56,7 +49,10 @@ class ShowUsagesTable extends JBTable implements DataProvider {
   static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   private static final int MARGIN = 2;
 
-  ShowUsagesTable() {
+  private final ShowUsagesTableCellRenderer myRenderer;
+
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer) {
+    myRenderer = renderer;
     ScrollingUtil.installActions(this);
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
@@ -96,13 +92,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @NotNull
-  Runnable prepareTable(final Editor editor,
-                        @NotNull RelativePoint popupPosition,
-                        @NotNull FindUsagesHandler handler,
-                        final int maxUsages,
-                        @NotNull final FindUsagesOptions options,
-                        final boolean previewMode,
-                        @NotNull ShowUsagesAction action) {
+  Runnable prepareTable(final boolean previewMode, @NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable) {
     SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
@@ -149,13 +139,12 @@ class ShowUsagesTable extends JBTable implements DataProvider {
 
     final Runnable itemChosenCallback = () -> {
       if (moreUsagesSelected.get()) {
-        action.appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
+        appendMoreUsageRunnable.run();
         return;
       }
 
       if (outsideScopeUsagesSelected.get()) {
-        options.searchScope = GlobalSearchScope.projectScope(handler.getProject());
-        action.showElementUsages(editor, popupPosition, handler, maxUsages, options, action.myWidth);
+        showInMaximalScopeRunnable.run();
         return;
       }
 
@@ -214,10 +203,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   @NotNull
-  MyModel setTableModel(@NotNull UsageViewImpl usageView,
-                        @NotNull final List<UsageNode> data,
-                        @NotNull AtomicInteger outOfScopeUsages,
-                        @NotNull SearchScope searchScope) {
+  MyModel setTableModel(@NotNull final List<UsageNode> data) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final int columnCount = calcColumnCount(data);
     MyModel model = getModel() instanceof MyModel ? (MyModel)getModel() : null;
@@ -225,11 +211,10 @@ class ShowUsagesTable extends JBTable implements DataProvider {
       model = new MyModel(data, columnCount);
       setModel(model);
 
-      ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);
       for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
         TableColumn column = getColumnModel().getColumn(i);
         column.setPreferredWidth(0);
-        column.setCellRenderer(renderer);
+        column.setCellRenderer(myRenderer);
       }
     }
     return model;
@@ -250,9 +235,8 @@ class ShowUsagesTable extends JBTable implements DataProvider {
       return getTable().convertRowIndexToModel(viewIndex);
     }
 
-    @NotNull
     @Override
-    protected Object[] getAllElements() {
+    protected Object @NotNull [] getAllElements() {
       return ((MyModel)getTable().getModel()).getItems().toArray();
     }
 
@@ -289,7 +273,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     }
 
     @NotNull
-    private static ColumnInfo[] cols(int cols) {
+    private static ColumnInfo<UsageNode, UsageNode>[] cols(int cols) {
       ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
         @Nullable
         @Override
@@ -298,7 +282,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
         }
       };
       List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
-      return list.toArray(ColumnInfo.EMPTY_ARRAY);
+      return list.toArray(ColumnInfo.emptyArray());
     }
 
     @Override

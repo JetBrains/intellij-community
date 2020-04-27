@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.ui.InstanceFilterEditor;
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,7 @@ public class EditInstanceFiltersDialog extends DialogWrapper{
   public EditInstanceFiltersDialog (Project project) {
     super(project, true);
     myProject = project;
-    setTitle(DebuggerBundle.message("instance.filters.dialog.title"));
+    setTitle(JavaDebuggerBundle.message("instance.filters.dialog.title"));
     init();
   }
 

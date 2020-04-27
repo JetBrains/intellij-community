@@ -2,10 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
@@ -49,7 +46,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public void addMoveUpAction() {
-    addAction(new AnAction(UIBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon()) {
+    addAction(new AnAction(UIBundle.messagePointer("move.up.action.name"), Presentation.NULL_STRING, IconUtil.getMoveUpIcon()) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         ListUtil.moveSelectedItemsUp(myList);
@@ -63,7 +60,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public void addMoveDownAction() {
-    addAction(new AnAction(UIBundle.message("move.down.action.name"), null, AllIcons.Actions.MoveDown) {
+    addAction(new AnAction(UIBundle.messagePointer("move.down.action.name"), Presentation.NULL_STRING, AllIcons.Actions.MoveDown) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         ListUtil.moveSelectedItemsDown(myList);

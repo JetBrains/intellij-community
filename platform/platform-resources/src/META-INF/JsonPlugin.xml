@@ -11,14 +11,14 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="JSON" extensions="json" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
+    <fileType name="JSON" extensions="json;har" implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE" language="JSON"/>
     <fileType name="JSON5" extensions="json5" implementationClass="com.intellij.json.json5.Json5FileType" fieldName="INSTANCE" language="JSON5"/>
     <fileIconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
-    <statusBarWidgetProvider implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetProvider" />
+    <statusBarWidgetFactory implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory" order="after codeStyleWidget, before notificationsWidget"/>
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
     <!-- Code style and formatting -->
@@ -91,9 +91,13 @@
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
-    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema" displayName="JSON Schema Mappings"
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema"
+                         bundle="messages.JsonBundle"
+                         key="configurable.JsonSchemaMappingsConfigurable.display.name"
                          instance="com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
-    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog" displayName="Remote JSON Schemas"
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog"
+                         bundle="messages.JsonBundle"
+                         key="configurable.JsonSchemaCatalogConfigurable.display.name"
                          instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
@@ -135,6 +139,7 @@
     <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor" interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion" interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.customStructureViewFactory" interface="com.intellij.json.structureView.JsonCustomStructureViewFactory" dynamic="true"/>
   </extensionPoints>
 
 </idea-plugin>

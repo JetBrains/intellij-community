@@ -43,9 +43,8 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       myAnnotation = annotation;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myAnnotation instanceof GitFileAnnotation) {
         return new AnAction[]{
           new ToggleIgnoreWhitespaces(myAnnotation.getProject()),
@@ -62,8 +61,8 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
     private ToggleCommitDate() {
-      super(VcsBundle.message("prefer.commit.timestamp.action.text"),
-            VcsBundle.message("prefer.commit.timestamp.action.description"), null);
+      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text"),
+            VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
     }
 
     @Override

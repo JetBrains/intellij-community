@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.WeighedItem;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,15 +53,6 @@ public class RunDashboardRunConfigurationStatus implements WeighedItem {
 
   public Icon getIcon() {
     return myIcon;
-  }
-
-  /**
-   * @deprecated Use {@link #getWeight()} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public int getPriority() {
-    return getWeight();
   }
 
   @Override

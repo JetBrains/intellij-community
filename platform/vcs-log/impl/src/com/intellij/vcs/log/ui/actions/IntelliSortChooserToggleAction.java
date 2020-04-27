@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -26,15 +27,17 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.BekUtil;
+import com.intellij.vcs.log.util.GraphSortPresentationUtil;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class IntelliSortChooserToggleAction extends ToggleAction implements DumbAware {
-  @NotNull private static final String DEFAULT_TEXT = "IntelliSort";
-  @NotNull private static final String DEFAULT_DESCRIPTION = "Turn IntelliSort On/Off";
 
   public IntelliSortChooserToggleAction() {
-    super(DEFAULT_TEXT, DEFAULT_DESCRIPTION, VcsLogIcons.IntelliSort);
+    //noinspection DialogTitleCapitalization
+    super(VcsLogBundle.message("vcs.log.action.intellisort.text"),
+          VcsLogBundle.message("vcs.log.action.intellisort.description"),
+          VcsLogIcons.IntelliSort);
   }
 
   @Override
@@ -64,17 +67,22 @@ public class IntelliSortChooserToggleAction extends ToggleAction implements Dumb
     e.getPresentation().setEnabled(BekUtil.isBekEnabled() && logUI != null);
 
     if (properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
-      boolean off = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.Normal;
-      String description = "Turn IntelliSort " + (off ? "on" : "off") + ": " +
-                           (off
-                            ? StringUtil.toLowerCase(PermanentGraph.SortType.Bek.getDescription())
-                            : StringUtil.toLowerCase(PermanentGraph.SortType.Normal.getDescription())) + ".";
+      String description;
+      if (properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.Normal) {
+        String localizedDescription = GraphSortPresentationUtil.getLocalizedDescription(PermanentGraph.SortType.Bek);
+        description = VcsLogBundle.message("vcs.log.action.turn.intellisort.on", StringUtil.toLowerCase(localizedDescription));
+      }
+      else {
+        String localizedDescription = GraphSortPresentationUtil.getLocalizedDescription(PermanentGraph.SortType.Normal);
+        description = VcsLogBundle.message("vcs.log.action.turn.intellisort.off", StringUtil.toLowerCase(localizedDescription));
+      }
       e.getPresentation().setDescription(description);
       e.getPresentation().setText(description);
     }
     else {
-      e.getPresentation().setText(DEFAULT_TEXT);
-      e.getPresentation().setDescription(DEFAULT_DESCRIPTION);
+      e.getPresentation().setText(VcsLogBundle.message("vcs.log.action.intellisort.text"));
+      //noinspection DialogTitleCapitalization
+      e.getPresentation().setDescription(VcsLogBundle.message("vcs.log.action.intellisort.description"));
     }
   }
 }

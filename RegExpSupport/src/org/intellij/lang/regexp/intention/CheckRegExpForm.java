@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -156,9 +156,9 @@ public class CheckRegExpForm {
         updater.cancelAllRequests();
         if (!updater.isDisposed()) {
           updater.addRequest(() -> {
-            final RegExpMatchResult result = isMatchingText(myRegexpFile, mySampleText.getText());
+            final RegExpMatchResult result = isMatchingText(myRegexpFile, myRegExp.getText(), mySampleText.getText());
             ApplicationManager.getApplication().invokeLater(() -> setBalloonState(result), ModalityState.any(), __ -> updater.isDisposed());
-          }, 200);
+          }, 0);
         }
       }
 
@@ -210,18 +210,17 @@ public class CheckRegExpForm {
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    return isMatchingText(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
+    return isMatchingText(regexpFile, regexpFile.getText(), sampleText) == RegExpMatchResult.MATCHES;
   }
-  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
-    final String regExp = regexpFile.getText();
 
+  static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, String regexpText, @NotNull String sampleText) {
     final Language regexpFileLanguage = regexpFile.getLanguage();
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regexpFileLanguage);
     if (matcherProvider != null) {
       final RegExpMatchResult result = ReadAction.compute(() -> {
         final PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(regexpFile);
         if (host != null) {
-          return matcherProvider.matches(regExp, regexpFile, host, sampleText, 1000L);
+          return matcherProvider.matches(regexpText, regexpFile, host, sampleText, 1000L);
         }
         return null;
       });
@@ -244,7 +243,7 @@ public class CheckRegExpForm {
 
     try {
       //noinspection MagicConstant
-      final Matcher matcher = Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
+      final Matcher matcher = Pattern.compile(regexpText, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
       if (matcher.matches()) {
         return RegExpMatchResult.MATCHES;
       }

@@ -13,9 +13,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class FileDescriptorsContainerTest extends DescriptorsTestCase {
   private ConfigFileContainer myContainer;
 

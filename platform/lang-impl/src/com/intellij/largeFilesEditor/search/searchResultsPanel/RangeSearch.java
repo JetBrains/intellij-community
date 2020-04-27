@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.largeFilesEditor.search.searchResultsPanel;
 
+import com.intellij.CommonBundle;
 import com.intellij.largeFilesEditor.GuiUtils;
 import com.intellij.largeFilesEditor.Utils;
 import com.intellij.largeFilesEditor.search.SearchResult;
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -271,7 +273,9 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
   public void updateTabName() {
     if (myContent != null && lastExecutedRangeSearchTask != null) {
-      String name = "\"" + lastExecutedRangeSearchTask.getOptions().stringToFind + "\" in " + myVirtualFile.getName();
+      String name = EditorBundle
+        .message("large.file.editor.tab.name.some.string.in.some.file", lastExecutedRangeSearchTask.getOptions().stringToFind,
+                 myVirtualFile.getName());
       myContent.setDisplayName(name);
       myContent.setDescription(name);
     }
@@ -305,7 +309,8 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
     catch (IOException e) {
       logger.info(e);
-      Messages.showWarningDialog("Working with file error.", "Error");
+      Messages.showWarningDialog(EditorBundle.message("large.file.editor.message.working.with.file.error"),
+                                 CommonBundle.getErrorTitle());
     }
 
     updateTabName();
@@ -330,7 +335,8 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
     if (fileDataProviderForSearch == null) {
       logger.warn("Can't open Large File Editor for target file.");
-      Messages.showWarningDialog("Can't open Large File Editor for target file.", "Error");
+      Messages.showWarningDialog(EditorBundle.message("large.file.editor.message.cant.open.large.file.editor.for.target.file"),
+                                 CommonBundle.getErrorTitle());
       return;
     }
 
@@ -340,7 +346,8 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
     catch (CloneNotSupportedException e) {
       logger.warn(e);
-      Messages.showWarningDialog("Can't launch searching because of unexpected error.", "Error");
+      Messages.showWarningDialog(EditorBundle.message("large.file.editor.cant.launch.searching.because.of.unexpected.error"),
+                                 CommonBundle.getErrorTitle());
       return;
     }
 
@@ -378,23 +385,22 @@ public class RangeSearch implements RangeSearchTask.Callback {
       }
     }
 
-    lblSearchStatusLeft.append(String.format("Found %d matches", getAmountOfStoredSearchResults()));
-
+    String newStatus;
     if (pagesAmount == -1 || myRightBorderPageNumber == UNDEFINED || myLeftBorderPageNumber == UNDEFINED) {
-      lblSearchStatusLeft.append(".");
-      return;
-    }
-
-    if (myLeftBorderPageNumber == 0 && myRightBorderPageNumber == pagesAmount - 1) {
-      lblSearchStatusLeft.append(" in the whole file.");
+      newStatus = EditorBundle.message("large.file.editor.message.found.some.matches", getAmountOfStoredSearchResults());
     }
     else {
-      lblSearchStatusLeft.append(" in bounds ");
-      lblSearchStatusLeft.append(String.valueOf(Utils.calculatePagePositionPercent(myLeftBorderPageNumber, pagesAmount)));
-      lblSearchStatusLeft.append("% to ");
-      lblSearchStatusLeft.append(String.valueOf(Utils.calculatePagePositionPercent(myRightBorderPageNumber, pagesAmount)));
-      lblSearchStatusLeft.append("% of file.");
+      if (myLeftBorderPageNumber == 0 && myRightBorderPageNumber == pagesAmount - 1) {
+        newStatus = EditorBundle.message("large.file.editor.message.found.some.matches.in.the.whole.file", getAmountOfStoredSearchResults());
+      }
+      else {
+        newStatus = EditorBundle
+          .message("large.file.editor.message.found.some.matches.in.some.bounds.of.file", getAmountOfStoredSearchResults(),
+                   Utils.calculatePagePositionPercent(myLeftBorderPageNumber, pagesAmount),
+                   Utils.calculatePagePositionPercent(myRightBorderPageNumber, pagesAmount));
+      }
     }
+    lblSearchStatusLeft.append(newStatus);
   }
 
   public JComponent getComponent() {
@@ -414,7 +420,8 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
     catch (IOException e) {
       logger.warn(e);
-      Messages.showWarningDialog("Working with file error.", "Error");
+      Messages.showWarningDialog(EditorBundle.message("large.file.editor.message.working.with.file.error"),
+                                 CommonBundle.getErrorTitle());
       return;
     }
 
@@ -476,7 +483,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
       else {
         setLeftBorderPageNumber(lastScannedPageNumber);
       }
-      setAdditionalStatusText("Search complete.");
+      setAdditionalStatusText(EditorBundle.message("large.file.editor.message.search.complete"));
     }
     callScheduledUpdate();
     fireSearchFinished();
@@ -521,7 +528,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
     if (getAmountOfStoredSearchResults() > options.criticalAmountOfSearchResults) {
       stopSearchTaskIfItExists();
-      setAdditionalStatusText("Search stopped because too many results were found.");
+      setAdditionalStatusText(EditorBundle.message("large.file.editor.message.search.stopped.because.too.many.results.were.found"));
       callScheduledUpdate();
     }
   }
@@ -562,7 +569,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
   protected void onSearchCatchedException(RangeSearchTask caller, IOException e) {
     if (!caller.isShouldStop()) {
-      setAdditionalStatusText("Search stopped because something went wrong.");
+      setAdditionalStatusText(EditorBundle.message("large.file.editor.message.search.stopped.because.something.went.wrong"));
       logger.warn(e);
     }
   }
@@ -642,10 +649,10 @@ public class RangeSearch implements RangeSearchTask.Callback {
     public void render(ColoredListCellRenderer coloredListCellRenderer, boolean selected, boolean hasFocus) {
       String text;
       if (isForwardDirection) {
-        text = "find next matches";
+        text = EditorBundle.message("large.file.editor.text.find.next.matches");
       }
       else {
-        text = "find previous matches";
+        text = EditorBundle.message("large.file.editor.text.find.previous.matches");
       }
 
       if (selected) {

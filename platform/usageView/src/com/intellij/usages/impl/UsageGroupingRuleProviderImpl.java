@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -22,9 +22,6 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider {
   protected boolean supportsNonCodeRule() {
     return true;
@@ -38,15 +35,13 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     return true;
   }
 
-  @NotNull
   @Override
-  public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
     return getActiveRules(project, UsageViewSettings.getInstance());
   }
 
   @Override
-  @NotNull
-  public UsageGroupingRule[] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
+  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
     List<UsageGroupingRule> rules = new ArrayList<>();
     if (supportsNonCodeRule()) {
       rules.add(new NonCodeUsageGroupingRule(project));
@@ -76,8 +71,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
   }
 
   @Override
-  @NotNull
-  public AnAction[] createGroupingActions(@NotNull UsageView view) {
+  public AnAction @NotNull [] createGroupingActions(@NotNull UsageView view) {
     UsageViewImpl impl = (UsageViewImpl)view;
     JComponent component = impl.getComponent();
 
@@ -144,7 +138,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByUsageTypeAction extends RuleAction {
     private GroupByUsageTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.usage.type"), AllIcons.General.Filter); //TODO: special icon
+      super(view, UsageViewBundle.messagePointer("action.group.by.usage.type"), AllIcons.General.Filter); //TODO: special icon
     }
     @Override
     protected boolean getOptionValue() {
@@ -158,7 +152,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByScopeAction extends RuleAction {
     private GroupByScopeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.test.production"), AllIcons.Actions.GroupByTestProduction);
+      super(view, UsageViewBundle.messagePointer("action.group.by.test.production"), AllIcons.Actions.GroupByTestProduction);
     }
     @Override
     protected boolean getOptionValue() {
@@ -172,7 +166,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByModuleTypeAction extends RuleAction {
     private GroupByModuleTypeAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.module"), AllIcons.Actions.GroupByModule);
+      super(view, UsageViewBundle.messagePointer("action.group.by.module"), AllIcons.Actions.GroupByModule);
     }
 
     @Override
@@ -188,7 +182,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class FlattenModulesAction extends RuleAction {
     private FlattenModulesAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.flatten.modules"), AllIcons.ObjectBrowser.FlattenModules);
+      super(view, UsageViewBundle.messagePointer("action.flatten.modules"), AllIcons.ObjectBrowser.FlattenModules);
     }
 
     @Override
@@ -224,7 +218,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   private static class GroupByFileStructureAction extends RuleAction {
     private GroupByFileStructureAction(UsageViewImpl view) {
-      super(view, UsageViewBundle.message("action.group.by.file.structure"), AllIcons.Actions.GroupByMethod);
+      super(view, UsageViewBundle.messagePointer("action.group.by.file.structure"), AllIcons.Actions.GroupByMethod);
     }
     @Override
     protected boolean getOptionValue() {

@@ -93,8 +93,8 @@ public class TextMateServiceImpl extends TextMateService {
       if (bundleConfigBean.isEnabled()) {
         boolean result = registerBundle(LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath()), newExtensionsMapping);
         if (!result) {
-          Notifications.Bus.notify(new Notification("TextMate Bundles", "TextMate bundle load error",
-                                                    "Bundle " + bundleConfigBean.getName() + " can't be registered",
+          Notifications.Bus.notify(new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error"),
+                                                    TextMateBundle.message("textmate.cant.register.bundle", bundleConfigBean.getName()),
                                                     NotificationType.ERROR, null));
         }
       }

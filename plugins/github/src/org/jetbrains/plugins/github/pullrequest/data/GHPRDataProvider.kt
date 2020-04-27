@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import git4idea.GitCommit
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
@@ -14,9 +13,9 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder {
   val number: Long
 
   val detailsRequest: CompletableFuture<GHPullRequest>
+  val mergeabilityStateRequest: CompletableFuture<GHPRMergeabilityState>
   val headBranchFetchRequest: CompletableFuture<Unit>
   val apiCommitsRequest: CompletableFuture<List<GHCommit>>
-  val logCommitsRequest: CompletableFuture<List<GitCommit>>
   val changesProviderRequest: CompletableFuture<out GHPRChangesProvider>
   val reviewThreadsRequest: CompletableFuture<List<GHPullRequestReviewThread>>
 
@@ -33,10 +32,13 @@ interface GHPRDataProvider : GHPRTimelineLoaderHolder {
   @CalledInAwt
   fun reloadReviewThreads()
 
+  @CalledInAwt
+  fun reloadMergeabilityState()
+
   interface RequestsChangedListener : EventListener {
     fun detailsRequestChanged() {}
     fun commitsRequestChanged() {}
     fun reviewThreadsRequestChanged() {}
-
+    fun mergeabilityStateRequestChanged() {}
   }
 }

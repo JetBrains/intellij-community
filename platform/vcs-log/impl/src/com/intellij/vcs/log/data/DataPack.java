@@ -100,7 +100,7 @@ public class DataPack extends DataPackBase {
 
   @Override
   public String toString() {
-    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}";
+    return "{DataPack. " + myPermanentGraph.getAllCommits().size() + " commits in " + myLogProviders.keySet().size() + " roots}"; // NON-NLS
   }
 
   public static class ErrorDataPack extends DataPack {

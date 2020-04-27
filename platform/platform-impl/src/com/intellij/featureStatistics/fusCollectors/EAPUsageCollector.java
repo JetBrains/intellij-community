@@ -4,11 +4,13 @@ package com.intellij.featureStatistics.fusCollectors;
 import com.intellij.idea.Main;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,7 +28,7 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
@@ -53,11 +55,11 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
           // non-eap commercial version
           if (facade.isEvaluationLicense()) {
             result.add(MetricEventFactoryKt.newMetric("evaluation"));
-            result.add(newLicencingMetric("evaluation"));
+            result.add(newLicencingMetric("evaluation", facade.metadata));
           }
           else if (!StringUtil.isEmpty(facade.getLicensedToMessage())){
             result.add(MetricEventFactoryKt.newMetric("license"));
-            result.add(newLicencingMetric("license"));
+            result.add(newLicencingMetric("license", facade.metadata));
           }
         }
         return result;
@@ -70,8 +72,12 @@ public class EAPUsageCollector extends ApplicationUsagesCollector {
   }
 
   @NotNull
-  private static MetricEvent newLicencingMetric(@NotNull String value) {
-    return MetricEventFactoryKt.newMetric("licencing", value);
+  private static MetricEvent newLicencingMetric(@NotNull String value, @Nullable String metadata) {
+    FeatureUsageData data = new FeatureUsageData();
+    if (StringUtil.isNotEmpty(metadata)) {
+      data.addData("metadata", metadata);
+    }
+    return MetricEventFactoryKt.newMetric("licencing", value, data);
   }
 
   @NotNull

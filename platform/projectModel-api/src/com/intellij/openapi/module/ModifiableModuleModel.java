@@ -23,8 +23,7 @@ public interface ModifiableModuleModel {
    *
    * @return the array of modules.
    */
-  @NotNull
-  Module[] getModules();
+  Module @NotNull [] getModules();
 
   /**
    * Creates a module of the specified type at the specified path and adds it to the project
@@ -145,12 +144,11 @@ public interface ModifiableModuleModel {
   @NotNull
   String getActualName(@NotNull Module module);
 
-  @Nullable
-  String[] getModuleGroupPath(@NotNull Module module);
+  String @Nullable [] getModuleGroupPath(@NotNull Module module);
 
   boolean hasModuleGroups();
 
-  void setModuleGroupPath(@NotNull Module module, @Nullable("null means remove") String[] groupPath);
+  void setModuleGroupPath(@NotNull Module module, String @Nullable("null means remove") [] groupPath);
 
   @NotNull
   Project getProject();

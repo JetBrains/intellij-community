@@ -417,7 +417,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   @NotNull
   @Override
-  public PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts) {
+  public PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts) {
     assert decoratorTexts.length > 0;
     StringBuilder functionText = new StringBuilder();
     for (String decoText : decoratorTexts) {

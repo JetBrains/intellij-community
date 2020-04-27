@@ -33,16 +33,19 @@ public class TablePassInfo extends LayoutPassInfo {
     return index != -1 && index == table.size() - 1;
   }
 
+  @Deprecated
   @Override
   public int getRowCount() {
     return table.size();
   }
 
+  @Deprecated
   @Override
   public int getColumnCount(final int row) {
     return table.get(row).myColumns.size();
   }
 
+  @Deprecated
   @Override
   public TabInfo getTabAt(final int row, final int column) {
     return table.get(row).myColumns.get(column);

@@ -17,12 +17,15 @@ import org.jetbrains.annotations.Nullable;
 public class LazyPatchContentRevision implements ContentRevision {
   private final VirtualFile myVf;
   private final FilePath myNewFilePath;
-  private final String myRevision;
+  @NotNull private final String myRevision;
   private final TextFilePatch myPatch;
 
   private final AtomicNotNullLazyValue<Data> myData;
 
-  public LazyPatchContentRevision(final VirtualFile vf, final FilePath newFilePath, final String revision, final TextFilePatch patch) {
+  public LazyPatchContentRevision(final VirtualFile vf,
+                                  final FilePath newFilePath,
+                                  @NotNull final String revision,
+                                  final TextFilePatch patch) {
     myVf = vf;
     myNewFilePath = newFilePath;
     myRevision = revision;

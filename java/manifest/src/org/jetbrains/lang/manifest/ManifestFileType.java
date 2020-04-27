@@ -52,7 +52,7 @@ public class ManifestFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "Manifest";
+    return ManifestBundle.message("file.type.description");
   }
 
   @NotNull

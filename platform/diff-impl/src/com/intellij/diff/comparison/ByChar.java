@@ -219,8 +219,7 @@ public class ByChar {
   // Misc
   //
 
-  @NotNull
-  private static int[] getAllCodePoints(@NotNull CharSequence text) {
+  private static int @NotNull [] getAllCodePoints(@NotNull CharSequence text) {
     TIntArrayList list = new TIntArrayList(text.length());
 
     int len = text.length();

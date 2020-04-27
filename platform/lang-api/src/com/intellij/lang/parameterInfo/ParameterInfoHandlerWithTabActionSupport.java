@@ -12,7 +12,7 @@ import java.util.Set;
 public interface ParameterInfoHandlerWithTabActionSupport<ParameterOwner extends PsiElement, ParameterType, ActualParameterType extends PsiElement>
   extends ParameterInfoHandler<ParameterOwner, ParameterType> {
 
-  @NotNull ActualParameterType[] getActualParameters(@NotNull ParameterOwner o);
+  ActualParameterType @NotNull [] getActualParameters(@NotNull ParameterOwner o);
 
   @NotNull IElementType getActualParameterDelimiterType();
 

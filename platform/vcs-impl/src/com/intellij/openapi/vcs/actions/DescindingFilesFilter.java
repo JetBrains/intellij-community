@@ -15,8 +15,7 @@ public class DescindingFilesFilter {
   private DescindingFilesFilter() {
   }
 
-  @NotNull
-  public static FilePath[] filterDescindingFiles(@NotNull FilePath[] roots, Project project) {
+  public static FilePath @NotNull [] filterDescindingFiles(FilePath @NotNull [] roots, Project project) {
     final List<FilePath> result = new ArrayList<>();
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
 

@@ -23,8 +23,6 @@ import kotlin.reflect.KClass
 /**
  * Produces class-file with qualified name [name] in a place specified by [content]. If the class is not from the default package,
  * the produced file will be placed in a sub-directory according to its package.
- *
- * @author nik
  */
 inline fun DirectoryContentBuilder.classFile(name: String, content: ClassFileBuilder.() -> Unit) {
   val builder = ClassFileBuilderImpl(name)

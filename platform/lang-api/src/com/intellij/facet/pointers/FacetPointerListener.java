@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface FacetPointerListener<F extends Facet> extends EventListener {
 
   void pointerIdChanged(@NotNull FacetPointer<F> pointer, @NotNull String oldId);

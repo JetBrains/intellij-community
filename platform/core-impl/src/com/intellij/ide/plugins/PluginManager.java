@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
@@ -20,7 +21,6 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -61,7 +61,7 @@ public final class PluginManager {
    */
   @Nullable
   public static Path getOnceInstalledIfExists() {
-    Path onceInstalledFile = Paths.get(PathManager.getConfigPath(), INSTALLED_TXT);
+    Path onceInstalledFile = PathManager.getConfigDir().resolve(INSTALLED_TXT);
     return Files.isRegularFile(onceInstalledFile) ? onceInstalledFile : null;
   }
 
@@ -101,14 +101,12 @@ public final class PluginManager {
   /**
    * @deprecated Use {@link PluginManagerCore#getPlugin(PluginId)}
    */
-  @Nullable
   @Deprecated
-  public static IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
+  public static @Nullable IdeaPluginDescriptor getPlugin(@Nullable PluginId id) {
     return PluginManagerCore.getPlugin(id);
   }
 
-  @NotNull
-  public static IdeaPluginDescriptor[] getPlugins() {
+  public static @NotNull IdeaPluginDescriptor[] getPlugins() {
     return PluginManagerCore.getPlugins();
   }
 
@@ -116,18 +114,15 @@ public final class PluginManager {
     return PluginManagerCore.isPluginInstalled(id);
   }
 
-  @Nullable
-  public static PluginId getPluginByClassName(@NotNull String className) {
+  public static @Nullable PluginId getPluginByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginByClassName(className);
   }
 
-  @NotNull
-  public static List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
+  public static @NotNull List<? extends IdeaPluginDescriptor> getLoadedPlugins() {
     return PluginManagerCore.getLoadedPlugins();
   }
 
-  @Nullable
-  public static PluginId getPluginOrPlatformByClassName(@NotNull String className) {
+  public @Nullable PluginId getPluginOrPlatformByClassName(@NotNull String className) {
     return PluginManagerCore.getPluginOrPlatformByClassName(className);
   }
 
@@ -147,7 +142,7 @@ public final class PluginManager {
    */
   @Deprecated
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    PluginManagerCore.saveDisabledPlugins(ContainerUtil.map(ids, s -> PluginId.getId(s)), append);
+    PluginManagerCore.saveDisabledPlugins(ContainerUtil.map(ids, PluginId::getId), append);
   }
 
   public static boolean disablePlugin(@NotNull String id) {
@@ -190,11 +185,11 @@ public final class PluginManager {
     descriptor.readExternal(JDOMUtil.load(file, factory), file.getParent(), context.pathResolver, context, descriptor);
   }
 
-  public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
+  public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
-  public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
+  public boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) {
       return false;
     }
@@ -232,8 +227,7 @@ public final class PluginManager {
     PluginManagerCore.trySaveDisabledPlugins(disabled);
   }
 
-  @Nullable
-  public IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
+  public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
     List<IdeaPluginDescriptorImpl> result = PluginManagerCore.ourLoadedPlugins;
     if (result == null) {
       return null;
@@ -245,5 +239,16 @@ public final class PluginManager {
       }
     }
     return null;
+  }
+
+  public boolean hideImplementationDetails() {
+    return !Registry.is("plugins.show.implementation.details");
+  }
+
+  @ApiStatus.Internal
+  public void setPlugins(@NotNull List<IdeaPluginDescriptor> descriptors) {
+    @SuppressWarnings("SuspiciousToArrayCall")
+    IdeaPluginDescriptorImpl[] list = descriptors.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
+    PluginManagerCore.doSetPlugins(list);
   }
 }

@@ -45,7 +45,9 @@ public class AddInlayInternalAction extends AnAction implements DumbAware {
     for (int offset : offsets) {
       AtomicReference<Inlay<?>> ref = new AtomicReference<>();
       MenuOnClickPresentation presentation = new MenuOnClickPresentation(new PresentationFactory(editor).text(inlayText), project, () -> {
-        return Collections.singletonList(new AnAction("Remove", "Remove this inlay", AllIcons.Actions.Cancel) {
+        return Collections.singletonList(new AnAction(InternalActionsBundle.messagePointer("action.AddInlayInternalAction.Anonymous.text.remove"),
+                                                      InternalActionsBundle.messagePointer("action.AddInlayInternalAction.Anonymous.description.remove.this.inlay"),
+                                                      AllIcons.Actions.Cancel) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e1) {
             Inlay<?> inlay = ref.get();

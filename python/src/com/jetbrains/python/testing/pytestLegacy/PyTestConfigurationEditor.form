@@ -26,7 +26,7 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="none" title="py.tests"/>
+            <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.pytest.legacy.py.tests"/>
             <children>
               <component id="97832" class="com.intellij.ui.components.JBLabel" binding="myTargetLabel">
                 <constraints>
@@ -45,7 +45,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <toolTipText value="Path to a file or directory that contains the tests to be executed"/>
+                  <toolTipText resource-bundle="messages/PyBundle" key="form.pytest.legacy.path.to.a.file.or.directory.that.contains.the.tests.to.be.executed"/>
                 </properties>
               </component>
               <component id="63cd5" class="javax.swing.JTextField" binding="myKeywordsTextField">
@@ -55,7 +55,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <toolTipText value="Specify the keywords to search for the required tests. -k command line option in py.tests"/>
+                  <toolTipText resource-bundle="messages/PyBundle" key="form.pytest.legacy.specify.the.keywords.to.search.for.the.required.tests.k.command.line.option.in.py.tests"/>
                 </properties>
               </component>
               <component id="4423e" class="javax.swing.JTextField" binding="myParamsTextField">
@@ -65,7 +65,7 @@
                   </grid>
                 </constraints>
                 <properties>
-                  <toolTipText value="Specify py.tests command line options"/>
+                  <toolTipText resource-bundle="messages/PyBundle" key="form.pytest.legacy.specify.py.tests.command.line.options"/>
                 </properties>
               </component>
               <component id="e538" class="javax.swing.JCheckBox" binding="myParametersCheckBox" default-binding="true">

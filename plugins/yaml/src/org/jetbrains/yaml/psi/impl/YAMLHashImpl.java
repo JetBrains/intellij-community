@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -10,9 +11,6 @@ import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 
-/**
- * @author oleg
- */
 public class YAMLHashImpl extends YAMLMappingImpl implements YAMLMapping {
   public YAMLHashImpl(@NotNull final ASTNode node) {
     super(node);
@@ -27,13 +25,13 @@ public class YAMLHashImpl extends YAMLMappingImpl implements YAMLMapping {
         anchor = child;
       }
     }
-    
+
     addAfter(key, anchor);
 
     final YAMLFile dummyFile = YAMLElementGenerator.getInstance(getProject()).createDummyYamlWithText("{,}");
     final PsiElement comma = dummyFile.findElementAt(1);
     assert comma != null && comma.getNode().getElementType() == YAMLTokenTypes.COMMA;
-    
+
     addAfter(comma, key);
   }
 

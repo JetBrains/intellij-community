@@ -36,9 +36,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class CompilerEncodingConfiguration {
   private final JpsModel myJpsModel;
   private final Map<String, String> myUrlToCharset;

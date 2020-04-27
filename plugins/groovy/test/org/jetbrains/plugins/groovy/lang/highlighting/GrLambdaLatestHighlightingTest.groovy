@@ -132,6 +132,7 @@ def method(Box<A> box) {
   }
 
   void testOverloadedInClosure() {
+    RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
     testHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 

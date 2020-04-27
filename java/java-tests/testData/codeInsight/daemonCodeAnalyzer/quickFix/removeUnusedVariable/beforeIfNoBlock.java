@@ -1,4 +1,4 @@
-// "Remove variable 'foo'" "true"
+// "Remove local variable 'foo'" "true"
 class a {
   private int refactorTest(int i) {
     int f<caret>oo = 0;

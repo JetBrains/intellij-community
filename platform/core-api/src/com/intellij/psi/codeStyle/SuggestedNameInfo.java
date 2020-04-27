@@ -21,10 +21,9 @@ public abstract class SuggestedNameInfo {
   /**
    * The suggested names.
    */
-  @NotNull
-  public final String[] names;
+  public final String @NotNull [] names;
 
-  public SuggestedNameInfo(@NotNull String[] names) {
+  public SuggestedNameInfo(String @NotNull [] names) {
     this.names = names;
   }
 
@@ -40,7 +39,7 @@ public abstract class SuggestedNameInfo {
   public static class Delegate extends SuggestedNameInfo {
     SuggestedNameInfo myDelegate;
 
-    public Delegate(@NotNull String[] names, @NotNull SuggestedNameInfo delegate) {
+    public Delegate(String @NotNull [] names, @NotNull SuggestedNameInfo delegate) {
       super(names);
       myDelegate = delegate;
     }

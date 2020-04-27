@@ -34,8 +34,7 @@ public class JspxIncludePathReferenceProvider extends PsiReferenceProvider imple
   @Nullable private Map<CustomizationKey, Object> myOptions;
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     if (element instanceof XmlAttributeValue) {
       final XmlAttributeValue attributeValue = ((XmlAttributeValue)element);
 
@@ -58,8 +57,7 @@ public class JspxIncludePathReferenceProvider extends PsiReferenceProvider imple
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @NotNull
-  private PsiReference[] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
+  private PsiReference @NotNull [] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
     return getFileReferencesFromString(str, position, offsetInPosition, this);
   }
 

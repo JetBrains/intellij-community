@@ -1,11 +1,11 @@
-public class TestCase extends Zzz {
+public class TestCase {
 
     Object ooo() {}
 
     {
         if (!(ooo() instanceof String)) {
         } else {
-          String s = o<caret>
+          String s = oo<caret>
         }
     }
 }

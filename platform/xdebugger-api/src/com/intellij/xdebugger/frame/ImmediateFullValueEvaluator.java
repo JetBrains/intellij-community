@@ -17,9 +17,6 @@ package com.intellij.xdebugger.frame;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ImmediateFullValueEvaluator extends XFullValueEvaluator {
   private final String myFullValue;
 

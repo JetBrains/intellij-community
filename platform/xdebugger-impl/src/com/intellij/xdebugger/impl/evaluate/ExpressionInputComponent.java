@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class ExpressionInputComponent extends EvaluationInputComponent {
   private final XDebuggerEditorBase myExpressionEditor;
   private final ExpressionInputForm myMainForm = new ExpressionInputForm();

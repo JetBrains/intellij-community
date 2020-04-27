@@ -25,7 +25,12 @@ public class TopHitCache implements Disposable {
 
   @Override
   public void dispose() {
+    clear();
+  }
+
+  public void clear() {
     map.values().forEach(TopHitCache::dispose);
+    map.clear();
   }
 
   private static void dispose(Collection<? extends OptionDescription> options) {
@@ -37,7 +42,10 @@ public class TopHitCache implements Disposable {
   }
 
   public void invalidateCachedOptions(Class<? extends OptionsTopHitProvider.ApplicationLevelProvider> providerClass) {
-    map.remove(providerClass);
+    Collection<OptionDescription> removed = map.remove(providerClass);
+    if (removed != null) {
+      dispose(removed);
+    }
   }
 
   public Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,

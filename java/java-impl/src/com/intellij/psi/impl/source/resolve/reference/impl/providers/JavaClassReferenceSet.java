@@ -233,8 +233,7 @@ public class JavaClassReferenceSet {
     return myReferences[index];
   }
 
-  @NotNull
-  public JavaClassReference[] getAllReferences() {
+  public JavaClassReference @NotNull [] getAllReferences() {
     JavaClassReference[] result = myReferences;
     if (myNestedGenericParameterReferences != null) {
       for(JavaClassReferenceSet set:myNestedGenericParameterReferences) {
@@ -260,8 +259,7 @@ public class JavaClassReferenceSet {
     return myElement;
   }
 
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return myReferences;
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -34,7 +35,7 @@ public class StreamFilterNotNullFix implements LocalQuickFix, HighPriorityAction
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.data.flow.filter.notnull.quickfix");
+    return JavaBundle.message("inspection.data.flow.filter.notnull.quickfix");
   }
 
   @Override

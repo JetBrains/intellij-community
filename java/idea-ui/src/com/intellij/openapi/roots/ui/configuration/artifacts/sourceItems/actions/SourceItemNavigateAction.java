@@ -22,9 +22,6 @@ import com.intellij.packaging.ui.TreeNodePresentation;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class SourceItemNavigateAction extends ArtifactEditorNavigateActionBase {
   private final SourceItemsTree mySourceItemsTree;
 

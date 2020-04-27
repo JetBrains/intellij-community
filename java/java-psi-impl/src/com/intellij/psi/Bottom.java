@@ -66,8 +66,7 @@ public class Bottom extends PsiType {
   }
 
   @Override
-  @NotNull
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     throw new UnsupportedOperationException();
   }
 

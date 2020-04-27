@@ -2,10 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.Splitter;
@@ -43,6 +40,8 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   @Nullable
   private JPanel divider;
 
+  private final JPanel dividerAndHeader = new JPanel(new BorderLayout());
+
   private Disposable disposable;
 
   /**
@@ -57,7 +56,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   private final ToolWindowHeader header;
 
-  InternalDecorator(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi) {
+  InternalDecorator(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
     super(new BorderLayout());
 
     this.toolWindow = toolWindow;
@@ -80,12 +79,26 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     enableEvents(AWTEvent.COMPONENT_EVENT_MASK);
 
     installFocusTraversalPolicy(this, new LayoutFocusTraversalPolicy());
-    add(header, BorderLayout.NORTH);
+
+    dividerAndHeader.setOpaque(false);
+    dividerAndHeader.add(header, BorderLayout.SOUTH);
+    add(dividerAndHeader, BorderLayout.NORTH);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
+    add(decoratorChild, BorderLayout.CENTER);
+
     setBorder(new InnerPanelBorder(toolWindow));
+  }
+
+  public ActionToolbar getHeaderToolbar() {
+    return header.getToolbar();
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
   }
 
   @Override
@@ -123,7 +136,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         add(divider, BorderLayout.EAST);
       }
       else if (anchor == ToolWindowAnchor.BOTTOM) {
-        add(divider, BorderLayout.NORTH);
+        dividerAndHeader.add(divider, BorderLayout.NORTH);
       }
       else if (anchor == ToolWindowAnchor.RIGHT) {
         add(divider, BorderLayout.WEST);
@@ -132,12 +145,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     }
     else if (divider != null) {
       // docked and floating windows don't have divider
-      remove(divider);
+      divider.getParent().remove(divider);
       divider = null;
     }
 
     // push "apply" request forward
-    if (info.isFloating()) {
+    if (info.getType() == ToolWindowType.FLOATING) {
       FloatingDecorator floatingDecorator = (FloatingDecorator)SwingUtilities.getAncestorOfClass(FloatingDecorator.class, this);
       if (floatingDecorator != null) {
         floatingDecorator.apply(info);
@@ -166,11 +179,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     return super.processKeyBinding(ks, e, condition, pressed);
   }
 
-  public void setTitleActions(@NotNull AnAction[] actions) {
+  public void setTitleActions(@NotNull AnAction @NotNull [] actions) {
     header.setAdditionalTitleActions(actions);
   }
 
-  void setTabActions(@NotNull AnAction[] actions) {
+  void setTabActions(@NotNull AnAction @NotNull [] actions) {
     header.setTabActions(actions);
   }
 
@@ -268,6 +281,10 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
   public void setHeaderVisible(boolean value) {
     header.setVisible(value);
+  }
+
+  public boolean isHeaderVisible() {
+    return header.isVisible();
   }
 
   @Override

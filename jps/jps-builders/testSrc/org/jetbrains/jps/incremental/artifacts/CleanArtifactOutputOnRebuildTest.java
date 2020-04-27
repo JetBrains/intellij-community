@@ -24,9 +24,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
-/**
- * @author nik
- */
 public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
 
   public void testCleanOutput() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveMembers;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -66,8 +67,8 @@ public class MoveMembersHandler extends MoveHandlerDelegate {
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
-    return "Move Members...";
+  public String getActionName(PsiElement @NotNull [] elements) {
+    return JavaRefactoringBundle.message("move.members.action.name");
   }
 
   @Override

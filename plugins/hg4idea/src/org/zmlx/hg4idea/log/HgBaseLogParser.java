@@ -104,8 +104,7 @@ public abstract class HgBaseLogParser<CommitT> implements Function<String, Commi
     return templates;
   }
 
-  @NotNull
-  public static String[] constructFullTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
+  public static String @NotNull [] constructFullTemplateArgument(boolean includeFiles, @NotNull HgVersion currentVersion) {
     List<String> templates = new ArrayList<>();
     templates.add("{rev}");
     templates.add("{node}");

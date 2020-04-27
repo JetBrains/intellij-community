@@ -30,11 +30,10 @@ import static org.junit.Assert.assertNotNull;
 
 /**
  * The ChangeListManagerImpl extension with some useful helper methods for tests.
- * @author Kirill Likhodedov
  */
 public class HgTestChangeListManager {
 
-  private final ChangeListManagerImpl peer;
+  final ChangeListManagerImpl peer;
 
   public HgTestChangeListManager(Project project) {
     peer = ChangeListManagerImpl.getInstanceImpl(project);

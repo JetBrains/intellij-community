@@ -18,6 +18,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -69,7 +70,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (defaultValue == null) return;
 
         if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
-          holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
+          holder.registerProblem(attribute, JavaFXBundle.message("inspection.javafx.redundant.property.values.problem"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveAttributeIntentionFix(attributeName));
         }
@@ -97,7 +98,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (defaultValue == null) return;
 
         if (isEqualValue(tagClass, tagText, defaultValue, descriptor.getDeclaration())) {
-          holder.registerProblem(tag, "Tag is redundant because it contains default value",
+          holder.registerProblem(tag, JavaFXBundle.message("inspection.javafx.redundant.property.values.redundant.tag.problem"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new RemoveTagIntentionFix(tag.getName(), tag));
         }

@@ -29,7 +29,7 @@ final class ContentComboLabel extends BaseLabel {
 
     @Override
     public boolean isActive() {
-      return myUi.myWindow.isActive();
+      return myUi.window.isActive();
     }
   };
   private final ComboContentLayout myLayout;
@@ -69,7 +69,7 @@ final class ContentComboLabel extends BaseLabel {
 
   @Override
   protected boolean allowEngravement() {
-    return myUi == null || myUi.myWindow.isActive();
+    return myUi == null || myUi.window.isActive();
   }
 
   @Override

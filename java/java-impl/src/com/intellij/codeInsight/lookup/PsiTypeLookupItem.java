@@ -8,11 +8,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NonNls;
@@ -302,7 +303,23 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
 
     int startOffset = context.getStartOffset();
     int tail = context.getTailOffset();
-    int newTail = JavaCompletionUtil.insertClassReference(aClass, file, startOffset, tail);
+
+    PsiJavaCodeReferenceElement ref =
+      PsiTreeUtil.findElementOfClassAtOffset(file, tail - 1, PsiJavaCodeReferenceElement.class, false);
+    boolean goneDeeper = false;
+    while (ref != null) {
+      PsiElement qualifier = ref.getQualifier();
+      PsiClass outer = aClass.getContainingClass();
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !Comparing.equal(aClass.getName(), ref.getReferenceName()) || outer == null) break;
+
+      goneDeeper = true;
+      ref = (PsiJavaCodeReferenceElement)qualifier;
+      aClass = outer;
+    }
+
+    int newTail = JavaCompletionUtil.insertClassReference(aClass, file,
+                                                          goneDeeper ? ref.getTextRange().getStartOffset() : startOffset,
+                                                          goneDeeper ? ref.getTextRange().getEndOffset() : tail);
     if (newTail > context.getDocument().getTextLength() || newTail < 0) {
       LOG.error("Invalid offset after insertion\n" +
                 "offset=" + newTail + "\n" +
@@ -315,8 +332,8 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       return;
     }
 
-    context.setTailOffset(newTail);
-    JavaCompletionUtil.shortenReference(file, context.getStartOffset());
-    PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();
+    if (!goneDeeper) {
+      context.setTailOffset(newTail);
+    }
   }
 }

@@ -53,8 +53,7 @@ public abstract class InferredAnnotationsManager {
    * 
    * @return all inferred annotations for the given element
    */
-  @NotNull
-  public abstract PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner);
+  public abstract PsiAnnotation @NotNull [] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner);
 
   /**
    * @return whether the given annotation was inferred by this service.

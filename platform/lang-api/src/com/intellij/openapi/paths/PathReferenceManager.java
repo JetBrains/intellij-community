@@ -51,10 +51,9 @@ public abstract class PathReferenceManager {
    * @param additionalProviders additional providers to process.
    * @return created references or an empty array.
    */
-  @NotNull
-  public abstract PsiReference[] createReferences(@NotNull PsiElement psiElement,
-                                                  boolean soft,
-                                                  PathReferenceProvider... additionalProviders);
+  public abstract PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement,
+                                                            boolean soft,
+                                                            PathReferenceProvider... additionalProviders);
 
   /**
    * Create web path references for given PsiElement.
@@ -66,21 +65,19 @@ public abstract class PathReferenceManager {
    *        Otherwise, web application root will be used.
    *@param additionalProviders additional providers to process.  @return created references or an empty array.
    */
-  @NotNull
-  public abstract PsiReference[] createReferences(@NotNull PsiElement psiElement,
-                                                  boolean soft,
-                                                  boolean endingSlashNotAllowed,
-                                                  boolean relativePathsAllowed, PathReferenceProvider... additionalProviders);
+  public abstract PsiReference @NotNull [] createReferences(@NotNull PsiElement psiElement,
+                                                            boolean soft,
+                                                            boolean endingSlashNotAllowed,
+                                                            boolean relativePathsAllowed, PathReferenceProvider... additionalProviders);
 
   public abstract PsiReference[] createReferences(@NotNull PsiElement psiElement,
                                                   boolean soft,
                                                   boolean endingSlashNotAllowed,
                                                   boolean relativePathsAllowed, FileType[] suitableFileTypes, PathReferenceProvider... additionalProviders);
 
-  @NotNull
-  public abstract PsiReference[] createCustomReferences(@NotNull PsiElement psiElement, 
-                                                        boolean soft,
-                                                        PathReferenceProvider... providers);
+  public abstract PsiReference @NotNull [] createCustomReferences(@NotNull PsiElement psiElement,
+                                                                  boolean soft,
+                                                                  PathReferenceProvider... providers);
 
   @Nullable
   public abstract PathReference getPathReference(@NotNull String path,

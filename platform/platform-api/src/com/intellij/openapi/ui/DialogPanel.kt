@@ -17,9 +17,9 @@ class DialogPanel : JBPanel<DialogPanel> {
   var validateCallbacks: List<() -> ValidationInfo?> = emptyList()
   var componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?> = emptyMap()
   var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap.empty()
-  var applyCallbacks: List<() -> Unit> = emptyList()
-  var resetCallbacks: List<() -> Unit> = emptyList()
-  var isModifiedCallbacks: List<() -> Boolean> = emptyList()
+  var applyCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap.empty()
+  var resetCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap.empty()
+  var isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean> = MultiMap.empty()
 
   private val componentValidationStatus = hashMapOf<JComponent, ValidationInfo>()
 
@@ -50,19 +50,28 @@ class DialogPanel : JBPanel<DialogPanel> {
   }
 
   fun apply() {
-    for (applyCallback in applyCallbacks) {
-      applyCallback()
+    for ((component, callbacks) in applyCallbacks.entrySet()) {
+      if (component == null) continue
+
+      val modifiedCallbacks = isModifiedCallbacks.get(component)
+      if (modifiedCallbacks.isEmpty() || modifiedCallbacks.any { it() }) {
+        callbacks.forEach { it() }
+      }
     }
+    applyCallbacks[null].forEach { it() }
   }
 
   fun reset() {
-    for (resetCallback in resetCallbacks) {
-      resetCallback()
+    for ((component, callbacks) in resetCallbacks.entrySet()) {
+      if (component == null) continue
+
+      callbacks.forEach { it() }
     }
+    resetCallbacks[null].forEach { it() }
   }
 
   fun isModified(): Boolean {
-    return isModifiedCallbacks.any { it() }
+    return isModifiedCallbacks.values().any { it() }
   }
 
   private fun registerCustomValidationRequestors(component: JComponent, validator: ComponentValidator) {

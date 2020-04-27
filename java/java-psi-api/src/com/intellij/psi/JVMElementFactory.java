@@ -96,7 +96,7 @@ public interface JVMElementFactory {
    * @throws IncorrectOperationException if some of the parameter names or types are invalid.
    */
   @NotNull
-  PsiParameterList createParameterList(@NotNull String[] names, @NotNull PsiType[] types) throws IncorrectOperationException;
+  PsiParameterList createParameterList(String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException;
 
   @NotNull
   PsiMethod createMethodFromText(String text, @Nullable PsiElement context);
@@ -123,7 +123,7 @@ public interface JVMElementFactory {
    * Creates new type parameter with the specified name and super types.
    */
   @NotNull
-  PsiTypeParameter createTypeParameter(@NotNull String name, @NotNull PsiClassType[] superTypes);
+  PsiTypeParameter createTypeParameter(@NotNull String name, PsiClassType @NotNull [] superTypes);
 
   /**
    * Creates a class type for the specified class.

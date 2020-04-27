@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -474,7 +474,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
       catch (InternalException e) {
         if (e.errorCode() == JvmtiError.INVALID_SLOT) {
           myChildren.add(
-            myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
+            myNodeManager.createMessageNode(new MessageDescriptor(JavaDebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
         }
         else {
           throw e;
@@ -512,7 +512,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
           node.removeAllChildren();
           node.add(getNodeFactory().createMessageNode(
-            new MessageDescriptor(DebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
+            new MessageDescriptor(JavaDebuggerBundle.message("error.cannot.build.node.children.object.collected", message)))
           );
           node.childrenChanged(false);
         });

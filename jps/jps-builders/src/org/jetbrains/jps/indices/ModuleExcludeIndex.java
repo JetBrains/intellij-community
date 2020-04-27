@@ -22,8 +22,6 @@ import java.util.Collection;
 
 /**
  * Allows to check whether a particular file is in the content or under an exclude root of a module.
- *
- * @author nik
  */
 public interface ModuleExcludeIndex {
   /**

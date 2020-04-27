@@ -341,7 +341,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    *
    * @param path the series of menu names, e.g. {@code invokeActionByMenuPath("Build", "Make Project")}
    */
-  public void invokeMenuPath(@NotNull String... path) {
+  public void invokeMenuPath(String @NotNull ... path) {
     getMenuFixture().invokeMenuPath(path);
   }
 
@@ -350,7 +350,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    *
    * @param path the series of menu names, e.g. {@code invokeActionByMenuPath("Build", "Make Project")}
    */
-  public MenuFixture.MenuItemFixture getMenuPath(@NotNull String... path) {
+  public MenuFixture.MenuItemFixture getMenuPath(String @NotNull ... path) {
     return getMenuFixture().getMenuItemFixture(path);
   }
 
@@ -377,7 +377,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
    *
    * @param path the series of menu name regular expressions, e.g. {@code invokeActionByMenuPath("Build", "Make( Project)?")}
    */
-  public void invokeMenuPathRegex(@NotNull String... path) {
+  public void invokeMenuPathRegex(String @NotNull ... path) {
     getMenuFixture().invokeMenuPathRegex(path);
   }
 
@@ -875,8 +875,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     return builder.toString();
   }
 
-  @NotNull
-  private static String[] debuggerTreeRootToChildrenTexts(XDebuggerTreeNode treeRoot) {
+  private static String @NotNull [] debuggerTreeRootToChildrenTexts(XDebuggerTreeNode treeRoot) {
     List<? extends TreeNode> children = treeRoot.getChildren();
     String[] childrenTexts = new String[children.size()];
     int i = 0;

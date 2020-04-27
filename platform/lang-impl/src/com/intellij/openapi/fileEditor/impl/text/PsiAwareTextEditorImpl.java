@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -18,12 +18,14 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -54,8 +56,11 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     List<? extends Segment> focusZones = FocusModePassFactory.calcFocusZones(psiFile);
 
-    DocRenderPassFactory.Items items = document != null && psiFile != null && Registry.is("editor.render.doc.comments")
-                                       ? DocRenderPassFactory.calculateItemsToRender(document, psiFile) : null;
+    migrateDocRenderSettingIfNeeded();
+    DocRenderPassFactory.Items items =
+      document != null && psiFile != null && EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled()
+      ? DocRenderPassFactory.calculateItemsToRender(document, psiFile)
+      : null;
 
     return () -> {
       baseResult.run();
@@ -80,6 +85,14 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
         DaemonCodeAnalyzer.getInstance(myProject).restart(psiFile);
       }
     };
+  }
+
+  private static void migrateDocRenderSettingIfNeeded() {
+    RegistryValue value = Registry.get("editor.render.doc.comments");
+    if (value.asBoolean()) {
+      value.setValue(false);
+      EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+    }
   }
 
   @NotNull
@@ -115,7 +128,8 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     @Override
     public void dispose() {
       super.dispose();
-      CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(myProject);
+
+      CodeFoldingManager foldingManager = myProject.getServiceIfCreated(CodeFoldingManager.class);
       if (foldingManager != null) {
         foldingManager.releaseFoldings(getEditor());
       }

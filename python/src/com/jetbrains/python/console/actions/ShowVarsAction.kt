@@ -5,13 +5,14 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.console.PythonConsoleView
 
 /**
  * Created by Yuli Fiterman on 9/18/2016.
  */
-class ShowVarsAction(private val consoleView: PythonConsoleView, private val consoleComm: PydevConsoleCommunication) : ToggleAction("Show Variables", "Shows active console variables", AllIcons.Debugger.Watch), DumbAware {
+class ShowVarsAction(private val consoleView: PythonConsoleView, private val consoleComm: PydevConsoleCommunication) : ToggleAction(PyBundle.message("console.show.variables.title"), PyBundle.message("console.show.variables.description"), AllIcons.Debugger.Watch), DumbAware {
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return consoleView.isShowVars

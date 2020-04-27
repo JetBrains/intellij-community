@@ -1,5 +1,6 @@
 package com.intellij.json.findUsages;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.HelpID;
 import com.intellij.lang.cacheBuilder.WordsScanner;
@@ -34,7 +35,7 @@ public class JsonFindUsagesProvider implements FindUsagesProvider {
   @Override
   public String getType(@NotNull PsiElement element) {
     if (element instanceof JsonProperty) {
-      return "property";
+      return JsonBundle.message("json.property");
     }
     return "";
   }
@@ -43,7 +44,7 @@ public class JsonFindUsagesProvider implements FindUsagesProvider {
   @Override
   public String getDescriptiveName(@NotNull PsiElement element) {
     final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
-    return name != null ? name : "<unnamed>";
+    return name != null ? name : JsonBundle.message("unnamed.desc");
   }
 
   @NotNull

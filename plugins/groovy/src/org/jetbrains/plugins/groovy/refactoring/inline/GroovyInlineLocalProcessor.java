@@ -57,7 +57,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new BaseUsageViewDescriptor(myLocal);
   }
 
@@ -74,7 +74,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof ClosureUsage) return true;
     }
@@ -89,9 +89,8 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
   }
 
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     final Instruction[] controlFlow = mySettings.getFlow();
     final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(controlFlow, myLocal);
     
@@ -179,7 +178,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     CommonRefactoringUtil.sortDepthFirstRightLeftOrder(usages);
 
     final GrExpression initializer = mySettings.getInitializer();

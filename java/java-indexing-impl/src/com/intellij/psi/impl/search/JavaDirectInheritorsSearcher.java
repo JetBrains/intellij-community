@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * @author max
- */
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> consumer) {
@@ -144,8 +141,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   // The list starts with non-anonymous classes, ends with anonymous sub classes
   // Classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
-  @NotNull
-  private static PsiClass[] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+  private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     ConcurrentMap<PsiClass, PsiClass[]> map = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES;
     PsiClass[] cache = map.get(baseClass);
     if (cache != null) {
@@ -175,11 +171,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ContainerUtil.process(collection, processor);
   }
 
-  @NotNull
-  private static PsiClass[] calculateDirectSubClasses(@NotNull Project project,
-                                                      @NotNull PsiClass baseClass,
-                                                      @NotNull String baseClassName,
-                                                      @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+  private static PsiClass @NotNull [] calculateDirectSubClasses(@NotNull Project project,
+                                                                @NotNull PsiClass baseClass,
+                                                                @NotNull String baseClassName,
+                                                                @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
     SearchScope useScope;
     CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
     if (info == null) {

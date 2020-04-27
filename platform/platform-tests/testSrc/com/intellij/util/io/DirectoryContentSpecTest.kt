@@ -21,9 +21,6 @@ import org.junit.Test
 import java.io.File
 import kotlin.test.fail
 
-/**
- * @author nik
- */
 class DirectoryContentSpecTest {
   @Test
   fun `files in directory`() {

@@ -6,6 +6,7 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -28,9 +29,8 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     LOG.assertTrue(element instanceof AbstractTreeNode, element.getClass().getName());
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode<?>> elements = treeNode.getChildren();
@@ -41,6 +41,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     if (providers != null && !providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof SettingsProvider ? ((SettingsProvider)treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {
+        ProgressManager.checkCanceled();
         try {
           elements = provider.modify(treeNode, (Collection<AbstractTreeNode<?>>)elements, settings);
           if (elements.stream().anyMatch(Objects::isNull)) LOG.error("provider creates null child: " + provider);

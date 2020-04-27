@@ -12,7 +12,7 @@
          <p>To configure, open <b>Settings / Preferences</b> and go to <b>Version Control | Git</b>.</p>
       ]]>
    </description>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <vendor>JetBrains</vendor>
 
   <resource-bundle>messages.GitBundle</resource-bundle>
@@ -33,7 +33,9 @@
       <add-to-group group-id="Vcs.Browse"/>
     </action>
 
-    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
+    <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog">
+      <add-to-group group-id="VcsSelectionHistoryDialog.Popup" anchor="after" relative-to-action="Vcs.CopyRevisionNumberAction"/>
+    </action>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
     <group class="git4idea.actions.GitCheckoutActionGroup" id="Git.CheckoutGroup"/>
@@ -45,6 +47,9 @@
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Rename.Local.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$RenameLocalBranch"/>
+    <action id="Git.Checkout.Branch" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$CheckoutSelectedBranchAction"/>
+    <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
+            icon="AllIcons.Actions.ArrowCollapse"/>
     <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction"/>
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction"/>
@@ -218,15 +223,16 @@
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
+    <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
-    <projectService serviceImplementation="git4idea.GitUserRegistry" />
     <projectService serviceImplementation="git4idea.branch.DeepComparatorHolder"/>
     <projectService serviceImplementation="git4idea.config.GitExecutableProblemsNotifier"/>
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
     <projectService serviceImplementation="git4idea.ignore.GitIgnoreInStoreDirGenerator"/>
+    <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceImplementation="org.jetbrains.git4idea.ssh.GitXmlRpcSshService"/>
@@ -241,6 +247,8 @@
     <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceImplementation="git4idea.DialogManager" />
     <applicationService serviceImplementation="git4idea.log.GitExternalLogTabsProperties"/>
+
+    <applicationService serviceImplementation="git4idea.light.LightGitTracker"/>
 
     <fileType name="PLAIN_TEXT" fileNames=".gitmodules"/>
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
@@ -284,9 +292,6 @@
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="false"
                  description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
 
-    <registryKey key="git.interactive.rebase.new.dialog" defaultValue="true"
-                 description="Show new Interactive Rebase Dialog" restartRequired="false"/>
-
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
 
@@ -295,10 +300,13 @@
     <completion.contributor language="TEXT" implementationClass="git4idea.commit.GitCommitCompletionContributor"
                             order="first, before commitCompletion"/>
 
-    <changesViewContent id="git.branches" tabName="Branches" className="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider"
-                        predicateClassName="git4idea.ui.branch.dashboard.BranchesDashboardTabContentProvider$BranchesTabVisibilityPredicate" order="last"/>
+    <customVcsLogUiFactoryProvider implementation="git4idea.ui.branch.dashboard.BranchesInGitLogUiFactoryProvider"/>
 
-    <statusBarWidgetProvider implementation="git4idea.light.LightGitStatusBarWidgetProvider"/>
+    <statusBarWidgetFactory implementation="git4idea.light.LightGitStatusBarWidgetFactory"/>
+    <lightEditTabAttributesProvider implementation="git4idea.light.LightGitTabAttributesProvider"/>
+    <statusBarWidgetFactory id="gitWidget"
+                            implementation="git4idea.ui.branch.GitBranchWidget$Factory"
+                            order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
 
   <extensionPoints>
@@ -306,4 +314,10 @@
     <extensionPoint qualifiedName="Git4Idea.gitRepositoryHostingService" interface="git4idea.remote.GitRepositoryHostingService"/>
     <extensionPoint qualifiedName="Git4Idea.GitCheckinExplicitMovementProvider" interface="git4idea.checkin.GitCheckinExplicitMovementProvider"/>
   </extensionPoints>
+
+  <projectListeners>
+    <listener class="git4idea.ui.branch.GitBranchWidget$Listener"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+  </projectListeners>
 </idea-plugin>

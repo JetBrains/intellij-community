@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -25,8 +25,6 @@ import java.util.stream.Collectors
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
  * non-bundled plugins (in {@link org.jetbrains.intellij.build.BuildPaths#artifacts artifacts}/plugins directory).
- *
- * @author nik
  */
 class DistributionJARsBuilder {
   private static final boolean COMPRESS_JARS = false
@@ -50,7 +48,7 @@ class DistributionJARsBuilder {
                           LinkedHashSet<PluginLayout> pluginsToPublish = []) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
-    this.pluginsToPublish = pluginsToPublish
+    this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
       include(name: "**/*Messages.properties")
@@ -144,8 +142,8 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.credentialStore")
       withModule("intellij.json")
       withModule("intellij.spellchecker")
-      withModule("intellij.platform.images")
       withModule("intellij.platform.statistics")
+      withModule("intellij.platform.statistics.uploader")
       withModule("intellij.platform.statistics.devkit")
 
       withModule("intellij.relaxng", "intellij-xml.jar")
@@ -197,6 +195,13 @@ class DistributionJARsBuilder {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
+  }
+
+  LinkedHashSet<PluginLayout> filterPluginsToPublish(LinkedHashSet<PluginLayout> plugins) {
+    def toInclude = buildContext.options.nonBundledPluginDirectoriesToInclude as Set<String>
+    if (toInclude.isEmpty()) return plugins
+    if (toInclude.size() == 1 && toInclude.contains("none")) return new LinkedHashSet<PluginLayout>()
+    return plugins.findAll { toInclude.contains(it.directoryName) }
   }
 
   private static Set<String> getLibsToRemoveVersion() {
@@ -764,12 +769,13 @@ Android Studio: This attempts to read a non-existent file. */
    * directory name return the old module name to temporary keep layout of plugins unchanged.
    */
   static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
-    if (!plugin.directoryNameSetExplicitly && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
+    // do not use old name for intellij.platform. modules
+    if (!plugin.directoryNameSetExplicitly && !plugin.mainModule.startsWith("intellij.platform.") && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
                                            && context.getOldModuleName(plugin.mainModule) != null) {
       context.getOldModuleName(plugin.mainModule)
     }
     else {
-      plugin.directoryName
+      return plugin.directoryName
     }
   }
 
@@ -783,7 +789,7 @@ Android Studio: This attempts to read a non-existent file. */
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
     addSearchableOptions(layoutBuilder)
     def enabledModulesSet = enabledPluginModules
-    pluginsToInclude.each { plugin ->
+    (buildContext.options.runBuildStepsInParallel ? pluginsToInclude.parallelStream() : pluginsToInclude.stream()).each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
       checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {

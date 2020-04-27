@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class RearrangeAttributesIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Rearrange tag attributes";
+    return XmlBundle.message("rearrange.tag.attributes");
   }
 
   @Override

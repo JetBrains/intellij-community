@@ -23,9 +23,6 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class ArtifactOutToSourceStorageProvider extends StorageProvider<ArtifactOutputToSourceMapping> {
   public static final ArtifactOutToSourceStorageProvider INSTANCE = new ArtifactOutToSourceStorageProvider();
 

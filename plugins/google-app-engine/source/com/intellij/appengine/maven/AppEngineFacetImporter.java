@@ -46,9 +46,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class AppEngineFacetImporter extends FacetImporter<AppEngineFacet, AppEngineFacetConfiguration, AppEngineFacetType> {
   public AppEngineFacetImporter() {
     super("com.google.appengine", "appengine-maven-plugin", FacetType.findInstance(AppEngineFacetType.class));

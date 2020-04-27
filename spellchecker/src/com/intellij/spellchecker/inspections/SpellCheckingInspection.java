@@ -26,9 +26,8 @@ import java.util.Set;
 public class SpellCheckingInspection extends LocalInspectionTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
       final Language language = element.getLanguage();
       SpellcheckingStrategy strategy = getSpellcheckingStrategy(element, language);

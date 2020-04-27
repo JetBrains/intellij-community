@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.cvsstatuses;
 
 import com.intellij.CvsBundle;
@@ -41,9 +41,6 @@ import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 
-/**
- * @author max
- */
 public class CvsChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance(CvsChangeProvider.class);
 
@@ -372,8 +369,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
   }
 
-  @Nullable
-  public byte[] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
+  public byte @Nullable [] getLastUpToDateContentFor(@NotNull final VirtualFile f) {
     final VirtualFile parent = f.getParent();
     final String name = f.getName();
     final Entry entry = myEntriesManager.getEntryFor(parent, name);
@@ -511,9 +507,8 @@ public class CvsChangeProvider implements ChangeProvider {
       return fileBytes == null ? null : CharsetToolkit.bytesToString(fileBytes, myPath.getCharset());
     }
 
-    @Nullable
     @Override
-    public byte[] getContentAsBytes() throws VcsException {
+    public byte @Nullable [] getContentAsBytes() throws VcsException {
       if (myContent == null) {
         try {
           myContent = getUpToDateBinaryContent();
@@ -525,8 +520,7 @@ public class CvsChangeProvider implements ChangeProvider {
       return myContent;
     }
 
-    @Nullable
-    private byte[] getUpToDateBinaryContent() throws CannotFindCvsRootException {
+    private byte @Nullable [] getUpToDateBinaryContent() throws CannotFindCvsRootException {
       final VirtualFile virtualFile = myPath.getVirtualFile();
       byte[] result = null;
       if (virtualFile != null) {
@@ -574,7 +568,7 @@ public class CvsChangeProvider implements ChangeProvider {
 
     @NonNls
     public String toString() {
-      return "CvsUpToDateRevision:" + myPath; 
+      return "CvsUpToDateRevision:" + myPath;
     }
   }
 
@@ -584,8 +578,7 @@ public class CvsChangeProvider implements ChangeProvider {
     }
 
     @Override
-    @Nullable
-    public byte[] getBinaryContent() throws VcsException {
+    public byte @Nullable [] getBinaryContent() throws VcsException {
       return getContentAsBytes();
     }
 

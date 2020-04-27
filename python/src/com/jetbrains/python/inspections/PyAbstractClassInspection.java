@@ -86,7 +86,7 @@ public class PyAbstractClassInspection extends PyInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Add '" + PyNames.ABC + "' to superclasses";
+        return PyBundle.message("INSP.abstract.class.add.to.superclasses", PyNames.ABC);
       }
 
       @Override
@@ -107,7 +107,7 @@ public class PyAbstractClassInspection extends PyInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Set '" + PyNames.ABC_META + "' as metaclass";
+        return PyBundle.message("INSP.abstract.class.set.as.metaclass", PyNames.ABC_META);
       }
 
       @Override

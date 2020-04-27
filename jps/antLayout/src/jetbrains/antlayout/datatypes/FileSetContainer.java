@@ -23,9 +23,6 @@ import org.apache.tools.ant.types.FileSet;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FileSetContainer extends Content {
   private final FileSet fileSet;
 

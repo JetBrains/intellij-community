@@ -28,6 +28,8 @@ import com.intellij.psi.impl.source.tree.java.JavaFileElement
 import com.intellij.psi.impl.source.tree.java.MethodElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.ref.GCWatcher
+
 /**
  * @author peter
  */
@@ -93,6 +95,7 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
   void "test no hard refs to AST via class reference type"() {
     def cls = myFixture.addClass("class Foo { Object bar() {} }")
+    def file = cls.containingFile as PsiFileImpl
     cls.node
     def type = cls.methods[0].returnType
     assert type instanceof PsiClassReferenceType
@@ -100,6 +103,12 @@ class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
     LeakHunter.checkLeak(type, MethodElement, { MethodElement node ->
       node.psi == cls.methods[0]
     } as Condition<MethodElement>)
+
+    GCWatcher.tracking(cls.node).ensureCollected()
+    assert !file.contentsLoaded
+
+    assert type.equalsToText(Object.name)
+    assert !file.contentsLoaded
   }
 
 }

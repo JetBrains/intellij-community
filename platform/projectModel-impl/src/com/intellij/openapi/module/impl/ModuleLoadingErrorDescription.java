@@ -18,18 +18,15 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.projectModel.ProjectModelBundle;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
   private final ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;
 
   ModuleLoadingErrorDescription(String description, @NotNull ModulePath modulePath, @NotNull ModuleManagerImpl moduleManager) {
-    super(modulePath.getModuleName(), description, new ConfigurationErrorType(ProjectBundle.message("element.kind.name.module"), false));
+    super(modulePath.getModuleName(), description, new ConfigurationErrorType(ProjectModelBundle.message("element.kind.name.module"), false));
 
     myModulePath = modulePath;
     myModuleManager = moduleManager;
@@ -47,6 +44,6 @@ public class ModuleLoadingErrorDescription extends ConfigurationErrorDescription
 
   @Override
   public String getIgnoreConfirmationMessage() {
-    return ProjectBundle.message("module.remove.from.project.confirmation", getElementName());
+    return ProjectModelBundle.message("module.remove.from.project.confirmation", getElementName());
   }
 }

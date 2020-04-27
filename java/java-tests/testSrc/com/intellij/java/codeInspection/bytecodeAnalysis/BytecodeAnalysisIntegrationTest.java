@@ -141,7 +141,9 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
       protected void visitSubPackage(PsiPackage aPackage, PsiClass[] classes) {
         for (PsiClass aClass : classes) {
           for (PsiMethod method : aClass.getMethods()) {
-            checkMethodAnnotations(method, diffs);
+            if (method.isPhysical()) {
+              checkMethodAnnotations(method, diffs);
+            }
           }
           for (PsiField field : aClass.getFields()) {
             checkFieldAnnotations(field, diffs);

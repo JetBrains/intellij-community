@@ -350,7 +350,7 @@ public class TooBroadScopeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Narrow scope";
+      return InspectionGadgetsBundle.message("too.broad.scope.inspection.fix.family.name");
     }
 
     @Override

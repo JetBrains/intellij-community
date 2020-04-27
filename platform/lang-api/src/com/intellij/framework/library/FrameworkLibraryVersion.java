@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface FrameworkLibraryVersion extends DownloadableFileSetDescription, PresentableVersion {
   @NotNull
   String getDefaultLibraryName();

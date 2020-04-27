@@ -44,7 +44,7 @@ public interface UpdateEnvironment {
    *                                  {@link UpdateSession#isCanceled}.
    */
   @NotNull
-  UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, UpdatedFiles updatedFiles,
+  UpdateSession updateDirectories(FilePath @NotNull [] contentRoots, UpdatedFiles updatedFiles,
                                   ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context) throws ProcessCanceledException;
 
   /**

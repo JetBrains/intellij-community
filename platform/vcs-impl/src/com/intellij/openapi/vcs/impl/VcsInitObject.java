@@ -22,6 +22,7 @@ public enum VcsInitObject {
   COMMITTED_CHANGES_CACHE(200, true),
   BRANCHES(250, true),
   REMOTE_REVISIONS_CACHE(300, true),
+  OTHER_INITIALIZATION(350, true),
   AFTER_COMMON(400, true);
 
   private final int myOrder;

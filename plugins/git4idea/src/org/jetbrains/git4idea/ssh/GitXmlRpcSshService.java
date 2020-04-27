@@ -39,7 +39,7 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
     generator.addClasses(KnownHosts.class);
     generator.addClasses(EdDSASecurityProvider.class);
     generator.addClasses(BCrypt.class);
-    generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
+    generator.addResource(SSHMainBundle.class, "/messages/SSHMainBundle.properties");
   }
 
   @NotNull

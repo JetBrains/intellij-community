@@ -8,6 +8,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -19,7 +20,7 @@ final class ComboContentLayout extends ContentLayout {
   }
 
   @Override
-  public void init() {
+  public void init(@NotNull ContentManager contentManager) {
     reset();
 
     myIdLabel = new BaseLabel(myUi, false);

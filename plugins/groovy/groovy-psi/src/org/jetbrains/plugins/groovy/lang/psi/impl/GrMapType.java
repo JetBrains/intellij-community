@@ -26,9 +26,8 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 public abstract class GrMapType extends GrLiteralClassType {
 
   private final VolatileNotNullLazyValue<PsiType[]> myParameters = new VolatileNotNullLazyValue<PsiType[]>() {
-    @NotNull
     @Override
-    protected PsiType[] compute() {
+    protected PsiType @NotNull [] compute() {
       final PsiType[] keyTypes = getAllKeyTypes();
       final PsiType[] valueTypes = getAllValueTypes();
       if (keyTypes.length == 0 && valueTypes.length == 0) {
@@ -67,8 +66,7 @@ public abstract class GrMapType extends GrLiteralClassType {
 
   public abstract boolean isEmpty();
 
-  @NotNull
-  protected PsiType[] getAllKeyTypes() {
+  protected PsiType @NotNull [] getAllKeyTypes() {
     Set<PsiType> result = new HashSet<>();
     if (!getStringEntries().isEmpty()) {
       result.add(GroovyPsiManager.getInstance(myFacade.getProject()).createTypeByFQClassName(JAVA_LANG_STRING, getResolveScope()));
@@ -80,8 +78,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     return result.toArray(createArray(result.size()));
   }
 
-  @NotNull
-  protected PsiType[] getAllValueTypes() {
+  protected PsiType @NotNull [] getAllValueTypes() {
     Set<PsiType> result = new HashSet<>(getStringEntries().values());
     for (Couple<PsiType> entry : getOtherEntries()) {
       result.add(entry.second);
@@ -97,8 +94,7 @@ public abstract class GrMapType extends GrLiteralClassType {
   protected abstract LinkedHashMap<String, PsiType> getStringEntries();
 
   @Override
-  @NotNull
-  public PsiType[] getParameters() {
+  public @Nullable PsiType @NotNull [] getParameters() {
     return myParameters.getValue();
   }
 

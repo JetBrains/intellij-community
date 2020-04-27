@@ -21,6 +21,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -163,10 +164,10 @@ public final class PyDataView implements DumbAware {
       }
       return null;
     });
-    myTabs.getPresentation().setEmptyText("Run Python Console or Debugger to view available data");
+    myTabs.getPresentation().setEmptyText(PyBundle.message("debugger.data.view.empty.text"));
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "Data", false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, PyBundle.message("debugger.data.view.data"), false);
     content.setCloseable(true);
     toolWindow.getContentManager().addContent(content);
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
@@ -192,12 +193,12 @@ public final class PyDataView implements DumbAware {
     TabInfo info = new TabInfo(panel);
     if (frameAccessor instanceof PydevConsoleCommunication) {
       info.setIcon(PythonIcons.Python.PythonConsole);
-      info.setTooltipText("Connected to Python Console");
+      info.setTooltipText(PyBundle.message("debugger.data.view.connected.to.python.console"));
     }
     if (frameAccessor instanceof PyDebugProcess) {
       info.setIcon(AllIcons.Toolwindows.ToolWindowDebugger);
       String name = ((PyDebugProcess)frameAccessor).getSession().getSessionName();
-      info.setTooltipText("Connected to debug session '"+  name + "'");
+      info.setTooltipText(PyBundle.message("debugger.data.view.connected.to.debug.session", name));
     }
     info.setText(EMPTY_TAB_NAME);
     info.setPreferredFocusableComponent(panel.getSliceTextField());
@@ -229,7 +230,7 @@ public final class PyDataView implements DumbAware {
     private final PyFrameAccessor myFrameAccessor;
 
     NewViewerAction(PyFrameAccessor frameAccessor) {
-      super("View New Container", "Open new container viewer", AllIcons.General.Add);
+      super(PyBundle.message("debugger.data.view.view.new.container"), PyBundle.message("debugger.data.view.open.new.container.viewer"), AllIcons.General.Add);
       myFrameAccessor = frameAccessor;
     }
 
@@ -245,7 +246,7 @@ public final class PyDataView implements DumbAware {
     private final PyFrameAccessor myFrameAccessor;
 
     CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
-      super("Close Viewer", "Close selected viewer", AllIcons.Actions.Close);
+      super(PyBundle.message("debugger.data.view.close.viewer"), PyBundle.message("debugger.data.view.close.selected.viewer"), AllIcons.Actions.Close);
       myInfo = info;
       myFrameAccessor = frameAccessor;
     }
@@ -261,7 +262,7 @@ public final class PyDataView implements DumbAware {
 
   private class ColoredAction extends ToggleAction {
     ColoredAction() {
-      super("Colored");
+      super(PyBundle.messagePointer("debugger.data.view.colored"));
     }
 
     @Override

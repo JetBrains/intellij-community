@@ -22,9 +22,6 @@ import javax.swing.event.DocumentEvent;
 import java.io.File;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FirefoxSettingsConfigurable implements Configurable {
   private static final FileChooserDescriptor PROFILES_INI_CHOOSER_DESCRIPTOR = createProfilesIniChooserDescriptor();
 

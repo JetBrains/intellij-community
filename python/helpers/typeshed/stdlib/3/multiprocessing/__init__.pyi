@@ -10,8 +10,10 @@ from multiprocessing.context import (
     AuthenticationError as AuthenticationError,
     BaseContext,
     BufferTooShort as BufferTooShort,
+    DefaultContext,
     Process as Process,
     ProcessError as ProcessError,
+    SpawnContext,
     TimeoutError as TimeoutError,
 )
 from multiprocessing.managers import SyncManager
@@ -22,6 +24,13 @@ from multiprocessing.spawn import set_executable as set_executable
 
 if sys.version_info >= (3, 8):
     from multiprocessing.process import parent_process as parent_process
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
+if sys.platform != "win32":
+    from multiprocessing.context import ForkContext, ForkServerContext
+
 
 # N.B. The functions below are generated at runtime by partially applying
 # multiprocessing.context.BaseContext's methods, so the two signatures should
@@ -79,6 +88,25 @@ def log_to_stderr(level: Optional[Union[str, int]] = ...) -> Logger: ...
 def Manager() -> SyncManager: ...
 def set_forkserver_preload(module_names: List[str]) -> None: ...
 def get_all_start_methods() -> List[str]: ...
-def get_context(method: Optional[str] = ...) -> BaseContext: ...
 def get_start_method(allow_none: bool = ...) -> Optional[str]: ...
 def set_start_method(method: str, force: Optional[bool] = ...) -> None: ...
+
+
+if sys.platform != "win32":
+    @overload
+    def get_context(method: None = ...) -> DefaultContext: ...
+    @overload
+    def get_context(method: Literal["spawn"]) -> SpawnContext: ...
+    @overload
+    def get_context(method: Literal["fork"]) -> ForkContext: ...
+    @overload
+    def get_context(method: Literal["forkserver"]) -> ForkServerContext: ...
+    @overload
+    def get_context(method: str) -> BaseContext: ...
+else:
+    @overload
+    def get_context(method: None = ...) -> DefaultContext: ...
+    @overload
+    def get_context(method: Literal["spawn"]) -> SpawnContext: ...
+    @overload
+    def get_context(method: str) -> BaseContext: ...

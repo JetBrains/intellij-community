@@ -15,6 +15,7 @@ import com.intellij.openapi.util.KeyWithDefaultValue
 import com.intellij.openapi.util.text.StringUtil.contains
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer
 import org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser.closure_header_with_arrow
@@ -297,7 +298,7 @@ fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advan
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 
-fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
+fun error(builder: PsiBuilder, level: Int, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   val marker = builder.latestDoneMarker ?: return false
   val elementType = marker.tokenType
   val newMarker = (marker as Marker).precede()
@@ -307,11 +308,11 @@ fun error(builder: PsiBuilder, level: Int, key: String): Boolean {
   return true
 }
 
-fun unexpected(builder: PsiBuilder, level: Int, key: String): Boolean {
+fun unexpected(builder: PsiBuilder, level: Int, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   return unexpected(builder, level, Parser { b, _ -> b.any() }, key)
 }
 
-fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, key: String): Boolean {
+fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, @PropertyKey(resourceBundle = GroovyBundle.BUNDLE) key: String): Boolean {
   val marker = builder.mark()
   if (parser.parse(builder, level)) {
     marker.error(GroovyBundle.message(key))

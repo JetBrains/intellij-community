@@ -1,5 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <name>Terminal</name>
+  <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
@@ -20,6 +21,18 @@
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Horizontal">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Next">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action class="org.jetbrains.plugins.terminal.action.GotoSplitTerminalActionBase$Prev">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
     <action id="Terminal.MoveToolWindowTabLeft" class="org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction">

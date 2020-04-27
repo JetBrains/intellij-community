@@ -170,7 +170,7 @@ public class GitIndexUtil {
   @NotNull
   public static Hash write(@NotNull GitRepository repository,
                            @NotNull FilePath filePath,
-                           @NotNull byte[] bytes,
+                           byte @NotNull [] bytes,
                            boolean executable) throws VcsException {
     return write(repository, filePath, new ByteArrayInputStream(bytes), executable);
   }
@@ -218,8 +218,7 @@ public class GitIndexUtil {
     Git.getInstance().runCommandWithoutCollectingOutput(h).throwOnError();
   }
 
-  @NotNull
-  public static byte[] read(@NotNull GitRepository repository, @NotNull String blobHash) throws VcsException {
+  public static byte @NotNull [] read(@NotNull GitRepository repository, @NotNull String blobHash) throws VcsException {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
 

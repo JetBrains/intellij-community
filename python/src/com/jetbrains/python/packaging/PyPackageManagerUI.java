@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +98,7 @@ public class PyPackageManagerUI {
             message += StringUtil.join(dep, "\n");
             message += size == 1 ? " package" : " packages";
             message += "\n\nDo you want to proceed?";
-            warning[0] = Messages.showYesNoDialog(message, "Warning",
+            warning[0] = Messages.showYesNoDialog(message, PyBundle.message("python.packaging.warning"),
                                                   AllIcons.General.BalloonWarning);
           }
           else {
@@ -108,7 +109,7 @@ public class PyPackageManagerUI {
             }
             message += StringUtil.join(dep, "\n");
             message += "\n\nDo you want to proceed?";
-            warning[0] = Messages.showYesNoDialog(message, "Warning",
+            warning[0] = Messages.showYesNoDialog(message, PyBundle.message("python.packaging.warning"),
                                                   AllIcons.General.BalloonWarning);
           }
         }, ModalityState.current());
@@ -244,7 +245,7 @@ public class PyPackageManagerUI {
       final List<ExecutionException> exceptions = new ArrayList<>();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
       if (myRequirements == null) {
-        indicator.setText("Installing packages...");
+        indicator.setText(PyBundle.message("python.packaging.installing.packages"));
         indicator.setIndeterminate(true);
         try {
           manager.install(null, myExtraArgs);
@@ -318,7 +319,7 @@ public class PyPackageManagerUI {
     protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      indicator.setText("Installing packaging tools...");
+      indicator.setText(PyBundle.message("python.packaging.installing.packaging.tools"));
       indicator.setIndeterminate(true);
       try {
         manager.installManagement();

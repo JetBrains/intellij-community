@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReplaceConcatenationWithFormatStringIntention extends Intention {
 
@@ -111,7 +112,10 @@ public class ReplaceConcatenationWithFormatStringIntention extends Intention {
                            ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
     if (textBlocks) {
       newExpression.append("\"\"\"\n");
-      newExpression.append(PsiLiteralUtil.escapeTextBlockCharacters(formatString));
+      formatString = Arrays.stream(formatString.split("\n"))
+        .map(s -> PsiLiteralUtil.escapeTextBlockCharacters(s))
+        .collect(Collectors.joining("\n"));
+      newExpression.append(formatString);
       if (insertNewline) {
         newExpression.append('\n');
       }

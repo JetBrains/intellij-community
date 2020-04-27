@@ -4,9 +4,6 @@ import com.intellij.remoteServer.runtime.RemoteOperationCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class DeploymentRuntime {
   public boolean isUndeploySupported() {
     return true;

@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,6 +62,7 @@ public class MavenIndicesTestFixture {
 
     getIndicesManager().setTestIndexDir(myDir.resolve("MavenIndices"));
     myIndicesManager = MavenProjectIndicesManager.getInstance(myProject);
+
     myIndicesManager.doInit();
   }
 

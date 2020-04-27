@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -164,8 +165,9 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
     SdkPopupFactory
       .newBuilder()
       .withProject(myProject)
-      .onSdkSelected(sdk -> myDeprecatedChosenSdk = sdk)
+      .withSdkType(JavaSdk.getInstance())
       .updateProjectSdkFromSelection()
+      .onSdkSelected(sdk -> myDeprecatedChosenSdk = sdk)
       .buildPopup()
       .showInFocusCenter();
 

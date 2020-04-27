@@ -17,7 +17,7 @@ public class  TogglePathShowingAction extends AnAction implements DumbAware {
 
   @Override
   public void update(@NotNull final AnActionEvent e) {
-    e.getPresentation().setText(IdeBundle.message("file.chooser.hide.path.tooltip.text"));
+    e.getPresentation().setText(IdeBundle.messagePointer("file.chooser.hide.path.tooltip.text"));
     DialogWrapper dialog = DialogWrapper.findInstance(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     e.getPresentation().setEnabled(dialog instanceof FileChooserDialogImpl);
   }

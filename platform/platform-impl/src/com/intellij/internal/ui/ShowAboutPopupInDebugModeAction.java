@@ -21,9 +21,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ShowAboutPopupInDebugModeAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

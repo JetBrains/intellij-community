@@ -48,6 +48,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       @Nullable
       @Override
       public Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
+        myRecentSearchText = pattern;
         int index = StringUtil.indexOfIgnoreCase(text, pattern, 0);
         return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
       }
@@ -92,9 +93,8 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     return null;
   }
 
-  @NotNull
   @Override
-  protected Object[] getAllElements() {
+  protected Object @NotNull [] getAllElements() {
     XDebuggerTreeNode root = ObjectUtils.tryCast(myComponent.getModel().getRoot(), XDebuggerTreeNode.class);
     int initialLevel = root != null ? root.getPath().getPathCount() : 0;
 

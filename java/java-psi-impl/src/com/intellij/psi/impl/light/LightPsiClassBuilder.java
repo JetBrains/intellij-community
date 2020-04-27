@@ -51,29 +51,25 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
     return myImplementsList;
   }
 
-  @NotNull
   @Override
-  public PsiField[] getFields() {
+  public PsiField @NotNull [] getFields() {
     // TODO
     return PsiField.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getMethods() {
+  public PsiMethod @NotNull [] getMethods() {
     return myMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClass[] getInnerClasses() {
+  public PsiClass @NotNull [] getInnerClasses() {
     // TODO
     return PsiClass.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiClassInitializer[] getInitializers() {
+  public PsiClassInitializer @NotNull [] getInitializers() {
     return PsiClassInitializer.EMPTY_ARRAY;
   }
 

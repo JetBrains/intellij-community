@@ -42,8 +42,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement e, @NotNull ProcessingContext context) {
     final PsiElement element = e.getParent();
     if (element instanceof XmlAttribute) {
       final XmlAttribute attribute = (XmlAttribute)element;

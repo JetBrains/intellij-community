@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -24,9 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author traff
- */
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
 
   protected static class ConsoleParameters {
@@ -37,7 +34,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     @NotNull PyConsoleType myConsoleType;
     @NotNull PyConsoleOptions.PyConsoleSettings mySettingsProvider;
     @NotNull Consumer<String> myRerunAction;
-    @NotNull String[] mySetupFragment;
+    String @NotNull [] mySetupFragment;
 
     public ConsoleParameters(@NotNull Project project,
                              @Nullable Sdk sdk,
@@ -46,7 +43,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                              @NotNull PyConsoleType consoleType,
                              @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                              @NotNull Consumer<String> rerunAction,
-                             @NotNull String[] setupFragment) {
+                             String @NotNull [] setupFragment) {
       myProject = project;
       mySdk = sdk;
       myWorkingDir = workingDir;
@@ -173,7 +170,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                    @NotNull PyConsoleType consoleType,
                                                    @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
                                                    @NotNull Consumer<? super String> rerunAction,
-                                                   @NotNull String... setupFragment) {
+                                                   String @NotNull ... setupFragment) {
     return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 

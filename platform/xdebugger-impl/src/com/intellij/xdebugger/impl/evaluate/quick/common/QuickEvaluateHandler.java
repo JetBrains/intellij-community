@@ -11,9 +11,6 @@ import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 
-/**
- * @author nik
- */
 public abstract class QuickEvaluateHandler {
 
   public abstract boolean isEnabled(@NotNull Project project);

@@ -6,9 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class DeploymentStatus {
 
   public static final DeploymentStatus DEPLOYED = new DeploymentStatus(AllIcons.RunConfigurations.TestPassed, "Deployed", false);

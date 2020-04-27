@@ -30,7 +30,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
 
   @NotNull
   @Override
-  public Iterable<T> classify(@NotNull final Iterable<T> source, @NotNull final ProcessingContext context) {
+  public Iterable<T> classify(@NotNull final Iterable<? extends T> source, @NotNull final ProcessingContext context) {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<>();
     for (T t : source) {
@@ -65,7 +65,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
 
   @NotNull
   @Override
-  public List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<T> items, @NotNull final ProcessingContext context) {
+  public List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull final ProcessingContext context) {
     return ContainerUtil.map(items, t -> new Pair<>(t, getWeight(t, context)));
   }
 }

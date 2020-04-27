@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -115,7 +116,7 @@ public class SliderSelectorAction extends DumbAwareAction {
 
     popupRef.set(popup);
     if (myConfiguration.isShowOk()) {
-      final JButton done = new JButton("Done");
+      final JButton done = new JButton(IdeBundle.message("button.done"));
       final JBPanel doneWrapper = new JBPanel(new BorderLayout());
       doneWrapper.add(done, BorderLayout.NORTH);
       result.add(doneWrapper, BorderLayout.EAST);

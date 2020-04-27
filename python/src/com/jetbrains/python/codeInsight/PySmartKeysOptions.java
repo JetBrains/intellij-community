@@ -16,7 +16,7 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.options.BeanConfigurable;
+import com.intellij.openapi.options.ConfigurableBuilder;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
@@ -25,9 +25,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class PySmartKeysOptions extends BeanConfigurable<CodeInsightSettings> implements SearchableConfigurable {
+public class PySmartKeysOptions extends ConfigurableBuilder implements SearchableConfigurable {
   public PySmartKeysOptions() {
-    super(CodeInsightSettings.getInstance());
     //CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;   //TODO: remove combobox from settings
     CodeInsightSettings commonSettings = CodeInsightSettings.getInstance();
     checkBox("Smart indent pasted lines", ()->commonSettings.INDENT_TO_CARET_ON_PASTE, v->commonSettings.INDENT_TO_CARET_ON_PASTE=v);

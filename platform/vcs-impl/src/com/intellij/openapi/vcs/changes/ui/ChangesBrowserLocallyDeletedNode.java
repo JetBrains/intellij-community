@@ -45,7 +45,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
       renderer.setIcon(additionalIcon);
     }
     else {
-      renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
+      renderer.setIcon(filePath, filePath.isDirectory() || !isLeaf());
     }
   }
 

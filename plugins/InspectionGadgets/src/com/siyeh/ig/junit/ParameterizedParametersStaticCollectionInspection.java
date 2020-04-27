@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -69,13 +70,13 @@ public class ParameterizedParametersStaticCollectionInspection extends BaseInspe
       @Override
       @NotNull
       public String getName() {
-        return infos.length > 0 ? (String)infos[0] : "Create @Parameterized.Parameters data provider";
+        return infos.length > 0 ? (String)infos[0] : InspectionGadgetsBundle.message("fix.data.provider.signature.text");
       }
 
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Fix data provider signature";
+        return InspectionGadgetsBundle.message("fix.data.provider.signature.family.name");
       }
     };
   }

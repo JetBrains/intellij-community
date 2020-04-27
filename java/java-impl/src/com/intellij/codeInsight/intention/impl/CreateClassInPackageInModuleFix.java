@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -57,14 +59,14 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
   @NotNull
   @Override
   public String getText() {
-    return "Create a class in '" + myPackageName + "'";
+    return JavaBundle.message("intention.text.create.a.class.in.0", myPackageName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Create a class in package";
+    return JavaBundle.message("intention.family.create.a.class.in.package");
   }
 
   @Override
@@ -137,10 +139,10 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
     @Nullable private final Project myProject;
 
-    CreateClassInPackageDialog(@Nullable Project project, @NotNull PsiDirectory[] rootDirs) {
+    CreateClassInPackageDialog(@Nullable Project project, PsiDirectory @NotNull [] rootDirs) {
       super(project);
       myProject = project;
-      setTitle("Create Class in Package");
+      setTitle(JavaBundle.message("dialog.title.create.class.in.package"));
 
       myRootDirCombo.setRenderer(new CreateServiceClassFixBase.PsiDirectoryListCellRenderer());
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(rootDirs));
@@ -152,9 +154,8 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       init();
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
@@ -174,9 +175,12 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     protected JComponent createNorthPanel() {
       PanelGridBuilder builder = UI.PanelFactory.grid();
       builder.add(UI.PanelFactory.panel(myNameTextField)
-                                 .withLabel("Name:").withComment("The class will be created in the package '" + myPackageName + "'"));
-      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
-      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+                    .withLabel(CommonBundle.message("label.name") + ":")
+                    .withComment(JavaBundle.message("comment.the.class.will.be.created.in.the.package.0", myPackageName)));
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel(CommonBundle.message("label.source.root") + ":"));
+      }
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel(CommonBundle.message("label.kind") + ":"));
       return builder.createPanel();
     }
 
@@ -190,7 +194,7 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       if (PsiNameHelper.getInstance(myProject).isIdentifier(name, level)) {
         return null;
       }
-      return new ValidationInfo("This is not a valid Java class name", myNameTextField);
+      return new ValidationInfo(JavaBundle.message("error.text.this.is.not.a.valid.java.class.name"), myNameTextField);
     }
 
     @NotNull

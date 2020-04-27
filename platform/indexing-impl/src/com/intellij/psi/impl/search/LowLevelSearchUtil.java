@@ -131,8 +131,7 @@ public class LowLevelSearchUtil {
     return processElementsAtOffsets(scope, searcher, processInjectedPsi, progress, occurrences, processor);
   }
 
-  @NotNull
-  static int[] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher) {
+  static int @NotNull [] getTextOccurrencesInScope(@NotNull PsiElement scope, @NotNull StringSearcher searcher) {
     ProgressManager.checkCanceled();
 
     PsiFile file = scope.getContainingFile();
@@ -163,7 +162,7 @@ public class LowLevelSearchUtil {
                                           @NotNull StringSearcher searcher,
                                           boolean processInjectedPsi,
                                           @NotNull ProgressIndicator progress,
-                                          @NotNull int[] offsetsInScope,
+                                          int @NotNull [] offsetsInScope,
                                           @NotNull TextOccurenceProcessor processor) {
     if (offsetsInScope.length == 0) {
       return true;
@@ -185,7 +184,7 @@ public class LowLevelSearchUtil {
   }
 
   static boolean processOffsets(@NotNull ASTNode node,
-                                @NotNull int[] offsetsInNode,
+                                int @NotNull [] offsetsInNode,
                                 @NotNull ProgressIndicator progress,
                                 @NotNull NodeTextOccurrenceProcessor processor) {
     final int scopeStartOffset = node.getStartOffset();
@@ -264,11 +263,10 @@ public class LowLevelSearchUtil {
     return true;
   }
 
-  @NotNull
-  private static int[] getTextOccurrences(@NotNull CharSequence text,
-                                          int startOffset,
-                                          int endOffset,
-                                          @NotNull StringSearcher searcher) {
+  private static int @NotNull [] getTextOccurrences(@NotNull CharSequence text,
+                                                    int startOffset,
+                                                    int endOffset,
+                                                    @NotNull StringSearcher searcher) {
     if (endOffset > text.length()) {
       throw new IllegalArgumentException("end: " + endOffset + " > length: " + text.length());
     }

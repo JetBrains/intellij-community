@@ -19,6 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -102,7 +103,7 @@ class ClassPatternsPanel extends JPanel {
                                                      int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         if (value instanceof String && ((String)value).isEmpty()) {
-          setText("constructors");
+          setText(JavaBundle.message("table.cell.constructors"));
           setForeground(UIUtil.getInactiveTextColor());
         }
         else if (value instanceof String) {

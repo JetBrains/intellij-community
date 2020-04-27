@@ -44,9 +44,8 @@ public abstract class RestInspection extends LocalInspectionTool {
     return true;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 

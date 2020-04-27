@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.execution.ExecutionBundle;
@@ -46,9 +46,6 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author traff
- */
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
 
@@ -277,15 +274,13 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
    * @deprecated already handled by {@link com.intellij.execution.runners.RunContentBuilder#createDescriptor()}
    */
   @Deprecated
-  @NotNull
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public AnAction[] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
+  public AnAction @NotNull [] detachConsoleActions(boolean prependSeparatorIfNonEmpty) {
     return AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return new AnAction[]{new ScrollToTheEndAction(), new ClearAction()};
   }
 
@@ -373,7 +368,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ClearAction extends DumbAwareAction {
     private ClearAction() {
-      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+      super(ExecutionBundle.messagePointer("clear.all.from.console.action.name"),
+            ExecutionBundle.messagePointer("clear.all.from.console.action.text"), AllIcons.Actions.GC);
     }
 
     @Override
@@ -389,8 +385,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   private class ScrollToTheEndAction extends DumbAwareAction {
     private ScrollToTheEndAction() {
-      super(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
-            ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+      super(ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
+            ActionsBundle.messagePointer("action.EditorConsoleScrollToTheEnd.text"),
             AllIcons.RunConfigurations.Scroll_down);
     }
 

@@ -22,9 +22,6 @@ import org.jetbrains.jps.model.JpsElement;
 import java.io.File;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface JpsModuleSourceRoot extends JpsElement {
   @NotNull
   JpsModuleSourceRootType<?> getRootType();

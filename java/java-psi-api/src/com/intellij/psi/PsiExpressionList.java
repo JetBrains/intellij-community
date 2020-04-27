@@ -14,9 +14,9 @@ public interface PsiExpressionList extends PsiElement {
   /**
    * Returns the expressions contained in the list.
    */
-  @NotNull PsiExpression[] getExpressions();
+  PsiExpression @NotNull [] getExpressions();
 
-  @NotNull PsiType[] getExpressionTypes();
+  PsiType @NotNull [] getExpressionTypes();
 
   /**
    * @return number of expressions in the expression list

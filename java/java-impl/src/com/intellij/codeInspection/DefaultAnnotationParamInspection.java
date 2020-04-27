@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -26,7 +27,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)element).getDefaultValue();
         if (defaultValue == null) return;
         if (AnnotationUtil.equal(value, defaultValue)) {
-          holder.registerProblem(value, "Redundant default parameter value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+          holder.registerProblem(value, JavaBundle.message("inspection.message.redundant.default.parameter.value.assignment"), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  createRemoveParameterFix());
         }
       }
@@ -40,7 +41,7 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
       @NotNull
       @Override
       public String getFamilyName() {
-        return "Remove redundant parameter";
+        return JavaBundle.message("quickfix.family.remove.redundant.parameter");
       }
 
       @Override

@@ -45,6 +45,10 @@ class FacetManagerViaWorkspaceModel(module: Module) : FacetManagerBase() {
   override fun getModule(): Module = module
   override fun createModifiableModel(): ModifiableFacetModel {
     val diff = TypedEntityStorageDiffBuilder.create(module.entityStore.current)
+    return createModifiableModel(diff)
+  }
+
+  fun createModifiableModel(diff: TypedEntityStorageDiffBuilder): ModifiableFacetModel {
     return ModifiableFacetModelViaWorkspaceModel(module.entityStore.current, diff, module, this)
   }
 
@@ -74,7 +78,7 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
         name = entity.name
         setFacetType(entity.facetType)
         configuration = entity.configurationXmlTag?.let { JDOMUtil.load(it) }
-      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.facetType), true)
+      }, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", entity.facetType), true, true)
     }
 
     val configuration = facetType.createDefaultConfiguration()

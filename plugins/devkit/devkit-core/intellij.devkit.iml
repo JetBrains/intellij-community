@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

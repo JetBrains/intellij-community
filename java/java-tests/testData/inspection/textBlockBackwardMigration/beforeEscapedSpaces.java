@@ -4,9 +4,9 @@ class TextBlockMigration {
 
   void escapeSpaces() {
     String block = """
-        text\040\040
-        block<caret>
-        """;
+        text\040\040\
+        block \s<caret>
+        \s""";
   }
 
 }

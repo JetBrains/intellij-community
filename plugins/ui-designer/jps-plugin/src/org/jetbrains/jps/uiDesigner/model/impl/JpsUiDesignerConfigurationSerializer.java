@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 
-/**
- * @author nik
- */
 public class JpsUiDesignerConfigurationSerializer extends JpsProjectExtensionSerializer {
   private static final SkipDefaultValuesSerializationFilters FILTERS = new SkipDefaultValuesSerializationFilters();
 

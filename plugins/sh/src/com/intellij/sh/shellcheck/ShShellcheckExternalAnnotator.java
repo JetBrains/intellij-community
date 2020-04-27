@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
 import com.google.gson.Gson;
@@ -8,7 +8,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +29,6 @@ import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -40,6 +42,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Arrays.asList;
 
@@ -119,8 +122,8 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
       int endOffset = ShShellcheckUtil.calcOffset(sequence, document.getLineStartOffset(result.endLine - 1), result.endColumn);
       TextRange range = TextRange.create(startOffset, endOffset == startOffset ? endOffset + 1 : endOffset);
 
-      boolean isInOuter = ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range));
-      if (isInOuter) continue;
+      // We skip results which out of scope for current file or intersect with outer language elements
+      if (!file.getTextRange().contains(range) || ContainerUtil.exists(rangesOfOuterElements, it -> it.contains(range))) continue;
 
       long code = result.code;
       String message = result.message;
@@ -168,7 +171,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
   }
 
   private static void writeFileContentToStdin(@NotNull Process process, @NotNull String content, @NotNull Charset charset) {
-    try (OutputStream stdin = ObjectUtils.assertNotNull(process.getOutputStream())) {
+    try (OutputStream stdin = Objects.requireNonNull(process.getOutputStream())) {
       stdin.write(content.getBytes(charset));
       stdin.flush();
     }

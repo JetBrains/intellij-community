@@ -21,7 +21,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/ProjectBundle" key="label.text.output.directory"/>
+              <text resource-bundle="messages/JavaUiBundle" key="label.text.output.directory"/>
             </properties>
           </component>
           <component id="a8018" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myOutputDirectoryField">
@@ -43,7 +43,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/ProjectBundle" key="checkbox.text.build.on.make"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="checkbox.text.build.on.make"/>
                 </properties>
               </component>
               <hspacer id="7bcaa">

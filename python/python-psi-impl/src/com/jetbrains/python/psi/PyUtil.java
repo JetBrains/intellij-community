@@ -36,10 +36,10 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
-import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
+import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -524,7 +524,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static List<PsiElement> filterTopPriorityResults(@NotNull ResolveResult[] resolveResults) {
+  public static List<PsiElement> filterTopPriorityResults(ResolveResult @NotNull [] resolveResults) {
     if (resolveResults.length == 0) return Collections.emptyList();
 
     final int maxRate = getMaxRate(Arrays.asList(resolveResults));
@@ -803,7 +803,7 @@ public class PyUtil {
   @NotNull
   public static PsiElement getHeaderEndAnchor(@NotNull PyStatementListContainer container) {
     final PyStatementList statementList = container.getStatementList();
-    return ObjectUtils.notNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
+    return Objects.requireNonNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
   }
 
   public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {

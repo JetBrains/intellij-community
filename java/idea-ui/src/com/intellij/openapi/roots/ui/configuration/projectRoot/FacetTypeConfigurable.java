@@ -17,15 +17,12 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.facet.FacetType;
 import com.intellij.facet.impl.ui.facetType.FacetTypeEditor;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.NamedConfigurable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
   private final FacetStructureConfigurable myFacetStructureConfigurable;
   private final FacetType myFacetType;
@@ -46,7 +43,7 @@ public class FacetTypeConfigurable extends NamedConfigurable<FacetType> {
 
   @Override
   public String getBannerSlogan() {
-    return ProjectBundle.message("facet.type.banner.text", myFacetType.getPresentableName());
+    return JavaUiBundle.message("facet.type.banner.text", myFacetType.getPresentableName());
   }
 
   @Override

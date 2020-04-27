@@ -70,11 +70,11 @@ public class CompressedIntList implements IntList {
 
   private final int myBlockSize;
 
-  @NotNull private final int[] myStrongValues;
+  private final int @NotNull [] myStrongValues;
 
   @NotNull private final IntList myCompressedDeltas;
 
-  private CompressedIntList(int blockSize, @NotNull int[] strongValues, @NotNull final IntList compressedDeltas) {
+  private CompressedIntList(int blockSize, int @NotNull [] strongValues, @NotNull final IntList compressedDeltas) {
     myBlockSize = blockSize;
     myStrongValues = strongValues;
     myCompressedDeltas = compressedDeltas;

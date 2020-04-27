@@ -81,11 +81,10 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
   }
 
 
-  @NotNull
   @Override
-  protected GrReferenceElement[] findReferencesToRestore(PsiFile file,
-                                                         RangeMarker bounds,
-                                                         ReferenceData[] referenceData) {
+  protected GrReferenceElement @NotNull [] findReferencesToRestore(PsiFile file,
+                                                                   RangeMarker bounds,
+                                                                   ReferenceData[] referenceData) {
     PsiManager manager = file.getManager();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper helper = facade.getResolveHelper();

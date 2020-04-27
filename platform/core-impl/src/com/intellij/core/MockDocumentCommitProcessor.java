@@ -23,9 +23,6 @@ import com.intellij.psi.impl.DocumentCommitProcessor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 class MockDocumentCommitProcessor implements DocumentCommitProcessor {
   @Override
   public void commitSynchronously(@NotNull Document document, @NotNull Project project, @NotNull PsiFile psiFile) {

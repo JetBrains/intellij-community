@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class XmlQuickFixFactoryImpl extends XmlQuickFixFactory {
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName, @NotNull String... values) {
+  public LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName, String @NotNull ... values) {
     return new InsertRequiredAttributeFix(tag, attrName, values);
   }
 

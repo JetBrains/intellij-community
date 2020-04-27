@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.template.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.GenericsUtil;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,7 +35,7 @@ public class IterableComponentTypeMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.iterable.component.type");
+    return JavaBundle.message("macro.iterable.component.type");
   }
 
   @Override
@@ -43,7 +45,7 @@ public class IterableComponentTypeMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;
@@ -62,7 +64,7 @@ public class IterableComponentTypeMacro extends Macro {
   }
 
   @Override
-  public Result calculateQuickResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return calculateResult(params, context);
   }
 

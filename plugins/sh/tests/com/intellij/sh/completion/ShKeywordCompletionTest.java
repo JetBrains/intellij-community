@@ -337,13 +337,13 @@ public class ShKeywordCompletionTest extends BasePlatformTestCase {
   public void testNoKeywordCompletionInString() {
     myFixture.configureByText("a.sh", "\"<caret> \"");
     myFixture.completeBasic();
-    assertLookupNotContainsTemplateKeywords();
+    assertNull(myFixture.getLookup());
   }
 
   public void testNoKeywordCompletionInRawString() {
     myFixture.configureByText("a.sh", "'<caret> '");
     myFixture.completeBasic();
-    assertLookupNotContainsTemplateKeywords();
+    assertNull(myFixture.getLookup());
   }
 
   public void testNoCompletionInComment() {

@@ -21,8 +21,7 @@ public interface GrListOrMap extends UserDataHolderEx, Cloneable, Iconable, PsiE
    * Use for list
    */
   @Override
-  @NotNull
-  GrExpression[] getInitializers();
+  GrExpression @NotNull [] getInitializers();
 
   boolean isMap();
 

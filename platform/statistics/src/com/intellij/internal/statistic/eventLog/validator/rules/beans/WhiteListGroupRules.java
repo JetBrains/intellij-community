@@ -48,9 +48,8 @@ public class WhiteListGroupRules {
     return eventDataRules;
   }
 
-  @NotNull
-  private static FUSRule[] getRules(@Nullable Set<String> rules,
-                                    @NotNull WhiteListGroupContextData contextData) {
+  private static FUSRule @NotNull [] getRules(@Nullable Set<String> rules,
+                                              @NotNull WhiteListGroupContextData contextData) {
 
     if (rules == null) return FUSRule.EMPTY_ARRAY;
     List<FUSRule> fusRules = new SortedList<>(getRulesComparator());
@@ -113,7 +112,7 @@ public class WhiteListGroupRules {
     }
   }
 
-  private static ValidationResultType acceptRule(@NotNull String ruleData, @NotNull EventContext context, @Nullable FUSRule... rules) {
+  private static ValidationResultType acceptRule(@NotNull String ruleData, @NotNull EventContext context, FUSRule @Nullable ... rules) {
     if (rules == null) return UNDEFINED_RULE;
 
     ValidationResultType prevResult = null;

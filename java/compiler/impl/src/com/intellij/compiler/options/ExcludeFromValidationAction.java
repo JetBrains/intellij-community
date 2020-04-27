@@ -5,7 +5,7 @@ package com.intellij.compiler.options;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludesConfiguration;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -16,13 +16,10 @@ import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class ExcludeFromValidationAction extends AnAction {
 
   public ExcludeFromValidationAction() {
-    super(CompilerBundle.message("action.name.exclude.from.validation"));
+    super(JavaCompilerBundle.messagePointer("action.name.exclude.from.validation"));
   }
 
   @Override

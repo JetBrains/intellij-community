@@ -271,7 +271,7 @@ public class GitPullDialog extends DialogWrapper {
   @Nullable
   private GitRepository getRepository() {
     VirtualFile root = gitRoot();
-    GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
+    GitRepository repository = myRepositoryManager.getRepositoryForRootQuick(root);
     if (repository == null) {
       LOG.error("Repository is null for " + root);
       return null;

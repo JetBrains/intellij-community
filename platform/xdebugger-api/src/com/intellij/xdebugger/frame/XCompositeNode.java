@@ -26,8 +26,6 @@ import javax.swing.*;
  * Represents a node with children in a debugger tree. This interface isn't supposed to be implemented by a plugin.
  *
  * @see XValueContainer
- *
- * @author nik
  */
 public interface XCompositeNode extends Obsolescent {
   /**

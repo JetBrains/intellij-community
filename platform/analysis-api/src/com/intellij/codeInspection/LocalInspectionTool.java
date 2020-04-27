@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
-import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,6 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    *
    * @return inspection tool ID.
    */
-  @Pattern(VALID_ID_PATTERN)
   @NonNls
   @NotNull
   public String getID() {
@@ -102,8 +100,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return {@code null} if no problems found or not applicable at file level.
    */
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     return null;
   }
 

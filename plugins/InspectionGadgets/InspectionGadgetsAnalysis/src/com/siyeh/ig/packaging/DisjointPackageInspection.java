@@ -38,8 +38,7 @@ import java.util.stream.Collectors;
 public class DisjointPackageInspection extends BaseGlobalInspection {
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(
+  public CommonProblemDescriptor @Nullable [] checkElement(
     @NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
     @NotNull InspectionManager inspectionManager,
     @NotNull GlobalInspectionContext globalInspectionContext) {

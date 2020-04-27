@@ -36,8 +36,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return ((CompositeElement)getNode()).getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
@@ -164,7 +163,7 @@ public class PsiLiteralExpressionImpl
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       if (line.length() > 0) {
-        sb.append(StringUtil.trimTrailing(line.substring(prefix), ' '));
+        sb.append(trimTrailingSpaces(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
         sb.append('\n');
@@ -173,14 +172,21 @@ public class PsiLiteralExpressionImpl
     return sb.toString();
   }
 
+  @NotNull
+  private static String trimTrailingSpaces(@NotNull String line) {
+    int index = line.length() - 1;
+    while (index >= 0 && line.charAt(index) == ' ') index--;
+    if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
+    return line.substring(0, index + 1);
+  }
+
   public int getTextBlockIndent() {
     String[] lines = getTextBlockLines();
     if (lines == null) return -1;
     return PsiLiteralUtil.getTextBlockIndent(lines);
   }
 
-  @Nullable
-  public String[] getTextBlockLines() {
+  public String @Nullable [] getTextBlockLines() {
     String rawText = getText();
     if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
     int start = 3;
@@ -200,7 +206,7 @@ public class PsiLiteralExpressionImpl
     return success ? outChars.toString() : null;
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {
     return CodeInsightUtilCore.parseStringCharacters(chars, outChars, sourceOffsets);
   }
 
@@ -225,8 +231,7 @@ public class PsiLiteralExpressionImpl
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     IElementType type = getLiteralElementType();
     return ElementType.STRING_LITERALS.contains(type) || type == JavaTokenType.INTEGER_LITERAL  // int literals could refer to SQL parameters
            ? PsiReferenceService.getService().getContributedReferences(this)

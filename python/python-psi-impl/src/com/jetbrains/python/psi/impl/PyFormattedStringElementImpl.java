@@ -43,7 +43,7 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
     final TextRange contentRange = getContentRange();
     return SyntaxTraverser.psiApi()
       .children(this)
-      .filter(child -> child.getNode().getElementType() == PyTokenTypes.FSTRING_TEXT)
+      .filter(child -> PyTokenTypes.FSTRING_TEXT_TOKENS.contains(child.getNode().getElementType()))
       .map(PsiElement::getTextRangeInParent)
       .map(range -> range.intersection(contentRange))
       .toList();
@@ -103,7 +103,7 @@ public class PyFormattedStringElementImpl extends PyElementImpl implements PyFor
           result.add(Pair.create(relChildRange, child.getText()));
         }
       }
-      else if (childType == PyTokenTypes.FSTRING_TEXT) {
+      else if (PyTokenTypes.FSTRING_TEXT_TOKENS.contains(childType)) {
         if (continuousTextStart == -1) {
           continuousTextStart = relChildRange.getStartOffset();
         }

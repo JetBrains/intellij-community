@@ -73,4 +73,14 @@ public class ShParserUtil extends GeneratedParserUtilBase {
     }
     return false;
   }
+
+  static boolean functionNameKeywordsRemapped(PsiBuilder b, @SuppressWarnings("UnusedParameters") int level) {
+    IElementType type = b.getTokenType();
+    if (ShTokenTypes.identifierKeywords.contains(type)) {
+      b.remapCurrentToken(ShTypes.WORD);
+      b.advanceLexer();
+      return true;
+    }
+    return false;
+  }
 }

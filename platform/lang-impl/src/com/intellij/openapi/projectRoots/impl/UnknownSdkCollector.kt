@@ -4,17 +4,26 @@ package com.intellij.openapi.projectRoots.impl
 import com.google.common.collect.MultimapBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkType
-import com.intellij.openapi.projectRoots.impl.UnknownSdkResolver.UnknownSdk
 import com.intellij.openapi.roots.ModuleJdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
 import java.util.function.Consumer
+
+private val EP_NAME = ExtensionPointName.create<UnknownSdkContributor>("com.intellij.unknownSdkContributor")
+
+interface UnknownSdkContributor {
+  fun contributeUnknownSdks(project: Project): List<UnknownSdk>
+}
 
 data class UnknownSdkSnapshot(
   val totallyUnknownSdks: Set<String>,
@@ -30,14 +39,12 @@ private data class MissingSdkInfo(
 }
 
 class UnknownSdkCollector(private val myProject: Project) {
-  fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      return onCompleted.accept(collectSdksUnderReadAction())
-    }
+  private val LOG = logger<UnknownSdkCollector>()
 
+  fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
       .expireWith(myProject)
-      .coalesceBy(this)
+      .coalesceBy(myProject, UnknownSdkCollector::class)
       .finishOnUiThread(ApplicationManager.getApplication().noneModalityState, onCompleted)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
@@ -102,6 +109,25 @@ class UnknownSdkCollector(private val myProject: Project) {
       }
 
       resolvableSdks.add(MissingSdkInfo(sdkName, sdkType))
+    }
+
+    val detectedUnknownSdkNames = resolvableSdks.mapNotNull { it.sdkName }.toMutableSet()
+
+    EP_NAME.forEachExtensionSafe {
+      val contrib = try {
+        it.contributeUnknownSdks(myProject)
+      } catch (e: ProcessCanceledException) {
+        throw e
+      } catch (t: Throwable) {
+        LOG.warn("Failed to contribute SDKs with ${it.javaClass.name}. ${t.message}", t)
+        listOf<UnknownSdk>()
+      }
+
+      for (unknownSdk in contrib) {
+        val name = unknownSdk.sdkName ?: continue
+        if (!detectedUnknownSdkNames.add(name)) continue
+        resolvableSdks += unknownSdk
+      }
     }
 
     return UnknownSdkSnapshot(totallyUnknownSdks, resolvableSdks)

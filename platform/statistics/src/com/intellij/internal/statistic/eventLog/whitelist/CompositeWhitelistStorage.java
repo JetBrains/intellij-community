@@ -5,14 +5,14 @@ import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListG
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompositeWhitelistStorage implements WhitelistGroupRulesStorage {
+public class CompositeWhitelistStorage implements WhitelistGroupRulesStorage, WhitelistTestRulesStorageHolder {
   @NotNull
   private final WhitelistGroupRulesStorage myWhitelistStorage;
   @NotNull
-  private final WhitelistGroupRulesStorage myWhitelistTestGroupStorage;
+  private final WhitelistTestGroupStorage myWhitelistTestGroupStorage;
 
   CompositeWhitelistStorage(@NotNull WhitelistGroupRulesStorage whitelistStorage,
-                            @NotNull WhitelistGroupRulesStorage testWhitelistStorage) {
+                            @NotNull WhitelistTestGroupStorage testWhitelistStorage) {
     myWhitelistStorage = whitelistStorage;
     myWhitelistTestGroupStorage = testWhitelistStorage;
   }
@@ -36,5 +36,11 @@ public class CompositeWhitelistStorage implements WhitelistGroupRulesStorage {
   public void update() {
     myWhitelistStorage.update();
     myWhitelistTestGroupStorage.update();
+  }
+
+  @NotNull
+  @Override
+  public WhitelistTestGroupStorage getTestGroupStorage() {
+    return myWhitelistTestGroupStorage;
   }
 }

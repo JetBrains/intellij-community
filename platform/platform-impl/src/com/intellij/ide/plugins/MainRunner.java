@@ -25,7 +25,7 @@ public final class MainRunner  {
 
   /** Called via reflection from {@link Main#bootstrap}. */
   public static void start(@NotNull String mainClass,
-                            @NotNull String[] args,
+                            String @NotNull [] args,
                             @NotNull LinkedHashMap<String, Long> startupTimings) {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
 

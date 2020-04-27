@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.filter;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -110,7 +112,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
   private class ResetFilterAction extends DumbAwareAction {
     ResetFilterAction() {
-      super("Reset Filter");
+      super(ActionsBundle.messagePointer("action.ResetFilterAction.text"));
     }
 
     @Override
@@ -127,7 +129,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
   private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
     ShowOnlyCleanupInspectionsAction() {
-      super("Show Only Cleanup Inspections");
+      super(AnalysisBundle.message("inspections.settings.show.only.cleanup.text"));
     }
 
     @Override
@@ -144,7 +146,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
     ShowAvailableOnlyOnAnalyzeInspectionsAction() {
-      super("Show Only Batch-Mode Inspections");
+      super(AnalysisBundle.message("inspections.settings.show.only.batch.text"));
     }
 
     @Override
@@ -190,7 +192,8 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     private final Boolean myShowEnabledActions;
 
     ShowEnabledOrDisabledInspectionsAction(final boolean showEnabledActions) {
-      super("Show Only " + (showEnabledActions ? "Enabled" : "Disabled"));
+      super(showEnabledActions ? AnalysisBundle.message("inspections.settings.show.only.enabled.text")
+                               : AnalysisBundle.message("inspections.settings.show.only.disabled.text"));
       myShowEnabledActions = showEnabledActions;
     }
 
@@ -211,7 +214,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     private final Language myLanguage;
 
     LanguageFilterAction(final @Nullable Language language) {
-      super(language == null ? "Language is not specified" : language.getDisplayName());
+      super(language == null ? AnalysisBundle.message("inspections.settings.language.not.specified.warning") : language.getDisplayName());
       myLanguage = language;
     }
 
@@ -236,8 +239,8 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   private final String presentableVersion = ApplicationNamesInfo.getInstance().getProductName() + " " + version;
   private class ShowNewInspectionsAction extends AnAction implements DumbAware {
     private ShowNewInspectionsAction() {
-      super("Show New Inspections in " + presentableVersion,
-            "Shows new inspections which are available since " + presentableVersion,
+      super(AnalysisBundle.message("inspections.settings.show.new.text", presentableVersion),
+            AnalysisBundle.message("inspections.settings.show.new.description", presentableVersion),
             AllIcons.Actions.Lightning);
     }
 
@@ -249,7 +252,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
   private class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
     ShowOnlyModifiedInspectionsAction() {
-      super("Show Only Modified Inspections");
+      super(AnalysisBundle.message("inspections.settings.show.modified.text"));
     }
 
     @Override

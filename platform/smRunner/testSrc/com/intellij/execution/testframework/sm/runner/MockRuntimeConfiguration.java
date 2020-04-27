@@ -74,7 +74,7 @@ public final class MockRuntimeConfiguration extends LocatableConfigurationBase i
 
     @Override
     @NotNull
-      public String getId() {
+    public String getId() {
       return "MockRuntimeConfiguration";
     }
 

@@ -259,7 +259,7 @@ final class Solver {
   }
 
   @NotNull
-  Result normalize(@NotNull Component[] sum) {
+  Result normalize(Component @NotNull [] sum) {
     Value acc = lattice.bot;
     boolean computableNow = true;
     for (Component prod : sum) {

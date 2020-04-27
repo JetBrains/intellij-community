@@ -25,6 +25,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * @return the display name of the configuration type.
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getDisplayName();
 
   /**
@@ -32,7 +33,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    *
    * @return the description of the configuration type.
    */
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getConfigurationTypeDescription();
 
   /**

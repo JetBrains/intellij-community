@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -36,8 +37,7 @@ public class StatementExtractor {
    * @param root a root expression
    * @return an array of non-physical statements which represent the same logic as passed expressions
    */
-  @NotNull
-  public static PsiStatement[] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
+  public static PsiStatement @NotNull [] generateStatements(List<? extends PsiExpression> expressionsToKeep, PsiExpression root) {
     String statementsCode = generateStatementsText(expressionsToKeep, root);
     if(statementsCode.isEmpty()) return PsiStatement.EMPTY_ARRAY;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(root.getProject());
@@ -208,6 +208,18 @@ public class StatementExtractor {
     }
 
     public String toString() {
+      if (myAnchor instanceof PsiInstanceOfExpression) {
+        List<PsiPatternVariable> variables = JavaPsiPatternUtil.getExposedPatternVariables(myAnchor);
+        StringBuilder sb = new StringBuilder();
+        for (PsiPatternVariable variable : variables) {
+          String initializer = JavaPsiPatternUtil.getEffectiveInitializerText(variable);
+          if (initializer != null) {
+            sb.append(variable.getTypeElement().getText()).append(" ").append(variable.getName()).append("=")
+              .append(initializer).append(";");
+          }
+        }
+        return sb.toString();
+      }
       return myAnchor.getText() + ";";
     }
   }

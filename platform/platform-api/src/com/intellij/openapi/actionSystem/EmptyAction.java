@@ -136,9 +136,8 @@ public final class EmptyAction extends AnAction {
       return myDelegate.isPopup();
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable final AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
       return myDelegate.getChildren(e);
     }
 

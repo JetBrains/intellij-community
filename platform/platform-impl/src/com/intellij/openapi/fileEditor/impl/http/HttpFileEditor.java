@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 class HttpFileEditor extends BaseRemoteFileEditor {
   private final RemoteFilePanel myPanel;
 

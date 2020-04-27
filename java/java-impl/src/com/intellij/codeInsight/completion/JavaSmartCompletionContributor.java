@@ -233,13 +233,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     return new SmartCompletionDecorator(lookupElement, infos);
   }
 
-  @NotNull
-  public static ExpectedTypeInfo[] getExpectedTypes(final CompletionParameters parameters) {
+  public static ExpectedTypeInfo @NotNull [] getExpectedTypes(final CompletionParameters parameters) {
     return getExpectedTypes(parameters.getPosition(), parameters.getCompletionType() == CompletionType.SMART);
   }
 
-  @NotNull
-  public static ExpectedTypeInfo[] getExpectedTypes(PsiElement position, boolean voidable) {
+  public static ExpectedTypeInfo @NotNull [] getExpectedTypes(PsiElement position, boolean voidable) {
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
       final PsiClassType classType = factory

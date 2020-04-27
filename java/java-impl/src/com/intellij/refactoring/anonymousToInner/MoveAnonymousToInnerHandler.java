@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.anonymousToInner;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -57,7 +58,7 @@ public class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
-    return "Convert Anonymous to Inner...";
+  public String getActionName(PsiElement @NotNull [] elements) {
+    return JavaRefactoringBundle.message("convert.anonymous.to.inner.action.name");
   }
 }

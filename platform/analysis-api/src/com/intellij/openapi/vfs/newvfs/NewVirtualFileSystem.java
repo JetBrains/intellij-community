@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -7,27 +7,42 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * @author max
- */
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = ContainerUtil.newConcurrentMap();
+
+  /**
+   * <p>Implementations <b>should</b> convert separator chars to forward slashes and remove duplicates ones,
+   * and convert paths to "absolute" form (so that they start from a root that is valid for this FS and
+   * could be later extracted with {@link #extractRootPath}).</p>
+   *
+   * <p>Implementations <b>should not</b> normalize paths by eliminating directory traversals or other indirections.</p>
+   *
+   * @return a normalized path, or {@code null} when a path is invalid for this FS.
+   */
+  @ApiStatus.OverrideOnly
+  protected @Nullable String normalize(@NotNull String path) {
+    return path;
+  }
+
+  /**
+   * IntelliJ platform calls this method with non-null value returned by {@link #normalize}, but if something went wrong
+   * and an implementation can't extract a valid root path nevertheless, it should return an empty string.
+   */
+  @ApiStatus.OverrideOnly
+  protected @NotNull abstract String extractRootPath(@NotNull String normalizedPath);
 
   @Nullable
   public abstract VirtualFile findFileByPathIfCached(@NotNull String path);
 
-  protected String normalize(@NotNull String path) {
-    return path;
-  }
-
   @Override
-  public void refreshWithoutFileWatcher(final boolean asynchronous) {
+  public void refreshWithoutFileWatcher(boolean asynchronous) {
     refresh(asynchronous);
   }
 
@@ -37,7 +52,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   }
 
   @Override
-  public boolean isSymLink(@NotNull final VirtualFile file) {
+  public boolean isSymLink(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -46,20 +61,19 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return null;
   }
 
-  @NotNull
-  protected abstract String extractRootPath(@NotNull String path);
-
   @Override
-  public void addVirtualFileListener(@NotNull final VirtualFileListener listener) {
+  public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
     VirtualFileListener wrapper = new VirtualFileFilteringListener(listener, this);
+    //noinspection deprecation
     VirtualFileManager.getInstance().addVirtualFileListener(wrapper);
     myListenerWrappers.put(listener, wrapper);
   }
 
   @Override
-  public void removeVirtualFileListener(@NotNull final VirtualFileListener listener) {
+  public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     VirtualFileListener wrapper = myListenerWrappers.remove(listener);
     if (wrapper != null) {
+      //noinspection deprecation
       VirtualFileManager.getInstance().removeVirtualFileListener(wrapper);
     }
   }
@@ -85,7 +99,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
 
   @Override
-  public abstract void renameFile(final Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
+  public abstract void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
 
   public boolean markNewFilesAsDirty() {
     return false;

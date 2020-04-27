@@ -10,8 +10,6 @@ import java.util.Arrays;
 
 /**
  * Represents a version of Java SDK. Use {@code JavaSdk#getVersion(Sdk)} method to obtain a version of an {@code Sdk}.
- *
- * @author nik
  * @see LanguageLevel
  */
 public enum JavaSdkVersion {
@@ -29,7 +27,8 @@ public enum JavaSdkVersion {
   JDK_11(LanguageLevel.JDK_11),
   JDK_12(LanguageLevel.JDK_12),
   JDK_13(LanguageLevel.JDK_13),
-  JDK_14(LanguageLevel.JDK_14);
+  JDK_14(LanguageLevel.JDK_14),
+  JDK_15(LanguageLevel.JDK_X);
 
   private final LanguageLevel myMaxLanguageLevel;
 

@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,6 +42,7 @@ public class PositionPanel extends EditorBasedWidget
   private static final String CHAR_COUNT_UNKNOWN = "...";
 
   private Alarm myAlarm;
+  private MergingUpdateQueue myQueue;
   private CodePointCountTask myCountTask;
 
   private String myText;
@@ -120,6 +123,7 @@ public class PositionPanel extends EditorBasedWidget
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
+    myQueue = new MergingUpdateQueue("PositionPanel", 100, true, null, this);
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addCaretListener(this, this);
     multicaster.addSelectionListener(this, this);
@@ -170,16 +174,14 @@ public class PositionPanel extends EditorBasedWidget
   }
 
   private void updatePosition(final Editor editor) {
-    if (editor == null || DISABLE_FOR_EDITOR.isIn(editor)) {
-      myText = "";
-    }
-    else {
-      if (!isOurEditor(editor)) return;
-      myText = getPositionText(editor);
-    }
-    if (myStatusBar != null) {
-      myStatusBar.updateWidget(ID());
-    }
+    if (!isOurEditor(editor)) return;
+
+    myQueue.queue(Update.create(this, () -> {
+      myText = editor == null || DISABLE_FOR_EDITOR.isIn(editor) ? "" : getPositionText(editor);
+      if (myStatusBar != null) {
+        myStatusBar.updateWidget(ID());
+      }
+    }));
   }
 
   private void updateTextWithCodePointCount(int codePointCount) {
@@ -265,7 +267,6 @@ public class PositionPanel extends EditorBasedWidget
     @Override
     public void run() {
       int count = calculate();
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (this == myCountTask) {
           updateTextWithCodePointCount(count);

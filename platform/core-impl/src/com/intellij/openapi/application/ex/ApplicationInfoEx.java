@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.Calendar;
@@ -14,14 +14,12 @@ import java.util.List;
 
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
-    return (ApplicationInfoEx) getInstance();
+    return (ApplicationInfoEx)getInstance();
   }
 
   public abstract Calendar getMajorReleaseBuildDate();
 
   public abstract String getSplashImageUrl();
-
-  public abstract Color getSplashTextColor();
 
   public abstract String getAboutImageUrl();
 
@@ -66,7 +64,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getToolWindowIconUrl();
 
-  public abstract String getWelcomeScreenLogoUrl();
+  public abstract @Nullable String getWelcomeScreenLogoUrl();
 
   /**
    * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
@@ -84,7 +82,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract boolean isMajorEAP();
 
-  public abstract UpdateUrls getUpdateUrls();
+  public @Nullable abstract UpdateUrls getUpdateUrls();
 
   public abstract String getDocumentationUrl();
 
@@ -163,10 +161,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @Nullable
   public abstract Color getProgressColor();
 
-  @Nullable
-  public abstract Icon getProgressTailIcon();
+  public @Nullable abstract String getProgressTailIcon();
 
-  public abstract int getLicenseOffsetX();
-
-  public abstract int getLicenseOffsetY();
+  public @NotNull abstract BuildNumber getApiVersionAsNumber();
 }

@@ -5,6 +5,7 @@ package com.intellij.coverage.actions;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageEngine;
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -43,7 +44,8 @@ public class ShowCoveringTestsAction extends AnAction {
   private final LineData myLineData;
 
   public ShowCoveringTestsAction(final String classFQName, LineData lineData) {
-    super("Show Tests Covering Line", "Show tests covering line", PlatformIcons.TEST_SOURCE_FOLDER);
+    super(CoverageBundle.message("action.text.show.tests.covering.line"),
+          CoverageBundle.message("action.description.show.tests.covering.line"), PlatformIcons.TEST_SOURCE_FOLDER);
     myClassFQName = classFQName;
     myLineData = lineData;
   }
@@ -61,7 +63,7 @@ public class ShowCoveringTestsAction extends AnAction {
 
     final Set<String> tests = new HashSet<>();
     if (ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> tests.addAll(coverageEngine.getTestsForLine(project, myClassFQName, myLineData.getLineNumber())),
-                                                                          "Extract Information About Tests", false, project)) { //todo cache them? show nothing found message
+                                                                          CoverageBundle.message("extract.information.about.tests"), false, project)) { //todo cache them? show nothing found message
       final String[] testNames = ArrayUtilRt.toStringArray(tests);
       Arrays.sort(testNames);
       if (testNames.length == 0) {
@@ -83,7 +85,9 @@ public class ShowCoveringTestsAction extends AnAction {
           });
       } else {
         component = null;
-        final JPanel panel = new PanelWithText("Following test" + (testNames.length > 1 ? "s" : "") + " could not be found: " + StringUtil.join(testNames, "<br/>").replace("_", "."));
+        final JPanel panel = new PanelWithText(CoverageBundle
+                                                 .message("following.test.0.could.not.be.found.1", testNames.length > 1 ? "s" : "",
+                                                          StringUtil.join(testNames, "<br/>").replace("_", ".")));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);
       }
       final JBPopup popup = popupBuilder.setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)

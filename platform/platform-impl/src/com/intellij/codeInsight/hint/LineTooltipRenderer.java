@@ -63,11 +63,11 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     void reload(boolean toExpand);
   }
 
-  public LineTooltipRenderer(@Nullable String text, @NotNull Object[] comparable) {
+  public LineTooltipRenderer(@Nullable String text, Object @NotNull [] comparable) {
     this(text, 0, comparable);
   }
 
-  public LineTooltipRenderer(@Nullable final String text, final int width, @NotNull Object[] comparable) {
+  public LineTooltipRenderer(@Nullable final String text, final int width, Object @NotNull [] comparable) {
     super(comparable);
     myCurrentWidth = width;
     myText = text;

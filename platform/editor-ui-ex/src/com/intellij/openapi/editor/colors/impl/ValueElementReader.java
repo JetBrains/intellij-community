@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,8 +17,6 @@ import java.awt.*;
  * Also it may have the following platform-specific attributes:
  * {@code windows}, {@code mac}, {@code linux}.  If one of them is set,
  * it should be used instead of the default one.
- *
- * @author Sergey.Malenkov
  */
 class ValueElementReader {
   @NonNls private static final String VALUE = "value";

@@ -6,7 +6,7 @@ class TextBlockMigration {
     String string = """
             foo
             bar
-            baz\040""".indent(2);
+            baz\s""".indent(2);
   }
 
 }

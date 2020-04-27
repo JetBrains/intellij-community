@@ -39,8 +39,7 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
     }
   };
 
-  @NotNull
-  private String[] myCssUris = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  private String @NotNull [] myCssUris = ArrayUtilRt.EMPTY_STRING_ARRAY;
   @NotNull
   private String myCSP = "";
   @NotNull
@@ -110,7 +109,7 @@ public class MarkdownJavaFxHtmlPanel extends JavaFxHtmlPanel implements Markdown
   }
 
   @Override
-  public void setCSS(@Nullable String inlineCss, @NotNull String... fileUris) {
+  public void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
     PreviewStaticServer.getInstance().setInlineStyle(inlineCss);
     myCssUris = inlineCss == null ? fileUris
                                   : ArrayUtil

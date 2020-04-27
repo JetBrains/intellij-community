@@ -10,13 +10,16 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl
 import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
+import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.WorkspaceModel
@@ -44,6 +47,7 @@ class LegacyBridgeModifiableRootModel(
   override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
+  private val listenerDisposables = MultiMap<LibraryTable, Disposable>()
 
   private val extensionsDelegate = lazy {
     RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
@@ -113,6 +117,7 @@ class LegacyBridgeModifiableRootModel(
     val entity = currentModel.contentEntities.firstOrNull { it.url == contentEntryUrl }
                  ?: error("ContentEntry $entry does not belong to modifiableRootModel of module ${legacyBridgeModule.name}")
 
+    entry.clearSourceFolders()
     diff.removeEntity(entity)
 
     if (assertChangesApplied && contentEntries.any { it.url == contentEntryUrl.url }) {
@@ -178,8 +183,18 @@ class LegacyBridgeModifiableRootModel(
 
     updateDependencies { it + libraryDependency }
 
-    return orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
-           ?: error("Unable to find library orderEntry after adding")
+
+    val libraryOrderEntry = (orderEntriesImpl.lastOrNull() as? LibraryOrderEntry
+                             ?: error("Unable to find library orderEntry after adding"))
+    registerLibraryTableListener(library.table)
+    return libraryOrderEntry
+  }
+
+  fun registerLibraryTableListener(libraryTable: LibraryTable?) {
+    if (libraryTable == null) return
+    (ProjectRootManagerImpl.getInstanceImpl(project) as? LegacyBridgeProjectRootManager)?.addListenerForTable(libraryTable)?.let {
+      listenerDisposables.putValue(libraryTable, it)
+    }
   }
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
@@ -254,6 +269,21 @@ class LegacyBridgeModifiableRootModel(
 
     if (assertChangesApplied && orderEntriesImpl.any { it.item == item })
       error("removeOrderEntry: removed order entry $item still exists after removing")
+
+    if (orderEntry is LibraryOrderEntry) {
+      unregisterLibraryTableListener(orderEntry.library)
+    }
+  }
+
+  private fun unregisterLibraryTableListener(library: Library?) {
+    if (library == null) return
+    val disposables = listenerDisposables.getModifiable(library.table)
+    val iterator = disposables.iterator()
+    if (iterator.hasNext()) {
+      val disposable = iterator.next()
+      Disposer.dispose(disposable)
+      iterator.remove()
+    }
   }
 
   override fun rearrangeOrderEntries(newOrder: Array<out OrderEntry>) {
@@ -292,9 +322,9 @@ class LegacyBridgeModifiableRootModel(
     }
   }
 
-  override fun commit() {
+  fun collectChanges(): TypedEntityStorageBuilder? {
     assertModelIsLive()
-    if (!isChanged) return
+    if (!isChanged) return null
 
     if (extensionsDelegate.isInitialized() && extensions.any { it.isChanged }) {
       val element = Element("component")
@@ -340,7 +370,12 @@ class LegacyBridgeModifiableRootModel(
     LegacyBridgeModuleRootComponent.getInstance(module).newModuleLibraries.addAll(moduleLibraryTable.librariesToAdd)
     // Do not clear `librariesToAdd`. Otherwise `getLibraries()` will return an empty list after the commit
 
-    disposeSkippingLibraries()
+    disposeWithoutLibraries()
+    return diff
+  }
+
+  override fun commit() {
+    val diff = collectChanges() ?: return
 
     val moduleDiff = module.diff
 
@@ -354,20 +389,18 @@ class LegacyBridgeModifiableRootModel(
   }
 
   override fun dispose() {
-    if (!modelIsCommittedOrDisposed) {
-      Disposer.dispose(extensionsDisposable)
-
-      moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
-      moduleLibraryTable.librariesToRemove.clear()
-    }
-
-    // No assertions here since it is ok to call dispose twice or more
-    modelIsCommittedOrDisposed = true
+    disposeWithoutLibraries()
+    if (isDisposed) return
+    moduleLibraryTable.librariesToRemove.forEach { Disposer.dispose(it) }
+    moduleLibraryTable.librariesToRemove.clear()
   }
 
-  private fun disposeSkippingLibraries() {
+  private fun disposeWithoutLibraries() {
     if (!modelIsCommittedOrDisposed) {
       Disposer.dispose(extensionsDisposable)
+
+      listenerDisposables.values().forEach { Disposer.dispose(it) }
+      listenerDisposables.clear()
     }
 
     // No assertions here since it is ok to call dispose twice or more
@@ -534,6 +567,14 @@ class LegacyBridgeModifiableRootModel(
       get() = modifiableModel.entityStoreOnDiff.cachedValue(librariesValue, librariesToAdd to librariesToRemove)
 
     override fun commit() {
+      librariesToAdd.forEach { library ->
+        val componentAsString = modifiableModel.serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
+        library.libraryEntity?.getCustomProperties()?.let { property ->
+          modifiableModel.diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+            propertiesXmlTag = componentAsString
+          }
+        }
+      }
     }
 
     override fun dispose() {

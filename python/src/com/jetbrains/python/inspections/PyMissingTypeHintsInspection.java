@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -10,6 +10,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.intentions.PyAnnotateTypesIntention;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
@@ -23,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author traff
- */
 public class PyMissingTypeHintsInspection extends PyInspection {
   /**
    * @noinspection PublicField
@@ -89,8 +87,9 @@ public class PyMissingTypeHintsInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Only when types are known(collected from run-time or inferred)",
-                                          this, "m_onlyWhenTypesAreKnown");
+    return new SingleCheckboxOptionsPanel(
+      PyBundle.message("INSP.missing.type.hints.only.when.types.are.known.collected.from.run.time.or.inferred"),
+      this, "m_onlyWhenTypesAreKnown");
   }
 
   private static class AddTypeHintsQuickFix implements LocalQuickFix {
@@ -104,14 +103,14 @@ public class PyMissingTypeHintsInspection extends PyInspection {
     @NotNull
     @Override
     public String getName() {
-      return "Add type hints for '" + myName + "'";
+      return PyBundle.message("INSP.missing.type.hints.add.type.hints.for", myName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Add type hints";
+      return PyBundle.message("INSP.missing.type.hints.add.type.hints");
     }
 
     @Override

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   private final VirtualFile myChild;
-  public VcsVirtualFolder(String name, VirtualFile child, VirtualFileSystem fileSystem) {
+  public VcsVirtualFolder(String name, VirtualFile child, @NotNull VirtualFileSystem fileSystem) {
     super(name == null ? "" : name, fileSystem);
     myChild = child;
   }
@@ -24,8 +24,7 @@ public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() {
+  public byte @NotNull [] contentsToByteArray() {
     throw new RuntimeException(VcsBundle.message("exception.text.internal.error.method.should.not.be.called"));
   }
 }

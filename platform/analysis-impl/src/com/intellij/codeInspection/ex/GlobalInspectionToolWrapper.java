@@ -48,8 +48,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   }
 
   @Override
-  @NotNull
-  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
+  public JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     GlobalInspectionTool tool = getTool();
     JobDescriptor[] additionalJobs = ObjectUtils.notNull(tool.getAdditionalJobs(context), JobDescriptor.EMPTY_ARRAY);
     StdJobDescriptors stdJobDescriptors = context.getStdJobDescriptors();

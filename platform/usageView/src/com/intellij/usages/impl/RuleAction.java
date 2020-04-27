@@ -12,6 +12,7 @@ import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * @author Eugene Zhuravlev
@@ -21,7 +22,11 @@ abstract class RuleAction extends ToggleAction implements DumbAware {
   private boolean myState;
 
   RuleAction(@NotNull UsageView view, @NotNull String text, @NotNull Icon icon) {
-    super(text, null, icon);
+    this(view, () -> text, icon);
+  }
+
+  RuleAction(@NotNull UsageView view, Supplier<String> text, @NotNull Icon icon) {
+    super(text, icon);
     myView = (UsageViewImpl)view;
     myState = getOptionValue();
   }

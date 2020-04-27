@@ -29,7 +29,7 @@ public class SettingsDialogFactory {
   }
 
   @NotNull
-  public DialogWrapper create(@NotNull Project project, @NotNull ConfigurableGroup[] groups, Configurable configurable, String filter){
+  public DialogWrapper create(@NotNull Project project, ConfigurableGroup @NotNull [] groups, Configurable configurable, String filter){
     return create(project, Arrays.asList(groups), configurable, filter);
   }
 

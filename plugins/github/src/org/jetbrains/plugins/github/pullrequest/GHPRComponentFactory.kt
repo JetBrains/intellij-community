@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.codeInsight.AutoPopupController
@@ -153,7 +153,7 @@ internal class GHPRComponentFactory(private val project: Project) {
 
     return ghprVirtualFile ?: error("error")
   }
-  
+
   fun tryOpenGHPREditorTab() {
     val file = getOrCreateGHPRViewFile() ?: return
 
@@ -179,7 +179,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     val detailsLoadingModel = createDetailsLoadingModel(dataProviderModel, disposable)
     val detailsModel = createValueModel(detailsLoadingModel)
 
-    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory, disposable)
+    val detailsPanel = createDetailsPanel(dataContext, detailsModel, avatarIconsProviderFactory)
     val detailsLoadingPanel = GHLoadingPanel(detailsLoadingModel, detailsPanel, disposable,
                                              GHLoadingPanel.EmptyTextBundle.Simple("Select pull request to view details",
                                                                                    "Can't load details")).apply {
@@ -187,7 +187,7 @@ internal class GHPRComponentFactory(private val project: Project) {
     }
 
     val changesModel = GHPRChangesModelImpl(project)
-    val diffHelper = GHPRChangesDiffHelperImpl(project, dataContext.reviewService,
+    val diffHelper = GHPRChangesDiffHelperImpl(dataContext.reviewService,
                                                avatarIconsProviderFactory, dataContext.securityService.currentUser)
     val changesLoadingModel = createChangesLoadingModel(changesModel, diffHelper,
                                                         dataProviderModel, projectUiSettings, disposable)
@@ -270,16 +270,13 @@ internal class GHPRComponentFactory(private val project: Project) {
 
   private fun createDetailsPanel(dataContext: GHPRDataContext,
                                  detailsModel: SingleValueModel<GHPullRequest?>,
-                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
-                                 parentDisposable: Disposable): JBPanelWithEmptyText {
+                                 avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory): JBPanelWithEmptyText {
+
     val metaPanel = GHPRMetadataPanel(project, detailsModel,
                                       dataContext.securityService,
-                                      dataContext.busyStateTracker,
                                       dataContext.metadataService,
                                       avatarIconsProviderFactory).apply {
       border = JBUI.Borders.empty(4, 8, 4, 8)
-    }.also {
-      Disposer.register(parentDisposable, it)
     }
 
     val descriptionPanel = GHPRDescriptionPanel(detailsModel).apply {
@@ -305,11 +302,15 @@ internal class GHPRComponentFactory(private val project: Project) {
       scrollPane.isVisible = detailsModel.value != null
     }
 
-    return JBPanelWithEmptyText(BorderLayout()).apply {
+    val panel = JBPanelWithEmptyText(BorderLayout()).apply {
       isOpaque = false
 
       add(scrollPane, BorderLayout.CENTER)
     }
+    detailsModel.addValueChangedListener {
+      panel.validate()
+    }
+    return panel
   }
 
   private fun installPopup(list: GHPRList) {

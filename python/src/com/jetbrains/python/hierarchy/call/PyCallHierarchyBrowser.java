@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.hierarchy.call;
 
-import com.intellij.ide.hierarchy.newAPI.CallHierarchyBrowserBase;
-import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.newAPI.HierarchyScopeType;
-import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -46,7 +45,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
   }
 
   @Override
-  protected void createTrees(@NotNull Map<HierarchyScopeType, JTree> type2TreeMap) {
+  protected void createTrees(@NotNull Map<String, JTree> type2TreeMap) {
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_CALL_HIERARCHY_POPUP);
 
     final JTree callerTree = createHierarchyTree(group);
@@ -69,11 +68,11 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   @Nullable
   @Override
-  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull HierarchyScopeType typeName, @NotNull PsiElement psiElement) {
-    if (getCallerType() == typeName) {
+  protected HierarchyTreeStructure createHierarchyTreeStructure(@NotNull String typeName, @NotNull PsiElement psiElement) {
+    if (getCallerType().equals(typeName)) {
       return new PyCallerFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
-    else if (getCalleeType() == typeName) {
+    else if (getCalleeType().equals(typeName)) {
       return new PyCalleeFunctionTreeStructure(myProject, psiElement, getCurrentScopeType());
     }
     else {

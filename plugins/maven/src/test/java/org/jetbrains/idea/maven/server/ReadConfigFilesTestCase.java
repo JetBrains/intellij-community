@@ -14,9 +14,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
   public void testSimpleProperties() throws IOException {
     doTestBothConfigFiles("-DmyProperty=value", ContainerUtil.stringMap("myProperty", "value"));

@@ -61,8 +61,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
   }
 
   @Override
-  @NotNull
-  public TreeElement[] getChildren() {
+  public TreeElement @NotNull [] getChildren() {
     if (!myElement.isValid()) return EMPTY_ARRAY;
     final ArrayList<TreeElement> result = new ArrayList<>();
     final DomElementVisitor elementVisitor = new DomElementVisitor() {

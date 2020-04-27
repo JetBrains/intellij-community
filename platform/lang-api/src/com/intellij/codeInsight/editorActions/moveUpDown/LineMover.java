@@ -26,6 +26,10 @@ import org.jetbrains.annotations.NotNull;
 public class LineMover extends StatementUpDownMover {
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
+    return checkLineMoverAvailable(editor, info, down);
+  }
+
+  public static boolean checkLineMoverAvailable(@NotNull Editor editor, @NotNull MoveInfo info, boolean down) {
     LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
 
     LogicalPosition maxLinePos = editor.offsetToLogicalPosition(editor.getDocument().getTextLength());

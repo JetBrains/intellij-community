@@ -72,17 +72,17 @@ public class PsiTypeVariableFactory {
 
         return type.accept(new PsiTypeVisitor<Boolean>() {
           @Override
-          public Boolean visitType(final PsiType type) {
+          public Boolean visitType(@NotNull final PsiType type) {
             return Boolean.TRUE;
           }
 
           @Override
-          public Boolean visitArrayType(final PsiArrayType arrayType) {
+          public Boolean visitArrayType(@NotNull final PsiArrayType arrayType) {
             return arrayType.getDeepComponentType().accept(this);
           }
 
           @Override
-          public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
+          public Boolean visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
             final PsiType bound = wildcardType.getBound();
 
             if (bound != null) {
@@ -93,7 +93,7 @@ public class PsiTypeVariableFactory {
           }
 
           @Override
-          public Boolean visitClassType(final PsiClassType classType) {
+          public Boolean visitClassType(@NotNull final PsiClassType classType) {
             final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
             final PsiClass aClass = result.getElement();
             final PsiSubstitutor aSubst = result.getSubstitutor();
@@ -174,8 +174,7 @@ public class PsiTypeVariableFactory {
       }
 
       @Override
-      @NotNull
-      public PsiType[] getSuperTypes() {
+      public PsiType @NotNull [] getSuperTypes() {
         return EMPTY_ARRAY;
       }
 

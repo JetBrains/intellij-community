@@ -22,12 +22,13 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
 public class SimpleDiffRequestChain extends DiffRequestChainBase {
-  @NotNull private final List<DiffRequestProducerWrapper> myRequests;
+  @NotNull private final List<? extends DiffRequestProducer> myRequests;
 
   public SimpleDiffRequestChain(@NotNull DiffRequest request) {
     this(Collections.singletonList(request));
@@ -37,9 +38,22 @@ public class SimpleDiffRequestChain extends DiffRequestChainBase {
     myRequests = ContainerUtil.map(requests, request -> new DiffRequestProducerWrapper(request));
   }
 
+  private SimpleDiffRequestChain(@NotNull List<? extends DiffRequestProducer> requests, @Nullable Object constructorFlag) {
+    assert constructorFlag == null;
+    myRequests = requests;
+  }
+
+  public static SimpleDiffRequestChain fromProducer(@NotNull DiffRequestProducer producer) {
+    return fromProducers(Collections.singletonList(producer));
+  }
+
+  public static SimpleDiffRequestChain fromProducers(@NotNull List<? extends DiffRequestProducer> producers) {
+    return new SimpleDiffRequestChain(producers, null);
+  }
+
   @Override
   @NotNull
-  public List<DiffRequestProducerWrapper> getRequests() {
+  public List<? extends DiffRequestProducer> getRequests() {
     return myRequests;
   }
 

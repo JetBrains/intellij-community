@@ -19,7 +19,7 @@ import org.editorconfig.language.util.EditorConfigTextMatchingUtil.textMatchesTo
 import org.editorconfig.language.util.EditorConfigVfsUtil
 
 class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
-  override fun processElementUsages(element: PsiElement, processor: Processor<UsageInfo>, options: FindUsagesOptions) =
+  override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions) =
     runReadAction {
       val id = getId(element) ?: return@runReadAction false
       findAllUsages(element, id).map(::UsageInfo).forEach {

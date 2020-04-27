@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -160,7 +161,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void special() {
-    assumeTrue("unix expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix);
+    assumeUnix();
     File file = new File("/dev/null");
 
     FileAttributes attributes = getAttributes(file);
@@ -508,7 +509,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void notOwned() {
-    assumeTrue("unix expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix);
+    assumeUnix();
     File userHome = new File(SystemProperties.getUserHome());
 
     FileAttributes homeAttributes = getAttributes(userHome);
@@ -522,7 +523,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void permissionsCloning() throws IOException {
-    assumeTrue("unix expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isUnix);
+    assumeUnix();
 
     File donor = tempDir.newFile("donor");
     File recipient = tempDir.newFile("recipient");

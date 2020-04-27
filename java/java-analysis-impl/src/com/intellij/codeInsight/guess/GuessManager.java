@@ -31,11 +31,9 @@ public abstract class GuessManager {
     return ServiceManager.getService(project, GuessManager.class);
   }
 
-  @NotNull
-  public abstract PsiType[] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore);
+  public abstract PsiType @NotNull [] guessContainerElementType(PsiExpression containerExpr, TextRange rangeToIgnore);
 
-  @NotNull
-  public abstract PsiType[] guessTypeToCast(PsiExpression expr);
+  public abstract PsiType @NotNull [] guessTypeToCast(PsiExpression expr);
 
   @NotNull 
   public abstract MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull PsiExpression forPlace, boolean honorAssignments);

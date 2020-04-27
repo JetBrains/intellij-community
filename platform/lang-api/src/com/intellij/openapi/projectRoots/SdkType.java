@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
@@ -14,6 +14,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,16 @@ public abstract class SdkType implements SdkTypeId {
   public Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
     return home != null ? Collections.singletonList(home) : Collections.emptyList();
+  }
+
+  /**
+   * This method is used to decide if a given {@link VirtualFile} has something in common
+   * with this {@link SdkType}.
+   *
+   * For example, it can be used by the IDE to decide showing SDK related editor notifications or quick fixes
+   */
+  public boolean isRelevantForFile(@NotNull Project project, @NotNull VirtualFile file) {
+    return true;
   }
 
   /**
@@ -130,6 +141,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getPresentableName();
 
   public Icon getIcon() {
@@ -172,7 +184,7 @@ public abstract class SdkType implements SdkTypeId {
   public FileChooserDescriptor getHomeChooserDescriptor() {
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           String selectedPath = files[0].getPath();
           boolean valid = isValidSdkHome(selectedPath);
@@ -205,8 +217,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
-  @NotNull
-  public static SdkType[] getAllTypes() {
+  public static SdkType @NotNull [] getAllTypes() {
     //noinspection deprecation
     SdkType[] components = ApplicationManager.getApplication().getComponents(SdkType.class);
     List<SdkType> list1 = components.length == 0 ? Collections.emptyList() : Arrays.asList(components);

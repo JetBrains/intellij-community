@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -35,19 +22,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 
-public class GitUserRegistry implements Disposable, VcsListener {
-
+@Service
+public final class GitUserRegistry implements Disposable, VcsListener {
   private static final Logger LOG = Logger.getInstance(GitUserRegistry.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final ProjectLevelVcsManager myVcsManager;
-  @NotNull private final VcsLogObjectsFactory myFactory;
   @NotNull private final Map<VirtualFile, VcsUser> myUserMap = ContainerUtil.newConcurrentMap();
 
-  public GitUserRegistry(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager, @NotNull VcsLogObjectsFactory factory) {
+  public GitUserRegistry(@NotNull Project project) {
     myProject = project;
-    myVcsManager = vcsManager;
-    myFactory = factory;
   }
 
   public static GitUserRegistry getInstance(@NotNull Project project) {
@@ -82,10 +65,10 @@ public class GitUserRegistry implements Disposable, VcsListener {
   }
 
   @Nullable
-  private VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  private static VcsUser readCurrentUser(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     String userName = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
     String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL));
-    return userName == null ? null : myFactory.createUser(userName, userEmail);
+    return userName == null ? null : project.getService(VcsLogObjectsFactory.class).createUser(userName, userEmail);
   }
 
   @Override
@@ -95,7 +78,7 @@ public class GitUserRegistry implements Disposable, VcsListener {
 
   @Override
   public void directoryMappingChanged() {
-    final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(GitVcs.getInstance(myProject));
+    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(GitVcs.getInstance(myProject));
     final Collection<VirtualFile> rootsToCheck = ContainerUtil.filter(roots, root -> getUser(root) == null);
     if (!rootsToCheck.isEmpty()) {
       Runnable task = () -> {

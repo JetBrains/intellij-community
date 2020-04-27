@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -119,7 +119,7 @@ public class ClassRenderer extends NodeRendererImpl{
       return "null";
     }
     else {
-      return DebuggerBundle.message("label.undefined");
+      return JavaDebuggerBundle.message("label.undefined");
     }
   }
 
@@ -153,7 +153,7 @@ public class ClassRenderer extends NodeRendererImpl{
         }
 
         if (children.isEmpty()) {
-          children.add(nodeManager.createMessageNode(DebuggerBundle.message("message.node.class.no.fields.to.display")));
+          children.add(nodeManager.createMessageNode(JavaDebuggerBundle.message("message.node.class.no.fields.to.display")));
         }
         else if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
           children.sort(NodeManagerImpl.getNodeComparator());
@@ -230,7 +230,7 @@ public class ClassRenderer extends NodeRendererImpl{
       );
     }
     catch (IncorrectOperationException e) {
-      throw new EvaluateException(DebuggerBundle.message("error.invalid.field.name", fieldDescriptor.getField().name()), null);
+      throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", fieldDescriptor.getField().name()), null);
     }
   }
 

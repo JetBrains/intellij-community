@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -55,9 +55,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Mike
- */
 public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   protected Editor myEditor;
 
@@ -106,7 +103,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   /**
    * @param files the first file will be loaded in editor
    */
-  protected VirtualFile configureByFiles(@Nullable String projectRoot, @NotNull String... files) {
+  protected VirtualFile configureByFiles(@Nullable String projectRoot, String @NotNull ... files) {
     if (files.length == 0) return null;
     final VirtualFile[] vFiles = new VirtualFile[files.length];
     for (int i = 0; i < files.length; i++) {
@@ -200,11 +197,11 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
   }
 
-  public VirtualFile doConfigureByFiles(@Nullable final File rawProjectRoot, @NotNull final VirtualFile... vFiles) throws IOException {
+  public VirtualFile doConfigureByFiles(@Nullable final File rawProjectRoot, final VirtualFile @NotNull ... vFiles) throws IOException {
     return configureByFiles(rawProjectRoot, vFiles);
   }
 
-  protected VirtualFile configureByFiles(@Nullable final File rawProjectRoot, @NotNull final VirtualFile... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable final File rawProjectRoot, final VirtualFile @NotNull ... vFiles) throws IOException {
     myFile = null;
     myEditor = null;
 
@@ -278,7 +275,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   @NotNull
   protected Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull String testDataFromDir,
                                                                      @NotNull VirtualFile toDir,
-                                                                     @NotNull String... relativePaths) throws IOException {
+                                                                     String @NotNull ... relativePaths) throws IOException {
     if (!testDataFromDir.startsWith("/")) testDataFromDir = "/" + testDataFromDir;
     return copyFilesFillingEditorInfos(LocalFileSystem.getInstance().refreshAndFindFileByPath(getTestDataPath() + testDataFromDir), toDir, relativePaths);
   }
@@ -286,7 +283,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   @NotNull
   protected Map<VirtualFile, EditorInfo> copyFilesFillingEditorInfos(@NotNull VirtualFile fromDir,
                                                                      @NotNull VirtualFile toDir,
-                                                                     @NotNull String... relativePaths) throws IOException {
+                                                                     String @NotNull ... relativePaths) throws IOException {
     Map<VirtualFile, EditorInfo> editorInfos = new LinkedHashMap<>();
 
     List<OutputStream> streamsToClose = new ArrayList<>();
@@ -416,7 +413,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
   protected void checkResultByFile(@NotNull final String filePath, final boolean stripTrailingSpaces) throws Exception {
     WriteCommandAction.writeCommandAction(getProject()).run(() -> {
-      getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
       if (stripTrailingSpaces) {
         ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces(getProject());
       }

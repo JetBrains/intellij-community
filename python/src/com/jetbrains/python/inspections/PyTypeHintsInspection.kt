@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
@@ -670,7 +671,7 @@ class PyTypeHintsInspection : PyInspection() {
   companion object {
     private class ReplaceWithTypeNameQuickFix(private val typeName: String) : LocalQuickFix {
 
-      override fun getFamilyName() = "Replace with type name"
+      override fun getFamilyName() = PyBundle.message("QFIX.replace.with.type.name")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? PyReferenceExpression ?: return
@@ -686,7 +687,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class RemoveFunctionAnnotations : LocalQuickFix {
 
-      override fun getFamilyName() = "Remove function annotations"
+      override fun getFamilyName() = PyBundle.message("QFIX.remove.function.annotations")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val function = (descriptor.psiElement.parent as? PyFunction) ?: return
@@ -703,7 +704,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class ReplaceWithTargetNameQuickFix(private val targetName: String) : LocalQuickFix {
 
-      override fun getFamilyName() = "Replace with target name"
+      override fun getFamilyName() = PyBundle.message("QFIX.replace.with.target.name")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val old = descriptor.psiElement as? PyStringLiteralExpression ?: return
@@ -715,7 +716,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class RemoveGenericParametersQuickFix : LocalQuickFix {
 
-      override fun getFamilyName() = "Remove generic parameter(s)"
+      override fun getFamilyName() = PyBundle.message("QFIX.remove.generic.parameters")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val old = descriptor.psiElement as? PySubscriptionExpression ?: return
@@ -726,7 +727,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class ReplaceWithSubscriptionQuickFix : LocalQuickFix {
 
-      override fun getFamilyName() = "Replace with square brackets"
+      override fun getFamilyName() = PyBundle.message("QFIX.replace.with.square.brackets")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? PyCallExpression ?: return
@@ -749,7 +750,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class SurroundElementsWithSquareBracketsQuickFix : LocalQuickFix {
 
-      override fun getFamilyName() = "Surround with square brackets"
+      override fun getFamilyName() = PyBundle.message("QFIX.surround.with.square.brackets")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? PyTupleExpression ?: return
@@ -765,7 +766,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class SurroundElementWithSquareBracketsQuickFix : LocalQuickFix {
 
-      override fun getFamilyName() = "Surround with square brackets"
+      override fun getFamilyName() = PyBundle.message("QFIX.surround.with.square.brackets")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
@@ -779,7 +780,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class ReplaceWithListQuickFix : LocalQuickFix {
 
-      override fun getFamilyName() = "Replace with square brackets"
+      override fun getFamilyName() = PyBundle.message("QFIX.replace.with.square.brackets")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
@@ -795,7 +796,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private class RemoveSquareBracketsQuickFix : LocalQuickFix {
 
-      override fun getFamilyName() = "Remove square brackets"
+      override fun getFamilyName() = PyBundle.message("QFIX.remove.square.brackets")
 
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as? PyListLiteralExpression ?: return

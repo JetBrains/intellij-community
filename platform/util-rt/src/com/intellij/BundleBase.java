@@ -3,6 +3,7 @@ package com.intellij;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.text.OrdinalFormat;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,6 @@ public abstract class BundleBase {
     return messageOrDefault(bundle, key, null, params);
   }
 
-
   public static String messageOrDefault(@Nullable ResourceBundle bundle,
                                         @NotNull String key,
                                         @Nullable String defaultValue,
@@ -49,9 +49,19 @@ public abstract class BundleBase {
     String result = postprocessValue(bundle, value, params);
 
     if (SHOW_LOCALIZED_MESSAGES) {
-      return result + L10N_MARKER;
+      return appendLocalizationMarker(result);
     }
     return result;
+  }
+
+  private static final String[] SUFFIXES = {"</body></html>", "</html>"};
+
+  @NotNull
+  protected static String appendLocalizationMarker(@NotNull String result) {
+    for (String suffix : SUFFIXES) {
+      if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
+    }
+    return result + L10N_MARKER;
   }
 
   @NotNull
@@ -67,7 +77,7 @@ public abstract class BundleBase {
   }
 
   @Nullable
-  static String postprocessValue(@NotNull ResourceBundle bundle, String value, @NotNull Object[] params) {
+  static String postprocessValue(@NotNull ResourceBundle bundle, @Nullable String value, @NotNull Object[] params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -90,6 +100,7 @@ public abstract class BundleBase {
     return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
   }
 
+  @Contract("null -> null")
   public static String replaceMnemonicAmpersand(@Nullable String value) {
     if (value == null || value.indexOf('&') < 0) {
       return value;

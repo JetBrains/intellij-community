@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.xslt.associations.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
@@ -25,6 +24,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,7 +41,7 @@ public final class FileAssociationsConfigurable implements SearchableConfigurabl
 
   @Override
   public String getDisplayName() {
-    return IdeBundle.message("configurable.FileAssociationsConfigurable.display.name");
+    return XPathBundle.message("configurable.FileAssociationsConfigurable.display.name");
   }
 
   @Override

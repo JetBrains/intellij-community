@@ -23,9 +23,6 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class BuildDataPathsImpl implements BuildDataPaths {
   private final File myDataStorageRoot;
 

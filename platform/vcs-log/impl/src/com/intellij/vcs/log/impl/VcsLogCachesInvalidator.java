@@ -33,7 +33,7 @@ public class VcsLogCachesInvalidator extends CachesInvalidator {
         FileUtil.createIfDoesntExist(PersistentUtil.getCorruptionMarkerFile());
       }
       else {
-        LOG.debug("Deleted VCS Log caches at " + PersistentUtil.LOG_CACHE);
+        LOG.info("Deleted Vcs Log caches at " + PersistentUtil.LOG_CACHE);
       }
       return deleted;
     }

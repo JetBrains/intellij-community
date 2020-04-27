@@ -42,8 +42,8 @@ public abstract class FontLayoutService {
   }
   
   @NotNull
-  public abstract GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, 
-                                                @NotNull char[] chars, int start, int end, boolean isRtl);
+  public abstract GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext,
+                                                char @NotNull [] chars, int start, int end, boolean isRtl);
 
   public abstract int charWidth(@NotNull FontMetrics fontMetrics, char c);
 
@@ -83,7 +83,7 @@ public abstract class FontLayoutService {
     @NotNull
     @Override
     public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext,
-                                         @NotNull char[] chars, int start, int end, boolean isRtl) {
+                                         char @NotNull [] chars, int start, int end, boolean isRtl) {
       return font.layoutGlyphVector(fontRenderContext, chars, start, end, (isRtl ? Font.LAYOUT_RIGHT_TO_LEFT : Font.LAYOUT_LEFT_TO_RIGHT) |
                                                                           LAYOUT_NO_PAIRED_CHARS_AT_SCRIPT_SPLIT);
     }

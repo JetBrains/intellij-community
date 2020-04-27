@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.LighterASTNode
 import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiField

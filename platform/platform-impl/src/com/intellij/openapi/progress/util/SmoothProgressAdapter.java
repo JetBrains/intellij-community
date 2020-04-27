@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.WrappedProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +34,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase implements BlockingProgressIndicator, WrappedProgressIndicator,
-                                                                            StandardProgressIndicator {
+public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase implements ProgressIndicatorEx, WrappedProgressIndicator,
+                                                                                      StandardProgressIndicator {
   private static final int SHOW_DELAY = 500;
 
   private Future<?> myStartupAlarm = CompletableFuture.completedFuture(null);
@@ -105,7 +106,6 @@ public class SmoothProgressAdapter extends AbstractProgressIndicatorExBase imple
     }
   }
 
-  @Override
   public void startBlocking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     start();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data.service
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,7 +18,7 @@ class GHPRCommentServiceImpl(private val progressManager: ProgressManager,
                              private val securityService: GHPRSecurityService,
                              private val requestExecutor: GithubApiRequestExecutor,
                              private val repository: GHRepositoryCoordinates) : GHPRCommentService {
-  override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.TRIAGE)
+  override fun canComment() = securityService.currentUserHasPermissionLevel(GHRepositoryPermissionLevel.READ)
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequest: Long,

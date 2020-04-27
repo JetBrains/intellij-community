@@ -3,12 +3,12 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -63,13 +63,12 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
   @Override
   @NotNull
   public String getPresentableName() {
-    return ProjectBundle.message("project.root.module.source");
+    return ProjectModelBundle.message("project.root.module.source");
   }
 
 
   @Override
-  @NotNull
-  public VirtualFile[] getFiles(@NotNull OrderRootType type) {
+  public VirtualFile @NotNull [] getFiles(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       return getRootModel().getSourceRoots();
     }
@@ -77,8 +76,7 @@ class ModuleSourceOrderEntryImpl extends OrderEntryBaseImpl implements ModuleSou
   }
 
   @Override
-  @NotNull
-  public String[] getUrls(@NotNull OrderRootType type) {
+  public String @NotNull [] getUrls(@NotNull OrderRootType type) {
     if (OrderRootType.SOURCES.equals(type)) {
       List<String> result = new ArrayList<>();
       for (ContentEntry contentEntry : getRootModel().getContentEntries()) {

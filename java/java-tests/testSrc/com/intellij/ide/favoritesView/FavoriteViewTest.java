@@ -66,8 +66,7 @@ public class FavoriteViewTest extends TestSourceBasedTestCase {
     assertTrue(favoritesManager.addRoots(name, getModule(), nodeToAdd));
 
     assertFalse(favoritesManager.getFavoritesListRootUrls(name).isEmpty());
-    Element favorite = new Element("favorite");
-    favoritesManager.writeExternal(favorite);
+    Element favorite = favoritesManager.getState();
 
     final Collection<AbstractTreeNode<?>> nodes = FavoritesListNode.getFavoritesRoots(myProject, "xxx", null);
     AbstractTreeNode<?> targetNode = null;
@@ -84,7 +83,7 @@ public class FavoriteViewTest extends TestSourceBasedTestCase {
     assertTrue(favoritesManager.removeRoot(name, Collections.singletonList(targetNode)));
     assertTrue(favoritesManager.getFavoritesListRootUrls(name).isEmpty());
 
-    favoritesManager.readExternal(favorite);
+    favoritesManager.loadState(favorite);
     Collection<TreeItem<Pair<AbstractUrl,String>>> urls = favoritesManager.getFavoritesListRootUrls(name);
     assertEquals(1, urls.size());
 

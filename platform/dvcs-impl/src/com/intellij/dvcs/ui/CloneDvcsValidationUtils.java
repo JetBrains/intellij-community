@@ -133,6 +133,6 @@ public class CloneDvcsValidationUtils {
 
   @NotNull
   static String sanitizeCloneUrl(@NotNull String urlText) {
-    return removePrefix(removePrefix(urlText.trim(), "git clone"), "hg clone").trim();
+    return removePrefix(removePrefix(urlText.trim(), "git clone"), "hg clone").trim(); //NON-NLS
   }
 }

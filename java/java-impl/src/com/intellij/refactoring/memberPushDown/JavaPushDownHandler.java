@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -44,7 +45,7 @@ import java.util.List;
  */
 public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHandler, ContextAwareActionHandler {
   /**
-   * Use {code {@link #getRefactoringName()}} instead
+   * @deprecated Use {@link #getRefactoringName()} instead
    */
   @Deprecated
   public static final String REFACTORING_NAME = "Push Members Down";
@@ -95,7 +96,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
       if (element instanceof PsiClass && ((PsiClass)element).getQualifiedName() != null || element instanceof PsiField || element instanceof PsiMethod) {
         if (element instanceof JspClass) {
-          return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
+          return RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.is.not.supported.for.jsp.classes"));
         }
         elements.add(element);
         return null;
@@ -105,7 +106,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
     if (aClass == null) return;
 
@@ -114,8 +115,8 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
 
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("refactoring.cannot.be.performed") +
-                                                           ": Class " + aClass.getName() + " is final", getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
+      CommonRefactoringUtil.showErrorHint(project, editor,  RefactoringBundle.message("refactoring.cannot.be.performed") + 
+                                                            JavaRefactoringBundle.message("class.is.final.warning.message", aClass.getName()), getRefactoringName(), HelpID.MEMBERS_PUSH_DOWN);
       return;
     }
 

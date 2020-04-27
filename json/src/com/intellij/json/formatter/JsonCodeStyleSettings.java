@@ -58,7 +58,7 @@ public class JsonCodeStyleSettings extends CustomCodeStyleSettings {
     DO_NOT_ALIGN(0, "formatter.align.properties.none"),
     ALIGN_ON_VALUE(1, "formatter.align.properties.on.value"),
     ALIGN_ON_COLON(2, "formatter.align.properties.on.colon");
-
+    @PropertyKey(resourceBundle = JsonBundle.BUNDLE)
     private final String myKey;
     private final int myId;
 

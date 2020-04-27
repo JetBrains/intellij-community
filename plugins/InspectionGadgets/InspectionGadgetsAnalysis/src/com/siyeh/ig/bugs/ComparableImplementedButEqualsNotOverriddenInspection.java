@@ -51,9 +51,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     return InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     if (infos[0] instanceof PsiAnonymousClass) {
       return new InspectionGadgetsFix[] {new GenerateEqualsMethodFix()};
     }

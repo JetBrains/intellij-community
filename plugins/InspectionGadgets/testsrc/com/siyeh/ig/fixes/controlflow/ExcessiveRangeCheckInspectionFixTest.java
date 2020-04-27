@@ -9,9 +9,8 @@ import com.siyeh.ig.controlflow.ExcessiveRangeCheckInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class ExcessiveRangeCheckInspectionFixTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ExcessiveRangeCheckInspection()};
   }
 

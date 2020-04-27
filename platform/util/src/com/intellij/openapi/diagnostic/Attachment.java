@@ -19,7 +19,7 @@ public class Attachment {
 
   private final String myPath;
   private final String myDisplayText;
-  private final @Nullable byte[] myBytes;
+  private final byte @Nullable [] myBytes;
   private final @Nullable File myTemporaryFile;
   private boolean myIncluded;   // opt-out for traces, opt-in otherwise
 
@@ -32,7 +32,7 @@ public class Attachment {
     this(path, content, content.getBytes(StandardCharsets.UTF_8), null);
   }
 
-  public Attachment(@NotNull String path, @NotNull byte[] bytes, @NotNull String displayText) {
+  public Attachment(@NotNull String path, byte @NotNull [] bytes, @NotNull String displayText) {
     this(path, displayText, bytes, null);
   }
 
@@ -40,7 +40,7 @@ public class Attachment {
     this(path, displayText, null, temporaryFile);
   }
 
-  private Attachment(String path, String displayText, @Nullable byte[] bytes, @Nullable File temporaryFile) {
+  private Attachment(String path, String displayText, byte @Nullable [] bytes, @Nullable File temporaryFile) {
     assert bytes != null || temporaryFile != null;
     myPath = path;
     myDisplayText = displayText;
@@ -68,8 +68,7 @@ public class Attachment {
     return Base64.getEncoder().encodeToString(getBytes());
   }
 
-  @NotNull
-  public byte[] getBytes() {
+  public byte @NotNull [] getBytes() {
     if (myBytes != null) {
       return myBytes;
     }

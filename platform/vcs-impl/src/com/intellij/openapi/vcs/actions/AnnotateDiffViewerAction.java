@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -58,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Objects;
 
 public class AnnotateDiffViewerAction {
   private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
@@ -370,7 +371,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void showAnnotation(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
-      Project project = ObjectUtils.assertNotNull(viewer.getProject());
+      Project project = Objects.requireNonNull(viewer.getProject());
       AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
     }
 
@@ -403,7 +404,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       if (side != viewer.getSide()) return;
-      Project project = ObjectUtils.assertNotNull(viewer.getProject());
+      Project project = Objects.requireNonNull(viewer.getProject());
       AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, data.annotation, data.vcs);
     }
 
@@ -436,7 +437,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull UnifiedDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       if (side != viewer.getMasterSide()) return;
-      Project project = ObjectUtils.assertNotNull(viewer.getProject());
+      Project project = Objects.requireNonNull(viewer.getProject());
       UnifiedUpToDateLineNumberProvider lineNumberProvider = new UnifiedUpToDateLineNumberProvider(viewer, side);
       AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, data.annotation, data.vcs, lineNumberProvider);
     }
@@ -511,7 +512,7 @@ public class AnnotateDiffViewerAction {
 
     @Override
     public void showAnnotation(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side, @NotNull AnnotationData data) {
-      Project project = ObjectUtils.assertNotNull(viewer.getProject());
+      Project project = Objects.requireNonNull(viewer.getProject());
       AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
     }
 

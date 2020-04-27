@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.config;
 
 import com.intellij.CvsBundle;
@@ -10,14 +10,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * @author Sergey.Malenkov
- */
 final class CvsOptionsTopHitProvider implements OptionsSearchTopHitProvider.ProjectLevelProvider {
   @NotNull
   @Override
@@ -38,7 +36,7 @@ final class CvsOptionsTopHitProvider implements OptionsSearchTopHitProvider.Proj
     return Collections.emptyList();
   }
 
-  private static BooleanOptionDescription option(final Project project, String option, String field) {
+  private static BooleanOptionDescription option(final Project project, @PropertyKey(resourceBundle = CvsBundle.BUNDLE) String option, String field) {
     return new PublicFieldBasedOptionDescription("CVS: " + CvsBundle.message(option), "vcs.CVS", field) {
       @Override
       public Object getInstance() {

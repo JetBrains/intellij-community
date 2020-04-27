@@ -10,7 +10,6 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.ContentFilterable
-import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.SourceSet
@@ -77,7 +76,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     if (externalProject != null) return externalProject
 
     def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
-    def isPreview = ExternalProjectPreview.name == modelName
     DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
     defaultExternalProject.externalSystemId = "GRADLE"
     defaultExternalProject.name = project.name
@@ -96,13 +94,14 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.buildFile = project.buildFile
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, isPreview, resolveSourceSetDependencies, sourceSetFinder)
-
+    defaultExternalProject.sourceSets = getSourceSets(project, resolveSourceSetDependencies, sourceSetFinder)
     // Android Studio: provide the option to not build Gradle tasks list, because this triggers full task graph configuration, which is
     // very slow for large Android projects.
     if (!Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim())) {
     defaultExternalProject.tasks = getTasks(project, tasksFactory)
     }
+    defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
+    defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
 
     addArtifactsData(project, defaultExternalProject)
 
@@ -174,7 +173,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @CompileDynamic
   private static Map<String, DefaultExternalSourceSet> getSourceSets(Project project,
-                                                                     boolean isPreview,
                                                                      boolean resolveSourceSetDependencies,
                                                                      SourceSetCachedFinder sourceSetFinder) {
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
@@ -201,14 +199,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       downloadSources = ideaPluginModule.downloadSources
     }
 
-    def projectSourceCompatibility
-    def projectTargetCompatibility
-
-    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
-    if (javaPluginConvention != null) {
-      projectSourceCompatibility = javaPluginConvention.sourceCompatibility.toString()
-      projectTargetCompatibility = javaPluginConvention.targetCompatibility.toString()
-    }
+    def projectSourceCompatibility = getSourceCompatibility(project)
+    def projectTargetCompatibility = getTargetCompatibility(project)
 
     def result = [:] as Map<String, DefaultExternalSourceSet>
     def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
@@ -237,6 +229,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       def javaCompileTask = project.tasks.findByName(sourceSet.compileJavaTaskName)
       if (javaCompileTask instanceof JavaCompile) {
         externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
+        externalSourceSet.preview = javaCompileTask.options.compilerArgs.contains("--enable-preview")
         externalSourceSet.targetCompatibility = javaCompileTask.targetCompatibility ?: projectTargetCompatibility
       }
       else {
@@ -429,7 +422,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
 
       if (resolveSourceSetDependencies) {
-        def dependencies = new DependencyResolverImpl(project, isPreview, downloadJavadoc, downloadSources, sourceSetFinder).
+        def dependencies = new DependencyResolverImpl(project, downloadJavadoc, downloadSources, sourceSetFinder).
           resolveDependencies(sourceSet)
         externalSourceSet.dependencies.addAll(dependencies)
       }
@@ -507,13 +500,18 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     result
   }
 
-  private static boolean isEmpty(FileCollection collection) {
-    try {
-      return collection.isEmpty()
-    }
-    catch (Throwable ignored) {
-    }
-    return true
+  @Nullable
+  private static String getSourceCompatibility(Project project) {
+    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
+    if (javaPluginConvention == null) return null
+    return javaPluginConvention.sourceCompatibility.toString()
+  }
+
+  @Nullable
+  private static String getTargetCompatibility(Project project) {
+    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
+    if (javaPluginConvention == null) return null
+    return javaPluginConvention.targetCompatibility.toString()
   }
 
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {

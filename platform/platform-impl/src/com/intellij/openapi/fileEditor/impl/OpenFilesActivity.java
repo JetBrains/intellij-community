@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,18 +32,17 @@ final class OpenFilesActivity implements StartupActivity {
 
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText("Reopening files...");
+      indicator.setText(IdeBundle.message("progress.text.reopening.files"));
     }
 
     FileEditorManagerImpl manager = (FileEditorManagerImpl)fileEditorManager;
     EditorsSplitters editorSplitters = manager.getMainSplitters();
     Ref<JPanel> panelRef = editorSplitters.restoreEditors();
-    if (panelRef == null) {
-      return;
-    }
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      editorSplitters.doOpenFiles(panelRef.get());
+      if (panelRef != null) {
+        editorSplitters.doOpenFiles(panelRef.get());
+      }
       manager.initDockableContentFactory();
       if (!manager.hasOpenFiles()) {
         EditorsSplitters.stopOpenFilesActivity(project);

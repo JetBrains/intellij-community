@@ -109,7 +109,7 @@ class SlowerTypeConversions implements Runnable {
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
       if (!method.getParameterList().isEmpty()) return null;
       return method.getName() + "(" +
-             getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_METHOD_CALL_PARENTHESES) + ")";
+             getSpace(CodeStyle.getLanguageSettings(file).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES) + ")";
     }
     else if (o instanceof PsiVariable) {
       return ((PsiVariable)o).getName();

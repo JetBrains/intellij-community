@@ -27,8 +27,6 @@ import java.io.File;
 /**
  * This class is added to workaround https://issues.apache.org/bugzilla/show_bug.cgi?id=49605
  * in Ant 1.8.0 and 1.8.1
- *
- * @author nik
  */
 public class PatchedJar extends Jar {
   private static final String MANIFEST_NAME = "META-INF/MANIFEST.MF";

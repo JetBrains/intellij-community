@@ -4,5 +4,5 @@ package com.intellij.codeInspection.ex;
 import java.util.List;
 
 public interface DynamicGroupTool {
-  List<LocalInspectionToolWrapper> getChildren();
+  List<LocalInspectionToolWrapper> getChildren(boolean parentIsEnabled);
 }

@@ -14,8 +14,6 @@ import org.jetbrains.annotations.Nullable;
  * &lt;/extensions&gt;
  * </pre>
  * After that {@link #getHelpPageUrl(String)} method will be used to show help for topics which IDs start with {@code '<plugin ID>.'}.
- *
- * @author nik
  */
 public abstract class WebHelpProvider implements PluginAware {
   private String myHelpTopicPrefix;

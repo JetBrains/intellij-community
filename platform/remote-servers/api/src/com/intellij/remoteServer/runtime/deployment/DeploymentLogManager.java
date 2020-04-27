@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/**
- * @author nik
- */
 public interface DeploymentLogManager {
   @NotNull
   Project getProject();

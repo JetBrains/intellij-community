@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -34,7 +35,7 @@ public abstract class MoreAction extends DumbAwareAction implements CustomCompon
     myLoadMoreBtn.setMargin(JBUI.insets(2));
     myLoadMoreBtn.addActionListener(__ -> perform());
     myPanel.add(myLoadMoreBtn);
-    myLabel = new JLabel("Loading...");
+    myLabel = new JLabel(CommonBundle.getLoadingTreeNodeText());
     myLabel.setForeground(UIUtil.getInactiveTextColor());
     myLabel.setBorder(JBUI.Borders.empty(1, 3, 1, 1));
     myPanel.add(myLabel);

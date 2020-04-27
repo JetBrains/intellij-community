@@ -1,11 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,6 +20,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,6 +34,15 @@ public class CommonActionsPanel extends JPanel {
 
     public static final Buttons[] ALL = {ADD, REMOVE, EDIT,  UP, DOWN};
 
+    @NotNull
+    private static final Map<Buttons, Supplier<String>> ourPresentableNamesMap = ContainerUtil.newHashMap(
+      new Pair<>(ADD, UIBundle.messagePointer("button.text.add")),
+      new Pair<>(REMOVE, UIBundle.messagePointer("button.text.remove")),
+      new Pair<>(EDIT, UIBundle.messagePointer("button.text.edit")),
+      new Pair<>(UP, UIBundle.messagePointer("button.text.up")),
+      new Pair<>(DOWN, UIBundle.messagePointer("button.text.down"))
+    );
+
     public Icon getIcon() {
       switch (this) {
         case ADD:    return IconUtil.getAddIcon();
@@ -44,7 +55,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     MyActionButton createButton(final Listener listener, String name, Icon icon) {
-      String buttonName = name == null ? StringUtil.capitalize(StringUtil.toLowerCase(name())) : name;
+      String buttonName = name == null ? getText() : name;
       switch (this) {
         case ADD: return new AddButton(listener, buttonName, icon);
         case REMOVE: return new RemoveButton(listener, buttonName, icon);
@@ -56,7 +67,7 @@ public class CommonActionsPanel extends JPanel {
     }
 
     public String getText() {
-      return StringUtil.capitalize(StringUtil.toLowerCase(name()));
+      return ourPresentableNamesMap.get(this).get();
     }
   }
 
@@ -82,7 +93,7 @@ public class CommonActionsPanel extends JPanel {
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 
   CommonActionsPanel(ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
-                     @Nullable AnActionButton[] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
+                     AnActionButton @Nullable [] additionalActions, @Nullable Comparator<AnActionButton> buttonComparator,
                      String addName, String removeName, String moveUpName, String moveDownName, String editName,
                      Icon addIcon, Buttons... buttons) {
     super(new BorderLayout());
@@ -178,7 +189,7 @@ public class CommonActionsPanel extends JPanel {
   }
 
   private static void registerDeleteHook(final MyActionButton removeButton) {
-    new AnAction("Delete Hook") {
+    new AnAction(IdeBundle.messagePointer("action.Anonymous.text.delete.hook")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeButton.actionPerformed(e);
@@ -213,7 +224,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  public void setCustomShortcuts(@NotNull Buttons button, @Nullable ShortcutSet... shortcutSets) {
+  public void setCustomShortcuts(@NotNull Buttons button, ShortcutSet @Nullable ... shortcutSets) {
     if (shortcutSets != null) {
       if (myCustomShortcuts == null) myCustomShortcuts = new EnumMap<>(Buttons.class);
       myCustomShortcuts.put(button, new CompositeShortcutSet(shortcutSets));

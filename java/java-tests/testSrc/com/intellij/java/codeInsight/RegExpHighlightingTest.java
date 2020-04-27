@@ -190,7 +190,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testNoNPE() {
-    doTest("<warning descr=\"Empty group\">(</warning><error descr=\"Unclosed group\">\"</error>);}}//");
+    doTest("(<error descr=\"Unclosed group\">\"</error>);}}//");
   }
 
   public void testBadInlineOption() {

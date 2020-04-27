@@ -30,7 +30,6 @@ import org.junit.runners.Suite;
   DataFlowInspection8Test.class,
   DataFlowInspection9Test.class,
   DataFlowInspection10Test.class,
-  DataFlowInspection12Test.class,
   DataFlowInspection14Test.class,
   DataFlowInspectionHeavyTest.class,
   DataFlowInspectionAncientTest.class,

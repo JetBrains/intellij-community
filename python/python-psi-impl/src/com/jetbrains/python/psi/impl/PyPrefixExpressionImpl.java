@@ -88,9 +88,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     return Ref.deref(
       StreamEx
       .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context)))
-      .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
+      .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
-      .map(callee -> callee.getCallableType().getCallType(context, this))
+      .map(callableType -> callableType.getCallType(context, this))
       .map(callType -> isAwait ? Ref.deref(getGeneratorReturnType(callType)) : callType)
       .collect(PyTypeUtil.toUnion())
     );

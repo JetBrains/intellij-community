@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -24,9 +26,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -41,16 +41,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvider {
-
-  private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
-  private static final String HELP_ID = "Vcs.Push.Dialog";
+  @NonNls private static final String DIMENSION_KEY = "Vcs.Push.Dialog.v2";
+  @NonNls private static final String HELP_ID = "Vcs.Push.Dialog";
   private static final int CENTER_PANEL_HEIGHT = 450;
   private static final int CENTER_PANEL_WIDTH = 800;
 
   protected final Project myProject;
   private final PushLog myListPanel;
   protected final PushController myController;
-  private final Map<PushSupport, VcsPushOptionsPanel> myAdditionalPanels;
+  private final Map<PushSupport<?, ?, ?>, VcsPushOptionsPanel> myAdditionalPanels;
 
   private Action myPushAction;
   @NotNull private final List<ActionWrapper> myAdditionalActions;
@@ -80,9 +79,12 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
     init();
     updateOkActions();
-    setOKButtonText("Push");
+    setOKButtonText(DvcsBundle.getString("action.push"));
     setOKButtonMnemonic('P');
-    setTitle("Push Commits " + (allRepos.size() == 1 ? "to " + DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)) : ""));
+    String title = allRepos.size() == 1
+                   ? DvcsBundle.message("push.dialog.push.commits.to.title", DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)))
+                   : DvcsBundle.getString("push.dialog.push.commits.title");
+    setTitle(title);
   }
 
   @Nullable
@@ -115,7 +117,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   protected JPanel createOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowy")) {
+    JPanel optionsPanel = new JPanel(new MigLayout("ins 0 0, flowy")) { //NON-NLS NON-NLS
       @Override
       public Component add(Component comp) {
         JPanel wrapperPanel = new BorderLayoutPanel().addToCenter(comp);
@@ -133,7 +135,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @NotNull
   private JPanel createSouthOptionsPanel() {
-    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %dpx 0 0, flowx, gapx %dpx", JBUI.scale(20), JBUI.scale(16))));
+    JPanel optionsPanel = new JPanel(new MigLayout(String.format("ins 0 %spx 0 0, flowx, gapx %spx", JBUI.scale(20), JBUI.scale(16)))); //NON-NLS
     for (VcsPushOptionsPanel panel : myAdditionalPanels.values()) {
       if (panel.getPosition() == VcsPushOptionsPanel.OptionsPanelPosition.SOUTH) {
         optionsPanel.add(panel);
@@ -165,8 +167,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final List<Action> actions = new ArrayList<>();
     myPushAction = new ComplexPushAction(myAdditionalActions);
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -182,8 +183,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @NotNull
-  public Map<PushSupport, Collection<PushInfo>> getSelectedPushSpecs() {
+  public @NotNull Map<PushSupport<Repository, PushSource, PushTarget>, Collection<PushInfo>> getSelectedPushSpecs() {
     return myController.getSelectedPushSpecs();
   }
 
@@ -207,7 +207,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   @Override
   @CalledInAwt
   public void push(boolean forcePush) {
-    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, "Pushing...", true) {
+    executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.getString("push.process.pushing"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         myController.push(forcePush);
@@ -235,7 +235,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
-    new Task.Modal(myController.getProject(), "Checking Commits...", true) {
+    new Task.Modal(myController.getProject(), DvcsBundle.getString("push.process.checking.commits"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         result.set(myController.executeHandlers(indicator));
@@ -250,24 +250,22 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
           String failedHandler = handlerException.getFailedHandlerName();
           List<String> skippedHandlers = handlerException.getSkippedHandlers();
 
-          String suggestionMessage;
+          @Nls String suggestionMessageProblem;
           if (cause instanceof ProcessCanceledException) {
-            suggestionMessage = failedHandler + " has been cancelled.\n";
+            suggestionMessageProblem = DvcsBundle.message("push.dialog.push.cancelled.message", failedHandler);
           }
           else {
             super.onThrowable(cause);
-            suggestionMessage = failedHandler + " has failed. See log for more details.\n";
+            suggestionMessageProblem = DvcsBundle.message("push.dialog.push.failed.message", failedHandler);
           }
 
-          if (skippedHandlers.isEmpty()) {
-            suggestionMessage += "Would you like to push anyway or cancel the push completely?";
-          }
-          else {
-            suggestionMessage += "Would you like to skip all remaining pre-push steps and push, or cancel the push completely?";
-          }
+          @Nls String suggestionMessageQuestion = skippedHandlers.isEmpty()
+                                                  ? DvcsBundle.message("push.dialog.push.anyway.confirmation")
+                                                  : DvcsBundle.message("push.dialog.skip.all.remaining.steps.confirmation");
 
-          suggestToSkipOrPush(suggestionMessage);
-        } else {
+          suggestToSkipOrPush(suggestionMessageProblem + "\n" + suggestionMessageQuestion);
+        }
+        else {
           super.onThrowable(error);
         }
       }
@@ -275,15 +273,15 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       @Override
       public void onCancel() {
         super.onCancel();
-        suggestToSkipOrPush("Would you like to skip all pre-push steps and push, or cancel the push completely?");
+        suggestToSkipOrPush(DvcsBundle.getString("push.dialog.skip.all.steps.confirmation"));
       }
 
-      private void suggestToSkipOrPush(@NotNull String message) {
+      private void suggestToSkipOrPush(@Nls @NotNull String message) {
         if (Messages.showOkCancelDialog(myProject,
                                         message,
-                                        "Push",
-                                        "&Push Anyway",
-                                        "&Cancel",
+                                        DvcsBundle.getString("action.push"),
+                                        DvcsBundle.getString("action.push.anyway"),
+                                        IdeBundle.message("button.cancel"),
                                         UIUtil.getWarningIcon()) == Messages.OK) {
           result.set(PrePushHandler.Result.OK);
         }
@@ -326,7 +324,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     private final List<? extends ActionWrapper> myOptions;
 
     private ComplexPushAction(@NotNull List<? extends ActionWrapper> additionalActions) {
-      super("&Push");
+      super(DvcsBundle.getString("action.complex.push"));
       myOptions = additionalActions;
     }
 
@@ -343,9 +341,8 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       }
     }
 
-    @NotNull
     @Override
-    public Action[] getOptions() {
+    public Action @NotNull [] getOptions() {
       return myAdditionalActions.toArray(new ActionWrapper[0]);
     }
   }

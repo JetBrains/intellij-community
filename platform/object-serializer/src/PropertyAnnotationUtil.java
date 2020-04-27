@@ -4,8 +4,7 @@ package com.intellij.serialization;
 import org.jetbrains.annotations.NotNull;
 
 final class PropertyAnnotationUtil {
-  @NotNull
-  public static Class<?>[] getAllowedClass(@NotNull Property annotation) {
+  public static Class<?> @NotNull [] getAllowedClass(@NotNull Property annotation) {
     return annotation.allowedTypes();
   }
 }

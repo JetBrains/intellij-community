@@ -67,13 +67,13 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     }
 
     @NotNull
-    private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation, @NotNull PsiVariable[] setters) {
+    private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation, PsiVariable @NotNull [] setters) {
       return createBuilderClass(annotation, setters, null);
     }
 
     @NotNull
     private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation,
-                                                    @NotNull PsiVariable[] setters,
+                                                    PsiVariable @NotNull [] setters,
                                                     @Nullable PsiType builtType) {
       final LightPsiClassBuilder builderClass = new BuilderHelperLightPsiClass(
         myContainingClass, getBuilderClassName(annotation, myContainingClass)

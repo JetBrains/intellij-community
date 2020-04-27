@@ -16,9 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ArtifactCompilerInstructionCreatorBase implements ArtifactCompilerInstructionCreator {
   protected final ArtifactInstructionsBuilderImpl myInstructionsBuilder;
 

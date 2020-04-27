@@ -279,8 +279,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private ProjectData[] fetchUserProjects(@NotNull MantisConnectPortType soap) throws Exception {
+  private ProjectData @NotNull [] fetchUserProjects(@NotNull MantisConnectPortType soap) throws Exception {
     try {
       return soap.mc_projects_get_user_accessible(getUsername(), getPassword());
     }
@@ -289,8 +288,7 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private FilterData[] fetchProjectFilters(@NotNull MantisConnectPortType soap, @NotNull MantisProject project) throws Exception {
+  private FilterData @NotNull [] fetchProjectFilters(@NotNull MantisConnectPortType soap, @NotNull MantisProject project) throws Exception {
     try {
       return soap.mc_filter_get(getUsername(), getPassword(), BigInteger.valueOf(project.getId()));
     }
@@ -299,9 +297,8 @@ public class MantisRepository extends BaseRepositoryImpl {
     }
   }
 
-  @NotNull
-  private IssueHeaderData[] fetchProjectIssues(@NotNull MantisConnectPortType soap, @NotNull MantisProject project,
-                                               @NotNull MantisFilter filter, int pageNumber, int pageSize) throws Exception {
+  private IssueHeaderData @NotNull [] fetchProjectIssues(@NotNull MantisConnectPortType soap, @NotNull MantisProject project,
+                                                         @NotNull MantisFilter filter, int pageNumber, int pageSize) throws Exception {
     try {
       if (filter.isUnspecified()) {
         return soap.mc_project_get_issue_headers(getUsername(), getPassword(),

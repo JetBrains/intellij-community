@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.util.CloudBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,12 +69,12 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public String getDescription() {
-    return "Java module of PAAS cloud application";
+    return CloudBundle.message("module.builder.description.java.module.of.paas.cloud.application");
   }
 
   @Override
   public String getPresentableName() {
-    return "Clouds";
+    return CloudBundle.message("presentable.name.clouds");
   }
 
   @Override

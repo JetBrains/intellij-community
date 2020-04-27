@@ -36,7 +36,7 @@ public class ColorsIcon extends ColorIcon {
 
   private final Color[] myColors;
 
-  public ColorsIcon(int size, @NotNull Color... colors) {
+  public ColorsIcon(int size, Color @NotNull ... colors) {
     super(size, size, Gray.TRANSPARENT, false);
     myColors = ArrayUtil.reverseArray(colors);
   }

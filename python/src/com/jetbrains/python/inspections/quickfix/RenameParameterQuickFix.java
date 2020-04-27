@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,13 +33,13 @@ public class RenameParameterQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Rename parameter";
+    return PyBundle.message("QFIX.rename.parameter");
   }
 
   @Override
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.rename.parameter.to.$0", myNewName);
+    return PyPsiBundle.message("QFIX.rename.parameter.to.$0", myNewName);
   }
 
   @Override

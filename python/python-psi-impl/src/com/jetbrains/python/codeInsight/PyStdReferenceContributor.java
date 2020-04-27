@@ -45,19 +45,17 @@ public class PyStdReferenceContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registerClassAttributeReference(registrar, PyNames.ALL, new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                   @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                             @NotNull ProcessingContext context) {
         return new PsiReference[]{new PyDunderAllReference((PyStringLiteralExpression)element)};
       }
     });
 
     registerClassAttributeReference(registrar, PyNames.SLOTS, new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                   @NotNull ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                             @NotNull ProcessingContext context) {
         return new PsiReference[]{new PyDunderSlotsReference((PyStringLiteralExpression)element)};
       }
     });

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.SelectInContext;
@@ -9,11 +9,13 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ToolWindow;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowIdFor;
+
 public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   private final Project myProject;
 
@@ -22,7 +24,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   }
 
   public String toString() {
-    return ChangesViewContentManager.LOCAL_CHANGES;
+    return LOCAL_CHANGES;
   }
 
   @Override
@@ -37,20 +39,22 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final VirtualFile file = context.getVirtualFile();
     Runnable runnable = () -> {
-      ChangesViewContentManager.getInstance(myProject).selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+      ChangesViewContentManager.getInstance(myProject).selectContent(LOCAL_CHANGES);
       ChangesViewManager.getInstance(myProject).selectFile(file);
     };
     if (requestFocus) {
-      ToolWindowManager.getInstance(myProject).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID).activate(runnable);
+      ToolWindow toolWindow = getToolWindowFor(myProject, LOCAL_CHANGES);
+      if (toolWindow != null) toolWindow.activate(runnable);
     }
     else {
       runnable.run();
     }
   }
 
+  @Nullable
   @Override
   public String getToolWindowId() {
-    return ChangesViewContentManager.TOOLWINDOW_ID;
+    return getToolWindowIdFor(myProject, LOCAL_CHANGES);
   }
 
   @Override

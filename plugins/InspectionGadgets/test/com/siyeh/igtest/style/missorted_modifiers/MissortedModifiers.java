@@ -7,52 +7,52 @@ import java.util.Hashtable;
 
 
 class MissortedModifiers {
-  <warning descr="Missorted modifiers 'private native static'">private native static</warning> int foo2();
+  <warning descr="Missorted modifiers 'private native static'">private</warning> native static int foo2();
 
-  <warning descr="Missorted modifiers 'static private'">static private</warning> int m_bar = 4;
-  <warning descr="Missorted modifiers 'static public'">static public</warning> int m_baz = 4;
-  <warning descr="Missorted modifiers 'static final public'">static final public</warning> int m_baz2 = 4;
+  <warning descr="Missorted modifiers 'static private'">static</warning> private int m_bar = 4;
+  <warning descr="Missorted modifiers 'static public'">static</warning> public int m_baz = 4;
+  <warning descr="Missorted modifiers 'static final public'">static</warning> final public int m_baz2 = 4;
   static final int m_baz3 = 4;
 
-  <warning descr="Missorted modifiers 'static public'">static public</warning> void foo(){}
+  <warning descr="Missorted modifiers 'static public'">static</warning> public void foo(){}
 
-  <warning descr="Missorted modifiers 'static public'">static public</warning> class Foo
+  <warning descr="Missorted modifiers 'static public'">static</warning> public class Foo
   {
 
   }
 
-  <warning descr="Missorted modifiers 'public @Deprecated'">public @Deprecated</warning> void foo3(){};
+  <warning descr="Missorted modifiers 'public @Deprecated'">public</warning> @Deprecated void foo3(){};
   private @ReadOnly int [] nums;
 
-  <warning descr="Missorted modifiers 'private transient static'">private transient static</warning> Hashtable mAttributeMeta;
+  <warning descr="Missorted modifiers 'private transient static'">private</warning> transient static Hashtable mAttributeMeta;
 
   interface A {
 
-    <warning descr="Missorted modifiers 'default public'">default public</warning> double f() {
+    <warning descr="Missorted modifiers 'default public'">default</warning> public double f() {
       return 0.0;
     }
   }
 
-  <warning descr="Missorted modifiers 'final public'">final public</warning> class TestQuickFix
+  <warning descr="Missorted modifiers 'final public'">final</warning> public class TestQuickFix
   {
-    <warning descr="Missorted modifiers 'protected final static'">protected final static</warning> String A = "a";
-    <warning descr="Missorted modifiers 'protected final static'">protected final static</warning> String B = "b";
-    <warning descr="Missorted modifiers 'protected final static'">protected final static</warning> String C = "c";
-    <warning descr="Missorted modifiers 'protected final static'">protected final static</warning> String D = "d";
+    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String A = "a";
+    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String B = "b";
+    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String C = "c";
+    <warning descr="Missorted modifiers 'protected final static'">protected</warning> final static String D = "d";
   }
 
   //@Type(type = "org.joda.time.contrib.hibernate.PersistentYearMonthDay")
   //@Column(name = "current_month")
-  <warning descr="Missorted modifiers 'final public @Nullable // commment @NotNull'">final
+  <warning descr="Missorted modifiers 'final public @Nullable @NotNull'">final</warning>
   public
   @Nullable
   // commment
-  @NotNull</warning>
+  @NotNull
   int //@Temporal(TemporalType.DATE)
   x() {return -1;}
 
 
-  <warning descr="Missorted modifiers 'public static @MethodOrTypeAnnotation'">public static @MethodOrTypeAnnotation</warning> void runAwayTrain() {
+  <warning descr="Missorted modifiers 'public static @MethodOrTypeAnnotation'">public</warning> static @MethodOrTypeAnnotation void runAwayTrain() {
     // ...
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -37,7 +38,7 @@ import java.util.Map;
 public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchInProgress> {
   private static final Logger LOG = Logger.getInstance(ImportToShelfExecutor.class);
 
-  private static final String IMPORT_TO_SHELF = "Import to Shelf";
+  private static final String IMPORT_TO_SHELF = VcsBundle.message("action.import.to.shelf");
   private final Project myProject;
 
   public ImportToShelfExecutor(Project project) {
@@ -96,7 +97,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
             }
             catch (PatchSyntaxException e) {
               VcsBalloonProblemNotifier
-                .showOverChangesView(myProject, "Can not import additional patch info: " + e.getMessage(), MessageType.ERROR);
+                .showOverChangesView(myProject, VcsBundle.message("patch.import.additional.info.error", e.getMessage()), MessageType.ERROR);
             }
           }
           try {
@@ -110,7 +111,8 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable, "Import Patch to Shelf", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable,
+                                                                      VcsBundle.message("patch.import.to.shelf.progress.title"), true, myProject);
     if (! vcsCatchingRunnable.get().isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), IMPORT_TO_SHELF);
     }

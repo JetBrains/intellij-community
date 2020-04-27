@@ -27,7 +27,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
   }
 
   @SafeVarargs
-  public CollectionListModel(@NotNull T... items) {
+  public CollectionListModel(T @NotNull ... items) {
     myItems = ContainerUtil.newArrayList(items);
   }
 

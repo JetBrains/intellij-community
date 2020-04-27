@@ -1,15 +1,4 @@
 <idea-plugin>
-  <application-components>
-    <component>
-      <interface-class>com.intellij.ide.FrameStateManager</interface-class>
-      <implementation-class>com.intellij.ide.FrameStateManagerImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </application-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"

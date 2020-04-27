@@ -15,9 +15,6 @@ import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionSerializer {
   public static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   public static final String RESOURCE_EXTENSIONS = "resourceExtensions";

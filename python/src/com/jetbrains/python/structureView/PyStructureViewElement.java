@@ -110,8 +110,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement[] getChildren() {
+  public StructureViewTreeElement @NotNull [] getChildren() {
     final PyElement element = getValue();
     if (element == null) {
       return EMPTY_ARRAY;

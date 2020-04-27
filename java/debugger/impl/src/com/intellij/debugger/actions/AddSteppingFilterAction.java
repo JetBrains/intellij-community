@@ -1,10 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author egor
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
@@ -41,7 +38,7 @@ public class AddSteppingFilterAction extends DebuggerAction {
 
         final Project project = e.getData(CommonDataKeys.PROJECT);
         ApplicationManager.getApplication().invokeLater(() -> {
-          String filter = Messages.showInputDialog(project, "", "Add Stepping Filter", null, name, null);
+          String filter = Messages.showInputDialog(project, "", JavaDebuggerBundle.message("add.stepping.filter"), null, name, null);
           if (filter != null) {
             ClassFilter[] newFilters = ArrayUtil.append(DebuggerSettings.getInstance().getSteppingFilters(), new ClassFilter(filter));
             DebuggerSettings.getInstance().setSteppingFilters(newFilters);

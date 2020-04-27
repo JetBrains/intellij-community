@@ -21,12 +21,11 @@ import java.util.List;
 public class RecentProjectsGroup extends ActionGroup implements DumbAware {
   public RecentProjectsGroup() {
     Presentation presentation = getTemplatePresentation();
-    presentation.setText(ActionsBundle.message(SystemInfo.isMac ? "group.reopen.mac.text" : "group.reopen.win.text"));
+    presentation.setText(ActionsBundle.messagePointer(SystemInfo.isMac ? "group.reopen.mac.text" : "group.reopen.win.text"));
   }
 
   @Override
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return removeCurrentProject(e == null ? null : e.getProject(), RecentProjectListActionProvider.getInstance().getActions(true));
   }
 

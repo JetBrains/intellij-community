@@ -17,6 +17,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author Konstantin Bulenkov
@@ -30,7 +31,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
   private final List<ActionButtonListener> myListeners = new ArrayList<>();
 
   public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text) {
-    super(text);
+    super(() -> text);
+  }
+
+  public AnActionButton(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
   }
 
   public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text,
@@ -39,8 +44,18 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(text, description, icon);
   }
 
+  public AnActionButton(@NotNull Supplier<String> dynamicText,
+                        @NotNull Supplier<String> dynamicDescription,
+                        @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
   public AnActionButton(@Nls(capitalization = Nls.Capitalization.Title) String text, Icon icon) {
     this(text, null, icon);
+  }
+
+  public AnActionButton(@NotNull Supplier<String> dynamicText, Icon icon) {
+    this(dynamicText, Presentation.NULL_STRING, icon);
   }
 
   public AnActionButton() {

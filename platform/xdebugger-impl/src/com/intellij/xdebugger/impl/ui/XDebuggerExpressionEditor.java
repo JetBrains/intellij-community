@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 
-/**
- * @author nik
- */
 public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final EditorTextField myEditorTextField;

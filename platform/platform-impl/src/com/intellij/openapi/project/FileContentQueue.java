@@ -50,7 +50,7 @@ public class FileContentQueue {
   private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
 
   FileContentQueue(@NotNull Project project,
-                   @NotNull Collection<VirtualFile> files,
+                   @NotNull Collection<? extends VirtualFile> files,
                    @NotNull final ProgressIndicator indicator) {
     myProject = project;
     int numberOfFiles = files.size();

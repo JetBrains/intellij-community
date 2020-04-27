@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 import javax.swing.*;
@@ -330,10 +331,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         super.addComponents();
 
         myLabelIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.label.indent"));
-        myLabelIndent = new IntegerField("label indent size", 0, Integer.MAX_VALUE);
+        myLabelIndent = new IntegerField(GroovyBundle.message("settings.code.style.label.indent.size"), 0, Integer.MAX_VALUE);
         add(myLabelIndentLabel, myLabelIndent);
 
-        myStyleLabel = new JBLabel("Label indent style:");
+        myStyleLabel = new JBLabel(GroovyBundle.message("settings.code.style.label.indent.style"));
         myLabelIndentStyle = new ComboBox<>(new EnumComboBoxModel<>(LabelIndentStyle.class));
         add(myStyleLabel, myLabelIndentStyle);
       }
@@ -397,9 +398,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   }
 
   private enum LabelIndentStyle {
-    ABSOLUTE("Absolute"),
-    RELATIVE("Indent statements after label"),
-    RELATIVE_REVERSED("Indent labels");
+    ABSOLUTE(GroovyBundle.message("settings.code.style.absolute")),
+    RELATIVE(GroovyBundle.message("settings.code.style.indent.statements.after.label")),
+    RELATIVE_REVERSED(GroovyBundle.message("settings.code.style.indent.labels"));
 
     private final String description;
 

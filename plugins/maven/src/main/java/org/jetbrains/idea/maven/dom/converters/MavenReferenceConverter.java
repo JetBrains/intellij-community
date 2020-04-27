@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class MavenReferenceConverter<T> extends Converter<T> implements CustomReferenceConverter<T> {
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue value, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue value, PsiElement element, ConvertContext context) {
     String text = value.getStringValue();
     TextRange range = ElementManipulators.getValueTextRange(element);
     return new PsiReference[]{createReference(element, text, range)};

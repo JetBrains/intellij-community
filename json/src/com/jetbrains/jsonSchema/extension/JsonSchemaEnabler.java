@@ -2,7 +2,10 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This API provides a mechanism to enable JSON schemas in particular files
@@ -17,9 +20,10 @@ public interface JsonSchemaEnabler {
    * This method should return true if JSON schema mechanism should become applicable to corresponding file.
    * This method SHOULD NOT ADDRESS INDEXES.
    * @param file Virtual file to check for
+   * @param project Current project
    * @return true if available, false otherwise
    */
-  boolean isEnabledForFile(VirtualFile file);
+  boolean isEnabledForFile(@NotNull VirtualFile file, @Nullable Project project);
 
   /**
    * This method enables/disables JSON schema selection widget

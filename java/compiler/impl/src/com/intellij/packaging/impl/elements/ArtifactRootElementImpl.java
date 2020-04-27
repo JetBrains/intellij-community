@@ -3,16 +3,13 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
   public ArtifactRootElementImpl() {
     super(PackagingElementFactoryImpl.ARTIFACT_ROOT_ELEMENT_TYPE);
@@ -24,7 +21,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
     return new PackagingElementPresentation() {
       @Override
       public String getPresentableName() {
-        return CompilerBundle.message("packaging.element.text.output.root");
+        return JavaCompilerBundle.message("packaging.element.text.output.root");
       }
 
       @Override

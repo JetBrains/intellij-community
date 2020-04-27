@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.uiDesigner.lw.IComponent;
 import com.intellij.uiDesigner.lw.IProperty;
 import com.intellij.uiDesigner.make.FormElementNavigatable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,15 +48,26 @@ public class FormFileErrorCollector extends FormErrorCollector {
                        @NotNull final IComponent component,
                        @Nullable IProperty prop,
                        @NotNull String errorMessage,
-                       @NotNull EditorQuickFixProvider... editorQuickFixProviders) {
-    final ProblemDescriptor problemDescriptor = myManager.createProblemDescriptor(myFile, JDOMUtil.escapeText(errorMessage),
-                                                                                  (LocalQuickFix)null,
-                                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly);
-    if (problemDescriptor instanceof ProblemDescriptorBase) {
-      FormElementNavigatable navigatable = new FormElementNavigatable(myFile.getProject(), myFile.getVirtualFile(),
-                                                                      component.getId());
-      ((ProblemDescriptorBase) problemDescriptor).setNavigatable(navigatable);
+                       EditorQuickFixProvider @NotNull ... editorQuickFixProviders) {
+    List<LocalQuickFix> quickFixes = new ArrayList<>();
+    for (EditorQuickFixProvider provider : editorQuickFixProviders) {
+      if (provider instanceof LocalQuickFixProvider) {
+        LocalQuickFix[] localQuickFixes = ((LocalQuickFixProvider)provider).getQuickFixes();
+        if (localQuickFixes != null) {
+          ContainerUtil.addAll(quickFixes, localQuickFixes);
+        }
+      }
     }
+    final ProblemDescriptorBase problemDescriptor = new FormElementProblemDescriptor(myFile, JDOMUtil.escapeText(errorMessage),
+                                                                                     quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY),
+                                                                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                                                     true,
+                                                                                     myOnTheFly,
+                                                                                     component.getId(),
+                                                                                     prop != null ? prop.getName() : null);
+    FormElementNavigatable navigatable = new FormElementNavigatable(myFile.getProject(), myFile.getVirtualFile(),
+                                                                    component.getId());
+    problemDescriptor.setNavigatable(navigatable);
     myProblems.add(problemDescriptor);
   }
 

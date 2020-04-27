@@ -248,7 +248,7 @@ class TracebackType:
     def tb_lineno(self) -> int: ...
 
 class FrameType:
-    f_back: FrameType
+    f_back: Optional[FrameType]
     f_builtins: Dict[str, Any]
     f_code: CodeType
     f_globals: Dict[str, Any]

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.unwrap;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -27,7 +27,7 @@ import java.util.List;
 
 public class GroovyAnonymousUnwrapper extends GroovyUnwrapper {
   public GroovyAnonymousUnwrapper() {
-    super(CodeInsightBundle.message("unwrap.anonymous"));
+    super(JavaBundle.message("unwrap.anonymous"));
   }
 
   @Override

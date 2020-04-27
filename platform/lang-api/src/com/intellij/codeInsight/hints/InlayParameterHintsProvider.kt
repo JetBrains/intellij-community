@@ -20,10 +20,13 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import org.jetbrains.annotations.NonNls
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
+import com.intellij.util.KeyedLazyInstance
 
+val PARAMETER_NAME_HINTS_EP = ExtensionPointName.create<KeyedLazyInstance<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
 
-object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>("com.intellij.codeInsight.parameterNameHints")
+object InlayParameterHintsExtension : LanguageExtension<InlayParameterHintsProvider>(PARAMETER_NAME_HINTS_EP)
 
 /**
  * If you are just implementing parameter hints, only three options are relevant to you: text, offset, isShowOnlyIfExistedBefore. The rest

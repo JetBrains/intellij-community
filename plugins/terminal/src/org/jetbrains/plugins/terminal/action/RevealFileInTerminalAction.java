@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.action;
 
 import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,8 +18,12 @@ import org.jetbrains.plugins.terminal.TerminalView;
 public class RevealFileInTerminalAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = getEventProject(e);
-    e.getPresentation().setEnabledAndVisible(project != null && getSelectedFile(e) != null);
+    e.getPresentation().setEnabledAndVisible(isAvailable(e));
+  }
+
+  private static boolean isAvailable(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    return project != null && !LightEdit.owns(project) && getSelectedFile(e) != null;
   }
 
   @Nullable
@@ -28,7 +33,7 @@ public class RevealFileInTerminalAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = getEventProject(e);
+    Project project = e.getProject();
     VirtualFile selectedFile = getSelectedFile(e);
     if (project == null || selectedFile == null) {
       return;

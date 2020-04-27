@@ -27,7 +27,7 @@ public class FileTypeDescriptor extends FileChooserDescriptor {
 
   private final ImmutableList<String> myExtensions;
 
-  public FileTypeDescriptor(String title, @NotNull String... extensions) {
+  public FileTypeDescriptor(String title, String @NotNull ... extensions) {
     super(true, false, false, true, false, false);
     assert extensions.length > 0 : "There should be at least one extension";
     myExtensions = ContainerUtil.immutableList(ContainerUtil.map(extensions, ext -> {

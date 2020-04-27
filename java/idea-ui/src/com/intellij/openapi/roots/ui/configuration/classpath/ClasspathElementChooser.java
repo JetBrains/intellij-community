@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
-* @author nik
-*/
 interface ClasspathElementChooser<T> {
   @NotNull
   List<T> chooseElements();

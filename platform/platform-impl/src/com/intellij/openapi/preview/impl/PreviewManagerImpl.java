@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.preview.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
@@ -20,15 +21,15 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -48,7 +49,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
 
-  private ToolWindowImpl myToolWindow;
+  private ToolWindowEx myToolWindow;
 
   private ContentManager myContentManager;
   private Content myEmptyStateContent;
@@ -127,7 +128,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       return;
     }
     if (isAvailable() && toolWindowManager.getToolWindow(ToolWindowId.PREVIEW) == null) {
-      myToolWindow = (ToolWindowImpl)toolWindowManager
+      myToolWindow = (ToolWindowEx)toolWindowManager
         .registerToolWindow(ToolWindowId.PREVIEW, myEmptyStatePanel, ToolWindowAnchor.RIGHT, myProject, false);
       myContentManager = myToolWindow.getContentManager();
       myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPreview);
@@ -135,7 +136,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       myToolWindow.setAutoHide(true);
       myEmptyStateContent = myContentManager.getContent(0);
       final MoveToStandardViewAction moveToStandardViewAction = new MoveToStandardViewAction();
-      myContentManager.addContentManagerListener(new ContentManagerAdapter() {
+      myContentManager.addContentManagerListener(new ContentManagerListener() {
         @Override
         public void selectionChanged(@NotNull ContentManagerEvent event) {
           if (myInnerSelectionChange || event.getOperation() != ContentManagerEvent.ContentOperation.add) return;
@@ -148,9 +149,8 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       });
 
       moveToStandardViewAction.registerCustomShortcutSet(new ShortcutSet() {
-        @NotNull
         @Override
-        public Shortcut[] getShortcuts() {
+        public Shortcut @NotNull [] getShortcuts() {
           Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
           return keymap.getShortcuts("ShowContent");
         }
@@ -306,9 +306,10 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   }
 
   private class MoveToStandardViewAction extends AnAction {
-    MoveToStandardViewAction() {
-      super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveTo2);
-    }
+  MoveToStandardViewAction() {
+    super(IdeBundle.messagePointer("action.AnAction.text.move.to.standard.view"),
+          IdeBundle.messagePointer("action.AnAction.description.move.to.standard.view"), AllIcons.Actions.MoveTo2);
+  }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {

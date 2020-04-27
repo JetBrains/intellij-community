@@ -383,8 +383,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   @Override
-  @NotNull
-  public Module[] getModules() {
+  public Module @NotNull [] getModules() {
     if (TEST_PACKAGE.equals(myData.TEST_OBJECT) &&
         getPersistentData().getScope() == TestSearchScope.WHOLE_PROJECT) {
       return Module.EMPTY_ARRAY;
@@ -749,18 +748,18 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
         if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
-          return ExecutionBundle.message("default.junit.config.name.whole.project");
+          return JUnitBundle.message("default.junit.config.name.whole.project");
         }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {
-            return ExecutionBundle.message("default.junit.config.name.all.in.module", moduleName);
+            return JUnitBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
           return getDefaultPackageName();
         }
         if (moduleName.length() > 0) {
-          return ExecutionBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
+          return JUnitBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
         }
         return packageName;
       }
@@ -867,6 +866,6 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   public static String getDefaultPackageName() {
-    return ExecutionBundle.message("default.package.presentable.name");
+    return JUnitBundle.message("default.package.presentable.name");
   }
 }

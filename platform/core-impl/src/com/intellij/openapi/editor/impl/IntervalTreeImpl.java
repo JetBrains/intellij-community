@@ -838,8 +838,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
                               int deltaUpToRootExclusive,
                               boolean assertInvalid,
                               @NotNull AtomicBoolean allValid,
-                              @NotNull int[] keyCounter,
-                              @NotNull int[] nodeCounter,
+                              int @NotNull [] keyCounter,
+                              int @NotNull [] nodeCounter,
                               @NotNull TLongHashSet ids,
                               boolean allDeltasUpAreNull) {
     if (root == null) return new IntTrinity(Integer.MAX_VALUE,Integer.MIN_VALUE,Integer.MIN_VALUE);

@@ -20,9 +20,8 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlMoveLeftRightHandler extends MoveElementLeftRightHandler {
-  @NotNull
   @Override
-  public PsiElement[] getMovableSubElements(@NotNull PsiElement element) {
+  public PsiElement @NotNull [] getMovableSubElements(@NotNull PsiElement element) {
     if (element instanceof XmlTag) {
       return ((XmlTag)element).getAttributes().clone();
     }

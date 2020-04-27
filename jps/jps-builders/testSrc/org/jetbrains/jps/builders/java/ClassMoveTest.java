@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
-/**
- * @author nik
- */
 public class ClassMoveTest extends JpsBuildTestCase {
   public void testMoveClassAndDelete() {
     String a1 = createFile("src1/A.java", "class A{}");

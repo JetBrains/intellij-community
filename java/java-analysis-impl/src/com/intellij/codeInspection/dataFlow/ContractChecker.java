@@ -72,11 +72,10 @@ class ContractChecker {
       return super.visitMethodCall(instruction, runner, memState);
     }
 
-    @NotNull
     @Override
-    public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
-                                                      @NotNull DataFlowRunner runner,
-                                                      @NotNull DfaMemoryState state) {
+    public DfaInstructionState @NotNull [] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
+                                                                @NotNull DataFlowRunner runner,
+                                                                @NotNull DfaMemoryState state) {
       if (instruction instanceof ReturnInstruction && ((ReturnInstruction)instruction).isViaException()) {
         ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
       }

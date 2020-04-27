@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
@@ -21,7 +22,7 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   public override fun getMetrics(project: Project): Set<MetricEvent> {
     val sdks = ModuleManager.getInstance(project).modules.mapNotNullTo(HashSet()) {
       ModuleRootManager.getInstance(it).sdk
-    }
+    }.filter { it.sdkType is JavaSdk }
 
     val jdkVersions = sdks.mapTo(HashSet()) {
       JavaVersion.tryParse(it.versionString)
@@ -55,4 +56,6 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
   }
 
   override fun requiresReadAccess() = true
+
+  override fun getVersion(): Int = 2
 }

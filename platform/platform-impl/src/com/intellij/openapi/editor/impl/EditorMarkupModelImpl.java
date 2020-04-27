@@ -150,7 +150,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null && errorPanel.myErrorStripeButton.isVisible() != value) {
       errorPanel.myErrorStripeButton.setVisible(value);
-      repaint(-1, -1);
+      repaint();
     }
   }
 
@@ -463,6 +463,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
   }
 
+  void repaint() {
+    repaint(-1, -1);
+  }
+
   // startOffset == -1 || endOffset == -1 means whole document
   void repaint(int startOffset, int endOffset) {
     ProperTextRange range = offsetsToYPositions(startOffset, endOffset);
@@ -479,6 +483,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return myEditor.isMirrored();
   }
 
+  @DirtyUI
   private class ErrorStripeButton extends JButton {
     private ErrorStripeButton() {
       setFocusable(false);
@@ -515,6 +520,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return !myEditor.shouldScrollBarBeOpaque();
   }
 
+  @DirtyUI
   private class MyErrorPanel extends ButtonlessScrollBarUI implements MouseMotionListener, MouseListener, MouseWheelListener, UISettingsListener {
     private PopupHandler myHandler;
     private JButton myErrorStripeButton;
@@ -1238,6 +1244,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         final JPanel editorFragmentPreviewPanel = new JPanel() {
           private static final int R = 6;
 
+          @DirtyUI
           @NotNull
           @Override
           public Dimension getPreferredSize() {
@@ -1249,6 +1256,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                           myEditor.visualLineToY(myEndVisualLine) - myEditor.visualLineToY(myStartVisualLine)));
           }
 
+          @DirtyUI
           @Override
           protected void paintComponent(@NotNull Graphics g) {
             if (myVisualLine ==-1 || myEditor.isDisposed()) return;

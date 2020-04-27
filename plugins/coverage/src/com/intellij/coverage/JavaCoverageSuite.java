@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -72,13 +73,11 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myCoverageEngine = coverageSupportProvider;
   }
 
-  @NotNull
-  public String[] getFilteredPackageNames() {
+  public String @NotNull [] getFilteredPackageNames() {
     return getPackageNames(myFilters);
   }
 
-  @NotNull
-  public String[] getExcludedPackageNames() {
+  public String @NotNull [] getExcludedPackageNames() {
     return getPackageNames(myExcludePatterns);
   }
 
@@ -94,18 +93,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public String[] getFilteredClassNames() {
+  public String @NotNull [] getFilteredClassNames() {
     return getClassNames(myFilters);
   }
 
-  @NotNull
-  public String[] getExcludedClassNames() {
+  public String @NotNull [] getExcludedClassNames() {
     return getClassNames(myExcludePatterns);
   }
 
-  @NotNull
-  private static String[] getClassNames(final String[] filters) {
+  private static String @NotNull [] getClassNames(final String[] filters) {
     if (filters == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     List<String> result = new ArrayList<>();
     for (String filter : filters) {
@@ -274,26 +270,20 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     final List<PsiClass> classes = new ArrayList<>();
     final String[] classNames = getFilteredClassNames();
     if (classNames.length > 0) {
+      final DumbService dumbService = DumbService.getInstance(project);
       for (final String className : classNames) {
-        final PsiClass aClass =
-          ReadAction.compute(() -> {
-            final DumbService dumbService = DumbService.getInstance(project);
-            dumbService.setAlternativeResolveEnabled(true);
-            try {
-              GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
-              RunConfigurationBase configuration = getConfiguration();
-              if (configuration instanceof ModuleBasedConfiguration) {
-                Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
-                if (module != null) {
-                  searchScope = GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
-                }
-              }
-              return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), searchScope);
+        ThrowableComputable<PsiClass, RuntimeException> computable = () -> {
+          GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
+          RunConfigurationBase<?> configuration = getConfiguration();
+          if (configuration instanceof ModuleBasedConfiguration) {
+            Module module = ((ModuleBasedConfiguration<?,?>)configuration).getConfigurationModule().getModule();
+            if (module != null) {
+              searchScope = GlobalSearchScope.moduleRuntimeScope(module, isTrackTestFolders());
             }
-            finally {
-              dumbService.setAlternativeResolveEnabled(false);
-            }
-          });
+          }
+          return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), searchScope);
+        };
+        final PsiClass aClass = ReadAction.compute(() -> dumbService.computeWithAlternativeResolveEnabled(computable));
         if (aClass != null) {
           classes.add(aClass);
         }

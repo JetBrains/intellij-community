@@ -46,14 +46,15 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void update() {
+    EditorImpl.assertIsDispatchThread();
     int oldWidth = getWidthInPixels();
     int oldHeight = getHeightInPixels();
-    GutterIconRenderer oldIconProvider = getGutterIconProvider();
+    GutterIconRenderer oldIconRenderer = getGutterIconRenderer();
     doUpdate();
     int changeFlags = 0;
     if (oldWidth != getWidthInPixels()) changeFlags |= InlayModel.ChangeFlags.WIDTH_CHANGED;
     if (oldHeight != getHeightInPixels()) changeFlags |= InlayModel.ChangeFlags.HEIGHT_CHANGED;
-    if (!Objects.equals(oldIconProvider, getGutterIconProvider())) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
+    if (!Objects.equals(oldIconRenderer, getGutterIconRenderer())) changeFlags |= InlayModel.ChangeFlags.GUTTER_ICON_PROVIDER_CHANGED;
     if (changeFlags != 0) {
       myEditor.getInlayModel().notifyChanged(this, changeFlags);
     }
@@ -64,7 +65,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void repaint() {
-    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate()) {
+    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate() && !myEditor.getInlayModel().isInBatchMode()) {
       JComponent contentComponent = myEditor.getContentComponent();
       if (contentComponent.isShowing()) {
         Rectangle bounds = getBounds();
@@ -82,6 +83,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Override
   public void dispose() {
+    EditorImpl.assertIsDispatchThread();
     if (isValid()) {
       int offset = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
       putUserData(OFFSET_BEFORE_DISPOSAL, offset);
@@ -125,7 +127,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
 
   @Nullable
   @Override
-  public GutterIconRenderer getGutterIconProvider() {
+  public GutterIconRenderer getGutterIconRenderer() {
     return null;
   }
 }

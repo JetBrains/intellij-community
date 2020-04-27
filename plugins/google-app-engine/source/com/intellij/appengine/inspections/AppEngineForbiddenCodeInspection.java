@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override

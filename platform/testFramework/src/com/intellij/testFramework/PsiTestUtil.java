@@ -319,14 +319,14 @@ public class PsiTestUtil {
    * @param libPath the path of a directory
    * @param jarArr the names of jars or subdirectories inside {@code libPath} that will become class roots
    */
-  public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, @NotNull String... jarArr) {
+  public static void addLibrary(@NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     ModuleRootModificationUtil.updateModel(module, model -> addLibrary(model, libName, libPath, jarArr));
   }
 
   /**
    * Add a module-level library. Same as {@link #addLibrary(Module, String, String, String...)}, but the library will be removed when the {@code parent} disposable is disposed.
    */
-  public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, @NotNull String... jarArr) {
+  public static void addLibrary(@NotNull Disposable parent, @NotNull Module module, String libName, @NotNull String libPath, String @NotNull ... jarArr) {
     Ref<Library> ref = new Ref<>();
     ModuleRootModificationUtil.updateModel(module, model -> ref.set(addLibrary(model, libName, libPath, jarArr)));
     Disposer.register(parent, () -> {
@@ -374,7 +374,7 @@ public class PsiTestUtil {
    * If you already have a {@link ModifiableRootModel} (e.g. inside {@link LightProjectDescriptor#configureModule}),
    * use {@link #addProjectLibrary(ModifiableRootModel, String, List)}.
    */
-  public static void addProjectLibrary(@NotNull Module module, String libName, @NotNull VirtualFile... classesRoots) {
+  public static void addProjectLibrary(@NotNull Module module, String libName, VirtualFile @NotNull ... classesRoots) {
     addProjectLibrary(module, libName, Arrays.asList(classesRoots), Collections.emptyList());
   }
 
@@ -443,7 +443,7 @@ public class PsiTestUtil {
   public static Library addLibrary(@NotNull ModifiableRootModel model,
                                    String libName,
                                    @NotNull String libPath,
-                                   @NotNull String... jarArr) {
+                                   String @NotNull ... jarArr) {
     List<VirtualFile> classesRoots = new ArrayList<>();
     for (String jar : jarArr) {
       if (!libPath.endsWith("/") && !jar.startsWith("/")) {
@@ -487,8 +487,8 @@ public class PsiTestUtil {
   public static void addLibrary(@NotNull Module module,
                                 String libName,
                                 @NotNull String libDir,
-                                @NotNull String[] classRoots,
-                                @NotNull String[] sourceRoots) {
+                                String @NotNull [] classRoots,
+                                String @NotNull [] sourceRoots) {
     String proto = (classRoots.length > 0 ? classRoots[0] : sourceRoots[0]).endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL;
     String parentUrl = VirtualFileManager.constructUrl(proto, libDir);
     List<String> classesUrls = new ArrayList<>();
@@ -549,7 +549,7 @@ public class PsiTestUtil {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude));
   }
 
-  public static void setJavadocUrls(@NotNull Module module, @NotNull String... urls) {
+  public static void setJavadocUrls(@NotNull Module module, String @NotNull ... urls) {
     ModuleRootModificationUtil.updateModel(module, model -> model.getModuleExtension(JavaModuleExternalPaths.class).setJavadocUrls(urls));
   }
 
@@ -565,7 +565,7 @@ public class PsiTestUtil {
   @Contract(pure=true)
   public static Sdk addRootsToJdk(@NotNull Sdk sdk,
                                   @NotNull OrderRootType rootType,
-                                  @NotNull VirtualFile... roots) {
+                                  VirtualFile @NotNull ... roots) {
     return modifyJdkRoots(sdk, sdkModificator -> {
       for (VirtualFile root : roots) {
         sdkModificator.setName(sdkModificator.getName() + "+" + root.getPath());

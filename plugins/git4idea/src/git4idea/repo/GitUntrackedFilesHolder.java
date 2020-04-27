@@ -198,10 +198,20 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
     Set<FilePath> untrackedFiles = myGit.untrackedFilePaths(myProject, myRoot, suspiciousFiles);
 
+    untrackedFiles.removeIf(it -> {
+      VirtualFile root = myVcsManager.getVcsRootFor(it);
+      if (!myRoot.equals(root)) {
+        LOG.warn(String.format("Ignoring untracked file under another root: %s; root: %s; mapped root: %s", it, myRoot, root));
+        return true;
+      }
+      return false;
+    });
+
+
     synchronized (LOCK) {
       if (suspiciousFiles != null) {
         // files that were suspicious (and thus passed to 'git ls-files'), but are not untracked, are definitely tracked.
-        myDefinitelyUntrackedFiles.removeIf((definitelyUntrackedFile)-> isUnder(myRootPath, suspiciousFiles, definitelyUntrackedFile));
+        myDefinitelyUntrackedFiles.removeIf((definitelyUntrackedFile) -> isUnder(myRootPath, suspiciousFiles, definitelyUntrackedFile));
         myDefinitelyUntrackedFiles.addAll(untrackedFiles);
       }
       else {

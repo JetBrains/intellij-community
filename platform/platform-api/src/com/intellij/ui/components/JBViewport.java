@@ -538,46 +538,49 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
   }
 
-  private static Dimension getPreferredScrollableViewportSize(@NotNull JList list) {
+  private static Dimension getPreferredScrollableViewportSize(@NotNull JList<?> list) {
     if (JList.class != getPreferredScrollableViewportSizeDeclaringClass(list)) {
       return list.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = getPreferredSizeWithoutScrollBars(list);
-    if (size == null) return new Dimension();
     if (JList.VERTICAL != list.getLayoutOrientation()) return size;
 
-    int fixedWidth = list.getFixedCellWidth();
-    int fixedHeight = list.getFixedCellHeight();
-
-    ListModel model = list.getModel();
+    ListModel<?> model = list.getModel();
     int modelRows = model == null ? 0 : model.getSize();
-    if (modelRows <= 0) {
+    boolean visibleRowCountOverride = list.getClientProperty("visibleRowCountIsMax") != null;
+    int visibleRows = list.getVisibleRowCount();
+    if (visibleRowCountOverride && visibleRows > 0) {
+      visibleRows = Math.min(modelRows, visibleRows);
+    }
+    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
+
+    boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    Insets insets = getInnerInsets(list);
+    size.height = insets != null ? insets.top + insets.bottom : 0;
+    if (modelRows == 0) {
+      int fixedWidth = list.getFixedCellWidth();
+      int fixedHeight = list.getFixedCellHeight();
       if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
       if (fixedWidth <= 0) fixedWidth = JBUIScale.scale(256); // scaled value from JDK
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("List.rowHeight");
       if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
-    }
-    int visibleRows = list.getVisibleRowCount();
-    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
 
-    boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    Insets insets = getInnerInsets(list);
-    size.height = insets != null ? insets.top + insets.bottom : 0;
-    if (0 < fixedWidth && 0 < fixedHeight) {
       size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
       size.height += fixedHeight * visibleRows;
       if (addExtraSpace) size.height += fixedHeight / 2;
     }
-    else if (addExtraSpace) {
-      Rectangle bounds = list.getCellBounds(visibleRows, visibleRows);
-      if (bounds != null) size.height = bounds.y + bounds.height / 2;
-    }
     else if (visibleRows > 0) {
       int lastRow = Math.min(visibleRows, modelRows) - 1;
       Rectangle bounds = list.getCellBounds(lastRow, lastRow);
-      if (bounds != null) {
-        size.height = bounds.y + bounds.height;
-        if (insets != null) size.height += insets.bottom;
+      if (bounds == null) return size; // null UI?
+      size.height = bounds.y + bounds.height;
+      if (insets != null) size.height += insets.bottom;
+      if (modelRows < visibleRows) {
+        size.height += (visibleRows - modelRows) * bounds.height;
+      }
+      else if (modelRows > visibleRows) {
+        if (addExtraSpace) size.height += bounds.height / 2;
       }
     }
     return size;
@@ -588,13 +591,13 @@ public class JBViewport extends JViewport implements ZoomableViewport {
       return tree.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = getPreferredSizeWithoutScrollBars(tree);
-    if (size == null) return new Dimension();
 
     int fixedHeight = tree.getRowHeight();
 
     int modelRows = tree.getRowCount();
     if (modelRows <= 0) {
       if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Tree.rowHeight");
       if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16);
     }
     int visibleRows = tree.getVisibleRowCount();

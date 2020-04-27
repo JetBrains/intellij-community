@@ -32,6 +32,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class DarculaTest {
   private JBCheckBox myJBCheckBox1;
   private JBCheckBox myJBCheckBox2;

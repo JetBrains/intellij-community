@@ -19,11 +19,10 @@ import com.intellij.execution.Executor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface RunContentWithExecutorListener {
-  void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor);
+  default void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+  }
 
-  void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor);
+  default void contentRemoved(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
+  }
 }

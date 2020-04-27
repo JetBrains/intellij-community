@@ -40,9 +40,8 @@ public class FileReferenceInjector extends ReferenceInjector {
     return "File Reference";
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull PsiElement element, @NotNull ProcessingContext context, @NotNull TextRange range) {
+  public PsiReference @NotNull [] getReferences(@NotNull PsiElement element, @NotNull ProcessingContext context, @NotNull TextRange range) {
     String text = range.substring(element.getText());
     return new SoftFileReferenceSet(text, element, range.getStartOffset(), null, true).getAllReferences();
   }

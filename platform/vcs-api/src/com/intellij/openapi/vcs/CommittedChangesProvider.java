@@ -52,8 +52,7 @@ public interface CommittedChangesProvider<T extends CommittedChangeList, U exten
                             int maxCount,
                             @NotNull AsynchConsumer<? super CommittedChangeList> consumer) throws VcsException;
 
-  @NotNull
-  ChangeListColumn[] getColumns();
+  ChangeListColumn @NotNull [] getColumns();
 
   @Nullable
   default VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {

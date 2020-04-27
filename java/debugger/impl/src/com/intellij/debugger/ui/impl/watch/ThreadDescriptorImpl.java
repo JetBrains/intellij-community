@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.SuspendManager;
@@ -64,12 +64,12 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
       final String threadStatusText = DebuggerUtilsEx.getThreadStatusText(getThreadReference().status());
       //noinspection HardCodedStringLiteral
       if (grname != null && !"SYSTEM".equalsIgnoreCase(grname)) {
-        return DebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
+        return JavaDebuggerBundle.message("label.thread.node.in.group", myName, thread.uniqueID(), threadStatusText, grname);
       }
-      return DebuggerBundle.message("label.thread.node", myName, thread.uniqueID(), threadStatusText);
+      return JavaDebuggerBundle.message("label.thread.node", myName, thread.uniqueID(), threadStatusText);
     }
     catch (ObjectCollectedException e) {
-      return myName != null ? DebuggerBundle.message("label.thread.node.thread.collected", myName) : "";
+      return myName != null ? JavaDebuggerBundle.message("label.thread.node.thread.collected", myName) : "";
     }
   }
 

@@ -61,7 +61,7 @@ public class StringConcatenationInMessageFormatCallInspection extends BaseInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace concatenation with argument";
+      return InspectionGadgetsBundle.message("string.concatenation.in.format.call.fix.family.name");
     }
 
     @Override

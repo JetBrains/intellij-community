@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -6,9 +6,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -21,6 +21,7 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 class TooltipReferencesPanel extends ReferencesPanel {
   private static final int REFS_LIMIT = 10;
@@ -28,7 +29,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
 
   TooltipReferencesPanel(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> refs) {
     super(new VerticalFlowLayout(JBUIScale.scale(H_GAP), JBUIScale.scale(V_GAP)), REFS_LIMIT);
-    VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
+    VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(refs)).getRoot();
     setReferences(ContainerUtil.sorted(refs, logData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
   }
 
@@ -75,7 +76,8 @@ class TooltipReferencesPanel extends ReferencesPanel {
   @Override
   protected JBLabel createRestLabel(int restSize) {
     String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
-    return createLabel("<html><font color=\"#" + gray + "\">... " + restSize + " more in details pane</font></html>",
-                       createEmptyIcon(getIconHeight()));
+    String labelText = VcsLogBundle.message("vcs.log.references.more.tooltip", restSize);
+    String html = "<html><font color=\"#" + gray + "\">" + labelText + "</font></html>"; // NON-NLS
+    return createLabel(html, createEmptyIcon(getIconHeight()));
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.jarRepository;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -30,13 +31,13 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
   @NotNull
   @Override
   public String getName() {
-    return "Add " + libraryDescription.getDisplayName() +" library to module dependencies";
+    return JavaUiBundle.message("intention.text.add.0.library.to.module.dependencies", libraryDescription.getDisplayName());
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Maven libraries";
+    return JavaUiBundle.message("intention.family.maven.libraries");
   }
 
   @Override

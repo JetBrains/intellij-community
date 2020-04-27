@@ -34,9 +34,8 @@ public class CreateSetterFromUsageFix extends CreateMethodFromUsageFix implement
     super(refExpression);
   }
 
-  @NotNull
   @Override
-  protected TypeConstraint[] getReturnTypeConstraints() {
+  protected TypeConstraint @NotNull [] getReturnTypeConstraints() {
     return new TypeConstraint[]{SubtypeConstraint.create(PsiType.VOID)};
   }
 

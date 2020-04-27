@@ -25,7 +25,7 @@
           <gridbag top="10" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="&amp;Create new"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="replace.constructor.builder.create.new"/>
         </properties>
       </component>
       <component id="97fc9" class="javax.swing.JRadioButton" binding="myExistingBuilderClassRadioButton">
@@ -34,7 +34,7 @@
           <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
         </constraints>
         <properties>
-          <text value="&amp;Use existing"/>
+          <text resource-bundle="messages/JavaRefactoringBundle" key="replace.constructor.builder.use.existing"/>
         </properties>
       </component>
       <grid id="c4e05" binding="myCreateNewPanel" layout-manager="GridBagLayout">
@@ -61,7 +61,7 @@
             </constraints>
             <properties>
               <labelFor value="bca69"/>
-              <text value="Builder class &amp;name"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="replace.constructor.new.builder.class.name"/>
             </properties>
           </component>
           <component id="f2123" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="myPackageTextField" custom-create="true">
@@ -77,7 +77,7 @@
               <gridbag top="5" left="0" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="&amp;Package for new builder"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="replace.constructor.new.builder.package"/>
             </properties>
           </component>
           <component id="bb743" class="javax.swing.JLabel">
@@ -113,7 +113,7 @@
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
             <properties>
-              <text value="&amp;Builder class name (fully qualified)"/>
+              <text resource-bundle="messages/JavaRefactoringBundle" key="replace.constructor.existing.builder.fqn"/>
             </properties>
           </component>
           <component id="5c6d8" class="com.intellij.ui.ReferenceEditorComboWithBrowseButton" binding="myExistentClassTF" custom-create="true">

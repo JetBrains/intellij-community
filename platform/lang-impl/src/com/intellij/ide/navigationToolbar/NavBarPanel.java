@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
@@ -320,13 +321,18 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  public void rebuildAndSelectItem(final Function<List<NavBarItem>, Integer> indexToSelectCallback) {
+  public void rebuildAndSelectItem(final Function<List<NavBarItem>, Integer> indexToSelectCallback, boolean showPopup) {
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
     myUpdateQueue.queueSelect(() -> {
       if (!myList.isEmpty()) {
-        myModel.setSelectedIndex(indexToSelectCallback.apply(myList));
+        int index = indexToSelectCallback.apply(myList);
+        myModel.setSelectedIndex(index);
         requestSelectedItemFocus();
+        if (showPopup) {
+          ctrlClick(index);
+        }
+
       }
     });
 
@@ -334,7 +340,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void rebuildAndSelectTail(final boolean requestFocus) {
-    rebuildAndSelectItem((list) -> list.size() - 1);
+    rebuildAndSelectItem((list) -> list.size() - 1, false);
   }
 
   public void requestSelectedItemFocus() {
@@ -429,9 +435,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   void installPopupHandler(@NotNull JComponent component, int index) {
     ActionManager actionManager = ActionManager.getInstance();
     PopupHandler.installPopupHandler(component, new ActionGroup() {
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (e == null) return EMPTY_ARRAY;
         String popupGroupId = null;
         for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
@@ -574,7 +579,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       final NavBarItem item = getItem(index);
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
-      myNodePopup = new NavBarPopup(this, siblings, selectedIndex);
+      myNodePopup = new NavBarPopup(this, index, siblings, selectedIndex);
      // if (item != null && item.isShowing()) {
         myNodePopup.show(item);
         item.update();
@@ -582,9 +587,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  protected void navigateInsideBar(final Object object) {
+  protected void navigateInsideBar(int sourceItemIndex, final Object object) {
     UIEventLogger.logUIEvent(UIEventId.NavBarNavigate);
 
+    boolean restorePopup = shouldRestorePopupOnSelect(object, sourceItemIndex);
     Object obj = expandDirsWithJustOneSubdir(object);
     myContextObject = null;
 
@@ -600,13 +606,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         myModel.setSelectedIndex(index);
       }
 
-      if (myModel.hasChildren(obj)) {
+      if (myModel.hasChildren(obj) && restorePopup) {
         restorePopup();
       }
       else {
         doubleClick(obj);
       }
     }, NavBarUpdateQueue.ID.NAVIGATE_INSIDE);
+  }
+
+  private boolean shouldRestorePopupOnSelect(Object obj, int sourceItemIndex) {
+    if (sourceItemIndex < myModel.size() - 1 && myModel.get(sourceItemIndex+1) == obj) return true;
+    if (!(obj instanceof PsiElement)) return true;
+    PsiElement psiElement = (PsiElement)obj;
+    return psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer;
   }
 
   void restorePopup() {

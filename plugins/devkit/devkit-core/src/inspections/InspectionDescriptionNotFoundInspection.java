@@ -55,7 +55,6 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
 
   private static boolean isPathMethodsAreOverridden(PsiClass psiClass) {
     return !(isLastMethodDefinitionIn("getStaticDescription", INSPECTION_PROFILE_ENTRY, psiClass)
-             && isLastMethodDefinitionIn("getDescriptionUrl", INSPECTION_PROFILE_ENTRY, psiClass)
              && isLastMethodDefinitionIn("getDescriptionContextClass", INSPECTION_PROFILE_ENTRY, psiClass)
              && isLastMethodDefinitionIn("getDescriptionFileName", INSPECTION_PROFILE_ENTRY, psiClass));
   }

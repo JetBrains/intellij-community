@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElementContainer;
 
 import java.util.Map;
 
-/**
- * @author nik
- */
 public abstract class JpsElementContainerEx implements JpsElementContainer {
   protected abstract Object getDataLock();
 

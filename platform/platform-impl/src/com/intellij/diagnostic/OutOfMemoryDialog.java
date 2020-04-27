@@ -144,7 +144,7 @@ public class OutOfMemoryDialog extends DialogWrapper {
   private void snapshot() {
     enableControls(false);
     myDumpMessageLabel.setVisible(true);
-    myDumpMessageLabel.setText("Dumping memory...");
+    myDumpMessageLabel.setText(DiagnosticBundle.message("label.dumping.memory"));
 
     Runnable task = () -> {
       TimeoutUtil.sleep(250);  // to give UI chance to update
@@ -183,9 +183,8 @@ public class OutOfMemoryDialog extends DialogWrapper {
     return myContentPane;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return myHeapDumpAction != null ? new Action[]{myShutdownAction, myContinueAction, myHeapDumpAction}
                                     : new Action[]{myShutdownAction, myContinueAction};
   }

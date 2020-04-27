@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ExternalLibraryDescriptor {
   private static final Logger LOG = Logger.getInstance(ExternalLibraryDescriptor.class);
   private final String myLibraryGroupId;

@@ -53,7 +53,7 @@ public final class WizardData {
    * Bean's class. If {@code null} then bean's class is't defined yet.
    */
   public PsiClass myBeanClass;
-  @NotNull public final FormProperty2BeanProperty[] myBindings;
+  public final FormProperty2BeanProperty @NotNull [] myBindings;
 
   public boolean myGenerateIsModified;
 

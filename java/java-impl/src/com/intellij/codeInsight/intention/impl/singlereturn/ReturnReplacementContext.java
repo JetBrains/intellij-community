@@ -224,8 +224,7 @@ class ReturnReplacementContext {
     }
   }
 
-  @NotNull
-  private static PsiElement[] extractTail(PsiStatement current, PsiCodeBlock block) {
+  private static PsiElement @NotNull [] extractTail(PsiStatement current, PsiCodeBlock block) {
     PsiElement[] children = block.getChildren();
     int pos = ArrayUtil.indexOf(children, current);
     assert pos >= 0;

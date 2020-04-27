@@ -17,9 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ProjectStructureProblemType {
   public enum Severity { ERROR, WARNING, UNUSED }
 

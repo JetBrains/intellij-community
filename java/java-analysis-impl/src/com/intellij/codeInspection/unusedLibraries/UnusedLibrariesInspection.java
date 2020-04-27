@@ -17,12 +17,12 @@
 package com.intellij.codeInspection.unusedLibraries;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -63,7 +63,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Don't report unused jars inside used library", this, "IGNORE_LIBRARY_PARTS");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("don.t.report.unused.jars.inside.used.library"), this, "IGNORE_LIBRARY_PARTS");
   }
 
   @Nullable
@@ -96,10 +96,9 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     }
   }
 
-  @Nullable
-  private CommonProblemDescriptor[] getDescriptors(@NotNull InspectionManager manager,
-                                                   RefModule refModule,
-                                                   Module module) {
+  private CommonProblemDescriptor @Nullable [] getDescriptors(@NotNull InspectionManager manager,
+                                                              RefModule refModule,
+                                                              Module module) {
     VirtualFile[] givenRoots =
       ReadAction.compute(() -> OrderEnumerator.orderEntries(module).withoutSdk()
         .withoutModuleSourceEntries()
@@ -125,13 +124,13 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
           final Set<VirtualFile> files = ContainerUtil.set(((LibraryOrderEntry)entry).getRootFiles(OrderRootType.CLASSES));
           boolean allRootsUnused = usedRoots == null || !files.removeAll(usedRoots);
           if (allRootsUnused) {
-            String message = InspectionsBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
+            String message = JavaAnalysisBundle.message("unused.library.problem.descriptor", entry.getPresentableName());
             result.add(manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), null)));
           }
           else if (!files.isEmpty() && !IGNORE_LIBRARY_PARTS) {
             final String unusedLibraryRoots = StringUtil.join(files, file -> file.getPresentableName(), ",");
             String message =
-              InspectionsBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
+              JavaAnalysisBundle.message("unused.library.roots.problem.descriptor", unusedLibraryRoots, entry.getPresentableName());
             CommonProblemDescriptor descriptor =
               ((LibraryOrderEntry)entry).isModuleLevel()
               ? manager.createProblemDescriptor(message, module, new RemoveUnusedLibrary(entry.getPresentableName(), files))
@@ -146,7 +145,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   }
 
   private static void appendUsedRootDependencies(@NotNull Set<VirtualFile> usedRoots,
-                                                 @NotNull VirtualFile[] givenRoots) {
+                                                 VirtualFile @NotNull [] givenRoots) {
     //classes per root
     Map<VirtualFile, Set<String>> fromClasses = new THashMap<>();
     //classes uses in root, ignoring self & jdk
@@ -223,7 +222,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -260,7 +259,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
+      return myFiles == null ? JavaAnalysisBundle.message("detach.library.quickfix.name") : JavaAnalysisBundle.message("detach.library.roots.quickfix.name");
     }
 
     @Override

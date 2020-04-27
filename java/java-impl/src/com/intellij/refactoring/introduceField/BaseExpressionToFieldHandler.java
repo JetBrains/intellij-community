@@ -13,6 +13,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,13 +87,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
 
     final PsiType tempType = getTypeByExpression(selectedExpr);
     if (tempType == null || LambdaUtil.notInferredType(tempType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
 
     if (PsiType.VOID.equals(tempType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return false;
     }
@@ -142,13 +143,13 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                            PsiType tempType) {
     if (myParentClass == null) {
       if (FileTypeUtils.isInServerPageFile(file)) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
+        CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName()),
                                             getRefactoringName(), getHelpID());
         return true;
       }
       else if ("package-info.java".equals(file.getName())) {
         CommonRefactoringUtil
-          .showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+          .showErrorHint(project, editor, JavaRefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
                          getRefactoringName(), getHelpID());
         return true;
       }
@@ -177,7 +178,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     if (!Comparing.strEqual(IntroduceConstantHandler.getRefactoringNameText(), getRefactoringName()) &&
         IntroduceFieldHandler.isInSuperOrThis(selectedExpr) &&
         isStaticFinalInitializer(selectedExpr) != null) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invalid.expression.context"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), getHelpID());
       return true;
     }

@@ -181,9 +181,8 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
       super(manager, language);
     }
 
-    @NotNull
     @Override
-    public GrAnnotationNameValuePair[] getAttributes() {
+    public GrAnnotationNameValuePair @NotNull [] getAttributes() {
       if (myCachedAttributes == null) {
         assert myAttributes != null;
         myCachedAttributes = myAttributes.toArray(GrAnnotationNameValuePair.EMPTY_ARRAY);

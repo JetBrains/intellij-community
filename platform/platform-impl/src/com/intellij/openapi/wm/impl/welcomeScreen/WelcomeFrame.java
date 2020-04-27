@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.GeneralSettings;
@@ -50,18 +50,20 @@ public final class WelcomeFrame extends JFrame implements IdeFrame, AccessibleCo
     SplashManager.hideBeforeShow(this);
 
     JRootPane rootPane = getRootPane();
-    final WelcomeScreen screen = createScreen(rootPane);
+    WelcomeScreen screen = createScreen(rootPane);
 
-    final IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
+    IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
     setGlassPane(glassPane);
     glassPane.setVisible(false);
     setContentPane(screen.getWelcomePanel());
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    Disposable listenerDisposable = Disposer.newDisposable();
+    ApplicationManager.getApplication().getMessageBus().connect(listenerDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
+        Disposer.dispose(listenerDisposable);
         dispose();
       }
     });

@@ -16,7 +16,7 @@
 
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JVMName;
@@ -53,14 +53,14 @@ class NewClassInstanceEvaluator implements Evaluator {
     DebugProcessImpl debugProcess = context.getDebugProcess();
     Object obj = myClassTypeEvaluator.evaluate(context);
     if (!(obj instanceof ClassType)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.class.type"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.class.type"));
     }
     ClassType classType = (ClassType)obj;
     // find constructor
     Method method = DebuggerUtils.findMethod(classType, JVMNameUtil.CONSTRUCTOR_NAME, myConstructorSignature.getName(debugProcess));
     if (method == null) {
       throw EvaluateExceptionUtil.createEvaluateException(
-        DebuggerBundle.message("evaluation.error.cannot.resolve.constructor", myConstructorSignature.getDisplayName(debugProcess)));
+        JavaDebuggerBundle.message("evaluation.error.cannot.resolve.constructor", myConstructorSignature.getDisplayName(debugProcess)));
     }
     // evaluate arguments
     List<Value> arguments;

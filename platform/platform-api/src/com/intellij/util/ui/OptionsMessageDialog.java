@@ -41,8 +41,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   protected abstract String getCancelActionName();
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     final Action okAction = getOKAction();
     final Action cancelAction = getCancelAction();
     assignMnemonic(getOkActionName(), okAction);

@@ -156,7 +156,7 @@ public abstract class StubProcessingHelperBase {
 
   protected abstract void onInternalError(VirtualFile file);
 
-  private static String getFileTypeInfo(VirtualFile file, Project project) {
+  protected static String getFileTypeInfo(VirtualFile file, Project project) {
     return "file type = " + file.getFileType() + ", " +
            "indexed file type =  " + FileTypeIndex.getIndexedFileType(file, project);
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.action;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
@@ -20,7 +21,7 @@ public class CalculateRetainedSizeAction extends MemoryAgentActionBase {
     MemoryAgent memoryAgent = MemoryAgent.get(evaluationContext.getDebugProcess());
     long size = memoryAgent.estimateObjectSize(evaluationContext, reference);
     ApplicationManager.getApplication().invokeLater(
-      () -> new MessageDialog(node.getTree().getProject(), String.valueOf(size), "Size of the Object",
+      () -> new MessageDialog(node.getTree().getProject(), String.valueOf(size), JavaDebuggerBundle.message("size.of.the.object"),
                               ArrayUtilRt.EMPTY_STRING_ARRAY, 0, null, false)
         .show());
   }

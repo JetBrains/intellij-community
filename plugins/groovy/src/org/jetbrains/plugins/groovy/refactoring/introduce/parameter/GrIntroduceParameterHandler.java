@@ -170,7 +170,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     // Does nothing
   }
 

@@ -5,11 +5,15 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.ReflectionUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
@@ -44,13 +48,26 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   }
 
   @Override
-  public boolean unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
-    return unregisterExtensions((x, adapter) -> {
+  public void unregisterExtensions(@NotNull List<Element> elements, List<Runnable> listenerCallbacks) {
+    Map<String, String> defaultAttributes = new HashMap<>();
+    ClassLoader classLoader = myDescriptor.getPluginClassLoader();
+    if (classLoader == null) {
+      classLoader = getClass().getClassLoader();
+    }
+    try {
+      Class<?> aClass = Class.forName(getClassName(), true, classLoader);
+      Object defaultInstance = ReflectionUtil.newInstance(aClass);
+      defaultAttributes.putAll(XmlExtensionAdapter.getExtensionAttributesMap(XmlSerializer.serialize(defaultInstance)));
+    }
+    catch (ClassNotFoundException ignored) {
+    }
+
+    unregisterExtensions((x, adapter) -> {
       if (!(adapter instanceof XmlExtensionAdapter)) {
         return true;
       }
       XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
-      return !xmlExtensionAdapter.isLoadedFromAnyElement(elements);
+      return !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
     }, false, listenerCallbacks);
   }
 }

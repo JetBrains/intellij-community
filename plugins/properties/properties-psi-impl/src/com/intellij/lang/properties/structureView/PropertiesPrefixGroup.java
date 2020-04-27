@@ -19,20 +19,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.smartTree.Group;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.editor.ResourceBundleEditorViewElement;
 import com.intellij.lang.properties.editor.PropertyStructureViewElement;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewElement {
+public class PropertiesPrefixGroup implements Group {
   private final @NotNull Collection<TreeElement> myProperties;
   private final @NotNull String myPrefix;
   private final @NotNull String myPresentableName;
@@ -88,24 +85,6 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
   @NotNull
   public Collection<TreeElement> getChildren() {
     return myProperties;
-  }
-
-  @NotNull
-  @Override
-  public IProperty[] getProperties() {
-    final List<IProperty> elements = ContainerUtil.mapNotNull(getChildren(), (NullableFunction<TreeElement, IProperty>)treeElement -> {
-      if (treeElement instanceof PropertyStructureViewElement) {
-        return ((PropertyStructureViewElement)treeElement).getProperties()[0];
-      }
-      return null;
-    });
-    return elements.toArray(IProperty.EMPTY_ARRAY);
-  }
-
-  @Nullable
-  @Override
-  public PsiFile[] getFiles() {
-    return null;
   }
 
   public boolean equals(final Object o) {

@@ -23,6 +23,5 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public interface LocalQuickFixProvider {
-  @Nullable
-  LocalQuickFix[] getQuickFixes();
+  LocalQuickFix @Nullable [] getQuickFixes();
 }

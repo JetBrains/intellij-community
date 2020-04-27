@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +53,8 @@ public class CompileQrcAction extends AnAction {
       path = QtFileType.findQtTool(module, "pyside-rcc");
     }
     if (path == null) {
-      Messages.showErrorDialog(project, "Could not find pyrcc4 or pyside-rcc for selected Python interpreter", "Compile .qrc file");
+      Messages.showErrorDialog(project, PyBundle.message("qt.cannot.find.pyrcc4.or.pysidercc"),
+                               PyBundle.message("qt.compile.qrc.file"));
       return;
     }
     CompileQrcDialog dialog = new CompileQrcDialog(project, vFiles);
@@ -73,7 +75,8 @@ public class CompileQrcAction extends AnAction {
         .run();
     }
     catch (ExecutionException ex) {
-      Messages.showErrorDialog(project, "Error running " + path + ": " + ex.getMessage(), "Compile .qrc file");
+      Messages.showErrorDialog(project, PyBundle.message("qt.run.error", path, ex.getMessage()), PyBundle.message(
+        "qt.compile.qrc.file"));
     }
   }
 
@@ -103,12 +106,12 @@ public class CompileQrcAction extends AnAction {
     protected CompileQrcDialog(Project project, VirtualFile[] vFiles) {
       super(project);
       if (vFiles.length == 1) {
-        setTitle("Compile " + vFiles [0].getName());
+        setTitle(PyBundle.message("qt.qrc.compile", vFiles [0].getName()));
       }
       else {
-        setTitle("Compile " + vFiles.length + " .qrc files");
+        setTitle(PyBundle.message("qt.qrc.compile.files", vFiles.length));
       }
-      myOutputFileField.addBrowseFolderListener("Select output path:", null, project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+      myOutputFileField.addBrowseFolderListener(PyBundle.message("qt.qrc.compiler.select.output.path"), null, project, FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
       init();
     }
 

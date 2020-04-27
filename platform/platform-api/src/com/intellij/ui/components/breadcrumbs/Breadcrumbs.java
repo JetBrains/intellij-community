@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -33,9 +33,6 @@ import static javax.swing.SwingConstants.*;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
-/**
- * @author Sergey.Malenkov
- */
 public class Breadcrumbs extends JBPanelWithEmptyText {
   private static final int LEFT_RIGHT = 5;
   private static final int TOP_BOTTOM = 3;

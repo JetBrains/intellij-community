@@ -18,6 +18,8 @@ import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Random;
+
 public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtmlPanel {
 
   private final JBCefJSQuery myJSQuerySetScrollY = JBCefJSQuery.create(this);
@@ -34,8 +36,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
     }
   };
 
-  @NotNull
-  private String[] myCssUris = ArrayUtil.EMPTY_STRING_ARRAY;
+  private String @NotNull [] myCssUris = ArrayUtil.EMPTY_STRING_ARRAY;
   @NotNull
   private String myCSP = "";
   @NotNull
@@ -47,8 +48,20 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
 
   private final CefLoadHandler myCefLoadHandler;
 
+  @NotNull
+  private static final String ourClassUrl;
+
+  static {
+    String url = "about:blank";
+    try {
+      url = MarkdownJCEFHtmlPanel.class.getResource(MarkdownJCEFHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
+    } catch (Exception ignored) {
+    }
+    ourClassUrl = url;
+  }
+
   public MarkdownJCEFHtmlPanel() {
-    super();
+    super(ourClassUrl + "@" + new Random().nextInt(Integer.MAX_VALUE));
 
     myJSQuerySetScrollY.addHandler((scrollY) -> {
         try {
@@ -89,7 +102,7 @@ public class MarkdownJCEFHtmlPanel extends JCEFHtmlPanel implements MarkdownHtml
   }
 
   @Override
-  public void setCSS(@Nullable String inlineCss, @NotNull String... fileUris) {
+  public void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
     PreviewStaticServer.getInstance().setInlineStyle(inlineCss);
     myCssUris = inlineCss == null ? fileUris
                                   : ArrayUtil

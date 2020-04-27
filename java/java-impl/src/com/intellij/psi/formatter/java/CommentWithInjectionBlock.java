@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class CommentWithInjectionBlock extends AbstractJavaBlock {
   private final InjectedLanguageBlockBuilder myInjectedBlockBuilder;
 

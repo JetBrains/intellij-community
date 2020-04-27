@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfo
@@ -21,9 +21,6 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
-/**
- * @author nik
- */
 class BuildTasksImpl extends BuildTasks {
   final BuildContext buildContext
 
@@ -351,17 +348,23 @@ idea.fatal.error.notification=disabled
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
-      List<BuildTaskRunnable<String>> tasks = [
-        createDistributionForOsTask("win", { BuildContext context ->
-          context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
-        }),
-        createDistributionForOsTask("linux", { BuildContext context ->
+      List<BuildTaskRunnable<String>> tasks = new ArrayList<>()
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_WINDOWS)) {
+        tasks.add(createDistributionForOsTask("win", { BuildContext context ->
+          context.windowsDistributionCustomizer?.
+            with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
+        }))
+      }
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_LINUX)) {
+        tasks.add(createDistributionForOsTask("linux", { BuildContext context ->
           context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
-        }),
-        createDistributionForOsTask("mac", { BuildContext context ->
+        }))
+      }
+      if (buildContext.shouldBuildDistributionForOS(BuildOptions.OS_MAC)) {
+        tasks.add(createDistributionForOsTask("mac", { BuildContext context ->
           context.macDistributionCustomizer?.with { new MacDistributionBuilder(context, it, propertiesFile) }
-        })
-      ]
+        }))
+      }
 
       List<String> paths = runInParallel(tasks).findAll { it != null }
 
@@ -440,14 +443,6 @@ idea.fatal.error.notification=disabled
     }
     if (buildContext.options.bundledJreBuild != null) {
       args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
-    }
-    [
-      'intellij.build.bundle.second.jre',
-      'intellij.build.bundled.second.jre.build'
-    ].each { prop ->
-      System.getProperty(prop)?.with {
-        args += "-D$prop=$it"
-      }
     }
     buildContext.gradle.run('Setting up JetBrains JREs', args)
     logFreeDiskSpace("after downloading JREs")

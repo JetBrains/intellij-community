@@ -6,9 +6,6 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import org.junit.Assume
 
-/**
- * @author nik
- */
 class ImportedFacetsSerializationTest : FacetTestCase() {
   override fun getProjectDirOrFile() = getProjectDirOrFile(true)
 

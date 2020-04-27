@@ -264,11 +264,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     private void updateTooltipText() {
-      String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
-      if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(tooltip)) {
-        HelpTooltip.dispose(this);
-        new HelpTooltip().setDescription(tooltip).installOn(this);
+      HelpTooltip.dispose(this);
+
+      if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(myTooltipText)) {
+        String shortcut = KeymapUtil.getFirstKeyboardShortcutText(ComboBoxAction.this);
+        new HelpTooltip().setTitle(myTooltipText).setShortcut(shortcut).installOn(this);
       } else {
+        String tooltip = KeymapUtil.createTooltipText(myTooltipText, ComboBoxAction.this);
         setToolTipText(!tooltip.isEmpty() ? tooltip : null);
       }
     }

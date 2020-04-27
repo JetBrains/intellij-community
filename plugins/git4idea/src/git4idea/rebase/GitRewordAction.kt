@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.notification.NotificationType
@@ -42,6 +28,7 @@ import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.findProtectedRemoteBranch
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 
 private val LOG: Logger = logger<GitRewordAction>()
@@ -49,7 +36,7 @@ private val LOG: Logger = logger<GitRewordAction>()
 class GitRewordAction : GitCommitEditingAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    prohibitRebaseDuringRebase(e, "reword", true)
+    prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
   }
 
   override fun actionPerformedAfterChecks(e: AnActionEvent) {
@@ -68,7 +55,7 @@ class GitRewordAction : GitCommitEditingAction() {
            ?: throw ProcessCanceledException()
   }
 
-  override fun getFailureTitle(): String = "Couldn't Edit Commit Message"
+  override fun getFailureTitle(): String = GitBundle.getString("rebase.log.reword.action.failure.title")
 
   private fun getCommitDataFromCache(data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata? {
     val commitIndex = data.getCommitIndex(commit.id, commit.root)
@@ -89,18 +76,22 @@ class GitRewordAction : GitCommitEditingAction() {
           commitData = VcsLogUtil.getDetails(data, commit.root, commit.id)
         }
         catch (e: VcsException) {
-          val error = "Couldn't load changes of " + commit.id.asString()
+          val error = GitBundle.message("rebase.log.reword.action.loading.commit.message.failed.message", commit.id.asString())
           LOG.warn(error, e)
           val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(
-            "", error, NotificationType.ERROR, null)
+            "",
+            error,
+            NotificationType.ERROR,
+            null
+          )
           VcsNotifier.getInstance(project).notify(notification)
         }
-      }, "Loading Commit Message...", true, project)
+      }, GitBundle.getString("rebase.log.reword.action.progress.indicator.loading.commit.message.title"), true, project)
     return commitData
   }
 
   private fun rewordInBackground(project: Project, commit: VcsCommitMetadata, repository: GitRepository, newMessage: String) {
-    object : Task.Backgroundable(project, "Rewording") {
+    object : Task.Backgroundable(project, GitBundle.getString("rebase.log.reword.action.progress.indicator.title")) {
       override fun run(indicator: ProgressIndicator) {
         GitRewordOperation(repository, commit, newMessage).execute()
       }
@@ -118,12 +109,16 @@ class GitRewordAction : GitCommitEditingAction() {
 
       init()
       isModal = false
-      title = "Edit Commit Message"
+      title = GitBundle.getString("rebase.log.reword.dialog.title")
     }
 
     override fun createCenterPanel() =
       JBUI.Panels.simplePanel(DEFAULT_HGAP, DEFAULT_VGAP)
-        .addToTop(JBLabel("Edit message for commit ${commit.id.toShortString()} by ${getShortPresentation(commit.author)}"))
+        .addToTop(JBLabel(GitBundle.message(
+          "rebase.log.reword.dialog.description.label",
+          commit.id.toShortString(),
+          getShortPresentation(commit.author)
+        )))
         .addToCenter(commitEditor)
 
     override fun getPreferredFocusedComponent() = commitEditor.editorField
@@ -145,15 +140,17 @@ class GitRewordAction : GitCommitEditingAction() {
     }
 
     override fun doValidate(): ValidationInfo? {
-      if (repository.info.currentRevision != originalHEAD ||
-          Disposer.isDisposed(data)) {
-        return ValidationInfo("Can't edit commit message: repository state was changed")
+      if (repository.info.currentRevision != originalHEAD || Disposer.isDisposed(data)) {
+        return ValidationInfo(GitBundle.getString("rebase.log.reword.dialog.failed.repository.changed.message"))
       }
 
       val branches = findContainingBranches(data, commit.root, commit.id)
       val protectedBranch = findProtectedRemoteBranch(repository, branches)
       if (protectedBranch != null) {
-        return ValidationInfo("Can't edit commit message: " + commitPushedToProtectedBranchError(protectedBranch))
+        return ValidationInfo(GitBundle.message(
+          "rebase.log.reword.dialog.failed.pushed.to.protected.message",
+          commitPushedToProtectedBranchError(protectedBranch)
+        ))
       }
 
       return null

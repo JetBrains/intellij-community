@@ -101,8 +101,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     return ref.get();
   }
 
-  @NotNull
-  private static Object[] getElements(@NotNull StructureViewComponent svc) {
+  private static Object @NotNull [] getElements(@NotNull StructureViewComponent svc) {
     TreeModel model = svc.getTree().getModel();
     Object first = TreeUtil.getFirstNodePath(svc.getTree()).getLastPathComponent();
     return TreeUtil.nodeChildren(first, model).map(TreeUtil::getUserObject).toList().toArray();

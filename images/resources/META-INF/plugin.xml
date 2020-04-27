@@ -1,0 +1,184 @@
+<idea-plugin implementation-detail="true">
+  <vendor>JetBrains</vendor>
+  <id>com.intellij.platform.images</id>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter"/>
+  </extensionPoints>
+
+  <resource-bundle>messages.ImagesBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images"
+                             bundle="messages.ImagesBundle" key="settings.page.name"/>
+    <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
+    <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
+
+    <applicationService serviceInterface="org.intellij.images.fileTypes.ImageFileTypeManager"
+                        serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
+    <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
+                        serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
+    <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
+                    serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
+    <!-- ImageIO.getReaderFormatNames() -->
+    <fileType name="Image" implementationClass="org.intellij.images.fileTypes.impl.ImageFileType" fieldName="INSTANCE" extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm" />
+    <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg" language="SVG"/>
+    <lang.parserDefinition language="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgParserDefinition"/>
+    <fileBasedIndex implementation="org.intellij.images.index.ImageInfoIndex"/>
+    <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
+    <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
+
+    <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
+  </extensions>
+
+  <actions>
+    <group id="ImagesRootGroup">
+      <action class="org.intellij.images.actions.EditExternallyAction"
+              id="Images.EditExternally">
+        <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
+        <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+      </action>
+      <action class="org.intellij.images.actions.ConvertSvgToPngAction"
+              id="Images.ConvertSvgToPng">
+        <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
+      </action>
+      <action class="org.intellij.images.actions.ShowThumbnailsAction"
+              id="Images.ShowThumbnails">
+      </action>
+      <action class="org.intellij.images.actions.ToggleTransparencyChessboardAction"
+              id="Images.ToggleTransparencyChessboard"
+              icon="ImagesIcons.ToggleTransparencyChessboard">
+      </action>
+      <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
+              id="Images.SetBackgroundImage">
+        <add-to-group group-id="ProjectViewPopupMenu"/>
+        <add-to-group group-id="EditorPopupMenu3"/>
+      </action>
+      <action class="org.intellij.images.editor.actions.ToggleGridAction"
+              id="Images.Editor.ToggleGrid"
+              icon="AllIcons.Graph.Grid">
+        <keyboard-shortcut first-keystroke="control QUOTE" keymap="$default"/>
+      </action>
+      <action class="org.intellij.images.editor.actions.ZoomInAction"
+              id="Images.Editor.ZoomIn"
+              icon="AllIcons.Graph.ZoomIn"
+              use-shortcut-of="ExpandAll"/>
+      <action class="org.intellij.images.editor.actions.ZoomOutAction"
+              id="Images.Editor.ZoomOut"
+              icon="AllIcons.Graph.ZoomOut"
+              use-shortcut-of="CollapseAll"/>
+      <action class="org.intellij.images.editor.actions.ActualSizeAction"
+              id="Images.Editor.ActualSize"
+              icon="AllIcons.Graph.ActualZoom">
+        <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
+      </action>
+      <action class="org.intellij.images.editor.actions.FitZoomToWindowAction"
+              id="Images.Editor.FitZoomToWindow"
+              icon="AllIcons.General.FitContent"/>
+      <separator/>
+
+      <action class="org.intellij.images.thumbnail.actions.UpFolderAction"
+              id="Images.Thumbnails.UpFolder"
+              icon="AllIcons.Nodes.UpFolder">
+        <keyboard-shortcut first-keystroke="BACK_SPACE" keymap="$default"/>
+      </action>
+      <action class="org.intellij.images.thumbnail.actions.ToggleRecursiveAction"
+              id="Images.Thumbnails.ToggleRecursive"
+              icon="AllIcons.ObjectBrowser.FlattenPackages">
+        <keyboard-shortcut first-keystroke="alt MULTIPLY" keymap="$default"/>
+      </action>
+      <action class="org.intellij.images.thumbnail.actions.ToggleFileSizeAction"
+              id="Images.Thumbnails.ToggleFileSize"
+              icon="AllIcons.FileTypes.Any_type">
+      </action>
+      <action class="org.intellij.images.thumbnail.actions.ToggleFileNameAction"
+              id="Images.Thumbnails.ToggleFileName"
+              icon="AllIcons.Actions.ShowImportStatements">
+      </action>
+      <action class="org.intellij.images.thumbnail.actions.FilterByThemeComboBoxAction"
+              internal="true"
+              id="Images.Thumbnails.FilterByTheme"/>
+      <action class="org.intellij.images.thumbnail.actions.FilterByTagActionGroup"
+              internal="true"
+              popup="true"
+              id="Images.Thumbnails.FilterByTag"/>
+      <action class="org.intellij.images.thumbnail.actions.ToggleTagsPanelAction"
+              id="Images.Thumbnails.ToggleTagsPanelName"
+              icon="AllIcons.Actions.Preview">
+      </action>
+
+      <action class="org.intellij.images.thumbnail.actions.HideThumbnailsAction"
+              id="Images.Thumbnails.Hide"
+              icon="AllIcons.Actions.Cancel" use-shortcut-of="CloseContent"/>
+
+      <action class="org.intellij.images.thumbnail.actions.EnterAction"
+              id="Images.Thumbnails.EnterAction">
+        <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+      </action>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
+    <group id="Images.EditorToolbar">
+      <reference id="Images.ToggleTransparencyChessboard"/>
+      <reference id="Images.Editor.ToggleGrid"/>
+      <separator/>
+      <reference id="Images.Editor.ZoomIn"/>
+      <reference id="Images.Editor.ZoomOut"/>
+      <reference id="Images.Editor.ActualSize"/>
+      <reference id="Images.Editor.FitZoomToWindow"/>
+      <reference id="ShowColorPicker"/>
+    </group>
+    <group id="Images.EditorPopupMenu">
+      <reference id="CutCopyPasteGroup"/>
+      <separator/>
+      <reference id="FindUsages"/>
+      <reference id="RefactoringMenu"/>
+      <separator/>
+      <reference id="Images.EditorToolbar"/>
+      <separator/>
+      <reference id="Images.SetBackgroundImage"/>
+      <separator/>
+      <reference id="AddToFavorites"/>
+      <separator/>
+      <reference id="VersionControlsGroup"/>
+      <separator/>
+      <reference id="Images.EditExternally"/>
+      <reference id="ExternalToolsGroup"/>
+    </group>
+    <group id="Images.ThumbnailsToolbar">
+      <reference id="Images.Thumbnails.UpFolder"/>
+      <reference id="Images.Thumbnails.ToggleRecursive"/>
+      <separator/>
+      <reference id="Images.ToggleTransparencyChessboard"/>
+      <reference id="Images.Thumbnails.ToggleFileSize"/>
+      <reference id="Images.Thumbnails.ToggleFileName"/>
+      <separator/>
+
+      <reference id="Images.Thumbnails.FilterByTheme"/>
+      <reference id="Images.Thumbnails.FilterByTag"/>
+      <reference id="Images.Thumbnails.ToggleTagsPanelName"/>
+      <reference id="Images.Thumbnails.Hide"/>
+    </group>
+    <group id="Images.ThumbnailsPopupMenu">
+      <reference id="CutCopyPasteGroup"/>
+      <reference id="EditSource"/>
+      <reference id="Images.Thumbnails.EnterAction"/>
+      <separator/>
+      <reference id="Images.ThumbnailsToolbar"/>
+      <separator/>
+      <reference id="FindUsages"/>
+      <reference id="RefactoringMenu"/>
+      <separator/>
+      <reference id="AddToFavorites"/>
+      <separator/>
+      <reference id="$Delete"/>
+      <separator/>
+      <reference id="VersionControlsGroup"/>
+      <reference id="CompareTwoFiles"/>
+      <separator/>
+      <reference id="Images.EditExternally"/>
+      <reference id="ExternalToolsGroup"/>
+    </group>
+  </actions>
+</idea-plugin>

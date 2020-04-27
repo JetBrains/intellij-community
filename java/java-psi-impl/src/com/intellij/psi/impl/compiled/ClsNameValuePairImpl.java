@@ -51,8 +51,7 @@ class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValuePair {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     if (myNameIdentifier != null) {
       return new PsiElement[]{myNameIdentifier, myMemberValue};
     }

@@ -5,7 +5,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.constraints.ExpirableConstrainedExecution;
 import com.intellij.openapi.application.constraints.Expiration;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -15,7 +17,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -28,6 +33,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.reflect.KClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -36,10 +42,7 @@ import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
@@ -70,8 +73,8 @@ public class NonBlockingReadActionImpl<T>
 
   private NonBlockingReadActionImpl(@NotNull Callable<T> computation,
                                     @Nullable Pair<ModalityState, Consumer<T>> edtFinish,
-                                    @NotNull ContextConstraint[] constraints,
-                                    @NotNull BooleanSupplier[] cancellationConditions,
+                                    ContextConstraint @NotNull [] constraints,
+                                    BooleanSupplier @NotNull [] cancellationConditions,
                                     @NotNull Set<? extends Expiration> expirationSet,
                                     @Nullable List<Object> coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
@@ -84,8 +87,8 @@ public class NonBlockingReadActionImpl<T>
 
   @NotNull
   @Override
-  protected NonBlockingReadActionImpl<T> cloneWith(@NotNull ContextConstraint[] constraints,
-                                                   @NotNull BooleanSupplier[] cancellationConditions,
+  protected NonBlockingReadActionImpl<T> cloneWith(ContextConstraint @NotNull [] constraints,
+                                                   BooleanSupplier @NotNull [] cancellationConditions,
                                                    @NotNull Set<? extends Expiration> expirationSet) {
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, constraints, cancellationConditions, expirationSet,
                                            myCoalesceEquality, myProgressIndicator);
@@ -93,7 +96,7 @@ public class NonBlockingReadActionImpl<T>
 
   @Override
   public void dispatchLaterUnconstrained(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(runnable, ModalityState.any());
   }
 
   @Override
@@ -123,7 +126,7 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
-  public NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
+  public NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator) {
     LOG.assertTrue(myProgressIndicator == null, "Unspecified behaviour. Outer progress indicator is already set for the action.");
     return new NonBlockingReadActionImpl<>(myComputation, myEdtFinish, getConstraints(), getCancellationConditions(), getExpirationSet(),
                                            myCoalesceEquality, progressIndicator);
@@ -136,7 +139,7 @@ public class NonBlockingReadActionImpl<T>
   }
 
   @Override
-  public NonBlockingReadAction<T> coalesceBy(@NotNull Object... equality) {
+  public NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality) {
     if (myCoalesceEquality != null) throw new IllegalStateException("Setting equality twice is not allowed");
     if (equality.length == 0) throw new IllegalArgumentException("Equality should include at least one object");
     if (equality.length == 1 && isTooCommon(equality[0])) {
@@ -154,6 +157,7 @@ public class NonBlockingReadActionImpl<T>
            o instanceof Editor ||
            o instanceof FileEditor ||
            o instanceof Class ||
+           o instanceof KClass ||
            o instanceof String ||
            o == null;
   }
@@ -258,10 +262,12 @@ public class NonBlockingReadActionImpl<T>
     public boolean setError(@NotNull Throwable error) {
       boolean result = super.setError(error);
       cleanupIfNeeded();
-      if (result) {
-        LOG.error(error);
-      }
       return result;
+    }
+
+    @Override
+    protected boolean shouldLogErrors() {
+      return backendExecutor != SYNC_DUMMY_EXECUTOR;
     }
 
     private void cleanupIfNeeded() {
@@ -394,7 +400,12 @@ public class NonBlockingReadActionImpl<T>
           throw new ProcessCanceledException();
         }
         if (isDone()) {
-          return get();
+          try {
+            return blockingGet(0, TimeUnit.MILLISECONDS);
+          }
+          catch (TimeoutException e) {
+            throw new RuntimeException(e);
+          }
         }
 
         Semaphore semaphore = new Semaphore(1);
@@ -420,6 +431,9 @@ public class NonBlockingReadActionImpl<T>
           return creationModality;
         }
       } : new EmptyProgressIndicator(creationModality);
+      if (myProgressIndicator != null) {
+        indicator.setIndeterminate(myProgressIndicator.isIndeterminate());
+      }
 
       currentIndicator = indicator;
       try {

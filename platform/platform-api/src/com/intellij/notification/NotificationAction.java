@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
@@ -18,6 +19,10 @@ public abstract class NotificationAction extends DumbAwareAction {
 
   public NotificationAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
+  }
+
+  public NotificationAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
   }
 
   @Override
@@ -30,7 +35,13 @@ public abstract class NotificationAction extends DumbAwareAction {
   @NotNull
   public static NotificationAction create(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
                                           @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
-    return new NotificationAction(text) {
+    return create(() -> text, performAction);
+  }
+
+  @NotNull
+  public static NotificationAction create(@NotNull Supplier<String> dynamicText,
+                                          @NotNull BiConsumer<? super AnActionEvent, ? super Notification> performAction) {
+    return new NotificationAction(dynamicText) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         performAction.accept(e, notification);
@@ -39,9 +50,14 @@ public abstract class NotificationAction extends DumbAwareAction {
   }
 
   @NotNull
+  public static NotificationAction createSimple(@NotNull Supplier<String> dynamicText, @NotNull Runnable performAction) {
+    return create(dynamicText, (event, notification) -> performAction.run());
+  }
+
+  @NotNull
   public static NotificationAction createSimple(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String text,
                                                 @NotNull Runnable performAction) {
-    return create(text, (event, notification) -> performAction.run());
+    return create(() -> text, (event, notification) -> performAction.run());
   }
 
   @NotNull

@@ -2,8 +2,8 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OffsetIcon;
@@ -21,6 +21,7 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
+@DirtyUI
 public class BaseLabel extends JLabel {
   protected ToolWindowContentUi myUi;
 
@@ -63,9 +64,8 @@ public class BaseLabel extends JLabel {
   }
 
   public static Font getLabelFont() {
-    UISettings uiSettings = UISettings.getInstance();
-    return JBUI.CurrentTheme.ToolWindow.headerFont().deriveFont(
-      uiSettings.getFontSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
+    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
+    return font.deriveFont(font.getSize() + JBUI.CurrentTheme.ToolWindow.overrideHeaderFontSizeOffset());
   }
 
   public void setActiveFg(final Color fg) {
@@ -78,7 +78,7 @@ public class BaseLabel extends JLabel {
 
   @Override
   protected void paintComponent(final Graphics g) {
-    final Color fore = myUi.myWindow.isActive() ? myActiveFg : myPassiveFg;
+    final Color fore = myUi.window.isActive() ? myActiveFg : myPassiveFg;
     setForeground(fore);
     super.paintComponent(_getGraphics((Graphics2D)g));
 

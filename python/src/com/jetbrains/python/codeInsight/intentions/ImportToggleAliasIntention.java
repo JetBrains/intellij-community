@@ -132,7 +132,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
         Application application = ApplicationManager.getApplication();
         if (application != null && !application.isUnitTestMode()) {
           String alias = Messages.showInputDialog(project, PyBundle.message("INTN.alias.for.$0.dialog.title", imported_name),
-                                                  "Add Alias", Messages.getQuestionIcon(), "", new InputValidator() {
+                                                  PyBundle.message("INTN.add.alias.title"), Messages.getQuestionIcon(), "", new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
               return PyNames.isIdentifier(inputString);

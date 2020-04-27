@@ -9,9 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BatchSuppressManagerImpl implements BatchSuppressManager {
-  @NotNull
   @Override
-  public SuppressQuickFix[] createBatchSuppressActions(@NotNull HighlightDisplayKey displayKey) {
+  public SuppressQuickFix @NotNull [] createBatchSuppressActions(@NotNull HighlightDisplayKey displayKey) {
     return new SuppressQuickFix[] {
         new SuppressByJavaCommentFix(displayKey),
         new SuppressLocalWithCommentFix(displayKey),

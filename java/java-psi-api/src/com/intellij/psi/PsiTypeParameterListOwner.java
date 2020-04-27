@@ -32,7 +32,6 @@ public interface PsiTypeParameterListOwner extends PsiJvmMember, JvmTypeParamete
    *
    * @return the array of type parameters, or an empty array if the element has no type parameters.
    */
-  @NotNull
   @Override
-  PsiTypeParameter[] getTypeParameters();
+  PsiTypeParameter @NotNull [] getTypeParameters();
 }

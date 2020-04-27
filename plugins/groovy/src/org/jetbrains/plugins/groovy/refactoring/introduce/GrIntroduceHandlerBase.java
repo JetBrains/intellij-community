@@ -101,7 +101,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @NotNull
-  public static GrStatement getAnchor(@NotNull PsiElement[] occurrences, @NotNull PsiElement scope) {
+  public static GrStatement getAnchor(PsiElement @NotNull [] occurrences, @NotNull PsiElement scope) {
     PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
     PsiElement container = getEnclosingContainer(parent);
     assert container != null;
@@ -135,8 +135,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @NotNull
   protected abstract String getHelpID();
 
-  @NotNull
-  protected abstract Scope[] findPossibleScopes(GrExpression expression, GrVariable variable, StringPartInfo stringPart, Editor editor);
+  protected abstract Scope @NotNull [] findPossibleScopes(GrExpression expression, GrVariable variable, StringPartInfo stringPart, Editor editor);
 
   protected abstract void checkExpression(@NotNull GrExpression selectedExpr) throws GrRefactoringError;
 
@@ -144,7 +143,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   protected abstract void checkStringLiteral(@NotNull StringPartInfo info) throws GrRefactoringError;
 
-  protected abstract void checkOccurrences(@NotNull PsiElement[] occurrences);
+  protected abstract void checkOccurrences(PsiElement @NotNull [] occurrences);
 
   @NotNull
   protected abstract GrIntroduceDialog<Settings> getDialog(@NotNull GrIntroduceContext context);
@@ -294,7 +293,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     // Does nothing
   }
 
@@ -472,8 +471,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return fillChoice(context);
   }
 
-  @NotNull
-  protected PsiElement[] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
+  protected PsiElement @NotNull [] findOccurrences(@NotNull GrExpression expression, @NotNull PsiElement scope) {
     final PsiElement[] occurrences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(expression, false), scope);
     if (occurrences == null || occurrences.length == 0) {
       throw new GrRefactoringError(GroovyRefactoringBundle.message("no.occurrences.found"));
@@ -615,7 +613,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Nullable
-  public static PsiElement findAnchor(@NotNull PsiElement[] occurrences,
+  public static PsiElement findAnchor(PsiElement @NotNull [] occurrences,
                                       @NotNull PsiElement container) {
     if (occurrences.length == 0) return null;
 
@@ -710,7 +708,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return null;
   }
 
-  public static boolean hasLhs(@NotNull final PsiElement[] occurrences) {
+  public static boolean hasLhs(final PsiElement @NotNull [] occurrences) {
     for (PsiElement element : occurrences) {
       if (element instanceof GrReferenceExpression) {
         if (PsiUtil.isLValue((GroovyPsiElement)element)) return true;

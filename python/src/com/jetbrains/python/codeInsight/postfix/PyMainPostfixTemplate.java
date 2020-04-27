@@ -45,7 +45,7 @@ public class PyMainPostfixTemplate extends SurroundPostfixTemplateBase {
     return new PyStatementSurrounder() {
       @Nullable
       @Override
-      protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+      protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
         throws IncorrectOperationException {
         PyIfStatement ifStatement = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.forElement(elements[0]), PyIfStatement.class, "if __name__ == '__main__':\n expr");
         ifStatement = (PyIfStatement)CodeStyleManager.getInstance(project).reformat(ifStatement);

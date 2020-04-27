@@ -75,7 +75,7 @@ class EditorCoordinateMapper {
   }
 
   private int getInlaysHeight(int visualLine, boolean above) {
-    return EditorUtil.getTotalInlaysHeight(myView.getEditor().getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+    return EditorUtil.getInlaysHeight(myView.getEditor(), visualLine, above);
   }
 
   @NotNull
@@ -201,9 +201,10 @@ class EditorCoordinateMapper {
           delayedResult = new LogicalPosition(fragment.getEndLogicalLine(), fragment.getEndLogicalColumn(), true);
         }
         else {
-          return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(),
+          return new LogicalPosition(column == maxColumn && minColumn != maxColumn ? fragment.getEndLogicalLine()
+                                                                                   : fragment.getStartLogicalLine(),
                                      fragment.visualToLogicalColumn(column),
-                                     fragment.isCollapsedFoldRegion() ? column < maxColumn :
+                                     fragment.isCollapsedFoldRegion() ? column < maxColumn || minColumn == maxColumn :
                                      fragment.getCurrentInlay() == null && fragment.isRtl() ^ pos.leansRight);
         }
       }

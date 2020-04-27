@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.*
@@ -93,8 +93,8 @@ class RecentProjectsTest {
     }
   }
 
-  private fun getProjectOpenTimestamp(projectName: String): Long {
-    val additionalInfo = RecentProjectsManagerBase.instanceEx.state!!.additionalInfo
+  private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
+    val additionalInfo = RecentProjectsManagerBase.instanceEx.state.additionalInfo
     for (s in additionalInfo.keys) {
       if (s.endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp
@@ -120,7 +120,7 @@ class RecentProjectsTest {
   private fun checkRecents(vararg recents: String) {
     val recentProjects = listOf(*recents)
     val state = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase).state
-    val projects = state!!.additionalInfo.keys.asSequence()
+    val projects = state.additionalInfo.keys.asSequence()
       .map { s -> PathUtil.getFileName(s).substringAfterLast("_") }
       .filter { recentProjects.contains(it) }
       .toList()

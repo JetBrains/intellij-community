@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -127,7 +128,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
       myPanel = new JPanel();
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 50, 0));
 
-      myPanel.add(new JLabel("This configuration cannot be edited", SwingConstants.CENTER));
+      myPanel.add(new JLabel(ExecutionBundle.message("this.configuration.cannot.be.edited"), SwingConstants.CENTER));
     }
 
     @Override

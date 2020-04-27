@@ -13,9 +13,6 @@ import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 
-/**
- * @author nik
- */
 class JavaLibraryRootsDetectionTest : LightPlatformTestCase() {
   fun `test JAR with classes`() {
     assertRootType(OrderRootType.CLASSES, false) {

@@ -2,7 +2,7 @@
   <id>org.intellij.plugins.markdown</id>
   <name>Markdown</name>
   <vendor>JetBrains</vendor>
-  
+  <category>Languages</category>
   <resource-bundle>messages.MarkdownBundle</resource-bundle>
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="plugin-intelliLang.xml">org.intellij.intelliLang</depends>
@@ -88,6 +88,7 @@ Includes the following features:</p>
 
     <lang.foldingBuilder language="Markdown" implementationClass="org.intellij.plugins.markdown.folding.MarkdownFoldingBuilder"/>
     <stubIndex implementation="org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex"/>
+    <stubElementTypeHolder class="org.intellij.plugins.markdown.lang.MarkdownElementTypes"/>
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.MarkdownAnchorPathReferenceProvider"/>
     <todoIndexer filetype="Markdown" implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownTodoIndexer" />
     <indexPatternBuilder implementation="org.intellij.plugins.markdown.highlighting.MarkdownIndexPatternBuilder" />

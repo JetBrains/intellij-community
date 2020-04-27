@@ -295,7 +295,7 @@ public class ProgressIndicatorUtils {
                                                                               int timeout,
                                                                               @NotNull TimeUnit timeUnit,
                                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
-    awaitWithCheckCancelled(lock, timeout, timeUnit);
+    awaitWithCheckCanceled(lock, timeout, timeUnit);
 
     try {
       return computable.compute();
@@ -311,26 +311,32 @@ public class ProgressIndicatorUtils {
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    return awaitWithCheckCanceled(future, indicator);
+  }
+
+  public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future, @Nullable ProgressIndicator indicator) {
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
         return future.get(10, TimeUnit.MILLISECONDS);
       }
-      catch (TimeoutException ignore) {
+      catch (TimeoutException | RejectedExecutionException ignore) {
       }
       catch (Throwable e) {
         Throwable cause = e.getCause();
-        if (cause instanceof CancellationException) {
-            throw new ProcessCanceledException(cause);
-        } else {
-          ExceptionUtil.rethrowUnchecked(e);
-          throw new RuntimeException(e);
+        if (cause instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)cause;
         }
+        if (cause instanceof CancellationException) {
+          throw new ProcessCanceledException(cause);
+        }
+        ExceptionUtil.rethrowUnchecked(e);
+        throw new RuntimeException(e);
       }
     }
   }
 
-  public static void awaitWithCheckCancelled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
+  public static void awaitWithCheckCanceled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
     awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
   }
 

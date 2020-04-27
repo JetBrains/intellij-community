@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
-/**
- * @author nik
- */
 public interface JpsSdkDependency extends JpsDependencyElement {
   @NotNull
   JpsSdkType<?> getSdkType();

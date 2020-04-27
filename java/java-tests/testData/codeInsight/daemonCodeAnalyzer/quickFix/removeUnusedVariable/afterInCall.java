@@ -1,4 +1,4 @@
-// "Remove variable 'i'" "true"
+// "Remove local variable 'i'" "true"
 public class Main {
   void test(String s) {
       foo(1);

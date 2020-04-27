@@ -10,7 +10,7 @@ internal class WhitelistTestGroupStorageTest : WhitelistBaseStorageTest() {
 
   @Test
   fun testAddWhitelistGroup() {
-    val storageForTest = WhitelistTestGroupStorage.getInstance(recorderId)
+    val storageForTest = WhitelistTestGroupStorage.getTestStorage(recorderId)!!
     storageForTest.addTestGroup(groupId)
 
     val groupRules = storageForTest.getGroupRules(groupId)
@@ -20,7 +20,7 @@ internal class WhitelistTestGroupStorageTest : WhitelistBaseStorageTest() {
 
   @Test
   fun testAddGroupWithCustomRules() {
-    val storageForTest = WhitelistTestGroupStorage.getInstance(recorderId)
+    val storageForTest = WhitelistTestGroupStorage.getTestStorage(recorderId)!!
     storageForTest.addGroupWithCustomRules(
       groupId,
       "{\n" +
@@ -36,12 +36,12 @@ internal class WhitelistTestGroupStorageTest : WhitelistBaseStorageTest() {
   }
 
   fun testCleanup() {
-    val storageForTest1 = WhitelistTestGroupStorage.getInstance(recorderId)
+    val storageForTest1 = WhitelistTestGroupStorage.getTestStorage(recorderId)!!
     storageForTest1.addTestGroup(groupId)
-    val storageForTest2 = WhitelistTestGroupStorage.getInstance(secondRecorderId)
+    val storageForTest2 = WhitelistTestGroupStorage.getTestStorage(secondRecorderId)!!
     storageForTest2.addTestGroup(groupId)
 
-    WhitelistTestGroupStorage.cleanupAll()
+    WhitelistTestGroupStorage.cleanupAll(listOf(recorderId, secondRecorderId))
     assertThat(storageForTest1.getGroupRules(groupId)).isNull()
     assertThat(storageForTest2.getGroupRules(groupId)).isNull()
   }

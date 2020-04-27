@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -113,11 +114,11 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     public String getPresentableName() {
       switch (myFileName) {
         case SCHEMA_JSON_FILE_NAME:
-          return "JSON schema v4";
+          return JsonBundle.message("schema.of.version", 4);
         case SCHEMA06_JSON_FILE_NAME:
-          return "JSON schema v6";
+          return JsonBundle.message("schema.of.version", 6);
         case SCHEMA07_JSON_FILE_NAME:
-          return "JSON schema v7";
+          return JsonBundle.message("schema.of.version", 7);
       }
       return getName();
     }

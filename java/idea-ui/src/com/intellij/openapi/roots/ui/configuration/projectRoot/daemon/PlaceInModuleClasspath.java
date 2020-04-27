@@ -24,9 +24,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class PlaceInModuleClasspath extends PlaceInProjectStructure {
   private final StructureConfigurableContext myContext;
   private final Module myModule;

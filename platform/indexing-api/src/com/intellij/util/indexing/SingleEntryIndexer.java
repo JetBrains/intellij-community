@@ -1,0 +1,37 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
+package com.intellij.util.indexing;
+
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Map;
+
+/**
+ * Simplifies API and ensures that data key will always be equal to virtual file id
+ *
+ * @author Eugene Zhuravlev
+ */
+@ApiStatus.OverrideOnly
+public abstract class SingleEntryIndexer<V> implements DataIndexer<Integer, V, FileContent>{
+  private final boolean myAcceptNullValues;
+
+  protected SingleEntryIndexer(boolean acceptNullValues) {
+    myAcceptNullValues = acceptNullValues;
+  }
+
+  @Override
+  @NotNull
+  public final Map<Integer, V> map(@NotNull FileContent inputData) {
+    final V value = computeValue(inputData);
+    if (value == null && !myAcceptNullValues) {
+      return Collections.emptyMap();
+    }
+    final int key = Math.abs(FileBasedIndex.getFileId(inputData.getFile()));
+    return Collections.singletonMap(key, value);
+  }
+
+  protected abstract @Nullable V computeValue(@NotNull FileContent inputData);
+}

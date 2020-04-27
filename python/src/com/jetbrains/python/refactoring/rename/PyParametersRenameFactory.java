@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -31,7 +32,7 @@ public class PyParametersRenameFactory implements AutomaticRenamerFactory {
 
   @Override
   public String getOptionName() {
-    return "Rename parameters in hierarchy";
+    return PyBundle.message("refactoring.rename.parameters.in.hierarchy");
   }
 
   @Override
@@ -69,12 +70,12 @@ public class PyParametersRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String getDialogTitle() {
-      return "Rename Parameters";
+      return PyBundle.message("refactoring.rename.parameters.title");
     }
 
     @Override
     public String getDialogDescription() {
-      return "Rename parameter in hierarchy to:";
+      return PyBundle.message("refactoring.rename.parameter.in.hierarchy.to");
     }
 
     @Override

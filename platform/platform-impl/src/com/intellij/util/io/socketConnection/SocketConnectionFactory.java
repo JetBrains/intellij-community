@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 
-/**
- * @author nik
- */
 public class SocketConnectionFactory {
   private SocketConnectionFactory() {
   }

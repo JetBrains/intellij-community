@@ -16,6 +16,7 @@
 
 package com.intellij.codeEditor.printing;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -74,7 +75,7 @@ public class HyperlinksToClassesOption extends PrintOption {
   private class HyperlinksToClassesConfigurable implements UnnamedConfigurable {
     @Override
     public JComponent createComponent() {
-      myCbGenerateHyperlinksToClasses = new JCheckBox(CodeEditorBundle.message("export.to.html.generate.hyperlinks.checkbox"), isGenerateHyperlinksToClasses);
+      myCbGenerateHyperlinksToClasses = new JCheckBox(JavaBundle.message("export.to.html.generate.hyperlinks.checkbox"), isGenerateHyperlinksToClasses);
       return myCbGenerateHyperlinksToClasses;
     }
 

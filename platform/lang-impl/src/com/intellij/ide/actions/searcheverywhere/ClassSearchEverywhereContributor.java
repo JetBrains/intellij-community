@@ -2,7 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoClassAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
@@ -25,7 +24,6 @@ import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,21 +47,18 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   @NotNull
   @Override
   public String getGroupName() {
-    return GotoClassPresentationUpdater.getTabTitle(true);
+    return GotoClassPresentationUpdater.getTabTitlePluralized();
   }
 
   @NotNull
   @Override
   public String getFullGroupName() {
-    String[] split = GotoClassPresentationUpdater.getActionTitle().split("/");
-    return Arrays.stream(split)
-      .map(StringUtil::pluralize)
-      .collect(Collectors.joining("/"));
+    return String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
   }
 
   @NotNull
   public String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.classes", IdeUICustomization.getInstance().getProjectConceptName());
+    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
   }
 
   @Override

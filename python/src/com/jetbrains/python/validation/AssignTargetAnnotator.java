@@ -19,6 +19,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -113,13 +114,15 @@ public class AssignTargetAnnotator extends PyAnnotator {
   public void visitPyAssignmentExpression(PyAssignmentExpression node) {
     final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(node, PyComprehensionElement.class, true, ScopeOwner.class);
     if (ScopeUtil.getScopeOwner(comprehensionElement) instanceof PyClass) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, "Assignment expressions within a comprehension cannot be used in a class body").create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR,
+                                PyBundle.message("ANN.assignment.expressions.within.a.comprehension.cannot.be.used.in.a.class.body")).create();
     }
   }
 
   private void errorOnUnparenthesizedAssignmentExpression(@Nullable PyExpression expression, @NotNull String suffix) {
     if (expression instanceof PyAssignmentExpression) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, "Unparenthesized assignment expressions are prohibited " + suffix).range(expression).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR,
+                                PyBundle.message("ANN.unparenthesized.assignment.expressions.are.prohibited.0", suffix)).range(expression).create();
     }
   }
 
@@ -153,10 +156,10 @@ public class AssignTargetAnnotator extends PyAnnotator {
       }
       if (PyNames.DEBUG.equals(targetName)) {
         if (LanguageLevel.forElement(node).isPy3K()) {
-          getHolder().newAnnotation(HighlightSeverity.ERROR, "assignment to keyword").range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.to.keyword")).range(node).create();
         }
         else {
-          getHolder().newAnnotation(HighlightSeverity.ERROR, "cannot assign to __debug__").range(node).create();
+          getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.cannot.assign.to.debug")).range(node).create();
         }
       }
     }
@@ -264,12 +267,12 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     @Override
     public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, "assignment to keyword").range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.to.keyword")).range(node).create();
     }
 
     @Override
     public void visitPyBoolLiteralExpression(PyBoolLiteralExpression node) {
-      getHolder().newAnnotation(HighlightSeverity.ERROR, "assignment to keyword").range(node).create();
+      getHolder().newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.assignment.to.keyword")).range(node).create();
     }
   }
 }

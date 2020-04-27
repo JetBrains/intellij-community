@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
@@ -8,7 +8,6 @@ import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.impl.SingleConfigurationConfigurable;
 import com.intellij.execution.ui.*;
 import com.intellij.execution.util.JreVersionDetector;
-import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
@@ -49,7 +48,6 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
 
     myJrePathEditor.setDefaultJreSelector(DefaultJreSelector.fromSourceRootsDependencies(myModule.getComponent(), getMainClassField()));
     myCommonProgramParameters.setModuleContext(myModuleSelector.getModule());
-    ProgramParametersConfigurator.addMacroSupport(myCommonProgramParameters.getProgramParametersComponent().getComponent().getEditorField());
     myModule.getComponent().addActionListener(e -> myCommonProgramParameters.setModuleContext(myModuleSelector.getModule()));
     new ClassBrowser.AppClassBrowser<EditorTextField>(project, myModuleSelector).setField(getMainClassField());
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));

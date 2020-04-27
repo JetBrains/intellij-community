@@ -120,8 +120,7 @@ public class IdeaWin32 {
     }
   }
 
-  @Nullable
-  public FileInfo[] listChildren(@NotNull String path) {
+  public FileInfo @Nullable [] listChildren(@NotNull String path) {
     path = path.replace('/', '\\');
     if (TRACE_ENABLED) {
       LOG.trace("list(" + path + ")");

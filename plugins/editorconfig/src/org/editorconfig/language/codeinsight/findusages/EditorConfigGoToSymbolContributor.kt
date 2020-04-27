@@ -14,11 +14,11 @@ import org.editorconfig.language.index.EditorConfigIdentifierIndex
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 
 class EditorConfigGoToSymbolContributor : ChooseByNameContributorEx {
-  override fun processNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?) {
+  override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     FileBasedIndex.getInstance().processAllKeys(EditorConfigIdentifierIndex.id, processor, scope, filter)
   }
 
-  override fun processElementsWithName(name: String, processor: Processor<NavigationItem>, parameters: FindSymbolParameters) {
+  override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
     val psiManager = PsiManager.getInstance(parameters.project)
     FileBasedIndex.getInstance().getFilesWithKey(
       EditorConfigIdentifierIndex.id, setOf(name), { file ->

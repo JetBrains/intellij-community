@@ -8,6 +8,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +25,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
   @NotNull private final JBCheckBox myRunHooks;
 
   public GitPushOptionsPanel(@Nullable GitPushTagMode defaultMode, boolean followTagsSupported, boolean showSkipHookOption) {
-    String checkboxText = "Push tags";
+    String checkboxText = GitBundle.getString("push.dialog.push.tags");
     if (followTagsSupported) {
       checkboxText += ": ";
     }
@@ -33,7 +34,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myPushTags.setSelected(defaultMode != null);
 
     myPushTagsMode = new ComboBox<>(GitPushTagMode.getValues());
-    myPushTagsMode.setRenderer(SimpleListCellRenderer.create("", GitPushTagMode::getTitle));
+    myPushTagsMode.setRenderer(SimpleListCellRenderer.create("", GitPushTagModeKt::localizedTitle));
     myPushTagsMode.setEnabled(myPushTags.isSelected());
     if (defaultMode != null) {
       myPushTagsMode.setSelectedItem(defaultMode);
@@ -47,7 +48,7 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     });
     myPushTagsMode.setVisible(followTagsSupported);
 
-    myRunHooks = new JBCheckBox("Run Git hooks");
+    myRunHooks = new JBCheckBox(GitBundle.message("checkbox.run.git.hooks"));
     myRunHooks.setMnemonic(KeyEvent.VK_H);
     myRunHooks.setSelected(true);
     myRunHooks.setVisible(showSkipHookOption);

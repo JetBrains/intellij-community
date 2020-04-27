@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * @author nik
- */
 abstract class ClasspathPanelAction implements ActionListener, Runnable {
   protected final ClasspathPanel myClasspathPanel;
 

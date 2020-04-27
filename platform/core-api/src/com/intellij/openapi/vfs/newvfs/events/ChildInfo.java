@@ -19,7 +19,7 @@ public interface ChildInfo {
 
   String getSymLinkTarget();
 
-  @Nullable("null means children are unknown") ChildInfo[] getChildren();
+  ChildInfo @Nullable("null means children are unknown") [] getChildren();
 
   FileAttributes getFileAttributes();
 }

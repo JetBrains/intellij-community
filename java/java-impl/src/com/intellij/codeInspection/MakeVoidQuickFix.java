@@ -19,6 +19,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefMethod;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
+    return JavaBundle.message("inspection.unused.return.value.make.void.quickfix");
   }
 
   @Override
@@ -85,7 +86,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
     SmartList<PsiMethod> methodsToModify = new SmartList<>(psiMethod);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       methodsToModify.addAll(OverridingMethodsSearch.search(psiMethod).findAll());
-    }, InspectionsBundle.message("psi.search.overriding.progress"), true, project)) {
+    }, JavaBundle.message("psi.search.overriding.progress"), true, project)) {
       return;
     }
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(methodsToModify)) return;
@@ -95,7 +96,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
                                                                       PsiType.VOID,
                                                                       ParameterInfoImpl.fromMethod(psiMethod)) {
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
         for (final PsiMethod method: methodsToModify) {
           replaceReturnStatements(method);

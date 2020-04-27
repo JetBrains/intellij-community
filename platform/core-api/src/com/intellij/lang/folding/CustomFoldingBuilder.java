@@ -29,9 +29,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
   private static final RegistryValue myMaxLookupDepth = Registry.get("custom.folding.max.lookup.depth");
   private static final ThreadLocal<Set<ASTNode>> ourCustomRegionElements = new ThreadLocal<>();
 
-  @NotNull
   @Override
-  public final FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+  public final FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     ourCustomRegionElements.set(new HashSet<>());
     List<FoldingDescriptor> descriptors = new ArrayList<>();
     try {
@@ -50,9 +49,8 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
-  @NotNull
   @Override
-  public final FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
+  public final FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     return buildFoldRegions(node.getPsi(), document, false);
   }
 

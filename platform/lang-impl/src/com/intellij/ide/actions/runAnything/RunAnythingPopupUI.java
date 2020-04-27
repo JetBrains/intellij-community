@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.execution.Executor;
@@ -58,9 +58,7 @@ import javax.swing.border.Border;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,7 +72,6 @@ import static java.awt.FlowLayout.RIGHT;
 public class RunAnythingPopupUI extends BigPopupUI {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.Run_anything;
-  public static final DataKey<Executor> EXECUTOR_KEY = DataKey.create("EXECUTOR_KEY");
   static final String RUN_ANYTHING = "RunAnything";
   public static final KeyStroke DOWN_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
   public static final KeyStroke UP_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
@@ -94,7 +91,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private RunAnythingContext mySelectedExecutingContext;
   private final List<RunAnythingContext> myAvailableExecutingContexts = new ArrayList<>();
   private RunAnythingChooseContextAction myChooseContextAction;
-  private final ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
+  private ProgressIndicator myProgressIndicator = new EmptyProgressIndicator();
   private final Alarm myListRenderingAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   @Nullable
@@ -360,11 +357,15 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      myProgressIndicator.start();
+      if (myProgressIndicator.isRunning() || !myProgressIndicator.isCanceled()) {
+        return;
+      }
+      myProgressIndicator = new EmptyProgressIndicator();
       try {
         myListModel = ProgressManager.getInstance()
           .runProcess(new RunAnythingCalcThread(myProject, getDataContext(), getSearchPattern()), myProgressIndicator);
-        myProgressIndicator.checkCanceled();
+
+        ProgressManager.checkCanceled();
       }
       catch (ProcessCanceledException e) {
         return;
@@ -476,7 +477,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     dataMap.put(CommonDataKeys.PROJECT.getName(), getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
     dataMap.put(CommonDataKeys.VIRTUAL_FILE.getName(), getWorkDirectory());
-    dataMap.put(EXECUTOR_KEY.getName(), getExecutor());
+    dataMap.put(RunAnythingAction.EXECUTOR_KEY.getName(), getExecutor());
     dataMap.put(RunAnythingProvider.EXECUTING_CONTEXT.getName(), myChooseContextAction.getSelectedContext());
     return SimpleDataContext.getSimpleContext(dataMap, null);
   }
@@ -687,7 +688,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myCurrentWorker = ActionCallback.DONE;
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
-    myProject = ObjectUtils.notNull(actionEvent.getData(CommonDataKeys.PROJECT));
+    myProject = Objects.requireNonNull(actionEvent.getData(CommonDataKeys.PROJECT));
     myModule = actionEvent.getData(LangDataKeys.MODULE);
 
     init();

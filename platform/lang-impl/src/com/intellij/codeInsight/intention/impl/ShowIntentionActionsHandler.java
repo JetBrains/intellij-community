@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
@@ -21,6 +22,8 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -46,9 +49,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author mike
- */
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @Override
@@ -69,8 +69,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
-    final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    letAutoImportComplete(editor, file, codeAnalyzer);
+    if (!LightEdit.owns(project)) {
+      final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
+      letAutoImportComplete(editor, file, codeAnalyzer);
+    }
 
     IntentionsUI.getInstance(project).hide();
 
@@ -104,7 +106,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   public static ShowIntentionsPass.IntentionsInfo calcIntentions(@NotNull Project project,
                                                                   @NotNull Editor editor,
                                                                   @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project, "Searching for Context Actions", () ->
+    ShowIntentionsPass.IntentionsInfo intentions = ActionUtil.underModalProgress(project,
+                                                                                 CodeInsightBundle.message("progress.title.searching.for.context.actions"), () ->
       ShowIntentionsPass.getActionsToShow(editor, file, false));
 
     ShowIntentionsPass.getActionsToShowSync(editor, file, intentions);
@@ -126,6 +129,9 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     try {
       Project project = psiFile.getProject();
       action = IntentionActionDelegate.unwrap(action);
+
+      if (LightEdit.owns(project) && !(action instanceof LightEditCompatible)) return false;
+
       if (action instanceof SuppressIntentionActionFromFix) {
         final ThreeState shouldBeAppliedToInjectionHost = ((SuppressIntentionActionFromFix)action).isShouldBeAppliedToInjectionHost();
         if (editor instanceof EditorWindow && shouldBeAppliedToInjectionHost == ThreeState.YES) {
@@ -135,7 +141,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
           return false;
         }
       }
-      
+
       if (action instanceof PsiElementBaseIntentionAction) {
         PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
         if (!psiAction.checkFile(psiFile)) {

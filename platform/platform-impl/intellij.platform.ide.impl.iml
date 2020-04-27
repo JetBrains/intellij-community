@@ -24,7 +24,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" exported="" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
-    <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -43,10 +42,10 @@
     <orderEntry type="library" name="imageio-tiff" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" scope="RUNTIME" />
-    <orderEntry type="library" exported="" name="StreamEx" level="project" />
+    <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="RUNTIME" />
-    <orderEntry type="library" exported="" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="fluent-hc" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
@@ -66,7 +65,21 @@
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.statistics" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.statistics.devkit" scope="RUNTIME" />
+    <orderEntry type="module-library">
+      <library name="byte-buddy-agent" type="repository">
+        <properties include-transitive-deps="false" maven-id="net.bytebuddy:byte-buddy-agent:1.10.1" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.10.1/byte-buddy-agent-1.10.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.10.1/byte-buddy-agent-1.10.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>

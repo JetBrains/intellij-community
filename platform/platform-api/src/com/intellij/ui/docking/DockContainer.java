@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking;
 
 import com.intellij.openapi.Disposable;
@@ -26,66 +12,75 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public interface DockContainer extends Disposable, Activatable {
-  enum ContentResponse {ACCEPT_MOVE, ACCEPT_COPY, DENY;
-    public boolean canAccept() {return this != DENY;}
+/**
+ * Implement {@link Activatable} if needed.
+ */
+public interface DockContainer {
+  enum ContentResponse {
+    ACCEPT_MOVE, ACCEPT_COPY, DENY;
+
+    public boolean canAccept() {
+      return this != DENY;
+    }
   }
 
+  @NotNull
   RelativeRectangle getAcceptArea();
 
   /**
-   * This area is used when nothing was found with getAcceptArea 
+   * This area is used when nothing was found with getAcceptArea
    */
-  RelativeRectangle getAcceptAreaFallback();
+  @NotNull
+  default RelativeRectangle getAcceptAreaFallback() {
+    return getAcceptArea();
+  }
 
   @NotNull
-  ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point);
+  ContentResponse getContentResponse(@NotNull DockableContent<?> content, RelativePoint point);
 
   JComponent getContainerComponent();
 
-  void add(@NotNull DockableContent content, RelativePoint dropTarget);
+  void add(@NotNull DockableContent<?> content, RelativePoint dropTarget);
 
   /**
    * Closes all contained editors.
    */
-  void closeAll();
+  default void closeAll() {
+  }
 
-  void addListener(Listener listener, Disposable parent);
+  default void addListener(@NotNull Listener listener, Disposable parent) {
+  }
 
   boolean isEmpty();
 
   @Nullable
-  Image startDropOver(@NotNull DockableContent content, RelativePoint point);
+  default Image startDropOver(@SuppressWarnings("unused") @NotNull DockableContent<?> content, @SuppressWarnings("unused") RelativePoint point) {
+    return null;
+  }
 
   @Nullable
-  Image processDropOver(@NotNull DockableContent content, RelativePoint point);
+  default Image processDropOver(@NotNull DockableContent<?> content, RelativePoint point) {
+    return null;
+  }
 
-  void resetDropOver(@NotNull DockableContent content);
-
+  default void resetDropOver(@NotNull DockableContent<?> content) {
+  }
 
   boolean isDisposeWhenEmpty();
 
   interface Dialog extends DockContainer {}
 
   interface Persistent extends DockContainer {
-
     String getDockContainerType();
-    Element getState();
 
+    Element getState();
   }
 
   interface Listener {
-    void contentAdded(@NotNull Object key);
-    void contentRemoved(Object key);
-    
-    class Adapter implements Listener {
-      @Override
-      public void contentAdded(@NotNull Object key) {
-      }
+    default void contentAdded(@SuppressWarnings("unused") @NotNull Object key) {
+    }
 
-      @Override
-      public void contentRemoved(Object key) {
-      }
+    default void contentRemoved(Object key) {
     }
   }
 }

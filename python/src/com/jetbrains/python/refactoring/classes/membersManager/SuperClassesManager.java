@@ -50,7 +50,7 @@ class SuperClassesManager extends MembersManager<PyClass> {
   @Override
   protected Collection<PyElement> moveMembers(@NotNull final PyClass from,
                                               @NotNull final Collection<PyMemberInfo<PyClass>> members,
-                                              @NotNull final PyClass... to) {
+                                              final PyClass @NotNull ... to) {
     final Collection<PyClass> elements = fetchElements(members);
     for (final PyClass destClass : to) {
       PyClassRefactoringUtil.addSuperclasses(from.getProject(), destClass, elements.toArray(new PyClass[members.size()]));

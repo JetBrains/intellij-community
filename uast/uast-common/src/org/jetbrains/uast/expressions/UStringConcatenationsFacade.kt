@@ -10,7 +10,12 @@ import com.intellij.psi.util.StringEntry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
-
+/**
+ * A helper class to work with string concatenations with variables and interpolated strings in a language-abstract way (UAST-based).
+ * It is mostly useful for working with reference/language injections in cases when it is injected into multiple [PsiLanguageInjectionHost] joined together.
+ *
+ * @see PartiallyKnownString
+ */
 class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: UExpression) {
 
   val uastOperands: Sequence<UExpression> = run {
@@ -80,7 +85,7 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
   }
 
   @ApiStatus.Experimental
-  fun asPartiallyKnownString() = PartiallyKnownString(segments.map { segment ->
+  fun asPartiallyKnownString() : PartiallyKnownString = PartiallyKnownString(segments.map { segment ->
     segment.value?.let { value ->
       StringEntry.Known(value, segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
     } ?: StringEntry.Unknown(segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
@@ -105,6 +110,4 @@ class UStringConcatenationsFacade @ApiStatus.Experimental constructor(uContext: 
       return UStringConcatenationsFacade(uElement)
     }
   }
-
 }
-

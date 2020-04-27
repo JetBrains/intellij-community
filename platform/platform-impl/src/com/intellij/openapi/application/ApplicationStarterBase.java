@@ -5,6 +5,7 @@ import com.intellij.ide.CliResult;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +70,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
     return Arrays.binarySearch(myArgsCount, args.size() - 1) != -1 && getCommandName().equals(args.get(0));
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public abstract String getUsageMessage();
 
   @NotNull
@@ -83,7 +85,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   }
 
   @Override
-  public void main(@NotNull String[] args) {
+  public void main(String @NotNull [] args) {
     int exitCode = 0;
     try {
       Future<CliResult> commandFuture = processCommand(Arrays.asList(args), null);

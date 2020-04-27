@@ -61,7 +61,7 @@ public class ConsoleExecuteAction extends DumbAwareAction {
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
                                @Nullable Condition<LanguageConsoleView> enabledCondition) {
-    super(null, null, AllIcons.Actions.Execute);
+    super(AllIcons.Actions.Execute);
 
     myConsoleView = consoleView;
     myExecuteActionHandler = executeActionHandler;

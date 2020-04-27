@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ReadAction;
@@ -18,9 +18,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
 public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
   @Override
   public boolean execute(@NotNull final AnnotatedElementsSearch.Parameters p, @NotNull final Processor<? super PsiModifierListOwner> consumer) {
@@ -83,7 +80,7 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
     });
   }
 
-  public static boolean isInstanceof(PsiElement owner, @NotNull Class<? extends PsiModifierListOwner>[] types) {
+  public static boolean isInstanceof(PsiElement owner, Class<? extends PsiModifierListOwner> @NotNull [] types) {
     for (Class<? extends PsiModifierListOwner> type : types) {
         if(type.isInstance(owner)) return true;
     }

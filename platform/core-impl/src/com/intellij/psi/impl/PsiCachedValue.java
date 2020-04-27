@@ -43,9 +43,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     myManager = manager;
   }
 
-  @NotNull
   @Override
-  protected Object[] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
+  protected Object @NotNull [] normalizeDependencies(@NotNull CachedValueProvider.Result<T> result) {
     Object[] dependencies = super.normalizeDependencies(result);
     if (dependencies.length > 0 && ContainerUtil.and(dependencies, this::anyChangeImpliesPsiCounterChange)) {
       return ArrayUtil.prepend(PSI_MOD_COUNT_OPTIMIZATION, dependencies);

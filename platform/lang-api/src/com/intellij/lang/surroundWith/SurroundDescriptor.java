@@ -40,8 +40,7 @@ public interface SurroundDescriptor {
    * @param endOffset   the selection end offset, with whitespaces skipped
    * @return the elements to be surrounded, or an empty array if cannot surround
    */
-  @NotNull
-  PsiElement[] getElementsToSurround(PsiFile file, int startOffset, int endOffset);
+  PsiElement @NotNull [] getElementsToSurround(PsiFile file, int startOffset, int endOffset);
 
   /**
    * Returns the list of surrounders (surround templates) which can be used for this
@@ -49,8 +48,7 @@ public interface SurroundDescriptor {
    *
    * @return the list of surrounders.
    */
-  @NotNull
-  Surrounder[] getSurrounders();
+  Surrounder @NotNull [] getSurrounders();
 
   boolean isExclusive();
 }

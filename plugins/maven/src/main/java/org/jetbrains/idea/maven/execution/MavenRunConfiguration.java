@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.CommonBundle;
 import com.intellij.build.*;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.impl.StartBuildEventImpl;
@@ -45,7 +46,6 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingCon
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
@@ -83,7 +83,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
     group.addEditor(RunnerBundle.message("maven.runner.parameters.title"), new MavenRunnerParametersSettingEditor(getProject()));
 
-    group.addEditor(MavenProjectBundle.message("maven.tab.general"), new MavenGeneralSettingsEditor(getProject()));
+    group.addEditor(CommonBundle.message("tab.title.general"), new MavenGeneralSettingsEditor(getProject()));
     group.addEditor(RunnerBundle.message("maven.tab.runner"), new MavenRunnerSettingsEditor(getProject()));
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;

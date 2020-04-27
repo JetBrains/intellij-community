@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 
-/**
- * @author nik
- */
 public class JUnitDependencyScopeSuggester extends LibraryDependencyScopeSuggester {
   private static final String[] JUNIT_JAR_MARKERS = {
     "org.junit.Test", "junit.framework.TestCase", "org.hamcrest.Matcher", "org.hamcrest.Matchers"

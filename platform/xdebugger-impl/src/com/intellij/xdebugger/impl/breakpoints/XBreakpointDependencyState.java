@@ -18,9 +18,6 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 
-/**
- * @author nik
-*/
 @Tag("dependency")
 public class XBreakpointDependencyState {
   private String myId;

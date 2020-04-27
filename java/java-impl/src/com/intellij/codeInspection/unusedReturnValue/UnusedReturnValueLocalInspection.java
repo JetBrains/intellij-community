@@ -38,9 +38,8 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
     return myGlobal.getShortName();
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiType.VOID.equals(method.getReturnType()) ||
         VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||

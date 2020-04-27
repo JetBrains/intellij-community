@@ -16,8 +16,7 @@ public abstract class LafManager {
     return ApplicationManager.getApplication().getComponent(LafManager.class);
   }
 
-  @NotNull
-  public abstract UIManager.LookAndFeelInfo[] getInstalledLookAndFeels();
+  public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
   public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
@@ -31,7 +30,11 @@ public abstract class LafManager {
   @ApiStatus.Internal
   public abstract LafReference getCurrentLookAndFeelReference();
 
-  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
+  public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
+    setCurrentLookAndFeel(lookAndFeelInfo, false);
+  }
+
+  public abstract void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme);
 
   public abstract void updateUI();
 

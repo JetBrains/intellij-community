@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class JavaCompilingTool {
   @NotNull
   public abstract String getId();

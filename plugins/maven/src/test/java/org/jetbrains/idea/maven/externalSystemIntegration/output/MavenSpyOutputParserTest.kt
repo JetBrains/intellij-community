@@ -40,6 +40,27 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
+  fun testdependencyInSinleMojoFailed() {
+    failOnWarns {
+      assertSameLines("io.testproject:web-test-example:jar:1.1\n" +
+                      "  resources\n" +
+                      "  compile\n" +
+                      "  testResources\n" +
+                      "  testCompile\n" +
+                      "  test\n" +
+                      "  jar\n" +
+                      "  single\n" +
+                      "   dependencies\n" +
+                      "    error:Failure to find io.testproject:java-sdk:pom:1.0 in https://repo.maven.apache.org/maven2 was cached in the local repository, resolution will not be reattempted until the update interval of central has elapsed or updates are forced\n" +
+                      "    error:Could not find artifact io.testproject:example-addon-proxy:pom:0.0.1-SNAPSHOT\n" +
+                      "  install",
+
+      testCase(*fromFile("org/jetbrains/maven/buildlogs/single-io.testproject.log"))
+        .withSkippedOutput()
+        .runAndFormatToString())
+    }
+  }
+
   fun testSuccessfullBuildWithOutputTwoSubmodules() {
     failOnWarns {
       assertSameLines("test:project:pom:1\n" +
@@ -172,4 +193,6 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
                         .runAndFormatToString())
     }
   }
+
+
 }

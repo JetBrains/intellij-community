@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class XBreakpointFileGroup extends XBreakpointGroup {
   private final VirtualFile myFile;
 

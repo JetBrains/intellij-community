@@ -17,9 +17,8 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
     return true;
   }
 
-  @Nullable
   @Override
-  public AnAction[] getActions(@NotNull PsiFile file) {
+  public AnAction @Nullable [] getActions(@NotNull PsiFile file) {
     return EditorConfigActionUtil.createNavigationActions(file);
   }
 

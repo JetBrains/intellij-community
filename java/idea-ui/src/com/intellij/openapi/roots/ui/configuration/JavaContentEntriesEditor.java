@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,7 +23,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -85,12 +85,12 @@ public class JavaContentEntriesEditor extends CommonContentEntriesEditor {
     final Runnable searchRunnable = () -> {
       final Runnable process = () -> {
         for (final File file : fileToEntryMap.keySet()) {
-          progressIndicator.setText(ProjectBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
+          progressIndicator.setText(JavaUiBundle.message("module.paths.searching.source.roots.progress", file.getPath()));
           final Collection<JavaModuleSourceRoot> roots = JavaSourceRootDetectionUtil.suggestRoots(file);
           entryToRootMap.put(fileToEntryMap.get(file), roots);
         }
       };
-      progressWindow.setTitle(ProjectBundle.message("module.paths.searching.source.roots.title"));
+      progressWindow.setTitle(JavaUiBundle.message("module.paths.searching.source.roots.title"));
       ProgressManager.getInstance().runProcess(process, progressIndicator);
     };
 

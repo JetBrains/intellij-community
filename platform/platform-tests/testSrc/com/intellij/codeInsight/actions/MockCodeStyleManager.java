@@ -23,8 +23,7 @@ import java.util.*;
 public class MockCodeStyleManager extends CodeStyleManager {
   private Map<PsiFile, ChangedLines[]> myFormattedLinesForFile = new HashMap<>();
 
-  @NotNull
-  public ChangedLines[] getFormattedLinesFor(@NotNull PsiFile file) {
+  public ChangedLines @NotNull [] getFormattedLinesFor(@NotNull PsiFile file) {
     ChangedLines[] changedLines = myFormattedLinesForFile.get(file);
     return changedLines != null ? changedLines : new ChangedLines[0];
   }

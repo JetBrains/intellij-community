@@ -35,9 +35,8 @@ public interface XmlFileNSInfoProvider {
    * null if the interface implementation does not know about such mapping.
    * Empty nsPrefix is "", nsPrefix, namespaceId should not be null, invalid mapping table is skipped.
    */
-  @Nullable
   @NonNls
-  String[][] getDefaultNamespaces(@NotNull XmlFile file);
+  String[] @Nullable [] getDefaultNamespaces(@NotNull XmlFile file);
 
   boolean overrideNamespaceFromDocType(@NotNull XmlFile file);
 }

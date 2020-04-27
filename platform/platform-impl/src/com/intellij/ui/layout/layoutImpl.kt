@@ -35,7 +35,7 @@ interface LayoutBuilderImpl {
   // Validation applicants for custom validation events
   val customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit>
 
-  val applyCallbacks: List<() -> Unit>
-  val resetCallbacks: List<() -> Unit>
-  val isModifiedCallbacks: List<() -> Boolean>
+  val applyCallbacks: MultiMap<JComponent?, () -> Unit>
+  val resetCallbacks: MultiMap<JComponent?, () -> Unit>
+  val isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean>
 }

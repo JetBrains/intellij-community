@@ -95,9 +95,8 @@ public class TooBroadThrowsInspection extends BaseInspection {
     return new AddThrowsClauseFix(maskedExceptions, originalNeeded.booleanValue());
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement context = (PsiElement)infos[2];
     final SuppressForTestsScopeFix suppressFix = SuppressForTestsScopeFix.build(this, context);
     if (suppressFix == null) {
@@ -130,7 +129,7 @@ public class TooBroadThrowsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix 'throws' clause";
+      return InspectionGadgetsBundle.message("add.throws.clause.fix.family.name");
     }
 
     @Override

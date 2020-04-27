@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -61,7 +62,8 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Convert " + (isConvertToRelative() ? "absolute" : "relative") + " path to " + (isConvertToRelative() ? "relative" : "absolute");
+    return JavaBundle
+      .message("intention.family.convert.0.path.to.1", isConvertToRelative() ? "absolute" : "relative", isConvertToRelative() ? "relative" : "absolute");
   }
 
   @Override
@@ -77,6 +79,6 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   @NotNull
   @Override
   public String getText() {
-    return "Convert path to " + (isConvertToRelative() ? "relative" : "absolute");
+    return JavaBundle.message("intention.text.convert.path.to.0", isConvertToRelative() ? "relative" : "absolute");
   }
 }

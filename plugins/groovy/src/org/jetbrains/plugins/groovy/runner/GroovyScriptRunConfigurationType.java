@@ -70,6 +70,11 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     }
 
     @Override
+    public @NotNull String getId() {
+      return "Groovy";
+    }
+
+    @Override
     public boolean isApplicable(@NotNull Project project) {
       return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
     }

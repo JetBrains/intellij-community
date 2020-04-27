@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -90,8 +91,8 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
 
   @Nullable
   @Override
-  public String getActionName(@NotNull PsiElement[] elements) {
-    return "Move Inner Class...";
+  public String getActionName(PsiElement @NotNull [] elements) {
+    return JavaRefactoringBundle.message("move.inner.class.action.name");
   }
 
   private static class SelectInnerOrMembersRefactoringDialog extends DialogWrapper {
@@ -125,10 +126,10 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new BorderLayout());
       myRbMoveInner = new JRadioButton();
-      myRbMoveInner.setText(RefactoringBundle.message("move.inner.class.to.upper.level", myClassName));
+      myRbMoveInner.setText(JavaRefactoringBundle.message("move.inner.class.to.upper.level", myClassName));
       myRbMoveInner.setSelected(true);
       myRbMoveMembers = new JRadioButton();
-      myRbMoveMembers.setText(RefactoringBundle.message("move.inner.class.to.another.class", myClassName));
+      myRbMoveMembers.setText(JavaRefactoringBundle.message("move.inner.class.to.another.class", myClassName));
 
 
       ButtonGroup gr = new ButtonGroup();

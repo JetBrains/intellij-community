@@ -18,6 +18,5 @@ public interface InspectionToolProvider {
    *
    * @return classes that extend {@link InspectionProfileEntry}
    */
-  @NotNull
-  Class<? extends LocalInspectionTool>[] getInspectionClasses();
+  Class<? extends LocalInspectionTool> @NotNull [] getInspectionClasses();
 }

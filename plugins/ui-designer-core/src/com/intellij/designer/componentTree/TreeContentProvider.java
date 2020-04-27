@@ -38,9 +38,8 @@ public final class TreeContentProvider extends AbstractTreeStructure {
     return myTreeRoot;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     if (element == myTreeRoot) {
       return myDesigner.getTreeRoots();
     }

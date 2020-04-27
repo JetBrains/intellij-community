@@ -22,7 +22,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
   @Override
   public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                  @NotNull PsiSubstitutor substitutor,
-                                                 @NotNull String[] options) {
+                                                 String @NotNull [] options) {
     int argNum = extractArgNum(options);
     boolean index = extractIndex(options);
 

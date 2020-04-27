@@ -46,9 +46,8 @@ public class InterfaceNeverImplementedInspection extends BaseInspection {
     ignorableAnnotations.writeSettings(node, "ignorableAnnotations");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     return AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations);
   }

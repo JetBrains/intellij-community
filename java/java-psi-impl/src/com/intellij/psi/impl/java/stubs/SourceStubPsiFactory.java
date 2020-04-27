@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.tree.java.*;
 
-/**
- * @author max
- */
 public class SourceStubPsiFactory extends StubPsiFactory {
   public static final SourceStubPsiFactory INSTANCE = new SourceStubPsiFactory();
 

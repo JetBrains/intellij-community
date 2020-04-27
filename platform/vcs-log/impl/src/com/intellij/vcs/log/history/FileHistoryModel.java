@@ -56,7 +56,7 @@ public abstract class FileHistoryModel {
   }
 
   @Nullable
-  public Change getSelectedChange(@NotNull int[] rows) {
+  public Change getSelectedChange(int @NotNull [] rows) {
     if (rows.length == 0) return null;
     int row = rows[0];
     List<Integer> parentRows;

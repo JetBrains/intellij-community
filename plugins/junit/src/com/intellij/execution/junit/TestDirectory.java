@@ -3,6 +3,7 @@ package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -163,11 +164,11 @@ class TestDirectory extends TestPackage {
     final String dirName = data.getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
-      throw new CantRunException(ExecutionBundle.message("directory.not.found.error.message", dirName));
+      throw new CantRunException(JUnitBundle.message("directory.not.found.error.message", dirName));
     }
     final PsiDirectory directory = ReadAction.compute(() -> PsiManager.getInstance(getConfiguration().getProject()).findDirectory(file));
     if (directory == null) {
-      throw new CantRunException(ExecutionBundle.message("directory.not.found.error.message", dirName));
+      throw new CantRunException(JUnitBundle.message("directory.not.found.error.message", dirName));
     }
     return directory;
   }
@@ -176,7 +177,7 @@ class TestDirectory extends TestPackage {
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     final String dirName = data.getDirName();
-    return dirName.isEmpty() ? ExecutionBundle.message("all.tests.scope.presentable.text")
+    return dirName.isEmpty() ? JUnitBundle.message("all.tests.scope.presentable.text")
                              : ExecutionBundle.message("test.in.scope.presentable.text", StringUtil.getShortName(FileUtil.toSystemIndependentName(dirName), '/'));
   }
 

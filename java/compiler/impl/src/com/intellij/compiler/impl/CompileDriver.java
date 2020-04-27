@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -46,10 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -290,7 +286,7 @@ public final class CompileDriver {
           if (compileContext.shouldUpdateProblemsView() && kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
             // treat JPS_INFO messages in a special way: add them as info messages to the problems view
             final Project project = compileContext.getProject();
-            ProblemsView.SERVICE.getInstance(project).addMessage(
+            ProblemsView.getInstance(project).addMessage(
               new CompilerMessageImpl(project, category, messageText),
               compileContext.getSessionId()
             );
@@ -376,7 +372,8 @@ public final class CompileDriver {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    final String name = CompilerBundle.message(isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
+    final String name = JavaCompilerBundle
+      .message(isRebuild ? "compiler.content.name.rebuild" : forceCompile ? "compiler.content.name.recompile" : "compiler.content.name.make");
     final CompilerTask compileTask = new CompilerTask(
       myProject, name, isUnitTestMode, !withModalProgress, true, isCompilationStartedAutomatically(scope), withModalProgress
     );
@@ -457,8 +454,9 @@ public final class CompileDriver {
     compileTask.start(compileWork, () -> {
       if (isRebuild) {
         final int rv = Messages.showOkCancelDialog(
-            myProject, "You are about to rebuild the whole project.\nRun 'Build Project' instead?", "Confirm Project Rebuild",
-            "Build", "Rebuild", Messages.getQuestionIcon()
+          myProject, JavaCompilerBundle.message("you.are.about.to.rebuild.the.whole.project"),
+          JavaCompilerBundle.message("confirm.project.rebuild"),
+          CommonBundle.message("button.build"), JavaCompilerBundle.message("button.rebuild"), Messages.getQuestionIcon()
         );
         if (rv == Messages.OK /*yes, please, do run make*/) {
           startup(scope, false, false, callback, null);
@@ -486,7 +484,7 @@ public final class CompileDriver {
         Collection<String> affectedRoots = ContainerUtil.newHashSet(CompilerPaths.getOutputPaths(affectedModules));
         if (!affectedRoots.isEmpty()) {
           ProgressIndicator indicator = compileContext.getProgressIndicator();
-          indicator.setText("Synchronizing output directories...");
+          indicator.setText(JavaCompilerBundle.message("synchronizing.output.directories"));
           CompilerUtil.refreshOutputRoots(affectedRoots);
           indicator.setText("");
         }
@@ -534,19 +532,19 @@ public final class CompileDriver {
   private static String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount, long duration) {
     String message;
     if (status == ExitStatus.CANCELLED) {
-      message = CompilerBundle.message("status.compilation.aborted");
+      message = JavaCompilerBundle.message("status.compilation.aborted");
     }
     else if (status == ExitStatus.UP_TO_DATE) {
-      message = CompilerBundle.message("status.all.up.to.date");
+      message = JavaCompilerBundle.message("status.all.up.to.date");
     }
     else  {
       if (status == ExitStatus.SUCCESS) {
         message = warningCount > 0
-               ? CompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
-               : CompilerBundle.message("status.compilation.completed.successfully");
+               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
+               : JavaCompilerBundle.message("status.compilation.completed.successfully");
       }
       else {
-        message = CompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
       }
       message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
@@ -591,7 +589,7 @@ public final class CompileDriver {
       List<CompileTask> tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTaskList();
       if (tasks.size() > 0) {
         progressIndicator.setText(
-          CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
+          JavaCompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
           try {
             if (!task.execute(context)) {
@@ -663,7 +661,8 @@ public final class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, ProjectBundle.message("modules.classpath.title"));
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle
+          .message("modules.classpath.title"));
         return false;
       }
 
@@ -718,7 +717,7 @@ public final class CompileDriver {
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
+    Messages.showMessageDialog(myProject, JavaCompilerBundle.message("error.chunk.modules.must.have.same.language.level", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
@@ -728,7 +727,7 @@ public final class CompileDriver {
     LOG.assertTrue(firstModule != null);
     String moduleNameToSelect = firstModule.getName();
     final String moduleNames = getModulesString(modulesInChunk);
-    Messages.showMessageDialog(myProject, CompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
+    Messages.showMessageDialog(myProject, JavaCompilerBundle.message("error.chunk.modules.must.have.same.jdk", moduleNames),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     showConfigurationDialog(moduleNameToSelect, null);
   }
@@ -741,7 +740,7 @@ public final class CompileDriver {
     return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
-  private void showNotSpecifiedError(@NonNls final String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
+  private void showNotSpecifiedError(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
                                      String editorNameToSelect) {
     String nameToSelect = null;
     final StringBuilder names = new StringBuilder();
@@ -760,7 +759,7 @@ public final class CompileDriver {
     if (modules.size() > maxModulesToShow) {
       names.append(",\n...");
     }
-    final String message = CompilerBundle.message(resourceId, modules.size(), names.toString());
+    final String message = JavaCompilerBundle.message(resourceId, modules.size(), names.toString());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);

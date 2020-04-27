@@ -34,9 +34,8 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
     CommonClassNames.JAVA_LANG_OBJECT + "[]"
   };
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final String dataProviderFqn = DataProvider.class.getName();
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
     if (annotation != null) {

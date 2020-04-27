@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public class DiffStringBuilder implements CharSequence {
-  @NotNull private char[] myData;
+  private char @NotNull [] myData;
   private int myLength;
 
   public DiffStringBuilder() {

@@ -54,7 +54,7 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     return myActionIds;
   }
 
-  public void setActionIds(@NotNull String[] value) {
+  public void setActionIds(String @NotNull [] value) {
     myActionIds = value;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

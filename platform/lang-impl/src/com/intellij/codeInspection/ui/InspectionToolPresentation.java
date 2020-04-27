@@ -60,8 +60,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Collection<RefEntity> getResolvedElements();
 
-  @NotNull
-  CommonProblemDescriptor[] getResolvedProblems(@NotNull RefEntity entity);
+  CommonProblemDescriptor @NotNull [] getResolvedProblems(@NotNull RefEntity entity);
 
   void suppressProblem(@NotNull CommonProblemDescriptor descriptor);
 
@@ -71,8 +70,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   boolean isSuppressed(CommonProblemDescriptor descriptor);
 
-  @NotNull
-  CommonProblemDescriptor[] getSuppressedProblems(@NotNull RefEntity entity);
+  CommonProblemDescriptor @NotNull [] getSuppressedProblems(@NotNull RefEntity entity);
 
   void cleanup();
   @Nullable
@@ -82,13 +80,12 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   HTMLComposerImpl getComposer();
 
-  @NotNull
-  QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
+  QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements);
   @NotNull
   SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements();
   @NotNull
   Collection<CommonProblemDescriptor> getProblemDescriptors();
-  void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions);
+  void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, CommonProblemDescriptor @NotNull ... descriptions);
 
   @NotNull
   GlobalInspectionContextImpl getContext();
@@ -157,7 +154,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
       severity = presentation.getSeverity(refElement);
     }
     if (severity == null) {
-      severity = profile.getErrorLevel(HighlightDisplayKey.find(presentation.getToolWrapper().getShortName()), psiElement).getSeverity();
+      String shortName = presentation.getToolWrapper().getShortName();
+      severity = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
     }
     return severity;
   }

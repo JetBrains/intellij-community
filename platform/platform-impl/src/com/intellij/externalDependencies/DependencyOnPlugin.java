@@ -24,8 +24,6 @@ import java.util.Arrays;
 
 /**
  * Describes a plugin (and optionally its versions range) which is required for a project to operate normally.
- *
- * @author nik
  */
 public class DependencyOnPlugin implements ProjectExternalDependency, Comparable<DependencyOnPlugin> {
   private final String myPluginId;

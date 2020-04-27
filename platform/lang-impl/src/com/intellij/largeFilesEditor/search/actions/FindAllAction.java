@@ -2,10 +2,12 @@
 package com.intellij.largeFilesEditor.search.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.largeFilesEditor.search.searchTask.SearchTaskOptions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +19,9 @@ public class FindAllAction extends AnAction implements DumbAware {
   public FindAllAction(LfeSearchManager searchManager) {
     this.searchManager = searchManager;
 
-    getTemplatePresentation().setDescription("Search the whole file from the beginning " +
-                                             "and show matching strings in the tool window");
-    getTemplatePresentation().setText("Search All");
+    getTemplatePresentation().setDescription(
+      EditorBundle.message("large.file.editor.action.description.search.entire.file.and.show.toolwindow"));
+    getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.FindAllAction.text"));
     getTemplatePresentation().setIcon(AllIcons.Actions.FindEntireFile);
   }
 

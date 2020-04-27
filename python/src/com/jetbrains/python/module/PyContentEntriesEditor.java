@@ -8,9 +8,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction;
 import com.intellij.openapi.util.Comparing;
@@ -18,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 public class PyContentEntriesEditor extends CommonContentEntriesEditor {
@@ -147,14 +147,18 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     }
 
     @Override
-    public void deleteContentFolder(ContentEntry contentEntry, ContentFolder folder) {
-      for (PyRootTypeProvider provider : myRootTypeProviders) {
-        if (provider.isMine(folder)) {
-          removeRoot(contentEntry, folder.getUrl(), provider);
-          return;
+    public void deleteContentFolder(ContentEntry contentEntry, ContentFolderRef folderRef) {
+      if (folderRef instanceof ExternalContentFolderRef) {
+        String url = folderRef.getUrl();
+        for (PyRootTypeProvider provider : myRootTypeProviders) {
+          Collection<VirtualFilePointer> roots = provider.getRoots().get(contentEntry);
+          if (roots.stream().anyMatch(pointer -> pointer.getUrl().equals(url))) {
+            removeRoot(contentEntry, url, provider);
+            return;
+          }
         }
       }
-      super.deleteContentFolder(contentEntry, folder);
+      super.deleteContentFolder(contentEntry, folderRef);
     }
 
     public void removeRoot(@Nullable ContentEntry contentEntry, String folder, PyRootTypeProvider provider) {
@@ -194,9 +198,9 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
 
       @Override
       @NotNull
-      protected ContentEntryImpl getContentEntry() {
+      protected ContentEntry getContentEntry() {
         //noinspection ConstantConditions
-        return (ContentEntryImpl)MyContentEntryEditor.this.getContentEntry();
+        return MyContentEntryEditor.this.getContentEntry();
       }
 
       @Override
@@ -204,9 +208,11 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
         super.addFolderGroupComponents();
         for (PyRootTypeProvider provider : myRootTypeProviders) {
           MultiMap<ContentEntry, VirtualFilePointer> roots = provider.getRoots();
-          if (!roots.get(getContentEntry()).isEmpty()) {
+          Collection<VirtualFilePointer> pointers = roots.get(getContentEntry());
+          if (!pointers.isEmpty()) {
+            List<ExternalContentFolderRef> folderRefs = ContainerUtil.map(pointers, ExternalContentFolderRef::new);
             final JComponent sourcesComponent = createFolderGroupComponent(provider.getName() + " Folders",
-                                                                           provider.createFolders(getContentEntry()),
+                                                                           folderRefs,
                                                                            provider.getColor(), null);
             this.add(sourcesComponent, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH,
                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 0, 10, 0), 0, 0));

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
 import com.google.common.collect.Collections2;
@@ -23,9 +23,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-/**
- * @author traff
- */
 public class MultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(MultiProcessDebugger.class);
 
@@ -177,6 +174,12 @@ public class MultiProcessDebugger implements ProcessDebugger {
   @Override
   public XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException {
     return debugger(threadId).loadFrame(threadId, frameId);
+  }
+
+  @Override
+  public  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+    throws PyDebuggerException {
+    return debugger(threadId).getSmartStepIntoVariants(threadId, frameId, startContextLine, endContextLine);
   }
 
   @Override
@@ -364,8 +367,8 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
-  public void smartStepInto(String threadId, String functionName) {
-    debugger(threadId).smartStepInto(threadId, functionName);
+  public void smartStepInto(String threadId, String frameId, String functionName, int callOrder, int contextStartLine, int contextEndLine) {
+    debugger(threadId).smartStepInto(threadId, frameId, functionName, callOrder, contextStartLine, contextEndLine);
   }
 
   @Override

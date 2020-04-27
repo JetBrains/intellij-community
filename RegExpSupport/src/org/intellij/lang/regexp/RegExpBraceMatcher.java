@@ -23,9 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RegExpBraceMatcher implements PairedBraceMatcher {
-  @NotNull
   @Override
-  public BracePair[] getPairs() {
+  public BracePair @NotNull [] getPairs() {
     return new BracePair[]{
       new BracePair(RegExpTT.GROUP_BEGIN, RegExpTT.GROUP_END, true),
       new BracePair(RegExpTT.SET_OPTIONS, RegExpTT.GROUP_END, true), new BracePair(RegExpTT.NON_CAPT_GROUP, RegExpTT.GROUP_END, true),

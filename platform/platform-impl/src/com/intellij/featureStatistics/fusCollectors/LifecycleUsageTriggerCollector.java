@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -33,6 +34,7 @@ public final class LifecycleUsageTriggerCollector {
     addIfTrue(data, "command_line", app.isCommandLine());
     addIfTrue(data, "internal", app.isInternal());
     addIfTrue(data, "headless", app.isHeadlessEnvironment());
+    addIfTrue(data, "debug_agent", DebugAttachDetector.isDebugEnabled());
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "ide.start", data);
   }
 
@@ -62,6 +64,11 @@ public final class LifecycleUsageTriggerCollector {
   public static void onProjectClosed(@NotNull Project project) {
     final FeatureUsageData data = new FeatureUsageData().addProject(project);
     FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "project.closed", data);
+  }
+
+  public static void onProjectModuleAttached(@NotNull Project project) {
+    final FeatureUsageData data = new FeatureUsageData().addProject(project);
+    FUCounterUsageLogger.getInstance().logEvent(LIFECYCLE, "project.module.attached", data);
   }
 
   public static void onFrameActivated(@Nullable Project project) {

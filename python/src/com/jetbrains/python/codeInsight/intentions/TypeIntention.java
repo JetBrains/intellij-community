@@ -109,7 +109,7 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     else {
       definitions = StreamEx.of(getCallExpressions(elementAt))
                             .flatMap(call -> StreamEx.of(call.multiResolveCallee(getResolveContext(elementAt))))
-                            .map(result -> result.getElement())
+                            .map(result -> result.getCallable())
                             .select(PyFunction.class);
     }
     final ProjectFileIndex index = ProjectFileIndex.getInstance(elementAt.getProject());

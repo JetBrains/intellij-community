@@ -45,8 +45,7 @@ final class QuickFixManagerImpl extends QuickFixManager <PropertyInspectorTable>
   }
 
   @Override
-  @NotNull
-  public ErrorInfo[] getErrorInfos() {
+  public ErrorInfo @NotNull [] getErrorInfos() {
     final int selectedRow = myComponent.getSelectedRow();
     if(selectedRow < 0 || selectedRow >= myComponent.getRowCount()){
       return ErrorInfo.EMPTY_ARRAY;

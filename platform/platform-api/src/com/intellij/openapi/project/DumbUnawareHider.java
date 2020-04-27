@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ public final class DumbUnawareHider extends JBPanelWithEmptyText {
   public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
     super(new BorderLayout());
     this.myDumbUnawareContent = dumbUnawareContent;
-    getEmptyText().setText("This view is not available until indices are built");
+    getEmptyText().setText(IdeBundle.message("empty.text.this.view.is.not.available.until.indices.are.built"));
     add(dumbUnawareContent, BorderLayout.CENTER);
   }
 

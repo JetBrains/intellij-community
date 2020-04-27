@@ -190,7 +190,7 @@ public class GitMergeHandler {
 
     public boolean checkIsValid() {
       if (myIsValid) {
-        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(myConflict.getRoot());
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(myConflict.getRoot());
         if (repository == null) return true;
         myIsValid = repository.getConflictsHolder().findConflict(myConflict.getFilePath()) != null;
       }

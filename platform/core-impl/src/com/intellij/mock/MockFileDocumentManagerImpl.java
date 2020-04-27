@@ -70,8 +70,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
-  @NotNull
-  public Document[] getUnsavedDocuments() {
+  public Document @NotNull [] getUnsavedDocuments() {
     return Document.EMPTY_ARRAY;
   }
 
@@ -95,7 +94,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
-  public void reloadFiles(@NotNull final VirtualFile... files) {
+  public void reloadFiles(final VirtualFile @NotNull ... files) {
   }
 
   @Override

@@ -14,8 +14,6 @@ import java.util.List;
 /**
  * Implement this class and return its instance from {@link com.intellij.xdebugger.XDebugProcess#getSmartStepIntoHandler()} to support
  * Smart Step Into action
- *
- * @author nik
  */
 public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVariant> {
 

@@ -16,6 +16,7 @@
 package com.siyeh.ig.javabeans;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -49,7 +50,7 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Only warn when field matching getter/setter name is present", this, "onlyWarnWhenFieldPresent");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.suspicious.getter.setter.field.option"), this, "onlyWarnWhenFieldPresent");
   }
 
   @Override

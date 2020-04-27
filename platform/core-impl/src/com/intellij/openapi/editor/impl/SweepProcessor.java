@@ -26,7 +26,7 @@ import java.util.Queue;
 
 @FunctionalInterface
 public interface SweepProcessor<T> {
-  boolean process(int offset, @NotNull T interval, boolean atStart, @NotNull Collection<T> overlappingIntervals);
+  boolean process(int offset, @NotNull T interval, boolean atStart, @NotNull Collection<? extends T> overlappingIntervals);
 
   /**
    * Process all intervals from generator in their "start offset - then end offset" order.
@@ -66,6 +66,6 @@ public interface SweepProcessor<T> {
 
   @FunctionalInterface
   interface Generator<T> {
-    boolean generateInStartOffsetOrder(@NotNull Processor<T> processor);
+    boolean generateInStartOffsetOrder(@NotNull Processor<? super T> processor);
   }
 }

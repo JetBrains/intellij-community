@@ -13,9 +13,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.Position;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public abstract class DebuggerFramesList extends JBList implements OccurenceNavigator {
   public DebuggerFramesList() {
     super(new CollectionListModel());

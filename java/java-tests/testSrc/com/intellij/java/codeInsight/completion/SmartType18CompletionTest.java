@@ -83,6 +83,8 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testInCollectionForEach() { doTest();}
+
   public void testConstructorRef() {
     doTest(false);
   }

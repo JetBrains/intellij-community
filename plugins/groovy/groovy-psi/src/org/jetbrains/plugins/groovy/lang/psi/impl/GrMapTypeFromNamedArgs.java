@@ -44,11 +44,11 @@ public class GrMapTypeFromNamedArgs extends GrMapType {
 
   };
 
-  public GrMapTypeFromNamedArgs(@NotNull PsiElement context, @NotNull GrNamedArgument[] namedArgs) {
+  public GrMapTypeFromNamedArgs(@NotNull PsiElement context, GrNamedArgument @NotNull [] namedArgs) {
     this(JavaPsiFacade.getInstance(context.getProject()), context.getResolveScope(), namedArgs);
   }
 
-  public GrMapTypeFromNamedArgs(@NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope, @NotNull GrNamedArgument[] namedArgs) {
+  public GrMapTypeFromNamedArgs(@NotNull JavaPsiFacade facade, @NotNull GlobalSearchScope scope, GrNamedArgument @NotNull [] namedArgs) {
     super(facade, scope);
 
     myStringEntries = new LinkedHashMap<>();

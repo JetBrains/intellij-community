@@ -1,3 +1,0 @@
-deprecated: atrule.png; use 'icons.CssIcons' from 'intellij.css' module instead
-deprecated: import.png; use 'icons.CssIcons' from 'intellij.css' module instead
-deprecated: property.png; use 'icons.CssIcons' from 'intellij.css' module instead

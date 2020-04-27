@@ -111,8 +111,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  @NotNull
-  public PsiExpression[] getArrayDimensions() {
+  public PsiExpression @NotNull [] getArrayDimensions() {
     PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     PsiExpression qualifier = getQualifier();
     if (qualifier == null ||
@@ -141,8 +140,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public PsiPolyVariantCachingReference getConstructorFakeReference() {
     return CachedValuesManager.getCachedValue(this, () -> new CachedValueProvider.Result<>(new PsiPolyVariantCachingReference() {
       @Override
-      @NotNull
-      public JavaResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
+      public JavaResolveResult @NotNull [] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
         ASTNode classRef = findChildByRole(ChildRole.TYPE_REFERENCE);
         if (classRef != null) {
           ASTNode argumentList = PsiImplUtil.skipWhitespaceAndComments(classRef.getTreeNext());
@@ -229,8 +227,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return getTypeArgumentList().getTypeArguments();
   }
 

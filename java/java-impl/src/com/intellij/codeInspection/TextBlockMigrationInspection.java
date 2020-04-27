@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +32,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.text.block.migration.suggest.literal.replacement"),
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement"),
                                           this,
                                           "mySuggestLiteralReplacement");
   }
@@ -66,7 +67,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         if (nNewLines <= 1) return;
         boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
         holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
-                               InspectionsBundle.message("inspection.text.block.migration.message", "Concatenation"),
+                               JavaBundle.message("inspection.text.block.migration.message", "Concatenation"),
                                new ReplaceWithTextBlockFix());
       }
 
@@ -80,7 +81,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         int newLineIdx = getNewLineIndex(text, 0);
         if (newLineIdx == -1 || getNewLineIndex(text, newLineIdx + 1) == -1) return;
         holder.registerProblem(expression, quickFixOnly ? null : new TextRange(newLineIdx, newLineIdx + 2),
-                               InspectionsBundle.message("inspection.text.block.migration.message", "String"),
+                               JavaBundle.message("inspection.text.block.migration.message", "String"),
                                new ReplaceWithTextBlockFix());
       }
     };
@@ -92,7 +93,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.replace.with.text.block.fix");
+      return JavaBundle.message("inspection.replace.with.text.block.fix");
     }
 
     @Override
@@ -111,7 +112,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       replaceWithTextBlock(polyadicExpression.getOperands(), polyadicExpression);
     }
 
-    private static void replaceWithTextBlock(@NotNull PsiExpression[] operands, @NotNull PsiExpression toReplace) {
+    private static void replaceWithTextBlock(PsiExpression @NotNull [] operands, @NotNull PsiExpression toReplace) {
       String[] lines = getContentLines(operands);
       if (lines == null) return;
       String textBlock = getTextBlock(lines);
@@ -119,7 +120,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @NotNull
-    private static String getTextBlock(@NotNull String[] lines) {
+    private static String getTextBlock(String @NotNull [] lines) {
       lines = getTextBlockLines(lines);
       int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, true);
       // we need additional indent call only when significant trailing line is missing
@@ -127,27 +128,17 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
       return "\"\"\"\n" + concatenateTextBlockLines(lines, indent) + "\"\"\"" + (indent > 0 ? ".indent(" + indent + ")" : "");
     }
 
-    @NotNull
-    private static String[] getTextBlockLines(@NotNull String[] lines) {
-      StringBuilder blockLines = new StringBuilder();
-      boolean escapeStartQuote = false;
-      for (int i = 0; i < lines.length; i++) {
-        String line = lines[i];
-        boolean isLastLine = i == lines.length - 1;
-        line = PsiLiteralUtil.escapeTextBlockCharacters(line, escapeStartQuote, isLastLine, isLastLine);
-        escapeStartQuote = line.endsWith("\"");
-        blockLines.append(line);
-      }
-      return blockLines.toString().split("(?<=\n)");
+    private static String @NotNull [] getTextBlockLines(String @NotNull [] lines) {
+      String blockLines = PsiLiteralUtil.escapeTextBlockCharacters(StringUtil.join(lines), true, true, true);
+      return blockLines.split("(?<=\n)");
     }
 
-    private static String concatenateTextBlockLines(@NotNull String[] lines, int indent) {
+    private static String concatenateTextBlockLines(String @NotNull [] lines, int indent) {
       if (indent <= 0) return StringUtil.join(lines);
       return Arrays.stream(lines).map(line -> indent < line.length() ? line.substring(indent) : line).collect(Collectors.joining());
     }
 
-    @Nullable
-    private static String[] getContentLines(@NotNull PsiExpression[] operands) {
+    private static String @Nullable [] getContentLines(PsiExpression @NotNull [] operands) {
       String[] lines = new String[operands.length];
       for (int i = 0; i < operands.length; i++) {
         PsiExpression operand = operands[i];

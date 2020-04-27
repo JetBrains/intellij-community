@@ -49,7 +49,7 @@ public class CvsStatusEnvironment implements UpdateEnvironment {
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles,
+  public UpdateSession updateDirectories(FilePath @NotNull [] contentRoots, final UpdatedFiles updatedFiles,
                                          ProgressIndicator progressIndicator,
                                          @NotNull final Ref<SequentialUpdatesContext> context) {
     final UpdateSettings updateSettings = UpdateSettings.DONT_MAKE_ANY_CHANGES;

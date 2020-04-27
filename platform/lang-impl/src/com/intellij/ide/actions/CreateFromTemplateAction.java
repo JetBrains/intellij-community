@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * @author Eugene.Kudelevsky
@@ -32,6 +34,10 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   public CreateFromTemplateAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
                                   @Nls(capitalization = Nls.Capitalization.Sentence) String description, Icon icon) {
     super(text, description, icon);
+  }
+
+  public CreateFromTemplateAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Override
@@ -48,7 +54,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final PsiDirectory dir = view.getOrChooseDirectory();
     if (dir == null || project == null) return;
 
-    final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
+    final CreateFileFromTemplateDialog.Builder builder = createDialogBuilder(project, dataContext);
     buildDialog(project, dir, builder);
 
     final Ref<String> selectedTemplateName = Ref.create(null);
@@ -74,10 +80,26 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                  },
                  createdElement -> {
                    if (createdElement != null) {
+                     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+                     int offset = getOffsetToPreserve(editor);
                      view.selectElement(createdElement);
+                     if (offset != -1 && editor != null && !editor.isDisposed()) {
+                       editor.getCaretModel().moveToOffset(offset);
+                     }
                      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
                    }
                  });
+  }
+
+  @SuppressWarnings("TestOnlyProblems")
+  private static CreateFileFromTemplateDialog.Builder createDialogBuilder(Project project, DataContext dataContext) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      TestDialogBuilder.TestAnswers answers = dataContext.getData(TestDialogBuilder.TestAnswers.KEY);
+      if (answers != null) {
+        return new TestDialogBuilder(answers);
+      }
+    }
+    return CreateFileFromTemplateDialog.createDialog(project);
   }
 
   protected void postProcess(T createdElement, String templateName, Map<String,String> customProperties) {
@@ -120,6 +142,13 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   @NotNull
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
+  }
+
+  private static Integer getOffsetToPreserve(Editor editor) {
+    if (editor == null) return -1;
+    int offset = editor.getCaretModel().getOffset();
+    if (offset == 0) return -1;
+    return offset;
   }
 
   //todo append $END variable to templates?

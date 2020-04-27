@@ -11,12 +11,9 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class XDebuggerUIConstants {
   /**
-   * Use {code {@link #getCollectingDataMessage()}} instead
+   * @deprecated Use {@link #getCollectingDataMessage()} instead
    */
   @Deprecated
   public static final String COLLECTING_DATA_MESSAGE = "Collecting data…";

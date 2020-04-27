@@ -7,6 +7,7 @@ import com.intellij.openapi.util.UserDataHolderUnprotected;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -191,7 +192,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @param message for error element.
      */
-    void error(@NotNull String message);
+    void error(@NotNull @Nls String message);
 
     /**
      * Like {@linkplain #error(String)}, but the marker is completed before specified one.
@@ -199,7 +200,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param message for error element.
      * @param before  marker to complete this one before.
      */
-    void errorBefore(@NotNull String message, @NotNull Marker before);
+    void errorBefore(@NotNull @Nls String message, @NotNull Marker before);
 
     /**
      * Allows to define custom edge token binders instead of default ones. If any of parameters is null
@@ -226,7 +227,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @param messageText the text of the error message displayed to the user.
    */
-  void error(@NotNull String messageText);
+  void error(@NotNull @Nls String messageText);
 
   /**
    * Checks if the lexer has reached the end of file.

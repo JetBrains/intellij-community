@@ -12,6 +12,7 @@ import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
@@ -66,7 +67,8 @@ public class PatchDiffRequestFactory {
       applier.execute();
 
       final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
-      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, "Current Version", null);
+      return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null,
+                                  DiffBundle.message("merge.version.title.current"), null);
     }
     else {
       String localContent = texts.getLocal();
@@ -74,7 +76,8 @@ public class PatchDiffRequestFactory {
       String patchedContent = texts.getPatched();
 
       return createDiffRequest(project, file, Arrays.asList(localContent, baseContent, patchedContent), null,
-                               Arrays.asList("Current Version", "Base Version", afterTitle));
+                               Arrays.asList(DiffBundle.message("merge.version.title.current"), DiffBundle.message("merge.version.title.base"),
+                                             afterTitle));
     }
   }
 
@@ -90,7 +93,7 @@ public class PatchDiffRequestFactory {
     if (windowTitle == null) windowTitle = getPatchTitle(file);
 
     String localTitle = StringUtil.notNullize(titles.get(0), VcsBundle.message("patch.apply.conflict.local.version"));
-    String baseTitle = StringUtil.notNullize(titles.get(1), "Base Version");
+    String baseTitle = StringUtil.notNullize(titles.get(1), DiffBundle.message("merge.version.title.base"));
     String patchedTitle = StringUtil.notNullize(titles.get(2), VcsBundle.message("patch.apply.conflict.patched.version"));
 
     FileType fileType = file != null ? file.getFileType() : null;
@@ -204,10 +207,10 @@ public class PatchDiffRequestFactory {
   @NotNull
   private static String getPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
-      return VcsBundle.message("patch.apply.conflict.title", getPresentablePath(file));
+      return VcsBundle.message("patch.apply.conflict.for.title", getPresentablePath(file));
     }
     else {
-      return "Patch Conflict";
+      return VcsBundle.message("patch.apply.conflict.title");
     }
   }
 
@@ -215,10 +218,10 @@ public class PatchDiffRequestFactory {
   @NotNull
   private static String getBadPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
-      return "Result of Patch Apply to " + getPresentablePath(file);
+      return VcsBundle.message("patch.apply.bad.diff.to.title", getPresentablePath(file));
     }
     else {
-      return "Result of Patch Apply";
+      return VcsBundle.message("patch.apply.bad.diff.title");
     }
   }
 

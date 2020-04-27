@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ import java.awt.*;
  *
  * @author tav
  */
-public class AATextInfo {
+public final class AATextInfo {
   public final @Nullable Object aaHint;
   public final @Nullable Integer lcdContrastHint;
 
@@ -33,11 +33,11 @@ public class AATextInfo {
   }
 
   public static Object create(@NotNull Object aaHint, @NotNull Integer lcdContrastHint) {
-    return SystemInfo.IS_AT_LEAST_JAVA9 ? new AATextInfo(aaHint, lcdContrastHint) : UIUtilities.createAATextInfo(aaHint, lcdContrastHint);
+    return SystemInfoRt.IS_AT_LEAST_JAVA9 ? new AATextInfo(aaHint, lcdContrastHint) : UIUtilities.createAATextInfo(aaHint, lcdContrastHint);
   }
 
   public static void putClientProperty(@Nullable Object aaTextInfo, @NotNull JComponent component) {
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       AATextInfo info = (AATextInfo)ObjectUtils.notNull(aaTextInfo, new AATextInfo(null, null));
       component.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, info.aaHint);
       component.putClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST, info.lcdContrastHint);
@@ -48,7 +48,7 @@ public class AATextInfo {
   }
 
   public static Object getClientProperty(@NotNull JComponent component) {
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       Object aaHint = component.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING);
       Object lcdContrastHint = component.getClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST);
       return new AATextInfo(aaHint, lcdContrastHint != null ? (Integer)lcdContrastHint : null);

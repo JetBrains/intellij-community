@@ -23,6 +23,12 @@ public class LocalTargetEnvironment implements TargetEnvironment {
 
   @NotNull
   @Override
+  public TargetEnvironmentRequest getRequest() {
+    return myRequest;
+  }
+
+  @NotNull
+  @Override
   public TargetPlatform getRemotePlatform() {
     return TargetPlatform.CURRENT;
   }
@@ -36,7 +42,7 @@ public class LocalTargetEnvironment implements TargetEnvironment {
   @NotNull
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
-      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously(this));
+      GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously());
       if (myRequest instanceof LocalTargetEnvironmentRequest) {
         generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)myRequest).getParentEnvironmentType());
       }

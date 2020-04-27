@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -35,6 +37,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class MavenIndicesManager implements Disposable {
   private static final String ELEMENT_ARCHETYPES = "archetypes";
@@ -60,7 +63,7 @@ public final class MavenIndicesManager implements Disposable {
   private final Object myUpdatingIndicesLock = new Object();
   private final List<MavenSearchIndex> myWaitingIndices = new ArrayList<>();
   private volatile MavenSearchIndex myUpdatingIndex;
-  private final IndexFixer myIndexFixer = new IndexFixer();
+  private IndexFixer myIndexFixer = new IndexFixer();
   private final BackgroundTaskQueue myUpdatingQueue = new BackgroundTaskQueue(null, IndicesBundle.message("maven.indices.updating"));
 
   private volatile List<MavenArchetype> myUserArchetypes = new ArrayList<>();
@@ -428,22 +431,36 @@ public final class MavenIndicesManager implements Disposable {
   }
 
 
-  private static class IndexFixer {
-    private final static Set<String> INDEXED = Collections.newSetFromMap(new WeakHashMap<>());
+  private class IndexFixer {
+    private final Set<String> indexedCache = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    private final ConcurrentLinkedQueue<Pair<File, MavenIndex>> queueToAdd = new ConcurrentLinkedQueue<>();
+    private final MergingUpdateQueue myMergingUpdateQueue;
+
+    private IndexFixer() {
+      myMergingUpdateQueue =
+        new MergingUpdateQueue(this.getClass().getName(), 1000, true, MergingUpdateQueue.ANY_COMPONENT, MavenIndicesManager.this, null,
+                               false).usePassThroughInUnitTestMode();
+    }
 
     public void fixIndex(File file, MavenIndex index) {
-      synchronized (INDEXED) {
-        if (INDEXED.contains(file.getName())) {
-          return;
+      if (indexedCache.contains(file.getName())) {
+        return;
+      }
+      queueToAdd.add(new Pair.NonNull<>(file, index));
+
+      myMergingUpdateQueue.queue(Update.create(this, new AddToIndexRunnable()));
+    }
+    
+    private class AddToIndexRunnable implements Runnable {
+
+      @Override
+      public void run() {
+        Pair<File, MavenIndex> elementToAdd;
+        while ((elementToAdd = queueToAdd.poll()) != null) {
+          elementToAdd.second.addArtifact(elementToAdd.first);
+          indexedCache.add(elementToAdd.first.getName());
         }
       }
-
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        index.addArtifact(file);
-        synchronized (INDEXED) {
-          INDEXED.add(file.getName());
-        }
-      });
     }
   }
 }

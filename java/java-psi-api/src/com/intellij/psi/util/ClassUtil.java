@@ -293,12 +293,12 @@ public class ClassUtil {
   private static PsiTypeVisitor<String> createSignatureVisitor() {
     return new PsiTypeVisitor<String>() {
       @Override
-      public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      public String visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return primitiveType.getCanonicalText();
       }
 
       @Override
-      public String visitClassType(PsiClassType classType) {
+      public String visitClassType(@NotNull PsiClassType classType) {
         PsiClass aClass = classType.resolve();
         if (aClass == null) {
           return "";
@@ -307,7 +307,7 @@ public class ClassUtil {
       }
 
       @Override
-      public String visitArrayType(PsiArrayType arrayType) {
+      public String visitArrayType(@NotNull PsiArrayType arrayType) {
         PsiType componentType = arrayType.getComponentType();
         String typePresentation = componentType.accept(this);
         if (arrayType.getDeepComponentType() instanceof PsiPrimitiveType) {
@@ -342,12 +342,12 @@ public class ClassUtil {
   private static PsiTypeVisitor<String> createBinarySignatureVisitor(boolean slashes) {
     return new PsiTypeVisitor<String>() {
       @Override
-      public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+      public String visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
         return primitiveType.getKind().getBinaryName();
       }
 
       @Override
-      public String visitClassType(PsiClassType classType) {
+      public String visitClassType(@NotNull PsiClassType classType) {
         PsiClass aClass = classType.resolve();
         if (aClass == null) {
           return "";
@@ -360,7 +360,7 @@ public class ClassUtil {
       }
 
       @Override
-      public String visitArrayType(PsiArrayType arrayType) {
+      public String visitArrayType(@NotNull PsiArrayType arrayType) {
         return "[" + arrayType.getComponentType().accept(this);
       }
     };

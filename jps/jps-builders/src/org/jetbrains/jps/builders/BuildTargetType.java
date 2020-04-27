@@ -23,7 +23,6 @@ import java.util.List;
 /**
  * The type of a build target. For example, there is a build target type for Java production and another for Java tests.
  *
- * @author nik
  * @see org.jetbrains.jps.incremental.BuilderService#getTargetTypes()
  */
 public abstract class BuildTargetType<T extends BuildTarget<?>> {

@@ -28,6 +28,7 @@ public interface DnDSupportBuilder {
   DnDSupportBuilder setImageProvider(Function<DnDActionInfo, DnDImage> provider);
   DnDSupportBuilder setBeanProvider(Function<DnDActionInfo, DnDDragStartBean> provider);
   DnDSupportBuilder setDropHandler(DnDDropHandler handler);
+  DnDSupportBuilder setDropHandlerWithResult(DnDDropHandler.WithResult handler);
   DnDSupportBuilder setTargetChecker(DnDTargetChecker checker);
   DnDSupportBuilder setDropActionHandler(DnDDropActionHandler handler);
   DnDSupportBuilder setDropEndedCallback(Runnable callback);

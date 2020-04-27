@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
-import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.LogMessage;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -21,9 +21,6 @@ import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mike
- */
 public final class IdeaLogger extends Log4jBasedLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;  // when not null, holds the first of errors that occurred
@@ -76,7 +73,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+  public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
     myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
   }
 
@@ -86,7 +83,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
+  public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, checkException(t));
       ExceptionUtil.rethrow(t);
@@ -140,6 +137,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   // return plugin mentioned in this exception (only if all plugins are initialized, to avoid stack overflow when exception is thrown during plugin init)
   private static IdeaPluginDescriptor findPluginIfInitialized(@NotNull Throwable t) {
-    return PluginManagerCore.arePluginsInitialized() ? PluginManagerCore.getPlugin(IdeErrorsDialog.findPluginId(t)) : null;
+    // do not use getInstance here - container maybe already disposed
+    return PluginManagerCore.arePluginsInitialized() ? PluginManagerCore.getPlugin(PluginUtilImpl.doFindPluginId(t)) : null;
   }
 }

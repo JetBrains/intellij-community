@@ -161,7 +161,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
   }
 
   public Collection<String> getSuggestedNames(@NotNull final PyExpression expression) {

@@ -75,7 +75,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with adapter";
+      return InspectionGadgetsBundle.message("listener.may.use.adapter.fix.family.name");
     }
 
     @Override

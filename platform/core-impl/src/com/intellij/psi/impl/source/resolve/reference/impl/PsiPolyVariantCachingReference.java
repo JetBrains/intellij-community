@@ -13,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantReference {
   @Override
-  @NotNull
-  public final ResolveResult[] multiResolve(boolean incompleteCode) {
+  public final ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     PsiElement element = getElement();
     PsiFile file = element.getContainingFile();
     return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, true, incompleteCode,file);
@@ -26,8 +25,7 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
     return results.length == 1 ? results[0].getElement() : null;
   }
 
-  @NotNull
-  protected abstract ResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile);
+  protected abstract ResolveResult @NotNull [] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile);
 
   @Override
   public boolean isReferenceTo(@NotNull final PsiElement element) {
@@ -42,9 +40,8 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
   private static class MyResolver implements ResolveCache.PolyVariantContextResolver<PsiPolyVariantReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
-    @NotNull
     @Override
-    public ResolveResult[] resolve(@NotNull PsiPolyVariantReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull PsiPolyVariantReference ref, @NotNull PsiFile containingFile, boolean incompleteCode) {
       return ((PsiPolyVariantCachingReference)ref).resolveInner(incompleteCode, containingFile);
     }
   }

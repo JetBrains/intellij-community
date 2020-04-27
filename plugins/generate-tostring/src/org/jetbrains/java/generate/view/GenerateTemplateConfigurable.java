@@ -19,6 +19,7 @@
  */
 package org.jetbrains.java.generate.view;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.java.generate.element.ClassElement;
 import org.jetbrains.java.generate.element.FieldElement;
 import org.jetbrains.java.generate.element.GenerationHelper;
@@ -102,10 +104,11 @@ public class GenerateTemplateConfigurable implements UnnamedConfigurable{
       }
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(component, BorderLayout.CENTER);
+      String availableVariables = JavaBundle.message("generate.tostring.available.implicit.variables.label", StringUtil.join(availableImplicits, ", "));
       JLabel label =
-        new JLabel("<html>" +
-                   (!availableImplicits.isEmpty() ? "Available implicit variables:<br/>" + StringUtil.join(availableImplicits, ", ") + "<br/>": "") +
-                   (myHint != null ? myHint : "") + "</html>");
+        new JLabel(XmlStringUtil.wrapInHtml(
+          (!availableImplicits.isEmpty() ? availableVariables + "<br/>" : "") +
+          (myHint != null ? myHint : "")));
       panel.add(label, BorderLayout.SOUTH);
       return panel;
     }

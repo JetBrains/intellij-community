@@ -140,7 +140,7 @@ public class VFSTestFrameworkListener {
   }
 
   @NotNull
-  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, @NotNull String... testFrameworkNames) {
+  private Map<String, Boolean> checkTestFrameworksInstalled(@Nullable Sdk sdk, String @NotNull ... testFrameworkNames) {
     final Map<String, Boolean> result = new HashMap<>();
     if (sdk == null || StringUtil.isEmptyOrSpaces(sdk.getHomePath())) {
       LOG.info("Searching test runner in empty sdk");

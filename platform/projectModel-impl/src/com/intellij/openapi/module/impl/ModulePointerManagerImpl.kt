@@ -20,9 +20,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-/**
- * @author nik
- */
 @State(name = "ModuleRenamingHistory", storages = [(Storage("modules.xml"))])
 class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager(), PersistentStateComponent<ModuleRenamingHistoryState> {
   private val unresolved = MultiMap.createSmart<String, ModulePointerImpl>()

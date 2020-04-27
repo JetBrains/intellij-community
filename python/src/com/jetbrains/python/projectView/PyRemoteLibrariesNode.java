@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.PlatformIcons;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
   @Override
   protected void updateImpl(@NotNull PresentationData data) {
-    data.setPresentableText("Remote Libraries");
+    data.setPresentableText(PyBundle.message("python.project.view.remote.libraries"));
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 

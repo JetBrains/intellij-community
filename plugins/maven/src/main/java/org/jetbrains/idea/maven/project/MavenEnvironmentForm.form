@@ -15,7 +15,7 @@
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
           <labelLocation value="West"/>
-          <text value="User &amp;settings file"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.environment.user.settings"/>
         </properties>
       </component>
       <component id="3d84d" class="javax.swing.JCheckBox" binding="settingsOverrideCheckBox">
@@ -23,7 +23,7 @@
           <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Override"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.override"/>
         </properties>
       </component>
       <vspacer id="9e56d">
@@ -38,7 +38,7 @@
         <properties>
           <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
           <labelLocation value="West"/>
-          <text value="Local &amp;repository"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.environment.local.repository"/>
         </properties>
       </component>
       <component id="d8828" class="javax.swing.JCheckBox" binding="localRepositoryOverrideCheckBox">
@@ -46,7 +46,7 @@
           <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Override"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.override"/>
         </properties>
       </component>
       <component id="5d3e4" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenHomeComponent" custom-create="true">
@@ -55,7 +55,7 @@
         </constraints>
         <properties>
           <labelLocation value="West"/>
-          <text value="Maven &amp;home directory"/>
+          <text resource-bundle="messages/MavenConfigurableBundle" key="maven.settings.environment.home.directory"/>
         </properties>
       </component>
       <component id="c53d3" class="com.intellij.openapi.ui.LabeledComponent" binding="mavenVersionLabelComponent" custom-create="true">
@@ -64,7 +64,7 @@
         </constraints>
         <properties>
           <labelLocation value="West"/>
-          <text value=""/>
+          <text value="" noi18n="true"/>
         </properties>
       </component>
     </children>

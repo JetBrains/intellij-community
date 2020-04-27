@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Paths
 
-/**
- * @author nik
- */
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
                                     private val dependencyModuleNames: List<String>,
                                     private val contentRoots: List<VirtualFilePointer>) : UnloadedModuleDescription {

@@ -3,25 +3,16 @@ package com.intellij.workspace.ide
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.messages.Topic
-import com.intellij.workspace.api.EntityStoreChanged
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.TypedEntityStore
-import java.util.*
-
-object WorkspaceModelTopics {
-  val CHANGED = Topic("Workspace Model Changed", WorkspaceModelChangeListener::class.java)
-}
-
-interface WorkspaceModelChangeListener : EventListener {
-  fun beforeChanged(event: EntityStoreChanged) {}
-  fun changed(event: EntityStoreChanged) {}
-}
 
 interface WorkspaceModel {
   val entityStore: TypedEntityStore
 
   fun <R> updateProjectModel(updater: (TypedEntityStorageBuilder) -> R): R
+
+  /** Update project model without the notification to message bus */
+  fun <R> updateProjectModelSilent(updater: (TypedEntityStorageBuilder) -> R): R
 
   companion object {
     @JvmStatic

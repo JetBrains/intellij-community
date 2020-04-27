@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MarkdownAccessor {
 
@@ -44,6 +45,10 @@ public class MarkdownAccessor {
           @Override
           public void openLink(@NotNull String link) {
           }
+          @Override
+          public boolean isSafeExtension(@Nullable String path) {
+            return true;
+          }
         };
       }
     }
@@ -56,5 +61,6 @@ public class MarkdownAccessor {
 
   public interface SafeOpenerAccessor {
     void openLink(@NotNull String link);
+    boolean isSafeExtension(@Nullable String path);
   }
 }

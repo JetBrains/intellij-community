@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
@@ -11,17 +11,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -52,14 +50,16 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull
   public static VcsRepositoryManager getInstance(@NotNull Project project) {
-    return ObjectUtils.assertNotNull(project.getComponent(VcsRepositoryManager.class));
+    return Objects.requireNonNull(project.getComponent(VcsRepositoryManager.class));
   }
 
-  public VcsRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager) {
+  public VcsRepositoryManager(@NotNull Project project) {
     myProject = project;
-    myVcsManager = vcsManager;
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myRepositoryCreators = Arrays.asList(VcsRepositoryCreator.EXTENSION_POINT_NAME.getExtensions(project));
     project.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
+    ((ProjectLevelVcsManagerImpl)myVcsManager).addInitializationRequest(VcsInitObject.OTHER_INITIALIZATION,
+                                                                        () -> checkAndUpdateRepositoriesCollection(null));
   }
 
   @Override
@@ -82,16 +82,13 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   }
 
   @Nullable
+  @CalledInBackground
   public Repository getRepositoryForFile(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, false);
   }
 
-  /**
-   * @deprecated to delete in 2020.3
-   */
   @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @CalledInAny
   public Repository getRepositoryForFileQuick(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, true);
   }
@@ -100,13 +97,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   public Repository getRepositoryForFile(@NotNull VirtualFile file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
-      Map<VirtualFile, Repository> repositories = getExternalRepositories();
-      for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
-        if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
-          return entry.getValue();
-        }
-      }
-      return null;
+      return getExternalRepositoryForFile(file);
     }
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
   }
@@ -115,15 +106,31 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
   public Repository getRepositoryForFile(@NotNull FilePath file, boolean quick) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
     if (vcsRoot == null) {
-      Map<VirtualFile, Repository> repositories = getExternalRepositories();
-      for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
-        if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
-          return entry.getValue();
-        }
-      }
-      return null;
+      return getExternalRepositoryForFile(file);
     }
     return quick ? getRepositoryForRootQuick(vcsRoot.getPath()) : getRepositoryForRoot(vcsRoot.getPath());
+  }
+
+  @Nullable
+  public Repository getExternalRepositoryForFile(@NotNull VirtualFile file) {
+    Map<VirtualFile, Repository> repositories = getExternalRepositories();
+    for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
+      if (entry.getKey().isValid() && VfsUtilCore.isAncestor(entry.getKey(), file, false)) {
+        return entry.getValue();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public Repository getExternalRepositoryForFile(@NotNull FilePath file) {
+    Map<VirtualFile, Repository> repositories = getExternalRepositories();
+    for (Map.Entry<VirtualFile, Repository> entry : repositories.entrySet()) {
+      if (entry.getKey().isValid() && FileUtil.isAncestor(entry.getKey().getPath(), file.getPath(), false)) {
+        return entry.getValue();
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -141,10 +148,10 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
     if (root == null) return null;
 
     Application application = ApplicationManager.getApplication();
-    if (updateIfNeeded && application.isWriteAccessAllowed() &&
+    if (updateIfNeeded && application.isDispatchThread() &&
         !application.isUnitTestMode() && !application.isHeadlessEnvironment()) {
       updateIfNeeded = false;
-      LOG.error("Do not call synchronous root update under write lock");
+      LOG.error("Do not call synchronous repository update in EDT");
     }
 
     REPO_LOCK.readLock().lock();
@@ -318,7 +325,7 @@ public class VcsRepositoryManager implements Disposable, VcsListener {
 
   @NotNull
   public String toString() {
-    return "RepositoryManager{myRepositories: " + myRepositories + '}';
+    return "RepositoryManager{myRepositories: " + myRepositories + '}'; // NON-NLS
   }
 
   @TestOnly

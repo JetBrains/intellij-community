@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E extends PackagingElement<?>> extends PackagingSourceItemsProvider {
   private final FacetTypeId<F> myFacetTypeId;
   private final PackagingElementType<E> myElementType;

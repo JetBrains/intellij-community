@@ -488,6 +488,20 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:STATEMENT_BREAK", "Py:LINE_BREAK", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
 
+  // PY-40757
+  public void testVerticalTab() {
+    doTest("\u000Bimport math",
+           "BAD_CHARACTER", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-40757
+  public void testVerticalTabAfterComment() {
+    doTest("# comment\n" +
+           "\u000Bimport math",
+           "Py:END_OF_LINE_COMMENT", "Py:LINE_BREAK",
+           "BAD_CHARACTER", "Py:IMPORT_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

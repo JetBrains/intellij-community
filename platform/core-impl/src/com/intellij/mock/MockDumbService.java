@@ -54,12 +54,22 @@ public class MockDumbService extends DumbService {
   public void cancelTask(@NotNull DumbModeTask task) { }
 
   @Override
+  public void cancelAllTasksAndWait() { }
+
+  @Override
   public void completeJustSubmittedTasks() {
   }
 
   @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent,
+                                    @NotNull Runnable updateRunnable,
+                                    @NotNull Disposable parentDisposable) {
+    return null;
   }
 
   @Override

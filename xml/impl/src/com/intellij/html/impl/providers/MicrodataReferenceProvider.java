@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
  * @author: Fedor.Korotkov
  */
 public class MicrodataReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     return element instanceof XmlAttributeValue ?
            MicrodataUtil.getUrlReferencesForAttributeValue((XmlAttributeValue)element) :
            PsiReference.EMPTY_ARRAY;

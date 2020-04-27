@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -16,8 +16,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import kotlin.math.max
 
-class GithubImageResizer(private val progressManager: ProgressManager) : Disposable {
-
+class GithubImageResizer : Disposable {
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitHub Image Resizer",
                                                                               ProcessIOExecutorService.INSTANCE,
                                                                               getThreadPoolSize())
@@ -27,7 +26,7 @@ class GithubImageResizer(private val progressManager: ProgressManager) : Disposa
     val indicator = progressIndicator
 
     return CompletableFuture.supplyAsync(Supplier {
-      progressManager.runProcess(Computable {
+      ProgressManager.getInstance().runProcess(Computable {
         indicator.checkCanceled()
         val hidpiImage = ImageUtil.ensureHiDPI(image, scaleContext)
         indicator.checkCanceled()

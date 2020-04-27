@@ -45,7 +45,7 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String getShortcutText(@NotNull String actionId) {
+  public static String getShortcutText(@NotNull @NonNls String actionId) {
     KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
     if (shortcut == null) return "<no shortcut>";
     return getShortcutText(shortcut);
@@ -195,7 +195,7 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null || actionId == null) {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
@@ -203,8 +203,19 @@ public class KeymapUtil {
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
   }
 
+  /**
+   * @param actionId action to find the shortcut for
+   * @return first keyboard shortcut that activates given action in active keymap; null if not found 
+   */
+  @Nullable
+  public static Shortcut getPrimaryShortcut(@Nullable @NonNls String actionId) {
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager == null || actionId == null) return null;
+    return ArrayUtil.getFirstElement(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  }
+
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
+  public static String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
     for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut) {
         return getShortcutText(shortcut);
@@ -213,7 +224,7 @@ public class KeymapUtil {
     return "";
   }
 
-  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull String actionId) {
+  public static boolean isEventForAction(@NotNull KeyEvent keyEvent, @NotNull @NonNls String actionId) {
     for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut && AWTKeyStroke.getAWTKeyStrokeForEvent(keyEvent) == ((KeyboardShortcut)shortcut).getFirstKeyStroke()) {
         return true;
@@ -235,14 +246,14 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String getPreferredShortcutText(@NotNull Shortcut[] shortcuts) {
+  public static String getPreferredShortcutText(Shortcut @NotNull [] shortcuts) {
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut != null ? getShortcutText(shortcut) :
            shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
   }
 
   @NotNull
-  public static String getShortcutsText(@NotNull Shortcut[] shortcuts) {
+  public static String getShortcutsText(Shortcut @NotNull [] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
     }
@@ -462,7 +473,7 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String name, @NotNull String actionId) {
+  public static String createTooltipText(@NotNull String name, @NotNull @NonNls String actionId) {
     String text = getFirstKeyboardShortcutText(actionId);
     return text.isEmpty() ? name : name + " (" + text + ")";
   }
@@ -485,7 +496,7 @@ public class KeymapUtil {
    */
   public static boolean matchActionMouseShortcutsModifiers(@NotNull Keymap activeKeymap,
                                                            @JdkConstants.InputEventMask int modifiers,
-                                                           @NotNull String actionId) {
+                                                           @NotNull @NonNls String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if (shortcut instanceof MouseShortcut) {

@@ -23,6 +23,5 @@ import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 public interface ArrayFactory<T> {
-  @NotNull
-  T[] create(int count);
+  T @NotNull [] create(int count);
 }

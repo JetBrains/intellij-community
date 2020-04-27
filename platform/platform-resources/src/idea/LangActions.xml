@@ -59,6 +59,11 @@
 
     <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
 
+    <action id="ToggleRenderedDocPresentation" class="com.intellij.codeInsight.documentation.render.ToggleRenderedDocPresentationAction"/>
+    <group id="DocCommentGutterIconContextMenu">
+      <action id="ToggleRenderDocsOnFileOpening" class="com.intellij.codeInsight.documentation.render.ToggleRenderDocsOnFileOpeningAction"/>
+    </group>
+
     <group id="CodeInsightEditorActions">
       <reference ref="LookupActions"/>
       <action id="EmacsStyleIndent" class="com.intellij.codeInsight.editorActions.EmacsStyleIndentAction"/>
@@ -86,6 +91,15 @@
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
     </action>
+
+    <!-- LightEdit Mode -->
+    <action id="LightEditOpenFileInProject" class="com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction"/>
+
+    <group id="LightEditModePopup">
+      <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ShowIntentionsGroup"/>
+      <reference id="LightEditOpenFileInProject"/>
+      <separator/>
+    </group>
 
     <!-- Edit -->
     <action id="CopyReference" class="com.intellij.ide.actions.CopyReferenceAction">
@@ -179,12 +193,19 @@
 
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
       <add-to-group group-id="EditorGutterPopupMenu"/>
+      <add-to-group group-id="DocCommentGutterIconContextMenu"/>
     </action>
 
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
       <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBar" anchor="after"/>
+      <override-text place="NavBar"/>
+    </action>
+
+    <action id="ViewMembersInNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarMembersAction">
+      <add-to-group group-id="UIToggleActions" relative-to-action="ViewNavigationBar" anchor="after"/>
+      <override-text place="NavBar"/>
     </action>
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
@@ -219,27 +240,32 @@
       <separator/>
       <action id="GotoDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoDeclarationAction">
         <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
       <action id="GotoImplementation" class="com.intellij.codeInsight.navigation.actions.GotoImplementationAction">
         <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
       <action id="GotoTypeDeclaration" class="com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction">
         <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
       <action id="GotoSuperMethod" class="com.intellij.codeInsight.navigation.actions.GotoSuperAction">
         <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
       <action id="GotoTest" class="com.intellij.testIntegration.GotoTestOrCodeAction">
         <override-text place="MainMenu"/>
+        <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
       </action>
       <action id="GotoRelated" class="com.intellij.ide.actions.GotoRelatedSymbolAction"/>
       <separator/>
       <action id="FileStructurePopup" class="com.intellij.ide.actions.ViewStructureAction"/>
       <action id="ShowFilePath" class="com.intellij.ide.actions.ShowFilePathAction"/>
       <group id="HierarchyGroup">
-        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.newAPI.actions.BrowseTypeHierarchyAction"/>
-        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.newAPI.actions.BrowseMethodHierarchyAction"/>
-        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.newAPI.actions.BrowseCallHierarchyAction"/>
+        <action id="TypeHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction"/>
+        <action id="MethodHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseMethodHierarchyAction"/>
+        <action id="CallHierarchy" class="com.intellij.ide.hierarchy.actions.BrowseCallHierarchyAction"/>
       </group>
       <separator/>
 
@@ -339,8 +365,14 @@
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
 
     <!-- Analyze -->
-    <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
-    <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
+    <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+    </action>
+    <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction">
+      <override-text place="MainMenu"/>
+      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+    </action>
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
@@ -501,7 +533,7 @@
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
       <reference ref="Scratch.ChangeLanguage"/>
-      <group id="MarkFileAs" class="com.intellij.openapi.file.exclude.ui.MarkFileGroup">
+      <group id="MarkFileAs">
         <action id="MarkAsPlainTextAction" class="com.intellij.openapi.file.exclude.ui.MarkAsPlainTextAction"/>
         <action id="MarkAsOriginalTypeAction" class="com.intellij.openapi.file.exclude.ui.MarkAsOriginalTypeAction"/>
       </group>
@@ -563,6 +595,9 @@
       <reference ref="EditSource"/>
       <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
+      <reference ref="ViewNavigationBar"/>
+      <reference ref="ViewMembersInNavigationBar"/>
+      <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
       <reference ref="ReplaceInPath"/>
@@ -622,7 +657,54 @@
       <reference ref="ProjectViewPopupMenu"/>
     </group>
 
-    <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
+    <group id="ProjectView.ToolWindow.SecondaryActions">
+      <action id="ProjectView.ShowModules"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowModules"
+              icon="AllIcons.Actions.GroupByModule"/>
+      <action id="ProjectView.ShowMembers"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowMembers"
+              icon="AllIcons.ObjectBrowser.ShowMembers"/>
+      <action id="ProjectView.ShowExcludedFiles"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowExcludedFiles"/>
+      <action id="ProjectView.ShowVisibilityIcons"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowVisibilityIcons"/>
+      <action id="ProjectView.ShowLibraryContents"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ShowLibraryContents"
+              icon="AllIcons.ObjectBrowser.ShowLibraryContents"/>
+      <separator/>
+      <action id="ProjectView.FlattenModules"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenModules"
+              icon="AllIcons.ObjectBrowser.FlattenModules"/>
+      <action id="ProjectView.FlattenPackages"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FlattenPackages"
+              icon="AllIcons.ObjectBrowser.FlattenPackages"/>
+      <action id="ProjectView.HideEmptyMiddlePackages"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$HideEmptyMiddlePackages"/>
+      <action id="ProjectView.AbbreviatePackageNames"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AbbreviatePackageNames"
+              icon="AllIcons.ObjectBrowser.AbbreviatePackageNames"/>
+      <action id="ProjectView.CompactDirectories"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$CompactDirectories"/>
+      <separator/>
+      <action id="ProjectView.AutoscrollToSource"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollToSource"
+              icon="AllIcons.General.AutoscrollToSource"/>
+      <action id="ProjectView.AutoscrollFromSource"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$AutoscrollFromSource"
+              icon="AllIcons.General.AutoscrollFromSource"/>
+      <separator/>
+      <action id="ProjectView.ManualOrder"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$ManualOrder"
+              icon="AllIcons.ObjectBrowser.Sorted"/>
+      <action id="ProjectView.SortByType"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$SortByType"
+              icon="AllIcons.ObjectBrowser.SortByType"/>
+      <action id="ProjectView.FoldersAlwaysOnTop"
+              class="com.intellij.ide.projectView.impl.ProjectViewImpl$Action$FoldersAlwaysOnTop"/>
+      <action id="ScopeView.EditScopes"
+              class="com.intellij.ide.scopeView.EditScopesAction"
+              icon="AllIcons.Ide.LocalScope"/>
+    </group>
 
     <group id="StructureViewPopupMenu">
       <reference ref="EditSource"/>
@@ -718,12 +800,12 @@
     <action id="ChangeInspectionProfile" class="com.intellij.ide.actions.QuickChangeInspectionProfileAction">
       <add-to-group group-id="ChangeScheme" anchor="after" relative-to-action="ChangeCodeStyleScheme"/>
     </action>
-    <action id="TypeHierarchyBase.BaseOnThisType" class="com.intellij.ide.hierarchy.newAPI.TypeHierarchyBrowserBase$BaseOnThisTypeAction" use-shortcut-of="TypeHierarchy"/>
-    <action id="MethodHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="MethodHierarchy"/>
-    <action id="CallHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.newAPI.CallHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="CallHierarchy"/>
-    <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.newAPI.ViewClassHierarchyAction"/>
-    <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.newAPI.ViewSubtypesHierarchyAction"/>
-    <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.newAPI.ViewSupertypesHierarchyAction"/>
+    <action id="TypeHierarchyBase.BaseOnThisType" class="com.intellij.ide.hierarchy.TypeHierarchyBrowserBase$BaseOnThisTypeAction" use-shortcut-of="TypeHierarchy"/>
+    <action id="MethodHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.MethodHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="MethodHierarchy"/>
+    <action id="CallHierarchy.BaseOnThisMethod" class="com.intellij.ide.hierarchy.CallHierarchyBrowserBase$BaseOnThisMethodAction" use-shortcut-of="CallHierarchy"/>
+    <action id="TypeHierarchy.Class" class="com.intellij.ide.hierarchy.ViewClassHierarchyAction"/>
+    <action id="TypeHierarchy.Subtypes" class="com.intellij.ide.hierarchy.ViewSubtypesHierarchyAction"/>
+    <action id="TypeHierarchy.Supertypes" class="com.intellij.ide.hierarchy.ViewSupertypesHierarchyAction"/>
 
     <group id="TypeHierarchyPopupMenu">
       <reference ref="TypeHierarchyBase.BaseOnThisType"/>
@@ -1042,7 +1124,7 @@
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
     </action>
 
-    <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.EditColors"/>
+    <action id="JumpToColorsAndFonts" class="com.intellij.application.options.colors.JumpToColorsAndFontsAction" icon="AllIcons.General.Settings"/>
 
     <!-- Arrangement rules -->
     <action id="Arrangement.Rule.Add"
@@ -1324,5 +1406,10 @@
     </group>
 
     <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
+    <action id="FileChooser.LightEditGotoOpenedFile"
+            class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"
+            icon="AllIcons.General.Locate">
+      <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
+    </action>
   </actions>
 </idea-plugin>

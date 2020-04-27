@@ -48,9 +48,8 @@ public final class Extensions {
   /**
    * @deprecated Use {@link ExtensionPointName#getExtensions()}
    */
-  @NotNull
   @Deprecated
-  public static Object[] getExtensions(@NonNls @NotNull String extensionPointName) {
+  public static Object @NotNull [] getExtensions(@NonNls @NotNull String extensionPointName) {
     return getRootArea().getExtensionPoint(extensionPointName).getExtensions();
   }
 
@@ -58,8 +57,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#getExtensionList()}
    */
   @Deprecated
-  @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
+  public static <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
     return extensionPointName.getExtensions();
   }
 
@@ -67,8 +65,7 @@ public final class Extensions {
    * @deprecated Use {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
   @Deprecated
-  @NotNull
-  public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
+  public static <T> T @NotNull [] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, @Nullable AreaInstance areaInstance) {
     return extensionPointName.getExtensions(areaInstance);
   }
 
@@ -76,8 +73,7 @@ public final class Extensions {
    * @deprecated Use {@link ExtensionPointName#getExtensions()}
    */
   @Deprecated
-  @NotNull
-  public static <T> T[] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
+  public static <T> T @NotNull [] getExtensions(@NotNull String extensionPointName, @Nullable("null means root") AreaInstance areaInstance) {
     return getArea(areaInstance).<T>getExtensionPoint(extensionPointName).getExtensions();
   }
 

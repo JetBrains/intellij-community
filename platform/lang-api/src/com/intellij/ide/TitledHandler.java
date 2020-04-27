@@ -16,9 +16,12 @@
 
 package com.intellij.ide;
 
+import org.jetbrains.annotations.Nls;
+
 /**
  * @author yole
  */
 public interface TitledHandler {
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getActionTitle();
 }

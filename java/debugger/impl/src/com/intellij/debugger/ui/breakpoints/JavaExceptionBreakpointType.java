@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.icons.AllIcons;
@@ -28,7 +28,7 @@ import javax.swing.*;
  */
 public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties> {
   public JavaExceptionBreakpointType() {
-    super("java-exception", DebuggerBundle.message("exception.breakpoints.tab.title"));
+    super("java-exception", JavaDebuggerBundle.message("exception.breakpoints.tab.title"));
   }
 
   @NotNull
@@ -62,17 +62,17 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
 
   //@Override
   public String getDisplayName() {
-    return DebuggerBundle.message("exception.breakpoints.tab.title");
+    return JavaDebuggerBundle.message("exception.breakpoints.tab.title");
   }
 
   @Override
   public String getDisplayText(XBreakpoint<JavaExceptionBreakpointProperties> breakpoint) {
     String name = breakpoint.getProperties().myQualifiedName;
     if (name != null) {
-      return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", name);
+      return JavaDebuggerBundle.message("breakpoint.exception.breakpoint.display.name", name);
     }
     else {
-      return DebuggerBundle.message("breakpoint.any.exception.display.name");
+      return JavaDebuggerBundle.message("breakpoint.any.exception.display.name");
     }
   }
 
@@ -104,7 +104,7 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
     final PsiClass throwableClass =
       JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, GlobalSearchScope.allScope(project));
     TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
-      .createInheritanceClassChooser(DebuggerBundle.message("add.exception.breakpoint.classchooser.title"),
+      .createInheritanceClassChooser(JavaDebuggerBundle.message("add.exception.breakpoint.classchooser.title"),
                                      GlobalSearchScope.allScope(project), throwableClass, true, true, null);
     chooser.showDialog();
     final PsiClass selectedClass = chooser.getSelected();

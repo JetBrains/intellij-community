@@ -15,19 +15,17 @@
  */
 package com.intellij.psi;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
  */
 public class PsiTypeVisitorEx<A> extends PsiTypeVisitor<A> {
-  @Nullable
-  public A visitTypeVariable(PsiTypeVariable var) {
+  public A visitTypeVariable(@NotNull PsiTypeVariable var) {
     return visitType(var);
   }
 
-  @Nullable
-  public A visitBottom (Bottom bottom) {
+  public A visitBottom (@NotNull Bottom bottom) {
     return visitType(bottom);
   }
 }

@@ -117,4 +117,12 @@ class X {
     }
     System.out.println("Found: "+s.trim());
   }
+  
+  void testLabel() {
+    Object o = "hello";
+    L0: if(!(o instanceof String s)) {
+      return;
+    }
+    System.out.println(s.length());
+  }
 }

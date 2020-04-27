@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventLogSystemEvents;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.FeatureUsageGroup;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
@@ -59,12 +60,6 @@ public class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 
-  /**
-   * System event which indicates that the counter collector is enabled in current IDE build.
-   * Used to calculate metric baseline.
-   */
-  @NonNls
-  private static final String REGISTERED = "registered";
   @NonNls
   private static final String[] GENERAL_GROUPS = new String[]{
     "event.log", "lifecycle", "performance", "actions", "ui.dialogs", "ui.settings",
@@ -127,7 +122,7 @@ public class FUCounterUsageLogger {
 
   public void logRegisteredGroups() {
     for (EventLogGroup group : myGroups.values()) {
-      FeatureUsageLogger.INSTANCE.log(group, REGISTERED);
+      FeatureUsageLogger.INSTANCE.log(group, EventLogSystemEvents.COLLECTOR_REGISTERED);
     }
   }
 

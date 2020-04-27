@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public abstract class RemoveConfigurableHandler<T> {
   private final Class<? extends NamedConfigurable<T>> myConfigurableClass;
 

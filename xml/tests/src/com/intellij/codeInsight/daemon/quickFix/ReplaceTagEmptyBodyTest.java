@@ -24,9 +24,8 @@ import java.io.File;
 
 public class ReplaceTagEmptyBodyTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {
       new CheckTagEmptyBodyInspection()
     };

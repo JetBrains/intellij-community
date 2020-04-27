@@ -24,15 +24,13 @@ import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
  * @author Medvedev Max
  */
 public class GroovyMethodImplementor implements MethodImplementor {
-  @NotNull
   @Override
-  public PsiMethod[] getMethodsToImplement(PsiClass aClass) {
+  public PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
+  public PsiMethod @NotNull [] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
     if (!(inClass instanceof GrTypeDefinition)) return PsiMethod.EMPTY_ARRAY;
     if (method instanceof GrTraitMethod) return PsiMethod.EMPTY_ARRAY;
 

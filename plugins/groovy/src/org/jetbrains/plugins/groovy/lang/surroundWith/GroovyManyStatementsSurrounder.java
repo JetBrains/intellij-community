@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     if (elements.length == 0) return false;
 
     for (PsiElement element : elements) {
@@ -54,7 +54,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
 
   @Override
   @Nullable
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements) throws IncorrectOperationException {
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements) throws IncorrectOperationException {
     if (elements.length == 0) return null;
 
     PsiElement element1 = elements[0];

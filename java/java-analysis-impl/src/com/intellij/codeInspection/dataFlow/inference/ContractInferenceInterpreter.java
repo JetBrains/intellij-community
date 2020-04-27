@@ -460,8 +460,7 @@ class ContractInferenceInterpreter {
     return -1;
   }
 
-  @Nullable
-  static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
+  static ValueConstraint @Nullable [] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
     if (constraints[index] == constraint) return constraints;
 
     ValueConstraint negated = constraint.negate();

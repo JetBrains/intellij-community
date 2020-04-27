@@ -100,17 +100,17 @@ public abstract class SingleRowLayout extends TabLayout {
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
     SingleRowPassInfo data = new SingleRowPassInfo(this, visibleInfos);
 
-    final boolean layoutLabels = checkLayoutLabels(data);
-    if (!layoutLabels) {
+    final boolean shouldLayoutLabels = checkLayoutLabels(data);
+    if (!shouldLayoutLabels) {
       data = myLastSingRowLayout;
     }
 
     final TabInfo selected = myTabs.getSelectedInfo();
     prepareLayoutPassInfo(data, selected);
 
-    myTabs.resetLayout(layoutLabels || myTabs.isHideTabs());
+    myTabs.resetLayout(shouldLayoutLabels || myTabs.isHideTabs());
 
-    if (layoutLabels && !myTabs.isHideTabs()) {
+    if (shouldLayoutLabels && !myTabs.isHideTabs()) {
       recomputeToLayout(data);
 
       data.position = getStrategy().getStartPosition(data) - getScrollOffset();

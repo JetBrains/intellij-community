@@ -4,8 +4,8 @@ package com.intellij.codeInspection.java19api;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddUsesDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil;
@@ -67,7 +67,7 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
             PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(argument);
             if (module != null && isUndeclaredUsage(module, psiClass)) {
               holder.registerProblem(
-                argument, InspectionsBundle.message("inspection.undeclared.service.usage.message", qualifiedName),
+                argument, JavaBundle.message("inspection.undeclared.service.usage.message", qualifiedName),
                 new AddUsesDirectiveFix(module, qualifiedName));
             }
           }

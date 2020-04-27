@@ -4,6 +4,7 @@ package com.intellij.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
@@ -19,8 +20,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 /**
  * The common base interface for all elements of the PSI tree.
@@ -69,9 +68,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the array of child elements.
    */
-  @NotNull
   @Contract(pure=true)
-  PsiElement[] getChildren();
+  PsiElement @NotNull [] getChildren();
 
   /**
    * Returns the parent of the PSI element.
@@ -210,9 +208,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the element text as a character array.
    */
-  @NotNull
   @Contract(pure=true)
-  char[] textToCharArray();
+  char @NotNull [] textToCharArray();
 
   /**
    * Returns the PSI element which should be used as a navigation target
@@ -448,9 +445,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see com.intellij.model.psi.PsiSymbolReferenceService#getReferences(PsiElement)
    */
   @Experimental
-  @NotNull
-  default Iterable<? extends PsiSymbolReference> getOwnReferences() {
-    return Arrays.asList(getReferences());
+  default @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+    return PsiSymbolService.getInstance().getOwnReferences(this);
   }
 
   /**
@@ -482,9 +478,8 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @see PsiReferenceService#getReferences
    * @see com.intellij.psi.search.searches.ReferencesSearch
    */
-  @NotNull
   @Contract(pure=true)
-  PsiReference[] getReferences();
+  PsiReference @NotNull [] getReferences();
 
   /**
    * Returns a copyable user data object attached to this element.

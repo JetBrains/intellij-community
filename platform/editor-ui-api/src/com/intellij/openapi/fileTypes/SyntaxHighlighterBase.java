@@ -19,20 +19,17 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
   @Deprecated
   protected static final TextAttributesKey[] EMPTY = TextAttributesKey.EMPTY_ARRAY;
 
-  @NotNull
-  public static TextAttributesKey[] pack(@Nullable TextAttributesKey key) {
+  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key) {
     return key == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{key};
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
+  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key1, @Nullable TextAttributesKey key2) {
     if (key1 == null) return pack(key2);
     if (key2 == null) return pack(key1);
     return new TextAttributesKey[]{key1, key2};
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@NotNull TextAttributesKey[] base, @Nullable TextAttributesKey key) {
+  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey key) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 0, base.length);
@@ -40,8 +37,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey[] base) {
+  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, TextAttributesKey @NotNull [] base) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 1, base.length);
@@ -49,8 +45,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  @NotNull
-  public static TextAttributesKey[] pack(@NotNull TextAttributesKey[] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
+  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
     int add = 0;
     if (t1 != null) add++;
     if (t2 != null) add++;
@@ -67,7 +62,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     fillMap(map, value, keys.getTypes());
   }
 
-  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, TextAttributesKey value, @NotNull IElementType... types) {
+  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, TextAttributesKey value, IElementType @NotNull ... types) {
     for (IElementType type : types) {
       map.put(type, value);
     }

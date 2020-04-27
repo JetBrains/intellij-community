@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
@@ -6,7 +6,6 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
@@ -39,8 +38,7 @@ import git4idea.history.GitLogUtil.readFullDetailsForHashes
 import git4idea.rebase.GitRebaseUtils
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import java.io.File
-import java.io.IOException
+import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.JPanel
 
@@ -92,7 +90,7 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   override fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList {
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return DEFAULT_CUSTOMIZER_LIST
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return DEFAULT_CUSTOMIZER_LIST
     return when (repository.state) {
       Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
       Repository.State.REBASING -> getRebaseTitleCustomizerList(repository, file)
@@ -246,16 +244,9 @@ private fun resolveMergeBranch(repository: GitRepository): RefInfo? {
 }
 
 private fun resolveRebaseOntoBranch(repository: GitRepository): RefInfo? {
-  val rebaseDir = GitRebaseUtils.getRebaseDir(repository.project, repository.root) ?: return null
-  val ontoHash = try {
-    FileUtil.loadFile(File(rebaseDir, "onto")).trim()
-  }
-  catch (e: IOException) {
-    return null
-  }
-
+  val ontoHash = GitRebaseUtils.getOntoHash(repository.project, repository.root) ?: return null
   val repo = GitRepositoryManager.getInstance(repository.project).getRepositoryForRoot(repository.root) ?: return null
-  return resolveBranchName(repo, HashImpl.build(ontoHash))
+  return resolveBranchName(repo, ontoHash)
 }
 
 private fun resolveBranchName(repository: GitRepository, hash: Hash): RefInfo {
@@ -289,7 +280,7 @@ internal fun getSingleCurrentBranchName(roots: Collection<GitRepository>): Strin
 }
 
 internal fun getTitleWithCommitDetailsCustomizer(
-  title: String,
+  @Nls title: String,
   repository: GitRepository,
   file: FilePath,
   commit: String
@@ -314,7 +305,7 @@ internal fun getTitleWithCommitDetailsCustomizer(
 }
 
 internal fun getTitleWithCommitsRangeDetailsCustomizer(
-  title: String,
+  @Nls title: String,
   repository: GitRepository,
   file: FilePath,
   range: Pair<String, String>
@@ -347,7 +338,7 @@ internal fun getTitleWithCommitsRangeDetailsCustomizer(
   }
 }
 
-internal fun getTitleWithShowDetailsAction(title: String, action: () -> Unit): JPanel =
+internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Unit): JPanel =
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
     .addToRight(LinkLabel.create("Show Details", action))

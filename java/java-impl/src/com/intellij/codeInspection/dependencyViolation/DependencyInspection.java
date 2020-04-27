@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.dependencyViolation;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.DataManager;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -34,7 +34,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
+    final JButton editDependencies = new JButton(JavaBundle.message("inspection.dependency.configure.button.text"));
     editDependencies.addActionListener(__ -> {
       Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
       if (project == null) project = ProjectManager.getInstance().getDefaultProject();
@@ -60,7 +60,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DEPENDENCY_GROUP_NAME;
+    return InspectionsBundle.message("group.names.dependency.issues");
   }
 
   @Override
@@ -70,8 +70,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Override
-  @Nullable
-  public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (file.getViewProvider().getPsi(JavaLanguage.INSTANCE) == null) {
       return null;
     }
@@ -88,7 +87,7 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
       PsiFile dependencyFile = dependency.getContainingFile();
       if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
         for (DependencyRule dependencyRule : violations.get(dependencyFile)) {
-          String message = InspectionsBundle.message("inspection.dependency.violator.problem.descriptor", dependencyRule.getDisplayText());
+          String message = JavaBundle.message("inspection.dependency.violator.problem.descriptor", dependencyRule.getDisplayText());
           LocalQuickFix[] fixes = createEditDependencyFixes(dependencyRule);
           problems.add(manager.createProblemDescriptor(place, message, isOnTheFly, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
         }
@@ -107,13 +106,13 @@ public class DependencyInspection extends AbstractBaseJavaLocalInspectionTool {
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("edit.dependency.rules.text", myRule.getDisplayText());
+      return JavaBundle.message("edit.dependency.rules.text", myRule.getDisplayText());
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("edit.dependency.rules.family");
+      return JavaBundle.message("edit.dependency.rules.family");
     }
 
     @Override

@@ -86,7 +86,7 @@ public class PathEnvironmentVariableUtil {
   private static List<File> findExeFilesInPath(boolean stopAfterFirstMatch,
                                                @Nullable FileFilter filter,
                                                @Nullable String pathEnvVarValue,
-                                               @NotNull String... fileBaseNames) {
+                                               String @NotNull ... fileBaseNames) {
     if (pathEnvVarValue == null) {
       return Collections.emptyList();
     }

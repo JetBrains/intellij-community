@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
@@ -55,7 +56,7 @@ class InstancesWithStackFrameView {
       stackTraceLabel = new JBLabel(TEXT_FOR_ARRAYS, SwingConstants.CENTER);
     }
     else {
-      ActionLink actionLink = new ActionLink("Enable tracking for new instances",
+      ActionLink actionLink = new ActionLink(JavaDebuggerBundle.message("enable.tracking.for.new.instances"),
                                              AllIcons.Debugger.Watch,
                                              new AnAction() {
                                                @Override

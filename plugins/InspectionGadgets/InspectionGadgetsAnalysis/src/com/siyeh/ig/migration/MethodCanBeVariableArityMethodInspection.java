@@ -18,6 +18,7 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -89,6 +90,9 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       if (onlyReportPublicMethods && !method.hasModifierProperty(PsiModifier.PUBLIC)) {
+        return;
+      }
+      if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();

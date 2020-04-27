@@ -34,8 +34,7 @@ public class ChangeClassSigntaureViewDescriptor extends UsageViewDescriptorAdapt
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return new PsiElement[]{myClass};
   }
 

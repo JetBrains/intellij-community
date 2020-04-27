@@ -7,9 +7,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* @author nik
-*/
 public class LibraryVersionProperties extends LibraryProperties<LibraryVersionProperties> {
   private String myVersionString;
 

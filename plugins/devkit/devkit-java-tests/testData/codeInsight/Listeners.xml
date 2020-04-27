@@ -3,10 +3,10 @@
   <vendor>JetBrains</vendor>
   <version>1.0</version>
 
-  <idea-version since-build="193.*"/>
+  <idea-version since-build="201.*"/>
 
   <applicationListeners>
-    <listener class="java.util.ArrayList" topic="java.util.Collection"
+    <listener class="java.util.ArrayList" topic="java.util.Collection" os="freebsd"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners>
 
@@ -17,11 +17,14 @@
               activeInHeadlessMode="true" activeInTestMode="true"/>
 
 
-    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="'java.util.Collection' is not a concrete class"><error descr="Interface is not allowed">java.util.Collection</error></error></error>"
+    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="Interface is not allowed">java.util.Collection</error></error>"
               topic="java.util.Collection"/>
+
+    <listener class="MyCollectionWithoutDefaultCTOR" topic="java.util.Collection"/>
 
 
     <listener class="java.util.ArrayList" topic="java.util.Collection"
+              os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInHeadlessMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInTestMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
   </applicationListeners>
@@ -40,11 +43,12 @@
               activeInHeadlessMode="true" activeInTestMode="true"/>
 
 
-    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="'java.util.Collection' is not a concrete class"><error descr="Interface is not allowed">java.util.Collection</error></error></error>"
+    <listener class="<error descr="'java.util.Collection' does not inherit from 'java.util.Collection'"><error descr="Interface is not allowed">java.util.Collection</error></error>"
               topic="java.util.Collection"/>
 
 
     <listener class="java.util.ArrayList" topic="java.util.Collection"
+              os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInHeadlessMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
               activeInTestMode="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"/>
   </projectListeners>

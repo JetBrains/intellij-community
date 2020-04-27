@@ -21,10 +21,10 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -121,15 +121,16 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     final PsiFile containingFile = aClass.getContainingFile();
     final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");
     if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL) || defaultPackage) {
-      if (Messages.showOkCancelDialog((aClass.isEnum() ? "Enum " + aClass.getQualifiedName() + " doesn't have constants to inline to. "
-                                                       : (defaultPackage ? "Class " : "Final class ") + aClass.getQualifiedName() + "does not have inheritors. ") +
-                                      "Pushing members down will result in them being deleted. " +
-                                      "Would you like to proceed?", conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
+      if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("push.down.delete.warning.text",
+                                                                aClass.isEnum() ? JavaRefactoringBundle.message("push.down.enum.no.constants.warning.text")
+                                                                                : JavaRefactoringBundle.message(defaultPackage ? "push.down.no.inheritors.class.warning.text"
+                                                                                                                           : "push.down.no.inheritors.final.class.warning.text", aClass.getQualifiedName())), 
+                                      conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
         return NewSubClassData.ABORT_REFACTORING;
       }
     } else {
       String noInheritors = aClass.isInterface() ?
-                            RefactoringBundle.message("interface.0.does.not.have.inheritors", aClass.getQualifiedName()) :
+                            JavaRefactoringBundle.message("interface.0.does.not.have.inheritors", aClass.getQualifiedName()) :
                             RefactoringBundle.message("class.0.does.not.have.inheritors", aClass.getQualifiedName());
       final String message = noInheritors + "\n" + RefactoringBundle.message("push.down.will.delete.members");
       final int answer = Messages.showYesNoCancelDialog(message, conflictDialogTitle, Messages.getWarningIcon());

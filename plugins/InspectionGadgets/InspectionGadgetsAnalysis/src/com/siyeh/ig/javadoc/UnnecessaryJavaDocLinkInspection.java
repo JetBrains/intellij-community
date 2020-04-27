@@ -92,7 +92,7 @@ public class UnnecessaryJavaDocLinkInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove redundant tag";
+      return InspectionGadgetsBundle.message("unnecessary.java.doc.link.fix.family.name");
     }
 
     @Override

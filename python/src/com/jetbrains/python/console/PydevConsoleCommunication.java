@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueNode;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.protocol.*;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -139,7 +140,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
     myCallbackHashMap.clear();
 
-    new Task.Backgroundable(myProject, "Close Console Communication", true) {
+    new Task.Backgroundable(myProject, PyBundle.message("console.close.console.communication"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -334,7 +335,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
 
     ThrowableComputable<String, Exception> doGetDesc = () -> getPythonConsoleBackendClient().getDescription(text);
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, "Getting Description", true, myProject);
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, PyBundle.message("console.getting.description"), true, myProject);
     }
     else {
       // note that the thread would still wait for the response after the timeout occurs
@@ -361,7 +362,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
     else {
       //create a thread that'll keep locked until an answer is received from the server.
-      new Task.Backgroundable(myProject, "REPL Communication", true) {
+      new Task.Backgroundable(myProject, PyBundle.message("console.repl.communication"), true) {
 
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
@@ -428,11 +429,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         }
       }.queue();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Waiting for REPL Response") {
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("console.waiting.for.repl.response")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
+          progressIndicator.setText(PyBundle.message("console.waiting.for.repl.response.with.timeout", (int)(TIMEOUT / 10e8)));
           progressIndicator.setIndeterminate(false);
           final long startTime = System.nanoTime();
           while (nextResponse == null) {

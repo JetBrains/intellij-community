@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +31,10 @@ public class PatchNameChecker {
   public static String validateName(@NotNull String name) {
     String fileName = new File(name).getName();
     if (StringUtil.isEmptyOrSpaces(fileName)) {
-      return "File name cannot be empty";
+      return IdeBundle.message("error.name.cannot.be.empty");
     }
     else if (name.length() > MAX_PATH) {
-      return "File path should not be too long.";
+      return VcsBundle.message("patch.creation.name.too.long.error");
     }
     return null;
   }

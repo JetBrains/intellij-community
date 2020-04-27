@@ -156,7 +156,7 @@ public abstract class LookupArranger implements WeighingContext {
    * along with the objects representing the weights in these criteria
    */
   @NotNull
-  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> items,
+  public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
                                                                                boolean hideSingleValued) {
     return Collections.emptyMap();
   }

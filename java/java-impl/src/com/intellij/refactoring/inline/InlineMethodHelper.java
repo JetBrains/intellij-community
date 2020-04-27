@@ -79,8 +79,7 @@ class InlineMethodHelper {
     return PsiSubstitutor.EMPTY;
   }
 
-  @NotNull
-  PsiLocalVariable[] declareParameters() {
+  PsiLocalVariable @NotNull [] declareParameters() {
     PsiCodeBlock block = Objects.requireNonNull(myMethodCopy.getBody());
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, mySubstitutor, myCallArguments);
     PsiParameter[] parameters = myMethodCopy.getParameterList().getParameters();

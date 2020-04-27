@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -26,7 +27,7 @@ public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsi
   @NotNull
   @Override
   public String getText() {
-    return "Collapse repeating annotations";
+    return JavaBundle.message("intention.text.collapse.repeating.annotations");
   }
 
   @Override

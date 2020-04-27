@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.debugger.impl.RemoteConnectionBuilder;
@@ -14,7 +14,6 @@ import com.intellij.execution.target.*;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory;
 import com.intellij.execution.util.JavaParametersUtil;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -26,15 +25,11 @@ import java.io.File;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author nik
- */
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
   extends JavaCommandLineState implements RemoteConnectionCreator {
 
   @NotNull protected final T myConfiguration;
 
-  @Nullable private TargetEnvironmentFactory myTargetEnvironmentFactory;
   @Nullable private RemoteConnection myRemoteConnection;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
@@ -55,7 +50,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
     try {
-      TargetEnvironmentFactory environmentFactory = getTargetEnvironmentFactory(environment);
+      TargetEnvironmentFactory environmentFactory = environment.getTargetEnvironmentFactory();
       if (!(environmentFactory instanceof LocalTargetEnvironmentFactory)) {
         final String remotePort = "12345";
         final String remoteAddressForVmParams;
@@ -104,8 +99,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    TargetEnvironmentFactory runner = getTargetEnvironmentFactory(getEnvironment());
-    TargetEnvironmentRequest request = runner.createRequest();
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(new EmptyProgressIndicator());
+    TargetEnvironmentRequest request = remoteEnvironment.getRequest();
     if (myRemoteConnection != null) {
       final int remotePort = StringUtil.parseInt(myRemoteConnection.getApplicationAddress(), -1);
       if (remotePort > 0) {
@@ -116,44 +111,21 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       }
     }
 
-    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, runner.getTargetConfiguration());
+    TargetedCommandLineBuilder targetedCommandLineBuilder = createTargetedCommandLine(request, getEnvironment().getTargetEnvironmentFactory().getTargetConfiguration());
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
-    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
-    TargetEnvironment remoteEnvironment = runner.prepareRemoteEnvironment(request, indicator);
-    Process process = remoteEnvironment.createProcess(targetedCommandLine, indicator);
+    Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());
 
     Map<String, String> content = targetedCommandLineBuilder.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
     }
-    //todo[remoteServers]: invent the new method for building presentation string
-    String commandRepresentation = StringUtil.join(targetedCommandLine.prepareCommandLine(remoteEnvironment), " ");
-
-    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process, commandRepresentation,
+    OSProcessHandler handler = new KillableColoredProcessHandler.Silent(process,
+                                                                        targetedCommandLine.getCommandPresentation(remoteEnvironment),
                                                                         targetedCommandLine.getCharset(),
                                                                         targetedCommandLineBuilder.getFilesToDeleteOnTermination());
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
-  }
-
-  @NotNull
-  private TargetEnvironmentFactory getTargetEnvironmentFactory(@NotNull ExecutionEnvironment environment)
-    throws ExecutionException {
-    if (myTargetEnvironmentFactory != null) {
-      return myTargetEnvironmentFactory;
-    }
-    if (myConfiguration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("runtime.environments")) {
-      String targetName = ((TargetEnvironmentAwareRunProfile)myConfiguration).getDefaultTargetName();
-      if (targetName != null) {
-        TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
-        if (config == null) {
-          throw new ExecutionException("Cannot find target " + targetName);
-        }
-        return myTargetEnvironmentFactory = config.createEnvironmentFactory(environment.getProject());
-      }
-    }
-    return myTargetEnvironmentFactory = new LocalTargetEnvironmentFactory();
   }
 
   @NotNull

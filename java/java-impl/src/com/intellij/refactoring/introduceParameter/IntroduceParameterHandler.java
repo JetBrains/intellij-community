@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.introduceParameter;
 
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FunctionalInterfaceSuggester;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -22,8 +23,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
@@ -137,7 +138,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     if (expr == null && localVar == null) {
-      String message =  RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
+      String message =  RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.should.represent.an.expression"));
       showErrorMessage(project, message, editor);
       return false;
     }
@@ -145,7 +146,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     if (localVar != null) {
       final PsiElement parent = localVar.getParent();
       if (!(parent instanceof PsiDeclarationStatement)) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
+        String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.local.or.expression.name"));
         showErrorMessage(project, message, editor);
         return false;
       }
@@ -160,13 +161,13 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
     final PsiType typeByExpression = invokedOnDeclaration ? null : RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (!invokedOnDeclaration && (typeByExpression == null || LambdaUtil.notInferredType(typeByExpression))) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("type.of.the.selected.expression.cannot.be.determined"));
       showErrorMessage(project, message, editor);
       return false;
     }
 
     if (!invokedOnDeclaration && PsiType.VOID.equals(typeByExpression)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, message, editor);
       return false;
     }
@@ -206,7 +207,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     }
 
     final JPanel panel = new JPanel(new BorderLayout());
-    final JCheckBox superMethod = new JCheckBox("Refactor super method", true);
+    final JCheckBox superMethod = new JCheckBox(JavaRefactoringBundle.message("introduce.parameter.super.method.checkbox"), true);
     superMethod.setMnemonic('U');
     panel.add(superMethod, BorderLayout.SOUTH);
     final JBList<PsiMethod> list = new JBList<>(validEnclosingMethods.toArray(PsiMethod.EMPTY_ARRAY));
@@ -244,7 +245,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setKeyboardActions(keyboardActions).addListener(new JBPopupAdapter() {
+      .setKeyboardActions(keyboardActions).addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters(highlighters);
@@ -301,7 +302,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
 
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     // Never called
     /* do nothing */
   }
@@ -510,7 +511,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   @VisibleForTesting
-  public boolean introduceStrategy(@NotNull Project project, final Editor editor, @NotNull PsiFile file, @NotNull final PsiElement[] elements) {
+  public boolean introduceStrategy(@NotNull Project project, final Editor editor, @NotNull PsiFile file, final PsiElement @NotNull [] elements) {
     if (elements.length > 0) {
       final AbstractInplaceIntroducer inplaceIntroducer = AbstractInplaceIntroducer.getActiveIntroducer(editor);
       if (inplaceIntroducer instanceof InplaceIntroduceParameterPopup) {
@@ -576,13 +577,11 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return false;
   }
 
-  @NotNull
-  public static PsiElement[] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement[] elements) {
+  public static PsiElement @NotNull [] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, PsiElement @NotNull [] elements) {
     return getElementsInCopy(project, file, elements, true);
   }
 
-  @NotNull
-  public static PsiElement[] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement[] elements, boolean reuseNonPhysical) {
+  public static PsiElement @NotNull [] getElementsInCopy(@NotNull Project project, @NotNull PsiFile file, PsiElement @NotNull [] elements, boolean reuseNonPhysical) {
     final PsiElement[] elementsCopy;
     if (reuseNonPhysical && !elements[0].isPhysical()) {
       elementsCopy = elements;

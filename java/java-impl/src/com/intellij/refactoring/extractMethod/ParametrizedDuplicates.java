@@ -54,7 +54,7 @@ public class ParametrizedDuplicates {
   private PsiMethodCallExpression myParametrizedCall;
   private VariableData[] myVariableDatum;
 
-  private ParametrizedDuplicates(@NotNull PsiElement[] pattern, @NotNull ExtractMethodProcessor originalProcessor) {
+  private ParametrizedDuplicates(PsiElement @NotNull [] pattern, @NotNull ExtractMethodProcessor originalProcessor) {
     PsiElement[] filteredPattern = getFilteredElements(pattern);
     PsiElement firstElement = filteredPattern.length != 0 ? filteredPattern[0] : null;
     if (firstElement instanceof PsiStatement) {
@@ -71,7 +71,7 @@ public class ParametrizedDuplicates {
     }
   }
 
-  private static PsiElement[] copyElements(@NotNull PsiElement[] pattern) {
+  private static PsiElement[] copyElements(PsiElement @NotNull [] pattern) {
     Project project = pattern[0].getProject();
     return IntroduceParameterHandler.getElementsInCopy(project, pattern[0].getContainingFile(), pattern, false);
   }
@@ -221,7 +221,7 @@ public class ParametrizedDuplicates {
     return (PsiMethodCallExpression)originalCall.replace(call);
   }
 
-  private boolean initMatches(@NotNull PsiElement[] pattern, @NotNull List<Match> matches) {
+  private boolean initMatches(PsiElement @NotNull [] pattern, @NotNull List<Match> matches) {
     if (myElements.length == 0) {
       return false;
     }
@@ -378,9 +378,8 @@ public class ParametrizedDuplicates {
     return true;
   }
 
-  @NotNull
-  private static VariableData[] unmapVariableData(@NotNull VariableData[] variableDatum,
-                                                  @NotNull Map<PsiVariable, PsiVariable> variablesMapping) {
+  private static VariableData @NotNull [] unmapVariableData(VariableData @NotNull [] variableDatum,
+                                                            @NotNull Map<PsiVariable, PsiVariable> variablesMapping) {
     Map<PsiVariable, PsiVariable> reverseMapping = ContainerUtil.reverseMap(variablesMapping);
     return StreamEx.of(variableDatum)
                    .map(data -> data.substitute(reverseMapping.get(data.variable)))
@@ -446,8 +445,7 @@ public class ParametrizedDuplicates {
     return ContainerUtil.isEmpty(myMatches);
   }
 
-  @NotNull
-  private static PsiElement[] wrapWithCodeBlock(@NotNull PsiElement[] elements, @NotNull InputVariables inputVariables) {
+  private static PsiElement @NotNull [] wrapWithCodeBlock(PsiElement @NotNull [] elements, @NotNull InputVariables inputVariables) {
     PsiElement fragmentStart = elements[0];
     PsiElement fragmentEnd = elements[elements.length - 1];
     List<ReusedLocalVariable> reusedLocalVariables =
@@ -466,8 +464,7 @@ public class ParametrizedDuplicates {
     return elementsInBlock;
   }
 
-  @NotNull
-  private static PsiElement[] trimBracesAndWhitespaces(@NotNull PsiCodeBlock codeBlock) {
+  private static PsiElement @NotNull [] trimBracesAndWhitespaces(@NotNull PsiCodeBlock codeBlock) {
     PsiElement[] elements = codeBlock.getChildren();
     int start = 1;
     while (start < elements.length && elements[start] instanceof PsiWhiteSpace) {
@@ -502,7 +499,7 @@ public class ParametrizedDuplicates {
   }
 
   @Nullable
-  private static PsiExpression wrapExpressionWithCodeBlock(@NotNull PsiElement[] copy,
+  private static PsiExpression wrapExpressionWithCodeBlock(PsiElement @NotNull [] copy,
                                                            @NotNull ExtractMethodProcessor originalProcessor) {
     if (copy.length != 1 || !(copy[0] instanceof PsiExpression)) return null;
 
@@ -603,8 +600,8 @@ public class ParametrizedDuplicates {
     return parameterDeclarations;
   }
 
-  private static void collectCopyMapping(@NotNull PsiElement[] pattern,
-                                         @NotNull PsiElement[] copy,
+  private static void collectCopyMapping(PsiElement @NotNull [] pattern,
+                                         PsiElement @NotNull [] copy,
                                          @NotNull List<? extends ClusterOfUsages> patternUsages,
                                          @NotNull Map<PsiExpression, PsiExpression> expressions,
                                          @NotNull Map<PsiVariable, PsiVariable> variables) {
@@ -616,8 +613,8 @@ public class ParametrizedDuplicates {
     collectCopyMapping(pattern, copy, patternExpressions::contains, expressions::put, variables::put);
   }
 
-  public static void collectCopyMapping(@NotNull PsiElement[] pattern,
-                                        @NotNull PsiElement[] copy,
+  public static void collectCopyMapping(PsiElement @NotNull [] pattern,
+                                        PsiElement @NotNull [] copy,
                                         @NotNull Predicate<? super PsiExpression> isReplaceablePattern,
                                         @NotNull BiConsumer<? super PsiExpression, ? super PsiExpression> expressionsMapping,
                                         @NotNull BiConsumer<? super PsiVariable, ? super PsiVariable> variablesMapping) {
@@ -663,8 +660,7 @@ public class ParametrizedDuplicates {
     collectCopyMapping(pattern.getChildren(), copy.getChildren(), isReplaceablePattern, expressionsMapping, variablesMapping);
   }
 
-  @NotNull
-  private static PsiElement[] getFilteredElements(@NotNull PsiElement[] elements) {
+  private static PsiElement @NotNull [] getFilteredElements(PsiElement @NotNull [] elements) {
     if (elements.length == 0) {
       return elements;
     }

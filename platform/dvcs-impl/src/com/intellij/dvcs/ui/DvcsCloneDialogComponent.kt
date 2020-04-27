@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.VcsCloneComponent
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
@@ -40,8 +41,8 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                            project,
                                            fcd)
     mainPanel = panel {
-      row("URL:") { urlEditor(growX) }
-      row("Directory:") { directoryField(growX) }
+      row(VcsBundle.getString("vcs.common.labels.url")) { urlEditor(growX) }
+      row(VcsBundle.getString("vcs.common.labels.directory")) { directoryField(growX) }
         .largeGapAfter()
       row {
         errorComponent = BorderLayoutPanel(UIUtil.DEFAULT_HGAP, 0)

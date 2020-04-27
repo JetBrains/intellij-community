@@ -43,8 +43,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   }
 
   @Override
-  @NotNull
-  public XPathExpression[] getArgumentList() {
+  public XPathExpression @NotNull [] getArgumentList() {
     final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
     final XPathExpression[] expressions = new XPathExpression[nodes.length];
     for (int i = 0; i < expressions.length; i++) {
@@ -117,8 +116,7 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     if (getPrefixNode() != null && getNameNode() != null) {
       return new PsiReference[]{getReference(), new PrefixReferenceImpl(this, getPrefixNode())};
     }

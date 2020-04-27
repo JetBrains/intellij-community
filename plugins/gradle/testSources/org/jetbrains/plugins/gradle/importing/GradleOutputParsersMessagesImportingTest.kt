@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
+import groovy.json.StringEscapeUtils.escapeJava
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Test
@@ -13,6 +14,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
   val itemLinePrefix by lazy { if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-" }
   val isPerTaskOutputSupported by lazy { currentGradleVersion >= GradleVersion.version("4.7") }
   private var enableStackTraceImportingOption = false
+  private var quietLogLevelImportingOption = false
 
   // do not inject repository
   override fun injectRepo(config: String): String = config
@@ -29,6 +31,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     else {
       if (baseArguments != null) {
         importSpecBuilder.withArguments(baseArguments.replace("--stacktrace", ""))
+      }
+    }
+    if (quietLogLevelImportingOption) {
+      if (baseArguments == null || !baseArguments.contains("--quiet")) {
+        importSpecBuilder.withArguments("${baseArguments} --quiet")
       }
     }
     return importSpecBuilder.build()
@@ -127,6 +134,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              "  Could not resolve junit:junit:4.12")
     assertSyncViewSelectedNode("Could not resolve junit:junit:4.12",
                                "Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
+                               when {
+                                 isNewDependencyResolutionApplicable -> "Required by:\n" +
+                                                                        "    project :\n"
+                                 else -> ""
+                               } +
                                "\n" +
                                "Possible solution:\n" +
                                " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
@@ -146,7 +158,10 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                              " -finished\n" +
                              "  Could not resolve junit:junit:99.99")
     assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
-                               "Could not resolve junit:junit:99.99.\n" +
+                               when {
+                                 isNewDependencyResolutionApplicable -> "No cached version of junit:junit:99.99 available for offline mode.\n"
+                                 else -> "Could not resolve junit:junit:99.99.\n"
+                               } +
                                "\n" +
                                "Possible solution:\n" +
                                " - Disable offline mode and reimport the project\n" +
@@ -178,6 +193,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "Searched in the following locations:\n" +
                                "  $itemLinePrefix https://repo.labs.intellij.net/repo1/junit/junit/99.99/junit-99.99.pom\n" +
                                "  $itemLinePrefix https://repo.labs.intellij.net/repo1/junit/junit/99.99/junit-99.99.jar\n" +
+                               when {
+                                 isNewDependencyResolutionApplicable -> "Required by:\n" +
+                                                                        "    project :\n"
+                                 else -> ""
+                               } +
                                "\n" +
                                "Possible solution:\n" +
                                " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
@@ -307,5 +327,29 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "Build file '$filePath' line: 1\n\n" +
                                "A problem occurred evaluating root project 'project'.\n" +
                                "> Cannot get property 'foo' on null object\n")
+  }
+
+  @Test
+  fun `test build output empty lines and output without eol at the end`() {
+    quietLogLevelImportingOption = true
+    val scriptOutputText = "script \noutput\n\ntext\n"
+    val scriptOutputTextWOEol = "text w/o eol"
+    importProject("""
+      print "${escapeJava(scriptOutputText)}"
+      print "${escapeJava(scriptOutputTextWOEol)}"
+    """.trimIndent())
+
+    assertSyncViewTreeEquals("-\n" +
+                             " finished")
+
+    assertSyncViewSelectedNode("finished", false) {
+      val text = it!!.lineSequence()
+        .dropWhile { s -> s == "Starting Gradle Daemon..."
+                          || s.startsWith("Gradle Daemon started in")
+                          || s.startsWith("Download ") }
+        .joinToString(separator = "\n")
+
+      assertEquals( scriptOutputText + scriptOutputTextWOEol, text)
+    }
   }
 }

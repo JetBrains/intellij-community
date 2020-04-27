@@ -23,15 +23,15 @@ public class BinaryLightVirtualFile extends LightVirtualFileBase {
     this(name, ArrayUtilRt.EMPTY_BYTE_ARRAY);
   }
 
-  public BinaryLightVirtualFile(String name, @NotNull byte[] content) {
+  public BinaryLightVirtualFile(String name, byte @NotNull [] content) {
     this(name, null, content, LocalTimeCounter.currentTime());
   }
 
-  public BinaryLightVirtualFile(String name, FileType fileType, @NotNull byte[] content) {
+  public BinaryLightVirtualFile(String name, FileType fileType, byte @NotNull [] content) {
     this(name, fileType, content, LocalTimeCounter.currentTime());
   }
 
-  public BinaryLightVirtualFile(String name, FileType fileType, @NotNull byte[] content, long modificationStamp) {
+  public BinaryLightVirtualFile(String name, FileType fileType, byte @NotNull [] content, long modificationStamp) {
     super(name, fileType, modificationStamp);
     setContent(content);
   }
@@ -54,18 +54,16 @@ public class BinaryLightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     return myContent;
   }
 
-  private void setContent(@NotNull byte[] content) {
+  private void setContent(byte @NotNull [] content) {
     //StringUtil.assertValidSeparators(content);
     myContent = content;
   }
 
-  @NotNull
-  public byte[] getContent() {
+  public byte @NotNull [] getContent() {
     return myContent;
   }
 

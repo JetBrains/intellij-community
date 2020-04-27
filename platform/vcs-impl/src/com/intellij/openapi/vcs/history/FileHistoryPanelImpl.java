@@ -152,11 +152,11 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     listener.installOn(myDualView.getTreeView());
     myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
 
-    setupDualView(fillActionGroup(true, new DefaultActionGroup(null, false)));
+    setupDualView(fillActionGroup(true, new DefaultActionGroup()));
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
-    DefaultActionGroup toolbarGroup = new DefaultActionGroup(null, false);
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     fillActionGroup(false, toolbarGroup);
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, toolbarGroup,
@@ -195,13 +195,16 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
     StringBuilder sb = new StringBuilder();
-    sb.append(VcsUtil.getShortRevisionString(revision.getRevisionNumber())).append(" ");
-    sb.append(revision.getAuthor());
     long time = revision.getRevisionDate().getTime();
-    sb.append(" on ").append(DateFormatUtil.formatDate(time)).append(" at ").append(DateFormatUtil.formatTime(time));
+    sb.append(VcsBundle.message("file.history.details.hash.author.on.date.at.time",
+                                VcsUtil.getShortRevisionString(revision.getRevisionNumber()),
+                                revision.getAuthor(),
+                                DateFormatUtil.formatDate(time),
+                                DateFormatUtil.formatTime(time)));
     if (revision instanceof VcsFileRevisionEx) {
       if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
-        sb.append(" (committed by ").append(((VcsFileRevisionEx)revision).getCommitterName()).append(")");
+        sb.append(" (").append(VcsBundle.message("file.history.details.committer.info",
+                                                 ((VcsFileRevisionEx)revision).getCommitterName())).append(")");
       }
     }
     if (withMessage) {
@@ -226,10 +229,9 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     return filePath1.equals(filePath2) && Comparing.equal(existingRevision, newRevision);
   }
 
-  @NotNull
-  private DualViewColumnInfo[] createColumnList(@NotNull Project project,
-                                                @NotNull VcsHistoryProvider provider,
-                                                @Nullable ColumnInfo[] additionalColumns) {
+  private DualViewColumnInfo @NotNull [] createColumnList(@NotNull Project project,
+                                                          @NotNull VcsHistoryProvider provider,
+                                                          ColumnInfo @Nullable [] additionalColumns) {
     ArrayList<DualViewColumnInfo> columns = new ArrayList<>();
     columns.add(new TreeNodeColumnInfoWrapper<>(
       new RevisionColumnInfo(comparing(revision -> myRevisionsOrder.get(revision.getRevisionNumber()), reverseOrder()))));
@@ -481,8 +483,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     return null;
   }
 
-  @Nullable
-  private Change[] getChanges() {
+  private Change @Nullable [] getChanges() {
     final VcsFileRevision[] revisions = getSelectedRevisions();
 
     if (revisions.length > 0) {
@@ -513,8 +514,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     return myRevisionToVirtualFile.get(revision);
   }
 
-  @NotNull
-  public VcsFileRevision[] getSelectedRevisions() {
+  public VcsFileRevision @NotNull [] getSelectedRevisions() {
     //noinspection unchecked
     List<TreeNodeOnVcsRevision> selection = (List<TreeNodeOnVcsRevision>)myDualView.getSelection();
     VcsFileRevision[] result = new VcsFileRevision[selection.size()];
@@ -753,7 +753,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
           StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;");
           if (ex.getCommitterName() != null && !Comparing.equal(ex.getAuthor(), ex.getCommitterName())) {
-            sb.append(", via ").append(ex.getCommitterName());
+            sb.append(", ").append(VcsBundle.message("file.history.details.committer.tooltip.info", ex.getCommitterName()));
             if (ex.getCommitterEmail() != null) sb.append(" &lt;").append(ex.getCommitterEmail()).append("&gt;");
           }
           ((AuthorCellRenderer)renderer).setTooltipText(sb.toString());
@@ -861,9 +861,8 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
       }
     }
 
-    @Nullable
     @Override
-    public byte[] getContentAsBytes() throws VcsException {
+    public byte @Nullable [] getContentAsBytes() throws VcsException {
       try {
         return VcsHistoryUtil.loadRevisionContent(myRevision);
       }
@@ -953,7 +952,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
 
   private class MyShowAsTreeAction extends ToggleAction implements DumbAware {
     MyShowAsTreeAction() {
-      super(VcsBundle.message("action.name.show.files.as.tree"), null, PlatformIcons.SMALL_VCS_CONFIGURABLE);
+      super(VcsBundle.messagePointer("action.name.show.files.as.tree"), PlatformIcons.SMALL_VCS_CONFIGURABLE);
     }
 
     @Override
@@ -971,7 +970,8 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
   private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
     MyShowDetailsAction() {
-      super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
+      super(VcsBundle.messagePointer("action.ToggleAction.text.show.details"),
+            VcsBundle.messagePointer("action.ToggleAction.description.show.details"), AllIcons.Actions.PreviewDetailsVertically);
     }
 
     @Override

@@ -16,6 +16,7 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("big.decimal.equals.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "compareTo()==0");
     }
 
     @Override

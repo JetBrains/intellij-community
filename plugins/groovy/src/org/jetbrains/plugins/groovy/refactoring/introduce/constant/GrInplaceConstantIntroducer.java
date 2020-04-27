@@ -57,9 +57,8 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
     return GrIntroduceConstantHandler.REFACTORING_NAME;
   }
 
-  @NotNull
   @Override
-  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+  protected String @NotNull [] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return mySuggestedNames;
   }
 

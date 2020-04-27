@@ -99,12 +99,6 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override val isDocked: Boolean
     get() = type == ToolWindowType.DOCKED
 
-  override val isFloating: Boolean
-    get() = type == ToolWindowType.FLOATING
-
-  override val isSliding: Boolean
-    get() = type == ToolWindowType.SLIDING
-
   fun normalizeAfterRead() {
     setTypeAndCheck(type)
 
@@ -120,7 +114,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     setTypeAndCheck(type)
   }
 
-  //Hardcoded to avoid single-usage-API
+  // hardcoded to avoid single-usage-API
   private fun setTypeAndCheck(value: ToolWindowType) {
     type = if (ToolWindowId.PREVIEW === id && value == ToolWindowType.DOCKED) ToolWindowType.SLIDING else value
   }

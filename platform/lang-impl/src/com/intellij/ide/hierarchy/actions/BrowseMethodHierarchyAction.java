@@ -23,10 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Use {@link com.intellij.ide.hierarchy.newAPI.actions.BrowseMethodHierarchyAction} instead
- */
-@Deprecated
 public final class BrowseMethodHierarchyAction extends BrowseHierarchyActionBase {
   public BrowseMethodHierarchyAction() {
     super(LanguageMethodHierarchy.INSTANCE);
@@ -36,7 +32,7 @@ public final class BrowseMethodHierarchyAction extends BrowseHierarchyActionBase
   public final void update(@NotNull final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     if (!ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
-      presentation.setText(IdeBundle.message("action.browse.method.hierarchy"));
+      presentation.setText(IdeBundle.messagePointer("action.browse.method.hierarchy"));
     }
     super.update(event);
   }

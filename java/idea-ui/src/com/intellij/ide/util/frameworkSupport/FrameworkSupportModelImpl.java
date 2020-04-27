@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* @author nik
-*/
 public class FrameworkSupportModelImpl extends FrameworkSupportModelBase {
   private final String myContentRootPath;
 

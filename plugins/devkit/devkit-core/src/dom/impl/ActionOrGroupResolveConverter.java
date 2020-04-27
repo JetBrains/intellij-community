@@ -6,21 +6,25 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.xml.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.util.Processor;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.ElementPresentationManager;
+import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jetbrains.idea.devkit.dom.Action;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Group;
+import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 
 import java.util.*;
 
@@ -31,13 +35,16 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public Collection<? extends ActionOrGroup> getVariants(ConvertContext context) {
     final List<ActionOrGroup> variants = new ArrayList<>();
     final Set<String> processedVariants = new HashSet<>();
-    PairProcessor<String, ActionOrGroup> collectProcessor = (s, actionOrGroup) -> {
-      if (isRelevant(actionOrGroup) && processedVariants.add(s)) {
-        variants.add(actionOrGroup);
-      }
+
+    processScopes(context, scope -> {
+      IdeaPluginRegistrationIndex.processAllActionOrGroup(context.getProject(), scope, actionOrGroup -> {
+        if (isRelevant(actionOrGroup) && processedVariants.add(getName(actionOrGroup))) {
+          variants.add(actionOrGroup);
+        }
+        return true;
+      });
       return true;
-    };
-    processActionOrGroup(context, collectProcessor);
+    });
     return variants;
   }
 
@@ -54,16 +61,17 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public ActionOrGroup fromString(@Nullable @NonNls final String value, ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(value)) return null;
 
+    final Project project = context.getProject();
     Ref<ActionOrGroup> result = Ref.create();
-    PairProcessor<String, ActionOrGroup> findProcessor = (s, actionOrGroup) -> {
-      if (isRelevant(actionOrGroup) &&
-          Comparing.strEqual(value, s)) {
-        result.set(actionOrGroup);
-        return false;
-      }
-      return true;
-    };
-    processActionOrGroup(context, findProcessor);
+    processScopes(context, scope -> {
+      return IdeaPluginRegistrationIndex.processActionOrGroup(project, value, scope, actionOrGroup -> {
+        if (isRelevant(actionOrGroup)) {
+          result.set(actionOrGroup);
+          return false;
+        }
+        return true;
+      });
+    });
     return result.get();
   }
 
@@ -136,57 +144,21 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   }
 
 
-  private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<? super String, ? super ActionOrGroup> processor) {
+  private static void processScopes(ConvertContext context,
+                                    final Processor<GlobalSearchScope> processor) {
     final Project project = context.getProject();
 
     Module module = context.getModule();
     if (module == null) {
-      final Collection<IdeaPlugin> plugins = IdeaPluginConverter.getAllPlugins(project);
-      return processPlugins(plugins, processor);
+      final GlobalSearchScope projectScope = GlobalSearchScopesCore.projectProductionScope(project).
+        union(ProjectScope.getLibrariesScope(project));
+      processor.process(projectScope);
+      return;
     }
 
-    return ModuleUtilCore.visitMeAndDependentModules(module, module1 -> {
-      final Collection<IdeaPlugin> dependenciesAndLibs = DescriptorUtil.getPlugins(project, module1.getModuleRuntimeScope(false));
-      return processPlugins(dependenciesAndLibs, processor);
+    ModuleUtilCore.visitMeAndDependentModules(module, module1 -> {
+      return processor.process(module1.getModuleRuntimeScope(false));
     });
-  }
-
-  private static boolean processPlugins(Collection<? extends IdeaPlugin> plugins, PairProcessor<? super String, ? super ActionOrGroup> processor) {
-    for (IdeaPlugin plugin : plugins) {
-      final Map<String, ActionOrGroup> forFile = collectForFile(plugin);
-      for (Map.Entry<String, ActionOrGroup> entry : forFile.entrySet()) {
-        if (!processor.process(entry.getKey(), entry.getValue())) return false;
-      }
-    }
-    return true;
-  }
-
-  private static Map<String, ActionOrGroup> collectForFile(final IdeaPlugin plugin) {
-    final XmlFile xmlFile = DomUtil.getFile(plugin);
-    return CachedValuesManager.getCachedValue(xmlFile, () -> {
-      Map<String, ActionOrGroup> result = new HashMap<>();
-      for (Actions actions : plugin.getActions()) {
-        collectRecursive(result, actions);
-      }
-
-      return CachedValueProvider.Result.create(result, DomManager.getDomManager(xmlFile.getProject()));
-    });
-  }
-
-  private static void collectRecursive(Map<String, ActionOrGroup> result, Actions actions) {
-    for (Action action : actions.getActions()) {
-      final String name = getName(action);
-      if (!StringUtil.isEmptyOrSpaces(name)) {
-        result.put(name, action);
-      }
-    }
-    for (Group group : actions.getGroups()) {
-      final String name = getName(group);
-      if (!StringUtil.isEmptyOrSpaces(name)) {
-        result.put(name, group);
-      }
-      collectRecursive(result, group);
-    }
   }
 
   @Nullable

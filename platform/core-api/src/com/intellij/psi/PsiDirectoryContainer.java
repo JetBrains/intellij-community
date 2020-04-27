@@ -29,8 +29,7 @@ public interface PsiDirectoryContainer extends PsiNamedElement {
    *
    * @return the array of directories.
    */
-  @NotNull
-  PsiDirectory[] getDirectories();
+  PsiDirectory @NotNull [] getDirectories();
 
   /**
    * Returns the array of directories corresponding to the package in the specified search scope.
@@ -38,6 +37,5 @@ public interface PsiDirectoryContainer extends PsiNamedElement {
    * @param scope the scope in which directories are searched.
    * @return the array of directories.
    */
-  @NotNull
-  PsiDirectory[] getDirectories(@NotNull GlobalSearchScope scope);
+  PsiDirectory @NotNull [] getDirectories(@NotNull GlobalSearchScope scope);
 }

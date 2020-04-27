@@ -250,7 +250,7 @@ public class PyNewStyleStringFormatParser {
 
     private Field(@NotNull String nodeText,
                   int leftBraceOffset,
-                  @NotNull int[] attrAndLookupBounds,
+                  int @NotNull [] attrAndLookupBounds,
                   int conversionOffset,
                   int formatSpecOffset,
                   @NotNull List<Field> fields,

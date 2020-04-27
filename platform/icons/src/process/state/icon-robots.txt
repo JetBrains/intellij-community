@@ -1,3 +1,0 @@
-deprecated: GreenOK.png; to be removed in IDEA 2020
-deprecated: GreyProgr.png; to be removed in IDEA 2020
-deprecated: RedExcl.png; to be removed in IDEA 2020

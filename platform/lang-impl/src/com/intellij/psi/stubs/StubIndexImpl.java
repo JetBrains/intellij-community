@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.provided.StubProvidedIndexExtension;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
@@ -35,11 +35,9 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.hash.MergedInvertedIndex;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
-import com.intellij.util.indexing.provided.ProvidedIndexExtension;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import gnu.trove.*;
@@ -55,7 +53,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.IntPredicate;
-import java.util.stream.Collectors;
 
 @State(name = "FileBasedIndex", storages = {
   @Storage(value = StoragePathMacros.CACHE_FILE),
@@ -63,7 +60,7 @@ import java.util.stream.Collectors;
 })
 public final class StubIndexImpl extends StubIndexEx implements PersistentStateComponent<StubIndexState> {
   private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
-  private static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
+  static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
   private static class AsyncState {
     private final Map<StubIndexKey<?, ?>, UpdatableIndex<?, Void, FileContent>> myIndices = new THashMap<>();
@@ -191,6 +188,17 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
       else registrationResultSink.registerIndexAsInitiallyBuilt(indexKey);
       if (indexRootHasChildren) FileUtil.deleteWithRenaming(indexRootDir);
       IndexingStamp.rewriteVersion(indexKey, version); // todo snapshots indices
+
+      try {
+        if (needRebuild) {
+          for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+            ex.onStubIndexVersionChanged(indexKey);
+          }
+        }
+      } catch (Exception e) {
+        LOG.error(e);
+      }
+
     } else {
       registrationResultSink.registerIndexAsUptoDate(indexKey);
     }
@@ -210,14 +218,10 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
         final MemoryIndexStorage<K, Void> memStorage = new MemoryIndexStorage<>(storage, indexKey);
         UpdatableIndex<K, Void, FileContent> index = new VfsAwareMapReduceIndex<>(wrappedExtension, memStorage, null, null, null, lock);
 
-        if (stubUpdatingIndex instanceof MergedInvertedIndex) {
-          List<ProvidedIndexExtension<K, Void>> providedIndexExtensions = ((MergedInvertedIndex<Integer, SerializedStubTree>)stubUpdatingIndex)
-                  .getProvidedExtensions()
-                  .filter(ex -> ex instanceof StubProvidedIndexExtension)
-                  .map(ex -> ((StubProvidedIndexExtension)ex).findProvidedStubIndex(extension))
-                  .collect(Collectors.toList());
-          if (!providedIndexExtensions.isEmpty()) {
-            index = MergedInvertedIndex.wrapWithProvidedIndex(providedIndexExtensions, wrappedExtension, index, ((MergedInvertedIndex<Integer, SerializedStubTree>)stubUpdatingIndex).getHashIndex());
+        for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+          UpdatableIndex<K, Void, FileContent> intermediateIndex = infrastructureExtension.combineIndex(wrappedExtension, index);
+          if (intermediateIndex != null) {
+            index = intermediateIndex;
           }
         }
 
@@ -403,7 +407,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
         }
 
         StubIdList list = myCachedStubIds.get(indexKey).getValue().computeIfAbsent(new CompositeKey<>(key, id), __ -> {
-          return myStubProcessingHelper.retrieveStubIdList(indexKey, key, file);
+          return myStubProcessingHelper.retrieveStubIdList(indexKey, key, file, project);
         });
         if (list == null) {
           LOG.error("StubUpdatingIndex & " + indexKey + " stub index mismatch. No stub index key is present");
@@ -490,8 +494,10 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
     final UpdatableIndex<K, Void, FileContent> index = getIndex(indexKey); // wait for initialization to finish
-    if (index == null) return true;
-    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
+    if (index == null ||
+        !((FileBasedIndexEx)FileBasedIndex.getInstance()).ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope, null)) {
+      return true;
+    }
 
     try {
       return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, ()->FileBasedIndexImpl.disableUpToDateCheckIn(()->
@@ -528,9 +534,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     final UpdatableIndex<Key, Void, FileContent> index = getIndex(indexKey);   // wait for initialization to finish
-    if (index == null) return IdIterator.EMPTY;
-
-    fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope);
+    if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return IdIterator.EMPTY;
 
     if (idFilter == null) {
       idFilter = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).projectIndexableFiles(project);
@@ -674,7 +678,7 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
       LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
 
       for (String s : indicesToDrop) {
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(StubIndexKey.createIndexKey(s)));
+        FileUtil.delete(IndexInfrastructure.getStubIndexRootDir(s));
       }
       return true;
     }
@@ -697,6 +701,12 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
                               @NotNull final Map<K, StubIdList> oldInputData,
                               @NotNull final Map<K, StubIdList> newInputData) {
     try {
+      if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+        LOG.info("stub index '" + key + "' update: " + fileId +
+                 " old = " + Arrays.toString(oldInputData.keySet().toArray()) +
+                 " new  = " + Arrays.toString(newInputData.keySet().toArray()) +
+                 " updated_id = " + System.identityHashCode(newInputData));
+      }
       final UpdatableIndex<K, Void, FileContent> index = getIndex(key);
       if (index == null) return;
       index.updateWithMap(new AbstractUpdateData<K, Void>(fileId) {
@@ -704,6 +714,11 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
         protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super K, ? super Void> addProcessor,
                                       @NotNull KeyValueUpdateProcessor<? super K, ? super Void> updateProcessor,
                                       @NotNull RemovedKeyProcessor<? super K> removeProcessor) throws StorageException {
+
+          if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+            LOG.info("iterating keys updated_id = " + System.identityHashCode(newInputData));
+          }
+
           boolean modified = false;
 
           for (K oldKey : oldInputData.keySet()) {
@@ -718,6 +733,10 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
               addProcessor.process(oldKey, null, fileId);
               if (!modified) modified = true;
             }
+          }
+
+          if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+            LOG.info("keys iteration finished updated_id = " + System.identityHashCode(newInputData) + "; modified = " + modified);
           }
 
           return modified;
@@ -770,14 +789,14 @@ public final class StubIndexImpl extends StubIndexEx implements PersistentStateC
       StringBuilder updated = new StringBuilder();
       String updatedIndices = indicesRegistrationSink.changedIndices();
       if (!updatedIndices.isEmpty()) updated.append(updatedIndices);
-      if (someIndicesWereDropped) updated.append(" and some indices were dropped");
+      if (someIndicesWereDropped && !InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) updated.append(" and some indices were dropped");
       indicesRegistrationSink.logChangedAndFullyBuiltIndices(LOG, "Following stub indices will be updated:",
                                                              "Following stub indices will be built:");
 
       if (updated.length() > 0) {
         final Throwable e = new Throwable(updated.toString());
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        ApplicationManager.getApplication().invokeLater(() -> forceRebuild(e), ModalityState.NON_MODAL);
+        AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> forceRebuild(e));
       }
 
       myInitialized = true;

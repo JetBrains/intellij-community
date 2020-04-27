@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.ui;
 
 import com.intellij.openapi.application.ModalityState;
@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class MethodOrClosureScopeChooser {
+public final class MethodOrClosureScopeChooser {
   private static final Logger LOG = Logger.getInstance(MethodOrClosureScopeChooser.class);
 
   @NonNls private static final String USE_SUPER_METHOD_OF = "Change base method";
@@ -147,7 +147,7 @@ public class MethodOrClosureScopeChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setKeyboardActions(keyboardActions).addListener(new JBPopupAdapter() {
+      .setKeyboardActions(keyboardActions).addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters(highlighters);

@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -60,6 +61,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
    * Primary intention for this key is to hint popup position for the non-caret location.
    */
   public static final Key<VisualPosition> ANCHOR_POPUP_POSITION = Key.create("popup.anchor.position");
+  /**
+   * If corresponding value is defined for an {@link Editor}, popups shown for the editor will be located at specified point. This allows to
+   * show popups for non-default locations (caret location is used by default).
+   *
+   * @see JBPopupFactory#guessBestPopupLocation(Editor)
+   */
+  public static final Key<Point> ANCHOR_POPUP_POINT = Key.create("popup.anchor.point");
 
   private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
 
@@ -204,6 +212,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
                             preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
+      UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
     }
 
     protected ActionGroupPopup(@Nullable WizardPopup aParent,
@@ -216,7 +225,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       setMaxRowCount(maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
+      myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
 
       registerAction("handleActionToggle1", KeyEvent.VK_SPACE, 0, new AbstractAction() {
         @Override
@@ -563,25 +572,27 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Nullable
   private static Point getVisibleBestPopupLocation(@NotNull Editor editor) {
-    VisualPosition visualPosition = editor.getUserData(ANCHOR_POPUP_POSITION);
+    int lineHeight = editor.getLineHeight();
+    Point p = editor.getUserData(ANCHOR_POPUP_POINT);
+    if (p == null) {
+      VisualPosition visualPosition = editor.getUserData(ANCHOR_POPUP_POSITION);
 
-    if (visualPosition == null) {
-      CaretModel caretModel = editor.getCaretModel();
-      if (caretModel.isUpToDate()) {
-        visualPosition = caretModel.getVisualPosition();
+      if (visualPosition == null) {
+        CaretModel caretModel = editor.getCaretModel();
+        if (caretModel.isUpToDate()) {
+          visualPosition = caretModel.getVisualPosition();
+        }
+        else {
+          visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
+        }
       }
-      else {
-        visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
-      }
+
+      p = editor.visualPositionToXY(visualPosition);
+      p.y += lineHeight;
     }
 
-    final int lineHeight = editor.getLineHeight();
-    Point p = editor.visualPositionToXY(visualPosition);
-    p.y += lineHeight;
-
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - lineHeight)
-           ? null : p;
+    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - lineHeight) ? null : p;
   }
 
   @Override

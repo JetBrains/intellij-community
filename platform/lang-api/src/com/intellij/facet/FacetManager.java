@@ -8,9 +8,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public abstract class FacetManager implements FacetModel {
   public static final Topic<FacetManagerListener> FACETS_TOPIC = Topic.create("facet changes", FacetManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
@@ -42,5 +39,5 @@ public abstract class FacetManager implements FacetModel {
   /**
    * This method must be called when configuration of {@code facet} is changed via its API.
    */
-  public abstract void facetConfigurationChanged(@NotNull Facet facet);
+  public abstract void facetConfigurationChanged(@NotNull Facet<?> facet);
 }

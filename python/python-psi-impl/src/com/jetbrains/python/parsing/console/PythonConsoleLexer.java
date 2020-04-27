@@ -23,9 +23,6 @@ import com.jetbrains.python.psi.PyElementType;
 
 import java.util.Map;
 
-/**
- * @author traff
- */
 public class PythonConsoleLexer extends PythonIndentingLexer {
   private final static Map<String, PyElementType> SPECIAL_IPYTHON_SYMBOLS = ImmutableMap.of(
     "?", PyConsoleTokenTypes.QUESTION_MARK,

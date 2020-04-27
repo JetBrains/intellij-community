@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -13,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,6 +23,7 @@ import com.intellij.ui.content.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,15 +38,15 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myProject = project;
   }
 
-  protected abstract String getShowInToolWindowProperty();
-  protected abstract String getAutoUpdateEnabledProperty();
+  @Nls protected abstract String getShowInToolWindowProperty();
+  @Nls protected abstract String getAutoUpdateEnabledProperty();
   protected boolean getAutoUpdateDefault() {
     return false;
   }
 
-  protected abstract String getAutoUpdateTitle();
-  protected abstract String getRestorePopupDescription();
-  protected abstract String getAutoUpdateDescription();
+  @Nls protected abstract String getAutoUpdateTitle();
+  @Nls protected abstract String getRestorePopupDescription();
+  @Nls protected abstract String getAutoUpdateDescription();
 
   protected abstract T createComponent();
   protected abstract void doUpdateComponent(@NotNull PsiElement element, PsiElement originalElement, T component);
@@ -76,15 +77,16 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     T component = createComponent();
 
-    ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-    ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(getToolwindowId());
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolwindowId());
     if (toolWindow == null) {
-      toolWindow = toolWindowManagerEx.registerToolWindow(RegisterToolWindowTask.closable(getToolwindowId(), ToolWindowAnchor.RIGHT));
+      toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(getToolwindowId(), AllIcons.Toolwindows.Documentation, ToolWindowAnchor.RIGHT));
+    }
+    else {
+      toolWindow.setAvailable(true);
     }
     myToolWindow = toolWindow;
-    toolWindow.setIcon(AllIcons.Toolwindows.Documentation);
 
-    toolWindow.setAvailable(true, null);
     toolWindow.setToHideOnEmptyContent(false);
 
     setToolwindowDefaultState();
@@ -123,7 +125,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   protected void setToolwindowDefaultState() {
-    final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
+    Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
     myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
   }
 
@@ -147,7 +149,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   @NotNull
   protected AnAction createRestorePopupAction() {
-    return new DumbAwareAction("Open as Popup", getRestorePopupDescription(), null) {
+    return new DumbAwareAction(CodeInsightBundle.messagePointer("action.AnActionButton.text.open.as.popup"), () -> getRestorePopupDescription(), null) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         restorePopupBehavior();
@@ -169,6 +171,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         myAutoUpdateRequest = null;
       }
     }
+  }
+
+  public void resetAutoUpdateState() {
+    restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));
   }
 
   public void updateComponent() {

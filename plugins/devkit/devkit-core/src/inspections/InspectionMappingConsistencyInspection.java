@@ -57,7 +57,7 @@ public class InspectionMappingConsistencyInspection extends DevKitPluginXmlInspe
   }
 
   private static boolean hasDefinedAttribute(DomElement element, String attributeName) {
-    final GenericAttributeValue attribute = PluginXmlDomInspection.getAttribute(element, attributeName);
+    final GenericAttributeValue attribute = DevKitPluginXmlInspectionBase.getAttribute(element, attributeName);
     return attribute != null && DomUtil.hasXml(attribute);
   }
 

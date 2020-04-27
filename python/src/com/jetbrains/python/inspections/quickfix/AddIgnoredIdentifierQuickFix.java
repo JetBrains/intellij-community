@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
@@ -43,17 +44,17 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
   @Override
   public String getName() {
     if (myIgnoreAllAttributes) {
-      return "Mark all unresolved attributes of '" + myIdentifier + "' as ignored";
+      return PyBundle.message("QFIX.mark.all.unresolved.attributes.of.0.as.ignored", myIdentifier);
     }
     else {
-      return "Ignore unresolved reference '" + myIdentifier + "'";
+      return PyBundle.message("QFIX.ignore.unresolved.reference.0", myIdentifier);
     }
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Ignore unresolved reference";
+    return PyBundle.message("QFIX.ignore.unresolved.reference");
   }
 
   @Override

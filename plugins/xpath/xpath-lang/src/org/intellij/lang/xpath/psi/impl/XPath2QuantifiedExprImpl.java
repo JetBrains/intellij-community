@@ -32,9 +32,8 @@ public class XPath2QuantifiedExprImpl extends XPath2ElementImpl implements XPath
     return XPath2Type.BOOLEAN;
   }
 
-  @NotNull
   @Override
-  public XPathVariableDeclaration[] getVariables() {
+  public XPathVariableDeclaration @NotNull [] getVariables() {
     return findChildrenByClass(XPathVariableDeclaration.class);
   }
 

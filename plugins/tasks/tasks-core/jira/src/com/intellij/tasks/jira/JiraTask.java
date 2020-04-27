@@ -42,8 +42,7 @@ public abstract class JiraTask extends Task {
   public abstract String getDescription();
 
   @Override
-  @NotNull
-  public abstract Comment[] getComments();
+  public abstract Comment @NotNull [] getComments();
 
   // iconUrl will be null in JIRA versions prior 5.x.x
   @Nullable

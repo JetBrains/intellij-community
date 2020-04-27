@@ -52,9 +52,8 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
       "string.touppercase.tolowercase.without.locale.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)infos[0];
     List<InspectionGadgetsFix> fixes = new ArrayList<>(2);
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);

@@ -8,23 +8,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 @ApiStatus.NonExtendable
 public interface FacetModel {
   /**
    * Returns all facets in the module sorted in such a way that a facet will occur before any of its subfacets
    * @return sorted array of facets
    */
-  @NotNull
-  Facet<?>[] getSortedFacets();
+  Facet<?> @NotNull [] getSortedFacets();
 
   /**
    * @return all facets in the module
    */
-  @NotNull
-  Facet<?>[] getAllFacets();
+  Facet<?> @NotNull [] getAllFacets();
 
   /**
    * @param typeId type of facets

@@ -44,13 +44,13 @@ import java.util.Collections;
 public class GotoSymbolContributor implements ChooseByNameContributorEx {
 
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(RelaxSymbolIndex.NAME, processor, scope, filter);
   }
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     boolean[] result = {true};
     PsiManager psiManager = PsiManager.getInstance(parameters.getProject());

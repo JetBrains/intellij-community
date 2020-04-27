@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.Map;
@@ -103,7 +104,7 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
               modifierList.setModifierProperty(PsiModifier.STATIC, true);
               modifierList.setModifierProperty(PsiModifier.FINAL, true);
             }
-            else if (element.getTreeParent().getElementType() == JavaElementType.METHOD ||
+            else if (element.getTreeParent().getElementType() == JavaElementType.METHOD && !PsiUtil.isLanguageLevel8OrHigher(modifierList) ||
                      element.getTreeParent().getElementType() == JavaElementType.ANNOTATION_METHOD) {
               modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
               modifierList.setModifierProperty(PsiModifier.ABSTRACT, true);

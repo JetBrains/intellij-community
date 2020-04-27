@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -17,11 +17,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class AntRunProfileState implements RunProfileState {
+final class AntRunProfileState implements RunProfileState {
   static final Key<AntBuildMessageView> MESSAGE_VIEW = Key.create("ANT_MESSAGE_VIEW");
   private final ExecutionEnvironment myEnvironment;
 
-  public AntRunProfileState(ExecutionEnvironment environment) {
+  AntRunProfileState(ExecutionEnvironment environment) {
     myEnvironment = environment;
   }
 

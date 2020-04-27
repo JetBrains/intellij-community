@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractSuperclass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.turnRefsToSuper.TurnRefsToSuperProcessorBase;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -65,7 +65,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new ExtractSuperClassViewDescriptor(myTargetDirectory, myClass, myMemberInfos);
   }
 
@@ -104,8 +104,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
       PsiReference.EMPTY_ARRAY);
     final ArrayList<UsageInfo> result = new ArrayList<>();
@@ -125,7 +124,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     try {
       final String superClassName = myClass.getName();
       final String oldQualifiedName = myClass.getQualifiedName();
@@ -167,7 +166,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   protected abstract PsiClass extractSuper(String superClassName) throws IncorrectOperationException;
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     myClass = (PsiClass)elements[0];
     myTargetDirectory = (PsiDirectory)elements[1];
     for (int i = 0; i < myMemberInfos.length; i++) {
@@ -179,7 +178,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
   @Override
   @NotNull
   protected String getCommandName() {
-    return RefactoringBundle.message("extract.subclass.command");
+    return JavaRefactoringBundle.message("extract.subclass.command");
   }
 
   @NotNull

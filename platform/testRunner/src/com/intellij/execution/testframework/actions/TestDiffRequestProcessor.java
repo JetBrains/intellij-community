@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
@@ -105,7 +106,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
   }
 
   @NotNull
-  private static String getContentTitle(@NotNull String titleKey, @Nullable VirtualFile file) {
+  private static String getContentTitle(@PropertyKey(resourceBundle = ExecutionBundle.PATH_TO_BUNDLE) @NotNull String titleKey, @Nullable VirtualFile file) {
     String title = ExecutionBundle.message(titleKey);
     if (file != null) {
       title += " (" + file.getPresentableUrl() + ")";

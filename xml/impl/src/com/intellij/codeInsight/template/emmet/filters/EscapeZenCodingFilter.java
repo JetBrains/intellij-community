@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.emmet.filters;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,6 +48,6 @@ public class EscapeZenCodingFilter extends ZenCodingFilter {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Escape";
+    return XmlBundle.message("emmet.filter.escape");
   }
 }

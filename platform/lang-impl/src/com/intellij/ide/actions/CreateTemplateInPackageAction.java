@@ -35,6 +35,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -44,7 +45,12 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
                                           final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    super(text, description, icon);
+    this(() -> text, () -> description, icon, rootTypes);
+  }
+
+  protected CreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon,
+                                          final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
+    super(dynamicText, dynamicDescription, icon);
     mySourceRootTypes = rootTypes;
   }
 
@@ -102,13 +108,10 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
     }
 
     DumbService service = DumbService.getInstance(dir.getProject());
-    service.setAlternativeResolveEnabled(true);
-    try {
-      return doCreate(dir, className, templateName);
-    }
-    finally {
-      service.setAlternativeResolveEnabled(false);
-    }
+    PsiDirectory finalDir = dir;
+    String finalClassName = className;
+    return service.computeWithAlternativeResolveEnabled(() ->
+      doCreate(finalDir, finalClassName, templateName));
   }
 
   protected String removeExtension(String templateName, String className) {

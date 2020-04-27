@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -24,7 +25,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public ShowLongEdgesAction() {
-    super("Show Long Edges", "Show long branch edges even if commits are invisible in the current view.", null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.long.edges"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.long.edges"), null);
   }
 
   @Override

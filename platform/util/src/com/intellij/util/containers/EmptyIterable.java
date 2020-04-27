@@ -20,6 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Iterator;
 
+/**
+ * @deprecated Use {@link Collections#emptyList()} instead
+ */
+@Deprecated
 public class EmptyIterable<T> implements Iterable<T> {
   private static final EmptyIterable INSTANCE = new EmptyIterable();
 

@@ -21,9 +21,6 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author oleg
- */
 public class PyImportStatementNavigator {
   private PyImportStatementNavigator() {
   }

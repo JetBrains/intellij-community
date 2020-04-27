@@ -43,9 +43,8 @@ public class ClassReferenceParser extends StandardHeaderParser {
 
   public static final HeaderParser INSTANCE = new ClassReferenceParser();
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
+  public PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart) {
     Module module = ModuleUtilCore.findModuleForPsiElement(headerValuePart);
     JavaClassReferenceProvider provider;
     if (module != null) {

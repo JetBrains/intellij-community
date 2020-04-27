@@ -37,6 +37,5 @@ public interface PsiCallExpression extends PsiExpression, PsiCall {
    *
    * @return the array of type arguments, or an empty array if no type arguments are specified.
    */
-  @NotNull
-  PsiType[] getTypeArguments();
+  PsiType @NotNull [] getTypeArguments();
 }

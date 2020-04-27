@@ -30,7 +30,7 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
   }
 
   protected ComputableActionGroup(boolean popup) {
-    super(null, popup);
+    super(Presentation.NULL_STRING, popup);
   }
 
   @Override
@@ -39,8 +39,7 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
   }
 
   @Override
-  @NotNull
-  public final AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     if (e == null) {
       return EMPTY_ARRAY;
     }
@@ -68,7 +67,6 @@ public abstract class ComputableActionGroup extends ActionGroup implements DumbA
       return () -> CachedValueProvider.Result.create(computeChildren(actionManager), ModificationTracker.NEVER_CHANGED);
     }
 
-    @NotNull
-    protected abstract AnAction[] computeChildren(@NotNull ActionManager manager);
+    protected abstract AnAction @NotNull [] computeChildren(@NotNull ActionManager manager);
   }
 }

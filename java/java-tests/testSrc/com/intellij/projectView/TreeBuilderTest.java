@@ -25,9 +25,8 @@ public class TreeBuilderTest extends LightPlatformTestCase {
       return ROOT;
     }
 
-    @NotNull
     @Override
-    public Object[] getChildElements(@NotNull Object element) {
+    public Object @NotNull [] getChildElements(@NotNull Object element) {
       int intValue = intValueOf(element);
       if (IS_FINITE && intValue == 2) {
         return new Object[]{};

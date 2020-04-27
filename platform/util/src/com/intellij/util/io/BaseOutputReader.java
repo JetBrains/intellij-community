@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.util.SystemProperties;
@@ -11,9 +11,6 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 
-/**
- * @author traff
- */
 public abstract class BaseOutputReader extends BaseDataReader {
   /** See {@link #BaseOutputReader(Reader, Options)}, {@link #readAvailable}, {@link BaseDataReader.SleepingPolicy}
    * and {@link #processInput} for reference.

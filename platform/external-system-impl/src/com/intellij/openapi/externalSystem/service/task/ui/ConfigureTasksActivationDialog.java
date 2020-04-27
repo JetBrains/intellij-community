@@ -40,7 +40,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -88,9 +87,8 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
     myTaskActivator = getInstance(myProject).getTaskActivator();
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
 
@@ -164,8 +162,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
       setMoveUpActionUpdater(e -> isMoveActionEnabled(-1)).
       setMoveDownAction(button -> moveAction(+1)).
       setMoveDownActionUpdater(e -> isMoveActionEnabled(+1)).
-      setToolbarPosition(ActionToolbarPosition.RIGHT).
-      setToolbarBorder(JBUI.Borders.empty());
+      setToolbarPosition(ActionToolbarPosition.RIGHT);
     tasksPanel.add(decorator.createPanel());
     return contentPane;
   }
@@ -239,7 +236,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   }
 
   @NotNull
-  private List<TaskActivationEntry> findTasksUnder(@NotNull SimpleNode[] nodes) {
+  private List<TaskActivationEntry> findTasksUnder(SimpleNode @NotNull [] nodes) {
     List<TaskActivationEntry> tasks = new SmartList<>();
     for (SimpleNode node : nodes) {
       if (node instanceof TaskNode) {

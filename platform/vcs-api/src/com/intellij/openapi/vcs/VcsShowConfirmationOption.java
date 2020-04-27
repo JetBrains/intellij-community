@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsShowConfirmationOption {
@@ -50,6 +51,20 @@ public interface VcsShowConfirmationOption {
       return false;
     }
   };
+
+  @NotNull
+  @Nls
+  static String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
+    switch (value) {
+      case SHOW_CONFIRMATION:
+        return VcsBundle.getString("settings.confirmation.option.text.ask");
+      case DO_NOTHING_SILENTLY:
+        return VcsBundle.getString("settings.confirmation.option.text.no");
+      case DO_ACTION_SILENTLY:
+        return VcsBundle.getString("settings.confirmation.option.text.yes");
+    }
+    throw new IllegalArgumentException("Unknown confirmation option " + value);
+  }
 
   Value getValue();
   void setValue(Value value);

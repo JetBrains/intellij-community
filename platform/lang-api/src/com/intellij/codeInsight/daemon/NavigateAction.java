@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.MouseEvent;
 
 /**
@@ -63,7 +64,18 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
 
   @NotNull
   public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull String text, @Nullable String originalActionId) {
+    return setNavigateAction(info, text, originalActionId, null);
+  }
+
+  @NotNull
+  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull String text,
+                                                                           @Nullable String originalActionId, @Nullable Icon icon) {
     NavigateAction<T> action = new NavigateAction<>(text, info, originalActionId);
+
+    if (icon != null) {
+      action.getTemplatePresentation().setIcon(icon);
+    }
+
     info.setNavigateAction(action);
     return info;
   }

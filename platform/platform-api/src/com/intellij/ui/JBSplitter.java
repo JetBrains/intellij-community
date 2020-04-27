@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +42,11 @@ public class JBSplitter extends Splitter {
     myDefaultProportion = 0.5f;
   }
 
-  public JBSplitter(@NotNull String proportionKey, float defaultProportion) {
+  public JBSplitter(@NotNull @NonNls String proportionKey, float defaultProportion) {
     this(false, proportionKey, defaultProportion);
   }
 
-  public JBSplitter(boolean vertical, @NotNull String proportionKey, float defaultProportion) {
+  public JBSplitter(boolean vertical, @NotNull @NonNls String proportionKey, float defaultProportion) {
     super(vertical, defaultProportion);
 
     mySplitterProportionKey = proportionKey;

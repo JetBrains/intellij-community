@@ -31,9 +31,8 @@ public class UnusedDeclarationInspectionMerger extends InspectionElementsMergerB
     return UnusedDeclarationInspectionBase.SHORT_NAME;
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {UNUSED_SYMBOL, UNUSED_DECLARATION};
   }
 

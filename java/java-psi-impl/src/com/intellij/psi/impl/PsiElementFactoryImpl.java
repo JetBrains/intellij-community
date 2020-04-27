@@ -113,18 +113,6 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiClass createRecord(@NotNull String name) throws IncorrectOperationException {
-    PsiUtil.checkIsIdentifier(myManager, name);
-    PsiJavaFile aFile = createDummyJavaFile("public record " +  name +  "() { }");
-    PsiClass[] classes = aFile.getClasses();
-    if (classes.length != 1) {
-      throw new IncorrectOperationException("Incorrect record name \"" + name + "\".");
-    }
-    return classes[0];
-  }
-
-  @NotNull
-  @Override
   public PsiClass createAnnotationType(@NotNull String name) throws IncorrectOperationException {
     return createClassInner("@interface", name);
   }
@@ -165,7 +153,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiTypeParameter createTypeParameter(@NotNull String name, @NotNull PsiClassType[] superTypes) {
+  public PsiTypeParameter createTypeParameter(@NotNull String name, PsiClassType @NotNull [] superTypes) {
     StringBuilder builder = new StringBuilder();
     builder.append("public <").append(name);
     if (superTypes.length > 1 || superTypes.length == 1 && !superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
@@ -339,7 +327,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, @NotNull PsiTypeParameter[] typeParameters) {
+  public PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, PsiTypeParameter @NotNull [] typeParameters) {
     Map<PsiTypeParameter, PsiType> substitutorMap = null;
     for (PsiTypeParameter parameter : typeParameters) {
       if (substitutorMap == null) substitutorMap = new HashMap<>();
@@ -468,7 +456,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiParameterList createParameterList(@NotNull String[] names, @NotNull PsiType[] types) throws IncorrectOperationException {
+  public PsiParameterList createParameterList(String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder();
     builder.append("void method(");
     for (int i = 0; i < names.length; i++) {
@@ -481,7 +469,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @NotNull
   @Override
-  public PsiReferenceList createReferenceList(@NotNull PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException {
+  public PsiReferenceList createReferenceList(PsiJavaCodeReferenceElement @NotNull [] references) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder();
     builder.append("void method()");
     if (references.length > 0){

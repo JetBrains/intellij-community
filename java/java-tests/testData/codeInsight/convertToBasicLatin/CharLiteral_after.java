@@ -1,3 +1,3 @@
 class C {
-    char ch = '\u00a9';
+    char ch = '\u00A9';
 }

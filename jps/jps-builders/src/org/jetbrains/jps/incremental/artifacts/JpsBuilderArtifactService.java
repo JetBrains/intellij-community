@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public abstract class JpsBuilderArtifactService {
   private static final JpsBuilderArtifactService ourInstance = new JpsBuilderArtifactServiceImpl();
 

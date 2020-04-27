@@ -53,7 +53,7 @@ abstract class VisibilityController : Disposable {
   }
 
   private fun propagateStateChanges() {
-    if (isDisposed) throw IllegalStateException("Visibility controller already disposed")
+    if (isDisposed) return
     when (state) {
       State.VISIBLE, State.INVISIBLE -> transitionTimer.stop()
       State.SHOWING, State.HIDING -> transitionTimer.start()

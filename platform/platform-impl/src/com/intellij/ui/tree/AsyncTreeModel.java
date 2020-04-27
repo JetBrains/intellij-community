@@ -36,9 +36,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class AsyncTreeModel extends AbstractTreeModel implements Identifiable, Searchable, Navigatable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final Command.Processor processor;
@@ -433,16 +430,6 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     return emptyList();
   }
 
-  @NotNull
-  private LeafState getLeafState(Object object) {
-    LOG.assertTrue(processor.background.isValidThread());
-    if (object instanceof LeafState.Supplier) {
-      LeafState.Supplier supplier = (LeafState.Supplier)object;
-      LeafState leafState = supplier.getLeafState();
-      if (LeafState.DEFAULT != leafState) return leafState;
-    }
-    return model.isLeaf(object) ? LeafState.ALWAYS : LeafState.NEVER;
-  }
 
   private abstract static class ObsolescentCommand implements Obsolescent, Command<Node> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
@@ -509,7 +496,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     Node getNode(Object object) {
       if (object == null) object = model.getRoot();
       if (object == null || isObsolete()) return null;
-      return new Node(object, getLeafState(object));
+      return new Node(object, LeafState.get(object, model));
     }
 
     @Override
@@ -578,7 +565,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
     @Override
     Node getNode(Object object) {
-      Node loaded = new Node(object, getLeafState(object));
+      Node loaded = new Node(object, LeafState.get(object, model));
       if (loaded.leafState == LeafState.ALWAYS || isObsolete()) return loaded;
 
       if (model instanceof ChildrenProvider) {
@@ -612,7 +599,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         }
         else {
           if (isObsolete()) return null;
-          children.add(new Node(child, getLeafState(child)));
+          children.add(new Node(child, LeafState.get(child, model)));
         }
       }
       return children;

@@ -12,9 +12,6 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.serialization.JpsSerializationTestCase
 import java.io.File
 
-/**
- * @author nik
- */
 class JpsAntSerializationTest : JpsSerializationTestCase() {
   private lateinit var antHome: File
 

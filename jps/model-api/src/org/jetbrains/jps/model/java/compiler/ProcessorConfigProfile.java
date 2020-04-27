@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public interface ProcessorConfigProfile extends AnnotationProcessingConfiguration {
   String DEFAULT_PRODUCTION_DIR_NAME = "generated";
   String DEFAULT_TESTS_DIR_NAME = "generated_tests";

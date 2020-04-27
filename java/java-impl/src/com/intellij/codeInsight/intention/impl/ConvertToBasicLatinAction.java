@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,30 +20,28 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.xml.util.XmlUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.Pair.pair;
 
 public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
-  private static final Logger LOG = Logger.getInstance(ConvertToBasicLatinAction.class);
-
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return CodeInsightBundle.message("intention.convert.to.basic.latin");
+  @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
+  public @NotNull String getFamilyName() {
+    return JavaBundle.message("intention.convert.to.basic.latin");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
@@ -132,12 +130,12 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
 
     @Override
     protected void convert(StringBuilder sb, char ch) {
-      sb.append(String.format("\\u%04x", (int)ch));
+      sb.append(String.format("\\u%04X", (int)ch));
     }
   }
 
   private static class DocCommentHandler extends Handler {
-    private static Map<Character, String> ourEntities;
+    private static TIntObjectHashMap<String> ourEntities;
 
     @Override
     PsiElement findApplicable(PsiElement element) {
@@ -157,7 +155,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
         sb.append('&').append(entity).append(';');
       }
       else {
-        sb.append("&#x").append(Integer.toHexString(ch)).append(';');
+        sb.append("&#x").append(Integer.toHexString(ch).toUpperCase(Locale.ENGLISH)).append(';');
       }
     }
 
@@ -172,18 +170,28 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
       XmlFile file;
       try {
         String url = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.HTML4_LOOSE_URI, project);
-        if (url == null) { LOG.error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI); return; }
+        if (url == null) {
+          Logger.getInstance(ConvertToBasicLatinAction.class).error("Namespace not found: " + XmlUtil.HTML4_LOOSE_URI);
+          return;
+        }
         VirtualFile vFile = VfsUtil.findFileByURL(new URL(url));
-        if (vFile == null) { LOG.error("Resource not found: " + url); return; }
+        if (vFile == null) {
+          Logger.getInstance(ConvertToBasicLatinAction.class).error("Resource not found: " + url);
+          return;
+        }
         PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
-        if (!(psiFile instanceof XmlFile)) { LOG.error("Unexpected resource: " + psiFile); return; }
+        if (!(psiFile instanceof XmlFile)) {
+          Logger.getInstance(ConvertToBasicLatinAction.class).error("Unexpected resource: " + psiFile);
+          return;
+        }
         file = (XmlFile)psiFile;
       }
       catch (MalformedURLException e) {
-        LOG.error(e); return;
+        Logger.getInstance(ConvertToBasicLatinAction.class).error(e);
+        return;
       }
 
-      Map<Character, String> entities = new HashMap<>();
+      TIntObjectHashMap<String> entities = new TIntObjectHashMap<>();
       Pattern pattern = Pattern.compile("&#(\\d+);");
       XmlUtil.processXmlElements(file, element -> {
         if (element instanceof XmlEntityDecl) {

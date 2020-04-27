@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
@@ -22,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
@@ -30,6 +32,8 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,16 +166,20 @@ public class VcsLogUiUtil {
     return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
   }
 
-  public static void appendActionToEmptyText(@NotNull StatusText emptyText, @NotNull String text, @NotNull Runnable action) {
+  public static void appendActionToEmptyText(@Nls @NotNull StatusText emptyText, @Nls @NotNull String text, @NotNull Runnable action) {
     emptyText.appendSecondaryText(text, getLinkAttributes(), e -> action.run());
   }
 
-  public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @NotNull StatusText emptyText) {
-    appendActionToEmptyText(emptyText, "Reset filters", () -> filterUi.setFilter(null));
+  public static void appendResetFiltersActionToEmptyText(@NotNull VcsLogFilterUiEx filterUi, @Nls @NotNull StatusText emptyText) {
+    appendActionToEmptyText(emptyText, VcsLogBundle.message("vcs.log.reset.filters.status.action"), () -> filterUi.setFilter(null));
+  }
+
+  public static boolean isDiffPreviewInEditor() {
+    return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
   }
 
   private static class VcsLogPlaceNavigator implements Place.Navigator {
-    private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
+    @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
     @NotNull private final VcsLogUiEx myUi;
 
     private VcsLogPlaceNavigator(@NotNull VcsLogUiEx ui) {

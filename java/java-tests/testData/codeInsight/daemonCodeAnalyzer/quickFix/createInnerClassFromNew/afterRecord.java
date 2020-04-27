@@ -4,6 +4,6 @@ public class Test {
         new Foo("bar", "baz")
     }
 
-    private record Foo(String bar,String baz) {
+    private record Foo(String bar, String baz) {
     }
 }

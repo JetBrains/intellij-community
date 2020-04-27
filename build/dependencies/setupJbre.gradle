@@ -1,5 +1,7 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import org.gradle.internal.os.OperatingSystem
 
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 task setupJbre()
@@ -8,19 +10,14 @@ def targetOs = System.getProperty("intellij.build.target.os", "all")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
 def jrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
-createJbreTasks(jreBuild, jreVersion, targetOs, jrePrefix)
-
-if (System.getProperty('intellij.build.bundle.second.jre', 'false').toBoolean()) {
-  def secondJreBuild = System.getProperty("intellij.build.bundled.second.jre.build", secondJreBuild)
-  createJbreTasks(secondJreBuild, 8, targetOs)
-}
+jbrTasks(jreBuild, jreVersion, targetOs, jrePrefix)
 
 /**
  * Update this method together with:
- *  `setupJdk.gradle` 
+ *  `setupJdk.gradle`
  *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
  */
-static def splitJreBuild(String jreBuild, String version) {
+static def splitJbrBuild(String jreBuild, String version) {
   def split = jreBuild.split('b')
   if (split.length > 2) {
     throw new IllegalArgumentException(
@@ -39,26 +36,14 @@ static def splitJreBuild(String jreBuild, String version) {
   }
 }
 
-def createJbreTasks(String defaultBuild, int version, String targetOs, String prefix = null) {
-  def isModular = version >= 9
-  def is32bitSupported = version <= 11
-  if (prefix == null) prefix = isModular ? 'jbr-' : 'jbrx-'
-  jrePlatformsToDownload(targetOs).each { platform ->
-    archToDownload(platform, is32bitSupported).each { arch ->
-      def jreBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
-      def (update, buildNumber) = splitJreBuild(jreBuild.toString(), version.toString())
-      def jbrxArtifactName = "$prefix$update-$platform-$arch-$buildNumber".toString()
-      def download = createDownloadJbreTask(jbrxArtifactName, jreBuild.toString(), !isModular)
-      if (!isModular) {
-        def jbrArtifactName = "jbr-$update-$platform-$arch-$buildNumber"
-        def untarTask = createUntarJbreTask(download, jbrxArtifactName.capitalize(), platform)
-        createTarJbreTask("tar${jbrArtifactName.capitalize()}", untarTask, platform, jbrArtifactName, false)
-        setupJbre.dependsOn("tar${jbrArtifactName.capitalize()}")
-        cleanSetupJbre.dependsOn("cleanTar${jbrArtifactName.capitalize()}")
-        createTarJbreTask("tar${jbrxArtifactName.capitalize()}", untarTask, platform, jbrxArtifactName, true)
-        setupJbre.dependsOn("tar${jbrxArtifactName.capitalize()}")
-        cleanSetupJbre.dependsOn("cleanTar${jbrxArtifactName.capitalize()}")
-      }
+def jbrTasks(String defaultBuild, int version, String targetOs, String prefix = null) {
+  if (prefix == null) prefix = 'jbr-'
+  platformsToDownload(targetOs).each { platform ->
+    archToDownload(platform).each { arch ->
+      def jbrBuild = project.ext.has("jreBuild_$platform") ? project.ext["jreBuild_$platform"] : defaultBuild
+      def (update, buildNumber) = splitJbrBuild(jbrBuild.toString(), version.toString())
+      def jbrArtifactName = "$prefix$update-$platform-$arch-$buildNumber"
+      downloadJbrTask(jbrArtifactName, jbrBuild.toString())
     }
   }
 }
@@ -69,10 +54,9 @@ def jreUrl() {
   System.getProperty('intellij.jre.teamcity.build.url') ?: 'https://cache-redirector.jetbrains.com/intellij-jbr'
 }
 
-def createDownloadJbreTask(String artifactName, String build, boolean doRepackage) {
+def downloadJbrTask(String artifactName, String build) {
   def outputDir = "$project.buildDir/jbre"
-  def suffix = doRepackage ? '_origin' : ''
-  def outputFile = "$outputDir/${artifactName}${suffix}.tar.gz"
+  def outputFile = "$outputDir/${artifactName}.tar.gz"
   task("download${artifactName.capitalize()}") {
     inputs.property('build', build)
     outputs.file(outputFile)
@@ -91,18 +75,12 @@ def createDownloadJbreTask(String artifactName, String build, boolean doRepackag
   file(outputFile)
 }
 
-def createUntarJbreTask(File downloadOutputs, String taskName, String platform) {
+def untarJbrTask(File downloadOutputs, String taskName) {
   Task untar
   if (OperatingSystem.current().isWindows()) {
-    // note: tarTree extracts symlinks as 0 length files which breaks osx distributions 
+    // note: tarTree extracts symlinks as 0 length files which breaks osx distributions
     untar = task("untar$taskName", type: Copy, dependsOn: "download$taskName") {
-      from tarTree(downloadOutputs), {
-        exclude 'lib/tools.jar'
-      }
-      from tarTree(downloadOutputs), {
-        include 'lib/tools.jar'
-        into 'jre'
-      }
+      from tarTree(downloadOutputs)
       into { "${downloadOutputs.parent}/${downloadOutputs.name - '.tar.gz'}/" }
       includeEmptyDirs = false
     }
@@ -114,64 +92,37 @@ def createUntarJbreTask(File downloadOutputs, String taskName, String platform) 
       outputs.dir(outputDir)
       doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
       commandLine 'tar', '-xpf', "${downloadOutputs.absolutePath}", '--directory', outputDir
-      if (platform != 'osx') {
-        doLast {
-          if (file("$outputDir/lib/tools.jar").exists()) {
-            exec {
-              commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
-              ignoreExitValue = true
-            }
-          }
-        }
-      }
     }
   }
   cleanSetupJbre.dependsOn("cleanUntar$taskName")
   untar
 }
 
-def createTarJbreTask(String taskName,
-                      Task untarTask,
-                      String platform,
-                      String archive,
-                      boolean includeToolsJar) {
-  def dirToTar = platform == 'osx' ? 'jdk' : 'jre'
+def tarJbrTask(String taskName, Task untarTask, String archive) {
+  def dirToTar = 'jbr'
+  def untarOutputs = untarTask.outputs.files
   if (OperatingSystem.current().isWindows()) {
     task(taskName, type: Tar) {
-      def untarOutputs = untarTask.outputs.files
       inputs.files(untarOutputs)
       from "$untarOutputs.singleFile/$dirToTar"
-      if (!includeToolsJar) {
-        exclude "**/tools.jar"
-      }
       into dirToTar
       compression = Compression.GZIP
-      archiveName = "${archive}.tar.gz"
-      destinationDir = untarOutputs.singleFile.parentFile
+      archiveFileName = "${archive}.tar.gz"
+      destinationDirectory = untarOutputs.singleFile.parentFile
     }
   }
   else {
     task(taskName, type: Exec) {
-      def untarOutputs = untarTask.outputs.files
       def outputFile = "${untarOutputs.singleFile.parentFile}/${archive}.tar.gz"
       inputs.files(untarOutputs)
       outputs.file(outputFile)
-      def arguments = ['tar', '-czf', outputFile, '-C', untarOutputs.singleFile.absolutePath]
-      if (!includeToolsJar) {
-        arguments += ['--exclude', '**/tools.jar']
-        // exclude entire lib directory (IDEA-176641)
-        if (platform == 'osx') {
-          arguments += ['--exclude', './jdk/Contents/Home/lib']
-        }
-      }
-      arguments += [dirToTar]
-      commandLine = arguments
+      commandLine = ['tar', '-czf', outputFile, '-C', untarOutputs.singleFile.absolutePath, dirToTar]
     }
   }
 }
 
 // see org.jetbrains.intellij.build.BuildOptions.targetOS
-static def jrePlatformsToDownload(targetOs) {
+static def platformsToDownload(targetOs) {
   Set<String> jrePlatformToDownload = []
   if (targetOs == 'all' || targetOs == 'linux') jrePlatformToDownload += 'linux'
   if (targetOs == 'all' || targetOs == 'windows') jrePlatformToDownload += 'windows'
@@ -179,6 +130,6 @@ static def jrePlatformsToDownload(targetOs) {
   jrePlatformToDownload
 }
 
-static def archToDownload(platform, is32BitArchSupported) {
-  is32BitArchSupported && platform == 'windows' ? ['x86', 'x64'] : ['x64']
+static def archToDownload(platform) {
+  platform != 'osx' ? ['x86', 'x64'] : ['x64']
 }

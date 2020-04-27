@@ -413,7 +413,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @Override
   @NotNull
-  PsiParameterList createParameterList(@NotNull @NonNls String[] names, @NotNull PsiType[] types) throws IncorrectOperationException;
+  PsiParameterList createParameterList(@NonNls String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException;
 
   /**
    * Creates a reference list element from the specified array of references.
@@ -421,10 +421,10 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @throws IncorrectOperationException if some of the references are invalid.
    */
   @NotNull
-  PsiReferenceList createReferenceList(@NotNull PsiJavaCodeReferenceElement[] references) throws IncorrectOperationException;
+  PsiReferenceList createReferenceList(PsiJavaCodeReferenceElement @NotNull [] references) throws IncorrectOperationException;
 
   @NotNull
-  PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, @NotNull PsiTypeParameter[] typeParameters);
+  PsiSubstitutor createRawSubstitutor(@NotNull PsiSubstitutor baseSubstitutor, PsiTypeParameter @NotNull [] typeParameters);
 
   /**
    * Create a lightweight PsiElement of given element type in a lightweight non-physical PsiFile (aka DummyHolder) in a given context.

@@ -18,6 +18,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogRefs;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -86,7 +87,7 @@ public class GoToHashOrRefPopup {
     myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
     myTextField.setBorder(JBUI.Borders.empty(3));
 
-    JBLabel label = new JBLabel("Enter hash or branch/tag name:");
+    JBLabel label = new JBLabel(VcsLogBundle.message("vcs.log.go.to.hash.popup.label"));
     label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
     label.setAlignmentX(Component.LEFT_ALIGNMENT);
 

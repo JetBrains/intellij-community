@@ -32,9 +32,8 @@ public class InconsistentResourceBundleInspection extends GlobalSimpleInspection
 
   private final NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]> myInspectionProviders =
     new NotNullLazyValue<InconsistentResourceBundleInspectionProvider[]>() {
-    @NotNull
     @Override
-    protected InconsistentResourceBundleInspectionProvider[] compute() {
+    protected InconsistentResourceBundleInspectionProvider @NotNull [] compute() {
       return new InconsistentResourceBundleInspectionProvider[] {
         new PropertiesKeysConsistencyInspectionProvider(),
         new DuplicatedPropertiesInspectionProvider(),

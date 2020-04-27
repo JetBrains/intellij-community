@@ -18,14 +18,10 @@ package com.intellij.util.xml.tree.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.treeStructure.SimpleNode;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ElementPresentation;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomFileElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
@@ -52,8 +48,8 @@ public class DeleteDomElement extends BaseDomTreeAction {
       
       final DomElement domElement = ((BaseDomElementNode)selectedNode).getDomElement();
 
-      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", "Remove",
-                                                  Messages.getQuestionIcon());
+      final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?",
+                                                  XmlDomBundle.message("dialog.title.remove.xml.element"), Messages.getQuestionIcon());
       if (ret == Messages.OK) {
         WriteCommandAction.writeCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)).run(() -> domElement.undefine());
       }
@@ -81,10 +77,10 @@ public class DeleteDomElement extends BaseDomTreeAction {
 
 
     if (enabled) {
-      e.getPresentation().setText(getPresentationText(selectedNode, ApplicationBundle.message("action.remove")));
+      e.getPresentation().setText(getPresentationText(selectedNode, XmlDomBundle.message("action.remove")));
     }
     else {
-      e.getPresentation().setText(ApplicationBundle.message("action.remove"));
+      e.getPresentation().setText(XmlDomBundle.messagePointer("action.remove"));
     }
 
     e.getPresentation().setIcon(AllIcons.General.Remove);

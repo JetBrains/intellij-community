@@ -35,7 +35,7 @@ internal abstract class GitSingleCommitActionGroup() : ActionGroup(), DumbAware 
     if (commits.size != 1) return AnAction.EMPTY_ARRAY
     val commit = commits.first()
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(commit.root) ?: return AnAction.EMPTY_ARRAY
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(commit.root) ?: return AnAction.EMPTY_ARRAY
 
     return getChildren(e, project, log, repository, commit)
   }

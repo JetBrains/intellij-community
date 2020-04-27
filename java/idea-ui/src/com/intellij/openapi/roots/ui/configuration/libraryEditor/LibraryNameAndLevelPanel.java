@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -45,15 +45,15 @@ public class LibraryNameAndLevelPanel {
   public LibraryNameAndLevelPanel(@NotNull FormBuilder formBuilder, @NotNull String libraryName, @NotNull List<LibrariesContainer.LibraryLevel> availableLevels,
                                   @Nullable LibrariesContainer.LibraryLevel level) {
     myLibraryNameField = new JTextField(25);
-    formBuilder.addLabeledComponent("&Name:", myLibraryNameField);
+    formBuilder.addLabeledComponent(JavaUiBundle.message("label.library.name"), myLibraryNameField);
     myLibraryNameField.setText(libraryName);
     myLevelComboBox = new ComboBox<>();
     if (level != null && !availableLevels.isEmpty()) {
-      formBuilder.addLabeledComponent("&Level:", myLevelComboBox);
+      formBuilder.addLabeledComponent(JavaUiBundle.message("label.library.level"), myLevelComboBox);
       final Map<LibrariesContainer.LibraryLevel, String> levels = new HashMap<>();
-      levels.put(LibrariesContainer.LibraryLevel.GLOBAL, ProjectBundle.message("combobox.item.global.library"));
-      levels.put(LibrariesContainer.LibraryLevel.PROJECT, ProjectBundle.message("combobox.item.project.library"));
-      levels.put(LibrariesContainer.LibraryLevel.MODULE, ProjectBundle.message("combobox.item.module.library"));
+      levels.put(LibrariesContainer.LibraryLevel.GLOBAL, JavaUiBundle.message("combobox.item.global.library"));
+      levels.put(LibrariesContainer.LibraryLevel.PROJECT, JavaUiBundle.message("combobox.item.project.library"));
+      levels.put(LibrariesContainer.LibraryLevel.MODULE, JavaUiBundle.message("combobox.item.module.library"));
       myLevelComboBox.setRenderer(SimpleListCellRenderer.create("", levels::get));
       myLevelComboBox.setModel(new CollectionComboBoxModel<>(availableLevels, level));
     }

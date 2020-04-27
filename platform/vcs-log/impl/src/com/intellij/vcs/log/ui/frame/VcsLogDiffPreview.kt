@@ -1,26 +1,27 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame
 
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.DiffPreviewProvider
+import com.intellij.openapi.vcs.changes.EditorTabPreview
 import com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.CommonUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
@@ -40,7 +41,7 @@ fun toggleDiffPreviewOnPropertyChange(uiProperties: VcsLogUiProperties,
 abstract class FrameDiffPreview<D : DiffRequestProcessor>(protected val previewDiff: D,
                                                           uiProperties: VcsLogUiProperties,
                                                           mainComponent: JComponent,
-                                                          splitterProportionKey: String,
+                                                          @NonNls splitterProportionKey: String,
                                                           vertical: Boolean = false,
                                                           defaultProportion: Float = 0.7f) {
   private val previewDiffSplitter: Splitter = OnePixelSplitter(vertical, splitterProportionKey, defaultProportion)
@@ -106,8 +107,8 @@ class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties
     return preview
   }
 
-  override fun getEditorTabName(): String {
-    return "Repository Diff"
+  override fun getEditorTabName(): @Nls String {
+    return VcsLogBundle.message("vcs.log.diff.preview.editor.tab.name")
   }
 
   override fun getOwnerComponent(): JComponent = mainFrame.changesBrowser.preferredFocusedComponent
@@ -122,24 +123,9 @@ class VcsLogEditorDiffPreview(project: Project, uiProperties: VcsLogUiProperties
 }
 
 private fun openPreviewInEditor(project: Project, diffPreviewProvider: DiffPreviewProvider, componentToFocus: JComponent) {
-  val fileEditorManager = FileEditorManager.getInstance(project)
-
-  val previewDiffVirtualFile = PreviewDiffVirtualFile(diffPreviewProvider)
-  val wasOpen = fileEditorManager.isFileOpen(previewDiffVirtualFile)
-  val fileEditor = fileEditorManager.openFile(previewDiffVirtualFile, false, true).singleOrNull() ?: return
-  if (!wasOpen) {
-    val action: DumbAwareAction = object : DumbAwareAction() {
-      override fun actionPerformed(e: AnActionEvent) {
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
-        toolWindow?.activate({
-                               IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true)
-                             }, false)
-      }
-
-      init {
-        shortcutSet = CommonShortcuts.ESCAPE
-      }
-    }
-    action.registerCustomShortcutSet(fileEditor.component, fileEditor)
+  val escapeHandler = Runnable {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)
+    toolWindow?.activate({ IdeFocusManager.getInstance(project).requestFocus(componentToFocus, true) }, false)
   }
+  EditorTabPreview.openPreview(project, PreviewDiffVirtualFile(diffPreviewProvider), false, escapeHandler)
 }

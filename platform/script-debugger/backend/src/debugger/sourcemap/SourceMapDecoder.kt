@@ -31,27 +31,7 @@ import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
 import org.jetbrains.io.JsonReaderEx
 import java.io.IOException
 import java.nio.file.Path
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.properties.Delegates.notNull
 
-private val MAPPING_COMPARATOR_BY_SOURCE_POSITION = Comparator<MappingEntry> { o1, o2 ->
-  if (o1.sourceLine == o2.sourceLine) {
-    o1.sourceColumn - o2.sourceColumn
-  }
-  else {
-    o1.sourceLine - o2.sourceLine
-  }
-}
-
-val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Comparator { o1, o2 ->
-  if (o1.generatedLine == o2.generatedLine) {
-    o1.generatedColumn - o2.generatedColumn
-  }
-  else {
-    o1.generatedLine - o2.generatedLine
-  }
-}
 
 internal const val UNMAPPED = -1
 
@@ -110,7 +90,6 @@ internal fun calculateReverseMappings(data: SourceMapData): Array<MappingList?> 
       null
     }
     else {
-      entries.sortWith(MAPPING_COMPARATOR_BY_SOURCE_POSITION)
       SourceMappingList(entries)
     }
   }
@@ -390,18 +369,20 @@ private class CharSequenceIterator(private val content: CharSequence) : CharIter
 }
 
 private class SourceMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+
   override fun getLine(mapping: MappingEntry) = mapping.sourceLine
 
   override fun getColumn(mapping: MappingEntry) = mapping.sourceColumn
-
-  override val comparator = MAPPING_COMPARATOR_BY_SOURCE_POSITION
 }
 
 internal class GeneratedMappingList(mappings: List<MappingEntry>) : MappingList(mappings) {
+
   override fun getLine(mapping: MappingEntry) = mapping.generatedLine
 
   override fun getColumn(mapping: MappingEntry) = mapping.generatedColumn
 
-  override val comparator = MAPPING_COMPARATOR_BY_GENERATED_POSITION
+  override fun getNext(mapping: MappingEntry): MappingEntry? {
+    return mapping.nextGenerated
+  }
 }
 

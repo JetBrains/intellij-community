@@ -15,22 +15,20 @@
  */
 package com.intellij.facet.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class ValidationResult {
   public static final ValidationResult OK = new ValidationResult(null, null);
 
   private final String myErrorMessage;
   private final FacetConfigurationQuickFix myQuickFix;
 
-  public ValidationResult(String errorMessage) {
+  public ValidationResult(@Nls String errorMessage) {
     this(errorMessage, null);
   }
 
-  public ValidationResult(String errorMessage, @Nullable FacetConfigurationQuickFix quickFix) {
+  public ValidationResult(@Nls String errorMessage, @Nullable FacetConfigurationQuickFix quickFix) {
     myErrorMessage = errorMessage;
     myQuickFix = quickFix;
   }

@@ -59,7 +59,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private volatile long myLastEventOrdinal;
   private volatile ProjectDescriptor myProjectDescriptor;
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<>());
-  private final ConstantSearch myConstantSearch = new ConstantSearch();
+  private final ConstantSearch myConstantSearch = null/*new ConstantSearch()*/;
   @NotNull
   private final BuildRunner myBuildRunner;
   private final boolean myForceModelLoading;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.pom.tree.events.impl;
 
@@ -33,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author ik
- */
 public class TreeChangeEventImpl implements TreeChangeEvent{
   private final Map<CompositeElement, TreeChangeImpl> myChangedElements = new LinkedHashMap<>();
   private final MultiMap<CompositeElement, TreeChangeImpl> myChangesByAllParents = MultiMap.createSet();
@@ -54,8 +37,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   @Override
-  @NotNull
-  public ASTNode[] getChangedElements() {
+  public ASTNode @NotNull [] getChangedElements() {
     return myChangedElements.keySet().toArray(ASTNode.EMPTY_ARRAY);
   }
 
@@ -120,8 +102,8 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   private static TreeElement findAncestorChild(@NotNull CompositeElement ancestor, @NotNull TreeChangeImpl change) {
     List<CompositeElement> superParents = change.getSuperParents();
     int index = superParents.indexOf(ancestor);
-    return index < 0 ? null : 
-           index == 0 ? change.getChangedParent() : 
+    return index < 0 ? null :
+           index == 0 ? change.getChangedParent() :
            superParents.get(index - 1);
   }
 
@@ -154,9 +136,9 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   @Override
   public void beforeNestedTransaction() {
     // compute changes and remember them, to prevent lazy computation to happen in another transaction
-    // when more changes might have occurred but shouldn't count in this transaction 
+    // when more changes might have occurred but shouldn't count in this transaction
     for (TreeChangeImpl change : myChangedElements.values()) {
-      change.getAffectedChildren(); 
+      change.getAffectedChildren();
     }
   }
 

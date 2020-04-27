@@ -1,10 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.TreeActions;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,138 +11,66 @@ import javax.swing.plaf.UIResource;
 import javax.swing.tree.TreePath;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.registry.Registry.is;
+import static com.intellij.util.ui.tree.TreeUtil.scrollToVisible;
+import static java.awt.event.KeyEvent.*;
 import static java.util.Arrays.asList;
 import static javax.swing.KeyStroke.getKeyStroke;
+import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 
-abstract class TreeAction extends AbstractAction implements UIResource {
+final class TreeAction extends AbstractAction implements UIResource {
+  private enum MoveType {ChangeLead, ChangeSelection, ExtendSelection}
+
   private static final List<TreeAction> ACTIONS = asList(
-    new TreeAction(TreeActions.Home.ID, getKeyStroke(KeyEvent.VK_HOME, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        scrollAndSetSelection(tree, 0);
-      }
-    },
-    new TreeAction(TreeActions.End.ID, getKeyStroke(KeyEvent.VK_END, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        scrollAndSetSelection(tree, tree.getRowCount() - 1);
-      }
-    },
-    new TreeAction(TreeActions.Up.ID, getKeyStroke(KeyEvent.VK_UP, 0), getKeyStroke(KeyEvent.VK_KP_UP, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        int row = tree.getRowForPath(path);
-        if (path == null || row < 0) {
-          scrollAndSetSelection(tree, 0);
-        }
-        else {
-          if (row == 0 && isCycleScrollingAllowed()) row = tree.getRowCount();
-          row--; // NB!: decrease row after checking for cycle scrolling
-          scrollAndSetSelection(tree, row);
-        }
-      }
-    },
-    new TreeAction(TreeActions.Down.ID, getKeyStroke(KeyEvent.VK_DOWN, 0), getKeyStroke(KeyEvent.VK_KP_DOWN, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        int row = tree.getRowForPath(path);
-        if (path == null || row < 0) {
-          scrollAndSetSelection(tree, 0);
-        }
-        else {
-          row++; // NB!: increase row before checking for cycle scrolling
-          if (isCycleScrollingAllowed() && row == tree.getRowCount()) row = 0;
-          scrollAndSetSelection(tree, row);
-        }
-      }
-    },
-    new TreeAction(TreeActions.Left.ID, getKeyStroke(KeyEvent.VK_LEFT, 0), getKeyStroke(KeyEvent.VK_KP_LEFT, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        int row = tree.getRowForPath(path);
-        if (path == null || row < 0) {
-          scrollAndSetSelection(tree, 0);
-        }
-        else if (tree.isExpanded(path)) {
-          tree.collapsePath(path);
-        }
-        else {
-          TreePath parent = path.getParentPath();
-          if (parent != null) {
-            if (tree.isRootVisible() || null != parent.getParentPath()) {
-              scrollAndSetSelection(tree, parent);
-            }
-            else if (row > 0) {
-              scrollAndSetSelection(tree, row - 1);
-            }
-          }
-        }
-      }
-    },
-    new TreeAction(TreeActions.Right.ID, getKeyStroke(KeyEvent.VK_RIGHT, 0), getKeyStroke(KeyEvent.VK_KP_RIGHT, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        int row = tree.getRowForPath(path);
-        if (path == null || row < 0) {
-          scrollAndSetSelection(tree, 0);
-        }
-        else if (tree.isExpanded(path) || tree.getModel().isLeaf(path.getLastPathComponent())) {
-          scrollAndSetSelection(tree, row + 1);
-        }
-        else {
-          tree.expandPath(path);
-        }
-      }
-    },
-    new TreeAction(TreeActions.PageUp.ID, getKeyStroke(KeyEvent.VK_PAGE_UP, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        Rectangle bounds = tree.getPathBounds(path);
-        if (path == null || bounds == null) {
-          scrollAndSetSelection(tree, 0);
-        }
-        else {
-          int height = Math.max(tree.getVisibleRect().height - bounds.height, 1);
-          TreePath next = tree.getClosestPathForLocation(bounds.x, bounds.y - height);
-          if (next != null && !next.equals(path)) scrollAndSetSelection(tree, next);
-        }
-      }
-    },
-    new TreeAction(TreeActions.PageDown.ID, getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0)) {
-      @Override
-      void actionPerformed(@NotNull JTree tree, @Nullable TreePath path) {
-        Rectangle bounds = tree.getPathBounds(path);
-        if (path == null || bounds == null) {
-          scrollAndSetSelection(tree, tree.getRowCount() - 1);
-        }
-        else {
-          int height = Math.max(tree.getVisibleRect().height - bounds.height, 1);
-          TreePath next = tree.getClosestPathForLocation(bounds.x, bounds.y + bounds.height + height);
-          if (next != null && !next.equals(path)) scrollAndSetSelection(tree, next);
-        }
-      }
-    }
+    new TreeAction(TreeAction::selectFirst, TreeActions.Home.ID, getKeyStroke(VK_HOME, 0)),
+    new TreeAction(TreeAction::selectFirstChangeLead, "selectFirstChangeLead"),
+    new TreeAction(TreeAction::selectFirstExtendSelection, TreeActions.ShiftHome.ID),
+
+    new TreeAction(TreeAction::selectLast, TreeActions.End.ID, getKeyStroke(VK_END, 0)),
+    new TreeAction(TreeAction::selectLastChangeLead, "selectLastChangeLead"),
+    new TreeAction(TreeAction::selectLastExtendSelection, TreeActions.ShiftEnd.ID),
+
+    new TreeAction(TreeAction::selectPrevious, TreeActions.Up.ID, getKeyStroke(VK_UP, 0), getKeyStroke(VK_KP_UP, 0)),
+    new TreeAction(TreeAction::selectPreviousChangeLead, "selectPreviousChangeLead"),
+    new TreeAction(TreeAction::selectPreviousExtendSelection, TreeActions.ShiftUp.ID),
+
+    new TreeAction(TreeAction::selectNext, TreeActions.Down.ID, getKeyStroke(VK_DOWN, 0), getKeyStroke(VK_KP_DOWN, 0)),
+    new TreeAction(TreeAction::selectNextChangeLead, "selectNextChangeLead"),
+    new TreeAction(TreeAction::selectNextExtendSelection, TreeActions.ShiftDown.ID),
+
+    new TreeAction(TreeAction::selectParent, TreeActions.Left.ID, getKeyStroke(VK_LEFT, 0), getKeyStroke(VK_KP_LEFT, 0)),
+    // new TreeAction(TreeAction::selectParentChangeLead, "selectParentChangeLead"),
+    // new TreeAction(TreeAction::selectParentExtendSelection, TreeActions.ShiftLeft.ID),
+
+    new TreeAction(TreeAction::selectChild, TreeActions.Right.ID, getKeyStroke(VK_RIGHT, 0), getKeyStroke(VK_KP_RIGHT, 0)),
+    // new TreeAction(TreeAction::selectChildChangeLead, "selectChildChangeLead"),
+    // new TreeAction(TreeAction::selectChildExtendSelection, TreeActions.ShiftRight.ID),
+
+    new TreeAction(TreeAction::scrollUpChangeSelection, TreeActions.PageUp.ID, getKeyStroke(VK_PAGE_UP, 0)),
+    new TreeAction(TreeAction::scrollUpChangeLead, "scrollUpChangeLead"),
+    new TreeAction(TreeAction::scrollUpExtendSelection, TreeActions.ShiftPageUp.ID),
+
+    new TreeAction(TreeAction::scrollDownChangeSelection, TreeActions.PageDown.ID, getKeyStroke(VK_PAGE_DOWN, 0)),
+    new TreeAction(TreeAction::scrollDownChangeLead, "scrollDownChangeLead"),
+    new TreeAction(TreeAction::scrollDownExtendSelection, TreeActions.ShiftPageDown.ID)
   );
   private final String name;
+  private final Consumer<JTree> action;
   private final List<KeyStroke> keys;
 
-  TreeAction(@NotNull String name, @NotNull KeyStroke... keys) {
+  private TreeAction(@NotNull Consumer<JTree> action, @NotNull String name, KeyStroke @NotNull ... keys) {
     this.name = name;
+    this.action = action;
     this.keys = asList(keys);
   }
 
-  abstract void actionPerformed(@NotNull JTree tree, @Nullable TreePath path);
-
   @Override
-  public final void actionPerformed(ActionEvent event) {
+  public void actionPerformed(ActionEvent event) {
     Object source = event.getSource();
-    if (source instanceof JTree) {
-      JTree tree = (JTree)source;
-      actionPerformed(tree, tree.getLeadSelectionPath());
-    }
+    if (source instanceof JTree) action.accept((JTree)source);
   }
 
   static void installTo(@NotNull ActionMap map) {
@@ -159,17 +85,316 @@ abstract class TreeAction extends AbstractAction implements UIResource {
     for (TreeAction action : ACTIONS) for (KeyStroke key : action.keys) map.put(key, action.name);
   }
 
-  static void scrollAndSetSelection(@NotNull JTree tree, int row) {
-    scrollAndSetSelection(tree, tree.getPathForRow(row));
-  }
-
-  static void scrollAndSetSelection(@NotNull JTree tree, @Nullable TreePath path) {
-    if (path != null && TreeUtil.scrollToVisible(tree, path, false)) tree.setSelectionPath(path);
-  }
-
-  static boolean isCycleScrollingAllowed() {
-    if (!Registry.is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
+  private static boolean isCycleScrollingAllowed(@NotNull MoveType type) {
+    if (type == MoveType.ExtendSelection) return false;
+    if (!is("ide.tree.ui.cyclic.scrolling.allowed")) return false;
     UISettings settings = UISettings.getInstanceOrNull();
     return settings != null && settings.getCycleScrolling();
+  }
+
+  private static boolean isLeaf(@NotNull JTree tree, @NotNull TreePath path) {
+    return tree.getModel().isLeaf(path.getLastPathComponent()); // TODO:malenkov: via DefaultTreeUI
+  }
+
+  private static void lineDown(@NotNull MoveType type, @NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    int row = tree.getRowForPath(lead);
+    if (lead == null || row < 0) {
+      selectFirst(type, tree);
+    }
+    else {
+      row++; // NB!: increase row before checking for cycle scrolling
+      if (isCycleScrollingAllowed(type) && row == tree.getRowCount()) row = 0;
+      select(type, tree, row);
+    }
+  }
+
+  private static void lineUp(@NotNull MoveType type, @NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    int row = tree.getRowForPath(lead);
+    if (lead == null || row < 0) {
+      selectFirst(type, tree);
+    }
+    else {
+      if (row == 0 && isCycleScrollingAllowed(type)) row = tree.getRowCount();
+      row--; // NB!: decrease row after checking for cycle scrolling
+      select(type, tree, row);
+    }
+  }
+
+  private static void pageDown(@NotNull MoveType type, @NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    Rectangle bounds = tree.getPathBounds(lead);
+    if (lead == null || bounds == null) {
+      selectLast(type, tree);
+    }
+    else {
+      int height = Math.max(tree.getVisibleRect().height - bounds.height * 4, 1);
+      TreePath next = tree.getClosestPathForLocation(bounds.x, bounds.y + bounds.height + height);
+      if (next != null && !next.equals(lead)) select(type, tree, next);
+    }
+  }
+
+  private static void pageUp(@NotNull MoveType type, @NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    Rectangle bounds = tree.getPathBounds(lead);
+    if (lead == null || bounds == null) {
+      selectFirst(type, tree);
+    }
+    else {
+      int height = Math.max(tree.getVisibleRect().height - bounds.height * 4, 1);
+      TreePath next = tree.getClosestPathForLocation(bounds.x, bounds.y - height);
+      if (next != null && !next.equals(lead)) select(type, tree, next);
+    }
+  }
+
+  private static void select(@NotNull MoveType type, @NotNull JTree tree, int row) {
+    select(type, tree, tree.getPathForRow(row), row);
+  }
+
+  private static void select(@NotNull MoveType type, @NotNull JTree tree, @NotNull TreePath path) {
+    select(type, tree, path, tree.getRowForPath(path));
+  }
+
+  private static void select(@NotNull MoveType type, @NotNull JTree tree, @Nullable TreePath path, int row) {
+    if (path == null || row < 0) return;
+    if (type == MoveType.ExtendSelection) {
+      TreePath anchor = tree.getAnchorSelectionPath();
+      int anchorRow = anchor == null ? -1 : tree.getRowForPath(anchor);
+      if (anchorRow < 0) {
+        tree.setSelectionPath(path);
+      }
+      else {
+        tree.setSelectionInterval(row, anchorRow);
+        tree.setAnchorSelectionPath(anchor);
+        tree.setLeadSelectionPath(path);
+      }
+    }
+    else if (type == MoveType.ChangeLead && DISCONTIGUOUS_TREE_SELECTION == tree.getSelectionModel().getSelectionMode()) {
+      tree.setLeadSelectionPath(path);
+    }
+    else {
+      tree.setSelectionPath(path);
+    }
+    scrollToVisible(tree, path, false);
+  }
+
+  private static void selectChild(@NotNull MoveType type, @NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    int row = tree.getRowForPath(lead);
+    if (lead == null || row < 0) {
+      selectFirst(type, tree);
+    }
+    else if (tree.isExpanded(lead) || isLeaf(tree, lead)) {
+      select(type, tree, row + 1);
+    }
+    else {
+      tree.expandPath(lead);
+    }
+  }
+
+  private static void selectFirst(@NotNull MoveType type, @NotNull JTree tree) {
+    select(type, tree, 0);
+  }
+
+  private static void selectLast(@NotNull MoveType type, @NotNull JTree tree) {
+    select(type, tree, tree.getRowCount() - 1);
+  }
+
+  private static void selectParent(@NotNull MoveType type, @NotNull JTree tree) {
+    TreePath lead = tree.getLeadSelectionPath();
+    int row = tree.getRowForPath(lead);
+    if (lead == null || row < 0) {
+      selectFirst(type, tree);
+    }
+    else if (type == MoveType.ChangeSelection && tree.isExpanded(lead)) {
+      tree.collapsePath(lead);
+    }
+    else {
+      TreePath parent = lead.getParentPath();
+      if (parent != null) {
+        if (tree.isRootVisible() || null != parent.getParentPath()) {
+          select(type, tree, parent);
+        }
+        else if (row > 0) {
+          select(type, tree, row - 1);
+        }
+      }
+    }
+  }
+
+
+  // NB!: the following method names correspond Tree.focusInputMap in BasicLookAndFeel and Actions in BasicTreeUI
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement addToSelection
+  private static void addToSelection(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement cancel
+  private static void cancel(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement clearSelection
+  private static void clearSelection(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement collapse
+  private static void collapse(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement expand
+  private static void expand(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement extendTo
+  private static void extendTo(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement moveSelectionTo
+  private static void moveSelectionTo(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement moveSelectionToParent
+  private static void moveSelectionToParent(@NotNull JTree tree) {
+  }
+
+  private static void scrollDownChangeLead(@NotNull JTree tree) {
+    pageDown(MoveType.ChangeLead, tree);
+  }
+
+  private static void scrollDownChangeSelection(@NotNull JTree tree) {
+    pageDown(MoveType.ChangeSelection, tree);
+  }
+
+  private static void scrollDownExtendSelection(@NotNull JTree tree) {
+    pageDown(MoveType.ExtendSelection, tree);
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement scrollLeft
+  private static void scrollLeft(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement scrollLeftChangeLead
+  private static void scrollLeftChangeLead(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement scrollLeftExtendSelection
+  private static void scrollLeftExtendSelection(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement scrollRight
+  private static void scrollRight(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement scrollRightChangeLead
+  private static void scrollRightChangeLead(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement scrollRightExtendSelection
+  private static void scrollRightExtendSelection(@NotNull JTree tree) {
+  }
+
+  private static void scrollUpChangeLead(@NotNull JTree tree) {
+    pageUp(MoveType.ChangeLead, tree);
+  }
+
+  private static void scrollUpChangeSelection(@NotNull JTree tree) {
+    pageUp(MoveType.ChangeSelection, tree);
+  }
+
+  private static void scrollUpExtendSelection(@NotNull JTree tree) {
+    pageUp(MoveType.ExtendSelection, tree);
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement selectAll
+  private static void selectAll(@NotNull JTree tree) {
+  }
+
+  private static void selectChild(@NotNull JTree tree) {
+    selectChild(MoveType.ChangeSelection, tree);
+  }
+
+  @SuppressWarnings("unused")
+  private static void selectChildChangeLead(@NotNull JTree tree) {
+    selectChild(MoveType.ChangeLead, tree);
+  }
+
+  @SuppressWarnings("unused") // because inconvenient
+  private static void selectChildExtendSelection(@NotNull JTree tree) {
+    selectChild(MoveType.ExtendSelection, tree);
+  }
+
+  private static void selectFirst(@NotNull JTree tree) {
+    selectFirst(MoveType.ChangeSelection, tree);
+  }
+
+  private static void selectFirstChangeLead(@NotNull JTree tree) {
+    selectFirst(MoveType.ChangeLead, tree);
+  }
+
+  private static void selectFirstExtendSelection(@NotNull JTree tree) {
+    selectFirst(MoveType.ExtendSelection, tree);
+  }
+
+  private static void selectLast(@NotNull JTree tree) {
+    selectLast(MoveType.ChangeSelection, tree);
+  }
+
+  private static void selectLastChangeLead(@NotNull JTree tree) {
+    selectLast(MoveType.ChangeLead, tree);
+  }
+
+  private static void selectLastExtendSelection(@NotNull JTree tree) {
+    selectLast(MoveType.ExtendSelection, tree);
+  }
+
+  private static void selectNext(@NotNull JTree tree) {
+    lineDown(MoveType.ChangeSelection, tree);
+  }
+
+  private static void selectNextChangeLead(@NotNull JTree tree) {
+    lineDown(MoveType.ChangeLead, tree);
+  }
+
+  private static void selectNextExtendSelection(@NotNull JTree tree) {
+    lineDown(MoveType.ExtendSelection, tree);
+  }
+
+  private static void selectParent(@NotNull JTree tree) {
+    selectParent(MoveType.ChangeSelection, tree);
+  }
+
+  @SuppressWarnings("unused")
+  private static void selectParentChangeLead(@NotNull JTree tree) {
+    selectParent(MoveType.ChangeLead, tree);
+  }
+
+  @SuppressWarnings("unused") // because inconvenient
+  private static void selectParentExtendSelection(@NotNull JTree tree) {
+    selectParent(MoveType.ExtendSelection, tree);
+  }
+
+  private static void selectPrevious(@NotNull JTree tree) {
+    lineUp(MoveType.ChangeSelection, tree);
+  }
+
+  private static void selectPreviousChangeLead(@NotNull JTree tree) {
+    lineUp(MoveType.ChangeLead, tree);
+  }
+
+  private static void selectPreviousExtendSelection(@NotNull JTree tree) {
+    lineUp(MoveType.ExtendSelection, tree);
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement startEditing
+  private static void startEditing(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement toggle
+  private static void toggle(@NotNull JTree tree) {
+  }
+
+  @SuppressWarnings("unused") // TODO:malenkov: implement toggleAndAnchor
+  private static void toggleAndAnchor(@NotNull JTree tree) {
   }
 }

@@ -17,16 +17,25 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> extends CreateTemplateInPackageAction<T> {
 
   protected JavaCreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
     super(text, description, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
+  }
+
+  protected JavaCreateTemplateInPackageAction(@NotNull Supplier<String> dynamicText,
+                                              @NotNull Supplier<String> dynamicDescription,
+                                              Icon icon,
+                                              boolean inSourceOnly) {
+    super(dynamicText, dynamicDescription, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
   }
 
   protected JavaCreateTemplateInPackageAction(String text,

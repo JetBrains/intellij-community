@@ -17,9 +17,6 @@ import java.util.stream.Collectors;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 import static org.jetbrains.jps.model.serialization.JpsProjectSerializationTest.SAMPLE_PROJECT_PATH;
 
-/**
- * @author nik
- */
 public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);

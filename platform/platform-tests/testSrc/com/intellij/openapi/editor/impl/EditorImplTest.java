@@ -572,6 +572,12 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("some t<caret>ext");
   }
 
+  public void testRightClickOutsideButVeryCloseToSelectionDoesNotRemoveIt() {
+    initText("<selection>some<caret></selection> text");
+    mouse().right().clickAtXY(42, 5);
+    checkResultByText("<selection>some<caret></selection> text");
+  }
+
   public void testDragStartingBeyondSelectedLineEnd() {
     initText("<selection>line1</selection>\nline2");
     setEditorVisibleSize(100, 100);
@@ -585,5 +591,49 @@ public class EditorImplTest extends AbstractEditorTest {
     addCollapsedFoldRegion(19, 25, "...");
     runWriteCommand(() -> ((EditorEx)getEditor()).getDocument().moveText(19, 25, 0));
     assertEquals(80, getEditor().getContentComponent().getPreferredSize().width);
+  }
+
+  public void testEditorIsNotScrolledOnSoftWrappingIfNotScrolledPreviously() {
+    initText("long long line");
+    EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 100, 1);
+    EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 10, 1);
+    assertEquals(0, getEditor().getScrollingModel().getVerticalScrollOffset());
+  }
+
+  public void testClickOnBlockInlayDoesNotMoveCaret() {
+    initText("text");
+    addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
+    mouse().clickAtXY(2 * TEST_CHAR_WIDTH, 0);
+    checkResultByText("<caret>text");
+  }
+
+  public void testDragInBlockInlayDoesNotCreateSelection() {
+    initText("text");
+    addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(2 * TEST_CHAR_WIDTH, 0).dragToXY(4 * TEST_CHAR_WIDTH, 0).release();
+    checkResultByText("<caret>text");
+  }
+
+  public void testDragBeyondEditorTopWithBlockInlay() {
+    initText("text");
+    addBlockInlay(0, true);
+    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+    mouse().pressAtXY(2 * TEST_CHAR_WIDTH, (int)(getEditor().getLineHeight() * 1.5)).dragToXY(-1, -1).release();
+    checkResultByText("<selection><caret>te</selection>xt");
+  }
+
+  public void testCaretMovementAtFoldRegionWithEmptyPlaceholder() {
+    initText("<caret>abc");
+    addCollapsedFoldRegion(1, 2, "");
+    right();
+    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
+    assertEquals(1, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 1), caret.getLogicalPosition());
+    assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
+    right();
+    assertEquals(3, caret.getOffset());
+    assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
+    assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
   }
 }

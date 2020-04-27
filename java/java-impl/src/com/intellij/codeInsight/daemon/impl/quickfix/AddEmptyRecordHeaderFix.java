@@ -43,6 +43,6 @@ public class AddEmptyRecordHeaderFix extends LocalQuickFixAndIntentionActionOnPs
   @NotNull
   @Override
   public String getFamilyName() {
-    return QuickFixBundle.message("add.empty.record.header");
+    return QuickFixBundle.message("insert.empty.parenthesis");
   }
 }

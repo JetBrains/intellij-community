@@ -59,7 +59,7 @@ public class LogMessageEx extends LogMessage {
   /** @deprecated use {@link Logger#error(String, Throwable, Attachment...)} and {@link AttachmentFactory#createContext} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static void error(@NotNull Logger logger, @NotNull String message, @NotNull String... attachmentText) {
+  public static void error(@NotNull Logger logger, @NotNull String message, String @NotNull ... attachmentText) {
     error(logger, message, new Throwable(), attachmentText);
   }
 

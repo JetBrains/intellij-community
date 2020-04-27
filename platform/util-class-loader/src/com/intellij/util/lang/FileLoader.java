@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -13,7 +13,7 @@ import java.net.URL;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-class FileLoader extends Loader {
+final class FileLoader extends Loader {
   private final File myRootDir;
   private final String myRootDirAbsolutePath;
   private final ClassPath myConfiguration;
@@ -39,7 +39,7 @@ class FileLoader extends Loader {
     }
 
     boolean containsClasses = false;
-    
+
     for (File file : files) {
       final boolean isClass = file.getPath().endsWith(UrlClassLoader.CLASS_EXTENSION);
       if (isClass) {
@@ -72,20 +72,20 @@ class FileLoader extends Loader {
   private static class DirEntry {
     static final int[] empty = new int[0];
     volatile int[] childrenNameHashes;
-    
+
     volatile DirEntry[] childrenDirectories;
     final int nameHash;
     @NotNull
     final String name;
-    
+
     DirEntry(int nameHash, @NotNull String name) {
       this.nameHash = nameHash;
       this.name = name;
     }
   }
-  
+
   private final DirEntry root = new DirEntry(0, "");
-  
+
   @Override
   @Nullable
   Resource getResource(@NotNull final String name) {
@@ -342,7 +342,7 @@ class FileLoader extends Loader {
     return loaderData;
   }
 
-  private static class MyResource extends Resource {
+  private static final class MyResource extends Resource {
     private final URL myUrl;
     private final File myFile;
 
@@ -389,7 +389,7 @@ class FileLoader extends Loader {
     return h;
   }
 
-  private static class UnsyncDataOutputStream extends java.io.DataOutputStream {
+  private static final class UnsyncDataOutputStream extends DataOutputStream {
     UnsyncDataOutputStream(@NotNull OutputStream out) {
       super(out);
     }

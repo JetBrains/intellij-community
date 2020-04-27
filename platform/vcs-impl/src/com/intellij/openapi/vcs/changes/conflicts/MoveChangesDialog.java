@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
@@ -49,7 +50,7 @@ public class MoveChangesDialog extends DialogWrapper {
     myTreeList.rebuildTree();
     myTreeList.selectFile(current);
 
-    myCheckBox = new JBCheckBox("Select current file only");
+    myCheckBox = new JBCheckBox(VcsBundle.message("checkbox.select.current.file.only"));
     myCheckBox.setMnemonic('c');
     myCheckBox.addActionListener(e -> setSelected(myCheckBox.isSelected()));
 

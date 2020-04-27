@@ -41,7 +41,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
     return new JavaElementVisitor() {
       @Override
       public void visitIfStatement(PsiIfStatement ifStatement) {
-        IfConditionalModel model = IfConditionalModel.from(ifStatement);
+        IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
         if (model == null) return;
         String operator = getTargetOperator(model);
         if (operator.isEmpty()) return;
@@ -232,7 +232,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class);
       if (ifStatement == null) return;
 
-      IfConditionalModel model = IfConditionalModel.from(ifStatement);
+      IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
       if (model == null) return;
       CommentTracker commentTracker = new CommentTracker();
       String conditional = buildExpressionText(model, commentTracker);

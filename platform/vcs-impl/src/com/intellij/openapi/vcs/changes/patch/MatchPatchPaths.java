@@ -349,8 +349,7 @@ public class MatchPatchPaths {
     return compareNamesImpl(parts, file.getParent(), parts.length - 2);
   }
 
-  @NotNull
-  private static String[] getPathParts(@Nullable String relativePath) {
+  private static String @NotNull [] getPathParts(@Nullable String relativePath) {
     if (relativePath == null) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return relativePath.replace('\\', '/').split("/");
   }

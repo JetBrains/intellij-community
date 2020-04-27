@@ -16,7 +16,9 @@
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Type of a particular function that is represented as a {@link PyCallable} in the PSI tree like lambda or function.
@@ -28,9 +30,22 @@ public interface PyFunctionType extends PyCallableType {
   /**
    * @return actual callable element line function or lambda
    */
+  @Override
   @NotNull
   PyCallable getCallable();
 
   @NotNull
   PyFunctionType dropSelf(@NotNull TypeEvalContext context);
+
+  @Override
+  default int getImplicitOffset() {
+    return getCallable().asMethod() != null ? (getModifier() == PyFunction.Modifier.STATICMETHOD ? 0 : 1) : 0;
+  }
+
+  @Override
+  @Nullable
+  default PyFunction.Modifier getModifier() {
+    final PyCallable callable = getCallable();
+    return callable instanceof PyFunction ? ((PyFunction)callable).getModifier() : null;
+  }
 }

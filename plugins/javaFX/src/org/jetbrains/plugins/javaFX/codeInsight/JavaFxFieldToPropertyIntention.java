@@ -33,6 +33,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -88,7 +89,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
 
     SearchUsagesTask(@NotNull Project project,
                             @NotNull PropertyInfo property) {
-      super(project, "Searching for usages of '" + property.myFieldName + "'", true);
+      super(project, JavaFXBundle.message("javafx.field.to.property.intention.search.for.usages", property.myFieldName), true);
       myProperty = property;
     }
 

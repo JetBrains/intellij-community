@@ -117,7 +117,7 @@ public class DiffUtil {
   private static final Logger LOG = Logger.getInstance(DiffUtil.class);
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
-  @NotNull public static final String DIFF_CONFIG = "diff.xml";
+  @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
   public static class Lazy {
@@ -397,7 +397,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static JPanel createMessagePanel(@NotNull String message) {
+  public static JPanel createMessagePanel(@NotNull @Nls String message) {
     String text = StringUtil.replace(message, "\n", "<br>");
     JLabel label = new JBLabel(text) {
       @Override
@@ -450,14 +450,12 @@ public class DiffUtil {
 
   @NotNull
   public static String getSettingsConfigurablePath() {
-    if (SystemInfo.isMac) {
-      return "Preferences | Tools | Diff & Merge";
-    }
-    return "Settings | Tools | Diff & Merge";
+    return SystemInfo.isMac ? DiffBundle.message("label.diff.settings.path.macos")
+                            : DiffBundle.message("label.diff.settings.path");
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String text, @Nullable String appendix) {
+  public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -471,7 +469,7 @@ public class DiffUtil {
   }
 
   @NotNull
-  public static String createNotificationText(@NotNull String text, @Nullable String appendix) {
+  public static String createNotificationText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
     StringBuilder result = new StringBuilder();
     result.append("<html><body>");
     result.append(text);
@@ -569,7 +567,7 @@ public class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        notifications.add(DiffNotifications.createNotification("File is too large. Only preview is loaded."));
+        notifications.add(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded")));
       }
     }
 
@@ -863,8 +861,7 @@ public class DiffUtil {
     return ComparisonUtil.isEquals(chunk1, chunk2, comparisonPolicy);
   }
 
-  @NotNull
-  public static <T> int[] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
+  public static <T> int @NotNull [] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
     final List<Integer> indexes = new ArrayList<>(values.size());
     for (int i = 0; i < values.size(); i++) {
       indexes.add(i);
@@ -879,8 +876,7 @@ public class DiffUtil {
     return ArrayUtil.toIntArray(indexes);
   }
 
-  @NotNull
-  public static int[] invertIndexes(@NotNull int[] indexes) {
+  public static int @NotNull [] invertIndexes(int @NotNull [] indexes) {
     int[] inverted = new int[indexes.length];
     for (int i = 0; i < indexes.length; i++) {
       inverted[indexes[i]] = i;
@@ -1482,7 +1478,7 @@ public class DiffUtil {
   @CalledInAwt
   public static boolean executeWriteCommand(@NotNull final Document document,
                                             @Nullable final Project project,
-                                            @Nullable final String commandName,
+                                            @Nullable @Nls final String commandName,
                                             @NotNull final Runnable task) {
     return executeWriteCommand(project, document, commandName, null, UndoConfirmationPolicy.DEFAULT, false, task);
   }
@@ -1529,7 +1525,7 @@ public class DiffUtil {
   /**
    * Difference with {@link VfsUtil#markDirtyAndRefresh} is that refresh from VfsUtil will be performed with ModalityState.NON_MODAL.
    */
-  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
+  public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     ModalityState modalityState = ApplicationManager.getApplication().getDefaultModalityState();
     VfsUtil.markDirty(recursive, reloadChildren, files);
     RefreshQueue.getInstance().refresh(async, recursive, null, modalityState, files);

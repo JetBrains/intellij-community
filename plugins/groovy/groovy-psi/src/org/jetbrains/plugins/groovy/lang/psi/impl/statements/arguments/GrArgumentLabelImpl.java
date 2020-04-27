@@ -104,9 +104,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       }
       else {
         return new PsiPolyVariantReferenceBase<PsiElement>(this) {
-          @NotNull
           @Override
-          public ResolveResult[] multiResolve(boolean incompleteCode) {
+          public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
             return ResolveResult.EMPTY_ARRAY;
           }
         };
@@ -183,9 +182,8 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return new TextRange(0, getTextLength());
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     final ResolveResult[] results = getRealReference().multiResolve(incompleteCode);
     if (results instanceof GroovyResolveResult[]) {
       return (GroovyResolveResult[])results;

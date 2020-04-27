@@ -68,7 +68,7 @@ public final class NewFilesProcessor {
   /**
    * @param localFileNames names of local files to add to VCS
    */
-  private static void addToVcsIfNeeded(@NotNull final Module module, @NotNull final String... localFileNames) {
+  private static void addToVcsIfNeeded(@NotNull final Module module, final String @NotNull ... localFileNames) {
     final LocalFileSystem fs = LocalFileSystem.getInstance();
     fs.refresh(false);
     final Project project = module.getProject();

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,6 +31,7 @@ public interface EmptyResolveMessageProvider {
    *
    * @return pattern or message
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   String getUnresolvedMessagePattern();
 }

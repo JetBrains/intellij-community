@@ -35,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class XInspectDialog extends DialogWrapper {
   private final DebuggerTreeWithHistoryPanel myDebuggerTreePanel;
   private final boolean myRebuildOnSessionEvents;

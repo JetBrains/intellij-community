@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.ArrayAction;
@@ -141,16 +141,16 @@ public class ArrayRenderer extends NodeRendererImpl{
 
       if (added == 0) {
         if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
-          builder.setMessage(DebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+          builder.setMessage(JavaDebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
         else {
-          builder.setMessage(DebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
+          builder.setMessage(JavaDebuggerBundle.message("message.node.all.array.elements.null", START_INDEX, END_INDEX), null,
                              SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
       }
       else {
         if (hiddenNulls) {
-          builder.setMessage(DebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+          builder.setMessage(JavaDebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
         if (!myForced && idx < end) {
           builder.tooManyChildren(end - idx);
@@ -223,7 +223,7 @@ public class ArrayRenderer extends NodeRendererImpl{
       NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
       NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
 
-      builder.setMessage(DebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
+      builder.setMessage(JavaDebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
                          AllIcons.General.Filter,
                          SimpleTextAttributes.REGULAR_ATTRIBUTES,
                          FILTER_HYPERLINK);

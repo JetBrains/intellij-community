@@ -101,8 +101,7 @@ public abstract class FavoriteNodeProvider {
    * @return the path of objects to be added to the tree, or null if it was not possible to locate an object with the
    * specified URL.
    */
-  @Nullable
-  public abstract Object[] createPathFromUrl(final Project project, final String url, final String moduleName);
+  public abstract Object @Nullable [] createPathFromUrl(final Project project, final String url, final String moduleName);
 
   @Nullable
   public PsiElement getPsiElement(final Object element) {

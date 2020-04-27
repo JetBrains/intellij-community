@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ public interface ActionPresentation {
    * @return the action name.
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getText();
 
   /**
@@ -42,6 +44,7 @@ public interface ActionPresentation {
    *
    * @return the action description.
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getDescription();
 
   /**

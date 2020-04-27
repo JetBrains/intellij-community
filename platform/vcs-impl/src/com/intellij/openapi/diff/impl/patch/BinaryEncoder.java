@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -34,13 +35,13 @@ import static com.intellij.openapi.diff.impl.patch.lib.base85xjava.Base85x.encod
 public class BinaryEncoder {
 
   private static char getCharForLineSize(int lineSize) throws BinaryPatchException, Base85x.Base85FormatException {
-    checkLenIsValid(lineSize, "Can't encode binary file patch: wrong line size");
+    checkLenIsValid(lineSize, VcsBundle.message("patch.binary.decoder.line.error"));
     return encodeChar(decodeChar('A') + lineSize - 1);
   }
 
   private static int getLineSizeFromChar(char charSize) throws BinaryPatchException, Base85x.Base85FormatException {
     int result = decodeChar(charSize) - decodeChar('A') + 1;
-    checkLenIsValid(result, "Can't decode binary file patch: wrong char-size symbol");
+    checkLenIsValid(result, VcsBundle.message("patch.binary.decoder.char.error"));
     return result;
   }
 
@@ -88,7 +89,7 @@ public class BinaryEncoder {
             resultLength = inflater.inflate(inflated);
           }
           catch (DataFormatException e) {
-            throw new BinaryPatchException("Can't decode binary file patch: can't decompress data");
+            throw new BinaryPatchException(VcsBundle.message("patch.binary.decoder.decompress.error"));
           }
           output.write(inflated, 0, resultLength);
         }
@@ -97,7 +98,7 @@ public class BinaryEncoder {
       }
       int count = output.size();
       if (count != size) {
-        throw new BinaryPatchException(String.format("%s binary content was decoded than expected", size > count ? "Less" : "More"));
+        throw new BinaryPatchException(VcsBundle.message("patch.binary.decoder.content.error", size > count ? 0 : 1));
       }
     }
     catch (Base85x.Base85FormatException e) {

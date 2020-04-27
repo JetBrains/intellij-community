@@ -43,9 +43,8 @@ public class IOExceptionDialog extends DialogWrapper {
     return myErrorLabel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[] {
       new AbstractAction(UIBundle.message("io.error.dialog.no.proxy")) {
         @Override

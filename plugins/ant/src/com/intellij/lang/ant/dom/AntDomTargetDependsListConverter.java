@@ -74,8 +74,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<TargetResolver.Result> value, PsiElement element, ConvertContext context) {
     final XmlElement xmlElement = value.getXmlElement();
     if (!(xmlElement instanceof XmlAttribute)) {
       return PsiReference.EMPTY_ARRAY;

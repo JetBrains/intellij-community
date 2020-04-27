@@ -36,16 +36,14 @@ public interface PsiTryStatement extends PsiStatement {
    *
    * @return the array of code blocks, or an empty array if the statement has no catch sections.
    */
-  @NotNull
-  PsiCodeBlock[] getCatchBlocks();
+  PsiCodeBlock @NotNull [] getCatchBlocks();
 
   /**
    * Returns the array of parameters for {@code catch} sections.
    *
    * @return the array of parameters, or an empty array if the statement has no catch sections.
    */
-  @NotNull
-  PsiParameter[] getCatchBlockParameters();
+  PsiParameter @NotNull [] getCatchBlockParameters();
 
   /**
    * Returns the array of {@code catch} sections in the statement.
@@ -53,8 +51,7 @@ public interface PsiTryStatement extends PsiStatement {
    * @return the array of {@code catch} sections, or an empty array if the statement
    * has no catch sections.
    */
-  @NotNull
-  PsiCatchSection[] getCatchSections();
+  PsiCatchSection @NotNull [] getCatchSections();
 
   /**
    * Returns the code block executed in the {@code finally} section.

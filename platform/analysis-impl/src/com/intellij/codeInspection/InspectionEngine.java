@@ -198,7 +198,7 @@ public class InspectionEngine {
             }
 
             @Override
-            public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
+            public void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
               if (!(refEntity instanceof RefElement)) return;
               PsiElement element = ((RefElement)refEntity).getPsiElement();
               convertToProblemDescriptors(element, commonProblemDescriptors, descriptors);
@@ -240,7 +240,7 @@ public class InspectionEngine {
   }
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
-                                                  @NotNull CommonProblemDescriptor[] commonProblemDescriptors,
+                                                  CommonProblemDescriptor @NotNull [] commonProblemDescriptors,
                                                   @NotNull List<? super ProblemDescriptor> descriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {

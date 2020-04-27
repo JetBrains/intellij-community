@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +21,7 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private static final ExtensionPointName<DocumentListener> DOCUMENT_EP = new ExtensionPointName<>("com.intellij.editorFactoryDocumentListener");
 
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
-  private final EventDispatcher<PrioritizedInternalDocumentListener> myPrioritizedDocumentMulticaster = EventDispatcher.create(PrioritizedInternalDocumentListener.class, Collections.singletonMap("getPriority", EditorDocumentPriorities.RANGE_MARKER));
+  private final EventDispatcher<PrioritizedDocumentListener> myPrioritizedDocumentMulticaster = EventDispatcher.create(PrioritizedDocumentListener.class, Collections.singletonMap("getPriority", EditorDocumentPriorities.RANGE_MARKER));
   private final EventDispatcher<EditReadOnlyListener> myEditReadOnlyMulticaster = EventDispatcher.create(EditReadOnlyListener.class);
 
   private final EventDispatcher<EditorMouseListener> myEditorMouseMulticaster = EventDispatcher.create(EditorMouseListener.class);
@@ -126,7 +126,7 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
    * Use for internal purposes only.
    * @see EditorDocumentPriorities
    */
-  public void addPrioritizedDocumentListener(@NotNull PrioritizedInternalDocumentListener listener, @NotNull Disposable parent) {
+  public void addPrioritizedDocumentListener(@NotNull PrioritizedDocumentListener listener, @NotNull Disposable parent) {
     myPrioritizedDocumentMulticaster.addListener(listener, parent);
   }
 

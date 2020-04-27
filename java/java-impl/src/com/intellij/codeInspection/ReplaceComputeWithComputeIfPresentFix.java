@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,7 +20,7 @@ public class ReplaceComputeWithComputeIfPresentFix implements LocalQuickFix, Hig
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.data.flow.use.computeifpresent.quickfix");
+    return JavaBundle.message("inspection.data.flow.use.computeifpresent.quickfix");
   }
 
   @Override

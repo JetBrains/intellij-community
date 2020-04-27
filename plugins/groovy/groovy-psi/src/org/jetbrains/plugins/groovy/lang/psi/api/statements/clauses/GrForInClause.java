@@ -9,9 +9,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 public interface GrForInClause extends GrForClause {
 
-  @NotNull
   @Override
-  default GrVariable[] getDeclaredVariables() {
+  default GrVariable @NotNull [] getDeclaredVariables() {
     GrVariable variable = getDeclaredVariable();
     return variable == null ? GrVariable.EMPTY_ARRAY : new GrVariable[]{variable};
   }

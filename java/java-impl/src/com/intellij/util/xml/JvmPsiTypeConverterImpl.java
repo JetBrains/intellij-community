@@ -139,8 +139,7 @@ public class JvmPsiTypeConverterImpl extends JvmPsiTypeConverter implements Cust
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<PsiType> value, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<PsiType> value, PsiElement element, ConvertContext context) {
     final PsiType psiType = value.getValue();
     final String s = value.getStringValue();
     assert s != null;

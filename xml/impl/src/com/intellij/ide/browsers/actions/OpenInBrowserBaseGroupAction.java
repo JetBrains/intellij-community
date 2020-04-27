@@ -1,13 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,8 +22,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     super(popup);
 
     Presentation p = getTemplatePresentation();
-    p.setText("Open in _Browser");
-    p.setDescription("Open selected file in browser");
+    p.setText(XmlBundle.message("open.in.browser"));
+    p.setDescription(XmlBundle.message("open.selected.file.in.browser"));
     p.setIcon(AllIcons.Nodes.PpWeb);
   }
 
@@ -36,7 +39,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
       if (addDefaultBrowser) {
         if (myDefaultBrowserAction == null) {
           myDefaultBrowserAction = new OpenFileInDefaultBrowserAction();
-          myDefaultBrowserAction.getTemplatePresentation().setText("Default");
+          myDefaultBrowserAction.getTemplatePresentation().setText(XmlBundle.message("default"));
           myDefaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
         }
         actions[0] = myDefaultBrowserAction;
@@ -65,7 +68,11 @@ public abstract class OpenInBrowserBaseGroupAction extends ComputableActionGroup
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       final WebBrowserManager browserManager = WebBrowserManager.getInstance();
-      e.getPresentation().setVisible(browserManager.isShowBrowserHover() && !browserManager.getActiveBrowsers().isEmpty() &&
+      PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
+      boolean needShowOnHover = psiFile != null && psiFile.getViewProvider().getBaseLanguage() == XMLLanguage.INSTANCE
+              ? browserManager.isShowBrowserHoverXml()
+              : browserManager.isShowBrowserHover();
+      e.getPresentation().setVisible(needShowOnHover && !browserManager.getActiveBrowsers().isEmpty() &&
                                      editor != null && !DiffUtil.isDiffEditor(editor));
     }
   }

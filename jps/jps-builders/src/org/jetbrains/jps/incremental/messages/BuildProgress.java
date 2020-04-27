@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -57,7 +58,7 @@ public class BuildProgress {
     for (BuildTargetChunk chunk : allChunks) {
       boolean affected = isAffected.test(chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
-        if (!targetIndex.isDummy(target)) {
+        if (!myTargetIndex.isDummy(target)) {
           if (affected) {
             increment(totalAffectedTargets, target.getTargetType());
             targetTypes.add(target.getTargetType());
@@ -123,6 +124,7 @@ public class BuildProgress {
 
   public synchronized void onTargetChunkFinished(BuildTargetChunk chunk, CompileContext context) {
     boolean successful = !Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled();
+    int nonDummyTargetsCount = ContainerUtil.count(chunk.getTargets(), it -> !myTargetIndex.isDummy(it));
     for (BuildTarget<?> target : chunk.getTargets()) {
       myCurrentProgress.remove(target);
       if (!myTargetIndex.isDummy(target)) {
@@ -134,7 +136,7 @@ public class BuildProgress {
         myAbsoluteBuildTime += elapsedTime;
         
         if (successful && FSOperations.isMarkedDirty(context, target)) {
-          long buildTime = elapsedTime / chunk.getTargets().size();
+          long buildTime = elapsedTime / nonDummyTargetsCount;
           if (!myTotalBuildTimeForFullyRebuiltTargets.adjustValue(targetType, buildTime)) {
             myTotalBuildTimeForFullyRebuiltTargets.put(targetType, buildTime);
           }

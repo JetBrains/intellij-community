@@ -50,7 +50,7 @@ public class CvsTabbedWindowComponent extends JPanel implements DataProvider, Cv
     add(myComponent, BorderLayout.CENTER);
 
     if (myAddToolbar) {
-      DefaultActionGroup actionGroup = new DefaultActionGroup(null, false);
+      DefaultActionGroup actionGroup = new DefaultActionGroup();
       actionGroup.add(new CloseAction());
       if (toolbarActions != null) {
         actionGroup.add(toolbarActions);

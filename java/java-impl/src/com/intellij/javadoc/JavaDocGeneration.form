@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="eefb8"/>
-          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.arguments"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.arguments"/>
         </properties>
       </component>
       <component id="eefb8" class="javax.swing.JTextField" binding="myOtherOptionsField">
@@ -47,7 +47,7 @@
                 </constraints>
                 <properties>
                   <selected value="false"/>
-                  <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.options.hierarchy"/>
+                  <text resource-bundle="messages/JavaBundle" key="javadoc.generate.options.hierarchy"/>
                 </properties>
               </component>
               <component id="6ec54" class="javax.swing.JCheckBox" binding="myNavigator">
@@ -55,7 +55,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.options.navigator"/>
+                  <text resource-bundle="messages/JavaBundle" key="javadoc.generate.options.navigator"/>
                 </properties>
               </component>
               <component id="2fd4d" class="javax.swing.JCheckBox" binding="myIndex">
@@ -63,7 +63,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.options.index"/>
+                  <text resource-bundle="messages/JavaBundle" key="javadoc.generate.options.index"/>
                 </properties>
               </component>
               <component id="1b4a1" class="javax.swing.JCheckBox" binding="mySeparateIndex">
@@ -73,7 +73,7 @@
                 <properties>
                   <enabled value="false"/>
                   <margin top="2" left="18" bottom="2" right="2"/>
-                  <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.options.index.per.letter"/>
+                  <text resource-bundle="messages/JavaBundle" key="javadoc.generate.options.index.per.letter"/>
                 </properties>
               </component>
               <vspacer id="325a8">
@@ -107,7 +107,7 @@
                   <enabled value="false"/>
                   <focusPainted value="true"/>
                   <margin top="2" left="18" bottom="2" right="2"/>
-                  <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.tag.list.deprecated"/>
+                  <text resource-bundle="messages/JavaBundle" key="javadoc.generate.tag.list.deprecated"/>
                 </properties>
               </component>
               <component id="72300" class="javax.swing.JCheckBox" binding="myTagAuthor">
@@ -176,7 +176,7 @@
         </constraints>
         <properties>
           <labelFor value="61630"/>
-          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.output.directory"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.output.directory"/>
         </properties>
       </component>
       <component id="61630" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myTfOutputDir">
@@ -193,7 +193,7 @@
         </constraints>
         <properties>
           <labelFor value="c592b"/>
-          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.heap.size"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.heap.size"/>
         </properties>
       </component>
       <component id="c592b" class="javax.swing.JTextField" binding="myHeapSizeField">
@@ -216,7 +216,7 @@
           <focusCycleRoot value="false"/>
           <margin top="2" left="0" bottom="2" right="2"/>
           <selected value="true"/>
-          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.open.in.browser"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.open.in.browser"/>
         </properties>
       </component>
       <vspacer id="b3b4c">
@@ -230,7 +230,7 @@
         </constraints>
         <properties>
           <labelFor value="3b6ec"/>
-          <text resource-bundle="messages/JavadocBundle" key="javadoc.generate.locale"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.locale"/>
         </properties>
       </component>
       <component id="3b6ec" class="javax.swing.JTextField" binding="myLocaleTextField">
@@ -247,7 +247,7 @@
         </constraints>
         <properties>
           <margin top="0" left="8" bottom="10" right="3"/>
-          <text value="Include JDK and library sources in -sourcepath"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.include.jdk.library.sources.in.sourcepath.option"/>
         </properties>
       </component>
       <component id="44709" class="javax.swing.JCheckBox" binding="myLinkToJdkDocs">
@@ -256,7 +256,7 @@
         </constraints>
         <properties>
           <margin top="0" left="8" bottom="10" right="3"/>
-          <text value="Link to JDK documentation (use -link option)"/>
+          <text resource-bundle="messages/JavaBundle" key="javadoc.generate.link.to.jdk.documentation.option"/>
         </properties>
       </component>
     </children>

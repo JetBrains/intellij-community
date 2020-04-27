@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -33,13 +34,11 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
   protected FileEditorManagerImpl myManager;
-  private Set<DockContainer> myOldDockContainers;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
-    myOldDockContainers = DockManager.getInstance(getProject()).getContainers();
     myManager = new FileEditorManagerImpl(getProject());
     ServiceContainerUtil.registerComponentInstance(getProject(), FileEditorManager.class, myManager, getTestRootDisposable());
     ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
@@ -47,27 +46,26 @@ public abstract class FileEditorManagerTestCase extends BasePlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    new RunAll(
+    RunAll.runAll(
       () -> {
-        for (DockContainer container : DockManager.getInstance(getProject()).getContainers()) {
-          if (!myOldDockContainers.contains(container)) {
-            Disposer.dispose(container);
-          }
-        }
-
-        myOldDockContainers = null;
         myManager.closeAllFiles();
         EditorHistoryManager.getInstance(getProject()).removeAllFiles();
         ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).clearSelectedProviders();
       },
-      () -> Disposer.dispose(myManager), () -> {
-      myManager = null;
-    },
+      () -> Disposer.dispose(myManager),
+      () -> {
+        myManager = null;
+
+        DockManager dockManager = getProject().getServiceIfCreated(DockManager.class);
+        Set<DockContainer> containers = dockManager == null ? Collections.emptySet() : dockManager.getContainers();
+        assertEmpty(containers);
+      },
       () -> super.tearDown()
-    ).run();
+    );
   }
 
-  protected VirtualFile getFile(String path) {
+  @NotNull
+  protected VirtualFile getFile(@NotNull String path) {
     String fullPath = getTestDataPath() + path;
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
     assertNotNull("Can't find " + fullPath, file);

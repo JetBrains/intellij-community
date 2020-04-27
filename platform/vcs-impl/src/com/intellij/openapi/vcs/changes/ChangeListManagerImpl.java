@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.highlighter.WorkspaceFileType;
@@ -59,10 +59,7 @@ import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -324,7 +321,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
     else {
       ProjectLevelVcsManagerImpl.getInstanceImpl(myProject)
-        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
+        .addInitializationRequest(VcsInitObject.CHANGE_LIST_MANAGER, () -> {
           myUpdater.initialized();
           broadcastStateAfterLoad();
           myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
@@ -433,11 +430,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
 
   @Override
   public void scheduleUpdate() {
-    myUpdater.schedule();
-  }
-
-  @Override
-  public void scheduleUpdate(boolean updateUnversionedFiles) {
     myUpdater.schedule();
   }
 
@@ -993,7 +985,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, Change @NotNull ... changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);
@@ -1096,19 +1088,28 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     });
   }
 
+  @NotNull
+  public FileStatus getStatus(@NotNull FilePath path) {
+    return getStatus(path, path.getVirtualFile());
+  }
+
   @Override
   @NotNull
   public FileStatus getStatus(@NotNull VirtualFile file) {
+    return getStatus(VcsUtil.getFilePath(file), file);
+  }
+
+  @NotNull
+  private FileStatus getStatus(@NotNull FilePath path, @Nullable VirtualFile file) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        FilePath filePath = VcsUtil.getFilePath(file);
-        if (myComposite.getUnversionedFileHolder().containsFile(filePath)) return FileStatus.UNKNOWN;
-        if (myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
-        if (myComposite.getIgnoredFileHolder().containsFile(filePath)) return FileStatus.IGNORED;
+        if (myComposite.getUnversionedFileHolder().containsFile(path)) return FileStatus.UNKNOWN;
+        if (file != null && myComposite.getModifiedWithoutEditingFileHolder().containsFile(file)) return FileStatus.HIJACKED;
+        if (myComposite.getIgnoredFileHolder().containsFile(path)) return FileStatus.IGNORED;
 
-        final FileStatus status = ObjectUtils.notNull(myWorker.getStatus(file), FileStatus.NOT_CHANGED);
+        FileStatus status = ObjectUtils.notNull(myWorker.getStatus(path), FileStatus.NOT_CHANGED);
 
-        if (FileStatus.NOT_CHANGED.equals(status)) {
+        if (file != null && FileStatus.NOT_CHANGED.equals(status)) {
           boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
           if (switched) return FileStatus.SWITCHED;
         }
@@ -1195,7 +1196,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), null, changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), changeList.getName(), false);
 
     committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);
@@ -1256,7 +1257,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public void addFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
+  public void addFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 
   @Override
@@ -1303,12 +1304,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public void setFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
+  public void setFilesToIgnore(IgnoredFileBean @NotNull ... filesToIgnore) {
   }
 
-  @NotNull
   @Override
-  public IgnoredFileBean[] getFilesToIgnore() {
+  public IgnoredFileBean @NotNull [] getFilesToIgnore() {
     return EMPTY_ARRAY;
   }
 
@@ -1430,9 +1430,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       updateImmediately();
       return true;
     }
-    VcsDirtyScopeVfsListener.getInstance(myProject).waitForAsyncTaskCompletion();
-    myUpdater.waitUntilRefreshed();
-    waitUpdateAlarm();
+    waitUntilRefreshed();
     return true;
   }
 
@@ -1507,7 +1505,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public boolean isFreezedWithNotification(@Nullable String modalTitle) {
+  public boolean isFreezedWithNotification(@Nls @Nullable String modalTitle) {
     final String freezeReason = isFreezed();
     if (freezeReason == null) return false;
 

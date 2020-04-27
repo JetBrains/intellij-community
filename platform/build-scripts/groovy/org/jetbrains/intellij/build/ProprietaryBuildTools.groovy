@@ -21,8 +21,6 @@ import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 
 /**
  * Describes proprietary tools which are used to build the product. Pass the instance of this class {@link BuildContext#createContext} method.
- *
- * @author nik
  */
 @CompileStatic
 @Canonical

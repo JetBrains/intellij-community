@@ -33,12 +33,14 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -57,6 +59,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.beans.PropertyChangeListener;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -65,7 +68,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
 
-public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
+@DirtyUI
+public class EditorsSplitters extends IdePanePanel implements UISettingsListener {
   private static final Key<Activity> OPEN_FILES_ACTIVITY = Key.create("open.files.activity");
   private static final Logger LOG = Logger.getInstance(EditorsSplitters.class);
   private static final String PINNED = "pinned";
@@ -81,11 +85,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   private Element mySplittersElement;  // temporarily used during initialization
   int myInsideChange;
   private final MyFocusWatcher myFocusWatcher;
-  private final Alarm myIconUpdaterAlarm = new Alarm();
+  private final Alarm myIconUpdaterAlarm;
+  final Disposable parentDisposable;
   private final UIBuilder myUIBuilder = new UIBuilder();
 
-  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer) {
+  EditorsSplitters(@NotNull FileEditorManagerImpl manager, boolean createOwnDockableContainer, @NotNull Disposable parentDisposable) {
     super(new BorderLayout());
+
+    myIconUpdaterAlarm = new Alarm(parentDisposable);
+    this.parentDisposable = parentDisposable;
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
     PropertyChangeListener l = e -> {
@@ -96,21 +104,25 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     };
 
     UIManager.getDefaults().addPropertyChangeListener(l);
-    Disposer.register(this, () -> UIManager.getDefaults().removePropertyChangeListener(l));
+    Disposer.register(parentDisposable, () -> UIManager.getDefaults().removePropertyChangeListener(l));
 
     myManager = manager;
+
     myFocusWatcher = new MyFocusWatcher();
+    Disposer.register(parentDisposable, () -> {
+      myFocusWatcher.deinstall(this);
+    });
+
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
     setTransferHandler(new MyTransferHandler());
     clear();
 
     if (createOwnDockableContainer) {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
-      Disposer.register(manager.getProject(), dockable);
-      DockManager.getInstance(manager.getProject()).register(dockable);
+      DockManager.getInstance(manager.getProject()).register(dockable, parentDisposable);
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
         invalidate();
@@ -137,16 +149,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     myFocusWatcher.install(this);
   }
 
-  private void stopListeningFocus() {
-    myFocusWatcher.deinstall(this);
-  }
-
-  @Override
-  public void dispose() {
-    myIconUpdaterAlarm.cancelAllRequests();
-    stopListeningFocus();
-  }
-
   @Nullable
   public VirtualFile getCurrentFile() {
     if (myCurrentWindow != null) {
@@ -154,7 +156,6 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     return null;
   }
-
 
   private boolean showEmptyText() {
     return myCurrentWindow == null || myCurrentWindow.getFiles().length == 0;
@@ -293,19 +294,28 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     mySplittersElement = element;
   }
 
-  @NotNull
-  public VirtualFile[] getOpenFiles() {
-    Set<VirtualFile> files = new ArrayListSet<>();
+  public @NotNull List<VirtualFile> getOpenFileList() {
+    List<VirtualFile> files = new ArrayList<>();
     for (EditorWindow myWindow : myWindows) {
       for (EditorWithProviderComposite editor : myWindow.getEditors()) {
-        files.add(editor.getFile());
+        VirtualFile file = editor.getFile();
+        if (!files.contains(file)) {
+          files.add(file);
+        }
       }
     }
-    return VfsUtilCore.toVirtualFileArray(files);
+    return files;
   }
 
-  @NotNull
-  public VirtualFile[] getSelectedFiles() {
+  /**
+   * @deprecated Use {@link #getOpenFileList()}
+   */
+  @Deprecated
+  public @NotNull VirtualFile @NotNull [] getOpenFiles() {
+    return VfsUtilCore.toVirtualFileArray(getOpenFileList());
+  }
+
+  public VirtualFile @NotNull [] getSelectedFiles() {
     final Set<VirtualFile> files = new ArrayListSet<>();
     for (final EditorWindow window : myWindows) {
       final VirtualFile file = window.getSelectedFile();
@@ -327,8 +337,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return virtualFiles;
   }
 
-  @NotNull
-  public FileEditor[] getSelectedEditors() {
+  public FileEditor @NotNull [] getSelectedEditors() {
     Set<EditorWindow> windows = new THashSet<>(myWindows);
     final EditorWindow currentWindow = getCurrentWindow();
     if (currentWindow != null) {
@@ -385,6 +394,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
   }
 
+  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+    final EditorWindow[] windows = getWindows();
+    for (int i = 0; i != windows.length; ++ i) {
+      windows[i].updateTabsLayout(newTabsLayoutInfo);
+    }
+  }
+
   public void setTabsPlacement(final int tabPlacement) {
     final EditorWindow[] windows = getWindows();
     for (int i = 0; i != windows.length; ++ i) {
@@ -415,13 +431,23 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       Path ioFile = null;
       VirtualFile file = getCurrentFile();
       if (file != null) {
-        ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+        try {
+          ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
+        }
+        catch (InvalidPathException error) {
+          // Sometimes presentable URLs, designed for showing texts in UI, aren't valid local filesystem paths.
+          // An error may happen not only for LightVirtualFile.
+          LOG.info(
+            String.format("Presentable URL %s of file %s can't be mapped on the local filesystem.", file.getPresentableUrl(), file),
+            error);
+        }
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
       frame.setFileTitle(fileTitle, ioFile);
     }
   }
 
+  @Nullable
   protected IdeFrameEx getFrame(@NotNull Project project) {
     ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(project);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || frame != null);
@@ -510,8 +536,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return null;
   }
 
-  void closeFile(VirtualFile file, boolean moveFocus) {
-    final List<EditorWindow> windows = findWindows(file);
+  void closeFile(@NotNull VirtualFile file, boolean moveFocus) {
+    List<EditorWindow> windows = findWindows(file);
     boolean isProjectOpen = myManager.getProject().isOpen();
     if (!windows.isEmpty()) {
       final VirtualFile nextFile = findNextFile(file);
@@ -538,8 +564,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    if (!myManager.getProject().isOpen()) return;
-    for (VirtualFile file : getOpenFiles()) {
+    for (EditorWindow window : myWindows) {
+      window.updateTabsVisibility(uiSettings);
+    }
+
+    if (!myManager.getProject().isOpen()) {
+      return;
+    }
+
+    for (VirtualFile file : getOpenFileList()) {
       updateFileBackgroundColor(file);
       updateFileIcon(file);
       updateFileColor(file);
@@ -604,7 +637,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   @NotNull
   protected EditorWindow createEditorWindow() {
-    return new EditorWindow(this);
+    return new EditorWindow(this, parentDisposable);
   }
 
   /**
@@ -613,8 +646,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor currently selected in this window
    */
-  void setCurrentWindow(@Nullable final EditorWindow window, final boolean requestFocus) {
-    final EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
+  void setCurrentWindow(@Nullable EditorWindow window, boolean requestFocus) {
+    EditorWithProviderComposite newEditor = window == null ? null : window.getSelectedEditor();
 
     Runnable fireRunnable = () -> getManager().fireSelectionChanged(newEditor);
 
@@ -623,7 +656,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     getManager().updateFileName(window == null ? null : window.getSelectedFile());
 
     if (window != null) {
-      final EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
+      EditorWithProviderComposite selectedEditor = window.getSelectedEditor();
       if (selectedEditor != null) {
         fireRunnable.run();
       }
@@ -631,12 +664,13 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       if (requestFocus) {
         window.requestFocus(true);
       }
-    } else {
+    }
+    else {
       fireRunnable.run();
     }
   }
 
-  void addWindow(EditorWindow window) {
+  void addWindow(@NotNull EditorWindow window) {
     myWindows.add(window);
   }
 
@@ -654,9 +688,8 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   /**
    * @deprecated Use {@link #getEditorComposites()}
    */
-  @NotNull
   @Deprecated
-  public EditorWithProviderComposite[] getEditorsComposites() {
+  public EditorWithProviderComposite @NotNull [] getEditorsComposites() {
     return getEditorComposites().toArray(new EditorWithProviderComposite[0]);
   }
 
@@ -684,9 +717,9 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
   }
 
   @NotNull
-  private List<EditorWindow> findWindows(final VirtualFile file) {
+  private List<EditorWindow> findWindows(@NotNull VirtualFile file) {
     List<EditorWindow> res = new ArrayList<>();
-    for (final EditorWindow window : myWindows) {
+    for (EditorWindow window : myWindows) {
       if (window.findFileComposite(file) != null) {
         res.add(window);
       }
@@ -694,8 +727,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return res;
   }
 
-  @NotNull
-  public EditorWindow [] getWindows() {
+  public EditorWindow @NotNull [] getWindows() {
     return myWindows.toArray(new EditorWindow[0]);
   }
 
@@ -760,7 +792,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   private final class MyFocusWatcher extends FocusWatcher {
     @Override
-    protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
+    protected void focusedComponentChanged(Component component, AWTEvent cause) {
       EditorWindow newWindow = null;
 
       if (component != null) {

@@ -42,16 +42,17 @@ import java.util.Map;
 
 public class GenerateDependencyAction extends GenerateDomElementAction {
   public GenerateDependencyAction() {
-    super(new MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency"), MavenDomDependency.class) {
-        @Nullable
-        @Override
-        protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
-          Project project = mavenModel.getManager().getProject();
+    super(new MavenGenerateProvider<MavenDomDependency>(MavenDomBundle.message("generate.dependency.title"), MavenDomDependency.class) {
+      @Nullable
+      @Override
+      protected MavenDomDependency doGenerate(@NotNull final MavenDomProjectModel mavenModel, final Editor editor) {
+        Project project = mavenModel.getManager().getProject();
 
-          final Map<DependencyConflictId, MavenDomDependency> managedDependencies = GenerateManagedDependencyAction.collectManagingDependencies(mavenModel);
+        final Map<DependencyConflictId, MavenDomDependency> managedDependencies =
+          GenerateManagedDependencyAction.collectManagingDependencies(mavenModel);
 
-          final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(project, managedDependencies.values());
-          if (ids.isEmpty()) return null;
+        final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(project, managedDependencies.values());
+        if (ids.isEmpty()) return null;
 
           PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -66,7 +67,8 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
                                                                  @NotNull Map<DependencyConflictId, MavenDomDependency> managedDependencies,
                                                                  @NotNull List<? extends MavenCoordinate> ids,
                                                                  @NotNull XmlFile psiFile) {
-    return WriteCommandAction.writeCommandAction(psiFile.getProject(), psiFile).withName("Generate Dependency").compute(() -> createDependency(mavenModel, editor, managedDependencies, ids));
+    return WriteCommandAction.writeCommandAction(psiFile.getProject(), psiFile).withName(MavenDomBundle.message("generate.dependency"))
+      .compute(() -> createDependency(mavenModel, editor, managedDependencies, ids));
   }
 
   @Nullable

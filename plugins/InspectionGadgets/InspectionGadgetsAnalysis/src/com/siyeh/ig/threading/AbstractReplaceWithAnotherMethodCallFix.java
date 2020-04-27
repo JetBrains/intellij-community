@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -11,9 +12,16 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jetbrains.annotations.NotNull;
 
 abstract class AbstractReplaceWithAnotherMethodCallFix extends InspectionGadgetsFix {
   protected abstract String getMethodName();
+
+  @Override
+  @NotNull
+  public String getFamilyName() {
+    return CommonQuickFixBundle.message("fix.replace.with.x", getMethodName() + "()");
+  }
 
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {

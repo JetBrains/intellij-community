@@ -355,7 +355,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
   }
 
   @NotNull
-  private static <T> T chooseFirstNotNull(@NotNull T... values) {
+  private static <T> T chooseFirstNotNull(T @NotNull ... values) {
     for (T value : values) {
       if (value != null) {
         return value;

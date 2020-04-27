@@ -51,9 +51,8 @@ public class PySuspendContext extends XSuspendContext {
     }
   }
 
-  @NotNull
   @Override
-  public XExecutionStack[] getExecutionStacks() {
+  public XExecutionStack @NotNull [] getExecutionStacks() {
     final Collection<PyThreadInfo> threads = myDebugProcess.getThreads();
     if (threads.size() < 1) {
       return XExecutionStack.EMPTY_ARRAY;

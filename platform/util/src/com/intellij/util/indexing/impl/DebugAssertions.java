@@ -17,11 +17,7 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.indexing.IndexId;
-import com.intellij.util.io.KeyDescriptor;
-
-import java.util.Collection;
 
 public class DebugAssertions {
   private static final Logger LOG = Logger.getInstance(DebugAssertions.class);

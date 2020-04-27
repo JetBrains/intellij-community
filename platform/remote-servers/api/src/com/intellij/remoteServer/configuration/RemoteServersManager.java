@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class RemoteServersManager {
   public static RemoteServersManager getInstance() {
     return ServiceManager.getService(RemoteServersManager.class);

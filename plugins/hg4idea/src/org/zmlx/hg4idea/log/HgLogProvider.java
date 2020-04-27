@@ -20,6 +20,7 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.LogDataImpl;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFileRevision;
@@ -315,8 +316,9 @@ public final class HgLogProvider implements VcsLogProvider {
 
   @Nullable
   @Override
+  @CalledInAny
   public String getCurrentBranch(@NotNull VirtualFile root) {
-    HgRepository repository = getHgRepoManager(myProject).getRepositoryForRoot(root);
+    HgRepository repository = getHgRepoManager(myProject).getRepositoryForRootQuick(root);
     if (repository == null) return null;
     return repository.getCurrentBranchName();
   }

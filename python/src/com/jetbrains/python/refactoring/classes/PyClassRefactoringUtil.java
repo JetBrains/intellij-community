@@ -43,7 +43,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.refactoring.PyRefactoringUtil;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ public final class PyClassRefactoringUtil {
 
       }
 
-      declarations.add(PyRefactoringUtil.addElementToStatementList(newDeclaration, superClassStatement));
+      declarations.add(PyPsiRefactoringUtil.addElementToStatementList(newDeclaration, superClassStatement));
       PyPsiUtils.removeRedundantPass(superClassStatement);
     }
     return declarations;
@@ -152,7 +152,7 @@ public final class PyClassRefactoringUtil {
    * @return newly added methods or existing one (if skipIfExists is true and method already exists)
    */
   @NotNull
-  public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, @NotNull final PyFunction... methods) {
+  public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, final PyFunction @NotNull ... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
     final List<PyFunction> result = new ArrayList<>(methods.length);
@@ -222,7 +222,7 @@ public final class PyClassRefactoringUtil {
 
   public static void restoreNamedReferences(@NotNull final PsiElement newElement,
                                             @Nullable final PsiElement oldElement,
-                                            @NotNull final PsiElement[] otherMovedElements) {
+                                            final PsiElement @NotNull [] otherMovedElements) {
     newElement.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -247,7 +247,7 @@ public final class PyClassRefactoringUtil {
 
   public static void restoreReference(@NotNull PyReferenceExpression sourceNode,
                                       @NotNull PyReferenceExpression targetNode,
-                                      @NotNull PsiElement[] otherMovedElements) {
+                                      PsiElement @NotNull [] otherMovedElements) {
     try {
       PsiNamedElement target = sourceNode.getCopyableUserData(ENCODED_IMPORT);
       final String asName = sourceNode.getCopyableUserData(ENCODED_IMPORT_AS);
@@ -350,7 +350,7 @@ public final class PyClassRefactoringUtil {
    * @param element     element to store references for
    * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
    */
-  public static void rememberNamedReferences(@NotNull final PsiElement element, @NotNull final String... namesToSkip) {
+  public static void rememberNamedReferences(@NotNull final PsiElement element, final String @NotNull ... namesToSkip) {
     element.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReferenceExpression(PyReferenceExpression node) {
@@ -533,7 +533,7 @@ public final class PyClassRefactoringUtil {
    */
   public static void addSuperclasses(@NotNull final Project project,
                                      @NotNull final PyClass clazz,
-                                     @NotNull final PyClass... superClasses) {
+                                     final PyClass @NotNull ... superClasses) {
 
     final Collection<String> superClassNames = new ArrayList<>();
 
@@ -625,7 +625,7 @@ public final class PyClassRefactoringUtil {
 
     final PyAssignmentStatement assignmentStatement = generator.createFromText(level, PyAssignmentStatement.class, text);
     //TODO: Add metaclass to the top. Add others between last attributeName and first method
-    return PyRefactoringUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
+    return PyPsiRefactoringUtil.addElementToStatementList(assignmentStatement, aClass.getStatementList(), true);
   }
 
   public static boolean addMetaClassIfNotExist(@NotNull PyClass cls, @NotNull PyClass metaClass, @NotNull TypeEvalContext context) {

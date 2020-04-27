@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.SystemInfo;
@@ -73,15 +73,15 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
   @NotNull
   @Override
   public JComponent getComponent() {
-    myCbForceClassicVM = new StateRestoringCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.force.classic.vm"));
-    myCbDisableJIT = new JCheckBox(DebuggerBundle.message("label.debugger.launching.configurable.disable.jit"));
-    myCbShowAlternativeSource = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.show.alternative.source"));
-    myRbSocket = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.socket"));
-    myRbShmem = new JRadioButton(DebuggerBundle.message("label.debugger.launching.configurable.shmem"));
-    myCbKillImmediately = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.kill.immediately"));
-    myCbAlwaysDebug = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.always.debug"));
-    myCbEnableMemoryAgent = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent"));
-    myCbEnableMemoryAgent.setToolTipText(DebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent.tooltip.text"));
+    myCbForceClassicVM = new StateRestoringCheckBox(JavaDebuggerBundle.message("label.debugger.launching.configurable.force.classic.vm"));
+    myCbDisableJIT = new JCheckBox(JavaDebuggerBundle.message("label.debugger.launching.configurable.disable.jit"));
+    myCbShowAlternativeSource = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.show.alternative.source"));
+    myRbSocket = new JRadioButton(JavaDebuggerBundle.message("label.debugger.launching.configurable.socket"));
+    myRbShmem = new JRadioButton(JavaDebuggerBundle.message("label.debugger.launching.configurable.shmem"));
+    myCbKillImmediately = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.kill.immediately"));
+    myCbAlwaysDebug = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.always.debug"));
+    myCbEnableMemoryAgent = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent"));
+    myCbEnableMemoryAgent.setToolTipText(JavaDebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent.tooltip.text"));
 
     final ButtonGroup gr = new ButtonGroup();
     gr.add(myRbSocket);
@@ -92,7 +92,7 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbShmem);
     final JPanel transportPanel = new JPanel(new BorderLayout());
-    transportPanel.add(new JLabel(DebuggerBundle.message("label.debugger.launching.configurable.debugger.transport")), BorderLayout.WEST);
+    transportPanel.add(new JLabel(JavaDebuggerBundle.message("label.debugger.launching.configurable.debugger.transport")), BorderLayout.WEST);
     transportPanel.add(box, BorderLayout.CENTER);
 
     VerticalBox panel = new VerticalBox();

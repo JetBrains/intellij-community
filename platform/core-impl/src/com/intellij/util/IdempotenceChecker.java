@@ -74,8 +74,17 @@ public class IdempotenceChecker {
                                           @NotNull Class<?> providerClass,
                                           @Nullable Computable<? extends T> recomputeValue) {
     String msg = checkValueEquivalence(existing, fresh);
-    if (msg != null &&
-        ourReportedValueClasses.add(providerClass)) {
+    if (msg != null) {
+      reportFailure(existing, fresh, providerClass, recomputeValue, msg);
+    }
+  }
+
+  private static <T> void reportFailure(@Nullable T existing,
+                                        @Nullable T fresh,
+                                        @NotNull Class<?> providerClass,
+                                        @Nullable Computable<? extends T> recomputeValue, String msg) {
+    boolean shouldReport = ApplicationManager.getApplication().isUnitTestMode() || ourReportedValueClasses.add(providerClass);
+    if (shouldReport) {
       if (recomputeValue != null) {
         msg += recomputeWithLogging(existing, fresh, recomputeValue);
       }
@@ -187,8 +196,7 @@ public class IdempotenceChecker {
     return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
   }
 
-  @Nullable
-  private static Object[] asArray(Object o) {
+  private static Object @Nullable [] asArray(Object o) {
     if (o instanceof Object[]) return (Object[])o;
     if (o instanceof Map.Entry) return new Object[]{((Map.Entry)o).getKey(), ((Map.Entry)o).getValue()};
     if (o instanceof Pair) return new Object[]{((Pair)o).first, ((Pair)o).second};

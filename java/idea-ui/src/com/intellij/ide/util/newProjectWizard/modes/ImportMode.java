@@ -2,11 +2,11 @@
 
 package com.intellij.ide.util.newProjectWizard.modes;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ImportChooserStep;
@@ -31,14 +31,14 @@ public class ImportMode extends WizardMode {
   @Override
   @NotNull
   public String getDisplayName(final WizardContext context) {
-    return ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName());
+    return JavaUiBundle.message("project.new.wizard.import.title", context.getPresentationName());
   }
 
   @Override
   @NotNull
   public String getDescription(final WizardContext context) {
     final String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-    return ProjectBundle.message("project.new.wizard.import.description", productName, context.getPresentationName(), StringUtil.join(
+    return JavaUiBundle.message("project.new.wizard.import.description", productName, context.getPresentationName(), StringUtil.join(
       ProjectImportProvider.PROJECT_IMPORT_PROVIDER.getExtensionList(),
       provider -> provider.getName(), ", "));
   }

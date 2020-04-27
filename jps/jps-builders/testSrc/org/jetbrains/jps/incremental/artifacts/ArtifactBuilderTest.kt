@@ -37,9 +37,6 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 
-/**
- * @author nik
- */
 class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   fun testFileCopy() {
     val a = addArtifact(root().fileCopy(createFile("file.txt", "foo")))

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -18,8 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * Git merge tool for resolving conflicts. Use IDEA built-in 3-way merge tool.
  */
@@ -27,7 +25,7 @@ public class GitResolveConflictsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = notNull(event.getProject());
+    Project project = Objects.requireNonNull(event.getProject());
     GitVcs vcs = GitVcs.getInstance(project);
 
     Set<VirtualFile> conflictedFiles = new TreeSet<>(Comparator.comparing(VirtualFile::getPresentableUrl));

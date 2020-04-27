@@ -24,8 +24,6 @@ import java.util.Set;
 
 /**
  * Represents a single build target or a set of build targets which circularly depend on each other.
- *
- * @author nik
  */
 public class BuildTargetChunk {
   private final Set<? extends BuildTarget<?>> myTargets;

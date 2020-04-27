@@ -43,6 +43,6 @@ public interface VcsLogIndexer {
   }
 
   interface PathsEncoder {
-    int encode(@NotNull String path, boolean isDirectory) throws VcsException;
+    int encode(@NotNull VirtualFile root, @NotNull String relativePath, boolean isDirectory) throws VcsException;
   }
 }

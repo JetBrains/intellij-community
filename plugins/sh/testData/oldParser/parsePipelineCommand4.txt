@@ -3,24 +3,23 @@ SHELL_SCRIPT
     PIPELINE_COMMAND
       PsiElement(!)('!')
       PsiWhiteSpace(' ')
-      PIPELINE
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('time')
-          PsiWhiteSpace(' ')
+      SIMPLE_COMMAND
+        GENERIC_COMMAND_DIRECTIVE
           LITERAL
-            PsiElement(word)('echo')
-          PsiWhiteSpace(' ')
-          LITERAL
-            PsiElement(word)('a')
+            PsiElement(word)('time')
         PsiWhiteSpace(' ')
-        PsiElement(|)('|')
+        LITERAL
+          PsiElement(word)('echo')
         PsiWhiteSpace(' ')
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('echo')
-          PsiWhiteSpace(' ')
-          LITERAL
-            PsiElement(word)('b')
+        LITERAL
+          PsiElement(word)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(|)('|')
+    PsiWhiteSpace(' ')
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('b')

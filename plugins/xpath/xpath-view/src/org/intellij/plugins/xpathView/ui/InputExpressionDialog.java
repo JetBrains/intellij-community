@@ -407,8 +407,7 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         }
 
         @Override
-        @NotNull
-        public String[] getVariablesInScope(XPathElement element) {
+        public String @NotNull [] getVariablesInScope(XPathElement element) {
             final HistoryElement selectedItem = myModel.getSelectedItem();
             if (selectedItem != null) {
                 return Variable.asSet(selectedItem.variables).toArray(new String[selectedItem.variables.size()]);

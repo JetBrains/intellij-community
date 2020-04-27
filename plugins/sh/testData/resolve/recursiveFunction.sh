@@ -1,0 +1,3 @@
+decho() {
+  <caret>decho
+}

@@ -25,6 +25,5 @@ public interface TreeElement {
    *
    * @return the list of children.
    */
-  @NotNull
-  TreeElement[] getChildren();
+  TreeElement @NotNull [] getChildren();
 }

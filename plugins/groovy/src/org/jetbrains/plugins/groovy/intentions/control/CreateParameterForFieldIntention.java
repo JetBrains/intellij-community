@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.control;
 
 import com.google.common.collect.Lists;
@@ -47,6 +47,8 @@ import org.jetbrains.plugins.groovy.refactoring.changeSignature.GrParameterInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 
 /**
  * @author Maxim.Medvedev
@@ -135,7 +137,7 @@ public class CreateParameterForFieldIntention extends Intention {
     if (parameterName == null) {
       parameterName = nameValidator.validateName(suggestedNames[0], true);
     }
-    parameters.add(new GrParameterInfo(parameterName, "null", "", selectedValue.getTypeGroovy(), -1, false));
+    parameters.add(new GrParameterInfo(parameterName, "null", "", selectedValue.getTypeGroovy(), NEW_PARAMETER, false));
 
     PsiClassType[] exceptionTypes = constructor.getThrowsList().getReferencedTypes();
     ThrownExceptionInfo[] thrownExceptionInfos = new ThrownExceptionInfo[exceptionTypes.length];
@@ -148,7 +150,7 @@ public class CreateParameterForFieldIntention extends Intention {
     final String finalParameterName = parameterName;
     final GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(project, grChangeInfo) {
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
 
         final GrOpenBlock block = constructor.getBlock();

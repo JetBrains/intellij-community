@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
 public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements PersistentStateComponent<ProjectFacetManagerImpl.ProjectFacetManagerState> {
   @NonNls public static final String COMPONENT_NAME = "ProjectFacetManager";
@@ -88,7 +85,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
 
   @NotNull
   @Override
-  public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId) {
+  public <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId) {
     return ContainerUtil.concat(getIndex().get(typeId), module -> FacetManager.getInstance(module).getFacetsByType(typeId));
   }
 
@@ -105,7 +102,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
   }
 
   @Override
-  public <F extends Facet> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules) {
+  public <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules) {
     final List<F> result = new ArrayList<>();
     for (Module module : modules) {
       result.addAll(FacetManager.getInstance(module).getFacetsByType(typeId));

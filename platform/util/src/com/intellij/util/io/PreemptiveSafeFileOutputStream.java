@@ -46,7 +46,7 @@ public class PreemptiveSafeFileOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(@NotNull byte[] b, int off, int len) throws IOException {
+  public void write(byte @NotNull [] b, int off, int len) throws IOException {
     try {
       myOutputStream.write(b, off, len);
     }

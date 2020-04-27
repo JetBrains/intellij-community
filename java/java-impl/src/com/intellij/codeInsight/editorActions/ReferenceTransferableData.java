@@ -26,7 +26,7 @@ import java.io.Serializable;
 public class ReferenceTransferableData implements TextBlockTransferableData, Cloneable, Serializable {
   private final ReferenceData[] myReferenceDatas;
 
-  public ReferenceTransferableData(@NotNull ReferenceData[] referenceDatas) {
+  public ReferenceTransferableData(ReferenceData @NotNull [] referenceDatas) {
     myReferenceDatas = referenceDatas;
   }
 
@@ -67,8 +67,7 @@ public class ReferenceTransferableData implements TextBlockTransferableData, Clo
     return new ReferenceTransferableData(newReferenceData);
   }
 
-  @NotNull
-  public ReferenceData[] getData() {
+  public ReferenceData @NotNull [] getData() {
     return myReferenceDatas;
   }
 }

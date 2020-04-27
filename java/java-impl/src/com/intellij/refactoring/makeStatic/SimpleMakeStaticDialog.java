@@ -1,11 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiTypeParameterListOwner;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ui.JBInsets;
@@ -19,7 +19,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
   public SimpleMakeStaticDialog(Project project, PsiTypeParameterListOwner member) {
     super(project, member);
     String type = UsageViewUtil.getType(myMember);
-    setTitle(RefactoringBundle.message("make.0.static", StringUtil.capitalize(type)));
+    setTitle(JavaRefactoringBundle.message("make.0.static", StringUtil.capitalize(type)));
     init();
   }
 
@@ -68,7 +68,7 @@ public class SimpleMakeStaticDialog extends AbstractMakeStaticDialog {
     panel.add(createDescriptionLabel(), gbConstraints);
 
     gbConstraints.gridy++;
-    myCbReplaceUsages = new JCheckBox(RefactoringBundle.message("replace.instance.qualifiers.with.class.references"));
+    myCbReplaceUsages = new JCheckBox(JavaRefactoringBundle.message("replace.instance.qualifiers.with.class.references"));
     panel.add(myCbReplaceUsages, gbConstraints);
     myCbReplaceUsages.setSelected(true);
     return panel;

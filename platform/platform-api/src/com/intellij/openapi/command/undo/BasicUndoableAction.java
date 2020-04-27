@@ -28,18 +28,18 @@ public abstract class BasicUndoableAction implements UndoableAction {
     myRefs = null;
   }
 
-  public BasicUndoableAction(@Nullable DocumentReference... refs) {
+  public BasicUndoableAction(DocumentReference @Nullable ... refs) {
     myRefs = refs;
   }
 
-  public BasicUndoableAction(@NotNull Document... docs) {
+  public BasicUndoableAction(Document @NotNull ... docs) {
     myRefs = new DocumentReference[docs.length];
     for (int i = 0; i < docs.length; i++) {
       myRefs[i] = DocumentReferenceManager.getInstance().create(docs[i]);
     }
   }
 
-  public BasicUndoableAction(@NotNull VirtualFile... files) {
+  public BasicUndoableAction(VirtualFile @NotNull ... files) {
     myRefs = new DocumentReference[files.length];
     for (int i = 0; i < files.length; i++) {
       myRefs[i] = DocumentReferenceManager.getInstance().create(files[i]);

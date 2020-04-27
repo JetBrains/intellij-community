@@ -20,8 +20,8 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.facet.impl.invalid.InvalidFacet;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {
   private final Facet myFacet;
   private final ModulesConfigurator myModulesConfigurator;
@@ -73,7 +70,7 @@ public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet
 
   @Override
   public String getBannerSlogan() {
-    return ProjectBundle.message("facet.banner.text", myFacetName);
+    return JavaUiBundle.message("facet.banner.text", myFacetName);
   }
 
   @Override

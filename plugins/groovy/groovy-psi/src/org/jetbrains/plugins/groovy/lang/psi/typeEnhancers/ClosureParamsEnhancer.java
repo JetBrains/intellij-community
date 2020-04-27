@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Pair;
@@ -19,11 +19,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder;
 
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.findCall;
 
 public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
@@ -73,9 +75,9 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     if (variant instanceof GroovyMethodResult) {
       GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
       if (candidate != null) {
-        ArgumentMapping mapping = candidate.getArgumentMapping();
+        ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
         if (mapping != null) {
-          param = mapping.targetParameter(new ExpressionArgument(expression));
+          param = doIfNotNull(mapping.targetParameter(new ExpressionArgument(expression)), PsiCallParameter::getPsi);
         }
       }
     } else {

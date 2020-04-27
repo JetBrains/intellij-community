@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
 import org.jetbrains.jps.model.module.JpsModuleType;
 
-/**
- * @author nik
- */
 public class JpsJavaModuleType extends JpsElementTypeWithDummyProperties implements JpsModuleType<JpsDummyElement> {
   public static final JpsJavaModuleType INSTANCE = new JpsJavaModuleType();
 

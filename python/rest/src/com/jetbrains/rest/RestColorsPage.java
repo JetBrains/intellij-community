@@ -19,16 +19,16 @@ import java.util.Map;
  */
 public class RestColorsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[]{
-    new AttributesDescriptor("Comment", RestSyntaxHighlighter.REST_COMMENT),
-    new AttributesDescriptor("Title", RestSyntaxHighlighter.REST_SECTION_HEADER),
-    new AttributesDescriptor("Explicit markup", RestSyntaxHighlighter.REST_EXPLICIT),
-    new AttributesDescriptor("Fields", RestSyntaxHighlighter.REST_FIELD),
-    new AttributesDescriptor("Reference name", RestSyntaxHighlighter.REST_REF_NAME),
-    new AttributesDescriptor("Inline literals", RestSyntaxHighlighter.REST_FIXED),
-    new AttributesDescriptor("Bold text", RestSyntaxHighlighter.REST_BOLD),
-    new AttributesDescriptor("Italic text", RestSyntaxHighlighter.REST_ITALIC),
-    new AttributesDescriptor("Interpreted text", RestSyntaxHighlighter.REST_INTERPRETED),
-    new AttributesDescriptor("Literal and line blocks", RestSyntaxHighlighter.REST_INLINE),
+    new AttributesDescriptor(RestBundle.message("colors.page.attributes.descriptor.comment"), RestSyntaxHighlighter.REST_COMMENT),
+    new AttributesDescriptor(RestBundle.message("colors.page.attributes.descriptor.title"), RestSyntaxHighlighter.REST_SECTION_HEADER),
+    new AttributesDescriptor(RestBundle.message("explicit.markup"), RestSyntaxHighlighter.REST_EXPLICIT),
+    new AttributesDescriptor(RestBundle.message("colors.page.attributes.descriptor.fields"), RestSyntaxHighlighter.REST_FIELD),
+    new AttributesDescriptor(RestBundle.message("reference.name"), RestSyntaxHighlighter.REST_REF_NAME),
+    new AttributesDescriptor(RestBundle.message("inline.literals"), RestSyntaxHighlighter.REST_FIXED),
+    new AttributesDescriptor(RestBundle.message("bold.text"), RestSyntaxHighlighter.REST_BOLD),
+    new AttributesDescriptor(RestBundle.message("italic.text"), RestSyntaxHighlighter.REST_ITALIC),
+    new AttributesDescriptor(RestBundle.message("interpreted.text"), RestSyntaxHighlighter.REST_INTERPRETED),
+    new AttributesDescriptor(RestBundle.message("literal.and.line.blocks"), RestSyntaxHighlighter.REST_INLINE),
   };
 
   @NonNls private static final HashMap<String, TextAttributesKey> ourTagToDescriptorMap = new HashMap<>();
@@ -37,7 +37,7 @@ public class RestColorsPage implements ColorSettingsPage {
   @Override
   @NotNull
   public String getDisplayName() {
-    return "reStructuredText";
+    return RestBundle.message("restructured.text");
   }
 
   @Override
@@ -46,14 +46,12 @@ public class RestColorsPage implements ColorSettingsPage {
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return ATTRS;
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 

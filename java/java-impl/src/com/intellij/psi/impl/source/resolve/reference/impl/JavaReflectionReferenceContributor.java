@@ -66,11 +66,10 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(Holder.PATTERN, new JavaReflectionReferenceProvider() {
-      @Nullable
       @Override
-      protected PsiReference[] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
-                                                     @NotNull PsiReferenceExpression methodReference,
-                                                     @NotNull ProcessingContext context) {
+      protected PsiReference @Nullable [] getReferencesByMethod(@NotNull PsiLiteralExpression literalArgument,
+                                                                @NotNull PsiReferenceExpression methodReference,
+                                                                @NotNull ProcessingContext context) {
 
         final PsiExpression qualifier = methodReference.getQualifierExpression();
         return qualifier != null ? new PsiReference[]{new JavaLangClassMemberReference(literalArgument, qualifier)} : null;
@@ -105,9 +104,8 @@ public class JavaReflectionReferenceContributor extends PsiReferenceContributor 
       setOption(JavaClassReferenceProvider.JVM_FORMAT, Boolean.TRUE);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
+    public PsiReference @NotNull [] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
       if (StringUtil.isEmpty(str)) {
         return PsiReference.EMPTY_ARRAY;
       }

@@ -33,8 +33,6 @@ import java.util.Set;
 
 /**
  * Implementation of {@link FrameworkDetector} for frameworks configured via facets
- *
- * @author nik
  */
 public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends FacetConfiguration> extends FrameworkDetector {
   private static final Logger LOG = Logger.getInstance(FacetBasedFrameworkDetector.class);

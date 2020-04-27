@@ -58,8 +58,7 @@ public class RncIncludeImpl extends RncFileReferenceImpl implements RncInclude {
   }
 
   @Override
-  @NotNull
-  public RncDefine[] getOverrides() {
+  public RncDefine @NotNull [] getOverrides() {
     // TODO: DIVs?
     return findChildrenByClass(RncDefine.class);
   }

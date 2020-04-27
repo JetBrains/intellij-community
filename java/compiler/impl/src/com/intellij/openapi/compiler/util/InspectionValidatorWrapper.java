@@ -144,8 +144,7 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   @Override
-  @NotNull
-  public ProcessingItem[] getProcessingItems(final CompileContext context) {
+  public ProcessingItem @NotNull [] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
     if (project.isDefault() || !ValidationConfiguration.shouldValidate(this, project)) {
       return ProcessingItem.EMPTY_ARRAY;
@@ -263,7 +262,7 @@ public class InspectionValidatorWrapper implements Validator {
       final Document document = myPsiDocumentManager.getCachedDocument(file);
       if (document != null && myPsiDocumentManager.isUncommited(document)) {
         final String url = file.getViewProvider().getVirtualFile().getUrl();
-        context.addMessage(CompilerMessageCategory.WARNING, CompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
+        context.addMessage(CompilerMessageCategory.WARNING, JavaCompilerBundle.message("warning.text.file.has.been.changed"), url, -1, -1);
         return false;
       }
 

@@ -2,6 +2,7 @@
 package com.intellij.spi;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.spi.SPILanguage;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -49,7 +50,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
   @NotNull
   @Override
   public String getDescription() {
-    return "Service Provider Interface";
+    return JavaBundle.message("spi.file.type.description");
   }
 
   @NotNull
@@ -66,7 +67,7 @@ public class SPIFileType extends LanguageFileType implements FileTypeIdentifiabl
 
   @Nullable
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return CharsetToolkit.UTF8;
   }
 }

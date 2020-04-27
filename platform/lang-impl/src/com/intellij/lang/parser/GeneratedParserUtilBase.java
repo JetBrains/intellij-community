@@ -614,7 +614,7 @@ public class GeneratedParserUtilBase {
       // do not report if there are errors beyond current position
       if (lastErrorPos == initialPos) {
         // do not force, inner recoverRoot might have skipped some tokens
-        reportError(builder, state, frame, elementType != null, false, false);
+        reportError(builder, state, frame, elementType != null && (frame.modifiers & _UPPER_) == 0, false, false);
       }
       else if (lastErrorPos > initialPos) {
         // set error pos here as if it is reported for future reference
@@ -1234,9 +1234,8 @@ public class GeneratedParserUtilBase {
       super(DUMMY_BLOCK);
     }
 
-    @NotNull
     @Override
-    public PsiReference[] getReferences() {
+    public PsiReference @NotNull [] getReferences() {
       return PsiReference.EMPTY_ARRAY;
     }
 

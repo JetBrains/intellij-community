@@ -11,6 +11,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.execution.JUnitBundle
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
 import com.intellij.lang.jvm.JvmModifier
@@ -28,7 +29,6 @@ import com.intellij.psi.util.TypeConversionUtil
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.TestUtils
-import org.jetbrains.annotations.Nls
 import java.util.*
 
 class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTool() {
@@ -50,7 +50,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (parameterizedAnnotation.isNotEmpty()) {
           if (testAnnotation.isNotEmpty() && method.parameterList.parametersCount > 0) {
             holder.registerProblem(testAnnotation[0],
-                                   "Suspicious combination @Test and @ParameterizedTest",
+                                   JUnitBundle.message("junit5.malformed.parameterized.inspection.description.suspicious.combination.test.and.parameterizedtest"),
                                    DeleteElementFix(testAnnotation[0]))
           }
 
@@ -93,16 +93,17 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
           if (noMultiArgsProvider) {
             if (source == null) {
-              holder.registerProblem(parameterizedAnnotation[0], "No sources are provided, the suite would be empty")
+              holder.registerProblem(parameterizedAnnotation[0],
+                                     JUnitBundle.message("junit5.malformed.parameterized.inspection.description.no.sources.are.provided"))
             }
             else if (hasMultipleParameters(method)) {
-              holder.registerProblem(source!!, "Multiple parameters are not supported by this source")
+              holder.registerProblem(source!!, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.multiple.parameters.are.not.supported.by.this.source"))
             }
           }
         }
         else if (testAnnotation.isNotEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS)) {
           holder.registerProblem(testAnnotation[0],
-                                 "Suspicious combination @Test and parameterized source",
+                                 JUnitBundle.message("junit5.malformed.parameterized.inspection.description.suspicious.combination"),
                                  ChangeAnnotationFix(testAnnotation[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
         }
       }
@@ -136,10 +137,10 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
         val attributesNumber = valuesSource.parameterList.attributes.size
         if (attributesNumber > 1) {
-          holder.registerProblem(valuesSource, "Exactly one type of input must be provided")
+          holder.registerProblem(valuesSource, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.exactly.one.type.of.input.must.be.provided"))
         }
         else if (attributesNumber == 0) {
-          holder.registerProblem(valuesSource, "No value source is defined")
+          holder.registerProblem(valuesSource, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.no.value.source.is.defined"))
         }
       }
 
@@ -150,7 +151,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
             if (ref.isSoft) continue
             if (ref is FileReference && ref.multiResolve(false).isEmpty()) {
               holder.registerProblem(ref.element, ref.rangeInElement,
-                                     "Cannot resolve file source: \'${attributeValue.text}\'", *ref.quickFixes)
+                                     JUnitBundle.message("junit5.malformed.parameterized.inspection.description.file.source", attributeValue.text), *ref.quickFixes)
             }
           }
         }
@@ -196,11 +197,11 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (holder.isOnTheFly) {
           val staticModifier = if (!TestUtils.testInstancePerClass(containingClass)) " static" else ""
           createFix = CreateMethodQuickFix.createFix(containingClass,
-                                                     "private$staticModifier Object[][] $sourceProviderName()",
-                                                     "return new Object[][] {};")
+                                                     "private$staticModifier java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> $sourceProviderName()",
+                                                     "return null;")
         }
         holder.registerProblem(attributeValue,
-                               "Cannot resolve target method source: \'$sourceProviderName\'",
+                               JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.unresolved", sourceProviderName),
                                createFix)
       }
 
@@ -212,23 +213,23 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
         if (!sourceProvider.hasModifierProperty(PsiModifier.STATIC) &&
             containingClass != null && !TestUtils.testInstancePerClass(containingClass)) {
-          holder.registerProblem(attributeValue, "Method source \'$providerName\' must be static",
+          holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.static", providerName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  QuickFixFactory.getInstance().createModifierListFix(sourceProvider, PsiModifier.STATIC, true, false))
         }
         else if (sourceProvider.parameterList.parametersCount != 0) {
-          holder.registerProblem(attributeValue, "Method source \'$providerName\' should have no parameters")
+          holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.no.params", providerName))
         }
         else {
           val componentType = getComponentType(sourceProvider.returnType, method)
           if (componentType == null) {
             holder.registerProblem(attributeValue,
-                                   "Method source \'$providerName\' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]")
+                                   JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.return.type", providerName))
           }
           else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType) &&
                    !componentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
                    !componentType.deepComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-            holder.registerProblem(attributeValue, "Multiple parameters have to be wrapped in Arguments")
+            holder.registerProblem(attributeValue, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.wrapped.in.arguments"))
           }
         }
       }
@@ -258,10 +259,10 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
               val value = name.value
               if (value is String) {
                 if (!allEnumConstants.contains(value)) {
-                  holder.registerProblem(name, "Can't resolve enum constant reference.")
+                  holder.registerProblem(name, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.unresolve.enum"))
                 }
                 else if (!definedConstants.add(value)) {
-                  holder.registerProblem(name, "Duplicate enum constant name")
+                  holder.registerProblem(name, JUnitBundle.message("junit5.malformed.parameterized.inspection.description.duplicated.enum"))
                 }
               }
             }
@@ -302,7 +303,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
             }
             if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, 0)) return
             holder.registerProblem(attributeValue,
-                                   "No implicit conversion found to convert object of type ${componentType.presentableText} to ${paramType.presentableText}")
+                                   JUnitBundle.message("junit5.malformed.parameterized.inspection.description.method.source.assignable", componentType.presentableText, paramType.presentableText))
           }
         }
       }
@@ -347,13 +348,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
 
 class ChangeAnnotationFix(testAnnotation: PsiAnnotation, val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
-  override fun getFamilyName(): String = "Replace annotation"
+  override fun getFamilyName(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.family.name")
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
     val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$targetAnnotation", startElement)
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation))
   }
 
-  override fun getText(): String = "Change to " + StringUtil.getShortName(targetAnnotation)
+  override fun getText(): String = JUnitBundle.message("junit5.malformed.parameterized.fix.text", StringUtil.getShortName(targetAnnotation))
 
 }

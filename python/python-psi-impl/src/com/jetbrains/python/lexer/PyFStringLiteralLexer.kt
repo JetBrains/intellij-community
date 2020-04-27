@@ -1,10 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.lexer
 
+import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil
 import com.jetbrains.python.PyTokenTypes
 
-class PyFStringLiteralLexer: PyStringLiteralLexerBase(PyTokenTypes.FSTRING_TEXT) {
+class PyFStringLiteralLexer(fStringTextToken: IElementType) : PyStringLiteralLexerBase(fStringTextToken) {
+  init {
+    assert(PyTokenTypes.FSTRING_TEXT_TOKENS.contains(fStringTextToken))
+  }
+
   override fun locateToken(start: Int): Int {
     if (start >= myBufferEnd) {
       return myBufferEnd
@@ -19,8 +24,7 @@ class PyFStringLiteralLexer: PyStringLiteralLexerBase(PyTokenTypes.FSTRING_TEXT)
     }
   }
 
-  // TODO actually keep track of "raw" prefixes of f-strings somehow
-  override fun isRaw(): Boolean = false
+  override fun isRaw(): Boolean = myOriginalLiteralToken == PyTokenTypes.FSTRING_RAW_TEXT
 
   override fun isUnicodeMode(): Boolean = true
 

@@ -64,6 +64,10 @@ public class RenameMembersInplaceTest extends LightJavaCodeInsightTestCase {
   public void testClassWithMultipleConstructors() {
     doTestInplaceRename("Bar");
   }
+
+  public void testTypeParameterUsedInJavadoc() {
+    doTestInplaceRename("K");
+  }
   
   public void testMethodWithJavadocRef() {
     doTestInplaceRename("bar");

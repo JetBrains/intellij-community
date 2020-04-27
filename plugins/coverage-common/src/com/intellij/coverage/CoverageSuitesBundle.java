@@ -135,8 +135,7 @@ public class CoverageSuitesBundle {
     return myEngine.getCoverageAnnotator(project);
   }
 
-  @NotNull
-  public CoverageSuite[] getSuites() {
+  public CoverageSuite @NotNull [] getSuites() {
     return mySuites;
   }
 

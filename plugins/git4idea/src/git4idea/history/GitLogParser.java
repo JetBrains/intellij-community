@@ -74,7 +74,7 @@ public class GitLogParser<R extends GitLogRecord> {
   private GitLogParser(@NotNull GitLogRecordBuilder<R> recordBuilder,
                        boolean supportsRawBody,
                        @NotNull NameStatus nameStatusOption,
-                       @NotNull GitLogOption... options) {
+                       GitLogOption @NotNull ... options) {
     mySupportsRawBody = supportsRawBody;
     myRecordBuilder = recordBuilder;
 
@@ -91,20 +91,20 @@ public class GitLogParser<R extends GitLogRecord> {
   public GitLogParser(@NotNull Project project,
                       @NotNull GitLogRecordBuilder<R> recordBuilder,
                       @NotNull NameStatus nameStatus,
-                      @NotNull GitLogOption... options) {
+                      GitLogOption @NotNull ... options) {
     this(recordBuilder, GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project), nameStatus, options);
   }
 
   @NotNull
   public static GitLogParser<GitLogFullRecord> createDefaultParser(@NotNull Project project,
                                                                    @NotNull NameStatus nameStatus,
-                                                                   @NotNull GitLogOption... options) {
+                                                                   GitLogOption @NotNull ... options) {
     return new GitLogParser<>(project, new DefaultGitLogFullRecordBuilder(), nameStatus, options);
   }
 
   @NotNull
   public static GitLogParser<GitLogRecord> createDefaultParser(@NotNull Project project,
-                                                               @NotNull GitLogOption... options) {
+                                                               GitLogOption @NotNull ... options) {
     return new GitLogParser<>(project, new DefaultGitLogRecordBuilder(), NameStatus.NONE, options);
   }
 
@@ -216,7 +216,7 @@ public class GitLogParser<R extends GitLogRecord> {
   }
 
   @NotNull
-  private String makeFormatFromOptions(@NotNull GitLogOption[] options) {
+  private String makeFormatFromOptions(GitLogOption @NotNull [] options) {
     Function<GitLogOption, String> function = option -> "%" + option.getPlaceholder();
     return encodeForGit(myRecordStart) + StringUtil.join(options, function, encodeForGit(myItemsSeparator)) + encodeForGit(myRecordEnd);
   }
@@ -294,10 +294,10 @@ public class GitLogParser<R extends GitLogRecord> {
   }
 
   private class OptionsParser {
-    @NotNull private final GitLogOption[] myOptions;
+    private final GitLogOption @NotNull [] myOptions;
     @NotNull private final PartialResult myResult = new PartialResult();
 
-    OptionsParser(@NotNull GitLogOption[] options) {
+    OptionsParser(GitLogOption @NotNull [] options) {
       myOptions = options;
     }
 

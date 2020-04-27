@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -27,7 +27,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,9 +36,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class PythonPathEditor extends SdkPathEditor {
   private final PathListModel myPathListModel;
 
@@ -273,7 +270,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
 
     private static boolean isStubPath(@NotNull VirtualFile file) {
-      final String path = PythonSdkType.getSkeletonsRootPath(PathManager.getSystemPath());
+      final String path = PythonSdkUtil.getSkeletonsRootPath(PathManager.getSystemPath());
       final VirtualFile skeletonRoot = LocalFileSystem.getInstance().findFileByPath(path);
       if (skeletonRoot != null && file.getPath().startsWith(skeletonRoot.getPath())) {
         return true;

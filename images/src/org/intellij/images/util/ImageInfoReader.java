@@ -41,12 +41,12 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data) {
+  public static Info getInfo(byte @NotNull [] data) {
     return getInfo(data, null);
   }
 
   @Nullable
-  public static Info getInfo(@NotNull byte[] data, @Nullable String inputName) {
+  public static Info getInfo(byte @NotNull [] data, @Nullable String inputName) {
     Info info = getSvgInfo(data);
     if (info != null) return info;
 
@@ -54,7 +54,7 @@ public class ImageInfoReader {
   }
 
   @Nullable
-  private static Info getSvgInfo(@NotNull byte[] data) {
+  private static Info getSvgInfo(byte @NotNull [] data) {
     for (int i = 0; i < Math.min(data.length, 100); i++) {
       byte b = data[i];
       if (b == '<') {

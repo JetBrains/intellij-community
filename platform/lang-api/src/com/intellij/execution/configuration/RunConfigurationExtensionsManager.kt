@@ -18,7 +18,6 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 private val RUN_EXTENSIONS = Key.create<List<Element>>("run.extension.elements")
@@ -130,7 +129,6 @@ open class RunConfigurationExtensionsManager<U : RunConfigurationBase<*>, T : Ru
     }
   }
 
-  @ApiStatus.Experimental
   @Throws(ExecutionException::class)
   open fun patchCommandLine(configuration: U,
                             runnerSettings: RunnerSettings?,

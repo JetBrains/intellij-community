@@ -17,7 +17,7 @@ open class MultiMessage<Aspect>(private val allValues: Collection<Aspect>,
                                 html: Boolean = true) {
   private val LOG = Logger.getInstance(MultiMessage::class.java)
   private val messages = linkedMapOf<Aspect, String>()
-  private val lineSeparator = if (html) "<br/>\n" else "\n"
+  private val lineSeparator = if (html) "<br/>\n" else "\n" // NON-NLS
 
   fun append(aspect: Aspect, message: String): MultiMessage<Aspect> {
     if (!allValues.contains(aspect)) {

@@ -71,7 +71,10 @@ public class PsiScopesUtil {
         return false; // resolved
       }
 
-      if (scope instanceof PsiModifierListOwner && !(scope instanceof PsiParameter/* important for not loading tree! */)) {
+      PsiElement context = scope.getContext();
+      if (scope instanceof PsiModifierListOwner &&
+          !(scope instanceof PsiParameter/* important for not loading tree! */) &&
+          !(context instanceof PsiFile)) { // avoid calling hasModifierProperty (it's expensive in Lombok) at least on top-level classes
         PsiModifierList modifierList = ((PsiModifierListOwner)scope).getModifierList();
         if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.STATIC)) {
           processor.handleEvent(JavaScopeProcessorEvent.START_STATIC, null);
@@ -79,7 +82,7 @@ public class PsiScopesUtil {
       }
       if (scope == maxScope) break;
       prevParent = scope;
-      scope = prevParent.getContext();
+      scope = context;
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
 

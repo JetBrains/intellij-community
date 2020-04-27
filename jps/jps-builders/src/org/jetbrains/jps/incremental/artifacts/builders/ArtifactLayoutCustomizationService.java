@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ArtifactLayoutCustomizationService {
   @Nullable
   public abstract List<JpsPackagingElement> getCustomizedLayout(@NotNull JpsArtifact artifact,

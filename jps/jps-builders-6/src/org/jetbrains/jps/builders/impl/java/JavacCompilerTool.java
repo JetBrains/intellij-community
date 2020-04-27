@@ -28,9 +28,6 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JavacCompilerTool extends JavaCompilingTool {
 
   public static final String ID = "Javac"; // duplicates org.jetbrains.jps.model.java.compiler.JavaCompilers.JAVAC_ID;

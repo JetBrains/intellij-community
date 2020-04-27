@@ -49,7 +49,7 @@ public class HgInitDialog extends DialogWrapper {
 
     myFileDescriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
-      public void validateSelectedFiles(@NotNull VirtualFile[] files) throws Exception {
+      public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (HgUtil.isHgRoot(files[0])) {
           throw new ConfigurationException(HgBundle.message("hg4idea.init.this.is.hg.root", files[0].getPresentableUrl()));
         }

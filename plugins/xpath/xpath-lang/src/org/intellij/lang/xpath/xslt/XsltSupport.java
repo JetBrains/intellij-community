@@ -86,8 +86,7 @@ public class XsltSupport {
   private XsltSupport() {
   }
 
-  @NotNull
-  public static PsiFile[] getFiles(XmlAttribute attribute) {
+  public static PsiFile @NotNull [] getFiles(XmlAttribute attribute) {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value != null) {
       final List<PsiFile> files = new SmartList<>();

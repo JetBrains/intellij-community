@@ -36,8 +36,7 @@ public class XmlNamedReferenceProviderBean extends CustomLoadingExtensionPointBe
   @XCollection(elementName = "hostName", valueAttributeName = "")
   public String[] hostNames;
 
-  @NotNull
-  public String[] getHostNames() {
+  public String @NotNull [] getHostNames() {
     String[] names = hostNames;
     if (names == null || names.length == 0) {
       throw new PluginException("At least one host name must be specified", getPluginDescriptor().getPluginId());

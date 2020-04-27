@@ -57,7 +57,7 @@ public class ThirdParamHintProcessor extends ParamHintProcessor {
     @Override
     public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
                                                    @NotNull PsiSubstitutor substitutor,
-                                                   @NotNull String[] options) {
+                                                   String @NotNull [] options) {
       List<PsiType[]> signatures = new ThirdParamHintProcessor().inferExpectedSignatures(method, substitutor, options);
       if (signatures.size() == 1) {
         PsiType[] signature = signatures.get(0);

@@ -43,6 +43,9 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
   val mainEntityClass: Class<E>
   fun loadEntities(builder: TypedEntityStorageBuilder, reader: JpsFileContentReader)
   fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out TypedEntity>, List<TypedEntity>>, writer: JpsFileContentWriter): List<TypedEntity>
+
+  val additionalEntityTypes: List<Class<out TypedEntity>>
+    get() = emptyList()
 }
 
 /**
@@ -51,9 +54,6 @@ interface JpsFileEntitiesSerializer<E : TypedEntity> {
 interface JpsFileEntityTypeSerializer<E : TypedEntity> : JpsFileEntitiesSerializer<E> {
   val entityFilter: (E) -> Boolean
     get() = { true }
-
-  val additionalEntityTypes: List<Class<out TypedEntity>>
-    get() = emptyList()
 }
 
 /**
@@ -336,7 +336,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
         entitiesToSave.any { serializer.mainEntityClass in it.value }) {
         val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
         serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
-          storage.entities(it.kotlin.java).toList()
+          storage.entities(it).toList()
         }
         serializersToRun.add(Pair(serializer, entitiesMap))
       }
@@ -373,7 +373,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
   }
 
   private fun <E : TypedEntity> getFilteredEntitiesForSerializer(serializer: JpsFileEntityTypeSerializer<E>, storage: TypedEntityStorage): List<E> {
-    return storage.entities(serializer.mainEntityClass.kotlin.java).filter(serializer.entityFilter).toList()
+    return storage.entities(serializer.mainEntityClass).filter(serializer.entityFilter).toList()
   }
 
   private fun <E : TypedEntity> saveEntitiesBySerializer(serializer: JpsFileEntitiesSerializer<E>,
@@ -404,7 +404,7 @@ class JpsEntitiesSerializationData(directorySerializersFactories: List<JpsDirect
   }
 
   private fun <E : TypedEntity> saveEntitiesList(it: JpsFileSerializerFactory<E>, storage: TypedEntityStorage, writer: JpsFileContentWriter) {
-    it.saveEntitiesList(storage.entities(it.entityClass.kotlin.java), writer)
+    it.saveEntitiesList(storage.entities(it.entityClass), writer)
   }
 }
 

@@ -665,6 +665,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitPatternVariable(PsiPatternVariable variable) {
+    super.visitPatternVariable(variable);
+    if (myType1 == JavaElementType.TYPE && myType2 == JavaTokenType.IDENTIFIER) {
+      createSpaceInCode(true);
+    }
+  }
+
+  @Override
   public void visitImportList(PsiImportList list) {
     if (ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild1.getElementType()) &&
         ElementType.IMPORT_STATEMENT_BASE_BIT_SET.contains(myChild2.getElementType())) {
@@ -1217,6 +1225,22 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+  }
+
+  @Override
+  public void visitRecordHeader(PsiRecordHeader recordHeader) {
+    if (myType2 == JavaTokenType.RPARENTH) {
+      createParenthSpace(myJavaSettings.RPAREN_ON_NEW_LINE_IN_RECORD_HEADER, false);
+    }
+    else if (myType1 == JavaTokenType.LPARENTH) {
+      createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, false);
+    }
+    else if (myChild1.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+    else if (myChild2.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
     }
   }
 

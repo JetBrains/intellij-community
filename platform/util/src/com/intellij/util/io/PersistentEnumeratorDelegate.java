@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,13 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
                    new PersistentEnumerator<>(file, dataDescriptor, initialSize, null, version);
   }
 
-  static boolean useBtree() {
+  @ApiStatus.Internal
+  public static int getVersion() {
+    return useBtree() ? PersistentBTreeEnumerator.VERSION : PersistentEnumerator.VERSION;
+  }
+
+  @ApiStatus.Internal
+  public static boolean useBtree() {
     String property = System.getProperty("idea.use.btree");
     return !"false".equals(property);
   }
@@ -100,14 +107,17 @@ public class PersistentEnumeratorDelegate<Data> implements DataEnumeratorEx<Data
     myEnumerator.force();
   }
 
+  @Override
   public Data valueOf(int id) throws IOException {
     return myEnumerator.valueOf(id);
   }
 
+  @Override
   public int enumerate(Data name) throws IOException {
     return myEnumerator.enumerate(name);
   }
 
+  @Override
   public int tryEnumerate(Data name) throws IOException {
     return myEnumerator.tryEnumerate(name);
   }

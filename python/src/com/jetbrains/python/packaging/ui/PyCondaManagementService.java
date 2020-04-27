@@ -28,6 +28,7 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -115,7 +116,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void addRepository(String repositoryUrl) {
     if (useConda()) {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Adding Conda Channel", true) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), PyBundle.message("python.packaging.adding.conda.channel"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
@@ -136,7 +137,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void removeRepository(String repositoryUrl) {
     if (useConda()) {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Removing Conda Channel", true) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), PyBundle.message("python.packaging.removing.conda.channel"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);

@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface InvertedIndex<Key, Value, Input> {
   @ApiStatus.Internal
-  boolean ARE_COMPOSITE_INDEXERS_ENABLED = SystemProperties.getBooleanProperty("com.intellij.composite.indexers", false);
+  boolean ARE_COMPOSITE_INDEXERS_ENABLED = SystemProperties.getBooleanProperty("com.intellij.composite.indexers", true);
 
   @NotNull
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;

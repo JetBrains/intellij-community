@@ -16,7 +16,7 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
@@ -31,14 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-/**
-* @author nik
-*/
 public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPackagingElement> {
   public static final ArtifactElementType ARTIFACT_ELEMENT_TYPE = new ArtifactElementType();
 
   ArtifactElementType() {
-    super("artifact", CompilerBundle.message("element.type.name.artifact"));
+    super("artifact", JavaCompilerBundle.message("element.type.name.artifact"));
   }
 
   @Override
@@ -56,7 +53,8 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   public List<? extends ArtifactPackagingElement> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact,
                                                                    @NotNull CompositePackagingElement<?> parent) {
     final Project project = context.getProject();
-    List<Artifact> artifacts = context.chooseArtifacts(getAvailableArtifacts(context, artifact, false), CompilerBundle.message("dialog.title.choose.artifacts"));
+    List<Artifact> artifacts = context.chooseArtifacts(getAvailableArtifacts(context, artifact, false), JavaCompilerBundle
+      .message("dialog.title.choose.artifacts"));
     final List<ArtifactPackagingElement> elements = new ArrayList<>();
     for (Artifact selected : artifacts) {
       elements.add(new ArtifactPackagingElement(project, ArtifactPointerManager.getInstance(project).createPointer(selected, context.getArtifactModel())));

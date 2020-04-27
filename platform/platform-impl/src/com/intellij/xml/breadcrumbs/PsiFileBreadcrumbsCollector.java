@@ -22,10 +22,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.PriorityQueue;
+import java.util.*;
 
 import static com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx.findProvider;
 
@@ -99,7 +96,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs =
       getLineElements(document, offset, file, myProject, defaultInfoProvider, true);
 
-    if (pairs == null) return ContainerUtil.emptyIterable();
+    if (pairs == null) return Collections.emptyList();
 
     ArrayList<Crumb> result = new ArrayList<>(pairs.size());
     CrumbPresentation[] presentations = getCrumbPresentations(toPsiElementArray(pairs));
@@ -115,8 +112,7 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     return result;
   }
 
-  @Nullable
-  private static CrumbPresentation[] getCrumbPresentations(final PsiElement[] elements) {
+  private static CrumbPresentation @Nullable [] getCrumbPresentations(final PsiElement[] elements) {
     for (BreadcrumbsPresentationProvider provider : BreadcrumbsPresentationProvider.EP_NAME.getExtensionList()) {
       final CrumbPresentation[] presentations = provider.getCrumbPresentations(elements);
       if (presentations != null) {
@@ -250,12 +246,11 @@ public class PsiFileBreadcrumbsCollector extends FileBreadcrumbsCollector {
     return elements;
   }
 
-  @Nullable
-  public static PsiElement[] getLinePsiElements(Document document,
-                                                int offset,
-                                                VirtualFile file,
-                                                Project project,
-                                                BreadcrumbsProvider infoProvider) {
+  public static PsiElement @Nullable [] getLinePsiElements(Document document,
+                                                           int offset,
+                                                           VirtualFile file,
+                                                           Project project,
+                                                           BreadcrumbsProvider infoProvider) {
     Collection<Pair<PsiElement, BreadcrumbsProvider>> pairs = getLineElements(document, offset, file, project, infoProvider, false);
     return pairs == null ? null : toPsiElementArray(pairs);
   }

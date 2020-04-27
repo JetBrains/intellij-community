@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
@@ -12,6 +13,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -19,15 +21,25 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
 
   public static final Configuration[] EMPTY_ARRAY = {};
+
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
   @NonNls private static final String UUID_ATTRIBUTE_NAME = "uuid";
+  @NonNls private static final String DESCRIPTION_ATTRIBUTE_NAME = "description";
+  @NonNls private static final String SUPPRESS_ID_ATTRIBUTE_NAME = "suppressId";
+  @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
+  @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
 
   private String name;
   private String category;
   private boolean predefined;
   private long created;
   private UUID uuid;
+  private String description;
+  private String suppressId;
+  private String newSuppressId;
+  private String problemDescriptor;
+  private int order;
 
   private transient String myCurrentVariableName = null;
 
@@ -48,16 +60,27 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     category = configuration.category;
     created = -1L; // receives timestamp when added to history
     predefined = false; // copy is never predefined
-    uuid = null;
+    uuid = configuration.uuid;
+    description = configuration.description;
+    newSuppressId = configuration.newSuppressId;
+    suppressId = configuration.suppressId;
+    problemDescriptor = configuration.problemDescriptor;
+    order = configuration.order;
   }
 
   public abstract Configuration copy();
 
+  public void initialize() {
+    if (!StringUtil.equals(suppressId, newSuppressId)) {
+      final String shortName = uuid.toString();
+      HighlightDisplayKey.unregister(shortName);
+      HighlightDisplayKey.register(uuid.toString(), name, newSuppressId);
+      suppressId = newSuppressId;
+    }
+  }
+
   @NotNull
   public String getName() {
-    if (StringUtil.isEmptyOrSpaces(name)) {
-      return StringUtil.collapseWhiteSpace(getMatchOptions().getSearchPattern());
-    }
     return name;
   }
 
@@ -84,12 +107,57 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.created = created;
   }
 
-  public void setUuid(UUID uuid) {
+  @NotNull
+  public UUID getUuid() {
+    if (uuid == null) {
+      return uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+    }
+    return uuid;
+  }
+
+  public void setUuidFromName() {
+    uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+  }
+
+  public void setUuid(@NotNull UUID uuid) {
     this.uuid = uuid;
   }
 
-  public UUID getUuid() {
-    return uuid;
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public String getSuppressId() {
+    return suppressId;
+  }
+
+  public String getNewSuppressId() {
+    return newSuppressId;
+  }
+
+  public void setSuppressId(String suppressId) {
+    newSuppressId = suppressId;
+  }
+
+  public String getProblemDescriptor() {
+    return this.problemDescriptor;
+  }
+
+  public void setProblemDescriptor(String problemDescriptor) {
+    this.problemDescriptor = problemDescriptor;
+  }
+
+  public int getOrder() {
+    return order;
+  }
+
+  public void setOrder(int order) {
+    if (order < 0) throw new IllegalArgumentException();
+    this.order = order;
   }
 
   @Override
@@ -109,6 +177,25 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
       }
       catch (IllegalArgumentException ignore) {}
     }
+    final Attribute descriptionAttribute = element.getAttribute(DESCRIPTION_ATTRIBUTE_NAME);
+    if (descriptionAttribute != null) {
+      description = descriptionAttribute.getValue();
+    }
+    final Attribute suppressIdAttribute = element.getAttribute(SUPPRESS_ID_ATTRIBUTE_NAME);
+    if (suppressIdAttribute != null) {
+      newSuppressId = suppressId = suppressIdAttribute.getValue();
+    }
+    final Attribute problemDescriptorAttribute = element.getAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME);
+    if (problemDescriptorAttribute != null) {
+      problemDescriptor = problemDescriptorAttribute.getValue();
+    }
+    final Attribute mainAttribute = element.getAttribute(ORDER_ATTRIBUTE_NAME);
+    if (mainAttribute != null) {
+      try {
+        order = Math.max(0, mainAttribute.getIntValue());
+      }
+      catch (DataConversionException ignore) {}
+    }
   }
 
   @Override
@@ -117,8 +204,20 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     if (created > 0) {
       element.setAttribute(CREATED_ATTRIBUTE_NAME, String.valueOf(created));
     }
-    if (uuid != null) {
+    if (uuid != null && !uuid.equals(UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)))) {
       element.setAttribute(UUID_ATTRIBUTE_NAME, uuid.toString());
+    }
+    if (!StringUtil.isEmpty(description)) {
+      element.setAttribute(DESCRIPTION_ATTRIBUTE_NAME, description);
+    }
+    if (!StringUtil.isEmpty(newSuppressId)) {
+      element.setAttribute(SUPPRESS_ID_ATTRIBUTE_NAME, newSuppressId);
+    }
+    if (!StringUtil.isEmpty(problemDescriptor)) {
+      element.setAttribute(PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME, problemDescriptor);
+    }
+    if (order != 0) {
+      element.setAttribute(ORDER_ATTRIBUTE_NAME, String.valueOf(order));
     }
   }
 

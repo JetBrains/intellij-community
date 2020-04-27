@@ -39,9 +39,8 @@ abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileRef
     super(node);
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final ASTNode literal = getNode().findChildByType(RncTokenTypes.LITERAL);
     if (literal == null) return PsiReference.EMPTY_ARRAY;
 

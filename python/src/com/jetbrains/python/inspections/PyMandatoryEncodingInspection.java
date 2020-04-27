@@ -26,7 +26,6 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,8 +66,8 @@ public class PyMandatoryEncodingInspection extends PyInspection {
         TextRange tr = new TextRange(0,0);
         ProblemsHolder holder = getHolder();
         if (holder != null)
-          holder.registerProblem(node, tr, "No encoding specified for file", new AddEncodingQuickFix(myDefaultEncoding,
-                                                                                                     myEncodingFormatIndex));
+          holder.registerProblem(node, tr, PyBundle.message("INSP.mandatory.encoding.no.encoding.specified.for.file"), new AddEncodingQuickFix(myDefaultEncoding,
+                                                                                                                                               myEncodingFormatIndex));
       }
     }
   }
@@ -121,14 +120,14 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private JPanel onlyPython2Box() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new CheckBox("Enable in Python 3+", this, "myAllPythons"));
+    panel.add(new CheckBox(PyBundle.message("enable.in.python.3"), this, "myAllPythons"));
     return panel;
   }
 
   @NotNull
   private static JPanel defaultEncodingLabel() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel("Select default encoding: "));
+    panel.add(new JLabel(PyBundle.message("INSP.mandatory.encoding.select.default.encoding")));
     return panel;
   }
 
@@ -151,7 +150,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private static JPanel encodingFormatLabel() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel("Encoding comment format:"));
+    panel.add(new JLabel(PyBundle.message("INSP.mandatory.encoding.encoding.comment.format")));
     return panel;
   }
 

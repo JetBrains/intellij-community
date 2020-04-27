@@ -44,11 +44,11 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   @NotNull
   @Override
   public String getGroupName() {
-    return "Files";
+    return IdeBundle.message("search.everywhere.group.name.files");
   }
 
   public String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.files", IdeUICustomization.getInstance().getProjectConceptName());
+    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
   }
 
   @Override

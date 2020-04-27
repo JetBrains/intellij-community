@@ -20,9 +20,6 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementCreator;
 
-/**
- * @author nik
- */
 public class JpsFactoryElementChildRoleBase<E extends JpsElement> extends JpsElementChildRole<E> implements JpsElementCreator<E> {
   private final String myDebugName;
   private final JpsElementCreator<E> myFactoryImpl;

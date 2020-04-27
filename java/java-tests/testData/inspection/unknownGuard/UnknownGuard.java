@@ -80,4 +80,12 @@ class UnknownGuard {
 
   @GuardedBy(<warning descr="Unknown @GuardedBy reference \"Nothing.LOCK\"">"Nothing.LOCK"</warning>)
   private Object twentytwo = new Object();
+
+  /**
+   * @GuardedBy itself
+   */
+  private Object twentythree = new Object();
+
+  @GuardedBy(<warning descr="Unknown @GuardedBy reference \"itself\"">"itself"</warning>)
+  private void method() {}
 }

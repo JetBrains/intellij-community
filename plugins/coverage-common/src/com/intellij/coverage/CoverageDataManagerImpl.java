@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.coverage.view.CoverageViewSuiteListener;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,6 +25,8 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -62,10 +66,6 @@ import java.util.*;
  * @author ven
  */
 public class CoverageDataManagerImpl extends CoverageDataManager {
-  private static final String REPLACE_ACTIVE_SUITES = "&Replace active suites";
-  private static final String ADD_TO_ACTIVE_SUITES = "&Add to active suites";
-  private static final String DO_NOT_APPLY_COLLECTED_COVERAGE = "Do not apply &collected coverage";
-
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
@@ -136,6 +136,53 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     if (coverageViewListener != null) {
       addSuiteListener(coverageViewListener, myProject);
     }
+
+    CoverageRunner.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageRunner>() {
+      @Override
+      public void extensionRemoved(@NotNull CoverageRunner coverageRunner, @NotNull PluginDescriptor pluginDescriptor) {
+        CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
+        if (suitesBundle != null &&
+            Arrays.stream(suitesBundle.getSuites()).anyMatch(suite -> coverageRunner == suite.getRunner())) {
+          chooseSuitesBundle(null);
+        }
+
+        RunManager runManager = RunManager.getInstance(project);
+        List<RunConfiguration> configurations = runManager.getAllConfigurationsList();
+        for (RunConfiguration configuration : configurations) {
+          if (configuration instanceof RunConfigurationBase) {
+            CoverageEnabledConfiguration coverageEnabledConfiguration =
+              ((RunConfigurationBase)configuration).getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
+            if (coverageEnabledConfiguration != null) {
+              coverageEnabledConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
+            }
+          }
+        }
+
+        //cleanup created templates
+        ((RunManagerImpl)runManager).reloadSchemes();
+
+        for (CoverageSuite suite : getSuites()) {
+          if (suite instanceof BaseCoverageSuite) {
+            CoverageRunner runner = suite.getRunner();
+            if (runner == coverageRunner) {
+              ((BaseCoverageSuite)suite).setRunner(null);
+            }
+          }
+        }
+      }
+    }, myProject);
+
+    CoverageEngine.EP_NAME.addExtensionPointListener(new ExtensionPointListener<CoverageEngine>() {
+      @Override
+      public void extensionRemoved(@NotNull CoverageEngine coverageEngine, @NotNull PluginDescriptor pluginDescriptor) {
+        CoverageSuitesBundle suitesBundle = getCurrentSuitesBundle();
+        if (suitesBundle != null && suitesBundle.getCoverageEngine() == coverageEngine) {
+          chooseSuitesBundle(null);
+        }
+
+        myCoverageSuites.removeIf(suite -> suite.getCoverageEngine() == coverageEngine);
+      }
+    }, myProject);
   }
 
   @Nullable
@@ -248,8 +295,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   @Override
-  @NotNull
-  public CoverageSuite[] getSuites() {
+  public CoverageSuite @NotNull [] getSuites() {
     return myCoverageSuites.toArray(new CoverageSuite[0]);
   }
 
@@ -306,7 +352,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (myCurrentSuitesBundle != null) {
-        final String message = CodeInsightBundle.message("display.coverage.prompt", suite.getPresentableName());
+        final String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
 
         final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
         final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption() {
@@ -337,9 +383,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
           }
         };
         final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
-                                 new String[] {REPLACE_ACTIVE_SUITES, ADD_TO_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE} :
-                                 new String[] {REPLACE_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE};
-        final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CodeInsightBundle.message("code.coverage"),
+                                 new String[] {
+                                   CoverageBundle.message("coverage.replace.active.suites"),
+                                   CoverageBundle.message("coverage.add.to.active.suites"),
+                                   CoverageBundle.message("coverage.do.not.apply.collected.coverage")} :
+                                 new String[] {
+                                   CoverageBundle.message("coverage.replace.active.suites"),
+                                   CoverageBundle.message("coverage.do.not.apply.collected.coverage")};
+        final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CoverageBundle.message("code.coverage"),
                                                                               options, 1, Messages.getQuestionIcon(),
                                                                               doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
         if (answer == DialogWrapper.OK_EXIT_CODE) {

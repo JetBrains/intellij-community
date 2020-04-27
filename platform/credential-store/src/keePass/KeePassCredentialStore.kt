@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
@@ -13,14 +13,13 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.safeOutputStream
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val DB_FILE_NAME = "c.kdbx"
 
-internal fun getDefaultKeePassBaseDirectory() = Paths.get(PathManager.getConfigPath())
+internal fun getDefaultKeePassBaseDirectory() = PathManager.getConfigDir()
 
 internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().resolve(MASTER_KEY_FILE_NAME)
 

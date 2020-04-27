@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractclass;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -98,7 +99,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       }
     };
     memberInfo = MemberInfo.extractClassMembers(this.sourceClass, filter, false);
-    extractAsEnum = new JCheckBox("Extract as enum");
+    extractAsEnum = new JCheckBox(JavaRefactoringBundle.message("extract.delegate.as.enum.checkbox"));
     boolean hasConstants = false;
     for (MemberInfo info : memberInfo) {
       final PsiMember member = info.getMember();
@@ -115,7 +116,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     if (!hasConstants) {
       extractAsEnum.setVisible(false);
     }
-    createInner = new JCheckBox("Create nested class");
+    createInner = new JCheckBox(JavaRefactoringBundle.message("extract.delegate.create.nested.checkbox"));
     super.init();
     validateButtons();
   }
@@ -138,7 +139,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
                                                                       isExtractAsEnum() ? enumConstants : Collections.emptyList(),
                                                                       createInner.isSelected());
     if (processor.getCreatedClass() == null) {
-      Messages.showErrorDialog(myVisibilityPanel, "Unable to create class with the given name");
+      Messages.showErrorDialog(myVisibilityPanel, JavaRefactoringBundle.message("extract.delegate.unable.create.warning.message"));
       classNameField.requestFocusInWindow();
       return;
     }
@@ -346,7 +347,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         myDestinationFolderComboBox.setEnabled(!isCreateInner);
       }
     });
-    myGenerateAccessorsCb = new JCheckBox("Generate accessors");
+    myGenerateAccessorsCb = new JCheckBox(JavaRefactoringBundle.message("extract.delegate.generate.accessors.checkbox"));
     myGenerateAccessorsCb.setMnemonic('G');
     panel.add(myGenerateAccessorsCb, BorderLayout.SOUTH);
 

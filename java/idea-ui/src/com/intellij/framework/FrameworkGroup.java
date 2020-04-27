@@ -11,8 +11,6 @@ import java.util.List;
  * Represents a group of frameworks. in the frameworks tree ("Additional Libraries and Frameworks"
  * in the New Project dialog or the tree displayed in the "Add Framework Support" dialog).
  * Frameworks in a group can have a common version number.
- *
- * @author nik
  */
 public abstract class FrameworkGroup<V extends FrameworkVersion> implements FrameworkOrGroup {
   private final String myId;

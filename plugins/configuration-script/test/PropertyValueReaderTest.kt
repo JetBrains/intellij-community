@@ -1,12 +1,13 @@
 package com.intellij.configurationScript
 
-//import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.configurationScript.providers.PluginsConfiguration
+import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Test
+import org.snakeyaml.engine.v2.nodes.MappingNode
 
 class PropertyValueReaderTest {
   companion object {
@@ -14,32 +15,6 @@ class PropertyValueReaderTest {
     @ClassRule
     val projectRule = ProjectRule()
   }
-
-  //@Test
-  //fun `enum`() {
-  //  val result = readRunConfigurations("""
-  //  runConfigurations:
-  //    java:
-  //      shortenClasspath: MANIFEST
-  //  """)
-  //  val options = JvmMainMethodRunConfigurationOptions()
-  //  options.shortenClasspath = ShortenCommandLine.MANIFEST
-  //  assertThat(result).containsExactly(options)
-  //}
-
-  //@Test
-  //fun map() {
-  //  val result = readRunConfigurations("""
-  //  runConfigurations:
-  //    java:
-  //      env:
-  //        foo: bar
-  //        answer: 42
-  //  """)
-  //  val options = JvmMainMethodRunConfigurationOptions()
-  //  options.env = linkedMapOf("foo" to "bar", "answer" to "42")
-  //  assertThat(result).containsExactly(options)
-  //}
 
   @Test
   fun collection() {
@@ -54,8 +29,26 @@ class PropertyValueReaderTest {
     options.repositories.addAll(listOf("foo", "bar", "http://example.com"))
     assertThat(result).isEqualTo(options)
   }
+
+  @Test
+  fun `list of objects`() {
+    val result = JdkAutoHints()
+    readIntoObject(result, readYaml("""
+      sdks:
+        - sdkName: foo
+          sdkPath: /home/foo
+    """).value)
+
+    assertThat(result.sdks).hasSize(1)
+    val sdks = result.sdks
+    assertThat(sdks).hasSize(1)
+  }
 }
 
-private fun doReadPluginsConfiguration(@Language("YAML") data: String): PluginsConfiguration? {
-  return readIntoObject(PluginsConfiguration(), findValueNodeByPath(Keys.plugins, doRead(data.trimIndent().reader())!!.value)!!)
+private fun readYaml(@Language("YAML") data: String): MappingNode {
+  return doRead(data.trimIndent().reader())!!
+}
+
+private fun doReadPluginsConfiguration(@Suppress("SameParameterValue") @Language("YAML") data: String): PluginsConfiguration? {
+  return readIntoObject(PluginsConfiguration(), findValueNodeByPath(PluginJsonSchemaGenerator.plugins, readYaml(data).value)!!)
 }

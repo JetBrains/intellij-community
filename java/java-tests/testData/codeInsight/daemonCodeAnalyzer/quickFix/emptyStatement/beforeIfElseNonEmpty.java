@@ -1,4 +1,4 @@
-// "Delete element" "false"
+// "Remove statement" "false"
 class Test {
   void test(int x) {
     if(x > -5) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -9,9 +9,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ik
- */
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
@@ -28,7 +25,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testFileScope1() { 
+  public void testFileScope1() {
     doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
     assertNotContainItems("private", "default");
   }
@@ -104,6 +101,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testInstanceofAfterStatementStart() { doTest(1, "instanceof"); }
   public void testNoInstanceofInAnnotation() { doTest(0, "instanceof"); }
 
+  public void testInstanceofNegated() { doTest(); }
   public void testInstanceofNegation() {
     configureByTestName();
     selectItem(myItems[0], '!');
@@ -117,7 +115,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
   public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
-  public void testPrimitivesInRecordHeader() { doTest(2, "byte", "boolean"); }
+  public void testPrimitivesInRecordHeader() {setLanguageLevel(LanguageLevel.JDK_14_PREVIEW); doTest(2, "byte", "boolean"); }
 
   public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }

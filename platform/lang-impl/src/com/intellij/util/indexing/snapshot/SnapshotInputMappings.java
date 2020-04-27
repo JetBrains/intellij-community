@@ -7,13 +7,13 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,40 +21,52 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
 
-public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapshotInputMappingIndex<Key, Value, Input> {
+public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInputMappingIndex<Key, Value, FileContent> {
   private static final Logger LOG = Logger.getInstance(SnapshotInputMappings.class);
 
-  private static final boolean USE_MANUAL_COMPRESSION = SystemProperties.getBooleanProperty("snapshots.use.manual.compression", false);
+  public static int getVersion() {
+    assert FileBasedIndex.ourSnapshotMappingsEnabled;
+    return 0xFFF +  // base index version modifier
+           1 // snapshot input mappings version
+      ;
+  }
 
   private final ID<Key, Value> myIndexId;
   private final DataExternalizer<Map<Key, Value>> myMapExternalizer;
   private final DataExternalizer<Value> myValueExternalizer;
-  private final DataIndexer<Key, Value, Input> myIndexer;
+  private final DataIndexer<Key, Value, FileContent> myIndexer;
   private final PersistentMapBasedForwardIndex myContents;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
-  private final HashIdForwardIndexAccessor<Key, Value, Input> myHashIdForwardIndexAccessor;
+  private final HashIdForwardIndexAccessor<Key, Value, FileContent> myHashIdForwardIndexAccessor;
+
+  private final CompositeHashIdEnumerator myCompositeHashIdEnumerator;
 
   private final boolean myIsPsiBackedIndex;
+  private PersistentSubIndexerRetriever<?, ?> mySubIndexerRetriever;
 
-  public SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
+  public SnapshotInputMappings(IndexExtension<Key, Value, FileContent> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();
     myIsPsiBackedIndex = FileBasedIndexImpl.isPsiDependentIndex(indexExtension);
 
     boolean storeOnlySingleValue = indexExtension instanceof SingleEntryFileBasedIndexExtension;
     myMapExternalizer = storeOnlySingleValue ? null : new InputMapExternalizer<>(indexExtension);
-    myValueExternalizer = storeOnlySingleValue ? indexExtension.getValueExternalizer() : null;
+    myValueExternalizer = storeOnlySingleValue ? new NullableDataExternalizer<>(indexExtension.getValueExternalizer()) : null;
 
     myIndexer = indexExtension.getIndexer();
     myContents = createContentsIndex();
-    myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this);
+    myHashIdForwardIndexAccessor = new HashIdForwardIndexAccessor<>(this, storeOnlySingleValue);
     myIndexingTrace = DebugAssertions.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
+
+    if (VfsAwareMapReduceIndex.isCompositeIndexer(myIndexer)) {
+      myCompositeHashIdEnumerator = new CompositeHashIdEnumerator(myIndexId);
+    } else {
+      myCompositeHashIdEnumerator = null;
+    }
   }
 
-  public HashIdForwardIndexAccessor<Key, Value, Input> getForwardIndexAccessor() {
+  public HashIdForwardIndexAccessor<Key, Value, FileContent> getForwardIndexAccessor() {
     return myHashIdForwardIndexAccessor;
   }
 
@@ -70,7 +82,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
 
   @Nullable
   @Override
-  public InputData<Key, Value> readData(@NotNull Input content) throws IOException {
+  public InputData<Key, Value> readData(@NotNull FileContent content) throws IOException {
     int hashId = getHashId(content);
 
     Map<Key, Value> data = doReadData(hashId);
@@ -94,13 +106,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   @Nullable
   private Map<Key, Value> doReadData(int hashId) throws IOException {
     ByteArraySequence byteSequence = readContents(hashId);
-    if (byteSequence != null) {
-      if (USE_MANUAL_COMPRESSION) {
-        byteSequence = decompress(byteSequence);
-      }
-      return deserialize(byteSequence);
-    }
-    return null;
+    return byteSequence != null ? deserialize(byteSequence) : null;
   }
 
   @NotNull
@@ -121,12 +127,12 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
       return AbstractForwardIndexAccessor.serializeToByteSeq(data, myMapExternalizer, data.size());
     } else {
       assert myValueExternalizer != null;
-      return AbstractForwardIndexAccessor.serializeToByteSeq(data.values().iterator().next(), myValueExternalizer, data.size());
+      return AbstractForwardIndexAccessor.serializeToByteSeq(ContainerUtil.getFirstItem(data.values()), myValueExternalizer, data.size());
     }
   }
 
   @Override
-  public InputData<Key, Value> putData(@Nullable Input content, @NotNull InputData<Key, Value> data) throws IOException {
+  public InputData<Key, Value> putData(@Nullable FileContent content, @NotNull InputData<Key, Value> data) throws IOException {
     int hashId;
     InputData<Key, Value> result;
     if (data instanceof HashedInputData) {
@@ -151,33 +157,43 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   }
 
   @NotNull
-  private String getContentDebugData(Input input) {
+  private static String getContentDebugData(FileContent input) {
     FileContentImpl content = (FileContentImpl) input;
     return "[" + content.getFile().getPath() + ";" + content.getFileType().getName() + ";" + content.getCharset() + "]";
   }
 
-  private int getHashId(@Nullable Input content) throws IOException {
-    return content == null ? 0 : getHashOfContent((FileContentImpl)content);
+  private int getHashId(@Nullable FileContent content) throws IOException {
+    if (content == null) {
+      return 0;
+    }
+    int hash = getHashOfContent((FileContentImpl)content);
+    if (myCompositeHashIdEnumerator != null) {
+      int subIndexerTypeId = mySubIndexerRetriever.getFileIndexerId(content);
+      return myCompositeHashIdEnumerator.enumerate(hash, subIndexerTypeId);
+    }
+    return hash;
   }
 
   @Override
   public void flush() {
     if (myContents != null) myContents.force();
     if (myIndexingTrace != null) myIndexingTrace.force();
+    if (myCompositeHashIdEnumerator != null) myCompositeHashIdEnumerator.force();
   }
 
   @Override
   public void clear() throws IOException {
     try {
-      if (myIndexingTrace != null) {
-        File baseFile = myIndexingTrace.getBaseFile().toFile();
+      if (myCompositeHashIdEnumerator != null) {
         try {
-          myIndexingTrace.close();
+          myCompositeHashIdEnumerator.clear();
         }
-        catch (Exception e) {
+        catch (IOException e) {
           LOG.error(e);
         }
-        PersistentHashMap.deleteFilesStartingWith(baseFile);
+      }
+      if (myIndexingTrace != null) {
+        PersistentHashMap.deleteMap(myIndexingTrace);
         myIndexingTrace = createIndexingTrace();
       }
     } finally {
@@ -194,14 +210,7 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
 
   @Override
   public void close() {
-    Stream.of(myContents, myIndexingTrace).filter(Objects::nonNull).forEach(index -> {
-      try {
-        index.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    });
+    IOUtil.closeSafe(LOG, myContents, myIndexingTrace, myCompositeHashIdEnumerator);
   }
 
   private PersistentMapBasedForwardIndex createContentsIndex() throws IOException {
@@ -274,6 +283,12 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     return doGetContentHash(content, false);
   }
 
+  // TODO replace it with constructor parameter
+  public void setSubIndexerRetriever(@NotNull PersistentSubIndexerRetriever<?, ?> retriever) {
+    assert myCompositeHashIdEnumerator != null;
+    mySubIndexerRetriever = retriever;
+  }
+
   @NotNull
   private static Integer doGetContentHash(FileContentImpl content, boolean fromDocument) throws IOException {
     com.intellij.openapi.util.Key<Integer> key = fromDocument ? ourSavedUncommittedHashIdKey : ourSavedContentHashIdKey;
@@ -337,9 +352,6 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
   }
 
   private void saveContents(int id, ByteArraySequence byteSequence) throws IOException {
-    if (USE_MANUAL_COMPRESSION) {
-      byteSequence = compress(byteSequence);
-    }
     if (SharedIndicesData.ourFileSharedIndicesEnabled) {
       if (SharedIndicesData.DO_CHECKS) {
         synchronized (myContents) {
@@ -352,17 +364,5 @@ public class SnapshotInputMappings<Key, Value, Input> implements UpdatableSnapsh
     } else {
       myContents.put(id, byteSequence);
     }
-  }
-
-  @NotNull
-  private static ByteArraySequence decompress(@NotNull ByteArraySequence seq) throws IOException {
-    return new ByteArraySequence(CompressionUtil.readCompressed(seq.toInputStream()));
-  }
-
-  @NotNull
-  private static ByteArraySequence compress(@NotNull ByteArraySequence seq) throws IOException {
-    UnsyncByteArrayOutputStream result = new UnsyncByteArrayOutputStream();
-    CompressionUtil.writeCompressed(new DataOutputStream(result), seq.getBytes(), seq.getOffset(), seq.length());
-    return result.toByteArraySequence();
   }
 }

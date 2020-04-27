@@ -64,12 +64,12 @@ public class PyArgumentListInspection extends PyInspection {
       final PyDecorator[] decorators = node.getDecorators();
       for (PyDecorator deco : decorators) {
         if (deco.hasArgumentList()) continue;
-        final PyCallExpression.PyMarkedCallee markedCallee = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
-        if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
-          final PyCallable callable = markedCallee.getElement();
+        final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+        if (callableType != null) {
+          final PyCallable callable = callableType.getCallable();
           if (callable == null) return;
-          final int firstParamOffset = markedCallee.getImplicitOffset();
-          final List<PyCallableParameter> params = markedCallee.getCallableType().getParameters(myTypeEvalContext);
+          final int firstParamOffset = callableType.getImplicitOffset();
+          final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
           if (params == null) return;
 
           final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
@@ -108,9 +108,9 @@ public class PyArgumentListInspection extends PyInspection {
     final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext, implicitOffset);
 
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
-      final PyCallExpression.PyMarkedCallee callee = mapping.getMarkedCallee();
-      if (callee != null) {
-        final PyCallable callable = callee.getElement();
+      final PyCallableType callableType = mapping.getCallableType();
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
         if (callable instanceof PyFunction) {
           final PyFunction function = (PyFunction)callable;
 
@@ -237,9 +237,9 @@ public class PyArgumentListInspection extends PyInspection {
 
       final PyCallExpression.PyArgumentsMapping mapping = mappings.get(0);
       if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
-        final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
-        if (markedCallee != null) {
-          final PyCallable callable = markedCallee.getElement();
+        final PyCallableType callableType = mapping.getCallableType();
+        if (callableType != null) {
+          final PyCallable callable = callableType.getCallable();
           final Project project = node.getProject();
           if (callable instanceof PyFunction && !PyChangeSignatureHandler.isNotUnderSourceRoot(project, callable.getContainingFile())) {
             final String message = PyBundle.message("INSP.unexpected.arg(s)");
@@ -329,25 +329,25 @@ public class PyArgumentListInspection extends PyInspection {
                                                                boolean isOnTheFly) {
     return StreamEx
       .of(mappings)
-      .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
+      .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
-      .map(markedCallee -> calculatePossibleCalleeRepresentation(markedCallee, context))
+      .map(callableType -> calculatePossibleCalleeRepresentation(callableType, context))
       .nonNull()
       .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 
   @Nullable
-  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallExpression.PyMarkedCallee markedCallee,
+  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
                                                               @NotNull TypeEvalContext context) {
-    final String name = markedCallee.getElement() != null ? markedCallee.getElement().getName() : "";
-    final List<PyCallableParameter> callableParameters = markedCallee.getCallableType().getParameters(context);
+    final String name = callableType.getCallable() != null ? callableType.getCallable().getName() : "";
+    final List<PyCallableParameter> callableParameters = callableType.getParameters(context);
     if (callableParameters == null) return null;
 
     final String parameters = ParamHelper.getPresentableText(callableParameters, true, context);
     final String callableNameAndParameters = name + parameters;
 
     return Optional
-      .ofNullable(PyUtil.as(markedCallee.getElement(), PyFunction.class))
+      .ofNullable(PyUtil.as(callableType.getCallable(), PyFunction.class))
       .map(PyFunction::getContainingClass)
       .map(PyClass::getName)
       .map(className -> PyNames.INIT.equals(name) ? className + parameters : className + "." + callableNameAndParameters)

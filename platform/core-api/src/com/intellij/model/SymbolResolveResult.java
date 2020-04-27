@@ -13,4 +13,9 @@ public interface SymbolResolveResult {
    */
   @NotNull
   Symbol getTarget();
+
+  @NotNull
+  static SymbolResolveResult fromSymbol(@NotNull Symbol symbol) {
+    return () -> symbol;
+  }
 }

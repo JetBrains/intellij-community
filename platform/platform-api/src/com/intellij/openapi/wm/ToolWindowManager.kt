@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -104,6 +104,8 @@ abstract class ToolWindowManager {
    * @return array of `id`s of all registered tool windows.
    */
   abstract val toolWindowIds: Array<String>
+
+  abstract val toolWindowIdSet: Set<String>
 
   /**
    * @return `ID` of currently active tool window or `null` if there is no active

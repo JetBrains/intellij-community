@@ -17,6 +17,7 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.migration.PsiMigrationManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +60,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new MigrationUsagesViewDescriptor(myMigrationMap, false);
   }
 
@@ -83,13 +83,12 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     myPsiMigration = startMigration(myProject);
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     ArrayList<UsageInfo> usagesVector = new ArrayList<>();
     try {
       if (myMigrationMap == null) {
@@ -128,7 +127,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     if (refUsages.get().length == 0) {
-      Messages.showInfoMessage(myProject, RefactoringBundle.message("migration.no.usages.found.in.the.project"), getRefactoringName());
+      Messages.showInfoMessage(myProject, JavaRefactoringBundle.message("migration.no.usages.found.in.the.project"), getRefactoringName());
       return false;
     }
     setPreviewUsages(true);
@@ -136,7 +135,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     finishFindMigration();
     final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
@@ -193,6 +192,6 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   private static String getRefactoringName() {
-    return RefactoringBundle.message("migration.title");
+    return JavaRefactoringBundle.message("migration.title");
   }
 }

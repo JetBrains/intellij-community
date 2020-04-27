@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.windows;
 
 import com.sun.jna.Memory;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Windows Utilities for the Password Safe
  */
-public class WindowsCryptUtils {
+public final class WindowsCryptUtils {
   private WindowsCryptUtils() { }
 
   /**
@@ -19,8 +19,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  @NotNull
-  public static byte[] protect(@NotNull byte[] data) {
+  public static byte @NotNull [] protect(byte @NotNull [] data) {
     if (data.length == 0) return data;
     WinCrypt.DATA_BLOB in = prepareInput(data);
     WinCrypt.DATA_BLOB out = new WinCrypt.DATA_BLOB.ByReference();
@@ -34,8 +33,7 @@ public class WindowsCryptUtils {
    * @param data the data to protect
    * @return the the protected form the data
    */
-  @NotNull
-  public static byte[] unprotect(byte[] data) {
+  public static byte @NotNull [] unprotect(byte[] data) {
     if (data.length == 0) return data;
     WinCrypt.DATA_BLOB in = prepareInput(data);
     WinCrypt.DATA_BLOB out = new WinCrypt.DATA_BLOB.ByReference();
@@ -56,11 +54,10 @@ public class WindowsCryptUtils {
     if (!rc) {
       throw new RuntimeException("CryptProtectData failed: " + Kernel32.INSTANCE.GetLastError());
     }
-    else {
-      byte[] output = new byte[out.cbData];
-      out.pbData.read(0, output, 0, output.length);
-      Kernel32.INSTANCE.LocalFree(out.pbData);
-      return output;
-    }
+
+    byte[] output = new byte[out.cbData];
+    out.pbData.read(0, output, 0, output.length);
+    Kernel32.INSTANCE.LocalFree(out.pbData);
+    return output;
   }
 }

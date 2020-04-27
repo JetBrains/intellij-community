@@ -164,7 +164,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
                                    @NotNull AnActionButtonRunnable addAction,
                                    @NotNull AnActionButtonRunnable editAction,
                                    @NotNull AnActionButtonRunnable removeAction,
-                                   @NotNull AnActionButton... extraActions) {
+                                   AnActionButton @NotNull ... extraActions) {
     return ToolbarDecorator.createDecorator(sdkList)
       .disableUpDownActions()
       .setAddAction(addAction)
@@ -403,7 +403,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
     ToggleVirtualEnvFilterButton() {
-      super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
+      super(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
     @Override
@@ -421,7 +421,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ShowPathButton extends AnActionButton implements DumbAware {
     ShowPathButton() {
-      super(PyBundle.message("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
+      super(PyBundle.messagePointer("sdk.details.dialog.show.interpreter.paths"), AllIcons.Actions.ShowAsTree);
     }
 
     @Override

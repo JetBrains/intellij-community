@@ -162,8 +162,7 @@ public class CompressedAppendableFile {
     }
   }
 
-  @NotNull
-  private synchronized byte[] loadChunk(int chunkNumber) throws IOException {
+  private synchronized byte @NotNull [] loadChunk(int chunkNumber) throws IOException {
     try {
       if (myChunkLengthTable == null) initChunkLengthTable();
       assert chunkNumber < myChunkTableLength;
@@ -331,8 +330,7 @@ public class CompressedAppendableFile {
     }
   }
 
-  @NotNull
-  private static short[] reallocShortTable(short[] table) {
+  private static short @NotNull [] reallocShortTable(short[] table) {
     return ArrayUtil.realloc(table, Math.max(table.length * 8 / 5, table.length + 1));
   }
 
@@ -340,8 +338,7 @@ public class CompressedAppendableFile {
     return CompressionUtil.writeCompressedWithoutOriginalBufferLength(compressedDataOut, buffer, myAppendBufferLength);
   }
 
-  @NotNull
-  protected byte[] decompress(DataInputStream keysStream) throws IOException {
+  protected byte @NotNull [] decompress(DataInputStream keysStream) throws IOException {
     return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream, myAppendBufferLength);
   }
 
@@ -445,8 +442,7 @@ public class CompressedAppendableFile {
       super(64, 64);
     }
 
-    @NotNull
-    byte[] get(CompressedAppendableFile file, int page) throws IOException {
+    byte @NotNull [] get(CompressedAppendableFile file, int page) throws IOException {
       byte[] bytes;
       synchronized (this) {
         myKey.setup(file, page);
@@ -503,7 +499,7 @@ public class CompressedAppendableFile {
     }
 
     @Override
-    public int read(@NotNull byte[] b, int off, int len) throws IOException {
+    public int read(byte @NotNull [] b, int off, int len) throws IOException {
       if (bytesFromCompressedBlock == null) {
         byte[] decompressedBytes = myCurrentPageNumber < myChunkLengthTableSnapshotLength ?
                                    FileChunkReadCache.ourDecompressedCache.get(CompressedAppendableFile.this, myCurrentPageNumber) : ArrayUtilRt.EMPTY_BYTE_ARRAY;

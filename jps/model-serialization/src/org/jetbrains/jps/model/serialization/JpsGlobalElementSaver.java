@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.JpsGlobal;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class JpsGlobalElementSaver {
   private static final JpsGlobalExtensionSerializer[] SERIALIZERS = {
     new JpsGlobalLoader.PathVariablesSerializer(), new JpsGlobalLoader.GlobalLibrariesSerializer(), new JpsGlobalLoader.SdkTableSerializer()

@@ -3,6 +3,8 @@ class Foo {
     record NoComponent() {}
     
     static record DeclaredStatic() {}
+    
+    <error descr="Modifier 'private' not allowed here">private</error> record Private() {}
   }
   
   static int STATIC_VAR = 3;

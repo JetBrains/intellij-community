@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
@@ -30,9 +30,6 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static javax.swing.SwingUtilities.isEventDispatchThread;
 
-/**
- * @author Sergey.Malenkov
- */
 public class InvokerTest {
   @SuppressWarnings("unused")
   private static final TestApplicationManager application = TestApplicationManager.getInstance();

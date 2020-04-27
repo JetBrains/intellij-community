@@ -524,7 +524,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     final String method;
     final Object[] args;
 
-    Node(@Nullable Node target, @Nullable String method, @Nullable Object[] args) {
+    Node(@Nullable Node target, @Nullable String method, Object @Nullable [] args) {
       this.target = target;
       this.method = method;
       this.args = args;

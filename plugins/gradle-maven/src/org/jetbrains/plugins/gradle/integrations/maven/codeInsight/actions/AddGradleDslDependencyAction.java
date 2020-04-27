@@ -37,8 +37,8 @@ public class AddGradleDslDependencyAction extends CodeInsightAction {
   static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<>();
 
   public AddGradleDslDependencyAction() {
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.description"));
-    getTemplatePresentation().setText(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.text"));
+    getTemplatePresentation().setDescription(GradleBundle.messagePointer("gradle.codeInsight.action.add_maven_dependency.description"));
+    getTemplatePresentation().setText(GradleBundle.messagePointer("gradle.codeInsight.action.add_maven_dependency.text"));
     getTemplatePresentation().setIcon(AllIcons.Nodes.PpLib);
   }
 

@@ -30,9 +30,8 @@ public class JavaSpellcheckerSuppressionTest extends LightQuickFixTestCase {
   public void testClassName() { doTest(); }
   public void testStringLiteral() { doTest(); }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return SpellcheckerInspectionTestCase.getInspectionTools();
   }
 

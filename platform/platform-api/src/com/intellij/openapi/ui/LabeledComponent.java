@@ -8,6 +8,7 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import java.awt.*;
 import java.util.Objects;
 
 public class LabeledComponent<Comp extends JComponent> extends JPanel implements PanelWithAnchor {
-  private static final String[] LABEL_BORDER_CONSTRAINS = {BorderLayout.NORTH, BorderLayout.EAST, BorderLayout.SOUTH, BorderLayout.WEST};
+  private static final @NonNls String[] LABEL_BORDER_CONSTRAINS = {BorderLayout.NORTH, BorderLayout.EAST, BorderLayout.SOUTH, BorderLayout.WEST};
 
   private final JBLabel myLabel = new JBLabel();
   private Comp myComponent;
@@ -60,7 +61,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     return StringUtil.endsWithChar(text, ':') ? text.substring(0, text.length() - 1) : text;
   }
 
-  public void setComponentClass(String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+  public void setComponentClass(@NonNls String className) throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     if (className != null) {
       @SuppressWarnings("unchecked") Class<Comp> aClass = (Class<Comp>)getClass().getClassLoader().loadClass(className);
       setComponent(aClass.newInstance());
@@ -84,6 +85,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     }
   }
 
+  @NonNls
   public String getComponentClass() {
     return myComponent == null ? null : getComponent().getClass().getName();
   }
@@ -99,14 +101,14 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     myLabel.setEnabled(enabled);
   }
 
-  public void setLabelLocation(String borderConstrains) {
+  public void setLabelLocation(@NonNls String borderConstrains) {
     if (ArrayUtil.indexOf(LABEL_BORDER_CONSTRAINS, borderConstrains) >= 0 && !borderConstrains.equals(myLabelConstraints)) {
       myLabelConstraints = borderConstrains;
       insertLabel();
     }
   }
 
-  public String getLabelLocation() {
+  public @NonNls String getLabelLocation() {
     return myLabelConstraints;
   }
 

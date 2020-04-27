@@ -23,13 +23,11 @@ public class BinaryFilePatch extends FilePatch {
     return myAfterContent == null;
   }
 
-  @Nullable
-  public byte[] getBeforeContent() {
+  public byte @Nullable [] getBeforeContent() {
     return myBeforeContent;
   }
 
-  @Nullable
-  public byte[] getAfterContent() {
+  public byte @Nullable [] getAfterContent() {
     return myAfterContent;
   }
 

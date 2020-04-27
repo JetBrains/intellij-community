@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -7,13 +7,13 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,31 +22,27 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class LightEditUtil {
-
-  private LightEditUtil() {
-  }
-
+public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
 
-  public static boolean openFile(@NotNull VirtualFile file) {
-    if (Registry.is(ENABLED_FILE_OPEN_KEY)) {
-      LightEditService.getInstance().openFile(file);
-      return true;
-    }
-    return false;
+  private LightEditUtil() {
   }
 
   public static boolean openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      return openFile(virtualFile);
+      return LightEdit.openFile(virtualFile);
     }
     return false;
   }
 
-  public static Project getProject() {
-    return ProjectManager.getInstance().getDefaultProject();
+  public static @NotNull Project getProject() {
+    return LightEditService.getInstance().getOrCreateProject();
+  }
+
+  @Nullable
+  public static Project getProjectIfCreated() {
+    return LightEditService.getInstance().getProject();
   }
 
   static boolean confirmClose(@NotNull String message,
@@ -100,5 +96,18 @@ public class LightEditUtil {
 
   private static String getCloseCancel() {
     return ApplicationBundle.message("light.edit.close.cancel");
+  }
+
+  public static void markUnknownFileTypeAsPlainTextIfNeeded(@Nullable Project project, @NotNull VirtualFile file) {
+    if (project != null && !project.isDefault() && !LightEdit.owns(project)) {
+      return;
+    }
+    if (isLightEditEnabled()) {
+      LightEditFileTypeOverrider.markUnknownFileTypeAsPlainText(file);
+    }
+  }
+
+  public static boolean isLightEditEnabled() {
+    return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip();
   }
 }

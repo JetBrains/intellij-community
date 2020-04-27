@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -34,6 +33,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import org.apache.commons.lang.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,11 +214,24 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void setFilter(@Nullable BranchFilters filters) {
-      triggerFilterSet(filters, BranchFilters::getBranchFilter, myFilter, BRANCH_FILTER.getName());
-      triggerFilterSet(filters, BranchFilters::getRevisionFilter, myFilter, REVISION_FILTER.getName());
-      triggerFilterSet(filters, BranchFilters::getRangeFilter, myFilter, RANGE_FILTER.getName());
+      boolean anyFilterDiffers = false;
 
-      super.setFilter(filters);
+      if (filterDiffers(filters, BranchFilters::getBranchFilter, myFilter)) {
+        triggerFilterSet(filters, BranchFilters::getBranchFilter, BRANCH_FILTER.getName());
+        anyFilterDiffers = true;
+      }
+      if (filterDiffers(filters, BranchFilters::getRevisionFilter, myFilter)) {
+        triggerFilterSet(filters, BranchFilters::getRevisionFilter, REVISION_FILTER.getName());
+        anyFilterDiffers = true;
+      }
+      if (filterDiffers(filters, BranchFilters::getRangeFilter, myFilter)) {
+        triggerFilterSet(filters, BranchFilters::getRangeFilter, RANGE_FILTER.getName());
+        anyFilterDiffers = true;
+      }
+
+      if (anyFilterDiffers) {
+        super.setFilter(filters);
+      }
     }
 
     @Override
@@ -518,6 +531,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
+      if (ObjectUtils.equals(myFilter, filter)) return;
+
       super.setFilter(filter);
       myText = null;
     }
@@ -537,7 +552,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     @Nullable
     @Override
     protected VcsLogTextFilter createFilter1(@NotNull List<String> values) {
-      return createTextFilter(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(values)));
+      return createTextFilter(Objects.requireNonNull(ContainerUtil.getFirstItem(values)));
     }
 
     @Nullable
@@ -566,8 +581,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   public static class FileFilterModel extends FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> {
-    @NotNull private static final String DIR = "dir:";
-    @NotNull private static final String FILE = "file:";
+    @NotNull private static final String DIR = "dir:"; // NON-NLS
+    @NotNull private static final String FILE = "file:"; // NON-NLS
     @NotNull private final Set<VirtualFile> myRoots;
 
     public FileFilterModel(@NotNull Set<VirtualFile> roots,
@@ -733,7 +748,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       });
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
       if (!shortcutText.isEmpty()) {
-        getTextEditor().setToolTipText("Use " + shortcutText + " to switch between text filter and commits list");
+        getTextEditor().setToolTipText(VcsLogBundle.message("vcs.log.filter.search.tooltip", shortcutText));
       }
     }
 

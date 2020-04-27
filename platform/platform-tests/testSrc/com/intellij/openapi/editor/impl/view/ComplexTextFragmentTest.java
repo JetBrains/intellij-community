@@ -93,7 +93,7 @@ public class ComplexTextFragmentTest {
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT) {
       @NotNull
       @Override
-      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, @NotNull char[] chars,
+      public GlyphVector layoutGlyphVector(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, char @NotNull [] chars,
                                            int start, int end, boolean isRtl) {
         return gv;
       }

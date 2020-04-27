@@ -40,7 +40,6 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -120,8 +119,7 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  PsiReference[] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
+  PsiReference @NotNull [] getDefaultReferences(@NotNull PsiReferenceService.Hints hints) {
     ProgressManager.checkCanceled();
     if (hints == PsiReferenceService.Hints.NO_HINTS) {
       return CachedValuesManager
@@ -133,8 +131,7 @@ public abstract class XmlTagDelegate {
     return getReferencesImpl(hints);
   }
 
-  @NotNull
-  private PsiReference[] getReferencesImpl(@NotNull PsiReferenceService.Hints hints) {
+  private PsiReference @NotNull [] getReferencesImpl(@NotNull PsiReferenceService.Hints hints) {
     final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(myTag.getNode());
     if (startTagName == null) return PsiReference.EMPTY_ARRAY;
     final ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(myTag.getNode());
@@ -184,8 +181,7 @@ public abstract class XmlTagDelegate {
     return i >= 0 || ranges[-i - 2].containsOffset(offsetInTag);
   }
 
-  @NotNull
-  private TextRange[] getValueTextRanges() {
+  private TextRange @NotNull [] getValueTextRanges() {
     TextRange[] elements = myTextElements;
     if (elements == null) {
       List<TextRange> list = new SmartList<>();
@@ -323,11 +319,8 @@ public abstract class XmlTagDelegate {
 
     // We put cached value in any case to cause its value update on e.g. mapping change
     map.put(namespace, NullableLazyValue.createValue(() -> {
-      final XmlFile[] file = new XmlFile[1];
-      List<XmlNSDescriptor> descriptors = fileLocations.stream().map(s -> {
-        file[0] = retrieveFile(tag, s, version, namespace, nsDecl);
-        return getDescriptor(tag, file[0], s, namespace);
-      }).filter(Objects::nonNull).collect(Collectors.toList());
+      List<XmlNSDescriptor> descriptors =
+      ContainerUtil.mapNotNull(fileLocations, s->getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
 
       XmlNSDescriptor descriptor = null;
       if (descriptors.size() == 1) {
@@ -542,8 +535,7 @@ public abstract class XmlTagDelegate {
     XmlPsiUtil.processXmlElementChildren(myTag, processor, false);
   }
 
-  @NotNull
-  XmlAttribute[] calculateAttributes() {
+  XmlAttribute @NotNull [] calculateAttributes() {
     final List<XmlAttribute> result = new ArrayList<>(10);
     processChildren(element -> {
       if (element instanceof XmlAttribute) {
@@ -603,16 +595,14 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  XmlTag[] getSubTags(boolean processIncludes) {
+  XmlTag @NotNull [] getSubTags(boolean processIncludes) {
     Key<CachedValue<XmlTag[]>> key = processIncludes ? SUBTAGS_WITH_INCLUDES_KEY : SUBTAGS_WITHOUT_INCLUDES_KEY;
     XmlTag[] cached = CachedValuesManager.getCachedValue(myTag, key, () ->
       Result.create(calcSubTags(processIncludes), PsiModificationTracker.MODIFICATION_COUNT));
     return cached.clone();
   }
 
-  @NotNull
-  protected XmlTag[] calcSubTags(boolean processIncludes) {
+  protected XmlTag @NotNull [] calcSubTags(boolean processIncludes) {
     List<XmlTag> result = new ArrayList<>();
     XmlPsiUtil.processXmlElements(myTag, element -> {
       if (element instanceof XmlTag) {
@@ -624,8 +614,7 @@ public abstract class XmlTagDelegate {
     return result.toArray(XmlTag.EMPTY);
   }
 
-  @NotNull
-  protected XmlTag[] findSubTags(@NotNull final String name, @Nullable final String namespace) {
+  protected XmlTag @NotNull [] findSubTags(@NotNull final String name, @Nullable final String namespace) {
     final XmlTag[] subTags = myTag.getSubTags();
     final List<XmlTag> result = new ArrayList<>();
     for (final XmlTag subTag : subTags) {
@@ -732,8 +721,7 @@ public abstract class XmlTagDelegate {
     return null;
   }
 
-  @NotNull
-  String[] knownNamespaces() {
+  String @NotNull [] knownNamespaces() {
     final PsiElement parentElement = myTag.getParent();
     BidirectionalMap<String, String> map = getNamespaceMap(myTag);
     Set<String> known = Collections.emptySet();

@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -23,9 +23,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRootData>> {
   private static final String ROOTS_FOUND_CARD = "roots_found";
   private static final String ROOTS_NOT_FOUND_CARD = "roots_not_found";
@@ -43,7 +40,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
                             StepSequence sequence,
                             Icon icon,
                             @NonNls String helpId) {
-    super(IdeBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
+    super(JavaUiBundle.message("prompt.stop.searching.for.sources", ApplicationNamesInfo.getInstance().getProductName()));
     myBuilder = builder;
     myContext = context;
     mySequence = sequence;
@@ -56,7 +53,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     final JPanel panel = new JPanel(new GridBagLayout());
     myDetectedRootsChooser = new DetectedRootsChooser();
     myDetectedRootsChooser.addSelectionListener(() -> updateSelectedTypes());
-    final String text = IdeBundle.message("label.project.roots.have.been.found");
+    final String text = JavaUiBundle.message("label.project.roots.have.been.found");
     final JLabel label = new JLabel(text);
     label.setUI(new MultiLineLabelUI());
     panel.add(label, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
@@ -65,12 +62,12 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                      JBInsets.create(8, 10), 0, 0));
 
-    final JButton markAllButton = new JButton(IdeBundle.message("button.mark.all"));
+    final JButton markAllButton = new JButton(JavaUiBundle.message("button.mark.all"));
     panel.add(markAllButton,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insets(0, 10, 8, 2), 0, 0));
 
-    final JButton unmarkAllButton = new JButton(IdeBundle.message("button.unmark.all"));
+    final JButton unmarkAllButton = new JButton(JavaUiBundle.message("button.unmark.all"));
     panel.add(unmarkAllButton,
               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                      JBUI.insets(0, 0, 8, 10), 0, 0));
@@ -82,7 +79,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
     myResultPanel.add(ROOTS_FOUND_CARD, panel);
     JPanel notFoundPanel = new JPanel(new BorderLayout());
     notFoundPanel.setBorder(JBUI.Borders.empty(5));
-    notFoundPanel.add(BorderLayout.NORTH, new MultiLineLabel(IdeBundle.message("label.project.roots.not.found")));
+    notFoundPanel.add(BorderLayout.NORTH, new MultiLineLabel(JavaUiBundle.message("label.project.roots.not.found")));
     myResultPanel.add(ROOTS_NOT_FOUND_CARD, notFoundPanel);
     return myResultPanel;
   }
@@ -155,7 +152,7 @@ public class RootsDetectionStep extends AbstractStepWithProgress<List<DetectedRo
   @Override
   protected String getProgressText() {
     final String root = getBaseProjectPath();
-    return IdeBundle.message("progress.searching.for.sources", root != null ? root.replace('/', File.separatorChar) : "");
+    return JavaUiBundle.message("progress.searching.for.sources", root != null ? root.replace('/', File.separatorChar) : "");
   }
 
   @Override

@@ -46,7 +46,7 @@ public abstract class XsltRefactoringActionBase implements RefactoringActionHand
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+    public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
         throw new UnsupportedOperationException();
     }
 

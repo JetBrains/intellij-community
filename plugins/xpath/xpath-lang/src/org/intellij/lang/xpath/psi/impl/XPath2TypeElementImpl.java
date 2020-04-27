@@ -71,8 +71,7 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     final PrefixedName prefixedName = getQName();
     if (prefixedName != null && prefixedName.getPrefix() != null) {
       final PsiReference[] references =

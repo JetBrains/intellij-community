@@ -236,8 +236,8 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
   }
 
   @NotNull
-  public DvcsBranchSettings getFavoriteBranchSettings() {
-    return getState().getFavoriteBranchSettings();
+  public DvcsBranchSettings getBranchSettings() {
+    return getState().getBranchSettings();
   }
 
   public boolean shouldSetUserNameGlobally() {

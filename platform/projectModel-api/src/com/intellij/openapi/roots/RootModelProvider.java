@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface RootModelProvider {
-  @NotNull
-  Module[] getModules();
+  Module @NotNull [] getModules();
 
   ModuleRootModel getRootModel(@NotNull Module module);
 }

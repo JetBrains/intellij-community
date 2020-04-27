@@ -234,7 +234,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     }
   }
 
-  public static void registerCastActions(@NotNull CandidateInfo[] candidates,
+  public static void registerCastActions(CandidateInfo @NotNull [] candidates,
                                          @NotNull PsiCall call,
                                          HighlightInfo highlightInfo,
                                          final TextRange fixRange) {

@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.time.LocalDate;
 import java.time.Month;
 
-/**
- * @author nik
- */
 public class MigrateToCloudToolsNotification implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {

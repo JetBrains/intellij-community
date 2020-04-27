@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 
@@ -63,7 +63,7 @@ public abstract class FieldDataBinding implements DataBinding{
       return ReflectionUtil.findField(from.getClass(), null, myFieldName);
     }
     catch (NoSuchFieldException e) {
-      throw new RuntimeException(DebuggerBundle.message("error.field.not.found.in.class", myFieldName, from.getClass().getName()));
+      throw new RuntimeException(JavaDebuggerBundle.message("error.field.not.found.in.class", myFieldName, from.getClass().getName()));
     }
   }
 }

@@ -85,7 +85,7 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   protected final void registerProblem(@Nullable final PsiElement element,
                                        @NotNull final String message,
-                                       @NotNull final LocalQuickFix... quickFixes) {
+                                       final LocalQuickFix @NotNull ... quickFixes) {
     if (element == null || element.getTextLength() == 0) {
       return;
     }

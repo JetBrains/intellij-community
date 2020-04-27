@@ -17,6 +17,7 @@
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,9 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class ConfigFileFactoryImpl extends ConfigFileFactory {
   private static final Logger LOG = Logger.getInstance(ConfigFileFactoryImpl.class);
 
@@ -111,8 +109,8 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
     catch (final IOException e) {
       LOG.info(e);
       ApplicationManager.getApplication().invokeLater(
-        () -> Messages.showErrorDialog(IdeBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
-                                     IdeBundle.message("message.text.creating.deployment.descriptor")));
+        () -> Messages.showErrorDialog(JavaUiBundle.message("message.text.error.creating.deployment.descriptor", e.getLocalizedMessage()),
+                                     JavaUiBundle.message("message.text.creating.deployment.descriptor")));
     }
     return null;
   }

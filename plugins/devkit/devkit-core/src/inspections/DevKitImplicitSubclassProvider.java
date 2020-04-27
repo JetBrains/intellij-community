@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-/**
- * @author nik
- */
 public class DevKitImplicitSubclassProvider extends ImplicitSubclassProvider {
 
   @Override

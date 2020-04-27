@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInspection.*;
@@ -33,9 +33,6 @@ import org.jetbrains.uast.*;
 
 import java.util.*;
 
-/**
- * @author max
- */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
 
@@ -115,7 +112,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -523,9 +520,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  @Nullable
   @Override
-  public JobDescriptor[] getAdditionalJobs(GlobalInspectionContext context) {
+  public JobDescriptor @Nullable [] getAdditionalJobs(GlobalInspectionContext context) {
     return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 
@@ -702,6 +698,6 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   public static String getDisplayNameText() {
-    return InspectionsBundle.message("inspection.dead.code.display.name");
+    return AnalysisBundle.message("inspection.dead.code.display.name");
   }
 }

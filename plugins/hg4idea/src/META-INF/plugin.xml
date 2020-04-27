@@ -12,7 +12,7 @@
         </ul>
       ]]>
   </description>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.vcs</depends>
 
@@ -51,7 +51,16 @@
     <lang.commenter language="HgIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
     <!--END HG ignore lang-->
     <vcs.actions.ScheduleForAdditionActionExtension implementation="org.zmlx.hg4idea.action.HgAdd"/>
+
+    <statusBarWidgetFactory id="hgWidget"
+                            implementation="org.zmlx.hg4idea.status.ui.HgStatusWidget$Factory"
+                            order="after selectionModeWidget,before notificationsWidget"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.zmlx.hg4idea.status.ui.HgStatusWidget$Listener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"/>
+  </projectListeners>
 
   <actions>
     <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit">
@@ -127,7 +136,7 @@
         <keyboard-shortcut first-keystroke="alt shift P" keymap="$default"/>
       </action>
       <action class="org.zmlx.hg4idea.action.mq.HgQFoldActionFromPatches" id="hg4idea.QFold"
-              icon="AllIcons.Modules.Merge">
+              icon="AllIcons.Vcs.Merge">
         <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
       </action>
       <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete"

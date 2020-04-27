@@ -11,9 +11,6 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XDebuggerSettingsTest extends PlatformLiteFixture {
   @Override
   protected void setUp() throws Exception {

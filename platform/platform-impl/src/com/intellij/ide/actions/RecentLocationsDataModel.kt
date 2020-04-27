@@ -86,9 +86,7 @@ data class RecentLocationsDataModel(val project: Project, val editorsToRelease: 
       return fileName
     }
 
-    val breadcrumbsText = crumbs.joinToString(" > ") { it.text }
-
-    return StringUtil.shortenTextWithEllipsis(breadcrumbsText, 50, 0)
+    return crumbs.joinToString(" > ") { it.text }
   }
 
   private fun calculateItems(project: Project, changed: Boolean): SynchronizedClearableLazy<List<RecentLocationItem>> {

@@ -81,9 +81,8 @@ public class FunctionImpl implements Function {
     return name;
   }
 
-  @NotNull
   @Override
-  public Parameter[] getParameters() {
+  public Parameter @NotNull [] getParameters() {
     return parameters;
   }
 

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ public class TextToCDataIntention implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert text to CData";
+    return XmlBundle.message("convert.text.to.cdata");
   }
 
   @Override

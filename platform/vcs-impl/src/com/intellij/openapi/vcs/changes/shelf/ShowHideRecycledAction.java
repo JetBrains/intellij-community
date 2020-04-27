@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
@@ -33,8 +34,10 @@ public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
     presentation.setEnabledAndVisible(project != null);
     if (project != null) {
       final boolean fromContextMenu = ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace());
-      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() && !fromContextMenu ?
-                           "Hide Already Unshelved" : "Show Already Unshelved");
+      presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() && !fromContextMenu
+                           ?
+                           VcsBundle.messagePointer("shelve.hide.already.unshelved.action")
+                           : VcsBundle.messagePointer("shelve.show.already.unshelved.action"));
       presentation.setIcon(fromContextMenu ? null : AllIcons.Vcs.Patch_applied);
     }
   }

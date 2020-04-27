@@ -37,7 +37,7 @@ public class JavaCodeInsightTestUtil {
     final Editor editor = fixture.getEditor();
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
     assert element instanceof PsiLocalVariable : element;
-    InlineLocalHandler.invoke(fixture.getProject(), editor, (PsiLocalVariable)element, null);
+    InlineLocalHandler.inlineVariable(fixture.getProject(), editor, (PsiLocalVariable)element, null);
     fixture.checkResultByFile(after, false);
   }
 

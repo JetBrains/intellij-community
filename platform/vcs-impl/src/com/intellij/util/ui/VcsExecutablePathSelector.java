@@ -98,7 +98,7 @@ public class VcsExecutablePathSelector {
                     @Nullable String projectPath,
                     @NotNull String autoDetectedPath) {
     myAutoDetectedPath = autoDetectedPath;
-    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText("Auto-detected: " + myAutoDetectedPath);
+    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + myAutoDetectedPath);
 
     myProjectPathCheckbox.setSelected(pathOverriddenForProject);
     if (pathOverriddenForProject) {

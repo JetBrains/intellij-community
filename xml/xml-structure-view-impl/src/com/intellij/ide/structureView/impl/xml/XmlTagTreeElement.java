@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.xml;
 
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
@@ -43,7 +43,7 @@ public class XmlTagTreeElement extends AbstractXmlTagTreeElement<XmlTag>{
   public String getPresentableText() {
     final XmlTag element = getElement();
     if (element == null) {
-      return IdeBundle.message("node.structureview.invalid");
+      return StructureViewBundle.message("node.structureview.invalid");
     }
     String id = element.getAttributeValue(ID_ATTR_NAME);
     if (id == null) {

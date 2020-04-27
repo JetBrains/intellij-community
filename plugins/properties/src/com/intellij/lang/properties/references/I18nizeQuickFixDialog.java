@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.references;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -10,6 +9,7 @@ import com.intellij.ide.util.TreeFileChooser;
 import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.LastSelectedPropertiesFileStore;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,6 +17,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -33,6 +35,7 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,10 +47,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -65,6 +66,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   private JCheckBox myUseResourceBundle;
   protected final Project myProject;
   protected final PsiFile myContext;
+  protected final Set<Module> myContextModules;
 
   private JPanel myPropertiesFilePanel;
   protected JPanel myExtensibilityPanel;
@@ -100,24 +102,25 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   public I18nizeQuickFixDialog(@NotNull Project project,
                                @NotNull final PsiFile context,
-                               String defaultPropertyValue,
+                               @NotNull String defaultPropertyValue,
                                DialogCustomization customization
                                ) {
     this(project, context, defaultPropertyValue, customization, false);
   }
 
   protected I18nizeQuickFixDialog(@NotNull Project project,
-                               @NotNull final PsiFile context,
-                               String defaultPropertyValue,
-                               DialogCustomization customization,
-                               boolean ancestorResponsible) {
+                                  @NotNull final PsiFile context,
+                                  @NotNull String defaultPropertyValue,
+                                  DialogCustomization customization,
+                                  boolean ancestorResponsible) {
     super(false);
     myProject = project;
     myContext = FileContextUtil.getContextFile(context);
+    myContextModules = ContainerUtil.createMaybeSingletonSet(ModuleUtilCore.findModuleForFile(myContext));
 
     myDefaultPropertyValue = defaultPropertyValue;
     myCustomization = customization != null ? customization:new DialogCustomization();
-    setTitle(myCustomization.title != null ? myCustomization.title:CodeInsightBundle.message("i18nize.dialog.title"));
+    setTitle(myCustomization.title != null ? myCustomization.title : PropertiesBundle.message("i18nize.dialog.title"));
 
     myPropertiesFile = new TextFieldWithHistory();
     myPropertiesFile.setHistorySize(-1);
@@ -127,7 +130,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         TreeFileChooserFactory chooserFactory = TreeFileChooserFactory.getInstance(myProject);
         final PropertiesFile propertiesFile = getPropertiesFile();
         TreeFileChooser fileChooser = chooserFactory.createFileChooser(
-          CodeInsightBundle.message("i18nize.dialog.property.file.chooser.title"), propertiesFile != null ? propertiesFile.getContainingFile() : null, StdFileTypes.PROPERTIES, null);
+          PropertiesBundle.message("i18nize.dialog.property.file.chooser.title"), propertiesFile != null ? propertiesFile.getContainingFile() : null, StdFileTypes.PROPERTIES, null);
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;
@@ -214,36 +217,8 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
 
   public static String suggestUniquePropertyKey(String value, String defaultKey, PropertiesFile propertiesFile) {
     // suggest property key not existing in this file
-    value = PATTERN.matcher(Normalizer.normalize(value, Normalizer.Form.NFD)).replaceAll("");
     if (defaultKey == null) {
-      final StringBuilder result = new StringBuilder();
-      boolean insertDotBeforeNextWord = false;
-      for (int i = 0; i < value.length(); i++) {
-        final char c = value.charAt(i);
-        if (Character.isLetterOrDigit(c)) {
-          if (insertDotBeforeNextWord) {
-            result.append('.');
-          }
-          result.append(Character.toLowerCase(c));
-          insertDotBeforeNextWord = false;
-        }
-        else if (c == '&') {   //do not insert dot if there is letter after the amp
-          if (insertDotBeforeNextWord) continue;
-          if (i == value.length() - 1) {
-            continue;
-          }
-          if (Character.isLetter(value.charAt(i + 1))) {
-            continue;
-          }
-          insertDotBeforeNextWord = true;
-        }
-        else {
-          if (result.length() > 0) {
-            insertDotBeforeNextWord = true;
-          }
-        }
-      }
-      defaultKey = result.toString();
+      defaultKey = generateDefaultPropertyKey(value);
     }
 
     if (propertiesFile != null) {
@@ -258,6 +233,41 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     else {
       return defaultKey;
     }
+  }
+
+  @NotNull
+  public static String generateDefaultPropertyKey(@NotNull String rawValue) {
+    String value = PATTERN.matcher(Normalizer.normalize(rawValue, Normalizer.Form.NFD)).replaceAll("");
+    String defaultKey;
+    final StringBuilder result = new StringBuilder();
+    boolean insertDotBeforeNextWord = false;
+    for (int i = 0; i < value.length(); i++) {
+      final char c = value.charAt(i);
+      if (Character.isLetterOrDigit(c)) {
+        if (insertDotBeforeNextWord) {
+          result.append('.');
+        }
+        result.append(Character.toLowerCase(c));
+        insertDotBeforeNextWord = false;
+      }
+      else if (c == '&') {   //do not insert dot if there is letter after the amp
+        if (insertDotBeforeNextWord) continue;
+        if (i == value.length() - 1) {
+          continue;
+        }
+        if (Character.isLetter(value.charAt(i + 1))) {
+          continue;
+        }
+        insertDotBeforeNextWord = true;
+      }
+      else {
+        if (result.length() > 0) {
+          insertDotBeforeNextWord = true;
+        }
+      }
+    }
+    defaultKey = result.toString();
+    return defaultKey;
   }
 
   protected String defaultSuggestPropertyKey(String value) {
@@ -285,7 +295,41 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     }
 
 
-    myValue.setText(myDefaultPropertyValue);
+    myValue.setText(escapeLineBreaks(myDefaultPropertyValue));
+  }
+
+  private static String escapeLineBreaks(String value) {
+    return StringUtil.escapeLineBreak(StringUtil.escapeBackSlashes(value));
+  }
+
+  private static String unescapeLineBreaks(String value) {
+    StringBuilder buffer = new StringBuilder(value.length());
+    int length = value.length();
+    int last = length - 1;
+    for (int i = 0; i < length; i++) {
+      char ch = value.charAt(i);
+      if (ch == '\\' && i != last) {
+        i++;
+        ch = value.charAt(i);
+        if (ch == 'n') {
+          buffer.append('\n');
+        }
+        else if (ch == 'r') {
+          buffer.append('\n');
+        }
+        else if (ch == '\\') {
+          buffer.append('\\');
+        }
+        else {
+          buffer.append('\\');
+          buffer.append(ch);
+        }
+      }
+      else {
+        buffer.append(ch);
+      }
+    }
+    return buffer.toString();
   }
 
   protected void somethingChanged() {
@@ -296,12 +340,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     List<String> paths = suggestPropertiesFiles();
     final String lastUrl = suggestSelectedFileUrl(paths);
     final String lastPath = lastUrl == null ? null : FileUtil.toSystemDependentName(VfsUtil.urlToPath(lastUrl));
-    Collections.sort(paths, (path1, path2) -> {
-      if (lastPath != null && lastPath.equals(path1)) return -1;
-      if (lastPath != null && lastPath.equals(path2)) return 1;
-      int r = LastSelectedPropertiesFileStore.getUseCount(path2) - LastSelectedPropertiesFileStore.getUseCount(path1);
-      return r == 0 ? path1.compareTo(path2) : r;
-    });
+    if (lastPath != null) {
+      paths.remove(lastPath);
+      paths.add(0, lastPath);
+    }
     myPropertiesFile.setHistory(paths);
     if (lastPath != null) {
       myPropertiesFile.setSelectedItem(lastPath);
@@ -348,7 +390,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   protected List<String> defaultSuggestPropertiesFiles() {
-    return I18nUtil.defaultSuggestPropertiesFiles(myProject);
+    return I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
   }
 
   protected PropertiesFile getPropertiesFile() {
@@ -363,16 +405,16 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (getPropertiesFile() != null) return true;
     final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
     if (StringUtil.isEmptyOrSpaces(path)) {
-      String message = CodeInsightBundle.message("i18nize.empty.file.path", myPropertiesFile.getText());
-      Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      String message = PropertiesBundle.message("i18nize.empty.file.path", myPropertiesFile.getText());
+      Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
       myPropertiesFile.requestFocusInWindow();
       return false;
     }
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
     if (fileType != StdFileTypes.PROPERTIES && fileType != StdFileTypes.XML) {
-      String message = CodeInsightBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
+      String message = PropertiesBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
                                                  myPropertiesFile.getText(), fileType.getDescription());
-      Messages.showErrorDialog(myProject, message, CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
       myPropertiesFile.requestFocusInWindow();
       return false;
     }
@@ -400,7 +442,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       });
     }
     catch (Exception e) {
-      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), CodeInsightBundle.message("i18nize.error.creating.properties.file"));
+      Messages.showErrorDialog(myProject, e.getLocalizedMessage(), PropertiesBundle.message("i18nize.error.creating.properties.file"));
       return false;
     }
     return true;
@@ -428,12 +470,12 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     Collection<PropertiesFile> propertiesFiles = getAllPropertiesFiles();
     for (PropertiesFile propertiesFile : propertiesFiles) {
       IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
-      final String propValue = myValue.getText();
+      final String propValue = getValue();
       if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
-        final String messageText = CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
+        final String messageText = PropertiesBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
         final int code = Messages.showOkCancelDialog(myProject,
                                                      messageText,
-                                                     CodeInsightBundle.message("i18nize.dialog.error.property.already.defined.title"),
+                                                     PropertiesBundle.message("i18nize.dialog.error.property.already.defined.title"),
                                                      null);
         if (code == Messages.CANCEL) {
           return;
@@ -449,13 +491,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return "editing.propertyFile.i18nInspection";
   }
 
-  public JComponent getValueComponent() {
-    return myValue;
-  }
-
   @Override
   public String getValue() {
-    return myValue.getText();
+    return unescapeLineBreaks(myValue.getText());
   }
 
   @Override

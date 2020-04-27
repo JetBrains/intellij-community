@@ -79,9 +79,8 @@ public class ObjectEqualityInspection extends BaseInspection {
     return new ObjectEqualityVisitor();
   }
 
-  @NotNull
   @Override
-  public InspectionGadgetsFix[] buildFixes(Object... infos) {
+  public InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return EqualityToEqualsFix.buildEqualityFixes((PsiBinaryExpression)infos[0]);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -49,6 +50,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -56,16 +58,10 @@ import static com.intellij.diff.tools.util.DiffNotifications.createNotification;
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createConflictDiffRequest;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createDiffRequest;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
   private static final Logger LOG = getInstance(DiffShelvedChangesActionProvider.class);
-
-  private static final String DIFF_WITH_BASE_ERROR = "Base content not found or not applicable.";
-  public static final String SHELVED_VERSION = "Shelved Version";
-  public static final String BASE_VERSION = "Base Version";
-  public static final String CURRENT_VERSION = "Current Version";
 
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
@@ -328,7 +324,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
         TextFilePatch patch = myPreloader.getPatch(myChange, myCommitContext);
         AppliedTextPatch appliedTextPatch = createAppliedTextPatch(patch);
         PatchDiffRequest request = new PatchDiffRequest(appliedTextPatch, getName(), VcsBundle.message("patch.apply.conflict.patch"));
-        DiffUtil.addNotification(createNotification("Cannot find local file for '" + getFilePath() + "'"), request);
+        DiffUtil.addNotification(createNotification(DiffBundle.message("cannot.file.file.error", getFilePath())), request);
         return request;
       }
       catch (VcsException e) {
@@ -367,7 +363,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
           DiffContent leftContent = contentFactory.create(myProject, file);
           DiffContent rightContent = contentFactory.create(myProject, patch.getSingleHunkPatchText(), file);
 
-          return new SimpleDiffRequest(getName(), leftContent, rightContent, CURRENT_VERSION, SHELVED_VERSION);
+          return new SimpleDiffRequest(getName(), leftContent, rightContent, DiffBundle.message("merge.version.title.current"),
+                                       VcsBundle.message("shelve.shelved.version"));
         }
         catch (VcsException e) {
           throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
@@ -446,11 +443,11 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       String leftTitle;
       if (myWithLocal) {
         leftContent = contentFactory.create(myProject, myFile);
-        leftTitle = CURRENT_VERSION;
+        leftTitle = DiffBundle.message("merge.version.title.current");
       }
       else {
         leftContent = contentFactory.create(myProject, patch.getSingleHunkPatchText(), myFile);
-        leftTitle = SHELVED_VERSION;
+        leftTitle = VcsBundle.message("shelve.shelved.version");
       }
 
       DiffContent rightContent = contentFactory.createEmpty();
@@ -467,15 +464,15 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       String leftTitle;
       if (myWithLocal) {
         leftContent = contentFactory.create(myProject, myFile);
-        leftTitle = CURRENT_VERSION;
+        leftTitle = DiffBundle.message("merge.version.title.current");
       }
       else {
-        leftContent = contentFactory.create(myProject, assertNotNull(texts.getBase()), myFile);
-        leftTitle = BASE_VERSION;
+        leftContent = contentFactory.create(myProject, Objects.requireNonNull(texts.getBase()), myFile);
+        leftTitle = DiffBundle.message("merge.version.title.base");
       }
 
       DiffContent rightContent = contentFactory.create(myProject, texts.getPatched(), myFile);
-      return new SimpleDiffRequest(getName(), leftContent, rightContent, leftTitle, SHELVED_VERSION);
+      return new SimpleDiffRequest(getName(), leftContent, rightContent, leftTitle, VcsBundle.message("shelve.shelved.version"));
     }
 
     private DiffRequest createDiffRequestUsingLocal(@NotNull ApplyPatchForBaseRevisionTexts texts,
@@ -483,10 +480,11 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
                                                     @NotNull UserDataHolder context,
                                                     @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       DiffRequest diffRequest = myChange.isConflictingChange()
-                                ? createConflictDiffRequest(myProject, myFile, patch, SHELVED_VERSION, texts, getName())
+                                ? createConflictDiffRequest(myProject, myFile, patch, VcsBundle.message("shelve.shelved.version"), texts, getName())
                                 : createDiffRequest(myProject, myChange.getChange(), getName(), context, indicator);
       if (!myWithLocal) {
-        DiffUtil.addNotification(createNotification(DIFF_WITH_BASE_ERROR + " Showing difference with local version"), diffRequest);
+        DiffUtil.addNotification(createNotification(
+          VcsBundle.message("shelve.base.content.not.found.or.not.applicable.error")), diffRequest);
       }
       return diffRequest;
     }

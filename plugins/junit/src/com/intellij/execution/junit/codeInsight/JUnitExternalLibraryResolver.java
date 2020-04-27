@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class JUnitExternalLibraryResolver extends ExternalLibraryResolver {
   private static final Set<String> JUNIT4_ANNOTATIONS = ContainerUtil.set(
     "Test", "Ignore", "RunWith", "Before", "BeforeClass", "After", "AfterClass"

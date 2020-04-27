@@ -25,8 +25,10 @@ internal fun execute(workingDir: File?, vararg command: String, withTimer: Boole
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(errOutputFile)
       .apply {
-        environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         environment()["LANG"] = "en_US.UTF-8"
+        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty()) {
+          environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        }
       }.start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
     process.waitFor(1, TimeUnit.MINUTES)
@@ -49,7 +51,7 @@ internal fun <T> List<T>.split(eachSize: Int): List<List<T>> {
   val result = mutableListOf<List<T>>()
   var start = 0
   while (start < this.size) {
-    val sub = this.subList(start, Math.min(start + eachSize, this.size))
+    val sub = this.subList(start, (start + eachSize).coerceAtMost(this.size))
     if (sub.isNotEmpty()) result += sub
     start += eachSize
   }

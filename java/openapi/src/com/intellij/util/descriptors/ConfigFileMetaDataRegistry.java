@@ -18,11 +18,8 @@ package com.intellij.util.descriptors;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface ConfigFileMetaDataRegistry extends ConfigFileMetaDataProvider {
 
-  void registerMetaData(@NotNull ConfigFileMetaData... metaData);
+  void registerMetaData(ConfigFileMetaData @NotNull ... metaData);
 
 }

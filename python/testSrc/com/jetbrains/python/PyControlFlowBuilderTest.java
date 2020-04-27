@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
@@ -12,9 +12,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 
-/**
- * @author oleg
- */
 public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
   @Override
@@ -149,11 +146,11 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testManyIfs() {
     doTest();
   }
-  
+
   public void testSuperclass() {
     doTest();
   }
-  
+
   public void testDefaultParameterValue() {
     doTest();
   }
@@ -161,7 +158,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testLambdaDefaultParameter() {
     doTest();
   }
-  
+
   public void testDecorator() {
     doTestFirstStatement();
   }
@@ -169,7 +166,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testSetComprehension() {
     doTest();
   }
-  
+
   public void testTypeAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }

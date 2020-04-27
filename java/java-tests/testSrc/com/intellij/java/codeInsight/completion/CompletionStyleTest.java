@@ -264,6 +264,18 @@ public class CompletionStyleTest extends LightJavaCodeInsightTestCase {
     styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = space_within_method_call_parentheses;
   }
 
+  public void testSpaceWithinNonEmptyCallParens() {
+    final String path = BASE_PATH;
+    CommonCodeStyleSettings styleSettings = getCodeStyleSettings();
+    final boolean space_within_method_call_parentheses = styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
+
+    styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true;
+    configureByFile(path + "/" + getTestName(false) + ".java");
+    performNormalCompletion();
+    checkResultByFile(path + "/" + getTestName(false) + "-out.java");
+    styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = space_within_method_call_parentheses;
+  }
+
   /*public void testClassNameCompletion1() throws Exception{
     final String path = BASE_PATH;
     configureByFile(path + "/before34.java");

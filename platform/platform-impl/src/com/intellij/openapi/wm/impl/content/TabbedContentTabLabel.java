@@ -40,7 +40,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
       final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
       myPopupReference = new WeakReference<>(popup);
       popup.showUnderneathOf(this);
-      popup.addListener(new JBPopupAdapter() {
+      popup.addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           repaint();
@@ -54,7 +54,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   public void update() {
     super.update();
     if (myContent != null) {
-      setText(myContent.getTabName());
+      setText(myContent.getDisplayName());
     }
   }
 

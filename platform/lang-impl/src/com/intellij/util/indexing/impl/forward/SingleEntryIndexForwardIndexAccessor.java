@@ -9,14 +9,13 @@ import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.InputData;
-import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
-import com.intellij.util.indexing.impl.RemovedKeyProcessor;
+import com.intellij.util.indexing.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class SingleEntryIndexForwardIndexAccessor<V> implements ForwardIndexAccessor<Integer, V> {
@@ -39,22 +38,14 @@ public class SingleEntryIndexForwardIndexAccessor<V> implements ForwardIndexAcce
   @NotNull
   @Override
   public InputDataDiffBuilder<Integer, V> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
-    Ref<Map<Integer, V>> dataRef = Ref.create();
-    StorageException[] ex = {null};
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      try {
-        dataRef.set(myIndex.getValue().getIndexedFileData(inputId));
-      }
-      catch (StorageException e) {
-        ex[0] = e;
-      }
-    });
-    if (ex[0] != null) {
-      throw new IOException(ex[0]);
+    Map<Integer, V> data;
+    try {
+      data = ProgressManager.getInstance().computeInNonCancelableSection(() -> myIndex.getValue().getIndexedFileData(inputId));
     }
-    Map<Integer, V> currentData = dataRef.get();
-
-    return new SingleValueDiffBuilder<>(inputId, currentData);
+    catch (StorageException e) {
+      throw new IOException(e);
+    }
+    return new SingleValueDiffBuilder<>(inputId, data);
   }
 
   @Nullable
@@ -63,7 +54,7 @@ public class SingleEntryIndexForwardIndexAccessor<V> implements ForwardIndexAcce
     return null;
   }
 
-  public static class SingleValueDiffBuilder<V> extends InputDataDiffBuilder<Integer, V> {
+  public static class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
     private final int myInputId;
     private final boolean myContainsValue;
     @Nullable
@@ -78,6 +69,11 @@ public class SingleEntryIndexForwardIndexAccessor<V> implements ForwardIndexAcce
       myInputId = inputId;
       myContainsValue = containsValue;
       myCurrentValue = currentValue;
+    }
+
+    @Override
+    public @NotNull Collection<Integer> getKeys() {
+      return myContainsValue ? Collections.singleton(myInputId) : Collections.emptySet();
     }
 
     @Override

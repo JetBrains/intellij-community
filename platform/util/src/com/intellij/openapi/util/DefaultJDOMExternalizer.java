@@ -9,6 +9,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -329,5 +330,10 @@ public class DefaultJDOMExternalizer {
       }
     }
     return color;
+  }
+
+  @ApiStatus.Internal
+  public static void clearFieldCache() {
+    ourFieldCache.clear();
   }
 }

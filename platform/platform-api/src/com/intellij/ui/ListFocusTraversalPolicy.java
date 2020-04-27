@@ -88,7 +88,7 @@ public class ListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
   }
 
   @NotNull
-  private static <X> TObjectIntHashMap<X> indexMap(@NotNull X[] array) {
+  private static <X> TObjectIntHashMap<X> indexMap(X @NotNull [] array) {
     TObjectIntHashMap<X> map = new TObjectIntHashMap<>(array.length);
     for (X x : array) {
       if (!map.contains(x)) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -29,9 +15,6 @@ import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.intellij.lang.annotations.Language;
 
-/**
- * @author mike
- */
 public class XmlTextTest extends LightJavaCodeInsightTestCase {
   public void testInsertAtOffset() {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
@@ -74,7 +57,7 @@ public class XmlTextTest extends LightJavaCodeInsightTestCase {
     XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("foo.xml", XmlFileType.INSTANCE, xml);
     XmlTag root = file.getDocument().getRootTag();
     final XmlText text = root.getValue().getTextElements()[0];
-                                                              
+
     assertEquals("&abc", text.getValue());
     assertEquals(0, text.displayToPhysical(0));
     assertEquals(5, text.displayToPhysical(1));

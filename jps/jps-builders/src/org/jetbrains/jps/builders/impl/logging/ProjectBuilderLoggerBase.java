@@ -25,9 +25,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   @Override
   public void logDeletedFiles(Collection<String> paths) {

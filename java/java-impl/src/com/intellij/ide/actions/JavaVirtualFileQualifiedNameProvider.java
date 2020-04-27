@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.module.JavaModuleType;
@@ -11,9 +11,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class JavaVirtualFileQualifiedNameProvider implements CopyReferenceAction.VirtualFileQualifiedNameProvider {
   @Nullable
@@ -27,7 +28,7 @@ public class JavaVirtualFileQualifiedNameProvider implements CopyReferenceAction
     final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
     VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null;
     if (logicalRootFile != null && !virtualFile.equals(logicalRootFile)) {
-      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
+      return Objects.requireNonNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
     }
 
     VirtualFile outerMostRoot = null;

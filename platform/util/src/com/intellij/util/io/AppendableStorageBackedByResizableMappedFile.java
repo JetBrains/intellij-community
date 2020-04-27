@@ -77,8 +77,19 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
     }
 
     if (myFileLength <= addr) {
+      // addr points to un-existed data
+      if (myAppendBuffer == null) {
+        throw new NoDataException("requested address points to un-existed data");
+      }
+
+      // addr points to un-existed data
+      int bufferOffset = addr - myFileLength;
+      if (bufferOffset > myBufferPosition) {
+        throw new NoDataException("requested address points to un-existed data");
+      }
+
       Data data =
-        descriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, addr - myFileLength, myBufferPosition)));
+        descriptor.read(new DataInputStream(new UnsyncByteArrayInputStream(myAppendBuffer, bufferOffset, myBufferPosition)));
       assert tempData == null || descriptor.isEqual(data, tempData);
       return data;
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.http;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -22,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
@@ -62,11 +62,11 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private void downloadContent(@NotNull Url url, @NotNull File file, @NotNull DownloadingCallback callback, @Nullable Throwable startTrace) {
     LOG.debug("Downloading started: " + url);
     final String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
-    callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
+    callback.setProgressText(IdeBundle.message("download.progress.connecting", presentableUrl), true);
     try {
       connect(url, HttpRequests.request(url.toExternalForm()), request -> {
             int size = request.getConnection().getContentLength();
-            callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
+        callback.setProgressText(IdeBundle.message("download.progress.downloading", presentableUrl), size == -1);
             request.saveToFile(file, new AbstractProgressIndicatorExBase() {
               @Override
               public void setFraction(double fraction) {
@@ -96,7 +96,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
     }
     catch (IOException e) {
       LOG.info(e);
-      callback.errorOccurred(VfsBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
+      callback.errorOccurred(IdeBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
     }
   }
 

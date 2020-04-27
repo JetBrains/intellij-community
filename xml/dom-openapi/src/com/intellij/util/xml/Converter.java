@@ -15,8 +15,6 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.IdeBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +42,7 @@ public abstract class Converter<T> {
    */
   @Nullable
   public String getErrorMessage(@Nullable String s, final ConvertContext context) {
-    return CodeInsightBundle.message("error.cannot.convert.default.message", s);
+    return XmlDomBundle.message("error.cannot.convert.default.message", s);
   }
 
 
@@ -71,7 +69,7 @@ public abstract class Converter<T> {
 
     @Override
     public String getErrorMessage(final String s, final ConvertContext context) {
-      return IdeBundle.message("value.should.be.integer");
+      return XmlDomBundle.message("value.should.be.integer");
     }
   };
 

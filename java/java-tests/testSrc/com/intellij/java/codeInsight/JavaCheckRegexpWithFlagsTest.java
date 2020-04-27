@@ -32,7 +32,7 @@ public class JavaCheckRegexpWithFlagsTest extends JavaCodeInsightTestCase {
            "}\n";
   }
 
-  private void defaultTest(@NotNull String regExp, int flags, @NotNull String[] matching, @NotNull String[] nonMatching) {
+  private void defaultTest(@NotNull String regExp, int flags, String @NotNull [] matching, String @NotNull [] nonMatching) {
     LanguageParserDefinitions.INSTANCE.addExplicitExtension(RegExpLanguage.INSTANCE,
                                                             new RegExpParserDefinition());
 

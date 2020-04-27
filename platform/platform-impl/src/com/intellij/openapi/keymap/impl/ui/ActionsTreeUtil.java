@@ -38,7 +38,7 @@ public class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   /**
-   * Use {code {@link #getMainMenuTitle()}} instead
+   * @deprecated Use {@link #getMainMenuTitle()} instead
    */
   @Deprecated
   public static final String MAIN_MENU_TITLE = "Main menu";
@@ -658,6 +658,22 @@ public class ActionsTreeUtil {
 
   public static String getEditorPopup() {
     return KeyMapBundle.message("editor.popup.menu.title");
+  }
+
+  public static String getEditorGutterPopupMenu() {
+    return KeyMapBundle.message("editor.gutter.popup.menu");
+  }
+
+  public static String getScopeViewPopupMenu() {
+    return KeyMapBundle.message("scope.view.popup.menu");
+  }
+
+  public static String getNavigationBarPopupMenu() {
+    return KeyMapBundle.message("navigation.bar.popup.menu");
+  }
+
+  public static String getNavigationBarToolbar() {
+    return KeyMapBundle.message("navigation.bar.toolbar");
   }
 
   public static String getEditorTabPopup() {

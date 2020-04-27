@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +37,7 @@ public class PlainTextFileType extends LanguageFileType implements PlainTextLike
   @Override
   @NotNull
   public String getDescription() {
-    return FileTypesBundle.message("filetype.plaintext.description");
+    return CoreBundle.message("filetype.plaintext.description");
   }
 
   @Override

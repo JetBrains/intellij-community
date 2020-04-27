@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.rename.naming;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +34,12 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
 
   @Override
   public String getDialogTitle() {
-    return "Rename Overloads";
+    return JavaRefactoringBundle.message("rename.overloads.dialog.title");
   }
 
   @Override
   public String getDialogDescription() {
-    return "Rename overloads to:";
+    return JavaRefactoringBundle.message("rename.overloads.to.dialog.description");
   }
 
   @Override
@@ -51,8 +52,7 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
     return true;
   }
 
-  @NotNull
-  protected PsiMethod[] getOverloads(@NotNull PsiMethod method) {
+  protected PsiMethod @NotNull [] getOverloads(@NotNull PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return PsiMethod.EMPTY_ARRAY;
     return containingClass.findMethodsByName(method.getName(), false);

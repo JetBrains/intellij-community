@@ -29,13 +29,13 @@ import java.util.ResourceBundle;
  */
 public class SSHMainBundle {
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return BundleBase.message(getBundle(), key, params);
   }
 
   private static Reference<ResourceBundle> ourBundle;
   @NonNls
-  private static final String BUNDLE = "org.jetbrains.git4idea.ssh.SSHMainBundle";
+  private static final String BUNDLE = "messages.SSHMainBundle";
 
   private SSHMainBundle() {
   }

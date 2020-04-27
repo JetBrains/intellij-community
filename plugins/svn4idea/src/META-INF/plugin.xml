@@ -1,7 +1,7 @@
 <idea-plugin>
   <name>Subversion</name>
   <id>Subversion</id>
-  <category>VCS Integration</category>
+  <category>Version Controls</category>
   <description>
     <![CDATA[
       Provides integration with Subversion VCS.<br/>
@@ -118,7 +118,6 @@
     <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.history.LoadedRevisionsCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnLoadedBranchesStorage"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.svn.dialogs.browserCache.SvnRepositoryCache"/>
     <applicationService serviceInterface="org.jetbrains.idea.svn.dialogs.browserCache.Loader"

@@ -96,8 +96,10 @@
                     interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider" dynamic="true"/>
 
     <extensionPoint name="ignoredFileProvider"
+                    dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
     <extensionPoint name="ignoredFileContentProvider"
+                    dynamic="true"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
@@ -113,7 +115,10 @@
                     interface="com.intellij.openapi.vcs.changes.VcsPreservingExecutor"/>
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"
                     interface="com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
+                    interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"/>
 
-    <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension" interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"/>
+    <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"
+                    interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"/>
   </extensionPoints>
 </idea-plugin>

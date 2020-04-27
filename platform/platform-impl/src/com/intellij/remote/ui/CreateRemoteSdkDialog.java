@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -23,9 +25,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
-/**
- * @author traff
- */
 public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> extends DialogWrapper implements RemoteSdkEditorContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.remote.ui.CreateRemoteSdkDialog");
   @Nullable
@@ -137,6 +136,9 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     try {
       remoteSdkData = getInterpreterForm().createSdkData();
     }
+    catch (ProcessCanceledException ignored) {
+      return;
+    }
     catch (RemoteSdkException e) {
       LOG.warn("Failed to create SDK data", e);
       onCreateFail(e.getMessage());
@@ -207,14 +209,15 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     }
     if (askSaveUnfinished) {
       if (Messages
-            .showOkCancelDialog(validation, "Can't create " + getSdkFactory().sdkName() + " SDK", "Save anyway", "Continue editing",
+            .showOkCancelDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()), IdeBundle.message("button.save.anyway"),
+                                IdeBundle.message("button.continue.editing"),
                                 Messages.getWarningIcon()) ==
           Messages.OK) {
         return true;
       }
     }
     else {
-      Messages.showErrorDialog(validation, "Can't create " + getSdkFactory().sdkName() + " SDK");
+      Messages.showErrorDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()));
     }
     return false;
   }

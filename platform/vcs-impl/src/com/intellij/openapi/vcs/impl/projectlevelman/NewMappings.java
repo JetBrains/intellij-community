@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.ui.MessageType;
@@ -79,7 +78,7 @@ public class NewMappings implements Disposable {
     myRootUpdateQueue = new MergingUpdateQueue("NewMappings", 1000, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
       .usePassThroughInUnitTestMode();
 
-    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, (DumbAwareRunnable)() -> {
+    vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, () -> {
       if (!myProject.isDisposed()) {
         activateActiveVcses();
       }
@@ -87,7 +86,7 @@ public class NewMappings implements Disposable {
 
     myFilePointerListener = new VirtualFilePointerListener() {
       @Override
-      public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+      public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
         scheduleMappedRootsUpdate();
       }
     };
@@ -99,8 +98,7 @@ public class NewMappings implements Disposable {
     myFileWatchRequestsManager = fileWatchRequestsManager;
   }
 
-  @NotNull
-  public AbstractVcs[] getActiveVcses() {
+  public AbstractVcs @NotNull [] getActiveVcses() {
     return myActiveVcses.toArray(new AbstractVcs[0]);
   }
 

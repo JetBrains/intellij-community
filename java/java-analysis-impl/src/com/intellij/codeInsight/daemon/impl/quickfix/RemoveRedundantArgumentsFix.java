@@ -40,7 +40,7 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
   private final PsiSubstitutor mySubstitutor;
 
   private RemoveRedundantArgumentsFix(@NotNull PsiMethod targetMethod,
-                                     @NotNull PsiExpression[] arguments,
+                                     PsiExpression @NotNull [] arguments,
                                      @NotNull PsiSubstitutor substitutor) {
     myTargetMethod = targetMethod;
     myArguments = arguments;
@@ -70,10 +70,9 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
     return findRedundantArgument(myArguments, myTargetMethod.getParameterList().getParameters(), mySubstitutor) != null;
   }
 
-  @Nullable
-  private static PsiExpression[] findRedundantArgument(@NotNull PsiExpression[] arguments,
-                                                       @NotNull PsiParameter[] parameters,
-                                                       @NotNull PsiSubstitutor substitutor) {
+  private static PsiExpression @Nullable [] findRedundantArgument(PsiExpression @NotNull [] arguments,
+                                                                  PsiParameter @NotNull [] parameters,
+                                                                  @NotNull PsiSubstitutor substitutor) {
     if (arguments.length <= parameters.length) return null;
 
     for (int i = 0; i < parameters.length; i++) {
@@ -107,7 +106,7 @@ public class RemoveRedundantArgumentsFix implements IntentionAction {
     return true;
   }
 
-  public static void registerIntentions(@NotNull JavaResolveResult[] candidates,
+  public static void registerIntentions(JavaResolveResult @NotNull [] candidates,
                                         @NotNull PsiExpressionList arguments,
                                         @Nullable HighlightInfo highlightInfo,
                                         TextRange fixRange) {

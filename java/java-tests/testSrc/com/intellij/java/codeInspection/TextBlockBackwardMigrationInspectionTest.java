@@ -11,9 +11,8 @@ import org.jetbrains.annotations.NotNull;
  * @see TextBlockBackwardMigrationInspection
  */
 public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new TextBlockBackwardMigrationInspection()};
   }
 
@@ -24,6 +23,6 @@ public class TextBlockBackwardMigrationInspectionTest extends LightQuickFixParam
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_13_PREVIEW;
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 }

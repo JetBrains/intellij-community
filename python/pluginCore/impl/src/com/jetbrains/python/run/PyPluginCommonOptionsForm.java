@@ -22,7 +22,10 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PathMappingSettings;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.sdk.PreferredSdkComparator;
+import com.jetbrains.python.sdk.PySdkListCellRenderer;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +72,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     myInterpreterComboBox.setMinimumAndPreferredWidth(100);
     myInterpreterComboBox.setRenderer(new PySdkListCellRenderer(null,"<Project Default>"));
-    myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
+    myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     ActionListener listener = new ActionListener() {

@@ -66,9 +66,8 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
       return true;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return AnAction.EMPTY_ARRAY;
 
       List<AnAction> actions = getActions(e.getDataContext());

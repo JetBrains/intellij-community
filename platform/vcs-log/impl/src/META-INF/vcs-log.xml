@@ -8,11 +8,14 @@
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider" area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
-                        predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
+    <changesViewContent tabName="Log"
+                        className="com.intellij.vcs.log.impl.VcsLogContentProvider"
+                        predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
+                        displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
     <applicationService serviceImplementation="com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList"/>
@@ -172,6 +175,7 @@
       <reference id="Vcs.Log.GoToParent"/>
       <separator/>
     </group>
+    <group id="Vcs.Log.Toolbar.LeftCorner"/>
     <group id="Vcs.Log.Toolbar.RightCorner">
       <reference id="Vcs.Log.ResumeIndexing"/>
       <reference id="Vcs.Log.GoToRef"/>

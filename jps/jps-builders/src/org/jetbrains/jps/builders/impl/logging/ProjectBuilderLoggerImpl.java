@@ -17,9 +17,6 @@ package org.jetbrains.jps.builders.impl.logging;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-/**
- * @author nik
- */
 public class ProjectBuilderLoggerImpl extends ProjectBuilderLoggerBase {
   private static final Logger LOG = Logger.getInstance(ProjectBuilderLoggerImpl.class);
 

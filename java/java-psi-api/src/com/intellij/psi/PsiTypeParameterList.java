@@ -28,8 +28,7 @@ public interface PsiTypeParameterList extends PsiElement {
    *
    * @return the array of type parameters.
    */
-  @NotNull
-  PsiTypeParameter[] getTypeParameters();
+  PsiTypeParameter @NotNull [] getTypeParameters();
 
   /**
    * Returns the index of the specified parameter in the list.

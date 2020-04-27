@@ -27,9 +27,6 @@ import com.intellij.packaging.ui.PackagingSourceItem;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
   private final SourceItemsTree myTree;
 

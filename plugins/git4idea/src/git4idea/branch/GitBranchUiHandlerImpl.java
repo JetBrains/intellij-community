@@ -22,6 +22,7 @@ import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,13 +118,12 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     return myProgressIndicator;
   }
 
-  @NotNull
   @Override
   public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                                  @NotNull List<? extends Change> changes,
                                                                  @NotNull Collection<String> paths,
-                                                                 @NotNull String operation,
-                                                                 @Nullable String forceButtonTitle) {
+                                                                 @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operation,
+                                                                 @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle) {
     Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle)));
     return exitCode.get();

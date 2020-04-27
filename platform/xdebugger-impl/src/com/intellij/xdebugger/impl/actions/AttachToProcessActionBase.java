@@ -588,7 +588,8 @@ public abstract class AttachToProcessActionBase extends AnAction {
         debugger.attachDebugSession(project, myHost, myInfo);
       }
       catch (ExecutionException e) {
-        ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, "pid " + myInfo.getPid(), e);
+        final String message = XDebuggerBundle.message("xdebugger.attach.pid", myInfo.getPid());
+        ExecutionUtil.handleExecutionError(project, ToolWindowId.DEBUG, message, e);
       }
     }
   }

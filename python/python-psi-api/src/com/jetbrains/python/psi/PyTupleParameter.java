@@ -27,6 +27,5 @@ public interface PyTupleParameter extends PyParameter, StubBasedPsiElement<PyTup
   /**
    * @return the nested parameters within this tuple parameter.
    */
-  @NotNull
-  PyParameter[] getContents();
+  PyParameter @NotNull [] getContents();
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.ImageUtil;
 /* Android Studio: b/67589184
@@ -220,7 +221,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
 /* Android Studio: b/67589184
       // JCEF/JBR11 is not compliant with JFX
-      if (!Registry.is("ide.browser.jcef.enabled")) {
+      if (!JBCefApp.isEnabled()) {
         // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
         try {
           PlatformImpl.startup(() -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));

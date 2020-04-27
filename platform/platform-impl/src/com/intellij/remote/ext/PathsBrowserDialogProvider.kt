@@ -7,8 +7,8 @@ import java.util.function.Supplier
 import javax.swing.JTextField
 
 /**
- * Could be implemented by [CredentialsTypeEx] to allow browsing for paths
- * fields in create remote SDK dialog.
+ * Could be implemented by [com.intellij.remote.CredentialsType] to allow
+ * browsing for paths fields in create remote SDK dialog.
  */
 interface PathsBrowserDialogProvider {
   fun showPathsBrowserDialog(project: Project?,

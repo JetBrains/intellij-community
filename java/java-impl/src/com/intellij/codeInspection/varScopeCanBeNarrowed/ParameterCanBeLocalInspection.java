@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -35,7 +35,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.CLASS_LAYOUT_GROUP_NAME;
+    return InspectionsBundle.message("group.names.class.structure");
   }
 
   @Override
@@ -72,7 +72,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
                                           boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
-      InspectionsBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
+      JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
       true,
       ProblemHighlightType.LIKE_UNUSED_SYMBOL,
       isOnTheFly,
@@ -161,7 +161,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         for (int i = 0; i < parameters.length; i++) {
           PsiParameter psiParameter = parameters[i];
           if (psiParameter == parameter) continue;
-          info.add(new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType()));
+          info.add(ParameterInfoImpl.create(i).withName(psiParameter.getName()).withType(psiParameter.getType()));
         }
         final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
@@ -177,7 +177,7 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
           }
 
           @Override
-          protected void performRefactoring(@NotNull UsageInfo[] usages) {
+          protected void performRefactoring(UsageInfo @NotNull [] usages) {
             final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
             newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
             super.performRefactoring(usages);

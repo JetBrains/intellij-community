@@ -5,6 +5,7 @@
   <!-- Plugin name -->
   <id>XPathView</id>
   <name>XPathView + XSLT</name>
+  <category>HTML and XML</category>
 
   <!-- Description -->
   <description><![CDATA[
@@ -19,6 +20,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.xml</depends>
+  <resource-bundle>messages.XPathBundle</resource-bundle>
 
   <!-- wasn't sure if the plugin manager correctly handles dependent plugins -->
   <!--<depends>XPathLanguage</depends>-->
@@ -50,7 +52,7 @@
         serviceImplementation="org.intellij.lang.xpath.xslt.psi.impl.XsltElementFactoryImpl" />
 
     <projectConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.associations.impl.FileAssociationsConfigurable" id="xslt.associations"
-                         bundle="messages.IdeBundle"
+                         bundle="messages.XPathBundle"
                          key="configurable.FileAssociationsConfigurable.display.name"
                          nonDefaultProject="true" />
 
@@ -70,7 +72,6 @@
     <lang.commenter language="XPath2" implementationClass="org.intellij.lang.xpath.XPath2Language$XPath2Commenter" />
 
     <codeInsight.parameterInfo language="XPath" implementationClass="org.intellij.lang.xpath.XPathParameterInfoHandler" />
-<!--    <fileTypeFactory implementation="org.intellij.lang.xpath.XPathSupportLoader" />-->
 
     <localInspection language="XPath" shortName="CheckNodeTest" displayName="Check node test" groupName="XPath" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.xpath.validation.inspections.CheckNodeTest"/>
@@ -133,10 +134,10 @@
     </intentionAction>
 
     <applicationConfigurable groupId="tools" instance="org.intellij.plugins.xpathView.XPathConfigurable" id="xpath.settings"
-                             bundle="messages.IdeBundle"
+                             bundle="messages.XPathBundle"
                              key="configurable.XPathConfigurable.display.name"/>
     <applicationConfigurable groupId="language" instance="org.intellij.lang.xpath.xslt.impl.XsltConfigImpl$UIImpl" id="settings.xslt"
-                             bundle="messages.IdeBundle"
+                             bundle="messages.XPathBundle"
                              key="configurable.UIImpl.display.name"/>
 
     <fileIconPatcher implementation="org.intellij.lang.xpath.xslt.impl.XsltIconProvider"/>

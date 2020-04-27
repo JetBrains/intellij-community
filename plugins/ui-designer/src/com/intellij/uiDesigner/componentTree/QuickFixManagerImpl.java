@@ -29,8 +29,7 @@ public final class QuickFixManagerImpl extends QuickFixManager<ComponentTree>{
   }
 
   @Override
-  @NotNull
-  protected ErrorInfo[] getErrorInfos() {
+  protected ErrorInfo @NotNull [] getErrorInfos() {
     final RadComponent component = myComponent.getSelectedComponent();
     if(component == null){
       return ErrorInfo.EMPTY_ARRAY;

@@ -14,7 +14,7 @@ import java.util.function.Predicate;
 // such simple util code better to keep separately.
 @ApiStatus.Internal
 public final class ExtensionProcessingHelper {
-  public static <T> void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer, @NotNull Iterable<T> iterable) {
+  public static <T> void forEachExtensionSafe(@NotNull Consumer<? super T> extensionConsumer, @NotNull Iterable<? extends T> iterable) {
     for (T t : iterable) {
       if (t == null) break;
       try {
@@ -30,12 +30,12 @@ public final class ExtensionProcessingHelper {
   }
 
   @Nullable
-  public static <T> T findFirstSafe(@NotNull Predicate<? super T> predicate, @NotNull Iterable<T> iterable) {
+  public static <T> T findFirstSafe(@NotNull Predicate<? super T> predicate, @NotNull Iterable<? extends T> iterable) {
     return computeSafeIfAny(o -> predicate.test(o) ? o : null, iterable);
   }
 
   @Nullable
-  public static <T, R> R computeSafeIfAny(@NotNull Function<T, R> processor, @NotNull Iterable<T> iterable) {
+  public static <T, R> R computeSafeIfAny(@NotNull Function<? super T, ? extends R> processor, @NotNull Iterable<? extends T> iterable) {
     for (T t : iterable) {
       if (t == null) {
         return null;

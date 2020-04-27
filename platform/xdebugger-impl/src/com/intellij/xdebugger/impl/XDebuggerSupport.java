@@ -14,9 +14,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XDebuggerSupport extends DebuggerSupport {
   private final XBreakpointPanelProvider myBreakpointPanelProvider;
   private final XToggleLineBreakpointActionHandler myToggleLineBreakpointActionHandler;

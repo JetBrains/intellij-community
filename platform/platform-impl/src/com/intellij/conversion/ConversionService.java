@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-/**
- * @author nik
- */
 public abstract class ConversionService {
   @NotNull
   public static ConversionService getInstance() {

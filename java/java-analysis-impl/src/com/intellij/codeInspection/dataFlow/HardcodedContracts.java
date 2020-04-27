@@ -126,6 +126,9 @@ public class HardcodedContracts {
                   ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), RelationType.EQ,
                   ContractValue.zero(), returnTrue()),
                 singleConditionContract(
+                  ContractValue.argument(0), RelationType.EQ,
+                  ContractValue.qualifier(), returnTrue()),
+                singleConditionContract(
                   ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
                   ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())))
     .register(instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT),
@@ -215,7 +218,8 @@ public class HardcodedContracts {
     else if (isJunit(className) || isTestng(className) ||
              className.startsWith("com.google.common.truth.") ||
              className.startsWith("org.assertj.core.api.") ||
-             className.equals("org.hamcrest.MatcherAssert")) {
+             className.equals("org.hamcrest.MatcherAssert") ||
+             className.equals("org.hamcrest.junit.MatcherAssert")) {
       return handleTestFrameworks(method, paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {

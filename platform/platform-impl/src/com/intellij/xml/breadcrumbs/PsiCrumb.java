@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Sergey.Malenkov
- */
 final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltipCrumb {
   private final PsiAnchor anchor;
   private volatile BreadcrumbsProvider provider;

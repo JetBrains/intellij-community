@@ -81,7 +81,7 @@ public final class PreviewFormAction extends AnAction{
   @NonNls public static final String PREVIEW_BINDING_FIELD = "myComponent";
 
   @NotNull
-  public static InstrumentationClassFinder createClassFinder(@Nullable URL[] platformUrls, @NotNull final String classPath) {
+  public static InstrumentationClassFinder createClassFinder(URL @Nullable [] platformUrls, @NotNull final String classPath) {
     final ArrayList<URL> urls = new ArrayList<>();
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
@@ -388,8 +388,7 @@ public final class PreviewFormAction extends AnAction{
     }
 
     @Override
-    @NotNull
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return new Module[] {myModule};
     }
   }

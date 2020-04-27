@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -150,7 +151,7 @@ class VcsPreviewPanel implements PreviewPanel {
       @NotNull
       @Override
       public String getAccessibleName() {
-        return "VCS marker: changed line";
+        return DiffBundle.message("vcs.marker.changed.line");
       }
     });
   }

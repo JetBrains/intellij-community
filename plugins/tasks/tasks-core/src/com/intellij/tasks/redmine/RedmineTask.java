@@ -57,9 +57,8 @@ public class RedmineTask extends Task {
     return myIssue.getDescription();
   }
 
-  @NotNull
   @Override
-  public Comment[] getComments() {
+  public Comment @NotNull [] getComments() {
     return Comment.EMPTY_ARRAY;
   }
 

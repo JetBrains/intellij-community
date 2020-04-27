@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.java.JavaLanguage;
@@ -131,13 +132,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myMethod);
   }
 
   @Override
-  @NotNull
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
     Set<UsageInfo> usages = new HashSet<>();
     if (myReference != null) {
@@ -177,7 +177,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
+  protected boolean isPreviewUsages(UsageInfo @NotNull [] usages) {
     for (UsageInfo usage : usages) {
       if (usage instanceof NonCodeUsageInfo) return true;
     }
@@ -185,7 +185,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {
+  protected void refreshElements(PsiElement @NotNull [] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
     myMethod = (PsiMethod)elements[0];
@@ -204,8 +204,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (PsiMethod method : superMethods) {
         String className = Objects.requireNonNull(method.getContainingClass()).getQualifiedName();
         final String message = method.hasModifierProperty(PsiModifier.ABSTRACT) ?
-                               RefactoringBundle.message("inlined.method.implements.method.from.0", className) :
-                               RefactoringBundle.message("inlined.method.overrides.method.from.0", className);
+                               JavaRefactoringBundle.message("inlined.method.implements.method.from.0", className) :
+                               JavaRefactoringBundle.message("inlined.method.overrides.method.from.0", className);
         conflicts.putValue(method, message);
       }
 
@@ -229,7 +229,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           }
         }
         if (element instanceof PsiReferenceExpression && myTransformerChooser.apply((PsiReference)element).isFallBackTransformer()) {
-          conflicts.putValue(element, RefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+          conflicts.putValue(element, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
         }
 
         final String errorMessage = checkUnableToInsertCodeBlock(myMethod.getBody(), element);
@@ -239,7 +239,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
     else if (myReference != null && myTransformerChooser.apply(myReference).isFallBackTransformer()) {
-      conflicts.putValue(myReference, RefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
+      conflicts.putValue(myReference, JavaRefactoringBundle.message("inlined.method.will.be.transformed.to.single.return.form"));
     }
 
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
@@ -367,7 +367,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     RangeMarker position = null;
     if (myEditor != null) {
       final int offset = myEditor.getCaretModel().getOffset();

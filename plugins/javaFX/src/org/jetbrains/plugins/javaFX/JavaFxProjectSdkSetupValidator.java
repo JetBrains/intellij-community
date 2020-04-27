@@ -41,8 +41,7 @@ public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator 
     final PsiClass nodeClass =
       JavaPsiFacade.getInstance(project).findClass(JavaFxCommonNames.JAVAFX_SCENE_NODE, GlobalSearchScope.allScope(project));
     if (nodeClass == null) {
-      return "The JavaFX runtime is not configured. " +
-             "Either use a JDK that has the JavaFX built in, or add a JavaFX library to the classpath";
+      return JavaFXBundle.message("javafx.project.sdk.setup.validator.runtime.not.configured.error");
     }
     return null;
   }

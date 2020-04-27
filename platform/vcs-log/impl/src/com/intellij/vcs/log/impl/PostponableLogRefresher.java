@@ -127,7 +127,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
 
     @Override
     public String toString() {
-      return "VcsLogWindow '" + myId + "'";
+      return "VcsLogWindow '" + myId + "'"; // NON-NLS
     }
   }
 }

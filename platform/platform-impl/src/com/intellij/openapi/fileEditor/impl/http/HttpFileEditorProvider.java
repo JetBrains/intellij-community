@@ -13,9 +13,6 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file) {

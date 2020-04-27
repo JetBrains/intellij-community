@@ -94,8 +94,7 @@ public abstract class XmlExtension {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
-  @Nullable
-  public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
+  public String[] @Nullable [] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
     return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
   }
 
@@ -208,6 +207,10 @@ public abstract class XmlExtension {
   }
 
   public boolean isSingleTagException(@NotNull XmlTag tag) { return false; }
+
+  public boolean isValidTagNameChar(final char c) {
+    return false;
+  }
 
   public static boolean shouldIgnoreSelfClosingTag(@NotNull XmlTag tag) {
     final XmlExtension extension = getExtensionByElement(tag);

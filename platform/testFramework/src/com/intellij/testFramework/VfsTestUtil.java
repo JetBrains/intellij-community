@@ -26,11 +26,9 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class VfsTestUtil {
   public static final Key<String> TEST_DATA_FILE_PATH = Key.create("TEST_DATA_FILE_PATH");
 
@@ -52,7 +50,7 @@ public class VfsTestUtil {
   }
 
   @NotNull
-  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, @NotNull byte[] data) {
+  public static VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath, byte @NotNull [] data) {
     return createFileOrDir(root, relativePath, data, false);
   }
 
@@ -62,7 +60,7 @@ public class VfsTestUtil {
   }
 
   @NotNull
-  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, @NotNull byte[] data, boolean dir) {
+  private static VirtualFile createFileOrDir(VirtualFile root, String relativePath, byte @NotNull [] data, boolean dir) {
     try {
       return WriteAction.computeAndWait(() -> {
         VirtualFile parent = root;
@@ -160,7 +158,7 @@ public class VfsTestUtil {
 
   @NotNull
   public static List<VFileEvent> getEvents(@NotNull Runnable action) {
-    List<VFileEvent> allEvents = new ArrayList<>();
+    List<VFileEvent> allEvents = Collections.synchronizedList(new ArrayList<>());
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {

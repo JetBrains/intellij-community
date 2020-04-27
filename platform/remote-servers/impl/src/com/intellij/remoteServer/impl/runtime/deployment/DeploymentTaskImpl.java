@@ -10,9 +10,6 @@ import com.intellij.remoteServer.runtime.deployment.debug.DebugConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class DeploymentTaskImpl<D extends DeploymentConfiguration> implements DeploymentTask<D> {
   private final DeploymentSource mySource;
   private final D myConfiguration;

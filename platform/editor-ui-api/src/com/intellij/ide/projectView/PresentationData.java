@@ -27,6 +27,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @deprecated Use {@link #PresentationData(String, String, Icon, TextAttributesKey)} instead.
    */
   @Deprecated
-  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
+  public PresentationData(@Nls String presentableText, String locationString, Icon openIcon, Icon closedIcon,
                           @Nullable TextAttributesKey attributesKey) {
     this(presentableText, locationString, closedIcon, attributesKey);
   }
@@ -138,7 +139,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    *
    * @param presentableText the name of the object.
    */
-  public void setPresentableText(String presentableText) {
+  public void setPresentableText(@Nls String presentableText) {
     myPresentableText = presentableText;
   }
 
@@ -268,8 +269,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   @Override
-  @NotNull
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[]{myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
       myLocationString, mySeparatorAbove, myLocationPrefix, myLocationSuffix};
   }

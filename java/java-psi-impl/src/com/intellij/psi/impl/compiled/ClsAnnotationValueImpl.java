@@ -59,8 +59,7 @@ abstract class ClsAnnotationValueImpl extends ClsElementImpl implements PsiAnnot
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return new PsiElement[]{myReferenceElement, myParameterList};
   }
 

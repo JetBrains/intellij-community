@@ -42,7 +42,7 @@ public class MethodResolverProcessor extends MethodCandidatesProcessor {
     setArgumentList(argumentList);
   }
 
-  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, @NotNull PsiConflictResolver[] resolvers) {
+  public MethodResolverProcessor(@NotNull PsiElement place, @NotNull PsiFile placeFile, PsiConflictResolver @NotNull [] resolvers) {
     super(place, placeFile, resolvers, new SmartList<>());
   }
 

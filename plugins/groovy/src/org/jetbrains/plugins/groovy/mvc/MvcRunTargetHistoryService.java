@@ -52,7 +52,7 @@ public class MvcRunTargetHistoryService implements PersistentStateComponent<Stri
   }
 
   @Override
-  public void loadState(@NotNull String[] state) {
+  public void loadState(String @NotNull [] state) {
     synchronized (myHistory) {
       myHistory.clear();
       int start = 0;

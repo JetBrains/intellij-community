@@ -70,7 +70,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
-    myWorkingDirectoryTextField.addBrowseFolderListener("Select Working Directory", "", data.getProject(),
+    myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
     myPythonSdks = new ArrayList<>(PythonSdkUtil.getAllSdks());

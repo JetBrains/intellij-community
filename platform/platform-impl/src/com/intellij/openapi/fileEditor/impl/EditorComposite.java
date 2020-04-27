@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
@@ -98,8 +99,8 @@ public class EditorComposite implements Disposable {
    * is {@code null} or {@code providers} is {@code null} or {@code myEditor} arrays is empty
    */
   EditorComposite(@NotNull final VirtualFile file,
-                  @NotNull final FileEditor[] editors,
-                  @NotNull FileEditorProvider[] providers,
+                  final FileEditor @NotNull [] editors,
+                  FileEditorProvider @NotNull [] providers,
                   @NotNull final FileEditorManagerEx fileEditorManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
@@ -156,7 +157,8 @@ public class EditorComposite implements Disposable {
             ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
           };
           if (ApplicationManager.getApplication().isDispatchThread()) {
-            CommandProcessor.getInstance().executeCommand(myFileEditorManager.getProject(), runnable, "Switch Active Editor", null);
+            CommandProcessor.getInstance().executeCommand(myFileEditorManager.getProject(), runnable,
+                                                          IdeBundle.message("command.switch.active.editor"), null);
           }
           else {
             runnable.run(); // not invoked by user
@@ -166,8 +168,7 @@ public class EditorComposite implements Disposable {
     });
   }
 
-  @NotNull
-  public FileEditorProvider[] getProviders() {
+  public FileEditorProvider @NotNull [] getProviders() {
     return myProviders;
   }
 
@@ -277,8 +278,7 @@ public class EditorComposite implements Disposable {
    * @return editors which are opened in the composite. <b>Do not modify
    * this array</b>.
    */
-  @NotNull
-  public FileEditor[] getEditors() {
+  public FileEditor @NotNull [] getEditors() {
     return myEditors;
   }
 
@@ -374,10 +374,6 @@ public class EditorComposite implements Disposable {
   @NotNull
   FileEditor getSelectedEditor() {
     return getSelectedWithProvider().getFileEditor();
-  }
-
-  public boolean isDisposed() {
-    return myTabbedPaneWrapper != null && myTabbedPaneWrapper.isDisposed();
   }
 
   /**

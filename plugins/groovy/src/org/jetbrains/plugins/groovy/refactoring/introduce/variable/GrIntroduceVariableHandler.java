@@ -49,12 +49,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   public static final String DUMMY_NAME = "________________xxx_________________";
   private RangeMarker myPosition = null;
 
-  @NotNull
   @Override
-  protected GrControlFlowOwner[] findPossibleScopes(GrExpression selectedExpr,
-                                                    GrVariable variable,
-                                                    StringPartInfo stringPartInfo,
-                                                    Editor editor) {
+  protected GrControlFlowOwner @NotNull [] findPossibleScopes(GrExpression selectedExpr,
+                                                              GrVariable variable,
+                                                              StringPartInfo stringPartInfo,
+                                                              Editor editor) {
     // Get container element
     final GrControlFlowOwner scope = ControlFlowUtils.findControlFlowOwner(stringPartInfo != null ? stringPartInfo.getLiteral() : selectedExpr);
     if (scope == null) {
@@ -97,7 +96,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected void checkOccurrences(@NotNull PsiElement[] occurrences) {
+  protected void checkOccurrences(PsiElement @NotNull [] occurrences) {
     //nothing to do
   }
 
@@ -213,7 +212,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   private GrVariable doProcessExpression(@NotNull final GrIntroduceContext context,
                                          @NotNull GroovyIntroduceVariableSettings settings,
                                          @NotNull GrVariableDeclaration varDecl,
-                                         @NotNull PsiElement[] elements,
+                                         PsiElement @NotNull [] elements,
                                          @NotNull GrExpression expression, boolean processUsages) {
     return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, processUsages) {
       @Override

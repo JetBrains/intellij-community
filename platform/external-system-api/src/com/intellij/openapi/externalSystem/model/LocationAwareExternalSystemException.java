@@ -26,19 +26,19 @@ public class LocationAwareExternalSystemException extends ExternalSystemExceptio
   private final Integer myLine;
   private final Integer myColumn;
 
-  public LocationAwareExternalSystemException(@Nullable String message, String filePath, @NotNull String... quickFixes) {
+  public LocationAwareExternalSystemException(@Nullable String message, String filePath, String @NotNull ... quickFixes) {
     this(message, null, filePath, -1, -1, quickFixes);
   }
 
-  public LocationAwareExternalSystemException(@Nullable String message, String filePath, Integer line, @NotNull String... quickFixes) {
+  public LocationAwareExternalSystemException(@Nullable String message, String filePath, Integer line, String @NotNull ... quickFixes) {
     this(message, null, filePath, line, -1, quickFixes);
   }
 
-  public LocationAwareExternalSystemException(@Nullable String message, String filePath, Integer line, Integer column, @NotNull String... quickFixes) {
+  public LocationAwareExternalSystemException(@Nullable String message, String filePath, Integer line, Integer column, String @NotNull ... quickFixes) {
     this(message, null, filePath, line, column, quickFixes);
   }
 
-  public LocationAwareExternalSystemException(@Nullable Throwable cause, String filePath, Integer line, Integer column, @NotNull String... quickFixes) {
+  public LocationAwareExternalSystemException(@Nullable Throwable cause, String filePath, Integer line, Integer column, String @NotNull ... quickFixes) {
     this(null, cause, filePath, line, column, quickFixes);
   }
 
@@ -47,7 +47,7 @@ public class LocationAwareExternalSystemException extends ExternalSystemExceptio
                                               String filePath,
                                               Integer line,
                                               Integer column,
-                                              @NotNull String... quickFixes) {
+                                              String @NotNull ... quickFixes) {
     super(message, cause, quickFixes);
     myFilePath = filePath;
     myLine = line;

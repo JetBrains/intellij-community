@@ -171,9 +171,8 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
     };
   }
 
-  @Nullable
   @Override
-  public byte[] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
+  public byte @Nullable [] getByteContent(final VirtualFile f, final FileRevisionTimestampComparator c) {
     if (!isInitialized()) return null;
     if (!myGateway.areContentChangesVersioned(f)) return null;
     return ReadAction.compute(() -> new ByteContentRetriever(myGateway, myVcs, f, c).getResult());

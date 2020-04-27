@@ -6,10 +6,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,9 +31,9 @@ public class ApproveRemovedMappingsActivity implements StartupActivity {
         for (RemovedMappingTracker.RemovedMapping mapping : list) {
           final FileNameMatcher matcher = mapping.getFileNameMatcher();
           final FileType fileType = FileTypeManager.getInstance().findFileTypeByName(mapping.getFileTypeName());
-          Notification notification = new Notification("File type recognized", "File type recognized",
-                                                       "File extension " + matcher.getPresentableString() +
-                                                       " was reassigned to " + fileType.getName() + " <a href='revert'>Revert</a>",
+          Notification notification = new Notification(FileTypesBundle.message("notification.title.file.type.recognized"),
+                                                       FileTypesBundle.message("notification.title.file.type.recognized"),
+                                                       FileTypesBundle.message("notification.file.extension.0.was.reassigned.to.1.revert", matcher.getPresentableString(), fileType.getName()),
                                                        NotificationType.WARNING, new NotificationListener.Adapter() {
             @Override
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {

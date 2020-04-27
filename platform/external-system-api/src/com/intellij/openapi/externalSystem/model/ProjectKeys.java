@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencies;
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,8 @@ public class ProjectKeys {
   @NotNull public static final Key<ConfigurationData>     CONFIGURATION = Key.create(ConfigurationData.class, 350);
 
   @NotNull public static final Key<TestData>              TEST = Key.create(TestData.class, 450);
+
+  @NotNull public static final Key<ProjectDependencies>   DEPENDENCIES_GRAPH = Key.create(ProjectDependencies.class, 500);
 
   private ProjectKeys() {
   }

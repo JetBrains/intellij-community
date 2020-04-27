@@ -13,7 +13,6 @@ import com.intellij.openapi.application.PreloadingActivity;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -23,6 +22,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Collection;
 import java.util.List;
@@ -110,16 +110,12 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   @NotNull
   public abstract String getId();
 
-  public static String messageApp(String property) {
+  public static String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
   }
 
-  public static String messageIde(String property) {
+  public static String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(IdeBundle.message(property), false);
-  }
-
-  public static String messageKeyMap(String property) {
-    return StringUtil.stripHtml(KeyMapBundle.message(property), false);
   }
 
   /*
@@ -213,6 +209,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                               @Nullable ProgressIndicator indicator,
                               @Nullable Project project,
                               @Nullable PluginDescriptor pluginDescriptor) {
+      if (!provider.preloadNeeded()) return;
       if (indicator != null && indicator.isCanceled()) return;  // if application is closed
       if (project != null && project.isDisposed()) return; // if project is closed
       getCachedOptions(provider, project, pluginDescriptor);

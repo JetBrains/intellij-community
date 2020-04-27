@@ -267,7 +267,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
   private class MyPatchModel extends AbstractTableModel implements MultiReorderedModel {
 
-    @NotNull private final MqPatchDetails.MqPatchEnum[] myColumnNames = MqPatchDetails.MqPatchEnum.values();
+    private final MqPatchDetails.MqPatchEnum @NotNull [] myColumnNames = MqPatchDetails.MqPatchEnum.values();
     @NotNull private final Map<String, MqPatchDetails> myPatchesWithDetails = new HashMap<>();
     @NotNull private final List<String> myPatches;
 

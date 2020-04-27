@@ -41,7 +41,7 @@ public class EncapsulateVariableFix extends RefactoringInspectionGadgetsFix impl
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Encapsulate field";
+    return InspectionGadgetsBundle.message("encapsulate.variable.fix.family.name");
   }
 
   @Override

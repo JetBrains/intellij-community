@@ -25,6 +25,5 @@ import org.jetbrains.annotations.NotNull;
 public interface ChangeVariableTypeQuickFixProvider {
   ExtensionPointName<ChangeVariableTypeQuickFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.changeVariableTypeQuickFixProvider");
 
-  @NotNull
-  IntentionAction[] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn);
+  IntentionAction @NotNull [] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn);
 }

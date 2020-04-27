@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.openapi.Disposable;
@@ -33,6 +34,11 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
     myBrowser.addListener(() -> updatePreviewLater(), this);
     myBrowser.getViewer().addSelectionListener(this::updatePreviewLater, this);
+  }
+
+  @Override
+  protected boolean shouldAddToolbarBottomBorder(@NotNull FrameDiffTool.ToolbarComponents toolbarComponents) {
+    return false;
   }
 
   @NotNull

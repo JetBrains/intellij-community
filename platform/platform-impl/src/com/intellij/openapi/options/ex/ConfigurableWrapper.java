@@ -80,9 +80,6 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
             return null; // do not create configurable that cannot be cast to the specified type
           }
         }
-        else if (type == OptionalConfigurable.class) {
-          return null; // do not create configurable from ConfigurableProvider which replaces OptionalConfigurable
-        }
       }
       configurable = wrapper.getConfigurable();
     }
@@ -161,7 +158,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
   @Nullable
   @Override
   public JComponent createComponent() {
-    return getConfigurable().createComponent();
+    UnnamedConfigurable configurable = getConfigurable();
+    return configurable == null ? null : configurable.createComponent();
   }
 
   @Override
@@ -264,9 +262,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
       myKids = kids;
     }
 
-    @NotNull
     @Override
-    public Configurable[] getConfigurables() {
+    public Configurable @NotNull [] getConfigurables() {
       if (isInitialized) {
         return myKids;
       }

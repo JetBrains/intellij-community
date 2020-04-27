@@ -26,7 +26,6 @@ import java.util.List;
  *
  * @see UnloadedModuleDescription
  * @see LoadedModuleDescription
- * @author nik
  */
 @ApiStatus.Experimental
 public interface ModuleDescription {

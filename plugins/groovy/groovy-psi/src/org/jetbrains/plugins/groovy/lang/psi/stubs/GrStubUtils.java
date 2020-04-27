@@ -32,12 +32,11 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrM
 
 public class GrStubUtils {
 
-  public static void writeStringArray(@NotNull StubOutputStream dataStream, @NotNull String[] array) throws IOException {
+  public static void writeStringArray(@NotNull StubOutputStream dataStream, String @NotNull [] array) throws IOException {
     writeSeq(dataStream, ContainerUtil.newArrayList(array), dataStream::writeName);
   }
 
-  @NotNull
-  public static String[] readStringArray(@NotNull StubInputStream dataStream) throws IOException {
+  public static String @NotNull [] readStringArray(@NotNull StubInputStream dataStream) throws IOException {
     return ArrayUtilRt.toStringArray(readSeq(dataStream, dataStream::readNameString));
   }
 

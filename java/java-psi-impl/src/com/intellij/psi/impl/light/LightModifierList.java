@@ -67,15 +67,13 @@ public class LightModifierList extends LightElement implements PsiModifierList {
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     //todo
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }
 
@@ -122,8 +120,7 @@ public class LightModifierList extends LightElement implements PsiModifierList {
     return buffer.toString();
   }
 
-  @NotNull
-  public String[] getModifiers() {
+  public String @NotNull [] getModifiers() {
     return ArrayUtilRt.toStringArray(myModifiers);
   }
 }

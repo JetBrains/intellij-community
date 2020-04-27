@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -123,13 +124,9 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
   private static PsiClass findLoader(Project project, Module module, String qualifiedName) {
     DumbService dumbService = DumbService.getInstance(project);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    dumbService.setAlternativeResolveEnabled(true);
-    try {
-      return ReadAction.compute(() -> facade.findClass(qualifiedName, module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project)));
-    }
-    finally {
-      dumbService.setAlternativeResolveEnabled(false);
-    }
+    ThrowableComputable<PsiClass, RuntimeException> computable = () -> facade.findClass(qualifiedName, module != null ? GlobalSearchScope
+      .moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project));
+    return ReadAction.compute(() -> dumbService.computeWithAlternativeResolveEnabled(computable));
   }
 
   @Nullable

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,6 +12,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -39,9 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Mike
- */
 public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   private static final Logger LOG = Logger.getInstance(CreateParameterFromUsageFix.class);
 
@@ -66,7 +51,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     @Override
     public String getText(String varName) {
-    return QuickFixBundle.message("create.parameter.from.usage.text", varName);
+    return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.PARAMETER.object(), varName);
   }
 
   @Nullable
@@ -95,7 +80,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
 
     final List<ParameterInfoImpl> parameterInfos =
       new ArrayList<>(Arrays.asList(ParameterInfoImpl.fromMethod(method)));
-    ParameterInfoImpl parameterInfo = new ParameterInfoImpl(-1, varName, type, varName, false);
+    ParameterInfoImpl parameterInfo = ParameterInfoImpl.createNew().withName(varName).withType(type).withDefaultValue(varName);
     if (!method.isVarArgs()) {
       parameterInfos.add(parameterInfo);
     }
@@ -117,7 +102,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
         dialog.setParameterInfos(parameterInfos);
         if (dialog.showAndGet()) {
           for (ParameterInfoImpl info : parameterInfos) {
-            if (info.getOldIndex() == -1) {
+            if (info.isNew()) {
               final String newParamName = info.getName();
               if (!Comparing.strEqual(varName, newParamName)) {
                 final PsiExpression newExpr =

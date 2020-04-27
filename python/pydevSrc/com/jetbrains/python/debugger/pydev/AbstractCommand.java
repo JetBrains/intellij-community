@@ -62,6 +62,8 @@ public abstract class AbstractCommand<T> {
   public static final int SHOW_WARNING = 150;
   public static final int LOAD_FULL_VALUE = 151;
 
+  public static final int CMD_GET_SMART_STEP_INTO_VARIANTS = 160;
+
   /**
    * The code of the message that means that IDE received
    * {@link #PROCESS_CREATED} message from the Python debugger script.

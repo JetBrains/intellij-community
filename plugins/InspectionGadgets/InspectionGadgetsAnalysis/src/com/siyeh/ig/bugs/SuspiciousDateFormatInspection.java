@@ -205,7 +205,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix incorrect date format";
+      return InspectionGadgetsBundle.message("incorrect.date.format.fix.family.name");
     }
 
     @Override

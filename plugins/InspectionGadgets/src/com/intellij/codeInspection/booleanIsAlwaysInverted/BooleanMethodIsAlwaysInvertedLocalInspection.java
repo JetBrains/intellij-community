@@ -32,9 +32,8 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
     return myGlobalTool.getShortName();
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     PsiType returnType = method.getReturnType();
     if (!PsiType.BOOLEAN.equals(returnType) ||
         MethodUtils.hasSuper(method) ||

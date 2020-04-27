@@ -4,8 +4,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Consider using {@link com.intellij.util.io.DirectoryContentBuilder} instead, it provides more convenient Kotlin DSL.
- *
- * @author nik
  */
 public class TestFileSystemBuilder {
   private final TestFileSystemItem myItem;

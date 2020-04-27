@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.VcsExecutablePathSelector;
@@ -60,9 +59,9 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     panel.add(UI.PanelFactory.panel(myIgnoredWhitespacesInAnnotationsCbx).createPanel());
 
     mySyncControl = new JBCheckBox(DvcsBundle.getString("sync.setting"));
-    JPanel mySyncControlPanel = ObjectUtils.notNull(UI.PanelFactory.panel(mySyncControl)
-      .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
-      .createPanel());
+    JPanel mySyncControlPanel = Objects.requireNonNull(UI.PanelFactory.panel(mySyncControl)
+                                                         .withTooltip(DvcsBundle.message("sync.setting.description", "Mercurial"))
+                                                         .createPanel());
     if (!project.isDefault()) {
       final HgRepositoryManager repositoryManager = ServiceManager.getService(project, HgRepositoryManager.class);
       mySyncControlPanel.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());

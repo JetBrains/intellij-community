@@ -36,7 +36,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
 
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
     if (!(original instanceof StandardProgressIndicator)) {
-      throw new IllegalArgumentException("Original indicator " + original + " must be StandardProcessIndicator but got: " + original.getClass());
+      throw new IllegalArgumentException("Original indicator " + original + " must be StandardProgressIndicator but got: " + original.getClass());
     }
     myOriginal = original;
     myCheckCanceledForMe = checkCanceledForMe;
@@ -97,6 +97,34 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
         break;
       }
     }
+  }
+
+  @Override
+  public void setText(String text) {
+    super.setText(text);
+    myOriginal.setText(text);
+  }
+
+  @Override
+  public void setText2(String text) {
+    super.setText2(text);
+    myOriginal.setText2(text);
+  }
+
+  @Override
+  public void setFraction(double fraction) {
+    super.setFraction(fraction);
+    myOriginal.setFraction(fraction);
+  }
+
+  @Override
+  public void setIndeterminate(boolean indeterminate) {
+    myOriginal.setIndeterminate(indeterminate);
+  }
+
+  @Override
+  public boolean isIndeterminate() {
+    return myOriginal.isIndeterminate();
   }
 
   @NotNull

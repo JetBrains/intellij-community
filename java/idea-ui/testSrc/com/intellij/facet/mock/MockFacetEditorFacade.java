@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class MockFacetEditorFacade implements FacetEditorFacade {
   private FacetInfo mySelectedFacet;
   private final FacetTreeModel myModel = new FacetTreeModel();

@@ -25,7 +25,10 @@ class PyInlineFunctionDialog(project: Project,
 
   init {
     myInvokedOnReference = myInvocationReference != null
-    title = if (isMethod) "Inline method $myFunctionName" else "Inline function $myFunctionName"
+    title = when {
+      isMethod -> PyBundle.message("refactoring.inline.method", myFunctionName)
+      else -> PyBundle.message("refactoring.inline.function", myFunctionName)
+    }
     init()
   }
 

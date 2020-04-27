@@ -278,9 +278,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     @NotNull
     public abstract NodeDescriptor doCreateDescriptor(Object element, NodeDescriptor parentDescriptor);
 
-    @NotNull
     @Override
-    public final Object[] getChildElements(@NotNull Object element) {
+    public final Object @NotNull [] getChildElements(@NotNull Object element) {
       return _getChildElements(element, true);
     }
 

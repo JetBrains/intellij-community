@@ -26,7 +26,7 @@ import java.util.function.Function;
 
 public class UnionPackageSet extends CompoundPackageSet {
   @NotNull
-  public static PackageSet create(@NotNull PackageSet... sets) {
+  public static PackageSet create(PackageSet @NotNull ... sets) {
     if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
     return sets.length == 1 ? sets[0] : new UnionPackageSet(sets);
   }
@@ -39,7 +39,7 @@ public class UnionPackageSet extends CompoundPackageSet {
     super(set1, set2);
   }
 
-  private UnionPackageSet(@NotNull PackageSet... sets) {
+  private UnionPackageSet(PackageSet @NotNull ... sets) {
     super(sets);
   }
 

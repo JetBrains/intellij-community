@@ -75,9 +75,8 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
     return myString;
   }
 
-  @NotNull
   @Override
-  public char[] getChars() { return myChars; }
+  public char @NotNull [] getChars() { return myChars; }
 
   @Override
   public int getLineCount() { return myLineSet.findLineIndex(myChars.length) + 1; }

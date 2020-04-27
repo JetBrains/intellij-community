@@ -34,9 +34,8 @@ public class XsltColorPage extends XMLColorsPage {
     return "XSLT";
   }
 
-  @NotNull
   @Override
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return new AttributesDescriptor[] { new AttributesDescriptor("XSLT directive", XsltSupport.XSLT_DIRECTIVE)};
   }
 

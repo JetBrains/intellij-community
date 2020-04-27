@@ -37,7 +37,7 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Replace with True or False";
+    return PyBundle.message("QFIX.replace.with.true.or.false");
   }
 
   @Override

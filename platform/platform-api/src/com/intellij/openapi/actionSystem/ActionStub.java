@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -48,6 +48,10 @@ public final class ActionStub extends AnAction implements ActionStubBase {
 
   public void addActionTextOverride(@NotNull String place, @NotNull String text) {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
+  }
+
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
   }
 
   @NotNull
@@ -100,7 +104,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     copyTemplatePresentation(this.getTemplatePresentation(), targetAction.getTemplatePresentation());
     targetAction.setShortcutSet(getShortcutSet());
     for (String place : myActionTextOverrides.keySet()) {
-      targetAction.addTextOverride(place, ObjectUtils.notNull(myActionTextOverrides.get(place)));
+      targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
     }
   }
 

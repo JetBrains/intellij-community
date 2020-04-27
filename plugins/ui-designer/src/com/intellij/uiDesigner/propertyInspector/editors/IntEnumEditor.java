@@ -18,7 +18,7 @@ public final class IntEnumEditor extends PropertyEditor<Integer> {
   private JComboBox myCbx;
   private final Pair[] myPairs;
 
-  public IntEnumEditor(@NotNull final Pair[] pairs) {
+  public IntEnumEditor(final Pair @NotNull [] pairs) {
     myPairs = pairs;
   }
 

@@ -17,9 +17,6 @@ package com.intellij.framework.library;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface FrameworkLibraryVersionFilter {
   FrameworkLibraryVersionFilter ALL = new FrameworkLibraryVersionFilter() {
     @Override

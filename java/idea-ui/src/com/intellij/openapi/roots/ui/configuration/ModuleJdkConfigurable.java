@@ -16,11 +16,11 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
@@ -95,8 +95,8 @@ public abstract class ModuleJdkConfigurable implements Disposable {
       if (projectJdk == null) {
         final int res =
           Messages.showYesNoDialog(myJdkPanel,
-                                   ProjectBundle.message("project.roots.no.jdk.on.project.message"),
-                                   ProjectBundle.message("project.roots.no.jdk.on.project.title"),
+                                   JavaUiBundle.message("project.roots.no.jdk.on.project.message"),
+                                   JavaUiBundle.message("project.roots.no.jdk.on.project.title"),
                                    Messages.getInformationIcon());
         if (res == Messages.YES) {
           myJdksModel.setProjectSdk(jdk);
@@ -115,7 +115,7 @@ public abstract class ModuleJdkConfigurable implements Disposable {
         clearCaches();
       }
     });
-    myJdkPanel.add(new JLabel(ProjectBundle.message("module.libraries.target.jdk.module.radio")),
+    myJdkPanel.add(new JLabel(JavaUiBundle.message("module.libraries.target.jdk.module.radio")),
                    new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
                                           JBUI.insetsRight(6), 0, 0));
     myJdkPanel.add(myCbModuleJdk, new GridBagConstraints(1, 0, 1, 1, 0, 1.0,

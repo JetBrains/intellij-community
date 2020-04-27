@@ -34,7 +34,7 @@ public class MessageDialog extends DialogWrapper {
   public MessageDialog(@Nullable Project project,
                        String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
-                       @NotNull String[] options,
+                       String @NotNull [] options,
                        int defaultOptionIndex,
                        @Nullable Icon icon,
                        boolean canBeParent) {
@@ -46,7 +46,7 @@ public class MessageDialog extends DialogWrapper {
                 @Nullable Component parentComponent,
                 String message,
                 @Nls(capitalization = Nls.Capitalization.Title) String title,
-                @NotNull String[] options,
+                String @NotNull [] options,
                 int defaultOptionIndex,
                 int focusedOptionIndex,
                 @Nullable Icon icon,
@@ -58,7 +58,7 @@ public class MessageDialog extends DialogWrapper {
 
   public MessageDialog(String message,
                        @Nls(capitalization = Nls.Capitalization.Title) String title,
-                       @NotNull String[] options,
+                       String @NotNull [] options,
                        int defaultOptionIndex,
                        @Nullable Icon icon) {
     this(null, null, message, title, options, defaultOptionIndex, -1, icon, null, false);
@@ -78,7 +78,7 @@ public class MessageDialog extends DialogWrapper {
 
   protected void _init(@Nls(capitalization = Nls.Capitalization.Title) String title,
                        String message,
-                       @NotNull String[] options,
+                       String @NotNull [] options,
                        int defaultOptionIndex,
                        int focusedOptionIndex,
                        @Nullable Icon icon,
@@ -102,9 +102,8 @@ public class MessageDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action[] actions = new Action[myOptions.length];
     for (int i = 0; i < myOptions.length; i++) {
       String option = myOptions[i];

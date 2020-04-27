@@ -1,6 +1,7 @@
 <idea-plugin implementation-detail="true">
   <name>Gradle-Maven</name>
   <id>org.jetbrains.plugins.gradle.maven</id>
+  <category>Build Tools</category>
   <vendor>JetBrains</vendor>
 
   <depends>org.intellij.groovy</depends>

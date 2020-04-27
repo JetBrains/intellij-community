@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.external;
 
+import com.intellij.CommonBundle;
 import com.intellij.diff.contents.*;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.diff.merge.ThreesideMergeRequest;
@@ -10,6 +11,7 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,6 +31,7 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,7 +166,7 @@ public class ExternalDiffToolUtil {
   }
 
   @NotNull
-  private static File createFile(@NotNull byte[] bytes, @NotNull FileNameInfo fileName) throws IOException {
+  private static File createFile(byte @NotNull [] bytes, @NotNull FileNameInfo fileName) throws IOException {
     File tempFile = FileUtil.createTempFile(fileName.prefix + "_", "_" + fileName.name, true);
     FileUtil.writeToFile(tempFile, bytes);
     return tempFile;
@@ -236,7 +239,8 @@ public class ExternalDiffToolUtil {
       if (settings.isMergeTrustExitCode()) {
         final Ref<Boolean> resultRef = new Ref<>();
 
-        ProgressManager.getInstance().run(new Task.Modal(project, "Waiting for External Tool...", true) {
+        ProgressManager.getInstance().run(new Task.Modal(project, DiffBundle
+          .message("waiting.for.external.tool"), true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             final Semaphore semaphore = new Semaphore(0);
@@ -273,7 +277,8 @@ public class ExternalDiffToolUtil {
         success = resultRef.get() == Boolean.TRUE;
       }
       else {
-        ProgressManager.getInstance().run(new Task.Modal(project, "Launching External Tool...", false) {
+        ProgressManager.getInstance().run(new Task.Modal(project, DiffBundle
+          .message("launching.external.tool"), false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(true);
@@ -282,8 +287,10 @@ public class ExternalDiffToolUtil {
         });
 
         success = Messages.showYesNoDialog(project,
-                                           "Press \"Mark as Resolved\" when you finish resolving conflicts in the external tool",
-                                           "Merge In External Tool", "Mark as Resolved", "Revert", null) == Messages.YES;
+                                           DiffBundle.message("press.mark.as.resolve"),
+                                           DiffBundle.message("merge.in.external.tool"),
+                                           DiffBundle.message("mark.as.resolved"),
+                                           CommonBundle.message("button.revert"), null) == Messages.YES;
       }
 
       if (success) outputFile.apply();
@@ -422,7 +429,7 @@ public class ExternalDiffToolUtil {
     @NotNull public final String prefix;
     @NotNull public final String name;
 
-    FileNameInfo(@NotNull String prefix, @NotNull String name) {
+    FileNameInfo(@NotNull @NonNls String prefix, @NotNull @NonNls String name) {
       this.prefix = prefix;
       this.name = name;
     }

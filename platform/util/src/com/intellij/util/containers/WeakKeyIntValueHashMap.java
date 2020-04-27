@@ -107,8 +107,7 @@ class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   }
 
   @Override
-  @NotNull
-  public final int[] values() {
+  public final int @NotNull [] values() {
     throw new IncorrectOperationException("values() makes no sense for weak/soft key map because GC can clear the key any moment now");
   }
 

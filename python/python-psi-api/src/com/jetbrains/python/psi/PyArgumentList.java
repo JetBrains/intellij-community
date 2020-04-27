@@ -35,8 +35,7 @@ public interface PyArgumentList extends PyElement {
   @NotNull
   Collection<PyExpression> getArgumentExpressions();
 
-  @NotNull
-  PyExpression[] getArguments();
+  PyExpression @NotNull [] getArguments();
 
   @Nullable
   PyKeywordArgument getKeywordArgument(String name);

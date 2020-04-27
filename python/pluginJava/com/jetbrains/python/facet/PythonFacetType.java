@@ -12,6 +12,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.indexing.FileContent;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.module.PythonModuleType;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -36,7 +37,7 @@ public class PythonFacetType extends FacetType<PythonFacet, PythonFacetConfigura
   }
 
   public PythonFacetType() {
-    super(PythonFacet.ID, ID, "Python");
+    super(PythonFacet.ID, ID, PyBundle.message("python.facet.name"));
   }
 
   @Override

@@ -6,10 +6,8 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.ui.UIUtil
-import org.junit.Assert
 
-import java.util.concurrent.Future
+import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   SearchEverywhereUI mySearchUI
@@ -31,24 +29,11 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def ui = createTestUI([ChooseByNameTest.createClassContributor(project)])
 
     def future = ui.findElementsForPattern("StrBuffer")
-    if (!waitFor(future)) Assert.fail("Search haven't finished")
-    assert future.get() == [strBuffer]
+    assert waitForFuture(future, 5000) == [strBuffer]
 
     future = ui.findElementsForPattern("StringBuffer")
-    if (!waitFor(future)) Assert.fail("Search haven't finished")
-    assert future.get() == [stringBuffer]
+    assert waitForFuture(future, 5000) == [stringBuffer]
   }
-
-  private static boolean waitFor(Future<?> future, long timeout = 30000) {
-    def start = System.currentTimeMillis()
-    while (!future.isDone()) {
-      UIUtil.dispatchAllInvocationEvents()
-      if (System.currentTimeMillis() - start > timeout) return false
-    }
-
-    return true
-  }
-
 
   private SearchEverywhereUI createTestUI(List<SearchEverywhereContributor<Object>> contributors) {
     if (mySearchUI != null) Disposer.dispose(mySearchUI)

@@ -20,7 +20,7 @@ abstract class ContentLayout {
     myUi = ui;
   }
 
-  public abstract void init();
+  public abstract void init(@NotNull ContentManager contentManager);
 
   public abstract void reset();
 
@@ -39,7 +39,7 @@ abstract class ContentLayout {
   public abstract void contentRemoved(ContentManagerEvent event);
 
   protected void updateIdLabel(BaseLabel label) {
-    String title = myUi.myWindow.getStripeTitle();
+    String title = myUi.window.getStripeTitle();
 
     String suffix = getTitleSuffix();
     if (suffix != null) title += suffix;
@@ -83,7 +83,7 @@ abstract class ContentLayout {
   public abstract String getNextContentActionName();
 
   protected boolean shouldShowId() {
-    JComponent component = myUi.myWindow.getComponentIfInitialized();
+    JComponent component = myUi.window.getComponentIfInitialized();
     return component != null && !"true".equals(component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL));
   }
 

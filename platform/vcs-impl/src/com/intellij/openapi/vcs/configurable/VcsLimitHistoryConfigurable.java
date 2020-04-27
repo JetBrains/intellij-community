@@ -27,7 +27,7 @@ public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigura
   private final VcsConfiguration myConfiguration;
 
   public VcsLimitHistoryConfigurable(Project project) {
-    super(project, "Limit history to: ", "rows");
+    super(project, VcsBundle.message("settings.checkbox.limit.history.to"), VcsBundle.message("settings.checkbox.rows"));
     myConfiguration = VcsConfiguration.getInstance(myProject);
   }
 

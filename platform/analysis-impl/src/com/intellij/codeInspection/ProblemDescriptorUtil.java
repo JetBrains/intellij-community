@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -75,7 +76,7 @@ public class ProblemDescriptorUtil {
         message.contains("#loc")) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
-        message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
+        message = StringUtil.replace(message, "#loc", "(" + AnalysisBundle.message("inspection.export.results.at.line") + " " + (lineNumber + 1) + ")");
       }
     }
     message = unescapeTags(message);
@@ -129,7 +130,7 @@ public class ProblemDescriptorUtil {
   }
 
   @NotNull
-  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, @Nullable PsiElement element) {
     return renderDescriptionMessage(descriptor, element, false);
   }
 
@@ -176,8 +177,7 @@ public class ProblemDescriptorUtil {
     }
     throw new RuntimeException("Cannot map " + highlightType);
   }
-  @NotNull
-  public static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
+  public static ProblemDescriptor @NotNull [] convertToProblemDescriptors(@NotNull final List<? extends Annotation> annotations, @NotNull final PsiFile file) {
     if (annotations.isEmpty()) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
@@ -207,7 +207,7 @@ public class ProblemDescriptorUtil {
                                                        int endOffset,
                                                        @NotNull String message,
                                                        boolean isAfterEndOfLine,
-                                                       @NotNull LocalQuickFix[] quickFixes) {
+                                                       LocalQuickFix @NotNull [] quickFixes) {
     if (severity == HighlightSeverity.INFORMATION ||
         startOffset == endOffset && !isAfterEndOfLine) {
       return null;
@@ -238,9 +238,8 @@ public class ProblemDescriptorUtil {
                                      false);
   }
 
-  @NotNull
-  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
-                                                   @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+  private static LocalQuickFix @NotNull [] toLocalQuickFixes(@Nullable List<? extends Annotation.QuickFixInfo> fixInfos,
+                                                             @NotNull Map<IntentionAction, LocalQuickFix> quickFixMappingCache) {
     if (fixInfos == null || fixInfos.isEmpty()) {
       return LocalQuickFix.EMPTY_ARRAY;
     }

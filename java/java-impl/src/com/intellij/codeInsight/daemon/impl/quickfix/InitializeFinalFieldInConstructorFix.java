@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -100,7 +100,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
 
   @NotNull
   private static PsiExpression addFieldInitialization(@NotNull PsiMethod constructor,
-                                                      @NotNull LookupElement[] suggestedInitializers,
+                                                      LookupElement @NotNull [] suggestedInitializers,
                                                       @NotNull PsiField field,
                                                       @NotNull Project project) {
     PsiCodeBlock methodBody = constructor.getBody();
@@ -123,7 +123,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
 
     final PsiExpressionStatement addedStatement = (PsiExpressionStatement)methodBody.add(codeStyleManager
       .reformat(factory.createStatementFromText(stmtText, methodBody)));
-    return ObjectUtils.notNull(((PsiAssignmentExpression)addedStatement.getExpression()).getRExpression());
+    return Objects.requireNonNull(((PsiAssignmentExpression)addedStatement.getExpression()).getRExpression());
   }
 
   private static boolean methodContainsParameterWithName(@NotNull PsiMethod constructor, @NotNull String name) {
@@ -136,7 +136,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
   }
 
   @NotNull
-  private static List<PsiMethod> choose(@NotNull PsiMethod[] ctors, @NotNull final Project project) {
+  private static List<PsiMethod> choose(PsiMethod @NotNull [] ctors, @NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Arrays.asList(ctors);
     }
@@ -159,8 +159,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static PsiMethodMember[] toPsiMethodMemberArray(@NotNull PsiMethod[] methods) {
+  private static PsiMethodMember @NotNull [] toPsiMethodMemberArray(PsiMethod @NotNull [] methods) {
     final PsiMethodMember[] result = new PsiMethodMember[methods.length];
     for (int i = 0; i < methods.length; i++) {
       result[i] = new PsiMethodMember(methods[i]);
@@ -168,8 +167,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     return result;
   }
 
-  @NotNull
-  private static PsiMethod[] toPsiMethodArray(@NotNull List<? extends PsiMethodMember> methodMembers) {
+  private static PsiMethod @NotNull [] toPsiMethodArray(@NotNull List<? extends PsiMethodMember> methodMembers) {
     final PsiMethod[] result = new PsiMethod[methodMembers.size()];
     int i = 0;
     for (PsiMethodMember methodMember : methodMembers) {

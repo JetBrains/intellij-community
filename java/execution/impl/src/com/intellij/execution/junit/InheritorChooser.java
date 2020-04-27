@@ -87,7 +87,7 @@ public class InheritorChooser {
           }
           return true;
         });
-      }, "Search for " + containingClass.getQualifiedName() + " inheritors", true, containingClass.getProject())) {
+      }, ExecutionBundle.message("search.for.0.inheritors", containingClass.getQualifiedName()), true, containingClass.getProject())) {
         return true;
       }
 

@@ -5,13 +5,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   protected final VirtualFile myFile;
   protected final String myFileName;
   protected final FileType myFileType;
-  private final Project myProject;
+  private volatile Project myProject;
 
   public IndexedFileImpl(@NotNull VirtualFile file, Project project) {
     this(file, file.getFileType(), project);
@@ -45,5 +47,9 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   @Override
   public Project getProject() {
     return myProject;
+  }
+
+  public void setProject(@NotNull Project project) {
+    myProject = project;
   }
 }

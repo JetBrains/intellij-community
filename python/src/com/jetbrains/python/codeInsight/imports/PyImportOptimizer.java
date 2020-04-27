@@ -120,8 +120,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     @NotNull
     private Comparator<PyImportElement> getFromNamesComparator() {
-      final Comparator<String> stringComparator =
-        myPySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      final Comparator<String> stringComparator = AddImportHelper.getImportTextComparator(myFile);
       final Comparator<QualifiedName> qNamesComparator = Comparator.comparing(QualifiedName::toString, stringComparator);
       return Comparator
         .comparing(PyImportElement::getImportedQName, Comparator.nullsFirst(qNamesComparator))

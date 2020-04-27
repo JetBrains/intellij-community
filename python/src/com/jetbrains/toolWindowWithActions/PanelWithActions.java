@@ -54,7 +54,7 @@ final class PanelWithActions extends JPanel {
   static JComponent wrap(@NotNull final JComponent dataComponent,
                          @NotNull final Collection<Runnable> closeListeners,
                          @Nullable final JComponent actionListenerComponent,
-                         @NotNull final AnAction... customActions) {
+                         final AnAction @NotNull ... customActions) {
     final PanelWithActions instance = new PanelWithActions();
 
     // Box layout: panel goes to the left, console to the right
@@ -104,7 +104,7 @@ final class PanelWithActions extends JPanel {
     @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setText(PyBundle.message("windowWithActions.closeWindow"));
+      e.getPresentation().setText(PyBundle.messagePointer("windowWithActions.closeWindow"));
     }
 
     @Override

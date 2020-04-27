@@ -89,16 +89,14 @@ public class ProjectBytecodeAnalysis {
     return null;
   }
 
-  @NotNull
-  public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
+  public PsiAnnotation @NotNull [] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
     return CachedValuesManager.getCachedValue(listOwner, () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
-  @NotNull
-  private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
+  private PsiAnnotation @NotNull [] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     PsiFile psiFile = listOwner.getContainingFile();
     VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
     if (file != null && ClassDataIndexer.isFileExcluded(file)) {
@@ -146,8 +144,7 @@ public class ProjectBytecodeAnalysis {
    * @param methodAnnotations inferred annotations
    * @return Psi annotations
    */
-  @NotNull
-  private PsiAnnotation[] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
+  private PsiAnnotation @NotNull [] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     boolean pure = methodAnnotations.pures.contains(primaryKey);
@@ -187,8 +184,7 @@ public class ProjectBytecodeAnalysis {
    * @param parameterAnnotations inferred parameter annotations
    * @return Psi annotations
    */
-  @NotNull
-  private PsiAnnotation[] toPsi(ParameterAnnotations parameterAnnotations) {
+  private PsiAnnotation @NotNull [] toPsi(ParameterAnnotations parameterAnnotations) {
     if (parameterAnnotations.notNull) {
       return new PsiAnnotation[]{getNotNullAnnotation()};
     }

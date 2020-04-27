@@ -8,7 +8,7 @@ public class ReverseLinesAction extends EditorAction {
   public ReverseLinesAction() {
     super(new AbstractPermuteLinesHandler() {
       @Override
-      public void permute(@NotNull String[] lines) {
+      public void permute(String @NotNull [] lines) {
         int halfSize = lines.length / 2;
         for (int i = 0; i < halfSize; i++) {
           int oppositeI = lines.length - 1 - i;

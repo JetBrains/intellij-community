@@ -46,13 +46,11 @@ public class PathReferenceConverter extends Converter<PathReference> implements 
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     return createReferences(element, true);
   }
 
-  @NotNull
-  public PsiReference[] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
+  public PsiReference @NotNull [] createReferences(@NotNull final PsiElement psiElement, final boolean soft) {
     return PathReferenceManager.getInstance().createReferences(psiElement, soft);
   }
 }

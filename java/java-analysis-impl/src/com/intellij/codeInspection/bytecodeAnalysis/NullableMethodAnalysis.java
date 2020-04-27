@@ -144,8 +144,7 @@ class NullableMethodAnalysis {
     return Value.Bot;
   }
 
-  @NotNull
-  private static int[] mapOrigins(boolean[] origins) {
+  private static int @NotNull [] mapOrigins(boolean[] origins) {
     int[] originsMapping = new int[origins.length];
     int mapped = 0;
     for (int i = 0; i < origins.length; i++) {

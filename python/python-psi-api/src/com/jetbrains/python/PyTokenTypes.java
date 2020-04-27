@@ -181,6 +181,7 @@ public class PyTokenTypes {
   public static final PyElementType DEDENT = new PyElementType("DEDENT");
 
   public static final PyElementType FSTRING_TEXT = new PyElementType("FSTRING_TEXT");
+  public static final PyElementType FSTRING_RAW_TEXT = new PyElementType("FSTRING_RAW_TEXT");
   public static final PyElementType FSTRING_START = new PyElementType("FSTRING_START");
   public static final PyElementType FSTRING_END = new PyElementType("FSTRING_END");
   public static final PyElementType FSTRING_FRAGMENT_START = new PyElementType("FSTRING_FRAGMENT_START");
@@ -195,4 +196,6 @@ public class PyTokenTypes {
                                                                 FSTRING_FRAGMENT_END,
                                                                 FSTRING_FRAGMENT_FORMAT_START,
                                                                 FSTRING_FRAGMENT_TYPE_CONVERSION);
+
+  public static final TokenSet FSTRING_TEXT_TOKENS = TokenSet.create(FSTRING_TEXT, FSTRING_RAW_TEXT);
 }

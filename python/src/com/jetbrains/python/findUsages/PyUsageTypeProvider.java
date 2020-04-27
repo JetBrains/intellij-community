@@ -7,6 +7,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.impl.rules.UsageTypeProviderEx;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyStructuralType;
@@ -18,10 +19,10 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PyUsageTypeProvider implements UsageTypeProviderEx {
-  private static final UsageType IN_IMPORT = new UsageType("Usage in import statement");
-  private static final UsageType UNTYPED = new UsageType("Untyped (probable) usage");
-  private static final UsageType USAGE_IN_ISINSTANCE = new UsageType("Usage in isinstance()");
-  private static final UsageType USAGE_IN_SUPERCLASS = new UsageType("Usage in superclass list");
+  private static final UsageType IN_IMPORT = new UsageType(PyPsiBundle.message("python.find.usages.usage.in.import.statement"));
+  private static final UsageType UNTYPED = new UsageType(PyPsiBundle.message("python.find.usages.untyped.probable.usage"));
+  private static final UsageType USAGE_IN_ISINSTANCE = new UsageType(PyPsiBundle.message("python.find.usages.usage.in.isinstance"));
+  private static final UsageType USAGE_IN_SUPERCLASS = new UsageType(PyPsiBundle.message("python.find.usages.usage.in.superclass.list"));
 
   @Override
   public UsageType getUsageType(PsiElement element) {
@@ -29,7 +30,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
+  public UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
     if (element instanceof PyElement) {
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return IN_IMPORT;

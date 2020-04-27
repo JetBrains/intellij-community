@@ -351,7 +351,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private DetachedRoot getDetachedRoot() {
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(myPanel.getProject());
       for (VirtualFile root : getSelectedRoots()) {
-        GitRepository repository = repositoryManager.getRepositoryForRoot(root);
+        GitRepository repository = repositoryManager.getRepositoryForRootQuick(root);
         if (repository == null) {
           continue;
         }

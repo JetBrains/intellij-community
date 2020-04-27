@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +34,11 @@ public class FileStatusFactory {
   private FileStatusFactory() {
   }
 
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @NotNull String description) {
+  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @Nls @NotNull String description) {
     return createFileStatus(id, description, null);
   }
 
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @NotNull String description, @Nullable Color color) {
+  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @Nls @NotNull String description, @Nullable Color color) {
     FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey(FILESTATUS_COLOR_KEY_PREFIX + id, color), description);
     myStatuses.add(result);
     return result;

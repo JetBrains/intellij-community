@@ -22,6 +22,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,8 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
       }
     });
     if (!dumbModeOccurred.isNull()) {
-      DumbService.getInstance(project).showDumbModeNotification("Usage search is not available until indices are ready");
+      DumbService.getInstance(project).showDumbModeNotification(
+        UsageViewBundle.message("notification.usage.search.is.not.available.until.indices.are.ready"));
       return;
     }
     final Usage[] usages = ReadAction.compute(() -> UsageInfo2UsageAdapter.convert(refUsages.get()));
@@ -50,6 +52,5 @@ public abstract class UsageInfoSearcherAdapter implements UsageSearcher {
     }
   }
 
-  @NotNull
-  protected abstract UsageInfo[] findUsages();
+  protected abstract UsageInfo @NotNull [] findUsages();
 }

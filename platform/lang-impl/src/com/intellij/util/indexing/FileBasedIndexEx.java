@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract IntPredicate getAccessibleFileIdFilter(@Nullable Project project);
 
   @ApiStatus.Internal
-  public abstract ProjectIndexableFilesFilter projectIndexableFiles(Project project);
+  public abstract ProjectIndexableFilesFilter projectIndexableFiles(@Nullable Project project);
 
   @ApiStatus.Internal
   abstract <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId);
@@ -45,11 +46,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   abstract void waitUntilIndicesAreInitialized();
 
+  /**
+   * @return true if index can be processed after it or
+   * false if no need to process it because, for example, scope is empty or index is going to rebuild.
+   */
   @ApiStatus.Internal
-  abstract <K> void ensureUpToDate(@NotNull final ID<K, ?> indexId,
-                                   @Nullable Project project,
-                                   @Nullable GlobalSearchScope filter,
-                                   @Nullable VirtualFile restrictedFile);
+  public abstract <K> boolean ensureUpToDate(@NotNull final ID<K, ?> indexId,
+                                             @Nullable Project project,
+                                             @Nullable GlobalSearchScope filter,
+                                             @Nullable VirtualFile restrictedFile);
 
   @Override
   @NotNull
@@ -104,7 +109,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (index == null) {
         return true;
       }
-      ensureUpToDate(indexId, scope.getProject(), scope);
+      if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
+        return true;
+      }
+      if (idFilter == null) {
+        idFilter = projectIndexableFiles(scope.getProject());
+      }
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -191,7 +201,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       }
       final Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
-      ensureUpToDate(indexId, project, filter, restrictToFile);
+      if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
+        return null;
+      }
 
       return myAccessValidator.validate(indexId, ()-> ConcurrencyUtil.withLock(index.getReadLock(), ()->computable.convert(index)));
     }
@@ -318,7 +330,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @Override
   public void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator) {
-    for(Runnable r: collectScanRootRunnables(processor, project, indicator)) r.run();
+    for (Runnable r : collectScanRootRunnables(processor, project, indicator)) r.run();
   }
 
   @NotNull
@@ -326,7 +338,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                          @NotNull final Project project,
                                                          ProgressIndicator indicator) {
     FileBasedIndexScanRunnableCollector collector = FileBasedIndexScanRunnableCollector.getInstance(project);
-    return collector.collectScanRootRunnables(processor, indicator);
+    ProgressIndicator finalIndicator = indicator != null ? indicator : new EmptyProgressIndicator();
+    return collector.collectScanRootRunnables(processor, finalIndicator);
   }
 
   @Nullable

@@ -146,9 +146,8 @@ public class JsonSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
       return isPermissiveDialect;
     }
 
-    @NotNull
     @Override
-    public TextAttributesKey[] getTokenHighlights(IElementType type) {
+    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType type) {
       return pack(ourAttributes.get(type));
     }
   }

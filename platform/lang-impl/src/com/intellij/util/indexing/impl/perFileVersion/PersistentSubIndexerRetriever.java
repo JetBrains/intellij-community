@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.perFileVersion;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -10,15 +11,12 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> {
+public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> implements Closeable {
   private static final String INDEXED_VERSIONS = "indexed_versions";
 
   @NotNull
@@ -51,6 +49,7 @@ public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> {
     myPersistentVersionEnumerator.clear();
   }
 
+  @Override
   public void close() throws IOException {
     myPersistentVersionEnumerator.close();
   }
@@ -65,7 +64,7 @@ public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> {
 
   public void setIndexedState(int fileId, @NotNull IndexedFile file) throws IOException {
     try (DataOutputStream stream = FSRecords.writeAttribute(fileId, myFileAttribute)) {
-      DataInputOutputUtil.writeINT(stream, getFileIndexerId(file));
+      DataInputOutputUtil.writeINT(stream, ProgressManager.getInstance().computeInNonCancelableSection(() -> getFileIndexerId(file)));
     }
   }
 
@@ -80,7 +79,7 @@ public class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> {
     return false;
   }
 
-  private int getFileIndexerId(@NotNull IndexedFile file) throws IOException {
+  public int getFileIndexerId(@NotNull IndexedFile file) throws IOException {
     SubIndexerType type = myIndexer.calculateSubIndexer(file);
     if (type == null) return -1;
     SubIndexerVersion version = myIndexer.getSubIndexerVersion(type);

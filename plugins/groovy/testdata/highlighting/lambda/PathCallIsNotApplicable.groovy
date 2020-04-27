@@ -5,5 +5,5 @@ class IntCategory {
 }
 
 use(IntCategory,() -> {
-  print 2(3)<warning descr="'2(3)' cannot be applied to '(java.lang.String, java.lang.String)'">("a", "b")</warning>
+  print 2(3)<warning descr="'call' cannot be applied to '(java.lang.String, java.lang.String)'">("a", "b")</warning>
 })

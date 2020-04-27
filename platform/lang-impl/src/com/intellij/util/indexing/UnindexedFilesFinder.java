@@ -12,14 +12,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 class UnindexedFilesFinder implements CollectingContentIterator {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
@@ -28,10 +29,18 @@ class UnindexedFilesFinder implements CollectingContentIterator {
   private final Project myProject;
   private final boolean myDoTraceForFilesToBeIndexed = FileBasedIndexImpl.LOG.isTraceEnabled();
   private final FileBasedIndexImpl myFileBasedIndex;
+  private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
 
   UnindexedFilesFinder(@NotNull Project project) {
     myProject = project;
     myFileBasedIndex = ((FileBasedIndexImpl)FileBasedIndex.getInstance());
+
+    myStateProcessors = FileBasedIndexInfrastructureExtension
+      .EP_NAME
+      .extensions()
+      .map(ex -> ex.createFileIndexingStatusProcessor(project))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -99,15 +108,20 @@ class UnindexedFilesFinder implements CollectingContentIterator {
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = affectedIndexCandidates.get(i);
               try {
-                if (myFileBasedIndex.needsFileContentLoading(indexId) && myFileBasedIndex.shouldIndexFile(fileContent, indexId)) {
-                  if (myDoTraceForFilesToBeIndexed) {
-                    LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
+                if (myFileBasedIndex.needsFileContentLoading(indexId)) {
+                  FileBasedIndexImpl.FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(fileContent, indexId);
+                  if (fileIndexingState == FileBasedIndexImpl.FileIndexingState.UP_TO_DATE) {
+                    myStateProcessors.forEach(p -> p.processUpToDateFile(file, inputId, indexId));
+                  } else if (fileIndexingState == FileBasedIndexImpl.FileIndexingState.SHOULD_INDEX) {
+                    if (myDoTraceForFilesToBeIndexed) {
+                      LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
+                    }
+                    synchronized (myFiles) {
+                      myFiles.add(file);
+                    }
+                    isUptoDate = false;
+                    break;
                   }
-                  synchronized (myFiles) {
-                    myFiles.add(file);
-                  }
-                  isUptoDate = false;
-                  break;
                 }
               }
               catch (RuntimeException e) {
@@ -125,7 +139,7 @@ class UnindexedFilesFinder implements CollectingContentIterator {
         }
 
         for (ID<?, ?> indexId : myFileBasedIndex.getContentLessIndexes(isDirectory)) {
-          if (myFileBasedIndex.shouldIndexFile(fileContent, indexId)) {
+          if (myFileBasedIndex.shouldIndexFile(fileContent, indexId) == FileBasedIndexImpl.FileIndexingState.SHOULD_INDEX) {
             myFileBasedIndex.updateSingleIndex(indexId, file, inputId, new IndexedFileWrapper(fileContent));
           }
         }
@@ -141,20 +155,14 @@ class UnindexedFilesFinder implements CollectingContentIterator {
     });
   }
 
+  private UpdatableIndex<FileType, Void, FileContent> myFileTypeIndex;
   private boolean isIndexedFileTypeUpToDate(@NotNull IndexedFile file, int inputId) {
-    long stamp = IndexingStamp.getIndexStamp(inputId, FileTypeIndex.NAME);
-    long fileTypeIndexVersion = IndexingStamp.getIndexCreationStamp(FileTypeIndex.NAME);
-    if (stamp != fileTypeIndexVersion) return false;
-
-    FileType actualFileType = file.getFileType();
-    try {
-      Map<FileType, Void> indexedFileType = myFileBasedIndex.getIndex(FileTypeIndex.NAME).getIndexedFileData(inputId);
-      return actualFileType.equals(ContainerUtil.getFirstItem(indexedFileType.keySet()));
+    if (myFileTypeIndex == null) {
+      myFileTypeIndex = myFileBasedIndex.getIndex(FileTypeIndex.NAME);
+      if (myFileTypeIndex == null) {
+        throw new IllegalStateException();
+      }
     }
-    catch (StorageException e) {
-      myFileBasedIndex.requestRebuild(FileTypeIndex.NAME, e);
-      LOG.error(e);
-      return false;
-    }
+    return myFileTypeIndex.isIndexedStateForFile(inputId, file);
   }
 }

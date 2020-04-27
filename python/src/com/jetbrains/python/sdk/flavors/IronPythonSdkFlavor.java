@@ -39,7 +39,16 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   private IronPythonSdkFlavor() {
   }
 
-  public static IronPythonSdkFlavor INSTANCE = new IronPythonSdkFlavor();
+  @Override
+  public boolean isPlatformIndependent() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public String envPathParam() {
+    return "IRONPYTHONPATH";
+  }
 
   @NotNull
   @Override

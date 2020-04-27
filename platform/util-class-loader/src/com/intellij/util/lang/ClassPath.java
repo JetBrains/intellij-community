@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,7 @@ public final class ClassPath {
   private static final LoaderCollector ourLoaderCollector = new LoaderCollector();
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = "classpath";
 
-  private final Stack<URL> myUrls = new Stack<URL>();
+  private final List<URL> myUrls = new ArrayList<URL>();
   private final List<Loader> myLoaders = new ArrayList<Loader>();
 
   private volatile boolean myAllUrlsWereProcessed;
@@ -81,7 +80,7 @@ public final class ClassPath {
     if (!urls.isEmpty()) {
       synchronized (myUrls) {
         for (int i = urls.size() - 1; i >= 0; i--) {
-          myUrls.push(urls.get(i));
+          myUrls.add(urls.get(i));
         }
         myAllUrlsWereProcessed = false;
       }
@@ -150,13 +149,14 @@ public final class ClassPath {
     while (myLoaders.size() < i + 1) {
       URL url;
       synchronized (myUrls) {
-        if (myUrls.empty()) {
+        int size = myUrls.size();
+        if (size == 0) {
           if (myCanUseCache) {
             myAllUrlsWereProcessed = true;
           }
           return null;
         }
-        url = myUrls.pop();
+        url = myUrls.remove(size - 1);
       }
 
       if (myLoadersMap.containsKey(url)) continue;

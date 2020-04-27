@@ -1,11 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomDeclarationSearcher;
@@ -19,8 +18,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,6 +162,10 @@ public final class TargetElementUtilBase {
 
     Project project = editor.getProject();
     if (project == null) return null;
+    return getReferencedElement(ref, flags);
+  }
+
+  static @Nullable PsiElement getReferencedElement(@NotNull PsiReference ref, int flags) {
     final Language language = ref.getElement().getLanguage();
     TargetElementEvaluator evaluator = TARGET_ELEMENT_EVALUATOR.forLanguage(language);
     if (evaluator != null) {
@@ -223,12 +224,9 @@ public final class TargetElementUtilBase {
 
     PsiElement element = file.findElementAt(adjusted);
     if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
-      final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
-      //if (referenceOrReferencedElement == null) {
-      //  return getReferenceOrReferencedElement(file, editor, flags, offset);
-      //}
-      if (isAcceptableReferencedElement(element, referenceOrReferencedElement)) {
-        return referenceOrReferencedElement;
+      final PsiElement referencedElement = getReferencedElement(file, offset, flags, editor, element);
+      if (referencedElement != null) {
+        return referencedElement;
       }
     }
 
@@ -241,7 +239,23 @@ public final class TargetElementUtilBase {
     return null;
   }
 
-  private static boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
+  @Nullable
+  static PsiElement getReferencedElement(@NotNull PsiFile file,
+                                         int offset,
+                                         int flags,
+                                         @NotNull Editor editor,
+                                         @Nullable PsiElement leafElement) {
+    final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
+    //if (referenceOrReferencedElement == null) {
+    //  return getReferenceOrReferencedElement(file, editor, flags, offset);
+    //}
+    if (isAcceptableReferencedElement(leafElement, referenceOrReferencedElement)) {
+      return referenceOrReferencedElement;
+    }
+    return null;
+  }
+
+  static boolean isAcceptableReferencedElement(@Nullable PsiElement element, @Nullable PsiElement referenceOrReferencedElement) {
     if (referenceOrReferencedElement == null || !referenceOrReferencedElement.isValid()) return false;
 
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(element.getLanguage()) : null;

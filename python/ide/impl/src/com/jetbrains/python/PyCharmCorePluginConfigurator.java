@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,12 +19,14 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
  *
  * This class is called <strong>only in PyCharm</strong>.
  * It does not work in plugin
- * @author yole
  */
-public final class PyCharmCorePluginConfigurator {
-  private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
+final class PyCharmCorePluginConfigurator implements ApplicationInitializedListener {
+  @Override
+  public void componentsInitialized() {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
 
-  PyCharmCorePluginConfigurator() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration", "true");
@@ -59,14 +61,6 @@ public final class PyCharmCorePluginConfigurator {
 
     ActionManager.getInstance().unregisterAction("RunAnything");
 
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-      ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void welcomeScreenDisplayed() {
-          ApplicationManager.getApplication().invokeLater(() -> propertiesComponent.setValue(DISPLAYED_PROPERTY, "true"));
-        }
-      });
-    }
     for (ConfigurableEP<Configurable> ep : Configurable.APPLICATION_CONFIGURABLE.getExtensionList()) {
       if ("com.jetbrains.python.documentation.PythonDocumentationConfigurable".equals(ep.id)) {
         ep.displayName = "External Documentation";

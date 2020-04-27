@@ -216,10 +216,10 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       new Simple("", Collections.singleton("valueOf"), new String[]{CommonClassNames.JAVA_LANG_STRING}, CallType.ENUM_STATIC);
     private final @NotNull String myClassName;
     private final @NotNull Set<String> myNames;
-    private final @Nullable String[] myParameters;
+    private final String @Nullable [] myParameters;
     private final CallType myCallType;
 
-    private Simple(@NotNull String className, @NotNull Set<String> names, @Nullable String[] parameters, CallType callType) {
+    private Simple(@NotNull String className, @NotNull Set<String> names, String @Nullable [] parameters, CallType callType) {
       myClassName = className;
       myNames = names;
       myParameters = parameters;
@@ -255,7 +255,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
      * @throws IllegalStateException if this matcher is already limited to parameters count or types
      */
     @Contract(pure = true)
-    public Simple parameterTypes(@NotNull String... types) {
+    public Simple parameterTypes(String @NotNull ... types) {
       if (myParameters != null) {
         throw new IllegalStateException("Parameters are already registered");
       }

@@ -3,7 +3,6 @@ package com.intellij.remote;
 
 import com.intellij.remote.ext.CredentialsLanguageContribution;
 import com.intellij.remote.ext.CredentialsManager;
-import com.intellij.remote.ext.CredentialsTypeEx;
 import com.intellij.remote.ui.CredentialsEditorProvider;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,14 +18,14 @@ public class CredentialsTypeUtil {
   public static boolean isCredentialsTypeSupportedForLanguage(@NotNull CredentialsType<?> credentialsType,
                                                               @NotNull Class<?> languageContributionMarkerClass) {
     // TODO add language contributors for Python and Node JS
-    for (CredentialsTypeEx<?> typeEx : CredentialsManager.getInstance().getExTypes()) {
-      if (credentialsType.equals(typeEx)) {
-        CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(typeEx, CredentialsEditorProvider.class);
+    for (CredentialsType<?> type : CredentialsManager.getInstance().getAllTypes()) {
+      if (credentialsType.equals(type)) {
+        CredentialsEditorProvider editorProvider = ObjectUtils.tryCast(type, CredentialsEditorProvider.class);
         if (editorProvider != null) {
           List<CredentialsLanguageContribution> contributions = getContributions(languageContributionMarkerClass);
           if (!contributions.isEmpty()) {
             for (CredentialsLanguageContribution contribution : contributions) {
-              if (contribution.getType() == typeEx && editorProvider.isAvailable(contribution)) {
+              if (contribution.getType() == type && editorProvider.isAvailable(contribution)) {
                 return true;
               }
             }

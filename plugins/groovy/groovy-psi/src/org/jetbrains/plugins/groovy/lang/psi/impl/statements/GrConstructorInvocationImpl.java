@@ -71,8 +71,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+  public GroovyResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     return myConstructorReference.multiResolve(incompleteCode);
   }
 
@@ -94,9 +93,8 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return null;
   }
 
-  @NotNull
   @Override
-  public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
+  public GroovyResolveResult @NotNull [] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
   }
 

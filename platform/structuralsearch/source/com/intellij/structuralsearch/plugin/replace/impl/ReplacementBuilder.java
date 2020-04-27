@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
-import com.intellij.structuralsearch.MalformedPatternException;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.StructuralSearchProfile;
-import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -91,10 +88,9 @@ public final class ReplacementBuilder {
       try {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           options.getReplacement(),
-          PatternTreeContext.Block,
+          new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext()),
           fileType,
           options.getMatchOptions().getDialect(),
-          options.getMatchOptions().getPatternContext(),
           project,
           false
         );

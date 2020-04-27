@@ -25,22 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
-/**
- * Use {@link com.intellij.ide.hierarchy.newAPI.CallHierarchyBrowserBase} instead
- */
-@Deprecated
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  /**
-   * Use {code {@link #getCalleeType()}} instead
-   */
-  @Deprecated
   public static final String CALLEE_TYPE = "Callees of {0}";
-
-  /**
-   * Use {code {@link #getCallerType()}} instead
-   */
-  @Deprecated
   public static final String CALLER_TYPE = "Callers of {0}";
 
   private static final String CALL_HIERARCHY_BROWSER_DATA_KEY = "com.intellij.ide.hierarchy.CallHierarchyBrowserBase";
@@ -91,6 +81,14 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     return IdeBundle.message("hierarchy.call.next.occurence.name");
   }
 
+  @Override
+  protected Map<String, Supplier<String>> getPresentableNameMap() {
+    HashMap<String, Supplier<String>> map = new HashMap<>();
+    map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
+    map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
+    return map;
+  }
+
   private class ChangeViewTypeActionBase extends ToggleAction {
     private final String myTypeName;
 
@@ -121,7 +119,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
     }
   }
 

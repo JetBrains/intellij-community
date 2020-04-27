@@ -81,7 +81,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
     return column;
   }
 
-  private static void trimLinesWithAlignment(@NotNull String[] lines, int tabSize, int firstLineStartColumn) {
+  private static void trimLinesWithAlignment(String @NotNull [] lines, int tabSize, int firstLineStartColumn) {
     if (lines.length == 1) {
       lines[0] = lines[0].trim();
     }

@@ -113,8 +113,7 @@ public class PyDefUseUtil {
     return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
 
-  @NotNull
-  public static PsiElement[] getPostRefs(ScopeOwner block, PyTargetExpression var, PyExpression anchor) {
+  public static PsiElement @NotNull [] getPostRefs(ScopeOwner block, PyTargetExpression var, PyExpression anchor) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
     final Instruction[] instructions = controlFlow.getInstructions();
     final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);

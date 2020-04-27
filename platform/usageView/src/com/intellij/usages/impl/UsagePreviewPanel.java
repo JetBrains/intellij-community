@@ -118,7 +118,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     @NotNull
     @Override
     public String getTabTitle() {
-      return "Preview";
+      return UsageViewBundle.message("tab.title.preview");
     }
   }
 
@@ -173,7 +173,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                                @NotNull final Project project,
                                boolean highlightOnlyNameElements,
                                int highlightLayer) {
-    LOG.assertTrue(!PsiDocumentManager.getInstance(project).hasUncommitedDocuments());
+    LOG.assertTrue(PsiDocumentManager.getInstance(project).isCommitted(editor.getDocument()));
 
     MarkupModel markupModel = editor.getMarkupModel();
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {

@@ -130,7 +130,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
 
   private static void checkThreading() {
     Application app = ApplicationManager.getApplication();
-    app.assertIsDispatchThread();
+    app.assertIsWriteThread();
     if (!app.isWriteAccessAllowed()) return;
 
     if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {
@@ -198,7 +198,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     private final VirtualFile[] myReadonlyFiles;
     @NotNull private final String myReadOnlyReason;
 
-    OperationStatusImpl(@NotNull VirtualFile[] readonlyFiles) {
+    OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
       this(readonlyFiles,"");
     }
 
@@ -208,8 +208,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
 
     @Override
-    @NotNull
-    public VirtualFile[] getReadonlyFiles() {
+    public VirtualFile @NotNull [] getReadonlyFiles() {
       return myReadonlyFiles;
     }
 

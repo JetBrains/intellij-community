@@ -44,7 +44,7 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
                                 @Nullable GrExpression expression,
                                 @Nullable GrVariable var,
                                 @Nullable StringPartInfo stringPart,
-                                @NotNull PsiElement[] occurrences,
+                                PsiElement @NotNull [] occurrences,
                                 PsiElement scope) {
     myStringPart = stringPart;
     LOG.assertTrue(expression != null || var != null || stringPart != null);
@@ -76,8 +76,7 @@ public class GrIntroduceContextImpl implements GrIntroduceContext {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getOccurrences() {
+  public PsiElement @NotNull [] getOccurrences() {
     return myOccurrences;
   }
 

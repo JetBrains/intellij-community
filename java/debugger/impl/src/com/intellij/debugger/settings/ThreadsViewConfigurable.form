@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <margin top="5" left="2" bottom="2" right="2"/>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.thread.groups"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.thread.groups"/>
             </properties>
           </component>
           <component id="5bfe" class="javax.swing.JCheckBox" binding="myShowSyntheticsCheckBox">
@@ -30,7 +30,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.stack.frames.for.synthetic.methods"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.stack.frames.for.synthetic.methods"/>
             </properties>
           </component>
           <component id="a7f8b" class="javax.swing.JCheckBox" binding="myShowCurrentThreadChechBox">
@@ -38,7 +38,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.current.thread.on.top"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.current.thread.on.top"/>
             </properties>
           </component>
         </children>
@@ -57,7 +57,7 @@
             </constraints>
             <properties>
               <margin top="5" left="2" bottom="2" right="2"/>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.line.number"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.line.number"/>
             </properties>
           </component>
           <component id="2fbc6" class="javax.swing.JCheckBox" binding="myClassNameCheckBox">
@@ -65,7 +65,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.class.name"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.class.name"/>
             </properties>
           </component>
           <component id="b56d7" class="javax.swing.JCheckBox" binding="mySourceCheckBox">
@@ -73,7 +73,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.source.file.name"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.source.file.name"/>
             </properties>
           </component>
           <component id="99bb5" class="javax.swing.JCheckBox" binding="myPackageCheckBox">
@@ -81,7 +81,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.package"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.package"/>
             </properties>
           </component>
           <component id="9be9b" class="javax.swing.JCheckBox" binding="myArgsTypesCheckBox">
@@ -89,7 +89,7 @@
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text resource-bundle="messages/DebuggerBundle" key="label.threads.view.configurable.show.prams.types"/>
+              <text resource-bundle="messages/JavaDebuggerBundle" key="label.threads.view.configurable.show.prams.types"/>
             </properties>
           </component>
         </children>

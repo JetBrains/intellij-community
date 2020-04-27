@@ -40,9 +40,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class LibraryDownloadSettings {
   private final FrameworkLibraryVersion myVersion;
   private final DownloadableLibraryType myLibraryType;

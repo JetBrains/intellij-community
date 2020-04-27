@@ -76,8 +76,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
   }
 
   @Override
-  @NotNull
-  public GrCodeReferenceElement[] getReferenceElementsGroovy() {
+  public GrCodeReferenceElement @NotNull [] getReferenceElementsGroovy() {
     final GrReferenceListStub stub = getStub();
     if (stub != null) {
       final String[] baseClasses = stub.getBaseClasses();
@@ -91,9 +90,8 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     return findChildrenByClass(GrCodeReferenceElement.class);
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     if (myCachedTypes == null || !isValid()) {
       final ArrayList<PsiClassType> types = new ArrayList<>();
       for (GrCodeReferenceElement ref : getReferenceElementsGroovy()) {

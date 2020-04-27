@@ -8,9 +8,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class AddFrameworkSupportAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

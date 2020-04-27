@@ -23,13 +23,12 @@ import java.text.CharacterIterator;
  * {@link CharacterIterator} implementation for a given fragment of a {@code char} array.
  */
 public class CharArrayIterator implements CharacterIterator {
-  @NotNull 
-  private final char[] myText;
+  private final char @NotNull [] myText;
   private final int myStart;
   private final int myEnd;
   private int myIndex;
 
-  public CharArrayIterator(@NotNull char[] text, int start, int end) {
+  public CharArrayIterator(char @NotNull [] text, int start, int end) {
     if (start < 0 || start > end || end > text.length) {
       throw new IllegalArgumentException("Text length: " + text.length + ", start: " + start + ", end: " + end);
     }

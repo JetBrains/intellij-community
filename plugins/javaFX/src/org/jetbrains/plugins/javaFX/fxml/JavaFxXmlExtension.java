@@ -21,9 +21,8 @@ public class JavaFxXmlExtension extends DefaultXmlExtension {
     return new JavaFxTagNameReference(nameElement, startTagFlag);
   }
 
-  @Nullable
   @Override
-  public String[][] getNamespacesFromDocument(XmlDocument parent, boolean declarationsExist) {
+  public String[] @Nullable [] getNamespacesFromDocument(XmlDocument parent, boolean declarationsExist) {
     return XmlUtil.getDefaultNamespaces(parent);
   }
 }

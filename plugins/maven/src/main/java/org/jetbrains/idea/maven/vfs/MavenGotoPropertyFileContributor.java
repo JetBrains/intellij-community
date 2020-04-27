@@ -25,14 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class MavenGotoPropertyFileContributor implements ChooseByNameContributor {
   @Override
-  @NotNull
-  public String[] getNames(Project project, boolean includeNonProjectItems) {
+  public String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
     return MavenPropertiesVirtualFileSystem.PROPERTIES_FILES;
   }
 
   @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
+  public NavigationItem @NotNull [] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     if (!includeNonProjectItems) return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
     VirtualFile file = MavenPropertiesVirtualFileSystem.getInstance().findFileByPath(name);
     if (file != null) {

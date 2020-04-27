@@ -38,7 +38,7 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
 
   @Override
   public String getText(String varName) {
-    return QuickFixBundle.message("create.inner.class.from.usage.text", getKind().getDescription(), varName);
+    return QuickFixBundle.message("create.inner.class.from.usage.text", getKind().getDescriptionAccusative(), varName);
   }
 
   @Override

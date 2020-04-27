@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
@@ -122,8 +122,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private SmartPsiElementPointer<PsiElement> myElement;
   private long myModificationCount;
 
-  private static final String QUICK_DOC_FONT_SIZE_OLD_PROPERTY = "quick.doc.font.size";
-  private static final String QUICK_DOC_FONT_SIZE_PROPERTY = "quick.doc.font.size.v2";
+  private static final String QUICK_DOC_FONT_SIZE_V1_PROPERTY = "quick.doc.font.size"; // 2019.3 or earlier versions
+  private static final String QUICK_DOC_FONT_SIZE_V2_PROPERTY = "quick.doc.font.size.v2"; // 2020.1 EAP
+  private static final String QUICK_DOC_FONT_SIZE_V3_PROPERTY = "quick.doc.font.size.v3"; // 2020.1 or later versions
 
   private final Stack<Context> myBackStack = new Stack<>();
   private final Stack<Context> myForwardStack = new Stack<>();
@@ -180,7 +181,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsEmpty = true;
     myStoreSize = storeSize;
 
-    myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
+    myEditorPane = new JEditorPane() {
       {
         enableEvents(AWTEvent.KEY_EVENT_MASK);
       }
@@ -275,7 +276,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    HTMLEditorKit editorKit = new JBHtmlEditorKit(true) {
+    HTMLEditorKit editorKit = new JBHtmlEditorKit(true, true) {
       @Override
       public ViewFactory getViewFactory() {
         return new JBHtmlFactory() {
@@ -383,6 +384,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     toolbarActions.add(actions);
     toolbarActions.addAction(new ShowAsToolwindowAction()).setAsSecondary(true);
+    toolbarActions.addAction(new ToggleShowDocsOnHoverAction()).setAsSecondary(true);
     toolbarActions.addAction(new MyShowSettingsAction(true)).setAsSecondary(true);
     toolbarActions.addAction(new ShowToolbarAction()).setAsSecondary(true);
     toolbarActions.addAction(new RestoreDefaultSizeAction()).setAsSecondary(true);
@@ -443,6 +445,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DefaultActionGroup gearActions = new MyGearActionGroup();
     ShowAsToolwindowAction showAsToolwindowAction = new ShowAsToolwindowAction();
     gearActions.add(showAsToolwindowAction);
+    gearActions.add(new ToggleShowDocsOnHoverAction());
     gearActions.add(new MyShowSettingsAction(false));
     gearActions.add(new ShowToolbarAction());
     gearActions.add(new RestoreDefaultSizeAction());
@@ -553,7 +556,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
   }
 
-  private static void prepareCSS(HTMLEditorKit editorKit) {
+  private static void prepareCSS(@NotNull HTMLEditorKit editorKit) {
     boolean newLayout = Registry.is("editor.new.mouse.hover.popups");
     Color documentationColor = EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getColor(COLOR_KEY);
     Color borderColor = newLayout ? UIUtil.getTooltipSeparatorColor() : ColorUtil.mix(documentationColor, BORDER_COLOR, 0.5);
@@ -561,6 +564,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     int definitionTopPadding = newLayout ? 4 : 3;
     int htmlBottomPadding = newLayout ? 8 : 5;
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
+    editorKit.getStyleSheet().addRule("tt {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"}");
@@ -595,7 +599,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     }
     editorKit.getStyleSheet().addRule("th { text-align: left; }");
-    editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px}");
+    editorKit.getStyleSheet().addRule(".section { color: " + ColorUtil.toHtmlColor(SECTION_COLOR) + "; padding-right: 4px; white-space:nowrap;}");
   }
 
   private static Color getLinkColor() {
@@ -616,25 +620,38 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   @NotNull
   public static FontSize getQuickDocFontSize() {
-    FontSize fontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_PROPERTY);
-    if (fontSize != null) return fontSize;
-    FontSize oldFontSize = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
-    if (oldFontSize != null) {
-      // migrate old-scale setting
-      PropertiesComponent.getInstance().unsetValue(QUICK_DOC_FONT_SIZE_OLD_PROPERTY);
-      FontSize newFontSize = oldFontSize == FontSize.X_LARGE ? FontSize.XX_LARGE
-                                                             : oldFontSize == FontSize.LARGE ? FontSize.X_LARGE
-                                                                                             : oldFontSize;
-      setQuickDocFontSize(newFontSize);
-      return newFontSize;
+    FontSize v1 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V1_PROPERTY, true);
+    FontSize v2 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V2_PROPERTY, true);
+    FontSize v3 = readFontSizeFromSettings(QUICK_DOC_FONT_SIZE_V3_PROPERTY, false);
+    if (v3 != null) {
+      return v3;
+    }
+    if (v2 != null) {
+      v3 = migrateV2ToV3(v2);
+      setQuickDocFontSize(v3);
+      return v3;
+    }
+    if (v1 != null) {
+      v3 = migrateV2ToV3(migrateV1ToV2(v1));
+      setQuickDocFontSize(v3);
+      return v3;
     }
     return FontSize.SMALL;
   }
 
+  private static @NotNull FontSize migrateV1ToV2(@NotNull FontSize size) {
+    return size == FontSize.X_LARGE ? FontSize.XX_LARGE : size == FontSize.LARGE ? FontSize.X_LARGE : size;
+  }
+
+  private static @NotNull FontSize migrateV2ToV3(@NotNull FontSize size) {
+    return size == FontSize.X_SMALL ? FontSize.XX_SMALL : size == FontSize.SMALL ? FontSize.X_SMALL : size;
+  }
+
   @Nullable
-  private static FontSize readFontSizeFromSettings(@NotNull String propertyName) {
+  private static FontSize readFontSizeFromSettings(@NotNull String propertyName, boolean unsetAfterReading) {
     String strValue = PropertiesComponent.getInstance().getValue(propertyName);
     if (strValue != null) {
+      if (unsetAfterReading) PropertiesComponent.getInstance().unsetValue(propertyName);
       try {
         return FontSize.valueOf(strValue);
       }
@@ -644,7 +661,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public static void setQuickDocFontSize(@NotNull FontSize fontSize) {
-    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_PROPERTY, fontSize.toString());
+    PropertiesComponent.getInstance().setValue(QUICK_DOC_FONT_SIZE_V3_PROPERTY, fontSize.toString());
   }
 
   public boolean isEmpty() {
@@ -1232,7 +1249,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
-    MyGearActionGroup(@NotNull AnAction... actions) {
+    MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
       setPopup(true);
     }
@@ -1240,7 +1257,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
-      super(CodeInsightBundle.message("javadoc.action.back"), null, AllIcons.Actions.Back);
+      super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
 
     @Override
@@ -1260,7 +1277,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
-      super(CodeInsightBundle.message("javadoc.action.forward"), null, AllIcons.Actions.Forward);
+      super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
 
     @Override
@@ -1283,7 +1300,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     private EditDocumentationSourceAction() {
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
-      getTemplatePresentation().setText("Edit Source");
+      getTemplatePresentation().setText(CodeInsightBundle.messagePointer("action.presentation.DocumentationComponent.text"));
     }
 
     @Override
@@ -1295,9 +1312,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     }
 
-    @Nullable
     @Override
-    protected Navigatable[] getNavigatables(DataContext dataContext) {
+    protected Navigatable @Nullable [] getNavigatables(DataContext dataContext) {
       SmartPsiElementPointer<PsiElement> element = myElement;
       if (element != null) {
         PsiElement psiElement = element.getElement();
@@ -1661,7 +1677,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
-      super("Show Toolbar");
+      super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
 
     @Override
@@ -1750,7 +1766,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
-      super("Open as Tool Window");
+      super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
 
     @Override
@@ -1773,7 +1789,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
-      super("Restore Size");
+      super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }
 
     @Override

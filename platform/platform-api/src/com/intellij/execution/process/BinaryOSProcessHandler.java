@@ -38,8 +38,7 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
     super(process, commandLine, charset);
   }
 
-  @NotNull
-  public byte[] getOutput() {
+  public byte @NotNull [] getOutput() {
     return myOutput.toByteArray();
   }
 
@@ -56,7 +55,7 @@ public class BinaryOSProcessHandler extends OSProcessHandler {
     }
 
     @Override
-    protected void onBinaryAvailable(@NotNull byte[] data, int size) {
+    protected void onBinaryAvailable(byte @NotNull [] data, int size) {
       myOutput.write(data, 0, size);
     }
 

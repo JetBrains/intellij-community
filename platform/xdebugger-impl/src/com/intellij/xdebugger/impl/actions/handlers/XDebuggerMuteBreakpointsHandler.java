@@ -7,9 +7,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
-*/
 public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandler {
   @Override
   protected boolean isEnabled(@Nullable final XDebugSession session, final AnActionEvent event) {

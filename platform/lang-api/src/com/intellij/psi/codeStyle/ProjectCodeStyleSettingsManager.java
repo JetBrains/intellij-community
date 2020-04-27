@@ -3,6 +3,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -108,6 +109,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   @Override
   public void loadState(@NotNull Element state) {
+    LOG.info("Loading Project code style");
     super.loadState(state);
     updateFromOldProjectSettings();
     for (Element subStyle : state.getChildren(CodeStyleScheme.CODE_STYLE_TAG_NAME)) {
@@ -120,6 +122,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
       else {
         mySettingsMap.put(name, settings);
       }
+      LOG.info(name + " code style loaded");
     }
     myIsLoaded = true;
   }
@@ -134,6 +137,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   public Element getState() {
     Element e = super.getState();
     if (e != null) {
+      LOG.info("Saving Project code style");
       for (String name : mySettingsMap.keySet()) {
         CodeStyleSettings settings = mySettingsMap.get(name);
         Element codeStyle = new Element(CodeStyleScheme.CODE_STYLE_TAG_NAME);
@@ -141,6 +145,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
         settings.writeExternal(codeStyle);
         if (!codeStyle.getContent().isEmpty()) {
           e.addContent(codeStyle);
+          LOG.info(name + " code style saved");
         }
       }
     }
@@ -159,7 +164,7 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   private static class ShowMoreInfoAction extends DumbAwareAction {
     ShowMoreInfoAction() {
-      super("More info");
+      super(IdeBundle.messagePointer("action.ProjectCodeStyleSettingsManager.ShowMoreInfoAction.text.more.info"));
     }
 
     @Override

@@ -18,7 +18,7 @@
           <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.nullable.problems.not.annotated.getters.for.annotated.fields"/>
+          <text resource-bundle="messages/JavaBundle" key="inspection.nullable.problems.not.annotated.getters.for.annotated.fields"/>
         </properties>
       </component>
       <component id="f4e37" class="javax.swing.JCheckBox" binding="myBreakingOverriding">
@@ -26,7 +26,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.nullable.problems.method.overrides.notnull.option"/>
+          <text resource-bundle="messages/JavaBundle" key="inspection.nullable.problems.method.overrides.notnull.option"/>
         </properties>
       </component>
       <component id="41568" class="javax.swing.JCheckBox" binding="myNAMethodOverridesNN">
@@ -34,7 +34,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.nullable.problems.method.overrides.option"/>
+          <text resource-bundle="messages/JavaBundle" key="inspection.nullable.problems.method.overrides.option"/>
         </properties>
       </component>
       <component id="ef852" class="javax.swing.JButton" binding="myConfigureAnnotationsButton" default-binding="true">
@@ -42,7 +42,7 @@
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="configure.annotations.option"/>
+          <text resource-bundle="messages/JavaBundle" key="configure.annotations.option"/>
         </properties>
       </component>
       <component id="2c6db" class="javax.swing.JCheckBox" binding="myIgnoreExternalSuperNotNull">
@@ -50,7 +50,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Ignore external @NotNull"/>
+          <text resource-bundle="messages/JavaBundle" key="inspection.nullable.problems.ignore.external.notnull"/>
         </properties>
       </component>
       <component id="4e48d" class="javax.swing.JCheckBox" binding="myNNParameterOverridesNA">
@@ -58,7 +58,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Report @NotNull &amp;parameters overriding non-annotated"/>
+          <text resource-bundle="messages/JavaBundle" key="inspection.nullable.problems.notnull.overrides.option"/>
         </properties>
       </component>
       <component id="9b307" class="com.intellij.ui.components.JBCheckBox" binding="myReportNullLiteralsPassedNotNullParameter" default-binding="true">
@@ -66,7 +66,7 @@
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Report @NotNull parameters with null-literal argument usages"/>
+          <text resource-bundle="messages/JavaBundle" key="inspection.nullable.problems.notnull.parameters.with.null.literal.option"/>
         </properties>
       </component>
     </children>

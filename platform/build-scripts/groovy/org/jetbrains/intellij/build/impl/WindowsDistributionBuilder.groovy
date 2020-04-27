@@ -10,9 +10,6 @@ import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
-/**
- * @author nik
- */
 class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final File ideaProperties
@@ -70,30 +67,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   void buildArtifacts(String winDistPath) {
-    def jreSuffix = buildContext.bundledJreManager.secondJreSuffix()
-    String jreDirectoryPath64 = null
-    //do not include win32 launcher into winzip with 9+ jbr bundled
-    List<String> excludeList = ["bin/${buildContext.productProperties.baseFileName}.exe", "bin/${buildContext.productProperties.baseFileName}.exe.vmoptions"]
-    if (buildContext.bundledJreManager.doBundleSecondJre()) {
-      jreDirectoryPath64 = buildContext.bundledJreManager.extractSecondBundledJreForWin(JvmArchitecture.x64)
-      List<String> jreDirectoryPaths = [jreDirectoryPath64]
-
-      if (customizer.buildZipArchive) {
-        buildWinZip(jreDirectoryPath64, "${jreSuffix}.win", winDistPath, excludeList)  // Android Studio: modified by Change I22bfabed
-      }
-    }
-
-    if (customizer.getBaseDownloadUrlForJre() != null) {
-      File archive = buildContext.bundledJreManager.findJreArchive(OsFamily.WINDOWS,JvmArchitecture.x32)
-      if (archive != null && archive.exists()) {
-        //prepare folder with jre x86 for win archive
-        def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS, JvmArchitecture.x32)
-        buildContext.ant.tar(tarfile: "${buildContext.paths.artifacts}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}", longfile: "gnu", compression: "gzip") {
-          tarfileset(dir: "${jreDirectoryPath}/jre32") {
-            include(name: "**/**")
-          }
-        }
-      }
+    if (customizer.include32BitLauncher) {
+      buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
     }
 
     def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
@@ -108,18 +83,10 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     /* Android Studio: this is handled by ADRT?
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        generateProductJson(productJsonDir, jreDirectoryPath64 != null)
-        new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
-        new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64)
-          .buildInstaller(winDistPath, productJsonDir,
-                          buildContext.bundledJreManager.secondJreSuffix(),
-                          !buildContext.bundledJreManager.secondBundledJreModular)
-      }
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])
       new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath)
-        .buildInstaller(winDistPath, productJsonDir, '', buildContext.bundledJreManager.is32JreSupported())
+        .buildInstaller(winDistPath, productJsonDir, '', buildContext.windowsDistributionCustomizer.include32BitLauncher)
     } */
   }
 
@@ -310,11 +277,7 @@ IDS_VM_OPTIONS=$vmOptions
 TODO(b/118034991): generate product-info.json files (or not) */
       buildContext.ant.zip(zipfile: targetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         dirs.each {
-          zipfileset(dir: it, prefix: zipPrefix) {
-            excludeList.each {
-              exclude(name: it)
-            }
-          }
+          zipfileset(dir: it, prefix: zipPrefix)
         }
         zipfileset(dir: jdkDirectoryPath, prefix: "$zipPrefix/jre") {
           exclude(name: "src.zip")

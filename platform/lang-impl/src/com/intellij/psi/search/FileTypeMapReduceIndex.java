@@ -11,9 +11,10 @@ import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
-class FileTypeMapReduceIndex extends VfsAwareMapReduceIndex<FileType, Void, FileContent> {
+class FileTypeMapReduceIndex extends VfsAwareMapReduceIndex<FileType, Void> {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImpl.class);
 
   FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension, @NotNull IndexStorage<FileType, Void> storage) throws IOException {
@@ -25,8 +26,8 @@ class FileTypeMapReduceIndex extends VfsAwareMapReduceIndex<FileType, Void, File
     boolean isIndexed = super.isIndexedStateForFile(fileId, file);
     if (!isIndexed) return false;
     try {
-      Map<FileType, Void> inputData = ((MapInputDataDiffBuilder<FileType, Void>) getKeysDiffBuilder(fileId)). getMap();
-      FileType indexedFileType = ContainerUtil.getFirstItem(inputData.keySet());
+      Collection<FileType> inputData = ((MapInputDataDiffBuilder<FileType, Void>) getKeysDiffBuilder(fileId)).getKeys();
+      FileType indexedFileType = ContainerUtil.getFirstItem(inputData);
       return FileTypeKeyDescriptor.INSTANCE.isEqual(indexedFileType, file.getFileType());
     } catch (IOException e) {
       LOG.error(e);

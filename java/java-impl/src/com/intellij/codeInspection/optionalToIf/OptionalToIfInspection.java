@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
 import com.intellij.codeInspection.util.OptionalUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +44,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         if (operations == null || operations.size() < 1 || !(operations.get(0) instanceof SourceOperation)) return;
         OptionalToIfContext context = OptionalToIfContext.create(terminalCall);
         if (context == null) return;
-        holder.registerProblem(terminalCall, "Replace Optional with if statements", new ReplaceOptionalWithIfFix());
+        holder.registerProblem(terminalCall, JavaBundle.message("inspection.message.replace.optional.with.if.statements"), new ReplaceOptionalWithIfFix());
       }
     };
   }
@@ -68,7 +69,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, @NotNull PsiExpression[] args) {
+  private static Operation convertToOperation(@NotNull String name, @NotNull PsiType type, PsiExpression @NotNull [] args) {
     Operation operation = IntermediateOperation.create(name, args);
     if (operation != null) return operation;
     operation = TerminalOperation.create(name, args);
@@ -130,7 +131,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
-  static List<Instruction> createInstructions(@NotNull PsiStatement[] statements) {
+  static List<Instruction> createInstructions(PsiStatement @NotNull [] statements) {
     List<Instruction> instructions = new ArrayList<>(statements.length);
     for (PsiStatement statement : statements) {
       Instruction instruction = Instruction.create(statement);
@@ -140,10 +141,9 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     return instructions;
   }
 
-  @NotNull
-  private static PsiStatement[] addStatements(@NotNull PsiElementFactory factory,
-                                              @NotNull PsiStatement chainStatement,
-                                              @NotNull String code) {
+  private static PsiStatement @NotNull [] addStatements(@NotNull PsiElementFactory factory,
+                                                        @NotNull PsiStatement chainStatement,
+                                                        @NotNull String code) {
     PsiStatement[] statements = ControlFlowUtils.unwrapBlock(factory.createStatementFromText("{" + code + "}", chainStatement));
     PsiElement parent = chainStatement.getParent();
     return ContainerUtil.map(statements, s -> (PsiStatement)parent.addBefore(s, chainStatement), PsiStatement.EMPTY_ARRAY);
@@ -169,7 +169,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace Optional chain with if statements";
+      return JavaBundle.message("quickfix.family.replace.optional.chain.with.if.statements");
     }
 
     @Override

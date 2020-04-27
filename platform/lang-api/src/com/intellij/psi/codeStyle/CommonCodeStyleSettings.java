@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -61,6 +62,8 @@ public class CommonCodeStyleSettings {
   private final SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+
+  private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
   public CommonCodeStyleSettings(Language language, FileType fileType) {
     myLanguage = language;
@@ -167,6 +170,7 @@ public class CommonCodeStyleSettings {
       myArrangementSettings = ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage);
     }
     mySoftMargins.deserializeFrom(element);
+    LOG.info("Loaded " + myLanguage.getDisplayName() + " common code style settings");
   }
 
   public void writeExternal(Element element) {

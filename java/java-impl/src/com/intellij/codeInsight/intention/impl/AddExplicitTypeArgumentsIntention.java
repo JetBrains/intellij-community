@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -32,7 +32,7 @@ public class AddExplicitTypeArgumentsIntention extends BaseElementAtCaretIntenti
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.add.explicit.type.arguments.family");
+    return JavaBundle.message("intention.add.explicit.type.arguments.family");
   }
 
   @Override

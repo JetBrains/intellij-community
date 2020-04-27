@@ -38,8 +38,7 @@ public class PsiPackageConverter extends Converter<PsiPackage> implements Custom
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<PsiPackage> genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<PsiPackage> genericDomValue, PsiElement element, ConvertContext context) {
     final String s = genericDomValue.getStringValue();
     if (s == null) {
       return PsiReference.EMPTY_ARRAY;

@@ -49,7 +49,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
       var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
         row("URL:") {
-          urlField = textFieldWithBrowseButton("Choose Local Git Repository", fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+          urlField = textFieldWithBrowseButton("Choose Local Git Repository", fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
         }
       }
 

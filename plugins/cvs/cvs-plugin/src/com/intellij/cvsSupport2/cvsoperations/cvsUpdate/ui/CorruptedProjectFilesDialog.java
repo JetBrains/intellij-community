@@ -76,8 +76,7 @@ public class CorruptedProjectFilesDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     return new Action[]{new SkipFile(), new GetFile(), new SkipAll(), new GetAll()
     //  , new VisualMerge()
     };

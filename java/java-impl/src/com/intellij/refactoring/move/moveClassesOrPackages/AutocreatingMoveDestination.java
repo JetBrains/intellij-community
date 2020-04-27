@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
     final String targetQName = myPackage.getQualifiedName();
     final String sourceRootPackage = myFileIndex.getPackageNameByDirectory(targetSourceRoot);
     if (!RefactoringUtil.canCreateInSourceRoot(sourceRootPackage, targetQName)) {
-      return RefactoringBundle.message("source.folder.0.has.package.prefix.1", targetSourceRoot.getPresentableUrl(),
+      return JavaRefactoringBundle.message("source.folder.0.has.package.prefix.1", targetSourceRoot.getPresentableUrl(),
                                        sourceRootPackage, targetQName);
     }
     return null;

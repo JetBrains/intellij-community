@@ -81,16 +81,14 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
   }
 
   @Override
-  @NotNull
-  public ResolveResult[] multiResolve(boolean incompleteCode) {
+  public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
     PsiElement element = getElement();
     PsiFile file = element.getContainingFile();
     return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, incompleteCode,file);
   }
 
-  @NotNull
   @Override
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final AntDomProject project = myInvocationContextElement.getParentOfType(AntDomProject.class, true);
     if (project != null) {
       final Collection<String> variants = PropertyResolver.resolve(project.getContextAntProject(), getCanonicalText(), myInvocationContextElement).getSecond();
@@ -197,8 +195,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
     static final MyResolver INSTANCE = new MyResolver();
 
     @Override
-    @NotNull
-    public ResolveResult[] resolve(@NotNull AntDomPropertyReference antDomPropertyReference, boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(@NotNull AntDomPropertyReference antDomPropertyReference, boolean incompleteCode) {
       final List<ResolveResult> result = new ArrayList<>();
       final AntDomProject project = antDomPropertyReference.myInvocationContextElement.getParentOfType(AntDomProject.class, true);
       if (project != null) {

@@ -17,8 +17,8 @@ package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.projectWizard.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.CommonClassNames;
@@ -63,7 +63,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @NotNull
   @Override
   public String getDescription() {
-    return ProjectBundle.message("module.type.java.description");
+    return JavaBundle.message("module.type.java.description");
   }
 
   @Override
@@ -96,6 +96,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   public static String getModuleName() {
-    return ProjectBundle.message("module.type.java.name");
+    return JavaBundle.message("module.type.java.name");
   }
 }

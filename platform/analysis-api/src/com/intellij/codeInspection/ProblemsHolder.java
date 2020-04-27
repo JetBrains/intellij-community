@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.BundleBase;
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- */
 public class ProblemsHolder {
   private static final Logger LOG = Logger.getInstance(ProblemsHolder.class);
 
@@ -55,14 +38,14 @@ public class ProblemsHolder {
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, descriptionTemplate, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes);
   }
 
   public void registerProblem(@NotNull PsiElement psiElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
                               @NotNull ProblemHighlightType highlightType,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, descriptionTemplate, myOnTheFly, fixes, highlightType));
   }
 
@@ -96,7 +79,7 @@ public class ProblemsHolder {
     String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
 
     final String template =
-      InspectionsBundle.message("inspection.redirect.template",
+      AnalysisBundle.message("inspection.redirect.template",
                                 description, path, original.getTextRange().getStartOffset(), vFile.getName());
 
 
@@ -106,7 +89,7 @@ public class ProblemsHolder {
     registerProblem(newProblem);
   }
 
-  public void registerProblem(@NotNull PsiReference reference, String descriptionTemplate, ProblemHighlightType highlightType) {
+  public void registerProblem(@NotNull PsiReference reference, @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate, ProblemHighlightType highlightType) {
     LocalQuickFix[] fixes = null;
     if (reference instanceof LocalQuickFixProvider) {
       fixes = ((LocalQuickFixProvider)reference).getQuickFixes();
@@ -116,8 +99,8 @@ public class ProblemsHolder {
 
   public void registerProblemForReference(@NotNull PsiReference reference,
                                           @NotNull ProblemHighlightType highlightType,
-                                          @NotNull String descriptionTemplate,
-                                          @Nullable LocalQuickFix... fixes) {
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String descriptionTemplate,
+                                          LocalQuickFix @Nullable ... fixes) {
     ProblemDescriptor descriptor = myManager.createProblemDescriptor(reference.getElement(), reference.getRangeInElement(),
                                                                      descriptionTemplate, highlightType, myOnTheFly, fixes);
     registerProblem(descriptor);
@@ -146,7 +129,7 @@ public class ProblemsHolder {
       }
     }
     else {
-      message = CodeInsightBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
+      message = AnalysisBundle.message("error.cannot.resolve.default.message", reference.getCanonicalText());
     }
     return message;
   }
@@ -154,7 +137,7 @@ public class ProblemsHolder {
   public void registerProblem(@NotNull PsiElement psiElement,
                               @Nullable TextRange rangeInElement,
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(psiElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
   }
 
@@ -171,7 +154,7 @@ public class ProblemsHolder {
                               @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
-                              @Nullable LocalQuickFix... fixes) {
+                              LocalQuickFix @Nullable ... fixes) {
     registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly, fixes));
   }
 
@@ -180,8 +163,7 @@ public class ProblemsHolder {
     return myProblems;
   }
 
-  @NotNull
-  public ProblemDescriptor[] getResultsArray() {
+  public ProblemDescriptor @NotNull [] getResultsArray() {
     final List<ProblemDescriptor> problems = getResults();
     return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }

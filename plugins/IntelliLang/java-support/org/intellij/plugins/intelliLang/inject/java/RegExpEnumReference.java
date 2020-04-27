@@ -42,8 +42,7 @@ final class RegExpEnumReference extends StringLiteralReference {
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final Set<String> values = getEnumValues();
     if (values == null || values.size() == 0) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.numeric;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.numeric.CachedNumberConstructorCallInspection;
@@ -34,7 +35,7 @@ public class CachedNumberConstructorCallTest extends IGQuickFixesTestCase {
   }
 
   public void testSimple() {
-    doTest(InspectionGadgetsBundle.message("cached.number.constructor.call.quickfix", "Integer"));
+    doTest(CommonQuickFixBundle.message("fix.replace.with.x", "Integer.valueOf()"));
   }
 
 }

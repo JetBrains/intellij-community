@@ -34,6 +34,16 @@ abstract class UiDslTest {
   }
 
   @Test
+  fun `field with gear`() {
+    doTest { fieldWithGear() }
+  }
+
+  @Test
+  fun `field with gear with indent`() {
+    doTest { fieldWithGearWithIndent() }
+  }
+
+  @Test
   fun `align fields in the nested grid`() {
     doTest { alignFieldsInTheNestedGrid() }
   }

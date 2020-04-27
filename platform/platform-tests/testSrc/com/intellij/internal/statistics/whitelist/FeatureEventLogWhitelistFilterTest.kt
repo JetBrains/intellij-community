@@ -4,6 +4,7 @@ package com.intellij.internal.statistics.whitelist
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.service.fus.FUSWhitelist
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
+import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
 import com.intellij.openapi.util.io.FileUtil
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -848,7 +849,9 @@ class FeatureEventLogWhitelistFilterTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
-      val actual = LogEventRecordRequest.create(log, "recorder-id", "IU", "user-id", 600, filter, false)
+      val actual = LogEventRecordRequest.create(
+        log, "recorder-id", "IU", "user-id", 600, filter, false, TestDataCollectorDebugLogger
+      )
       assertEquals(expected, actual)
     }
     finally {

@@ -29,7 +29,7 @@ public abstract class Compressor implements Closeable {
     //<editor-fold desc="Implementation">
     private final TarArchiveOutputStream myStream;
 
-    private Tar(OutputStream stream, Compression compression) throws IOException {
+    public Tar(@NotNull OutputStream stream, @NotNull Compression compression) throws IOException {
       myStream = new TarArchiveOutputStream(compressedStream(stream, compression));
       myStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
     }
@@ -150,11 +150,11 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull byte[] content) throws IOException {
+  public final void addFile(@NotNull String entryName, byte @NotNull [] content) throws IOException {
     addFile(entryName, content, -1);
   }
 
-  public final void addFile(@NotNull String entryName, @NotNull byte[] content, long timestamp) throws IOException {
+  public final void addFile(@NotNull String entryName, byte @NotNull [] content, long timestamp) throws IOException {
     entryName = entryName(entryName);
     if (accepts(entryName, null)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));

@@ -66,8 +66,7 @@ public class StringConcatenationInspection extends BaseInspection {
   }
 
   @Override
-  @NotNull
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)infos[0];
     final Collection<InspectionGadgetsFix> result = new ArrayList<>();
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(polyadicExpression);

@@ -3,6 +3,15 @@ import java.util.*;
 class GetClass {
   native void unknown();
 
+  public static void testIntClass() {
+    Class<?> cls = someIntClass();
+    System.out.println(Object.class.isAssignableFrom(cls));
+  }
+
+  public static Class<?> someIntClass() {
+    return int.class;
+  }
+
   void testStability(Object obj, Class<?> c) {
     if (obj.getClass().equals(c)) {
       unknown();

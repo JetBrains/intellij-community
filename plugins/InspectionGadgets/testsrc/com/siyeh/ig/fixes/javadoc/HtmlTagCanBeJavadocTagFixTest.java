@@ -1,5 +1,6 @@
 package com.siyeh.ig.fixes.javadoc;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection;
@@ -11,7 +12,7 @@ public class HtmlTagCanBeJavadocTagFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new HtmlTagCanBeJavadocTagInspection());
     myRelativePath = "javadoc/html_tag_can_be_javadoc_tag";
-    myDefaultHint = InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
+    myDefaultHint = CommonQuickFixBundle.message("fix.replace.with.x", "{@code ...}");
   }
 
   public void testBraces() { doTest(); }

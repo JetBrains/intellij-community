@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware {
   String getSearchProviderId();
 
   @NotNull
+  @Nls
   String getGroupName();
 
   @NotNull

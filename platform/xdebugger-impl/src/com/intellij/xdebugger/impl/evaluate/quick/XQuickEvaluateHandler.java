@@ -23,9 +23,6 @@ import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class XQuickEvaluateHandler extends QuickEvaluateHandler {
   private static final Logger LOG = Logger.getInstance(XQuickEvaluateHandler.class);
 

@@ -51,8 +51,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   @Override
-  @NotNull
-  public PyParameter[] getParameters() {
+  public PyParameter @NotNull [] getParameters() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
 

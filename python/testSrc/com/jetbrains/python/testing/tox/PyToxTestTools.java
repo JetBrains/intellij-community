@@ -26,11 +26,11 @@ public final class PyToxTestTools {
   }
 
 
-  public static void setRunOnlyEnvs(@NotNull final PyToxConfiguration configuration, @NotNull final String... tests) {
+  public static void setRunOnlyEnvs(@NotNull final PyToxConfiguration configuration, final String @NotNull ... tests) {
     configuration.setRunOnlyEnvs(tests);
   }
 
-  public static void setArguments(@NotNull final PyToxConfiguration configuration, @NotNull final String... args) {
+  public static void setArguments(@NotNull final PyToxConfiguration configuration, final String @NotNull ... args) {
     configuration.setArguments(args);
   }
 }

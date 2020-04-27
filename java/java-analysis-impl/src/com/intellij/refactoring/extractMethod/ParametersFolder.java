@@ -78,7 +78,7 @@ class ParametersFolder {
     return false;
   }
 
-  void foldParameterUsagesInBody(@NotNull List<? extends VariableData> datum, @NotNull PsiElement[] elements, @NotNull SearchScope scope) {
+  void foldParameterUsagesInBody(@NotNull List<? extends VariableData> datum, PsiElement @NotNull [] elements, @NotNull SearchScope scope) {
     Map<VariableData, Set<PsiExpression>> equivalentExpressions = new LinkedHashMap<>();
     for (VariableData data : datum) {
       if (myDeleted.contains(data.variable)) continue;
@@ -285,7 +285,7 @@ class ParametersFolder {
     return exprWithWriteAccessInside[0] != null;
   }
 
-  private static boolean isAncestor(@NotNull PsiElement expression, @NotNull PsiElement[] scopeElements) {
+  private static boolean isAncestor(@NotNull PsiElement expression, PsiElement @NotNull [] scopeElements) {
     for (PsiElement scopeElement : scopeElements) {
       if (PsiTreeUtil.isAncestor(expression, scopeElement, false)) {
         return true;

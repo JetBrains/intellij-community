@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.update;
 
 import com.intellij.ide.DataManager;
@@ -31,8 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
-public abstract class LazyUiDisposable<T extends Disposable> implements Activatable {
-
+public abstract class LazyUiDisposable<T> implements Activatable {
   private Throwable myAllocation;
 
   private final AtomicReference<JComponent> myUI;
@@ -77,7 +62,9 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
       }
     }
     initialize(parent, myChild, project);
-    Disposer.register(parent, myChild);
+    if (myChild instanceof Disposable) {
+      Disposer.register(parent, (Disposable)myChild);
+    }
   }
 
   @Override

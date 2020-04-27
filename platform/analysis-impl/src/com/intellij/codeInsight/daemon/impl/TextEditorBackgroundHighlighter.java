@@ -51,7 +51,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   @NotNull
-  List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
+  List<TextEditorHighlightingPass> getPasses(int @NotNull [] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
 
     LOG.assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(myDocument));
@@ -76,14 +76,12 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   }
 
   @Override
-  @NotNull
-  public TextEditorHighlightingPass[] createPassesForVisibleArea() {
+  public TextEditorHighlightingPass @NotNull [] createPassesForVisibleArea() {
     return createPassesForEditor();
   }
 
   @Override
-  @NotNull
-  public TextEditorHighlightingPass[] createPassesForEditor() {
+  public TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
     List<TextEditorHighlightingPass> passes = getPasses(ArrayUtilRt.EMPTY_INT_ARRAY);
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
   }

@@ -1,11 +1,9 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        CONDITIONAL_COMMAND
-          PsiElement([[)('[[')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            PsiElement(word)('!(a)')
-          PsiWhiteSpace(' ')
-          PsiElement(]])(']]')
+    CONDITIONAL_COMMAND
+      PsiElement([[)('[[')
+      PsiWhiteSpace(' ')
+      LITERAL_CONDITION
+        PsiElement(word)('!(a)')
+      PsiWhiteSpace(' ')
+      PsiElement(]])(']]')

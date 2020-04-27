@@ -13,10 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -199,7 +196,7 @@ public abstract class DumbService {
    * @see #isDumbAware(Object)
    */
   @NotNull
-  public <T> List<T> filterByDumbAwareness(@NotNull T[] array) {
+  public <T> List<T> filterByDumbAwareness(T @NotNull [] array) {
     return filterByDumbAwareness(Arrays.asList(array));
   }
 
@@ -242,6 +239,12 @@ public abstract class DumbService {
   public abstract void cancelTask(@NotNull DumbModeTask task);
 
   /**
+   * Cancels all tasks and wait when their execution is finished. Should be called on write thread.
+   */
+  @ApiStatus.Internal
+  public abstract void cancelAllTasksAndWait();
+
+  /**
    * Runs the "just submitted" tasks under a modal dialog. "Just submitted" means that tasks were queued for execution
    * earlier within the same Swing event dispatch thread event processing, and there were no other tasks already running at that moment. Otherwise, this method does nothing.<p/>
    * <p>
@@ -260,6 +263,16 @@ public abstract class DumbService {
    * @return Wrapped component.
    */
   public abstract JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable);
+
+  /**
+   * Adds a "Results might be incomplete while indexing." decorator to a given component during dumb mode.
+   *
+   * @param dumbAwareContent - a component to wrap
+   * @param updateRunnable - an action to execute when dumb mode state changed or user explicitly request reload panel
+   *
+   * @return Wrapped component.
+   */
+  public abstract JComponent wrapWithSpoiler(@NotNull JComponent dumbAwareContent, @NotNull Runnable updateRunnable, @NotNull Disposable parentDisposable);
 
   /**
    * Disables given component temporarily during dumb mode.
@@ -282,7 +295,7 @@ public abstract class DumbService {
   /**
    * Show a notification when given action is not available during dumb mode.
    */
-  public abstract void showDumbModeNotification(@NotNull String message);
+  public abstract void showDumbModeNotification(@NotNull @Nls String message);
 
   /**
    * Show modal progress about indexing blocking those actions until it is cancelled or indexing stops.
@@ -316,7 +329,9 @@ public abstract class DumbService {
    * <p>
    * A typical usage would involve {@code try-finally}, where the alternative resolution is first enabled, then an action is performed,
    * and then alternative resolution is turned off in the {@code finally} block.
+   * @deprecated Use {@link #runWithAlternativeResolveEnabled(ThrowableRunnable)} or {@link #computeWithAlternativeResolveEnabled(ThrowableComputable)} or {@link #withAlternativeResolveEnabled(Runnable)} instead
    */
+  @Deprecated
   public abstract void setAlternativeResolveEnabled(boolean enabled);
 
   /**
@@ -374,7 +389,6 @@ public abstract class DumbService {
    * @see #completeJustSubmittedTasks()
    * @deprecated Obsolete, does nothing, just executes the passed runnable.
    */
-  @SuppressWarnings({"unused"})
   @Deprecated
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();
@@ -385,7 +399,8 @@ public abstract class DumbService {
    *
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
-  public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
+  public abstract void suspendIndexingAndRun(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String activityName,
+                                             @NotNull Runnable activity);
 
   /**
    * Checks whether {@link #isDumb()} is true for the current project and if it's currently suspended by user or a {@link #suspendIndexingAndRun} call.

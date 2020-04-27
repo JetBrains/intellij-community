@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.execution.Platform;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -52,7 +53,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   public void processTerminated(@NotNull ProcessEvent event) {
     ProcessHandler processHandler = event.getProcessHandler();
     processHandler.removeProcessListener(this);
-    String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(event.getExitCode()));
+    String message = myProcessFinishedMessage.replaceAll(EXIT_CODE_REGEX, stringifyExitCode(Platform.current(), event.getExitCode()));
     processHandler.notifyTextAvailable(message, ProcessOutputTypes.SYSTEM);
     if (myProject != null) {
       ApplicationManager.getApplication().invokeLater(() -> StatusBar.Info.set(message, myProject), myProject.getDisposed());
@@ -60,11 +61,11 @@ public class ProcessTerminatedListener extends ProcessAdapter {
   }
 
   @NotNull
-  private static String stringifyExitCode(int exitCode) {
+  public static String stringifyExitCode(@NotNull Platform platform, int exitCode) {
     StringBuilder result = new StringBuilder();
     result.append(exitCode);
 
-    if (SystemInfo.isWindows && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
+    if (platform == Platform.WINDOWS && exitCode >= 0xC0000000 && exitCode < 0xD0000000) {
       // Quote from http://support.microsoft.com/kb/308558:
       //   If the result code has the "C0000XXX" format, the task did not complete successfully (the "C" indicates an error condition).
       //   The most common "C" error code is "0xC000013A: The application terminated as a result of a CTRL+C".
@@ -74,7 +75,7 @@ public class ProcessTerminatedListener extends ProcessAdapter {
       }
       result.append(')');
     }
-    else if (SystemInfo.isUnix && exitCode >= 129 && exitCode <= 159) {
+    else if (platform == Platform.UNIX && exitCode >= 129 && exitCode <= 159) {
       // "Exit Codes With Special Meanings" (http://www.tldp.org/LDP/abs/html/exitcodes.html)
       @SuppressWarnings("SpellCheckingInspection") String[] signals = {
         "HUP", "INT", "QUIT", "ILL", "TRAP", "ABRT", "EMT", "FPE", "KILL", "BUS", "SEGV", "SYS", "PIPE", "ALRM", "TERM", "URG",

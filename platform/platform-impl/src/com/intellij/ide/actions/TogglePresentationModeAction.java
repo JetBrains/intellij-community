@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.ui.LafManager;
@@ -155,9 +155,8 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     // to clear windows stack
     manager.clearSideStack();
 
-    String[] ids = manager.getToolWindowIds();
     boolean hasVisible = false;
-    for (String id : ids) {
+    for (String id : manager.getToolWindowIds()) {
       ToolWindow toolWindow = manager.getToolWindow(id);
       if (toolWindow.isVisible()) {
         toolWindow.hide(null);

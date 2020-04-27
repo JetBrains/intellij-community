@@ -3,8 +3,8 @@ package com.intellij.execution.services;
 
 import com.intellij.execution.services.ServiceModel.ServiceViewItem;
 import com.intellij.execution.services.ServiceViewModel.ServiceViewModelListener;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.AppUIUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
@@ -24,12 +24,7 @@ class ServiceSingleView extends ServiceView {
     super(new BorderLayout(), project, model, ui);
     ui.setServiceToolbar(ServiceViewActionProvider.getInstance());
     add(ui.getComponent(), BorderLayout.CENTER);
-    myListener = new ServiceViewModelListener() {
-      @Override
-      public void rootsChanged() {
-        updateItem();
-      }
-    };
+    myListener = this::updateItem;
     model.addModelListener(myListener);
     model.getInvoker().invokeLater(this::updateItem);
   }
@@ -87,7 +82,7 @@ class ServiceSingleView extends ServiceView {
     ServiceViewItem oldValue = myRef.get();
     ServiceViewItem newValue = ContainerUtil.getOnlyItem(getModel().getRoots());
     myRef.set(newValue);
-    AppUIUtil.invokeOnEdt(() -> {
+    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
       if (mySelected) {
         if (newValue != null) {
           ServiceViewDescriptor descriptor = newValue.getViewDescriptor();
@@ -97,7 +92,7 @@ class ServiceSingleView extends ServiceView {
           myUi.setDetailsComponent(descriptor.getContentComponent());
         }
       }
-    }, getProject().getDisposed());
+    });
   }
 
   private void showContent() {

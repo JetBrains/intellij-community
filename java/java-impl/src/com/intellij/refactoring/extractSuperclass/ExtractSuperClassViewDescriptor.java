@@ -54,8 +54,7 @@ public class ExtractSuperClassViewDescriptor extends UsageViewDescriptorAdapter 
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return myElements;
   }
 

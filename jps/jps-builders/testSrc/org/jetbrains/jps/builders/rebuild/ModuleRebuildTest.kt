@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
 
-/**
- * @author nik
- */
 class ModuleRebuildTest: JpsRebuildTestCase() {
   fun testModuleCycle() {
     doTest("moduleCycle/moduleCycle.ipr", directoryContent {

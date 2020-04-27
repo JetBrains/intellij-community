@@ -21,9 +21,6 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 
 import static org.jetbrains.jps.incremental.storage.ProjectStamps.PORTABLE_CACHES;
 
-/**
- * @author nik
- */
 public class PathStringDescriptor extends EnumeratorStringDescriptor {
   public static final PathStringDescriptor INSTANCE = new PathStringDescriptor();
 

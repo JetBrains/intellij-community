@@ -5,10 +5,8 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,9 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-/**
- * @author nik
- */
 abstract class FileIndexBase implements FileIndex {
   private final FileTypeRegistry myFileTypeRegistry;
   final DirectoryIndex myDirectoryIndex;
@@ -90,12 +85,6 @@ abstract class FileIndexBase implements FileIndex {
     return !file.isDirectory() &&
            !myFileTypeRegistry.isFileIgnored(file) &&
            isInSourceContent(file);
-  }
-
-  @NotNull
-  static VirtualFile[][] getModuleContentAndSourceRoots(@NotNull Module module) {
-    return new VirtualFile[][]{ModuleRootManager.getInstance(module).getContentRoots(),
-      ModuleRootManager.getInstance(module).getSourceRoots()};
   }
 
   protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {

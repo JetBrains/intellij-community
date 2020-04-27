@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -55,10 +55,10 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
     ThreadGroupReferenceProxyImpl group = getThreadGroupReference();
     try {
       myName = group.name();
-      return DebuggerBundle.message("label.thread.group.node", myName, group.uniqueID());
+      return JavaDebuggerBundle.message("label.thread.group.node", myName, group.uniqueID());
     }
     catch (ObjectCollectedException e) {
-      return myName != null ? DebuggerBundle.message("label.thread.group.node.group.collected", myName) : "";
+      return myName != null ? JavaDebuggerBundle.message("label.thread.group.node.group.collected", myName) : "";
     }
   }
 

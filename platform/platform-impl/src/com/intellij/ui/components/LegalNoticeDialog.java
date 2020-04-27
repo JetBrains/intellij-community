@@ -100,9 +100,8 @@ public final class LegalNoticeDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     if (myBuilder.customAction != null) {

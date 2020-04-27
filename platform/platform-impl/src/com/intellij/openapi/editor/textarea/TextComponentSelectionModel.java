@@ -15,38 +15,27 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.EditorCopyPasteHelper;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.SelectionListener;
-import com.intellij.openapi.editor.impl.SelectionModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.text.JTextComponent;
 
 /**
  * @author yole
  */
-public class TextComponentSelectionModel implements SelectionModel {
-  private final JTextComponent myTextComponent;
+class TextComponentSelectionModel implements SelectionModel {
   private final TextComponentEditor myEditor;
 
-  public TextComponentSelectionModel(@NotNull JTextComponent textComponent, @NotNull TextComponentEditor textComponentEditor) {
-    myTextComponent = textComponent;
+  TextComponentSelectionModel(@NotNull TextComponentEditorImpl textComponentEditor) {
     myEditor = textComponentEditor;
   }
 
   @Override
-  public int getSelectionStart() {
-    return myTextComponent.getSelectionStart();
+  public @NotNull Editor getEditor() {
+    return myEditor;
   }
 
   @Nullable
@@ -55,84 +44,16 @@ public class TextComponentSelectionModel implements SelectionModel {
     return null;
   }
 
-  @Override
-  public int getSelectionEnd() {
-    return myTextComponent.getSelectionEnd();
-  }
-
   @Nullable
   @Override
   public VisualPosition getSelectionEndPosition() {
     return null;
   }
 
-  @Override
-  @Nullable
-  public String getSelectedText() {
-    return myTextComponent.getSelectedText();
-  }
-
-  @Nullable
-  @Override
-  public String getSelectedText(boolean allCarets) {
-    return getSelectedText();
-  }
-
-  @Override
-  public int getLeadSelectionOffset() {
-    final int caretPosition = myTextComponent.getCaretPosition();
-    final int start = myTextComponent.getSelectionStart();
-    final int end = myTextComponent.getSelectionEnd();
-    return caretPosition == start ? end : start;
-  }
-
   @Nullable
   @Override
   public VisualPosition getLeadSelectionPosition() {
     return null;
-  }
-
-  @Override
-  public boolean hasSelection() {
-    return myTextComponent.getSelectionStart() != myTextComponent.getSelectionEnd();
-  }
-
-  @Override
-  public boolean hasSelection(boolean anyCaret) {
-    return hasSelection();
-  }
-
-  @Override
-  public void setSelection(final int startOffset, final int endOffset) {
-    if (myTextComponent.getCaretPosition() == startOffset) {   // avoid moving caret (required for correct Ctrl-W operation)
-      myTextComponent.setCaretPosition(endOffset);
-      myTextComponent.moveCaretPosition(startOffset);
-    }
-    else {
-      myTextComponent.setCaretPosition(startOffset);
-      myTextComponent.moveCaretPosition(endOffset);
-    }
-  }
-
-  @Override
-  public void setSelection(int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    setSelection(startOffset, endOffset);
-  }
-
-  @Override
-  public void setSelection(@Nullable VisualPosition startPosition, int startOffset, @Nullable VisualPosition endPosition, int endOffset) {
-    setSelection(startOffset, endOffset);
-  }
-
-  @Override
-  public void removeSelection() {
-    final int position = myTextComponent.getCaretPosition();
-    myTextComponent.select(position, position);
-  }
-
-  @Override
-  public void removeSelection(boolean allCarets) {
-    removeSelection();
   }
 
   @Override
@@ -146,22 +67,8 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  public void selectLineAtCaret() {
-    SelectionModelImpl.doSelectLineAtCaret(myEditor.getCaretModel().getPrimaryCaret());
-  }
-
-  @Override
-  public void selectWordAtCaret(final boolean honorCamelWordsSettings) {
-    removeSelection();
-
-    EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(
-      IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
-    handler.execute(myEditor, null, DataManager.getInstance().getDataContext(myEditor.getComponent()));
-  }
-
-  @Override
   public void copySelectionToClipboard() {
-    if (! (myTextComponent instanceof JPasswordField)) {
+    if (! (myEditor.getContentComponent() instanceof JPasswordField)) {
       EditorCopyPasteHelper.getInstance().copySelectionToClipboard(myEditor);
     }
   }
@@ -172,14 +79,12 @@ public class TextComponentSelectionModel implements SelectionModel {
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionStarts() {
+  public int @NotNull [] getBlockSelectionStarts() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  @NotNull
-  public int[] getBlockSelectionEnds() {
+  public int @NotNull [] getBlockSelectionEnds() {
     throw new UnsupportedOperationException("Not implemented");
   }
 

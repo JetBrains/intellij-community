@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -52,7 +52,6 @@ import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.util.ExceptionUtil.rethrowAllAsUnchecked;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.emptyList;
@@ -89,8 +88,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myDescription = description;
     myChange = change;
     myCommittedRevision = revision;
-    myOldFilePath = notNull(myChange.getBeforeRevision()).getFile();
-    myNewFilePath = notNull(myChange.getAfterRevision()).getFile();
+    myOldFilePath = requireNonNull(myChange.getBeforeRevision()).getFile();
+    myNewFilePath = requireNonNull(myChange.getAfterRevision()).getFile();
     myBaseForPatch = findValidParentAccurately(myNewFilePath);
     myOldPresentation = TreeConflictRefreshablePanel.filePath(myOldFilePath);
     myNewPresentation = TreeConflictRefreshablePanel.filePath(myNewFilePath);
@@ -214,7 +213,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void createPatches() throws VcsException {
-    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, notNull(myBaseForPatch).getPath(), false);
+    List<FilePatch> patches = buildPatch(myVcs.getProject(), myTheirsChanges, requireNonNull(myBaseForPatch).getPath(), false);
     myTextPatches = map(patches, TextFilePatch.class::cast);
   }
 
@@ -272,7 +271,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   private static void applyBinaryChange(@NotNull Change change) throws IOException, VcsException {
     if (change.getAfterRevision() == null) {
-      FilePath path = notNull(change.getBeforeRevision()).getFile();
+      FilePath path = requireNonNull(change.getBeforeRevision()).getFile();
       VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.getPath());
       if (file == null) {
         throw new VcsException("Can not delete file: " + path.getPath(), true);
@@ -281,7 +280,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     }
     else {
       FilePath file = change.getAfterRevision().getFile();
-      String parentPath = notNull(file.getParentPath()).getPath();
+      String parentPath = requireNonNull(file.getParentPath()).getPath();
       VirtualFile parentFile = VfsUtil.createDirectoryIfMissing(parentPath);
       if (parentFile == null) {
         throw new VcsException("Can not create directory: " + parentPath, true);
@@ -373,7 +372,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
 
   @NotNull
   private static FilePath rebasePath(@NotNull FilePath oldBase, @NotNull FilePath newBase, @NotNull FilePath path) {
-    String relativePath = notNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
+    String relativePath = requireNonNull(getRelativePath(oldBase.getPath(), path.getPath(), '/'));
     return VcsUtil.getFilePath(newBase.getPath() + "/" + relativePath, path.isDirectory());
   }
 
@@ -426,7 +425,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
     settings.CHANGE_AFTER = String.valueOf(min);
 
     //noinspection unchecked
-    List<SvnChangeList> committedChanges = notNull(myVcs.getCachingCommittedChangesProvider()).getCommittedChanges(settings, location, 0);
+    List<SvnChangeList> committedChanges = requireNonNull(myVcs.getCachingCommittedChangesProvider())
+      .getCommittedChanges(settings, location, 0);
     return filter(committedChanges, changeList -> changeList.getNumber() != min);
   }
 

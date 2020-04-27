@@ -28,8 +28,8 @@ public final class ContractConverter {
 
   @Nullable
   public static PsiAnnotation convertContract(@NotNull PsiMethod method,
-                                              @NotNull String[] oldParameterNames,
-                                              @NotNull JavaParameterInfo[] newParameters) throws ContractConversionException {
+                                              String @NotNull [] oldParameterNames,
+                                              JavaParameterInfo @NotNull [] newParameters) throws ContractConversionException {
     PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
     if (AnnotationUtil.isExternalAnnotation(annotation)) {
@@ -64,9 +64,9 @@ public final class ContractConverter {
 
   @NotNull
   private static StandardMethodContract convertContract(@NotNull StandardMethodContract contract,
-                                                        @NotNull int[] newToOldIndex,
-                                                        @NotNull int[] oldToNewIndex,
-                                                        @NotNull String[] oldParameterNames) throws ContractConversionException {
+                                                        int @NotNull [] newToOldIndex,
+                                                        int @NotNull [] oldToNewIndex,
+                                                        String @NotNull [] oldParameterNames) throws ContractConversionException {
     if (contract.getParameterCount() != oldToNewIndex.length) {
       // invalid contract
       throw new ContractConversionException("invalid contract clause '" + contract + "'");

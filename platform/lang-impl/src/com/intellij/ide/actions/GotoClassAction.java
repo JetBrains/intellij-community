@@ -49,7 +49,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     //we need to change the template presentation to show the proper text for the action in Settings | Keymap
     Presentation presentation = getTemplatePresentation();
     presentation.setText(GotoClassPresentationUpdater.getActionTitle() + "...");
-    presentation.setDescription(IdeBundle.message("go.to.class.action.description",
+    presentation.setDescription(IdeBundle.messagePointer("go.to.class.action.description",
                                                   StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), "/")));
   }
 
@@ -242,8 +242,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return current;
   }
 
-  @NotNull
-  private static PsiElement[] getAnonymousClasses(@NotNull PsiElement element) {
+  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
     for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
       final PsiElement[] elements = provider.getAnonymousElements(element);
       if (elements.length > 0) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -21,9 +21,6 @@ import static com.intellij.util.containers.ContainerUtil.immutableList;
 import static java.awt.AlphaComposite.SrcAtop;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-/**
- * @author Sergey.Malenkov
- */
 public class AnimatedIcon implements Icon {
   /**
    * This key is used to allow animated icons in lists, tables and trees.
@@ -183,18 +180,18 @@ public class AnimatedIcon implements Icon {
   private long time;
   private int index;
 
-  public AnimatedIcon(int delay, @NotNull Icon... icons) {
+  public AnimatedIcon(int delay, Icon @NotNull ... icons) {
     this(getFrames(delay, icons));
   }
 
-  public AnimatedIcon(@NotNull Frame... frames) {
+  public AnimatedIcon(Frame @NotNull ... frames) {
     this.frames = frames;
     assert frames.length > 0 : "empty array";
     for (Frame frame : frames) assert frame != null : "null animation frame";
     time = System.currentTimeMillis();
   }
 
-  private static Frame[] getFrames(int delay, @NotNull Icon... icons) {
+  private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {
     int length = icons.length;
     assert length > 0 : "empty array";
     Frame[] frames = new Frame[length];

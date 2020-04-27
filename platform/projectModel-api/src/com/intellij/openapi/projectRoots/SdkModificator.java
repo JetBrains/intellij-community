@@ -34,11 +34,9 @@ public interface SdkModificator {
 
   void setSdkAdditionalData(SdkAdditionalData data);
 
-  @NotNull
-  VirtualFile[] getRoots(@NotNull OrderRootType rootType);
+  VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType);
 
-  @NotNull
-  default String[] getUrls(@NotNull OrderRootType rootType) {
+  default String @NotNull [] getUrls(@NotNull OrderRootType rootType) {
     return ContainerUtil.map(getRoots(rootType), file -> file.getUrl(), ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 

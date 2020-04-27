@@ -14,15 +14,13 @@ public interface PsiAnnotationOwner {
    *
    * @return the list of annotations.
    */
-  @NotNull
-  PsiAnnotation[] getAnnotations();
+  PsiAnnotation @NotNull [] getAnnotations();
 
   /**
    * @return the list of annotations which are applicable to this owner
    *         (e.g. type annotations on method belong to its type element, not the method).
    */
-  @NotNull
-  PsiAnnotation[] getApplicableAnnotations();
+  PsiAnnotation @NotNull [] getApplicableAnnotations();
 
   /**
    * Searches the owner for an annotation with the specified fully qualified name

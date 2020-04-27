@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.text
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
@@ -25,29 +26,29 @@ class DateTimeFormatConfigurableUi(settings: DateTimeFormatManager) : Configurab
   init {
     ui = panel {
       row {
-        overrideSystemDateFormatting = checkBox("Override system date and time format",
+        overrideSystemDateFormatting = checkBox(IdeBundle.message("date.format.override.system.date.and.time.format"),
                                                 { settings.isOverrideSystemDateFormat },
                                                 { settings.isOverrideSystemDateFormat = it }).component
-        row("Date format:") {
+        row(IdeBundle.message("date.format.date.format")) {
           cell {
             pattern = textField({ settings.dateFormatPattern },
                                 { settings.dateFormatPattern = it },
                                 16).component
-            browserLink("Date patterns", "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
+            browserLink(IdeBundle.message("date.format.date.patterns"), "https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html")
           }
         }.enableIf(overrideSystemDateFormatting.selected)
 
         row {
-          use24HourTime = checkBox("Use 24-hour time", { settings.isUse24HourTime },
+          use24HourTime = checkBox(IdeBundle.message("date.format.24.hours"), { settings.isUse24HourTime },
                                    { settings.isUse24HourTime = it }).component
         }.enableIf(overrideSystemDateFormatting.selected)
 
       }
       row {
-        usePrettyFormatting = checkBox("Use pretty formatting",
+        usePrettyFormatting = checkBox(IdeBundle.message("date.format.pretty"),
                                        { settings.isPrettyFormattingAllowed },
                                        { settings.isPrettyFormattingAllowed = it })
-          .comment("Replace numeric date with <i>Today</i>, <i>Yesterday</i>, and <i>10 minutes ago</i>").component
+          .comment(IdeBundle.message("date.format.relative")).component
       }
     }
   }

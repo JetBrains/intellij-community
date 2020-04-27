@@ -65,7 +65,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   public DomElementProblemDescriptorImpl(@NotNull final DomElement domElement,
                                          final String message,
                                          final HighlightSeverity type,
-                                         @NotNull LocalQuickFix... fixes) {
+                                         LocalQuickFix @NotNull ... fixes) {
     this(domElement, message, type, null, null, fixes);
   }
 
@@ -74,7 +74,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
                                          final HighlightSeverity type,
                                          @Nullable final TextRange textRange,
                                          ProblemHighlightType highlightType,
-                                         @NotNull LocalQuickFix... fixes) {
+                                         LocalQuickFix @NotNull ... fixes) {
     myDomElement = domElement;
     final XmlElement element = domElement.getXmlElement();
     if (element != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -112,8 +112,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   }
 
   @Override
-  @NotNull
-  public LocalQuickFix[] getFixes() {
+  public LocalQuickFix @NotNull [] getFixes() {
     return myFixes;
   }
 

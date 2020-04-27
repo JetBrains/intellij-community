@@ -35,7 +35,7 @@ public interface SearchWordQueryBuilder {
    */
   @Contract(value = "_, _ -> new", pure = true)
   @NotNull
-  SearchWordQueryBuilder inContexts(@NotNull SearchContext context, @NotNull SearchContext... otherContexts);
+  SearchWordQueryBuilder inContexts(@NotNull SearchContext context, SearchContext @NotNull ... otherContexts);
 
   /**
    * Orders to search occurrences in given contexts.
@@ -58,7 +58,7 @@ public interface SearchWordQueryBuilder {
    */
   @Contract(value = "_, _ -> new", pure = true)
   @NotNull
-  SearchWordQueryBuilder restrictFileTypes(@NotNull FileType fileType, @NotNull FileType... fileTypes);
+  SearchWordQueryBuilder restrictFileTypes(@NotNull FileType fileType, FileType @NotNull ... fileTypes);
 
   /**
    * Orders to search occurrences in files of given language.

@@ -24,19 +24,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class SingleParentUsageGroupingRule implements UsageGroupingRule {
   /**
    * @return a group a specific usage should be placed into, or null, if this rule doesn't apply to this kind of usages.
    */
   @Nullable
-  protected abstract UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets);
+  protected abstract UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets);
 
   @NotNull
   @Override
-  public final List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  public final List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return ContainerUtil.createMaybeSingletonList(getParentGroupFor(usage, targets));
   }
 

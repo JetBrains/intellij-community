@@ -98,7 +98,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   }
 
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
     cache.processAllClassNames(processor, scope, filter);
     cache.processAllFieldNames(processor, scope, filter);
@@ -107,7 +107,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull final Processor<? super NavigationItem> processor,
                                       @NotNull final FindSymbolParameters parameters) {
 
     GlobalSearchScope scope = parameters.getSearchScope();
@@ -231,12 +231,12 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     }
 
     @Override
-    public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     }
 
     @Override
     public void processElementsWithName(@NotNull String name,
-                                        @NotNull Processor<NavigationItem> processor,
+                                        @NotNull Processor<? super NavigationItem> processor,
                                         @NotNull FindSymbolParameters parameters) {
     }
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.components.ComponentConfig;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -70,6 +71,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private @Nullable String myProductCode;
   private @Nullable Date myReleaseDate;
   private int myReleaseVersion;
+  private boolean myIsLicenseOptional;
   private String myResourceBundleBaseName;
   private String myChangeNotes;
   private String myVersion;
@@ -139,6 +141,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   @NotNull
+  @Override
   public Path getPluginPath() {
     return myPath;
   }
@@ -188,8 +191,19 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     if (incomplete) {
+      myDescriptionChildText = element.getChildTextTrim("description");
+      myCategory = element.getChildTextTrim("category");
+      myVersion = element.getChildTextTrim("version");
       if (LOG.isDebugEnabled()) {
         LOG.debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
+      }
+      List<Element> dependsElements = element.getChildren("depends");
+      for (Element dependsElement : dependsElements) {
+        readPluginDependency(basePath, context, dependsElement);
+      }
+      if (myPluginDependencies != null) {
+        int size = XmlReader.collapseDuplicateDependencies(myPluginDependencies);
+        XmlReader.collectDependentPluginIds(this, size);
       }
       return false;
     }
@@ -262,46 +276,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           break;
 
         case "depends":
-          String dependencyIdString = child.getTextTrim();
-          if (!dependencyIdString.isEmpty()) {
-            PluginId dependencyId = PluginId.getId(dependencyIdString);
-            boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
-            boolean isAvailable = true;
-            IdeaPluginDescriptorImpl dependencyDescriptor = null;
-            if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
-              if (!isOptional) {
-                context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is disabled)");
-                markAsIncomplete(context);
-                return false;
-              }
-
-              isAvailable = false;
-            }
-            else {
-              dependencyDescriptor = context.parentContext.result.idMap.get(dependencyId);
-              if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
-                if (!isOptional) {
-                  context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
-                  markAsIncomplete(context);
-                  return false;
-                }
-
-                isAvailable = false;
-              }
-            }
-
-            if (myPluginDependencies == null) {
-              myPluginDependencies = new ArrayList<>();
-            }
-
-            PluginDependency dependency = new PluginDependency();
-            dependency.pluginId = dependencyId;
-            dependency.optional = isOptional;
-            dependency.available = isAvailable;
-            dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
-            dependency.dependency = dependencyDescriptor;
-            myPluginDependencies.add(dependency);
-          }
+          if (!readPluginDependency(basePath, context, child)) return false;
           break;
 
         case "category":
@@ -333,6 +308,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
           myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
           myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
           myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
+          myIsLicenseOptional = Boolean.valueOf(child.getAttributeValue("optional", "false"));
           break;
 
         case "vendor":
@@ -360,9 +336,52 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     if (myPluginDependencies != null) {
-      XmlReader.readDependencies(rootDescriptor, this, myPluginDependencies, context, pathResolver);
+      XmlReader.readDependencies(rootDescriptor, this, context, pathResolver);
     }
 
+    return true;
+  }
+
+  private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorLoadingContext context, Element child) {
+    String dependencyIdString = child.getTextTrim();
+    if (dependencyIdString.isEmpty()) {
+      return true;
+
+    }
+    PluginId dependencyId = PluginId.getId(dependencyIdString);
+    boolean isOptional = Boolean.parseBoolean(child.getAttributeValue("optional"));
+    boolean isAvailable = true;
+    IdeaPluginDescriptorImpl dependencyDescriptor = null;
+    if (context.isPluginDisabled(dependencyId) || context.isPluginIncomplete(dependencyId)) {
+      if (!isOptional) {
+        markAsIncomplete(context);
+      }
+
+      isAvailable = false;
+    }
+    else {
+      dependencyDescriptor = context.parentContext.result.idMap.get(dependencyId);
+      if (dependencyDescriptor != null && context.isBroken(dependencyDescriptor)) {
+        if (!isOptional) {
+          context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
+          markAsIncomplete(context);
+          return false;
+        }
+
+        isAvailable = false;
+      }
+    }
+
+    PluginDependency dependency = new PluginDependency();
+    dependency.pluginId = dependencyId;
+    dependency.optional = isOptional;
+    dependency.available = isAvailable;
+    dependency.configFile = StringUtil.nullize(child.getAttributeValue("config-file"));
+    dependency.dependency = dependencyDescriptor;
+    if (myPluginDependencies == null) {
+      myPluginDependencies = new ArrayList<>();
+    }
+    myPluginDependencies.add(dependency);
     return true;
   }
 
@@ -379,16 +398,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     }
 
     markAsIncomplete(context);
-
-    if (since == null) {
-      since = "0.0";
-    }
-
-    if (until == null) {
-      until = "*.*";
-    }
-    context.parentContext.result.errors.put(getPluginId(), formatErrorMessage("is incompatible (target build " +
-                                            (since.equals(until) ? "is " + since : "range is " + since + " to " + until) + ")"));
+    context.parentContext.result.reportIncompatiblePlugin(this, message, since, until);
     return false;
   }
 
@@ -409,7 +419,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     incomplete = true;
     setEnabled(false);
     if (myId != null) {
-      context.parentContext.result.incompletePlugins.put(myId, this);
+      context.parentContext.result.addIncompletePlugin(this);
     }
   }
 
@@ -424,17 +434,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
     String preload = element.getAttributeValue("preload");
     if (preload != null) {
-      if (preload.equals("true")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
-      }
-      else if (preload.equals("await")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
-      }
-      else if (preload.equals("notHeadless")) {
-        descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
-      }
-      else {
-        LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+      switch (preload) {
+        case "true":
+          descriptor.preload = ServiceDescriptor.PreloadMode.TRUE;
+          break;
+        case "await":
+          descriptor.preload = ServiceDescriptor.PreloadMode.AWAIT;
+          break;
+        case "notHeadless":
+          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_HEADLESS;
+          break;
+        case "notLightEdit":
+          descriptor.preload = ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT;
+          break;
+        default:
+          LOG.error("Unknown preload mode value: " + JDOMUtil.writeElement(element));
+          break;
       }
     }
 
@@ -492,7 +507,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             String value = elementChild.getAttributeValue("value");
             if (name != null) {
               if (name.equals("os")) {
-                if (!isComponentSuitableForOs(value)) {
+                if (value != null && !isSuitableForOs(value)) {
                   continue loop;
                 }
               }
@@ -682,7 +697,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       result = myDescriptionChildText;
     }
     else {
-      result = CommonBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
+      result = AbstractBundle.messageOrDefault(bundle, "plugin." + myId + ".description", StringUtil.notNullize(myDescriptionChildText));
     }
     myDescription = result;
     return result;
@@ -715,15 +730,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myReleaseVersion;
   }
 
+  public boolean isLicenseOptional() {
+    return myIsLicenseOptional;
+  }
+
   @Override
-  @NotNull
-  public PluginId[] getDependentPluginIds() {
+  public PluginId @NotNull [] getDependentPluginIds() {
     return myDependencies;
   }
 
   @Override
-  @NotNull
-  public PluginId[] getOptionalDependentPluginIds() {
+  public PluginId @NotNull [] getOptionalDependentPluginIds() {
     return myOptionalDependencies;
   }
 
@@ -825,7 +842,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       for (Path f : childStream) {
         if (Files.isRegularFile(f)) {
           String name = f.getFileName().toString();
-          if (StringUtil.endsWithIgnoreCase(name, ".jar") || StringUtil.endsWithIgnoreCase(name, ".zip")) {
+          if (StringUtilRt.endsWithIgnoreCase(name, ".jar") || StringUtilRt.endsWithIgnoreCase(name, ".zip")) {
             result.add(f);
           }
         }
@@ -995,8 +1012,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return "PluginDescriptor(name=" + myName + ", id=" + myId + ", path=" + myPath + ")";
   }
 
-  private static boolean isComponentSuitableForOs(@Nullable String os) {
-    if (StringUtil.isEmpty(os)) {
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  private static boolean isSuitableForOs(@NotNull String os) {
+    if (os.isEmpty()) {
       return true;
     }
 
@@ -1032,7 +1050,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
   @Nullable
   public String findOptionalDependencyConfigFile(@NotNull PluginId pluginId) {
-    if (myDependencies == null) return null;
+    if (myDependencies == null) {
+      return null;
+    }
     for (PluginDependency dependency : myPluginDependencies) {
       if (dependency.pluginId.equals(pluginId)) {
         return dependency.configFile;
@@ -1059,6 +1079,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
 
         Element child = (Element)item;
+
+        String os = child.getAttributeValue("os");
+        if (os != null && !isSuitableForOs(os)) {
+          continue;
+        }
+
         String listenerClassName = child.getAttributeValue("class");
         String topicClassName = child.getAttributeValue("topic");
         if (listenerClassName == null || topicClassName == null) {
@@ -1126,14 +1152,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
       }
     }
 
-    static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                     @NotNull IdeaPluginDescriptorImpl descriptor,
-                                     @NotNull List<PluginDependency> dependencies,
-                                     @NotNull DescriptorLoadingContext context,
-                                     @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
-      List<String> visitedFiles = null;
-
-      // https://youtrack.jetbrains.com/issue/IDEA-206274
+    static int collapseDuplicateDependencies(List<PluginDependency> dependencies) {
       int size = 0;
       for (int i = 0, n = dependencies.size(); i < n; i++) {
         PluginDependency dependency = dependencies.get(i);
@@ -1151,6 +1170,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
             break;
           }
         }
+      }
+      return size;
+    }
+
+    static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
+                                     @NotNull IdeaPluginDescriptorImpl descriptor,
+                                     @NotNull DescriptorLoadingContext context,
+                                     @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver) {
+      List<String> visitedFiles = null;
+      List<PluginDependency> dependencies = descriptor.myPluginDependencies;
+
+      // https://youtrack.jetbrains.com/issue/IDEA-206274
+      int size = collapseDuplicateDependencies(dependencies);
+
+      for (PluginDependency dependency : dependencies) {
+        if (dependency == null) continue;
 
         // because of https://youtrack.jetbrains.com/issue/IDEA-206274, configFile maybe not only for optional dependencies
         String configFile = dependency.configFile;
@@ -1198,7 +1233,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         }
       }
 
-      PluginId[] dependentPlugins = new PluginId[size];
+      collectDependentPluginIds(descriptor, size);
+    }
+
+    static void collectDependentPluginIds(@NotNull IdeaPluginDescriptorImpl descriptor, int dependencyListSize) {
+      List<PluginDependency> dependencies = descriptor.myPluginDependencies;
+      PluginId[] dependentPlugins = new PluginId[dependencyListSize];
       int optionalSize = 0;
       int index = 0;
       for (PluginDependency dependency : dependencies) {
@@ -1258,35 +1298,36 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
         String os = extensionElement.getAttributeValue("os");
         if (os != null) {
           extensionElement.removeAttribute("os");
-          if (!isComponentSuitableForOs(os)) {
+          if (!isSuitableForOs(os)) {
             continue;
           }
         }
 
         String qualifiedExtensionPointName = stringInterner.intern(ExtensionsAreaImpl.extractPointName(extensionElement, ns));
         ContainerDescriptor containerDescriptor;
-        if (qualifiedExtensionPointName.equals(APPLICATION_SERVICE)) {
-          containerDescriptor = descriptor.myAppContainerDescriptor;
-        }
-        else if (qualifiedExtensionPointName.equals(PROJECT_SERVICE)) {
-          containerDescriptor = descriptor.myProjectContainerDescriptor;
-        }
-        else if (qualifiedExtensionPointName.equals(MODULE_SERVICE)) {
-          containerDescriptor = descriptor.myModuleContainerDescriptor;
-        }
-        else {
-          if (epNameToExtensions == null) {
-            epNameToExtensions = new THashMap<>();
-            descriptor.myExtensions = epNameToExtensions;
-          }
+        switch (qualifiedExtensionPointName) {
+          case APPLICATION_SERVICE:
+            containerDescriptor = descriptor.myAppContainerDescriptor;
+            break;
+          case PROJECT_SERVICE:
+            containerDescriptor = descriptor.myProjectContainerDescriptor;
+            break;
+          case MODULE_SERVICE:
+            containerDescriptor = descriptor.myModuleContainerDescriptor;
+            break;
+          default:
+            if (epNameToExtensions == null) {
+              epNameToExtensions = new THashMap<>();
+              descriptor.myExtensions = epNameToExtensions;
+            }
 
-          List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
-          if (list == null) {
-            list = new SmartList<>();
-            epNameToExtensions.put(qualifiedExtensionPointName, list);
-          }
-          list.add(extensionElement);
-          continue;
+            List<Element> list = epNameToExtensions.get(qualifiedExtensionPointName);
+            if (list == null) {
+              list = new SmartList<>();
+              epNameToExtensions.put(qualifiedExtensionPointName, list);
+            }
+            list.add(extensionElement);
+            continue;
         }
 
         containerDescriptor.addService(readServiceDescriptor(extensionElement));

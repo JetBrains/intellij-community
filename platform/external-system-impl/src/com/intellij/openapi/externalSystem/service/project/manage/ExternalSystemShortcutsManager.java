@@ -76,12 +76,10 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public boolean hasShortcuts(@NotNull String actionId) {
-    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    return activeKeymap.getShortcuts(actionId).length > 0;
+    return KeymapUtil.getPrimaryShortcut(actionId) != null;
   }
 
-  @NotNull
-  private Shortcut[] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
+  private Shortcut @NotNull [] getShortcuts(@Nullable String projectPath, @Nullable String taskName) {
     String actionId = getActionId(projectPath, taskName);
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
     return activeKeymap.getShortcuts(actionId);

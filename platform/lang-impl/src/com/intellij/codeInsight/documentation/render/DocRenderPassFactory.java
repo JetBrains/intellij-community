@@ -7,17 +7,16 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +25,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.intellij.lang.documentation.DocumentationMarkup.*;
 
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory {
   private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
@@ -41,10 +38,9 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   @Nullable
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!Registry.is("editor.render.doc.comments")) return null;
     long current = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
-    return existing != null && existing == current ? null : new DocRenderPass(editor, file);
+    return editor.getProject() == null || existing != null && existing == current ? null : new DocRenderPass(editor, file);
   }
 
   private static class DocRenderPass extends EditorBoundHighlightingPass {
@@ -67,54 +63,31 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
   @NotNull
   public static Items calculateItemsToRender(@NotNull Document document, @NotNull PsiFile psiFile) {
+    boolean enabled = EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled();
     Items items = new Items();
-    SyntaxTraverser.psiTraverser(psiFile).filter(PsiDocCommentBase.class).forEach(comment -> {
+    DocumentationManager.getProviderFromElement(psiFile).collectDocComments(psiFile, comment -> {
       TextRange range = comment.getTextRange();
       if (range != null && DocRenderItem.isValidRange(document, range)) {
-        String textToRender = calcText(comment);
-        if (textToRender != null) {
-          items.addItem(new Item(range, textToRender));
-        }
+        String textToRender = enabled ? calcText(comment) : null;
+        items.addItem(new Item(range, textToRender));
       }
     });
     return items;
   }
 
-  @Nullable
-  private static String calcText(@NotNull PsiDocCommentBase comment) {
+  static @NotNull String calcText(@Nullable PsiDocCommentBase comment) {
     try {
-      PsiElement owner = comment.getOwner();
-      if (owner == null) return null;
-      String doc = DocumentationManager.getProviderFromElement(owner).generateDoc(owner, null);
-      if (doc == null) return null;
-      // remove definition (it's already visible in the source code)
-      int definitionPos = doc.indexOf(DEFINITION_START);
-      if (definitionPos >= 0) {
-        int definitionEnd = doc.indexOf(DEFINITION_END, definitionPos + DEFINITION_START.length());
-        if (definitionEnd > 0) {
-          doc = doc.substring(0, definitionPos) + doc.substring(definitionEnd + DEFINITION_END.length());
+      String text = null;
+      if (comment != null) {
+        PsiElement owner = comment.getOwner();
+        if (owner != null) {
+          text = DocumentationManager.getProviderFromElement(owner).generateRenderedDoc(owner);
         }
       }
-      // remove information about non-code annotations
-      int sectionPos = 0;
-      while ((sectionPos = doc.indexOf(SECTION_HEADER_START, sectionPos)) >= 0) {
-        int sectionNamePos = sectionPos + SECTION_HEADER_START.length();
-        int separatorPos = doc.indexOf(SECTION_SEPARATOR, sectionNamePos);
-        if (separatorPos < 0) break;
-        int endPos = doc.indexOf(SECTION_END, separatorPos + SECTION_SEPARATOR.length());
-        if (endPos < 0) break;
-        int endEndPos = endPos + SECTION_END.length();
-        if (doc.substring(sectionNamePos, separatorPos).contains("annotations")) {
-          doc = doc.substring(0, sectionPos) + doc.substring(endEndPos);
-        }
-        else {
-          sectionPos = endEndPos;
-        }
-      }
-      return doc;
+      return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : text;
     }
     catch (IndexNotReadyException e) {
-      LOG.debug(e);
+      LOG.warn(e);
       return CodeInsightBundle.message("doc.render.dumb.mode.text");
     }
   }
@@ -129,6 +102,10 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
   public static class Items implements Iterable<Item> {
     private final Map<TextRange, Item> myItems = new LinkedHashMap<>();
+
+    boolean isEmpty() {
+      return myItems.isEmpty();
+    }
 
     private void addItem(@NotNull Item item) {
       myItems.put(item.textRange, item);
@@ -150,7 +127,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     final TextRange textRange;
     final String textToRender;
 
-    private Item(@NotNull TextRange textRange, @NotNull String textToRender) {
+    private Item(@NotNull TextRange textRange, @Nullable String textToRender) {
       this.textRange = textRange;
       this.textToRender = textToRender;
     }

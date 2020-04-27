@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>UI Designer</name>
   <id>com.intellij.uiDesigner</id>
+  <category>Swing</category>
   <vendor>JetBrains</vendor>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>

@@ -30,7 +30,7 @@ class VcsLogHashFilterImpl implements VcsLogHashFilter {
 
   @Override
   public String toString() {
-    return "hashes:" + myHashes;
+    return "hashes:" + myHashes; // NON-NLS
   }
 
   @Override

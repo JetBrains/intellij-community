@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.reference;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -19,6 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class RefJavaUtilImpl extends RefJavaUtil {
   private static final Logger LOG = Logger.getInstance(RefJavaUtilImpl.class);
@@ -33,7 +34,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   }
 
   @Override
-  public void addReferencesTo(@NotNull final UDeclaration decl, @NotNull final RefJavaElement ref, @Nullable final UElement[] findIn) {
+  public void addReferencesTo(@NotNull final UDeclaration decl, @NotNull final RefJavaElement ref, final UElement @Nullable [] findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     if (findIn == null) {
       return;
@@ -68,9 +69,8 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          type = type.getDeepComponentType();
                          if (type instanceof PsiClassType) {
                            type.accept(new PsiTypeVisitor<Void>() {
-                             @Nullable
                              @Override
-                             public Void visitClassType(PsiClassType classType) {
+                             public Void visitClassType(@NotNull PsiClassType classType) {
                                for (PsiType parameter : classType.getParameters()) {
                                  parameter.accept(this);
                                }
@@ -295,7 +295,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitReturnExpression(@NotNull UReturnExpression node) {
-                         if (refFrom instanceof RefMethodImpl && 
+                         if (refFrom instanceof RefMethodImpl &&
                              UastUtils.getParentOfType(node, UMethod.class, false, UClass.class, ULambdaExpression.class) == decl) {
                            RefMethodImpl refMethod = (RefMethodImpl)refFrom;
                            refMethod.updateReturnValueTemplate(node.getReturnExpression());
@@ -405,7 +405,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                UExpression refExpression,
                                final UElement uFrom,
                                final RefElement refFrom) {
-    UMethod uMethod = ObjectUtils.notNull(UastContextKt.toUElement(psiResolved, UMethod.class));
+    UMethod uMethod = Objects.requireNonNull(UastContextKt.toUElement(psiResolved, UMethod.class));
     RefMethodImpl refMethod = (RefMethodImpl)refResolved;
 
     if (refExpression instanceof UCallableReferenceExpression) {
@@ -511,7 +511,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     }
     RefPackage refPackage = getPackage(refEntity);
 
-    return refPackage == null ? InspectionsBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
+    return refPackage == null ? JavaAnalysisBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
   }
 
   @NotNull

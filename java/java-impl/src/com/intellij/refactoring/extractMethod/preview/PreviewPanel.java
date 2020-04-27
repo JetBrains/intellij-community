@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -14,7 +15,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
@@ -129,8 +129,8 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
       return;
     }
     if (Messages.showYesNoDialog(myProject,
-                                 "Project files have been changed.\nWould you like to to re-run the refactoring?",
-                                 "Re-Run Refactoring", null) == Messages.YES) {
+                                 JavaRefactoringBundle.message("project.files.have.been.changed"),
+                                 JavaRefactoringBundle.message("re.run.refactoring"), null) == Messages.YES) {
       close();
       myDiffPanel.tryExtractAgain();
     }
@@ -176,12 +176,12 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
       super(new FlowLayout(FlowLayout.LEFT, JBUIScale.scale(8), 0));
       myProject = project;
 
-      myRefactorButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.refactor"));
+      myRefactorButton = new JButton(JavaRefactoringBundle.message("refactoring.extract.method.preview.button.refactor"));
       DialogUtil.registerMnemonic(myRefactorButton);
       myRefactorButton.addActionListener(e -> doRefactor());
       add(myRefactorButton);
 
-      myRerunButton = new JButton(RefactoringBundle.message("refactoring.extract.method.preview.button.rerun"));
+      myRerunButton = new JButton(JavaRefactoringBundle.message("refactoring.extract.method.preview.button.rerun"));
       DialogUtil.registerMnemonic(myRefactorButton);
       myRerunButton.addActionListener(e -> rerunRefactoring());
       add(myRerunButton);

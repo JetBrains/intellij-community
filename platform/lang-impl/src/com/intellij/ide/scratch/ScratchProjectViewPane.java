@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -144,9 +142,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
         VirtualFile vFile = PsiUtilCore.getVirtualFile(file);
         vFile = BackedVirtualFile.getOriginFileIfBacked(vFile);
         if (vFile == null || !vFile.isValid()) return false;
-        if (!vFile.isInLocalFileSystem()) return false;
 
-        return ScratchFileService.getInstance().getRootType(vFile) != null;
+        return ScratchUtil.isScratch(vFile);
       }
 
       @Override
@@ -271,20 +268,21 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static final class MyProjectNode extends ProjectViewNode<String> {
     MyProjectNode(Project project, ViewSettings settings) {
-      super(project, ScratchesNamedScope.NAME, settings);
+      super(project, ScratchesNamedScope.scratchesAndConsoles(), settings);
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return FileTypeRegistry.getInstance().isFileOfType(file, ScratchFileType.INSTANCE);
+      return ScratchUtil.isScratch(file);
     }
 
     @NotNull
     @Override
     public Collection<? extends AbstractTreeNode<?>> getChildren() {
       List<AbstractTreeNode<?>> list = new ArrayList<>();
+      Project project = Objects.requireNonNull(getProject());
       for (RootType rootType : RootType.getAllRootTypes()) {
-        ContainerUtil.addIfNotNull(list, createRootNode(getProject(), rootType, getSettings()));
+        ContainerUtil.addIfNotNull(list, createRootNode(project, rootType, getSettings()));
       }
       return list;
     }
@@ -311,12 +309,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @NotNull
     public RootType getRootType() {
-      return ObjectUtils.notNull(getValue());
+      return Objects.requireNonNull(getValue());
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return ScratchFileService.getInstance().getRootType(file) == getValue();
+      return getValue().containsFile(file);
     }
 
     @Nullable
@@ -358,7 +356,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       VirtualFile root = getVirtualFile();
       if (root == null) return true;
       RootType rootType = getRootType();
-      Project project = ObjectUtils.notNull(getProject());
+      Project project = Objects.requireNonNull(getProject());
       for (VirtualFile f : root.getChildren()) {
         if (!rootType.isIgnored(project, f)) return false;
       }
@@ -428,8 +426,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   private static void customizePresentation(@NotNull BasePsiNode node, @NotNull PresentationData data) {
-    VirtualFile file = ObjectUtils.notNull(node.getVirtualFile());
-    Project project = ObjectUtils.notNull(node.getProject());
+    VirtualFile file = Objects.requireNonNull(node.getVirtualFile());
+    Project project = Objects.requireNonNull(node.getProject());
     AbstractTreeNode parent = node.getParent();
     MyRootNode rootNode = parent instanceof MyRootNode ? (MyRootNode)parent :
                           parent instanceof PsiDirectoryNode ? (MyRootNode)((PsiDirectoryNode)parent).getFilter() : null;

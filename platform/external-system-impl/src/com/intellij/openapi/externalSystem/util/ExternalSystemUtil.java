@@ -68,6 +68,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -434,7 +435,7 @@ public final class ExternalSystemUtil {
             public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
               long eventTime = System.currentTimeMillis();
             /* Android Studio: keep "Refresh Gradle project" out of build view; see b/76099171
-              AnAction rerunImportAction = new AnAction() {
+              AnAction rerunImportAction = new DumbAwareAction() {
                 @Override
                 public void update(@NotNull AnActionEvent e) {
                   Presentation p = e.getPresentation();
@@ -449,9 +450,9 @@ public final class ExternalSystemUtil {
                 }
               };
               String systemId = id.getProjectSystemId().getReadableName();
-              rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.message("action.refresh.project.text", systemId));
+              rerunImportAction.getTemplatePresentation().setText(ExternalSystemBundle.messagePointer("action.refresh.project.text", systemId));
               rerunImportAction.getTemplatePresentation()
-                .setDescription(ExternalSystemBundle.message("action.refresh.project.description", systemId));
+                .setDescription(ExternalSystemBundle.messagePointer("action.refresh.project.description", systemId));
               rerunImportAction.getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
             */
 

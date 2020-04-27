@@ -16,6 +16,7 @@
 
 package com.intellij.util;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -119,7 +120,7 @@ public class VisibilityUtil  {
 
   @NotNull
   public static String toPresentableText(@PsiModifier.ModifierConstant @NotNull String modifier) {
-    return PsiBundle.visibilityPresentation(modifier);
+    return JavaPsiBundle.visibilityPresentation(modifier);
   }
 
   public static void fixVisibility(PsiElement[] elements, PsiMember member, @PsiModifier.ModifierConstant String newVisibility) {

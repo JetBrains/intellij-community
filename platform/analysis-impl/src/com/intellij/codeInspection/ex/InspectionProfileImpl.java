@@ -19,6 +19,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -412,8 +413,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Override
-  @NotNull
-  public InspectionToolWrapper[] getInspectionTools(@Nullable PsiElement element) {
+  public InspectionToolWrapper @NotNull [] getInspectionTools(@Nullable PsiElement element) {
     initInspectionTools(element == null ? null : element.getProject());
     List<InspectionToolWrapper> result = new ArrayList<>();
     for (Tools toolList : myTools.values()) {
@@ -492,8 +492,36 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           //some settings were read for the tool, so it must be initialized,
           //otherwise no dynamic tools are expected
           toolWrapper.isInitialized()) {
-        for (LocalInspectionToolWrapper wrapper : ((DynamicGroupTool)toolWrapper.getTool()).getChildren()) {
-          addTool(project, wrapper, dependencies);
+        final boolean parentEnabled = myTools.get(toolWrapper.getShortName()).isEnabled();
+        List<LocalInspectionToolWrapper> children = ((DynamicGroupTool)toolWrapper.getTool()).getChildren(parentEnabled);
+        if (tools.stream().noneMatch(i -> children.stream().anyMatch(l -> i.getShortName().equals(l.getShortName())))) {
+          boolean isLocked = myLockedProfile;
+          myLockedProfile = false;
+          for (LocalInspectionToolWrapper wrapper : children) {
+            addTool(project, wrapper, dependencies);
+            final String shortName = wrapper.getShortName();
+            if (InspectionElementsMerger.getMerger(shortName) != null) continue;
+            InspectionElementsMerger.addMerger(shortName, new InspectionElementsMergerBase() {
+              @Override
+              public @NotNull String getMergedToolName() {
+                return shortName;
+              }
+
+              @Override
+              public String @NotNull [] getSourceToolNames() {
+                return ArrayUtil.EMPTY_STRING_ARRAY;
+              }
+
+              @Override
+              protected boolean areSettingsMerged(@NotNull Map<String, Element> settings, @NotNull Element element) {
+                // returns true when settings are default, so defaults will not be saved in profile
+                return Boolean.parseBoolean(element.getAttributeValue("enabled")) == wrapper.isEnabledByDefault() &&
+                       wrapper.getDefaultLevel().toString().equals(element.getAttributeValue("level")) &&
+                       Boolean.parseBoolean(element.getAttributeValue("enabled_by_default")) == wrapper.isEnabledByDefault();
+              }
+            });
+          }
+          myLockedProfile = isLocked;
         }
       }
     }
@@ -619,21 +647,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         return merger.getMergedToolName();
       }
 
-      @NotNull
       @Override
-      public String[] getSourceToolNames() {
+      public String @NotNull [] getSourceToolNames() {
         return merger.getSourceToolNames();
       }
     };
   }
 
-  @Nullable
   @Transient
-  public String[] getScopesOrder() {
+  public String @Nullable [] getScopesOrder() {
     return myScopesOrder;
   }
 
-  public void setScopesOrder(@NotNull String[] scopesOrder) {
+  public void setScopesOrder(String @NotNull [] scopesOrder) {
     myScopesOrder = scopesOrder;
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.classes.pushDown;
 
 import com.intellij.openapi.project.Project;
@@ -26,8 +26,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
     super(project, membersToMove, from, getChildren(from));
   }
 
-  @NotNull
-  private static PyClass[] getChildren(@NotNull final PyClass from) {
+  private static PyClass @NotNull [] getChildren(@NotNull final PyClass from) {
     final Collection<PyClass> all = getInheritors(from);
     return all.toArray(PyClass.EMPTY_ARRAY);
   }
@@ -51,12 +50,6 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount));
-  }
-
-  @Override
-  @Nullable
-  public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return null;
   }
 
   @NotNull

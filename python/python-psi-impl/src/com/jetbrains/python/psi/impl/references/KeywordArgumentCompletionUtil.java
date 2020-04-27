@@ -65,8 +65,8 @@ public class KeywordArgumentCompletionUtil {
           ContainerUtil.addIfNotNull(result, parameter.getName());
         }
         PyFunction func = null;
-        if (type instanceof PyFunctionType) {
-          func = as(((PyFunctionType)type).getCallable(), PyFunction.class);
+        if (type.getCallable() instanceof PyFunction) {
+          func = as(type.getCallable(), PyFunction.class);
         }
         else if (type instanceof PyClassType) {
           func = ((PyClassType)type).getPyClass().findInitOrNew(true, context);

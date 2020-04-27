@@ -10,9 +10,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class DefaultCommitPlaceholderProvider implements CommitPlaceholderProvider {
 
-  @NotNull
   @Override
-  public String[] getPlaceholders(TaskRepository repository) {
+  public String @NotNull [] getPlaceholders(TaskRepository repository) {
     return new String[] { "id", "number", "summary", "project", "taskType"};
   }
 

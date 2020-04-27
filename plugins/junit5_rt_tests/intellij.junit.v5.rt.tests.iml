@@ -62,5 +62,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="TEST" name="StreamEx" level="project" />
   </component>
 </module>

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.lambda;
 
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,15 +18,14 @@ import java.util.Collections;
 public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitParameterList(PsiParameterList parameterList) {
         super.visitParameterList(parameterList);
         if (isApplicable(parameterList)) {
-          holder.registerProblem(parameterList, "Lambda parameter type is redundant", new LambdaParametersFix());
+          holder.registerProblem(parameterList, JavaBundle.message("inspection.message.lambda.parameter.type.is.redundant"), new LambdaParametersFix());
         }
       }
     };
@@ -107,10 +107,9 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
 
   private static class LambdaParametersFix implements LocalQuickFix {
     @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
-      return "Remove redundant parameter types";
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("quickfix.family.remove.redundant.parameter.types");
     }
 
     @Override

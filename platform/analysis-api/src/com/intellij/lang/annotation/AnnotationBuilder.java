@@ -18,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 public
 interface AnnotationBuilder {

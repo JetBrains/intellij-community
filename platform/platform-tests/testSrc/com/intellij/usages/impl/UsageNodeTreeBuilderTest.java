@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,9 +35,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * @author max
- */
 public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
   public void testNoGroupingRules() {
     GroupNode groupNode = buildUsageTree(new int[]{2, 3, 0}, UsageGroupingRule.EMPTY_ARRAY);
@@ -96,16 +92,9 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     ExtensionPoint<UsageGroupingRuleProvider> point = UsageGroupingRuleProvider.EP_NAME.getPoint(null);
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
-      @NotNull
       @Override
-      public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+      public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return rules;
-      }
-
-      @NotNull
-      @Override
-      public AnAction[] createGroupingActions(@NotNull UsageView view) {
-        return AnAction.EMPTY_ARRAY;
       }
     };
 
@@ -134,7 +123,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
   private static class LogGroupingRule extends SingleParentUsageGroupingRule {
     @Nullable
     @Override
-    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       return new LogUsageGroup(usage.toString().length());
     }
   }
@@ -269,7 +258,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     @Nullable
     @Override
-    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       MockUsage mockUsage = (MockUsage)usage;
 
       if (mockUsage.getId() > 1000) return null;
@@ -294,8 +283,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     public UsagePresentation getPresentation() {
       return new UsagePresentation() {
         @Override
-        @NotNull
-        public TextChunk[] getText() {
+        public TextChunk @NotNull [] getText() {
           return TextChunk.EMPTY_ARRAY;
         }
 

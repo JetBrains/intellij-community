@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -389,10 +390,10 @@ class LocalFileSystemRefreshWorker {
       if (child == null) { // new file is created
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
 
-        String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+        String symLinkTarget = isLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
         try {
           FileAttributes fa = toFileAttributes(file, attributes, isLink);
-          myHelper.scheduleCreation(parent, name, fa, symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
+          myHelper.scheduleCreation(parent, name, fa, symLinkTarget, () -> checkCancelled(myFileOrDir, myRefreshContext));
         }
         catch (RefreshWorker.RefreshCancelledException e) {
           return FileVisitResult.TERMINATE;
@@ -417,10 +418,10 @@ class LocalFileSystemRefreshWorker {
           oldIsSpecial != isSpecial) { // symlink or directory or special changed
         myHelper.scheduleDeletion(child);
         VirtualFile parent = myFileOrDir.isDirectory() ? myFileOrDir : myFileOrDir.getParent();
-        String symlinkTarget = isLink ? file.toRealPath().toString() : null;
+        String symLinkTarget = isLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
         try {
           FileAttributes fa = toFileAttributes(file, attributes, isLink);
-          myHelper.scheduleCreation(parent, child.getName(), fa, symlinkTarget, ()-> checkCancelled(myFileOrDir, myRefreshContext));
+          myHelper.scheduleCreation(parent, child.getName(), fa, symLinkTarget, () -> checkCancelled(myFileOrDir, myRefreshContext));
         }
         catch (RefreshWorker.RefreshCancelledException e) {
           return FileVisitResult.TERMINATE;

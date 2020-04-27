@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElement;
 
 public interface ShLogicalBitwiseCondition extends ShCondition {
 
-  @Nullable
-  ShCondition getCondition();
+  @NotNull
+  ShCommand getCommand();
 
   @NotNull
   PsiElement getBang();

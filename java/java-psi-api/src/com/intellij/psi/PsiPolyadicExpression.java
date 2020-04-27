@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiPolyadicExpression extends PsiExpression {
-  @NotNull PsiExpression[] getOperands();
+  PsiExpression @NotNull [] getOperands();
 
   @NotNull
   IElementType getOperationTokenType();

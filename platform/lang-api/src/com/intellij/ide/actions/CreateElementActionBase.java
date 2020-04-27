@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * The base class for actions which create new file elements.
@@ -47,14 +48,18 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     super(text, description, icon);
   }
 
+  protected CreateElementActionBase(Supplier<String> dynamicText, Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+
   /**
    * @return created elements. Never null.
    * @deprecated use async variant
    * {@link CreateElementActionBase#invokeDialog(Project, PsiDirectory, Consumer)} instead
    */
-  @NotNull
   @Deprecated
-  protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
+  protected PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -63,20 +68,27 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * adapted for asynchronous calls
    * @param elementsConsumer describes actions with created elements
    */
-  protected void invokeDialog(Project project, PsiDirectory directory, Consumer<PsiElement[]> elementsConsumer) {
+  protected void invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory, @NotNull Consumer<PsiElement[]> elementsConsumer) {
     elementsConsumer.accept(invokeDialog(project, directory));
   }
 
   /**
    * @return created elements. Never null.
    */
-  @NotNull
-  protected abstract PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception;
+  protected abstract PsiElement @NotNull [] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract String getErrorTitle();
 
-  protected abstract String getCommandName();
+  /**
+   * @deprecated this method isn't called by the platform; {@link #getActionName(PsiDirectory, String)} is used instead.
+   */
+  @Deprecated
+  protected String getCommandName() {
+    return "";
+  }
 
+  @Nls
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
   @Override
@@ -89,7 +101,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     final Project project = e.getProject();
 
     final PsiDirectory dir = view.getOrChooseDirectory();
-    if (dir == null) return;
+    if (dir == null || project == null) return;
     invokeDialog(project, dir, createdElements -> {
       for (PsiElement createdElement : createdElements) {
         view.selectElement(createdElement);

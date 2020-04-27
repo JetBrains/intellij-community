@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -87,7 +88,7 @@ public class ReassignVariableUtil {
 
         JBPopup popup = JBPopupFactory.getInstance()
           .createPopupChooserBuilder(vars)
-          .setTitle("Choose variable to reassign")
+          .setTitle(JavaRefactoringBundle.message("introduce.local.variable.to.reassign.title"))
           .setRequestFocus(true)
           .setRenderer(SimpleListCellRenderer.<PsiVariable>create((label, value, index) -> {
             if (value != null) {

@@ -7,7 +7,7 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.Patches;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -79,7 +79,7 @@ public class MethodEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
     if (!(object instanceof ObjectReference || isInvokableType(object))) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
     }
     List<Value> args = new ArrayList<>(myArgumentEvaluators.length);
     for (Evaluator evaluator : myArgumentEvaluators) {
@@ -98,7 +98,7 @@ public class MethodEvaluator implements Evaluator {
 
       if (referenceType == null) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", myMethodName))
+          JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", myMethodName))
         );
       }
       final String signature = myMethodSignature != null ? myMethodSignature.getName(debugProcess) : null;
@@ -129,7 +129,7 @@ public class MethodEvaluator implements Evaluator {
         jdiMethod = DebuggerUtils.findMethod(referenceType, myMethodName, signature);
       }
       if (jdiMethod == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
       }
       if (myMustBeVararg && !jdiMethod.isVarArgs()) {
         // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
@@ -152,7 +152,7 @@ public class MethodEvaluator implements Evaluator {
             }
           }
         }
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message(
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message(
           "evaluation.error.no.static.method", DebuggerUtilsEx.methodName(referenceType.name(), myMethodName, signature)));
       }
 

@@ -130,6 +130,14 @@ val UExpression.sourceInjectionHost: PsiLanguageInjectionHost?
     return null
   }
 
+val UExpression.allPsiLanguageInjectionHosts: List<PsiLanguageInjectionHost>
+  @ApiStatus.Experimental
+  get() {
+    sourceInjectionHost?.let { return listOf(it) }
+    (this as? UPolyadicExpression)?.let { return this.operands.mapNotNull { it.sourceInjectionHost } }
+    return emptyList()
+  }
+
 /**
  * @return a non-strict parent [PsiLanguageInjectionHost] for [sourcePsi] of given literal expression if it exists.
  *

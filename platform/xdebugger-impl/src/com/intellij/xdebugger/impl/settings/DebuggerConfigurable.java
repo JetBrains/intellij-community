@@ -36,9 +36,8 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     return "reference.idesettings.debugger";
   }
 
-  @NotNull
   @Override
-  public Configurable[] getConfigurables() {
+  public Configurable @NotNull [] getConfigurables() {
     compute();
 
     if (myChildren.length == 0 && myRootConfigurable instanceof SearchableConfigurable.Parent) {
@@ -90,7 +89,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
     }
   }
 
-  private static void computeMergedConfigurables(@NotNull DebuggerConfigurableProvider[] providers, @NotNull List<? super Configurable> result) {
+  private static void computeMergedConfigurables(DebuggerConfigurableProvider @NotNull [] providers, @NotNull List<? super Configurable> result) {
     for (DebuggerSettingsCategory category : MERGED_CATEGORIES) {
       List<Configurable> configurables = getConfigurables(category, providers);
       if (!configurables.isEmpty()) {
@@ -102,7 +101,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @Nullable
-  private MergedCompositeConfigurable computeGeneralConfigurables(@NotNull DebuggerConfigurableProvider[] providers) {
+  private MergedCompositeConfigurable computeGeneralConfigurables(DebuggerConfigurableProvider @NotNull [] providers) {
     List<Configurable> rootConfigurables = getConfigurables(DebuggerSettingsCategory.GENERAL, providers);
     if (rootConfigurables.isEmpty()) {
       return null;
@@ -168,7 +167,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   }
 
   @NotNull
-  private static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category, @NotNull DebuggerConfigurableProvider[] providers) {
+  private static List<Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category, DebuggerConfigurableProvider @NotNull [] providers) {
     List<Configurable> configurables = null;
     for (DebuggerConfigurableProvider provider : providers) {
       Collection<? extends Configurable> providerConfigurables = provider.getConfigurables(category);

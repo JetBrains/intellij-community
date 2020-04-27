@@ -55,17 +55,16 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   @Override
-  public void init() {
+  public void init(@NotNull ContentManager contentManager) {
     reset();
 
     myIdLabel = new BaseLabel(myUi, false) {
       @Override
       protected boolean allowEngravement() {
-        return myUi.myWindow.isActive();
+        return myUi.window.isActive();
       }
     };
 
-    ContentManager contentManager = myUi.getContentManager();
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));
     }
@@ -78,8 +77,8 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     myIdLabel = null;
   }
 
-  void setTabDoubleClickActions(@NotNull AnAction... actions) {
-    myDoubleClickActions = ContainerUtil.newArrayList(actions);
+  void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
+    myDoubleClickActions = actions;
   }
 
   private Rectangle getMoreRect() {
@@ -127,9 +126,9 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
 
     if (myLastLayout != null &&
         myLastLayout.layoutSize.equals(bounds.getSize()) &&
-        myLastLayout.contentCount == manager.getContentCount()) {
+        myLastLayout.contentCount == manager.getContentCount() &&
+        ContainerUtil.all(myTabs, Component::isValid)) {
       for (ContentTabLabel each : myTabs) {
-        if (!each.isValid()) break;
         if (each.getContent() == selected && each.getBounds().width != 0) {
           data = myLastLayout;
           data.fullLayout = false;
@@ -165,7 +164,12 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       boolean reachedBounds = false;
       data.moreRect = null;
+      boolean toDrawTabs = isToDrawTabs();
       for (ContentTabLabel each : data.toLayout) {
+        if (!toDrawTabs) {
+          each.setBounds(0,0, 0, 0);
+          continue;
+        }
         data.eachY = 0;
         final Dimension eachSize = each.getPreferredSize();
         if (data.eachX + eachSize.width < data.toFitWidth + tabsStart) {
@@ -283,10 +287,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
       if (each.isSelected()) {
-        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
+        tabPainter.paintSelectedTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.window.isActive(), each.isHovered());
       }
       else {
-        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.myWindow.isActive(), each.isHovered());
+        tabPainter.paintTab(JBTabsPosition.top, g2d, r, borderThickness, null, myUi.window.isActive(), each.isHovered());
       }
     }
     g2d.dispose();
@@ -374,11 +378,11 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
   @Override
   public String getPreviousContentActionName() {
-    return "Select Previous Tab";
+    return UIBundle.message("tabbed.pane.select.previous.tab");
   }
 
   @Override
   public String getNextContentActionName() {
-    return "Select Next Tab";
+    return UIBundle.message("tabbed.pane.select.next.tab");
   }
 }

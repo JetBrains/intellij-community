@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -103,7 +104,8 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (testRootUrls.isEmpty() && computeSuitableTestRootUrls(testModule).isEmpty()) {
       testModule = srcModule;
       if (!propertiesComponent.getBoolean(CREATE_TEST_IN_THE_SAME_ROOT)) {
-        if (Messages.showOkCancelDialog(project, "Create test in the same source root?", "No Test Roots Found", Messages.getQuestionIcon()) !=
+        if (Messages.showOkCancelDialog(project, JavaBundle.message("dialog.message.create.test.in.the.same.source.root"),
+                                        JavaBundle.message("dialog.title.no.test.roots.found"), Messages.getQuestionIcon()) !=
             Messages.OK) {
           return;
         }

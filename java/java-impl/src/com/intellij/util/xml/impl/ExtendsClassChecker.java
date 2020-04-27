@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.impl;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
@@ -13,7 +14,10 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ExtendClass;
+import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomCustomAnnotationChecker;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -72,17 +76,17 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     final SmartList<DomElementProblemDescriptor> list = new SmartList<>();
     if (extendClasses.length > 0) {
       if (!name.equals(value.getQualifiedName()) && ContainerUtil.find(extendClasses, aClass -> value.isInheritor(aClass, true)) == null) {
-        String message = DomBundle.message("class.is.not.a.subclass", value.getQualifiedName(), name);
+        String message = JavaBundle.message("class.is.not.a.subclass", value.getQualifiedName(), name);
         list.add(holder.createProblem(element, message));
       }
     }
 
     if (instantiatable) {
       if (value.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        list.add(holder.createProblem(element, DomBundle.message("class.is.not.concrete", value.getQualifiedName())));
+        list.add(holder.createProblem(element, JavaBundle.message("class.is.not.concrete", value.getQualifiedName())));
       }
       else if (!allowNonPublic && !value.hasModifierProperty(PsiModifier.PUBLIC)) {
-        list.add(holder.createProblem(element, DomBundle.message("class.is.not.public", value.getQualifiedName())));
+        list.add(holder.createProblem(element, JavaBundle.message("class.is.not.public", value.getQualifiedName())));
       }
       else if (!PsiUtil.hasDefaultConstructor(value, true, true)) {
         if (canBeDecorator) {
@@ -104,22 +108,22 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
             }
           }
           if (!hasConstructor) {
-            list.add(holder.createProblem(element, DomBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
+            list.add(holder.createProblem(element, JavaBundle.message("class.decorator.or.has.default.constructor", value.getQualifiedName())));
           }
         }
         else {
-          list.add(holder.createProblem(element, DomBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
+          list.add(holder.createProblem(element, JavaBundle.message("class.has.no.default.constructor", value.getQualifiedName())));
         }
       }
     }
     if (!allowInterface && value.isInterface()) {
-      list.add(holder.createProblem(element, DomBundle.message("interface.not.allowed", value.getQualifiedName())));
+      list.add(holder.createProblem(element, JavaBundle.message("interface.not.allowed", value.getQualifiedName())));
     }
     if (!allowEnum && value.isEnum()) {
-      list.add(holder.createProblem(element, DomBundle.message("enum.not.allowed", value.getQualifiedName())));
+      list.add(holder.createProblem(element, JavaBundle.message("enum.not.allowed", value.getQualifiedName())));
     }
     if (!allowAbstract && value.hasModifierProperty(PsiModifier.ABSTRACT) && !value.isInterface()) {
-      list.add(holder.createProblem(element, DomBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
+      list.add(holder.createProblem(element, JavaBundle.message("abstract.class.not.allowed", value.getQualifiedName())));
     }
     return list;
   }

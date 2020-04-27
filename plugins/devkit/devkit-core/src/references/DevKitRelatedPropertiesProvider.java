@@ -21,10 +21,23 @@ import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.navigation.DevkitRelatedLineMarkerProviderBase;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
 public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProviderBase {
+
+  @Override
+  public String getName() {
+    return DevKitBundle.message("line.marker.related.property.description");
+  }
+
+  @NotNull
+  @Override
+  public Icon getIcon() {
+    return AllIcons.FileTypes.Properties;
+  }
+
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement leaf, @NotNull Collection<? super RelatedItemLineMarkerInfo> result) {
     if (!(leaf instanceof XmlToken)) return;
@@ -39,14 +52,19 @@ public class DevKitRelatedPropertiesProvider extends DevkitRelatedLineMarkerProv
 
     GenericAttributeValue<String> attr = ((ActionOrGroup)ag).getId();
     String id = attr.getStringValue();
+    String tagName = ag.getXmlElementName();
+    if (!"action".equals(tagName) && !"group".equals(tagName)) {
+      return;
+    }
+
     if (id != null) {
       PropertiesFileImpl file = DevKitPluginXmlInspectionBase.findBundlePropertiesFile(ag);
 
       if (file == null) return;
 
       JBIterable<PsiElement> targets = JBIterable.of(
-        file.findPropertyByKey("action." + id + ".text"),
-        file.findPropertyByKey("action." + id + ".description"))
+        file.findPropertyByKey(tagName + "." + id + ".text"),
+        file.findPropertyByKey(tagName + "." + id + ".description"))
         .filter(PsiElement.class);
 
       if (targets.isEmpty()) return;

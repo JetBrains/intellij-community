@@ -113,7 +113,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
   }
   
   @Nullable
-  private static AnAction findAction(@NotNull AnAction[] actions, @NotNull String name) {
+  private static AnAction findAction(AnAction @NotNull [] actions, @NotNull String name) {
     return ContainerUtil.find(actions, action -> action.getTemplatePresentation().toString().contains(name));
   }
 
@@ -124,9 +124,8 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
                                                   GlobalSearchScope.allScope(project),
                                                   false,
                                                   false) {
-      @NotNull
       @Override
-      public AnAction[] createConsoleActions() {
+      public AnAction @NotNull [] createConsoleActions() {
         return ContainerUtil.reverse(Arrays.asList(super.createConsoleActions())).toArray(AnAction.EMPTY_ARRAY);
       }
     };

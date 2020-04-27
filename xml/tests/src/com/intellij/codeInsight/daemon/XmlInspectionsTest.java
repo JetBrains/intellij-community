@@ -22,6 +22,7 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.xml.analysis.XmlAnalysisBundle;
 
 import java.io.File;
 
@@ -35,7 +36,7 @@ public class XmlInspectionsTest extends BasePlatformTestCase {
     myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" elementFormDefault=<warning descr=\"Redundant default attribute value assignment\">\"unqua<caret>lified\"</warning>>\n" +
                                                     "</schema>");
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention(XmlErrorBundle.message("remove.attribute.quickfix.family") + " e");
+    IntentionAction action = myFixture.findSingleIntention(XmlAnalysisBundle.message("remove.attribute.quickfix.family") + " e");
     myFixture.launchAction(action);
     myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
                           "</schema>");

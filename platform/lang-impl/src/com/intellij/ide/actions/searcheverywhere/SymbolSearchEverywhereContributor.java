@@ -29,12 +29,12 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   @NotNull
   @Override
   public String getGroupName() {
-    return "Symbols";
+    return IdeBundle.message("search.everywhere.group.name.symbols");
   }
 
   @NotNull
   public String includeNonProjectItemsText() {
-    return IdeBundle.message("checkbox.include.non.project.symbols", IdeUICustomization.getInstance().getProjectConceptName());
+    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.symbols");
   }
 
   @Override

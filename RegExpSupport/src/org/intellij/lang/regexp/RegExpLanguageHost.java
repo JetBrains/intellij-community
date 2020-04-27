@@ -86,12 +86,10 @@ public interface RegExpLanguageHost {
     return true;
   }
 
-  @NotNull
-  String[][] getAllKnownProperties();
+  String[] @NotNull [] getAllKnownProperties();
   @Nullable
   String getPropertyDescription(@Nullable final String name);
-  @NotNull
-  String[][] getKnownCharacterClasses();
+  String[] @NotNull [] getKnownCharacterClasses();
 
   /**
    * @param number  the number element to extract the value from
@@ -106,8 +104,7 @@ public interface RegExpLanguageHost {
     return Lookbehind.FULL; // to not break existing implementations, although rarely actually supported.
   }
 
-  @NotNull
-  default String[][] getAllPropertyValues(@NotNull String propertyName){
+  default String[] @NotNull [] getAllPropertyValues(@NotNull String propertyName){
     return EMPTY_COMPLETION_ITEMS_ARRAY; 
   }
 

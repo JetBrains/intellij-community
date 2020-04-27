@@ -9,9 +9,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
-*/
 public class XDebuggerPauseActionHandler extends XDebuggerActionHandler {
   @Override
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.PluginException
@@ -34,7 +34,7 @@ internal class ConstructorParameterResolver {
                    expectedType: Class<*>,
                    pluginId: PluginId,
                    isExtensionSupported: Boolean): Boolean {
-    if (isLightService(expectedType) ||
+    if (PlatformComponentManagerImpl.isLightService(expectedType) ||
         expectedType === ComponentManager::class.java ||
         findTargetAdapter(componentManager, expectedType, requestorKey, requestorClass, requestorConstructor, pluginId) != null) {
       return true
@@ -52,7 +52,7 @@ internal class ConstructorParameterResolver {
       return componentManager
     }
 
-    if (isLightService(expectedType)) {
+    if (PlatformComponentManagerImpl.isLightService(expectedType)) {
       return componentManager.getLightService(expectedType, true)
     }
 

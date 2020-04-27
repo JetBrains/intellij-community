@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author max
- */
 public interface ApplicationEx extends Application {
   String LOCATOR_FILE_NAME = ".home";
 
@@ -68,9 +65,8 @@ public interface ApplicationEx extends Application {
   /**
    * Executes {@code process} in a separate thread in the application thread pool (see {@link #executeOnPooledThread(Runnable)}).
    * The process is run inside read action (see {@link #runReadAction(Runnable)})
-   * It is guaranteed that no other read or write action is run before the process start running.
+   * If run from EDT, it is guaranteed that no other read or write action is run before the process start running.
    * If the process is running for too long, a progress window shown with {@code progressTitle} and a button with {@code cancelText}.
-   * This method can be called from the EDT only.
    * @return true if process run successfully and was not canceled.
    */
   boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,

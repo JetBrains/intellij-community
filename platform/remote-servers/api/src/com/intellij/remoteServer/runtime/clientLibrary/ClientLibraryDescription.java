@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 
-/**
- * @author nik
- */
 public class ClientLibraryDescription {
   private final String myId;
   @NotNull private final URL myDescriptionUrl;

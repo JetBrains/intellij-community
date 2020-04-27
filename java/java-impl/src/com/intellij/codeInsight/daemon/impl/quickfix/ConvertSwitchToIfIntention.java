@@ -305,6 +305,12 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       if (useEquals) {
         out.append(caseValue).append(".equals(").append(expressionText).append(')');
       }
+      else if (caseValue.equals("true")) {
+        out.append(expressionText);
+      }
+      else if (caseValue.equals("false")) {
+        out.append("!(").append(expressionText).append(")");
+      }
       else {
         out.append(expressionText).append("==").append(caseValue);
       }

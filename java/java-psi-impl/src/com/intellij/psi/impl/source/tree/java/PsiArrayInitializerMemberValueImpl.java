@@ -36,8 +36,7 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
   }
 
   @Override
-  @NotNull
-  public PsiAnnotationMemberValue[] getInitializers() {
+  public PsiAnnotationMemberValue @NotNull [] getInitializers() {
     return getChildrenAsPsiElements(MEMBER_SET, PsiAnnotationMemberValue.ARRAY_FACTORY);
   }
 

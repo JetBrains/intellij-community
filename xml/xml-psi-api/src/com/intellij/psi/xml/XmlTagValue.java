@@ -20,11 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 public interface XmlTagValue {
 
-  @NotNull
-  XmlTagChild[] getChildren();
+  XmlTagChild @NotNull [] getChildren();
 
-  @NotNull
-  XmlText[] getTextElements();
+  XmlText @NotNull [] getTextElements();
 
   /**
    * @return raw tag value text

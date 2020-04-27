@@ -17,9 +17,6 @@ package com.intellij.util.io.socketConnection;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface AbstractResponseHandler<R extends AbstractResponse> {
   void processResponse(@NotNull R response);
 }

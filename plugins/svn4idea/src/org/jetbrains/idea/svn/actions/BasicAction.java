@@ -99,7 +99,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     VcsDirtyScopeManager.getInstance(vcs.getProject()).fileDirty(file);
   }
 
-  private void batchExecute(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+  private void batchExecute(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException {
     batchPerform(vcs, files, context);
 
     getApplication().runWriteAction(() -> {
@@ -115,7 +115,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
   @NotNull
   protected abstract String getActionName();
 
-  protected boolean isEnabled(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files) {
+  protected boolean isEnabled(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files) {
     Stream<VirtualFile> fileStream = Stream.of(files);
     Predicate<VirtualFile> enabledPredicate = file -> isEnabled(vcs, file);
 
@@ -127,7 +127,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
 
   protected abstract void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException;
 
-  protected abstract void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException;
+  protected abstract void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) throws VcsException;
 
   protected abstract boolean isBatchAction();
 }

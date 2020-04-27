@@ -510,13 +510,13 @@ public class JavaReflectionReferenceUtil {
   }
 
   @Nullable
-  private static ReflectiveSignature composeMethodSignatureFromTypes(@NotNull PsiExpression[] returnAndParameterTypes) {
+  private static ReflectiveSignature composeMethodSignatureFromTypes(PsiExpression @NotNull [] returnAndParameterTypes) {
     final List<String> typeTexts = ContainerUtil.map(returnAndParameterTypes, JavaReflectionReferenceUtil::getTypeText);
     return ReflectiveSignature.create(typeTexts);
   }
 
   @Nullable
-  public static Pair.NonNull<Integer, Boolean> getGenericSignature(@NotNull PsiExpression[] genericSignatureShape) {
+  public static Pair.NonNull<Integer, Boolean> getGenericSignature(PsiExpression @NotNull [] genericSignatureShape) {
     if (genericSignatureShape.length == 0 || genericSignatureShape.length > 2) {
       return null;
     }
@@ -538,7 +538,7 @@ public class JavaReflectionReferenceUtil {
    * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
    */
   @Nullable
-  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
+  private static ReflectiveSignature composeGenericMethodSignature(PsiExpression @NotNull [] genericSignatureShape) {
     final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(genericSignatureShape);
     if (signature == null) return null;
     final int objectArgCount = signature.getFirst();
@@ -683,7 +683,7 @@ public class JavaReflectionReferenceUtil {
 
     private final Icon myIcon;
     @NotNull private final String myReturnType;
-    @NotNull private final String[] myArgumentTypes;
+    private final String @NotNull [] myArgumentTypes;
 
     @Nullable
     public static ReflectiveSignature create(@NotNull List<String> typeTexts) {
@@ -699,7 +699,7 @@ public class JavaReflectionReferenceUtil {
       return null;
     }
 
-    private ReflectiveSignature(@Nullable Icon icon, @NotNull String returnType, @NotNull String[] argumentTypes) {
+    private ReflectiveSignature(@Nullable Icon icon, @NotNull String returnType, String @NotNull [] argumentTypes) {
       myIcon = icon;
       myReturnType = returnType;
       myArgumentTypes = argumentTypes;

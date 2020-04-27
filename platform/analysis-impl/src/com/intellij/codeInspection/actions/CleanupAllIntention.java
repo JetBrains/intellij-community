@@ -16,8 +16,8 @@
 
 package com.intellij.codeInspection.actions;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public class CleanupAllIntention extends CleanupIntention {
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("cleanup.in.file");
+    return AnalysisBundle.message("cleanup.in.file");
   }
 
   @Nullable

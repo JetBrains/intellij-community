@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs;
 
 import com.intellij.dvcs.repo.Repository;
@@ -14,12 +14,12 @@ import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.test.VcsPlatformTest;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -51,7 +51,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     ExtensionPoint<VcsRepositoryCreator> point = getExtensionPoint();
     point.registerExtension(mockCreator, getTestRootDisposable());
 
-    myGlobalRepositoryManager = new VcsRepositoryManager(myProject, myProjectLevelVcsManager);
+    myGlobalRepositoryManager = new VcsRepositoryManager(myProject);
   }
 
   @NotNull
@@ -100,7 +100,7 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     String externalName = "external";
     mkdir(externalName);
     projectRoot.refresh(false, true);
-    final VirtualFile repositoryFile = ObjectUtils.assertNotNull(projectRoot.findChild(externalName));
+    final VirtualFile repositoryFile = Objects.requireNonNull(this.projectRoot.findChild(externalName));
     MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
     myGlobalRepositoryManager.addExternalRepository(repositoryFile, externalRepo);
     return repositoryFile;

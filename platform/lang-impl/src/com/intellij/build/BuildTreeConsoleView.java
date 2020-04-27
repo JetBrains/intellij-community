@@ -47,7 +47,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -58,6 +57,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.*;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -78,7 +78,9 @@ import static com.intellij.build.BuildView.CONSOLE_VIEW_NAME;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 import static com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES;
+import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.ui.UIUtil.getTreeSelectionForeground;
 
 /**
@@ -123,7 +125,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myRootNode.add(myBuildProgressRootNode);
 
     AbstractTreeStructure treeStructure = new MyTreeStructure();
-    myTreeModel = new StructureTreeModel<>(treeStructure, this, Invoker::forBackgroundThreadWithoutReadAction);  // Android Studio: temporary edit; discard when in conflict with upstream
+    myTreeModel = new StructureTreeModel<>(treeStructure, null, Invoker.forBackgroundThreadWithoutReadAction(this), this);
     AsyncTreeModel asyncTreeModel = new AsyncTreeModel(myTreeModel, this);
     asyncTreeModel.addTreeModelListener(new ExecutionNodeAutoExpandingListener());
     myTree = initTree(asyncTreeModel);
@@ -284,11 +286,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           if (event instanceof MessageEvent) {
             MessageEvent messageEvent = (MessageEvent)event;
             currentNode.setStartTime(messageEvent.getEventTime());
-            addNotNull(structureChanged, currentNode.setEndTime(messageEvent.getEventTime()));
+            addIfNotNull(structureChanged, currentNode.setEndTime(messageEvent.getEventTime()));
             Navigatable messageEventNavigatable = messageEvent.getNavigatable(myProject);
             currentNode.setNavigatable(messageEventNavigatable);
             MessageEventResult messageEventResult = messageEvent.getResult();
-            addNotNull(structureChanged, currentNode.setResult(messageEventResult));
+            addIfNotNull(structureChanged, currentNode.setResult(messageEventResult));
 
             if (messageEventResult instanceof FailureResult) {
               for (Failure failure : ((FailureResult)messageEventResult).getFailures()) {
@@ -352,8 +354,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       if (result instanceof DerivedResult) {
         result = calculateDerivedResult((DerivedResult)result, currentNode);
       }
-      addNotNull(structureChanged, currentNode.setResult(result));
-      addNotNull(structureChanged, currentNode.setEndTime(event.getEventTime()));
+      addIfNotNull(structureChanged, currentNode.setResult(result));
+      addIfNotNull(structureChanged, currentNode.setEndTime(event.getEventTime()));
       SkippedResult skippedResult = new SkippedResultImpl();
       finishChildren(structureChanged, currentNode, skippedResult);
       if (result instanceof FailureResult) {
@@ -385,7 +387,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     }
     if (selectErrorNodeTask != null) {
       Runnable finalSelectErrorTask = selectErrorNodeTask;
-      myTreeModel.invalidate(getRootElement(), false).onProcessed(p -> finalSelectErrorTask.run());
+      myTreeModel.invalidate(getRootElement(), true).onProcessed(p -> finalSelectErrorTask.run());
     }
   }
 
@@ -395,15 +397,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   public String getSelectedNodeConsoleText() {
     ExecutionConsole console = myConsoleViewHandler.getCurrentConsole();
     if (console instanceof ConsoleViewImpl) {
+      ((ConsoleViewImpl)console).flushDeferredText();
       return ((ConsoleViewImpl)console).getText();
     }
-    return null;
-  }
-
-  private static void addNotNull(@NotNull SmartHashSet<ExecutionNode> changed, @Nullable ExecutionNode result) {
-    if (result != null) {
-      changed.add(result);
+    if (myConsoleViewHandler.myView.isViewVisible(ConsoleViewHandler.EMPTY_CONSOLE_NAME)) {
+      return "";
     }
+    return null;
   }
 
   private static EventResult calculateDerivedResult(DerivedResult result, ExecutionNode node) {
@@ -425,7 +425,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         ExecutionNode updatedRoot = executionNode.reportChildMessageKind(eventKind);
         if (updatedRoot != null) {
           scheduleUpdate(updatedRoot, true);
-        } else {
+        }
+        else {
           scheduleUpdate(executionNode, false);
         }
       }
@@ -541,7 +542,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         continue;
       }
       finishChildren(structureChanged, child, result);
-      addNotNull(structureChanged, child.setResult(result));
+      addIfNotNull(structureChanged, child.setResult(result));
     }
   }
 
@@ -593,9 +594,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return false;
   }
 
-  @NotNull
   @Override
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return AnAction.EMPTY_ARRAY;
   }
 
@@ -712,6 +712,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(tree);
     tree.setCellRenderer(new MyNodeRenderer());
+    tree.putClientProperty(SHRINK_LONG_RENDERER, true);
     return tree;
   }
 
@@ -742,8 +743,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     return node;
   }
 
-  private void invokeLater(@NotNull Runnable task) {
-    myTreeModel.getInvoker().invokeLater(task);
+  @ApiStatus.Internal
+  public Promise<?> invokeLater(@NotNull Runnable task) {
+    return myTreeModel.getInvoker().invokeLater(task);
   }
 
   private static class ConsoleViewHandler implements Disposable {
@@ -1000,10 +1002,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   private static class MyNodeRenderer extends NodeRenderer {
-    {
-      putClientProperty(DefaultTreeUI.SHRINK_LONG_RENDERER, true);
-    }
-
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;

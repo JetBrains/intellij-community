@@ -63,7 +63,7 @@ final class HashedBlockInputStream extends InputStream {
   }
 
   @Override
-  public int read(@NotNull byte[] b, int offset, int length) throws IOException {
+  public int read(byte @NotNull [] b, int offset, int length) throws IOException {
     return get(b, offset, length);
   }
 

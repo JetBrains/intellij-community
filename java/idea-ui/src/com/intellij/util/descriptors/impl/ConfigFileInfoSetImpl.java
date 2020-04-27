@@ -31,9 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
-/**
- * @author nik
- */
 public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   private static final Logger LOG = Logger.getInstance(ConfigFileInfoSetImpl.class);
   @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";

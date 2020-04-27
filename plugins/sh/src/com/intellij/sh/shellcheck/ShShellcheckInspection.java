@@ -29,9 +29,8 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   private final Set<String> myDisabledInspections = new TreeSet<>();
   private JComponent myOptionsPanel;
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix @NotNull [] getBatchSuppressActions(@Nullable PsiElement element) {
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 

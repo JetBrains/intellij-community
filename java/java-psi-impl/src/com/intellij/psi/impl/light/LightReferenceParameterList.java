@@ -75,14 +75,12 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement[] getTypeParameterElements() {
+  public PsiTypeElement @NotNull [] getTypeParameterElements() {
     return myTypeElements;
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return PsiImplUtil.typesByTypeElements(myTypeElements);
   }
 }

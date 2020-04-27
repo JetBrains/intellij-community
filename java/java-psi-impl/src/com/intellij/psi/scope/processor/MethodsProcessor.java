@@ -27,7 +27,7 @@ public abstract class MethodsProcessor extends ConflictFilterProcessor implement
   private PsiType[] myTypeArguments;
   private final LanguageLevel myLanguageLevel;
 
-  MethodsProcessor(@NotNull PsiConflictResolver[] resolvers,
+  MethodsProcessor(PsiConflictResolver @NotNull [] resolvers,
                    @NotNull List<CandidateInfo> container,
                    @NotNull PsiElement place,
                    @NotNull PsiFile placeFile) {

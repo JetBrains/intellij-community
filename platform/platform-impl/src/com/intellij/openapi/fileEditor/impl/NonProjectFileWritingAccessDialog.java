@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,7 +34,7 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
                                            @NotNull List<? extends VirtualFile> nonProjectFiles,
                                            @NotNull String filesType) {
     super(project);
-    setTitle(filesType + " Protection");
+    setTitle(IdeBundle.message("dialog.title.0.protection", filesType));
 
     myFileList.setPreferredSize(ReadOnlyStatusDialog.getDialogPreferredSize());
 
@@ -41,9 +42,8 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     myFileList.setModel(new CollectionListModel<>(nonProjectFiles));
 
     String theseFilesMessage = ReadOnlyStatusDialog.getTheseFilesMessage(nonProjectFiles);
-    myListTitle.setText(StringUtil.capitalize(theseFilesMessage)
-                        + " " + (nonProjectFiles.size() > 1 ? "do" : "does")
-                        + " not belong to the project:");
+    myListTitle.setText(IdeBundle.message("label.0.1.not.belong.to.the.project", StringUtil.capitalize(theseFilesMessage),
+                                          nonProjectFiles.size()));
 
 
     myUnlockOneButton.setSelected(true);

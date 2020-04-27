@@ -70,9 +70,8 @@ public class Difference {
         return e.getContent().getString(e, gw);
       }
 
-      @Nullable
       @Override
-      public byte[] getContentAsBytes() throws VcsException {
+      public byte @Nullable [] getContentAsBytes() throws VcsException {
         if (e.isDirectory()) return null;
         return e.getContent().getBytes();
       }

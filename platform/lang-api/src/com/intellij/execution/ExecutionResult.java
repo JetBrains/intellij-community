@@ -39,8 +39,7 @@ public interface ExecutionResult {
    *
    * @return the list of toolbar actions to display.
    */
-  @NotNull
-  AnAction[] getActions();
+  AnAction @NotNull [] getActions();
 
 
   /**

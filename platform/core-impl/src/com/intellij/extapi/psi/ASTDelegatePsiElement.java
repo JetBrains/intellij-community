@@ -80,8 +80,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     PsiElement psiChild = getFirstChild();
     if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
@@ -147,8 +146,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   @Override
-  @NotNull
-  public char[] textToCharArray() {
+  public char @NotNull [] textToCharArray() {
     return getNode().getText().toCharArray();
   }
 
@@ -221,8 +219,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return nodes.length == 0 ? null : nodes[0].getPsi();
   }
 
-  @NotNull
-  protected <T extends PsiElement> T[] findChildrenByType(IElementType elementType, Class<T> arrayClass) {
+  protected <T extends PsiElement> T @NotNull [] findChildrenByType(IElementType elementType, Class<T> arrayClass) {
     return ContainerUtil.map2Array(SharedImplUtil.getChildrenOfType(getNode(), elementType), arrayClass, s -> (T)s.getPsi());
   }
 
@@ -257,8 +254,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
     return result;
   }
 
-  @NotNull
-  protected <T extends PsiElement> T[] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
+  protected <T extends PsiElement> T @NotNull [] findChildrenByType(TokenSet elementType, Class<T> arrayClass) {
     return ContainerUtil.map2Array(getNode().getChildren(elementType), arrayClass, s -> (T)s.getPsi());
   }
 

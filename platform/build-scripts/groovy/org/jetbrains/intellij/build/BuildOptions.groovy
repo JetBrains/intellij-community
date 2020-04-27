@@ -1,12 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 class BuildOptions {
   /**
@@ -19,11 +18,13 @@ class BuildOptions {
   /**
    * Specifies for which operating systems distributions should be built.
    */
-  String targetOS = System.getProperty("intellij.build.target.os", OS_ALL)
+  String targetOS
   static final String OS_LINUX = "linux"
   static final String OS_WINDOWS = "windows"
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
+  static final String OS_CURRENT = "current"
+
   /**
    * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
    * will be built.
@@ -143,7 +144,16 @@ class BuildOptions {
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
-  List<String> bundledPluginDirectoriesToSkip = System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", "").split(",") as List<String>
+  List<String> bundledPluginDirectoriesToSkip = StringUtil.split(System.getProperty("intellij.build.bundled.plugin.dirs.to.skip", ""), ",") as List<String>
+
+  /**
+   * Specifies list of names of directories of non-bundled plugins (determined by {@link ProductModulesLayout#pluginsToPublish} and
+   * {@link ProductModulesLayout#buildAllCompatiblePlugins}) which should be actually built. This option can be used to speed up updating
+   * the IDE from sources. By default all plugins determined by {@link ProductModulesLayout#pluginsToPublish} and
+   * {@link ProductModulesLayout#buildAllCompatiblePlugins} are built. In order to skip building all non-bundled plugins, set the property to
+   * {@code none}.
+   */
+  List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",") as List<String>
 
   /**
    * Specifies JRE version to be bundled with distributions, 11 by default.
@@ -156,13 +166,13 @@ class BuildOptions {
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Directory path to unpack Jetbrains JDK builds into
+   * Directory path to unpack JetBrains JDK builds into
    */
   static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies Jetbrains JBR version to be used by build scripts, 8 by default.
+   * Specifies JetBrains JDK version to be used by build scripts, 8 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
   int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
@@ -171,4 +181,16 @@ class BuildOptions {
    * Specifies an algorithm to build distribution checksums.
    */
   String hashAlgorithm = "SHA-384"
+
+  BuildOptions() {
+    targetOS = System.getProperty("intellij.build.target.os")
+    if (targetOS == OS_CURRENT) {
+      targetOS = SystemInfo.isWindows ? OS_WINDOWS :
+                 SystemInfo.isMac ? OS_MAC :
+                 SystemInfo.isLinux ? OS_LINUX : null
+    }
+    else if (targetOS == null || targetOS.isEmpty()) {
+      targetOS = OS_ALL
+    }
+  }
 }

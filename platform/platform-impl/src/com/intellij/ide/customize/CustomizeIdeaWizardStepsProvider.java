@@ -25,7 +25,6 @@ public class CustomizeIdeaWizardStepsProvider implements CustomizeIDEWizardSteps
       protected void initFeaturedPlugins(@NotNull Map<String, String> featuredPlugins) {
         featuredPlugins.put("Scala", "Custom Languages:Scala language support:org.intellij.scala");
         featuredPlugins.put("IntelliJ Light Theme", "Themes:A new light theme for IntelliJ-based IDEs:com.jetbrains.lightThemePreview");
-        featuredPlugins.put("Grazie", "Spellcheck:Intelligent spelling and grammar checks:tanvd.grazi");
         addAwsPlugin(featuredPlugins);
         featuredPlugins.put("Kubernetes", "Cloud Support:Kubernetes resource files support:com.intellij.kubernetes");
         featuredPlugins.put("Big Data Tools", "Tools Integration:Zeppelin notebooks and Spark applications support:com.intellij.bigdatatools");

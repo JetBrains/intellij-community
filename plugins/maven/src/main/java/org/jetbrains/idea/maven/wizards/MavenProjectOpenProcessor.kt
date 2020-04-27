@@ -18,4 +18,10 @@ internal class MavenProjectOpenProcessor : ProjectOpenProcessor() {
   override fun doOpenProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     return importProvider.openProject(projectFile, projectToClose, forceOpenInNewFrame)
   }
+
+  override fun canImportProjectAfterwards(): Boolean = true
+
+  override fun importProjectAfterwards(project: Project, file: VirtualFile) {
+    importProvider.linkToExistingProject(file, project)
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,10 +69,6 @@ public class TabbedPaneWrapper  {
     assertIsDispatchThread();
   }
 
-  public boolean isDisposed() {
-    return myTabbedPane != null && myTabbedPane.isDisposed();
-  }
-
   private void assertIsDispatchThread() {
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     if (application != null){
@@ -101,15 +98,15 @@ public class TabbedPaneWrapper  {
   /**
    * @see JTabbedPane#addTab(String, Icon, Component, String)
    */
-  public final synchronized void addTab(final String title, final Icon icon, final JComponent component, final String tip) {
+  public final synchronized void addTab(@Nls(capitalization = Nls.Capitalization.Title) final String title, final Icon icon, final JComponent component, final String tip) {
     insertTab(title, icon, component, tip, myTabbedPane.getTabCount());
   }
 
-  public final synchronized void addTab(final String title, final JComponent component) {
+  public final synchronized void addTab(@Nls(capitalization = Nls.Capitalization.Title) final String title, final JComponent component) {
     insertTab(title, null, component, null, myTabbedPane.getTabCount());
   }
 
-  public synchronized void insertTab(final String title, final Icon icon, final JComponent component, final String tip, final int index) {
+  public synchronized void insertTab(@Nls(capitalization = Nls.Capitalization.Title) final String title, final Icon icon, final JComponent component, final String tip, final int index) {
     myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
   }
 

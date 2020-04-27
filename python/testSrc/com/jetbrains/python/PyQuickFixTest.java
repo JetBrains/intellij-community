@@ -91,7 +91,7 @@ public class PyQuickFixTest extends PyTestCase {
     settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
       doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class,
-                       PyBundle.message("ACT.qualify.with.module"), true, true);
+                       PyPsiBundle.message("ACT.qualify.with.module"), true, true);
     }
     finally {
       settings.PREFER_FROM_IMPORT = oldPreferFrom;
@@ -123,6 +123,11 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
   }
 
+  // PY-22045
+  public void testBatchReplacePrintInsertsFutureImportOnlyOnce() {
+    doInspectionTest(PyCompatibilityInspection.class, "Fix all 'Code compatibility inspection' problems in file", true, true);
+  }
+
   // PY-4556
   public void testAddSelfFunction() {
     doInspectionTest("AddSelfFunction.py", PyUnresolvedReferencesInspection.class,
@@ -140,7 +145,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testRenameToSelf() {
-    doInspectionTest(PyMethodParametersInspection.class, PyBundle.message("QFIX.rename.parameter.to.$0", "self"), true, true);
+    doInspectionTest(PyMethodParametersInspection.class, PyPsiBundle.message("QFIX.rename.parameter.to.$0", "self"), true, true);
   }
 
   public void testRemoveTrailingSemicolon() {
@@ -174,7 +179,7 @@ public class PyQuickFixTest extends PyTestCase {
   }
 
   public void testSimplifyBooleanCheck() {
-    doInspectionTest(PySimplifyBooleanCheckInspection.class, PyBundle.message("QFIX.simplify.$0", "b"), true, true);
+    doInspectionTest(PySimplifyBooleanCheckInspection.class, PyPsiBundle.message("QFIX.simplify.$0", "b"), true, true);
   }
 
   public void testMoveFromFutureImport() {
@@ -232,7 +237,7 @@ public class PyQuickFixTest extends PyTestCase {
     myFixture.enableInspections(PyRedundantParenthesesInspection.class);
     myFixture.configureByFiles(testFiles);
     myFixture.checkHighlighting(true, false, true);
-    final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("QFIX.redundant.parentheses"));
+    final IntentionAction intentionAction = myFixture.findSingleIntention(PyPsiBundle.message("QFIX.redundant.parentheses"));
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"));
@@ -240,71 +245,71 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3095
   public void testRedundantParenthesesBoolean() {
-    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyPsiBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
   // PY-3239
   public void testRedundantParenthesesMore() {
-    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyPsiBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
   // PY-12679
   public void testRedundantParenthesesParenthesizedExpression() {
-    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyPsiBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
   public void testRedundantParenthesesMultipleParentheses() {
-    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyPsiBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
   // PY-15506
   public void testEmptyListOfBaseClasses() {
-    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyPsiBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
   // PY-18203
   public void testRedundantParenthesesInTuples() {
-    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyPsiBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
   // PY-1020
   public void testChainedComparisons() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-3126
   public void testChainedComparison1() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-3126
   public void testChainedComparison2() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-3126
   public void testChainedComparison3() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-5623
   public void testChainedComparison4() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-6467
   public void testChainedComparison5() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-20004
   public void testChainedComparison7() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-14002
   public void testChainedComparisonWithCommonBinaryExpression() {
-    doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
+    doInspectionTest(PyChainedComparisonsInspection.class, PyPsiBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-19583
@@ -368,16 +373,16 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3127
   public void testDefaultArgument() {
-    doInspectionTest(PyDefaultArgumentInspection.class, PyBundle.message("QFIX.default.argument"), true, true);
+    doInspectionTest(PyDefaultArgumentInspection.class, PyPsiBundle.message("QFIX.default.argument"), true, true);
   }
 
   public void testDefaultArgumentEmptyList() {
-    doInspectionTest(PyDefaultArgumentInspection.class, PyBundle.message("QFIX.default.argument"), true, true);
+    doInspectionTest(PyDefaultArgumentInspection.class, PyPsiBundle.message("QFIX.default.argument"), true, true);
   }
 
   // PY-17392
   public void testDefaultArgumentCommentsInsideParameters() {
-    doInspectionTest(PyDefaultArgumentInspection.class, PyBundle.message("QFIX.default.argument"), true, true);
+    doInspectionTest(PyDefaultArgumentInspection.class, PyPsiBundle.message("QFIX.default.argument"), true, true);
   }
 
   // PY-3125
@@ -733,7 +738,7 @@ public class PyQuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
+  protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,

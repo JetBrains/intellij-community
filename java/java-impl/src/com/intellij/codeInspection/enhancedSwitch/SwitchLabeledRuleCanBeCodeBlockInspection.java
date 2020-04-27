@@ -15,7 +15,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInspection.InspectionsBundle.message;
+import static com.intellij.java.JavaBundle.message;
 
 /**
  * @author Pavel.Dolgov

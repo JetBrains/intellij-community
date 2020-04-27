@@ -15,9 +15,8 @@ public class JavaReflectionMemberAccessInspectionFixTest extends LightQuickFixPa
     return LightJavaCodeInsightFixtureTestCase.JAVA_8;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new JavaReflectionMemberAccessInspection()
     };

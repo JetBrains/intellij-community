@@ -1,6 +1,8 @@
 package com.intellij.util.net.ssl;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -51,8 +53,8 @@ public class CertificateWarningDialog extends DialogWrapper {
     setTitle(title);
     myMessagePane.setText(String.format("<html><body><p>%s</p></body></html>", message));
     myMessagePane.setBackground(UIUtil.getPanelBackground());
-    setOKButtonText("Accept");
-    setCancelButtonText("Reject");
+    setOKButtonText(CommonBundle.message("button.accept"));
+    setCancelButtonText(IdeBundle.message("button.reject"));
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
     Messages.installHyperlinkSupport(myNoticePane);

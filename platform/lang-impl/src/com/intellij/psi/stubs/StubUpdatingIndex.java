@@ -7,19 +7,21 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
+import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.indexing.impl.IndexStorage;
@@ -36,11 +38,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
   static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
-  private static final int VERSION = 43 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0) + (InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED ? 1 : 0);
+  private static final int VERSION = 43 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0) + (InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED ? 2 : 0);
 
   // todo remove once we don't need this for stub-ast mismatch debug info
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 3, true);
@@ -48,14 +51,21 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
   private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
+  @NotNull
   private final StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
+  @NotNull
+  private final SerializationManagerEx mySerializationManager;
+
   public StubUpdatingIndex() {
-    myStubIndexesExternalizer = SerializedStubTree.IDE_USED_EXTERNALIZER;
+    this(StubForwardIndexExternalizer.getIdeUsedExternalizer(SerializationManagerEx.getInstanceEx()),
+         SerializationManagerEx.getInstanceEx());
   }
 
-  public StubUpdatingIndex(StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
+  public StubUpdatingIndex(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer,
+                           @NotNull SerializationManagerEx serializationManager) {
     myStubIndexesExternalizer = stubIndexesExternalizer;
+    mySerializationManager = serializationManager;
   }
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
@@ -124,7 +134,7 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
                 if (PrebuiltIndexProviderBase.DEBUG_PREBUILT_INDICES) {
                   Stub stub = StubTreeBuilder.buildStubTree(inputData);
                   if (serializedStubTree != null && stub != null) {
-                    check(serializedStubTree.getStub(false), stub);
+                    check(serializedStubTree.getStub(), stub);
                     checkStubIndexes(serializedStubTree, stub);
                   }
                 }
@@ -134,9 +144,13 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
             if (serializedStubTree == null) {
               Stub rootStub = StubTreeBuilder.buildStubTree(inputData, type);
               if (rootStub != null) {
-                serializedStubTree = new SerializedStubTree(rootStub, SerializationManagerEx.getInstanceEx(), SerializedStubTree.IDE_USED_EXTERNALIZER);
+                serializedStubTree = SerializedStubTree.serializeStub(
+                  rootStub,
+                  mySerializationManager,
+                  myStubIndexesExternalizer
+                );
                 if (DebugAssertions.DEBUG) {
-                  Stub deserialized = serializedStubTree.retrieveStubFromBytes(SerializationManagerEx.getInstanceEx());
+                  Stub deserialized = serializedStubTree.getStub(mySerializationManager);
                   check(deserialized, rootStub);
                 }
               }
@@ -240,7 +254,7 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
   @NotNull
   @Override
   public DataExternalizer<SerializedStubTree> getValueExternalizer() {
-    return new SerializedStubTreeDataExternalizer(true, null, myStubIndexesExternalizer);
+    return new SerializedStubTreeDataExternalizer(true, mySerializationManager, myStubIndexesExternalizer);
   }
 
   @NotNull
@@ -274,27 +288,43 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
         }
       });
     }
+    checkNameStorage();
     return new MyIndex(extension, storage);
   }
 
-  private static class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree, FileContent> {
+  private void checkNameStorage() throws StorageException {
+    if (mySerializationManager.isNameStorageCorrupted()) {
+      mySerializationManager.repairNameStorage();
+      throw new StorageException("NameStorage for stubs serialization has been corrupted");
+    }
+  }
+
+  private static class MyIndex extends VfsAwareMapReduceIndex<Integer, SerializedStubTree> {
     private StubIndexImpl myStubIndex;
     @Nullable
-    private final StubVersionMap myStubVersionMap = InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED ? null : new StubVersionMap();
+    private final StubVersionMap myStubVersionMap =
+      InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED ? null : new StubVersionMap();
+    @Nullable
+    private final CompositeBinaryBuilderMap myCompositeBinaryBuilderMap =
+      InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED ? new CompositeBinaryBuilderMap() : null;
 
     MyIndex(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension, @NotNull IndexStorage<Integer, SerializedStubTree> storage)
-      throws StorageException, IOException {
+      throws IOException {
       super(extension, storage, new EmptyForwardIndex(), new StubUpdatingForwardIndexAccessor(), null, null);
       ((StubUpdatingForwardIndexAccessor)getForwardIndexAccessor()).setIndex(this);
-      checkNameStorage();
 
+      // load stub serializers before usage
       if (InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
-        // load stub serializers before usage
-        for (FileType fileType : FileTypeRegistry.getInstance().getRegisteredFileTypes()) {
-          StubVersionMap.getVersionOwner(fileType);
-        }
+        FileTypeRegistry.getInstance().getRegisteredFileTypes();
+        getExtensions(BinaryFileStubBuilders.INSTANCE).forEach(builder -> {});
       }
+      getExtensions(LanguageParserDefinitions.INSTANCE).forEach(ParserDefinition::getFileNodeType);
 
+    }
+
+    private static  <T> Stream<T> getExtensions(KeyedExtensionCollector<T, ?> ex) {
+      ExtensionPoint<KeyedLazyInstance<T>> point = ex.getPoint();
+      return point == null ? Stream.empty() : point.extensions().map(KeyedLazyInstance::getInstance);
     }
 
     @Override
@@ -316,15 +346,6 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
       }
       return index;
     }
-
-    private static void checkNameStorage() throws StorageException {
-      final SerializationManagerEx serializationManager = SerializationManagerEx.getInstanceEx();
-      if (serializationManager.isNameStorageCorrupted()) {
-        serializationManager.repairNameStorage();
-        throw new StorageException("NameStorage for stubs serialization has been corrupted");
-      }
-    }
-
 
     @Override
     protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<? extends Integer, ? extends SerializedStubTree> map) {
@@ -393,11 +414,20 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
     public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
       super.setIndexedStateForFile(fileId, file);
 
-      if (myStubVersionMap == null) return;
-      try {
-        myStubVersionMap.persistIndexedState(fileId, file.getFile());
-      } catch (IOException e) {
-        LOG.error(e);
+      if (myStubVersionMap != null) {
+        try {
+          myStubVersionMap.persistIndexedState(fileId, file.getFile());
+        } catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+
+      if (myCompositeBinaryBuilderMap != null) {
+        try {
+          myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
+        } catch (IOException e) {
+          LOG.error(e);
+        }
       }
 
     }
@@ -415,6 +445,19 @@ public class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<Serial
         LOG.error(e);
         return false;
       }
+    }
+
+    @Override
+    protected boolean isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+      if (myCompositeBinaryBuilderMap != null) {
+        try {
+          return myCompositeBinaryBuilderMap.isUpToDateState(fileId, file.getFile());
+        } catch (IOException e) {
+          LOG.error(e);
+          return false;
+        }
+      }
+      return false;
     }
   }
 }

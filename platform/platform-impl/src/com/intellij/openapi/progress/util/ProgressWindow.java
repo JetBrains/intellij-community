@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.BlockingProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -168,13 +169,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @Override
   public void startBlocking() {
     startBlocking(EmptyRunnable.getInstance());
   }
 
+  @Override
   public void startBlocking(@NotNull Runnable init) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -184,16 +185,23 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     init.run();
 
     try {
-      IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
-        if (isCancellationEvent(event)) {
-          cancel();
-        }
-        return wasStarted() && !isRunning();
+      ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+        pumpEventsForHierarchy();
+        return null;
       });
     }
     finally {
       exitModality();
     }
+  }
+
+  public void pumpEventsForHierarchy() {
+    IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, event -> {
+      if (isCancellationEvent(event)) {
+        cancel();
+      }
+      return wasStarted() && !isRunning();
+    });
   }
 
   final boolean isCancellationEvent(@Nullable AWTEvent event) {
@@ -240,7 +248,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         Disposer.dispose(this);
       });
 
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(EmptyRunnable.INSTANCE); // Just to give blocking dispatching a chance to go out.
     }
   }
@@ -319,7 +326,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert EventQueue.isDispatchThread();
     stopSystemActivity();
     if (isRunning()) {
       cancel();

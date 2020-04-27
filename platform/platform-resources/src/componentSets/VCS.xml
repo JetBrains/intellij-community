@@ -1,12 +1,6 @@
 <idea-plugin>
   <project-components>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.annotate.AnnotationsPreloader</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage</implementation-class>
-    </component>
-    <component>
       <interface-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManagerI</interface-class>
       <implementation-class>com.intellij.openapi.vcs.impl.LineStatusTrackerManager</implementation-class>
       <option name="workspace" value="true"/>
@@ -14,9 +8,6 @@
     <component>
       <implementation-class>com.intellij.openapi.vcs.impl.PartialLineStatusTrackerManagerState</implementation-class>
       <option name="workspace" value="true"/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.openapi.vcs.update.RestoreUpdateTree</implementation-class>
     </component>
     <component>
       <implementation-class>com.intellij.vcs.commit.CommitWorkflowManager</implementation-class>
@@ -70,6 +61,7 @@
                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguageHighlighterFactory"/>
 
     <localInspection
+        language="IgnoreLang"
         bundle="messages.VcsBundle"
         enabledByDefault="true"
         groupKey="ignore.codeInspection.group"
@@ -77,4 +69,9 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.openapi.vcs.annotate.AnnotationsPreloader$AnnotationsPreloaderFileEditorManagerListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

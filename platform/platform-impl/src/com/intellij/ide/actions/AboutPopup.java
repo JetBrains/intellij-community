@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.AboutPopupDescriptionProvider;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -14,6 +16,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,6 +62,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -129,6 +133,8 @@ public class AboutPopup {
   }
 
   private static class InfoSurface extends JPanel {
+    private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
+
     private final Color myColor;
     private final Color myLinkColor;
     private final Icon myImage;
@@ -200,6 +206,22 @@ public class AboutPopup {
       String vmVendor = properties.getProperty("java.vendor", "unknown");
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
       appendLast();
+
+      for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensions()) {
+        String description = aboutInfoProvider.getDescription();
+        if (description == null) continue;
+
+        String[] lines = description.split("[\n]+");
+
+        if (lines.length == 0) continue;
+
+        myLines.add(new AboutBoxLine(""));
+
+        for (String line : lines) {
+          myLines.add(new AboutBoxLine(line));
+          appendLast();
+        }
+      }
 
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine(""));
@@ -630,20 +652,31 @@ public class AboutPopup {
 
   @NotNull
   private static String getExtraInfo() {
-    return SystemInfo.getOsNameAndVersion() + "\n" +
+    String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
 
-           "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
-             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n" +
+    extraInfo += "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
+             .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n";
 
-           "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n" +
+    extraInfo += "Memory: " + (Runtime.getRuntime().maxMemory() / FileUtilRt.MEGABYTE) + "M" + "\n";
 
-           "Cores: " + Runtime.getRuntime().availableProcessors() + "\n" +
+    extraInfo += "Cores: " + Runtime.getRuntime().availableProcessors() + "\n";
 
-           "Registry: " + Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
-             .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining()) + "\n" +
+    String registryKeys = Registry.getAll().stream().filter(RegistryValue::isChangedFromDefault)
+      .map(v -> v.getKey() + "=" + v.asString()).collect(StringUtil.joining());
+    if (!StringUtil.isEmpty(registryKeys)) {
+      extraInfo += "Registry: " + registryKeys + "\n";
+    }
 
-           "Non-Bundled Plugins: " + Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
-             .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
+    String nonBundledPlugins = Arrays.stream(PluginManagerCore.getPlugins()).filter(p -> !p.isBundled() && p.isEnabled())
+      .map(p -> p.getPluginId().getIdString()).collect(StringUtil.joining());
+    if (!StringUtil.isEmpty(nonBundledPlugins)) {
+      extraInfo += "Non-Bundled Plugins: " + nonBundledPlugins;
+    }
+
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      extraInfo += "\nCurrent Desktop: " + notNull(System.getenv("XDG_CURRENT_DESKTOP"), "Undefined");
+    }
+    return extraInfo;
   }
 
   public static class PopupPanel extends JPanel {
@@ -719,7 +752,7 @@ public class AboutPopup {
       {
         init();
         setAutoAdjustable(false);
-        setOKButtonText("Close");
+        setOKButtonText(CommonBundle.message("close.action.name"));
       }
 
       @Override
@@ -751,8 +784,7 @@ public class AboutPopup {
       }
 
       @Override
-      @NotNull
-      protected Action[] createActions() {
+      protected Action @NotNull [] createActions() {
         return new Action[]{getOKAction()};
       }
 

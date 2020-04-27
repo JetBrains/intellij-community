@@ -85,8 +85,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   abstract static class RecordBufferHandler<T extends PersistentEnumeratorBase> {
     abstract int recordWriteOffset(T enumerator, byte[] buf);
-    @NotNull
-    abstract byte[] getRecordBuffer(T enumerator);
+    abstract byte @NotNull [] getRecordBuffer(T enumerator);
     abstract void setupRecord(T enumerator, int hashCode, final int dataOffset, final byte[] buf);
   }
 
@@ -172,7 +171,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myDoCaching = doCaching;
 
     if (!Files.exists(file)) {
-      assert file.getFileSystem() == FileSystems.getDefault();
+      if (file.getFileSystem() != FileSystems.getDefault()) {
+        throw new IOException(file + " in " + file.getFileSystem() + " is not exist");
+      }
       FileUtil.delete(keyStreamFile());
       if (!FileUtil.createIfDoesntExist(file.toFile())) {
         throw new IOException("Cannot create empty file: " + file);
@@ -229,7 +230,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       unlockStorage();
     }
 
-    if (inlineKeyStorage(dataDescriptor)) {
+    if (dataDescriptor instanceof InlineKeyDescriptor) {
       myKeyStorage = null;
     }
     else {
@@ -247,10 +248,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
     }
     myAssumeDifferentSerializedBytesMeansObjectsInequality = myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy;
-  }
-
-  public static boolean inlineKeyStorage(@NotNull KeyDescriptor<?> descriptor) {
-    return descriptor instanceof InlineKeyDescriptor;
   }
 
   void lockStorage() {
@@ -472,6 +469,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   @Override
   public Data valueOf(int idx) throws IOException {
+    if (idx <= NULL_ID) return null;
     try {
 
       lockStorage();
@@ -484,7 +482,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       finally {
         unlockStorage();
       }
-
+    }
+    catch (NoDataException e) {
+      markCorrupted();
+      return null;
     }
     catch (IOException io) {
       markCorrupted();

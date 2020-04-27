@@ -532,8 +532,7 @@ public final class Palette implements PersistentStateComponent<Element> {
       new IntEnumEditor(pairs), false);
   }
 
-  @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final RadComponent component) {
+  public IntrospectedProperty @NotNull [] getIntrospectedProperties(@NotNull final RadComponent component) {
     return getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass());
   }
 
@@ -542,8 +541,7 @@ public final class Palette implements PersistentStateComponent<Element> {
    * specified class. Only properties with getter and setter methods are
    * returned.
    */
-  @NotNull
-  public IntrospectedProperty[] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
+  public IntrospectedProperty @NotNull [] getIntrospectedProperties(@NotNull final Class aClass, @NotNull final Class delegeeClass) {
     // Try the cache first
     // TODO[vova, anton] update cache after class reloading (its properties could be hanged).
     if (myClass2Properties.containsKey(aClass)) {

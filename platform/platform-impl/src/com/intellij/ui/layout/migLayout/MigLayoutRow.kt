@@ -19,7 +19,6 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
-import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.LineBorder
 import kotlin.math.max
@@ -37,15 +36,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow,
                                  comment: String,
-                                 component: JComponent,
+                                 maxLineLength: Int,
                                  indent: Int,
                                  isParentRowLabeled: Boolean,
-                                 maxLineLength: Int) {
+                                 forComponent: Boolean,
+                                 columnIndex: Int) {
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
-      commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), lazyOf(cc))
-      if (isParentRowLabeled) {
+      commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength), cc)
+      if (forComponent) {
+        cc.horizontal.gapBefore = BoundSize.NULL_SIZE
+        cc.skip = columnIndex
+      }
+      else if (isParentRowLabeled) {
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip()
       }
@@ -88,6 +92,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
     }
     builder.withButtonGroup(buttonGroup, body)
+  }
+
+  override fun checkBoxGroup(title: String?, body: () -> Unit) {
+    if (title != null) {
+      label(title)
+      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
+    }
+    body()
   }
 
   override var enabled = true
@@ -160,7 +172,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
   internal val columnIndexIncludingSubRows: Int
-    get() = max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
+    get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.max() ?: -1)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     return createChildRow(indent, label, isSeparated, noGrid, title)
@@ -185,7 +197,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
       separatorRow.enabled = subRowsEnabled
+      separatorRow.subRowsEnabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
+      separatorRow.subRowsVisible = subRowsVisible
       row.getOrCreateSubRowsList().add(separatorRow)
     }
 
@@ -199,7 +213,9 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     subRows.add(insertIndex, row)
 
     row.enabled = subRowsEnabled
+    row.subRowsEnabled = subRowsEnabled
     row.visible = subRowsVisible
+    row.subRowsVisible = subRowsVisible
 
     if (label != null) {
       row.addComponent(label)
@@ -219,7 +235,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         growX()
       }
     }
-    addComponent(titleComponent, lazyOf(cc))
+    addComponent(titleComponent, cc)
   }
 
   override fun titledRow(title: String, init: Row.() -> Unit): Row {
@@ -235,10 +251,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       .apply(init)
       .apply {
         createChildRow().apply {
-          JPanel().apply {
-            maximumSize = Dimension(0, 0)
-            preferredSize = Dimension(0, 0)
-          }()
+          placeholder()
           largeGapAfter()
         }
       }
@@ -282,7 +295,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       // do not add split if cell empty or contains the only component
       if ((components.size - firstComponentIndex) > 1) {
         val component = components.get(firstComponentIndex)
-        val cc = builder.componentConstraints.getOrPut(component) { CC() }
+        val cc = component.constraints
         cc.split(components.size - firstComponentIndex)
         if (fullWidth) {
           cc.spanX(LayoutUtil.INF)
@@ -296,23 +309,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override operator fun <T : JComponent> T.invoke(vararg constraints: CCFlags,
-                                                  gapLeft: Int,
-                                                  growPolicy: GrowPolicy?,
-                                                  comment: String?): CellBuilder<T> {
-    addComponent(this, constraints.create()?.let { lazyOf(it) } ?: lazy { CC() }, growPolicy, comment)
-    return CellBuilderImpl(builder, this@MigLayoutRow, this).apply {
-      if (gapLeft != 0) {
-        builder.updateComponentConstraints(component) {
-          horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-        }
-      }
-    }
+  override fun <T : JComponent> component(component: T): CellBuilder<T> {
+    addComponent(component)
+    return CellBuilderImpl(builder, this, component)
   }
 
-  // separate method to avoid JComponent as a receiver
-  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: CC = CC()) {
     components.add(component)
+    builder.componentConstraints.put(component, cc)
 
     if (!visible) {
       component.isVisible = false
@@ -332,22 +336,18 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       builder.componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
     }
 
-    if (comment != null && comment.isNotEmpty()) {
-      addCommentRow(component, comment)
-    }
-
     if (component is JRadioButton) {
       builder.topButtonGroup?.add(component)
     }
 
-    builder.defaultComponentConstraintCreator.createComponentConstraints(cc, component, growPolicy = growPolicy)
+    builder.defaultComponentConstraintCreator.addGrowIfNeeded(cc, component, spacing)
 
     if (!noGrid && indent > 0 && components.size == 1) {
-      cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
+      cc.horizontal.gapBefore = gapToBoundSize(indent, true)
     }
 
     if (builder.hideableRowNestingLevel > 0) {
-      cc.value.hideMode = 0
+      cc.hideMode = 0
     }
 
     // if this row is not labeled and:
@@ -357,18 +357,18 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val siblings = parent!!.subRows
       if (siblings != null && siblings.size > 1) {
         if (siblings.get(siblings.size - 2).labeled && component.text == UIBundle.message("auth.remember.cb")) {
-          cc.value.skip(1)
-          cc.value.horizontal.gapBefore = BoundSize.NULL_SIZE
+          cc.skip(1)
+          cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         }
         else if (siblings.any { it.labeled }) {
-          cc.value.spanX(2)
+          cc.spanX(2)
         }
       }
     }
 
     // MigLayout doesn't check baseline if component has grow
     if (labeled && component is JScrollPane && component.viewport.view is JTextArea) {
-      val labelCC = builder.componentConstraints.getOrPut(components.get(0)) { CC() }
+      val labelCC = components.get(0).constraints
       labelCC.alignY("top")
 
       val labelTop = component.border?.getBorderInsets(component)?.top ?: 0
@@ -376,32 +376,26 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         labelCC.vertical.gapBefore = gapToBoundSize(labelTop, false)
       }
     }
-
-    if (cc.isInitialized()) {
-      builder.componentConstraints.put(component, cc.value)
-    }
   }
 
-  fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int = 70) {
+  private val JComponent.constraints get() = builder.componentConstraints.getOrPut(this) { CC() }
+
+  fun addCommentRow(component: JComponent, comment: String, maxLineLength: Int, forComponent: Boolean) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
-    createCommentRow(this, comment, component, indent, isParentRowLabeled, maxLineLength)
+    createCommentRow(this, comment, maxLineLength, indent, isParentRowLabeled, forComponent, columnIndex)
   }
 
-  private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: Lazy<CC>): Boolean {
+  private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: CC): Boolean {
     if (components.size > 1 && component is JLabel && component.icon === AllIcons.General.GearPlain) {
-      componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
+      componentCC.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 
       if (lastComponentConstraintsWithSplit == null) {
         val prevComponent = components.get(components.size - 2)
-        var cc = builder.componentConstraints.get(prevComponent)
-        if (cc == null) {
-          cc = CC()
-          builder.componentConstraints.put(prevComponent, cc)
-        }
-        cc.split++
-        lastComponentConstraintsWithSplit = cc
+        val prevCC = prevComponent.constraints
+        prevCC.split++
+        lastComponentConstraintsWithSplit = prevCC
       }
       else {
         lastComponentConstraintsWithSplit!!.split++
@@ -435,7 +429,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = createChildRow(label = null, noGrid = true)
-    row.addComponent(component, lazyOf(cc))
+    row.addComponent(component, cc)
     return row
   }
 
@@ -446,6 +440,18 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
     return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
+
+  override fun onGlobalApply(callback: () -> Unit): Row = apply {
+    builder.applyCallbacks.putValue(null, callback)
+  }
+
+  override fun onGlobalReset(callback: () -> Unit): Row = apply {
+    builder.resetCallbacks.putValue(null, callback)
+  }
+
+  override fun onGlobalIsModified(callback: () -> Boolean): Row = apply {
+    builder.isModifiedCallbacks.putValue(null, callback)
+  }
 }
 
 class CellBuilderImpl<T : JComponent> internal constructor(
@@ -454,10 +460,20 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   override val component: T
 ) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
   private var applyIfEnabled = false
-  var property: GraphProperty<*>? = null
+  private var property: GraphProperty<*>? = null
+
+  override fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T> {
+    this.property = property
+    return this
+  }
 
   override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
-    row.addCommentRow(component, text, maxLineLength)
+    row.addCommentRow(component, text, maxLineLength, forComponent = false)
+    return this
+  }
+
+  override fun commentComponent(text: String, maxLineLength: Int): CellBuilder<T> {
+    row.addCommentRow(component, text, maxLineLength, forComponent = true)
     return this
   }
 
@@ -478,17 +494,17 @@ class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun onApply(callback: () -> Unit): CellBuilder<T> {
-    builder.applyCallbacks.add(callback)
+    builder.applyCallbacks.putValue(component, callback)
     return this
   }
 
   override fun onReset(callback: () -> Unit): CellBuilder<T> {
-    builder.resetCallbacks.add(callback)
+    builder.resetCallbacks.putValue(component, callback)
     return this
   }
 
   override fun onIsModified(callback: () -> Boolean): CellBuilder<T> {
-    builder.isModifiedCallbacks.add(callback)
+    builder.isModifiedCallbacks.putValue(component, callback)
     return this
   }
 
@@ -529,9 +545,27 @@ class CellBuilderImpl<T : JComponent> internal constructor(
     }
   }
 
+  override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)
+    }
+  }
+
+  override fun constraints(vararg constraints: CCFlags): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      overrideFlags(this, constraints)
+    }
+  }
+
   override fun withLargeLeftGap(): CellBuilder<T> = apply {
     builder.updateComponentConstraints(component) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
+    }
+  }
+
+  override fun withLeftGap(gapLeft: Int): CellBuilder<T> = apply {
+    builder.updateComponentConstraints(component) {
+      horizontal.gapBefore = gapToBoundSize(gapLeft, true)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,8 +17,8 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExtensionProvider {
@@ -55,7 +55,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
 
     List<CommitId> commits = log.getSelectedCommits();
     if (commits.size() != 1) return;
-    CommitId commit = notNull(getFirstItem(commits));
+    CommitId commit = Objects.requireNonNull(getFirstItem(commits));
 
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 

@@ -10,11 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * An action allowed to be performed in dumb mode.
- *
- * @author nik
  */
 public abstract class DumbAwareAction extends AnAction implements DumbAware {
 
@@ -30,16 +29,33 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
   }
 
   protected DumbAwareAction() {
+    super((Icon)null);
+  }
+
+  protected DumbAwareAction(@Nullable Icon icon) {
+    super(icon);
   }
 
   protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text) {
     super(text);
   }
 
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText) {
+    super(dynamicText);
+  }
+
   protected DumbAwareAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) String text,
                             @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                             @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+    super(dynamicText, icon);
   }
 
   private static class SimpleDumbAwareAction extends DumbAwareAction implements ActionWithDelegate<Consumer<? super AnActionEvent>> {
@@ -49,7 +65,8 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
       myActionPerformed = actionPerformed;
     }
 
-    private SimpleDumbAwareAction(@Nls(capitalization = Nls.Capitalization.Title) String text, Consumer<? super AnActionEvent> actionPerformed) {
+    private SimpleDumbAwareAction(@Nls(capitalization = Nls.Capitalization.Title) String text,
+                                  Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;
     }

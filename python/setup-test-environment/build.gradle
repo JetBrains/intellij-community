@@ -32,8 +32,8 @@ plugins {
 envs {
   String python27version = "2.7.16"
   String python36version = "3.6.8"
-  String python37version = "3.7.5"
-  String python38version = "3.8.0"
+  String python37version = "3.7.6"
+  String python38version = "3.8.1"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -146,21 +146,6 @@ envs {
 
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt", true)
-  }
-
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) { // Only windows needs IronPython
-
-    ironpython "ironpython"
-
-    project.tasks.create("Misc for ironpython") { // "Misc" will be launched by "build"
-      shouldRunAfter 'build_envs'
-
-      doLast {
-        def file = Paths.get(bootstrapDirectory.toString(), "ironpython", "tags.txt").toFile()
-        file.createNewFile()
-        file.write("iron")
-      }
-    }
   }
 }
 

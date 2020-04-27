@@ -19,9 +19,6 @@ import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
-/**
- * @author nik
- */
 public class JavaResourceRootProperties extends JpsElementBase<JavaResourceRootProperties> {
   private String myRelativeOutputPath = "";
   private boolean myForGeneratedSources;

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ObjectUtils;
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogUi;
@@ -32,11 +33,13 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
-    super(getText("Vcs"), getDescription("Vcs"), AllIcons.Actions.OpenNewTab);
+    super(() -> getText(VcsLogBundle.message("vcs")),
+          () -> getDescription(VcsLogBundle.message("vcs")), AllIcons.Actions.OpenNewTab);
   }
 
   @Override
@@ -63,13 +66,15 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static String getDescription(@NotNull String vcsName) {
-    return "Open new tab with " + vcsName + " Log";
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  private static String getDescription(@Nls @NotNull String vcsName) {
+    return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log", vcsName);
   }
 
   @NotNull
-  private static String getText(@NotNull String vcsName) {
-    return "Open New " + vcsName + " Log Tab";
+  @Nls(capitalization = Nls.Capitalization.Title)
+  private static String getText(@Nls @NotNull String vcsName) {
+    return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log", vcsName);
   }
 
   @Override

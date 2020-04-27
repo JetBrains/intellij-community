@@ -18,9 +18,6 @@ package com.intellij.util.descriptors;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class ConfigFileInfo {
   @NotNull private final ConfigFileMetaData myMetaData;
   @NotNull private final String myUrl;

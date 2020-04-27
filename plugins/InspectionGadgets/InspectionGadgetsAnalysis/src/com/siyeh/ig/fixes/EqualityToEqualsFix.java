@@ -64,8 +64,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     return new EqualityToEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
   }
 
-  @NotNull
-  public static InspectionGadgetsFix[] buildEqualityFixes(PsiBinaryExpression expression) {
+  public static InspectionGadgetsFix @NotNull [] buildEqualityFixes(PsiBinaryExpression expression) {
     final List<InspectionGadgetsFix> result = new ArrayList<>(2);
     ContainerUtil.addIfNotNull(result, buildFix(expression));
     ContainerUtil.addIfNotNull(result, EqualityToSafeEqualsFix.buildFix(expression));

@@ -3,15 +3,17 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -169,13 +171,13 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           traverseToLeaves(selectedNode, denyRules, allowRules);
         }
         if (denyRules.length() + allowRules.length() > 0) {
-          StatusBar.Info.set(AnalysisScopeBundle.message("status.bar.rule.violation.message",
+          StatusBar.Info.set(CodeInsightBundle.message("status.bar.rule.violation.message",
                                                         ((denyRules.length() == 0 || allowRules.length() == 0) ? 1 : 2),
                                                         (denyRules.length() > 0 ? denyRules.toString() + (allowRules.length() > 0 ? "; " : "") : " ") +
                                                         (allowRules.length() > 0 ? allowRules.toString() : " ")), myProject);
         }
         else {
-          StatusBar.Info.set(AnalysisScopeBundle.message("status.bar.no.rule.violation.message"), myProject);
+          StatusBar.Info.set(CodeInsightBundle.message("status.bar.no.rule.violation.message"), myProject);
         }
       }
     });
@@ -485,7 +487,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class CloseAction extends AnAction implements DumbAware {
     CloseAction() {
-      super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
+      super(CommonBundle.messagePointer("action.close"), CodeInsightBundle.messagePointer("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
 
@@ -499,8 +501,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class FlattenPackagesAction extends ToggleAction {
     FlattenPackagesAction() {
-      super(AnalysisScopeBundle.message("action.flatten.packages"),
-            AnalysisScopeBundle.message("action.flatten.packages"),
+      super(CodeInsightBundle.messagePointer("action.flatten.packages"), CodeInsightBundle.messagePointer("action.flatten.packages"),
             PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 
@@ -519,7 +520,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class ShowFilesAction extends ToggleAction {
     ShowFilesAction() {
-      super(AnalysisScopeBundle.message("action.show.files"), AnalysisScopeBundle.message("action.show.files.description"),
+      super(CodeInsightBundle.messagePointer("action.show.files"), CodeInsightBundle.messagePointer("action.show.files.description"),
             AllIcons.FileTypes.Unknown);
     }
 
@@ -541,7 +542,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class ShowModulesAction extends ToggleAction {
     ShowModulesAction() {
-      super(AnalysisScopeBundle.message("action.show.modules"), AnalysisScopeBundle.message("action.show.modules.description"),
+      super(CodeInsightBundle.messagePointer("action.show.modules"), CodeInsightBundle.messagePointer("action.show.modules.description"),
             AllIcons.Actions.GroupByModule);
     }
 
@@ -560,7 +561,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class ShowModuleGroupsAction extends ToggleAction {
     ShowModuleGroupsAction() {
-      super("Show module groups", "Show module groups", AllIcons.Actions.GroupByModuleGroup);
+      super(AnalysisBundle.message("analyze.dependencies.show.module.groups.action.text"),
+            AnalysisBundle.message("analyze.dependencies.show.module.groups.action.text"), AllIcons.Actions.GroupByModuleGroup);
     }
 
     @Override
@@ -585,8 +587,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class GroupByScopeTypeAction extends ToggleAction {
     GroupByScopeTypeAction() {
-      super(AnalysisScopeBundle.message("action.group.by.scope.type"), AnalysisScopeBundle.message("action.group.by.scope.type.description"),
-            AllIcons.Actions.GroupByTestProduction);
+      super(CodeInsightBundle.messagePointer("action.group.by.scope.type"),
+            CodeInsightBundle.messagePointer("action.group.by.scope.type.description"), AllIcons.Actions.GroupByTestProduction);
     }
 
     @Override
@@ -605,8 +607,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class FilterLegalsAction extends ToggleAction {
     FilterLegalsAction() {
-      super(AnalysisScopeBundle.message("action.show.illegals.only"), AnalysisScopeBundle.message("action.show.illegals.only.description"),
-            AllIcons.General.Filter);
+      super(CodeInsightBundle.messagePointer("action.show.illegals.only"),
+            CodeInsightBundle.messagePointer("action.show.illegals.only.description"), AllIcons.General.Filter);
     }
 
     @Override
@@ -631,7 +633,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private final class EditDependencyRulesAction extends AnAction {
     EditDependencyRulesAction() {
-      super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"),
+      super(CodeInsightBundle.messagePointer("action.edit.rules"), CodeInsightBundle.messagePointer("action.edit.rules.description"),
             AllIcons.General.Settings);
     }
 
@@ -694,7 +696,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class RerunAction extends AnAction {
     RerunAction(JComponent comp) {
-      super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
+      super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
 
@@ -752,7 +754,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class ShowDetailedInformationAction extends AnAction {
     private ShowDetailedInformationAction() {
-      super("Show indirect dependencies");
+      super(ActionsBundle.messagePointer("action.ShowDetailedInformationAction.text"));
     }
 
     @Override
@@ -789,7 +791,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class RemoveFromScopeAction extends AnAction {
     private RemoveFromScopeAction() {
-      super("Remove from scope");
+      super(ActionsBundle.messagePointer("action.RemoveFromScopeAction.text"));
     }
 
     @Override
@@ -812,7 +814,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class AddToScopeAction extends AnAction {
     private AddToScopeAction() {
-      super("Add to scope");
+      super(ActionsBundle.messagePointer("action.AddToScopeAction.text"));
     }
 
     @Override
@@ -830,7 +832,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       } else {
         builder = new ForwardDependenciesBuilder(myProject, scope, myTransitiveBorder);
       }
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(myProject, CodeInsightBundle.message("package.dependencies.progress.title"),
                                                                          () -> builder.analyze(), () -> {
         myBuilders.add(builder);
         myDependencies.putAll(builder.getDependencies());
@@ -865,7 +867,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class SelectInLeftTreeAction extends AnAction {
     SelectInLeftTreeAction() {
-      super(AnalysisScopeBundle.message("action.select.in.left.tree"), AnalysisScopeBundle.message("action.select.in.left.tree.description"), null);
+      super(CodeInsightBundle.messagePointer("action.select.in.left.tree"),
+            CodeInsightBundle.messagePointer("action.select.in.left.tree.description"), null);
     }
 
     @Override
@@ -905,8 +908,8 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
   private class MarkAsIllegalAction extends AnAction {
     MarkAsIllegalAction() {
-      super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"),
-            AllIcons.Actions.Lightning);
+      super(CodeInsightBundle.messagePointer("mark.dependency.illegal.text"),
+            CodeInsightBundle.messagePointer("mark.dependency.illegal.text"), AllIcons.Actions.Lightning);
     }
 
     @Override
@@ -953,8 +956,9 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
                                         new NamedScope.UnnamedScope(rightPackageSet), true));
           rebuild();
         } else {
-          Messages.showErrorDialog(DependenciesPanel.this, "Rule was not added.\n There is no direct dependency between \'" + leftPackageSet.getText() + "\' and \'" + rightPackageSet.getText() + "\'",
-                                   AnalysisScopeBundle.message("mark.dependency.illegal.text"));
+          Messages.showErrorDialog(DependenciesPanel.this, AnalysisBundle
+                                     .message("analyze.dependencies.unable.to.create.rule.error.message", leftPackageSet.getText(), rightPackageSet.getText()),
+                                   CodeInsightBundle.message("mark.dependency.illegal.text"));
         }
       }
     }

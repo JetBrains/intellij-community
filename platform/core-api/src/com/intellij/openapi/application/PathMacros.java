@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,14 +28,19 @@ public abstract class PathMacros {
   @Nullable
   public abstract String getValue(@NotNull String name);
 
+  /**
+   * Consider using {@link PathMacroContributor}.
+   */
+  @ApiStatus.Internal
   public abstract void setMacro(@NotNull String name, @Nullable String value);
 
   /**
-   * Obsolete macros that are to be removed gently from the project files. They can be read, but not written again. Not persisted.
+   * @deprecated Use {@link PathMacroContributor}
    */
-  public abstract void addLegacyMacro(@NotNull String name, @NotNull String value);
-
-  public abstract void removeMacro(@NotNull String name);
+  @Deprecated
+  public void removeMacro(@NotNull String name) {
+    setMacro(name, null);
+  }
 
   @NotNull
   public abstract Set<String> getUserMacroNames();

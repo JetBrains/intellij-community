@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
-* @author nik
-*/
 class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implements ItemRemovable {
   private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(
     getExportColumnName()) {
@@ -186,10 +183,10 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   }
 
   private static String getScopeColumnName() {
-    return ProjectBundle.message("modules.order.export.scope.column");
+    return JavaUiBundle.message("modules.order.export.scope.column");
   }
 
   static String getExportColumnName() {
-    return ProjectBundle.message("modules.order.export.export.column");
+    return JavaUiBundle.message("modules.order.export.export.column");
   }
 }

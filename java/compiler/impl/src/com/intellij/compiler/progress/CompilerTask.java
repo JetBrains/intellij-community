@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -14,7 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -145,7 +145,9 @@ public final class CompilerTask extends Task.Backgroundable {
   @NotNull
   @Override
   public NotificationInfo getNotificationInfo() {
-    return new NotificationInfo(myErrorCount > 0? "Compiler (errors)" : "Compiler (success)", "Compilation Finished", myErrorCount + " Errors, " + myWarningCount + " Warnings", true);
+    return new NotificationInfo(myErrorCount > 0? "Compiler (errors)" : "Compiler (success)",
+                                JavaCompilerBundle.message("compilation.finished"),
+                                JavaCompilerBundle.message("0.errors.1.warnings", myErrorCount, myWarningCount), true);
   }
 
   private CloseListener myCloseListener;
@@ -565,7 +567,7 @@ public final class CompilerTask extends Task.Backgroundable {
     return TextRange.EMPTY_RANGE;
   }
 
-  private final class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
+  private final class CloseListener implements ProjectManagerListener, ContentManagerListener {
     private Content myContent;
     private ContentManager myContentManager;
     private boolean myIsApplicationExitingOrProjectClosing = false;
@@ -611,8 +613,8 @@ public final class CompilerTask extends Task.Backgroundable {
         if (!myIndicator.isCanceled() && shouldAskUser()) {
           int result = Messages.showOkCancelDialog(
             myProject,
-            CompilerBundle.message("warning.compiler.running.on.toolwindow.close"),
-            CompilerBundle.message("compiler.running.dialog.title"),
+            JavaCompilerBundle.message("warning.compiler.running.on.toolwindow.close"),
+            JavaCompilerBundle.message("compiler.running.dialog.title"),
             Messages.getQuestionIcon()
           );
           if (result != Messages.OK) {

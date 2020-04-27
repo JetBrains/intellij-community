@@ -24,12 +24,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 
 public class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
+  @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
   @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";
   @NonNls private static final String SCRIPT_OPTIONS_TAG = "SCRIPT_OPTIONS";
-  @NonNls private static final String SCRIPT_WORKING_DIRECTORY = "SCRIPT_WORKING_DIRECTORY";
+  @NonNls private static final String SCRIPT_WORKING_DIRECTORY_TAG = "SCRIPT_WORKING_DIRECTORY";
   @NonNls private static final String INTERPRETER_PATH_TAG = "INTERPRETER_PATH";
   @NonNls private static final String INTERPRETER_OPTIONS_TAG = "INTERPRETER_OPTIONS";
 
@@ -73,10 +75,10 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 
-    JDOMExternalizerUtil.writeField(element, SCRIPT_PATH_TAG, FileUtil.toSystemIndependentName(myScriptPath));
+    writePathWithMetadata(element, myScriptPath, SCRIPT_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, SCRIPT_OPTIONS_TAG, myScriptOptions);
-    JDOMExternalizerUtil.writeField(element, SCRIPT_WORKING_DIRECTORY, FileUtil.toSystemIndependentName(myScriptWorkingDirectory));
-    JDOMExternalizerUtil.writeField(element, INTERPRETER_PATH_TAG, FileUtil.toSystemIndependentName(myInterpreterPath));
+    writePathWithMetadata(element, myScriptWorkingDirectory, SCRIPT_WORKING_DIRECTORY_TAG);
+    writePathWithMetadata(element, myInterpreterPath, INTERPRETER_PATH_TAG);
     JDOMExternalizerUtil.writeField(element, INTERPRETER_OPTIONS_TAG, myInterpreterOptions);
   }
 
@@ -84,11 +86,11 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
 
-    myScriptPath = FileUtil.toSystemDependentName(notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_PATH_TAG), ""));
-    myScriptOptions = notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_OPTIONS_TAG), "");
-    myScriptWorkingDirectory = FileUtil.toSystemDependentName(notNullize(JDOMExternalizerUtil.readField(element, SCRIPT_WORKING_DIRECTORY), ""));
-    myInterpreterPath = FileUtil.toSystemDependentName(notNullize(JDOMExternalizerUtil.readField(element, INTERPRETER_PATH_TAG), ""));
-    myInterpreterOptions = notNullize(JDOMExternalizerUtil.readField(element, INTERPRETER_OPTIONS_TAG), "");
+    myScriptPath = readPathWithMetadata(element, SCRIPT_PATH_TAG);
+    myScriptOptions = readStringTagValue(element, SCRIPT_OPTIONS_TAG);
+    myScriptWorkingDirectory = readPathWithMetadata(element, SCRIPT_WORKING_DIRECTORY_TAG);
+    myInterpreterPath = readPathWithMetadata(element, INTERPRETER_PATH_TAG);
+    myInterpreterOptions = readStringTagValue(element, INTERPRETER_OPTIONS_TAG);
   }
 
   @Nullable
@@ -116,6 +118,23 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     VirtualFile vfile = PsiUtilCore.getVirtualFile(element);
     if (vfile == null) return null;
     return vfile.getPath();
+  }
+
+  private static void writePathWithMetadata(@NotNull Element element, @NotNull String path, @NotNull String pathTag) {
+    String systemIndependentPath = FileUtil.toSystemIndependentName(path);
+    JDOMExternalizerUtil.writeField(element, TAG_PREFIX + pathTag, Boolean.toString(systemIndependentPath.equals(path)));
+    JDOMExternalizerUtil.writeField(element, pathTag, systemIndependentPath);
+  }
+
+  private static String readPathWithMetadata(@NotNull Element element, @NotNull String pathTag) {
+    return Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, TAG_PREFIX + pathTag))
+           ? readStringTagValue(element, pathTag)
+           : toSystemDependentName(readStringTagValue(element, pathTag));
+  }
+
+  @NotNull
+  private static String readStringTagValue(@NotNull Element element, @NotNull String tagName) {
+    return notNullize(JDOMExternalizerUtil.readField(element, tagName), "");
   }
 
   public String getScriptPath() {

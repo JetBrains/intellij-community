@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class AppEngineSdkManager {
 
   public static AppEngineSdkManager getInstance() {

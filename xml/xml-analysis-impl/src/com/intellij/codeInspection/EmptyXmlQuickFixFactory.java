@@ -28,7 +28,7 @@ public class EmptyXmlQuickFixFactory extends XmlQuickFixFactory {
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement insertRequiredAttributeFix(@NotNull XmlTag tag,
                                                                                 @NotNull String attrName,
-                                                                                @NotNull String... values) {
+                                                                                String @NotNull ... values) {
     return QuickFixes.EMPTY_FIX;
   }
 

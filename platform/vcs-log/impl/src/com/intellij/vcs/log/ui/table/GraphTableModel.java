@@ -2,10 +2,8 @@ package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -122,67 +120,49 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = getCommitMetadata(rowIndex);
+    try {
+      return getValue(rowIndex, column, getCommitMetadata(rowIndex));
+    }
+    catch (ProcessCanceledException ignore) {
+      return getStub(column);
+    }
+    catch (Throwable t) {
+      ERROR_LOG.error("Failed to get information for the log table", t);
+      return getStub(column);
+    }
+  }
+
+  @NotNull
+  private Object getValue(int rowIndex, @NotNull VcsLogColumn column, @NotNull VcsShortCommitDetails data) {
     switch (column) {
       case ROOT:
-        return getRootSafely(rowIndex);
+        return myDataPack.getFilePath(rowIndex);
       case COMMIT:
-        return getCommitCellSafely(rowIndex, data);
+        return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
+                                   myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
       case AUTHOR:
-        return getAuthorSafely(data);
+        return CommitPresentationUtil.getAuthorPresentation(data);
       case DATE:
-        return getDateSafely(data);
+        long timeStamp = myProperties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
+                         Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
+                         data.getCommitTime() : data.getAuthorTime();
+        return timeStamp < 0 ? "" : JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp);
       case HASH:
-        return getHashSafely(data);
+        return data.getId().toShortString();
       default:
         throw new IllegalStateException("Unexpected value: " + column);
     }
   }
 
   @NotNull
-  private FilePath getRootSafely(int rowIndex) {
-    return getOrLogAndReturnStub(() -> myDataPack.getFilePath(rowIndex), VcsUtil.getFilePath(getFirstItem(myLogData.getRoots())));
-  }
-
-  @NotNull
-  private GraphCommitCell getCommitCellSafely(int rowIndex, @NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> {
-      return new GraphCommitCell(data.getSubject(), getRefsAtRow(rowIndex),
-                                 myDataPack.getVisibleGraph().getRowInfo(rowIndex).getPrintElements());
-    }, new GraphCommitCell("", Collections.emptyList(), Collections.emptyList()));
-  }
-
-  @NotNull
-  private static String getAuthorSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> CommitPresentationUtil.getAuthorPresentation(data), "");
-  }
-
-  @NotNull
-  private String getDateSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> {
-      long timeStamp = myProperties.exists(CommonUiProperties.PREFER_COMMIT_DATE) &&
-                       Boolean.TRUE.equals(myProperties.get(CommonUiProperties.PREFER_COMMIT_DATE)) ?
-                       data.getCommitTime() : data.getAuthorTime();
-      return timeStamp < 0 ? "" : JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp);
-    }, "");
-  }
-
-  @NotNull
-  private static String getHashSafely(@NotNull VcsShortCommitDetails data) {
-    return getOrLogAndReturnStub(() -> data.getId().toShortString(), "");
-  }
-
-  @NotNull
-  private static <T> T getOrLogAndReturnStub(@NotNull Computable<T> computable, @NotNull T stub) {
-    try {
-      return computable.compute();
-    }
-    catch (ProcessCanceledException ignore) {
-      return stub;
-    }
-    catch (Throwable t) {
-      ERROR_LOG.error("Failed to get information for the log table", t);
-      return stub;
+  private Object getStub(@NotNull VcsLogColumn column) {
+    switch (column) {
+      case ROOT:
+        return VcsUtil.getFilePath(getFirstItem(myLogData.getRoots()));
+      case COMMIT:
+        return new GraphCommitCell("", Collections.emptyList(), Collections.emptyList());
+      default:
+        return "";
     }
   }
 

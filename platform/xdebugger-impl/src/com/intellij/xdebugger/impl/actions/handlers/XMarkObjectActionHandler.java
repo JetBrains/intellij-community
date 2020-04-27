@@ -24,9 +24,6 @@ import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
-/**
- * @author nik
- */
 public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   @Override
   public void perform(@NotNull Project project, AnActionEvent event) {

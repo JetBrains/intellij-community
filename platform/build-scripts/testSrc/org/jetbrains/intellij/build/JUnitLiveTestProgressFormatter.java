@@ -14,9 +14,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-/**
- * @author nik
- */
 @SuppressWarnings("unused") //used in org.jetbrains.intellij.build.impl.TestingTasksImpl
 public class JUnitLiveTestProgressFormatter implements JUnitResultFormatter, IgnoredTestListener {
   private PrintWriter myOut;

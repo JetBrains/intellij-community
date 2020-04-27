@@ -114,10 +114,10 @@ internal class LegacyBridgeLibraryImpl(
     storage.resolve(id)
   }
 
-  private val libraryEntity
+  internal val libraryEntity
     get() = entityStore.cachedValue(libraryEntityValue, entityId)
 
-  private val snapshotValue = CachedValueWithParameter { storage, id: LibraryId ->
+  internal val snapshotValue = CachedValueWithParameter { storage, id: LibraryId ->
     LibraryViaTypedEntity(
       libraryImpl = this,
       libraryEntity = storage.resolve(id) ?: object : LibraryEntity {
@@ -148,10 +148,10 @@ internal class LegacyBridgeLibraryImpl(
           originalLibrarySnapshot = librarySnapshot,
           diff = diff,
           committer = { _, diffBuilder ->
-          WorkspaceModel.getInstance(project).updateProjectModel {
-            it.addDiff(diffBuilder)
-          }
-        })
+            WorkspaceModel.getInstance(project).updateProjectModel {
+              it.addDiff(diffBuilder)
+            }
+          })
       }
     )
   }

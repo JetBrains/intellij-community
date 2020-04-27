@@ -14,6 +14,7 @@ import com.jetbrains.python.inspections.quickfix.RemoveArgumentEqualDefaultQuick
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
@@ -131,10 +132,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
 
       if (name == null || !(value instanceof PyNoneLiteralExpression) || !((PyNoneLiteralExpression)value).isEllipsis()) return value;
 
-      final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
-      if (markedCallee == null) return value;
+      final PyCallableType callableType = mapping.getCallableType();
+      if (callableType == null) return value;
 
-      final PyCallable callable = markedCallee.getElement();
+      final PyCallable callable = callableType.getCallable();
       if (callable == null) return value;
 
       if (PyiUtil.isInsideStub(callable)) {

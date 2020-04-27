@@ -39,9 +39,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.function.Supplier;
 
-/**
- * @author nik
- */
 public class XDebuggerEvaluationDialog extends DialogWrapper {
   public static final DataKey<XDebuggerEvaluationDialog> KEY = DataKey.create("DEBUGGER_EVALUATION_DIALOG");
 

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +32,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
   private int myDescriptorIdx = 0;
 
   protected PerformFixesModalTask(@NotNull Project project,
-                                  @NotNull CommonProblemDescriptor[] descriptors) {
+                                  CommonProblemDescriptor @NotNull [] descriptors) {
     this(project, Collections.singletonList(descriptors));
   }
 
@@ -78,7 +79,7 @@ public abstract class PerformFixesModalTask implements SequentialTask {
         presentableText = SymbolPresentationUtil.getSymbolPresentableText(psiElement);
       }
     }
-    indicator.setText("Processing " + presentableText);
+    indicator.setText(InspectionsBundle.message("processing.progress.text", presentableText));
 
     final boolean[] runInReadAction = {false};
     final QuickFix[] fixes = descriptor.getFixes();

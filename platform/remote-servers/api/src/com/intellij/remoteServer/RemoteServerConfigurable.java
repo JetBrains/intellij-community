@@ -17,9 +17,6 @@ package com.intellij.remoteServer;
 
 import com.intellij.openapi.options.UnnamedConfigurable;
 
-/**
- * @author nik
- */
 public abstract class RemoteServerConfigurable implements UnnamedConfigurable {
   /**
    * When user edits a server configuration IDEA periodically tries to connect to the server to check the configuration and show

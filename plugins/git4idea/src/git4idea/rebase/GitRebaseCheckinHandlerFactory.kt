@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import git4idea.GitVcs
 import git4idea.branch.GitRebaseParams
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 
 class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey()) {
@@ -24,7 +25,7 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
       override fun checkinSuccessful() {
         if (!active) return
-        object : Task.Backgroundable(project, "Rebasing") {
+        object : Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
           override fun run(indicator: ProgressIndicator) {
             val params = GitRebaseParams.editCommits(repository.vcs.version, rebaseFrom, null, false)
             GitRebaseUtils.rebase(project, listOf(repository), params, indicator)

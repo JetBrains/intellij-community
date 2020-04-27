@@ -328,7 +328,7 @@ class TestFeatureUsageEventWriter : StatisticsEventLogWriter {
   }
 
   override fun getActiveFile(): EventLogFile? = null
-  override fun getFiles(): List<EventLogFile> = emptyList()
+  override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
 }

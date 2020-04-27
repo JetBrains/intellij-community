@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MaximizeToolWindowAction extends AnAction implements DumbAware {
   public MaximizeToolWindowAction() {
-    super(ActionsBundle.message("action.ResizeToolWindowMaximize.text"));
+    super(ActionsBundle.messagePointer("action.ResizeToolWindowMaximize.text"));
   }
 
   @Override

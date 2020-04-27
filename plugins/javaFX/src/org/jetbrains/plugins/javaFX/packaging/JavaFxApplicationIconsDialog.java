@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import java.io.File;
@@ -24,7 +25,7 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
   public JavaFxApplicationIconsDialog(JComponent parent, JavaFxApplicationIcons icons, Project project) {
     super(parent, true);
     myProject = project;
-    setTitle("Choose Application Icons");
+    setTitle(JavaFXBundle.message("javafx.application.icons.choose.icons"));
     init();
 
     if (icons != null) {
@@ -69,19 +70,19 @@ public class JavaFxApplicationIconsDialog extends DialogWrapper {
     if (StringUtil.isEmptyOrSpaces(text)) return true;
     final VirtualFile virtualFile = VfsUtil.findFileByIoFile(new File(text.trim()), false);
     if (virtualFile == null || !virtualFile.exists() || virtualFile.isDirectory()) {
-      Messages.showErrorDialog(myPanel.myWholePanel, osName + " icon file should exist");
+      Messages.showErrorDialog(myPanel.myWholePanel, JavaFXBundle.message("javafx.application.icons.icon.file.should.exist", osName));
       return false;
     }
     if (!index.isInContent(virtualFile)) {
-      Messages.showErrorDialog(myPanel.myWholePanel, osName + " icon file should be inside the project content");
+      Messages.showErrorDialog(myPanel.myWholePanel, JavaFXBundle.message("javafx.application.icons.file.should.be.inside.project.content", osName));
       return false;
     }
     return true;
   }
 
   private static void addBrowseListener(TextFieldWithBrowseButton withBrowseButton, String extension, Project project) {
-    withBrowseButton.addBrowseFolderListener("Choose Icon File",
-                                             "Select icon file (*." + extension + ") for the resulting application", project,
+    withBrowseButton.addBrowseFolderListener(JavaFXBundle.message("javafx.application.icons.select.icon.file.title"),
+                                             JavaFXBundle.message("javafx.application.icons.select.icon.file.description",extension), project,
                                              FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
                                                .withFileFilter(file -> extension.equalsIgnoreCase(file.getExtension())));
   }

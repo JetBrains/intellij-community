@@ -29,9 +29,8 @@ public class RevertChangeListAction extends RevertCommittedStuffAbstractAction {
     super(true);
   }
 
-  @Nullable
   @Override
-  protected Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
+  protected Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
     if (isFromUpdate) {
       return e.getData(VcsDataKeys.CHANGES);
     }

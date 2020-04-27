@@ -22,8 +22,8 @@ public class PermanentLinearGraphBuilder<CommitId> {
 
   private final int myNodesCount;
 
-  @NotNull private final int[] myNodeToEdgeIndex;
-  @NotNull private final int[] myLongEdges;
+  private final int @NotNull [] myNodeToEdgeIndex;
+  private final int @NotNull [] myLongEdges;
   // downCommitId -> List of upNodeIndex
   @NotNull private final Map<CommitId, List<Integer>> upAdjacentNodes = new HashMap<>();
 

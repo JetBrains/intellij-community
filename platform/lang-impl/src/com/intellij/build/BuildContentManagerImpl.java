@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.build.process.BuildProcessHandler;
@@ -67,8 +67,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       return toolWindow;
     }
 
-    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(TOOL_WINDOW_ID));
-    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
+    toolWindow = toolWindowManager.registerToolWindow(RegisterToolWindowTask.closable(TOOL_WINDOW_ID, AllIcons.Toolwindows.ToolWindowBuild));
     ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addDataProvider(new DataProvider() {
       private int myInsideGetData = 0;
@@ -85,7 +84,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       }
     });
 
-    new ContentManagerWatcher(toolWindow, contentManager);
+    ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
     return toolWindow;
   }
 

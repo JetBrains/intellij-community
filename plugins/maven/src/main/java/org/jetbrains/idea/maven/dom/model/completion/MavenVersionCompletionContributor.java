@@ -50,17 +50,12 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
     String artifactId = trimDummy(coordinates.getArtifactId().getStringValue());
 
     if (MavenAbstractPluginExtensionCompletionContributor.isPluginOrExtension(coordinates) && StringUtil.isEmpty(groupId)) {
-      return MavenAbstractPluginExtensionCompletionContributor.findPluginByArtifactId(service, artifactId, searchParameters, consumer);
+      return MavenAbstractPluginExtensionCompletionContributor
+        .findPluginByArtifactId(service, artifactId, searchParameters, new RepositoryArtifactDataConsumer(artifactId, groupId, consumer));
     }
 
-    return service.suggestPrefix(groupId, artifactId, searchParameters, rad -> {
-      if (rad instanceof MavenRepositoryArtifactInfo) {
-        MavenRepositoryArtifactInfo mrai = (MavenRepositoryArtifactInfo)rad;
-        if (StringUtil.equals(mrai.getArtifactId(), artifactId) && StringUtil.equals(mrai.getGroupId(), groupId)) {
-          consumer.accept(mrai);
-        }
-      }
-    });
+
+    return service.suggestPrefix(groupId, artifactId, searchParameters, new RepositoryArtifactDataConsumer(artifactId, groupId, consumer));
   }
 
   @Override
@@ -88,5 +83,27 @@ public class MavenVersionCompletionContributor extends MavenCoordinateCompletion
   protected CompletionResultSet amendResultSet(@NotNull CompletionResultSet result) {
     return result.withRelevanceSorter(CompletionService.getCompletionService().emptySorter().weigh(
       new MavenVersionNegatingWeigher()));
+  }
+
+  private static class RepositoryArtifactDataConsumer implements Consumer<RepositoryArtifactData> {
+    private final String myArtifactId;
+    private final String myGroupId;
+    private @NotNull final Consumer<RepositoryArtifactData> myConsumer;
+
+    public RepositoryArtifactDataConsumer(String artifactId, String groupId, @NotNull Consumer<RepositoryArtifactData> consumer) {
+      myArtifactId = artifactId;
+      myGroupId = groupId;
+      myConsumer = consumer;
+    }
+
+    @Override
+    public void accept(RepositoryArtifactData rad) {
+      if (rad instanceof MavenRepositoryArtifactInfo) {
+        MavenRepositoryArtifactInfo mrai = (MavenRepositoryArtifactInfo)rad;
+        if (StringUtil.equals(mrai.getArtifactId(), myArtifactId) && (StringUtil.isEmpty(myGroupId) || StringUtil.equals(mrai.getGroupId(), myGroupId))) {
+          myConsumer.accept(mrai);
+        }
+      }
+    }
   }
 }

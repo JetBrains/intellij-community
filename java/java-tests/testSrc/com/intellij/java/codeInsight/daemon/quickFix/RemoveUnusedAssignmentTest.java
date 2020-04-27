@@ -23,9 +23,8 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveUnusedAssignmentTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {new DefUseInspection(), new SillyAssignmentInspection()};
   }
 
@@ -36,6 +35,6 @@ public class RemoveUnusedAssignmentTest extends LightQuickFixParameterizedTestCa
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+    return LanguageLevel.JDK_14_PREVIEW;
   }
 }

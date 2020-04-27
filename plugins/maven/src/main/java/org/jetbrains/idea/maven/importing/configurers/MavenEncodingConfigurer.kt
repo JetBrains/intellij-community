@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing.configurers
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -38,8 +39,13 @@ class MavenEncodingConfigurer : MavenModuleConfigurer() {
     val leaveAsIsMap = LinkedHashMap<VirtualFile, Charset>()
     val projectManagerImpl = (EncodingProjectManager.getInstance(project) as EncodingProjectManagerImpl)
 
-    fillSourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
-    fillResourceEncoding(project, mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    ReadAction.compute<Unit, Throwable> {
+      fillSourceEncoding(mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    }
+
+    ReadAction.compute<Unit, Throwable> {
+      fillResourceEncoding(project, mavenProject, newMap, leaveAsIsMap, projectManagerImpl)
+    }
 
     if (newMap.isEmpty()) {
       return

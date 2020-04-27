@@ -23,9 +23,6 @@ import org.jetbrains.jps.incremental.TargetBuilder;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactBuilderService extends BuilderService {
   @NotNull
   @Override

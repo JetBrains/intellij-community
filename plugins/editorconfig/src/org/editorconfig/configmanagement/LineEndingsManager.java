@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
@@ -42,7 +42,7 @@ public final class LineEndingsManager implements FileDocumentManagerListener {
     ApplicationManager.getApplication().invokeLater(() -> {
       IdeFrame frame = WindowManager.getInstance().getIdeFrame(myProject);
       StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
-      StatusBarWidget widget = statusBar == null ? null : statusBar.getWidget("LineSeparator");
+      StatusBarWidget widget = statusBar == null ? null : statusBar.getWidget(StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL);
       if (widget instanceof LineSeparatorPanel) {
         ((LineSeparatorPanel)widget).selectionChanged((VirtualFile)null);
       }

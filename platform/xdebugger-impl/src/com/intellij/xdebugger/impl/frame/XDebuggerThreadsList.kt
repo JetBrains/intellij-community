@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.util.ui.UIUtil
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import java.awt.Component
 import java.awt.Point
@@ -21,6 +24,8 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
         get() = model.size
 
     companion object {
+        val THREADS_LIST: DataKey<XDebuggerThreadsList> = DataKey.create("THREADS_LIST")
+
         fun createDefault(): XDebuggerThreadsList {
             return create(XDebuggerGroupedFrameListRenderer())
         }
@@ -39,6 +44,9 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
         if (font != null) {
             setFont(FontUIResource(font.name, font.style, font.size))
         }
+        setDataProvider {
+            return@setDataProvider if (THREADS_LIST.`is`(it)) this@XDebuggerThreadsList else null
+        }
     }
 
     private fun doInit() {
@@ -50,7 +58,7 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
             }
         }
 
-        emptyText.text = "Threads are not available"
+        emptyText.text = XDebuggerBundle.message("threads.list.threads.not.available")
     }
 
     private fun onThreadChanged(stack: StackInfo?) {
@@ -129,6 +137,8 @@ class XDebuggerThreadsList(private val renderer: ListCellRenderer<StackInfo>) : 
                 StackInfo.StackKind.Error,
                 StackInfo.StackKind.Loading -> append(stack.toString())
             }
+            if (selected)
+                background = UIUtil.getListSelectionBackground(hasFocus)
         }
     }
 }

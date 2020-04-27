@@ -59,16 +59,14 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     return MultiMap.emptyInstance();
   });
 
-  @NotNull
   @Override
-  public String[] getGroups() {
+  public String @NotNull [] getGroups() {
     myTemplates.drop();
     return ArrayUtilRt.toStringArray(myTemplates.getValue().keySet());
   }
 
-  @NotNull
   @Override
-  public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
+  public ProjectTemplate @NotNull [] createTemplates(@Nullable String group, WizardContext context) {
     Collection<ArchivedProjectTemplate> templates = myTemplates.getValue().get(group);
     return templates.isEmpty() ? ProjectTemplate.EMPTY_ARRAY : templates.toArray(ProjectTemplate.EMPTY_ARRAY);
   }

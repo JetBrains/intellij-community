@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -93,7 +93,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
           return myProject.isDisposed() ? null : collectRemoteRepositoriesIdsAndUrls();
         });
         File localRepository = ReadAction.compute(() -> myProject.isDisposed() ? null : getLocalRepository());
-        if (remoteRepositoriesIdsAndUrls == null || localRepository == null) {
+        if (remoteRepositoriesIdsAndUrls == null || localRepository == null || myProject.isDisposed()) {
           return;
         }
 
@@ -240,7 +240,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       return false;
     }
     ProgressIndicatorProvider.checkCanceled();
-    return getGroupIds().contains(groupId);
+    return hasProjectGroupId(groupId) || myProjectIndices.stream().anyMatch(i -> i.hasGroupId(groupId));
   }
 
   /**
@@ -252,7 +252,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       return false;
     }
     ProgressIndicatorProvider.checkCanceled();
-    return getArtifactIds(groupId).contains(artifactId);
+    return hasProjectArtifactId(groupId, artifactId) || myProjectIndices.stream().anyMatch(i -> i.hasArtifactId(groupId, artifactId));
   }
 
   /**
@@ -262,7 +262,8 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   public boolean hasVersion(String groupId, String artifactId, String version) {
     if (hasProjectVersion(groupId, artifactId, version)) return true;
     ProgressIndicatorProvider.checkCanceled();
-    return getVersions(groupId, artifactId).contains(version);
+    return hasProjectVersion(groupId, artifactId, version) ||
+           myProjectIndices.stream().anyMatch(i -> i.hasVersion(groupId, artifactId, version));
   }
 
   private Set<String> getProjectGroupIds() {

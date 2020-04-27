@@ -74,8 +74,7 @@ public class HeaderParserRepository {
     return parser != null ? parser.getConvertedValue(header) : null;
   }
 
-  @NotNull
-  public PsiReference[] getReferences(@NotNull HeaderValuePart headerValuePart) {
+  public PsiReference @NotNull [] getReferences(@NotNull HeaderValuePart headerValuePart) {
     Header header = PsiTreeUtil.getParentOfType(headerValuePart, Header.class);
     if (header != null) {
       HeaderParser parser = getHeaderParser(header.getName());

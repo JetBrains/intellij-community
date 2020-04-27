@@ -48,8 +48,7 @@ public class PsiPlainTextFileImpl extends PsiFileImpl implements PsiPlainTextFil
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferences() {
+  public PsiReference @NotNull [] getReferences() {
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

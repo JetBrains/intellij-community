@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   private final ArtifactsStructureConfigurableContext myContext;
   private final Artifact myOriginalArtifact;
@@ -51,19 +48,19 @@ public class ArtifactProblemsHolderImpl extends ArtifactProblemsHolderBase {
   public void registerError(@NotNull String message,
                             @NotNull String problemTypeId,
                             @Nullable List<PackagingElement<?>> pathToPlace,
-                            @NotNull ArtifactProblemQuickFix... quickFixes) {
+                            ArtifactProblemQuickFix @NotNull ... quickFixes) {
     registerProblem(message, pathToPlace, ProjectStructureProblemType.error(problemTypeId), quickFixes);
   }
 
   @Override
   public void registerWarning(@NotNull String message,
                               @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
-                              @NotNull ArtifactProblemQuickFix... quickFixes) {
+                              ArtifactProblemQuickFix @NotNull ... quickFixes) {
     registerProblem(message, pathToPlace, ProjectStructureProblemType.warning(problemTypeId), quickFixes);
   }
 
   private void registerProblem(@NotNull String message, @Nullable List<PackagingElement<?>> pathToPlace,
-                               final ProjectStructureProblemType problemType, @NotNull ArtifactProblemQuickFix... quickFixes) {
+                               final ProjectStructureProblemType problemType, ArtifactProblemQuickFix @NotNull ... quickFixes) {
     String parentPath;
     PackagingElement<?> element;
     if (pathToPlace != null && !pathToPlace.isEmpty()) {

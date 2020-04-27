@@ -17,8 +17,6 @@ package org.jetbrains.jps.indices;
 
 /**
  * Indexes the ignored files in a project.
- *
- * @author nik
  */
 public interface IgnoredFileIndex {
   /**

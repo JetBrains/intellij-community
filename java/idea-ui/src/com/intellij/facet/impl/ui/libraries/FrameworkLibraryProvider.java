@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class FrameworkLibraryProvider {
   @NotNull
   public abstract String getPresentableName();

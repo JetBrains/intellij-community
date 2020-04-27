@@ -45,10 +45,6 @@ class DesktopLayout {
     }
   }
 
-  internal fun getOrCreateDefault(id: String): WindowInfoImpl {
-    return idToInfo.getOrPut(id) { createDefaultInfo(id) }
-  }
-
   private fun createDefaultInfo(id: String): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.id = id
@@ -58,6 +54,11 @@ class DesktopLayout {
   }
 
   fun getInfo(id: String) = idToInfo.get(id)
+
+  internal fun addInfo(id: String, info: WindowInfoImpl) {
+    val old = idToInfo.put(id, info)
+    LOG.assertTrue(old == null)
+  }
 
   /**
    * Sets new `anchor` and `id` for the specified tool window.

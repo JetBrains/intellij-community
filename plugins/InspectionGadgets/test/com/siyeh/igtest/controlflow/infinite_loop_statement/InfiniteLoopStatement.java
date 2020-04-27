@@ -57,4 +57,13 @@ public class InfiniteLoopStatement {
     private void alsoUsedInThreadConstructor() {
         while (true) {}
     }
+
+    void foo() {
+        bar:
+        {
+            while (true) {
+                break bar;
+            }
+        }
+    }
 }

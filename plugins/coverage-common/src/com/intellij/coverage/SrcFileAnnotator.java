@@ -2,7 +2,6 @@
 
 package com.intellij.coverage;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.history.FileRevisionTimestampComparator;
 import com.intellij.history.LocalHistory;
 import com.intellij.icons.AllIcons;
@@ -119,13 +118,12 @@ public class SrcFileAnnotator implements Disposable {
     }
   }
 
-  @NotNull
-  private static String[] getCoveredLines(@NotNull byte[] oldContent, VirtualFile vFile) {
+  private static String @NotNull [] getCoveredLines(byte @NotNull [] oldContent, VirtualFile vFile) {
     final String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, vFile, false, false).toString();
     return LineTokenizer.tokenize(text, false);
   }
 
-  @NotNull private static String[] getUpToDateLines(final Document document) {
+  private static String @NotNull [] getUpToDateLines(final Document document) {
     final Ref<String[]> linesRef = new Ref<>();
     final Runnable runnable = () -> {
       final int lineCount = document.getLineCount();
@@ -225,8 +223,7 @@ public class SrcFileAnnotator implements Disposable {
     return new SoftReference<>(getCoverageVersionToCurrentLineMapping(change, oldLines.length));
   }
 
-  @Nullable
-  private byte[] loadFromVersionControl(long date, VirtualFile f) {
+  private byte @Nullable [] loadFromVersionControl(long date, VirtualFile f) {
     try {
       final AbstractVcs vcs = VcsUtil.getVcsFor(myProject, f);
       if (vcs == null) return null;
@@ -293,7 +290,7 @@ public class SrcFileAnnotator implements Disposable {
     if (engine.isInLibrarySource(myProject, file)) {
       // compare file and coverage timestamps
       if (fileTimeStamp > coverageTimeStamp) {
-        showEditorWarningMessage(CodeInsightBundle.message("coverage.data.outdated"));
+        showEditorWarningMessage(CoverageBundle.message("coverage.data.outdated"));
         return;
       }
       oldToNewLineMapping = null;
@@ -305,7 +302,7 @@ public class SrcFileAnnotator implements Disposable {
 
         // if history for file isn't available let's check timestamps
         if (fileTimeStamp > coverageTimeStamp && classesArePresentInCoverageData(data, qualifiedNames)) {
-          showEditorWarningMessage(CodeInsightBundle.message("coverage.data.outdated"));
+          showEditorWarningMessage(CoverageBundle.message("coverage.data.outdated"));
           return;
         }
       }
@@ -608,7 +605,7 @@ public class SrcFileAnnotator implements Disposable {
 
 
   private void coverageDataNotFound(final CoverageSuitesBundle suite) {
-    showEditorWarningMessage(CodeInsightBundle.message("coverage.data.not.found"));
+    showEditorWarningMessage(CoverageBundle.message("coverage.data.not.found"));
     for (CoverageSuite coverageSuite : suite.getSuites()) {
       CoverageDataManager.getInstance(myProject).removeCoverageSuite(coverageSuite);
     }

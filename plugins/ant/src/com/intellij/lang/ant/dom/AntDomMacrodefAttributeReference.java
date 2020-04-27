@@ -54,8 +54,7 @@ public class AntDomMacrodefAttributeReference extends AntDomReferenceBase{
   }
 
   @Override
-  @NotNull
-  public Object[] getVariants() {
+  public Object @NotNull [] getVariants() {
     final AntDomMacroDef parentMacrodef = getParentMacrodef();
     if (parentMacrodef != null) {
       final List<Object> variants = new ArrayList<>();

@@ -59,15 +59,13 @@ public class LightReferenceListBuilder extends LightElement implements PsiRefere
     myRefs.add(myFactory.createReferenceElementByType(type));
   }
 
-  @NotNull
   @Override
-  public PsiJavaCodeReferenceElement[] getReferenceElements() {
+  public PsiJavaCodeReferenceElement @NotNull [] getReferenceElements() {
     return myRefs.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getReferencedTypes() {
+  public PsiClassType @NotNull [] getReferencedTypes() {
     PsiClassType[] types = myCachedTypes;
     if (types == null) {
       int size = myRefs.size();

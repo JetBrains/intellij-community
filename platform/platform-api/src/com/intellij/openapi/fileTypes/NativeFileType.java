@@ -3,6 +3,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +30,7 @@ public class NativeFileType implements INativeFileType {
   @Override
   @NotNull
   public String getDescription() {
-    return "Files opened in associated applications";
+    return IdeBundle.message("native.filetype.description");
   }
 
   @Override
@@ -54,7 +55,7 @@ public class NativeFileType implements INativeFileType {
   }
 
   @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
+  public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
     return null;
   }
 

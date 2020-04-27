@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.psi.impl
 
 import com.intellij.model.psi.PsiSymbolDeclaration
@@ -19,13 +19,13 @@ class DefaultPsiSymbolDeclarationProvider : PsiSymbolDeclarationProvider {
 
     for (searcher in PomDeclarationSearcher.EP_NAME.extensions) {
       ProgressManager.checkCanceled()
-      val result = SmartList<PsiSymbolDeclaration>()
+      val result: MutableList<PsiSymbolDeclaration> = SmartList()
       searcher.findDeclarationsAt(element, offsetInElement, fun(target: PomTarget) {
         ProgressManager.checkCanceled()
-        result += PsiElement2Declaration.createFromPom(target, element)
+        result += PsiElement2Declaration.createFromPom(target, element) ?: return
       })
       if (result.isNotEmpty()) {
-        return result
+        return listOf(result.first())
       }
     }
 

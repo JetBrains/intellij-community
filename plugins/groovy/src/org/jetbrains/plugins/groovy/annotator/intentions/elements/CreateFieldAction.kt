@@ -16,6 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
+import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.annotator.intentions.GroovyCreateFieldFromUsageHelper
@@ -36,12 +37,8 @@ internal class CreateFieldAction(
   override fun getText(): String {
     val what = request.fieldName
     val where = getNameForClass(target, false)
-    return if (constantField) {
-      message("create.constant.from.usage.full.text", what, where)
-    }
-    else {
-      message("create.field.from.usage.full.text", what, where)
-    }
+    val kind = if (constantField) JavaElementKind.CONSTANT else JavaElementKind.FIELD
+    return message("create.element.in.class", kind.`object`(), what, where)
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {

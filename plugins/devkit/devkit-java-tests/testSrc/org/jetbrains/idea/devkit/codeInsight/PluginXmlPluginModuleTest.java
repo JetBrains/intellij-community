@@ -23,4 +23,8 @@ public class PluginXmlPluginModuleTest extends PluginModuleTestCase {
   public void testPluginWithoutVersionInPluginModule() {
     myFixture.testHighlighting(false, false, false, "pluginWithoutVersionInPluginModule.xml");
   }
+
+  public void testListenersNoSinceBuild() {
+    myFixture.testHighlighting(false, false, false, "ListenersNoSinceBuild.xml");
+  }
 }

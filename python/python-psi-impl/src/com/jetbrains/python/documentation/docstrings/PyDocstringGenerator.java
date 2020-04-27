@@ -38,9 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class PyDocstringGenerator {
   public static final String TRIPLE_DOUBLE_QUOTES = "\"\"\"";
   public static final String TRIPLE_SINGLE_QUOTES = "'''";

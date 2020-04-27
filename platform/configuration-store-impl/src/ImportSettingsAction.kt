@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.IdeBundle
@@ -34,13 +34,13 @@ import java.util.zip.ZipInputStream
 // for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isImportExportActionApplicable()
+    e.presentation.isEnabled = isImportExportActionApplicable()
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
-    chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path"))
+    chooseSettingsFile(PathManager.getConfigPath(), component, ConfigurationStoreBundle.message("title.import.file.location"), ConfigurationStoreBundle.message("prompt.choose.import.file.path"))
       .onSuccess {
         val saveFile = Paths.get(it)
         try {
@@ -48,11 +48,11 @@ open class ImportSettingsAction : AnAction(), DumbAware {
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-              IdeBundle.message("error.reading.settings.file", saveFile, e1.message, promptLocationMessage()),
-              IdeBundle.message("title.invalid.file"))
+              ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message, promptLocationMessage()),
+              ConfigurationStoreBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
-          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", saveFile, e1.message),
+          Messages.showErrorDialog(ConfigurationStoreBundle.message("error.reading.settings.file.2", saveFile, e1.message),
                                    IdeBundle.message("title.error.reading.file"))
         }
       }
@@ -69,7 +69,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", saveFile), IdeBundle.message("title.file.not.found"))
+      Messages.showErrorDialog(ConfigurationStoreBundle.message("error.cannot.find.file", saveFile), ConfigurationStoreBundle.message("title.file.not.found"))
       return
     }
 
@@ -77,15 +77,15 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
           IdeBundle.message("error.file.contains.no.settings.to.import", saveFile, promptLocationMessage()),
-          IdeBundle.message("title.invalid.file"))
+          ConfigurationStoreBundle.message("title.invalid.file"))
       return
     }
 
     val configPath = FileUtil.toSystemIndependentName(PathManager.getConfigPath())
     val dialog = ChooseComponentsToExportDialog(
         getExportableComponents(relativePaths), false,
-        IdeBundle.message("title.select.components.to.import"),
-        IdeBundle.message("prompt.check.components.to.import"))
+        ConfigurationStoreBundle.message("title.select.components.to.import"),
+        ConfigurationStoreBundle.message("prompt.check.components.to.import"))
     if (!dialog.showAndGet()) {
       return
     }
@@ -101,7 +101,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
     val action = IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action")
     if (showOkCancelDialog(title = IdeBundle.message("title.restart.needed"),
-                           message = IdeBundle.message("message.settings.imported.successfully", action, ApplicationNamesInfo.getInstance().fullProductName),
+                           message = ConfigurationStoreBundle.message("message.settings.imported.successfully", action, ApplicationNamesInfo.getInstance().fullProductName),
                            okText = IdeBundle.message("ide.restart.action"),
                            icon = Messages.getQuestionIcon()) == Messages.OK) {
       (ApplicationManager.getApplication() as ApplicationEx).restart(true)
@@ -110,7 +110,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   private fun getRelativeNamesToExtract(chosenComponents: Set<ExportableItem>): Set<String> {
     val result = THashSet<String>()
-    val root = Paths.get(PathManager.getConfigPath())
+    val root = PathManager.getConfigDir()
     for (item in chosenComponents) {
       result.add(root.relativize(item.file).systemIndependentPath)
     }

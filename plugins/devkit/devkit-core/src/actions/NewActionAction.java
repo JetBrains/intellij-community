@@ -45,10 +45,6 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   private NewActionDialog myDialog;
   private XmlFile pluginDescriptorToPatch;
 
-  public NewActionAction() {
-    super(DevKitBundle.message("new.menu.action.text"), DevKitBundle.message("new.menu.action.description"), null);
-  }
-
   @Override
   protected final PsiElement @NotNull [] invokeDialog(Project project, PsiDirectory directory) {
     PsiElement[] psiElements = doInvokeDialog(project, directory);
@@ -111,11 +107,6 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   @Override
   protected String getErrorTitle() {
     return DevKitBundle.message("new.action.error");
-  }
-
-  @Override
-  protected String getCommandName() {
-    return DevKitBundle.message("new.action.command");
   }
 
   @Override

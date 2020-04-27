@@ -19,9 +19,6 @@ import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
   private static final Color DEFAULT_COLOR = JBColor.RED;
   @NotNull private final Set<String> myExistingMarkups;
@@ -35,7 +32,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
 
   public ValueMarkerPresentationDialogBase(@Nullable Component parent, @Nullable String defaultText, @NotNull Collection<ValueMarkup> markups) {
     super(parent, true);
-    setTitle("Select Object Label");
+    setTitle(XDebuggerBundle.message("value.marker.dialog.select.object.label"));
     setModal(true);
     myExistingMarkups = StreamEx.of(markups).map(ValueMarkup::getText).toSet();
     myLabelField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -47,7 +44,7 @@ public abstract class ValueMarkerPresentationDialogBase extends DialogWrapper {
     myChooseColorButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final Color color = ColorChooser.chooseColor(myColorSample, "Choose Label Color", myColor);
+        final Color color = ColorChooser.chooseColor(myColorSample, XDebuggerBundle.message("value.marker.dialog.choose.label.color"), myColor);
         if (color != null) {
           myColor = color;
           updateLabelSample();

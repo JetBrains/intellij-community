@@ -89,8 +89,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, GrField.class, PsiClass.class);
   }
 
-  @NotNull
-  private static PsiElement[] findTargets(@NotNull PsiMember e) {
+  private static PsiElement @NotNull [] findTargets(@NotNull PsiMember e) {
     if (e instanceof PsiClass) {
       PsiClass aClass = (PsiClass)e;
       List<PsiClass> allSupers = new ArrayList<>(Arrays.asList(aClass.getSupers()));
@@ -113,8 +112,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
     }
   }
 
-  @NotNull
-  private static PsiMethod[] getSupers(PsiMethod method) {
+  private static PsiMethod @NotNull [] getSupers(PsiMethod method) {
     if (method.isConstructor()) {
       PsiMethod constructorInSuper = JavaPsiConstructorUtil.findConstructorInSuper(method);
       if (constructorInSuper != null) {

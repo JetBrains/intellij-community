@@ -7,15 +7,14 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
   @Nullable
@@ -83,12 +82,20 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return instance;
   }
 
-  boolean isLoadedFromAnyElement(List<Element> candidateElements) {
-    Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance);
+  boolean isLoadedFromAnyElement(List<Element> candidateElements, Map<String, String> defaultAttributes) {
+    SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
+    Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
     Map<String, String> serializedAttributes = getExtensionAttributesMap(serializedElement);
 
     for (Element candidateElement : candidateElements) {
       Map<String, String> candidateAttributes = getExtensionAttributesMap(candidateElement);
+      for (Iterator<Map.Entry<String, String>> iterator = candidateAttributes.entrySet().iterator(); iterator.hasNext(); ) {
+        Map.Entry<String, String> entry = iterator.next();
+        if (Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue())) {
+          iterator.remove();
+        }
+      }
+
       if (serializedAttributes.equals(candidateAttributes) &&
           JDOMUtil.areElementContentsEqual(serializedElement, candidateElement, true)) {
         return true;
@@ -97,7 +104,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return false;
   }
 
-  private static Map<String, String> getExtensionAttributesMap(Element serializedElement) {
+  static Map<String, String> getExtensionAttributesMap(Element serializedElement) {
     Map<String, String> attributes = new HashMap<>();
     for (Attribute attribute : serializedElement.getAttributes()) {
       if (!attribute.getName().equals("id") && !attribute.getName().equals("order")) {

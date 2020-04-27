@@ -29,8 +29,11 @@ SYSLOG_UDP_PORT: int
 SYSLOG_TCP_PORT: int
 
 class WatchedFileHandler(FileHandler):
+    dev: int
+    ino: int
     def __init__(self, filename: _Path, mode: str = ..., encoding: Optional[str] = ...,
                  delay: bool = ...) -> None: ...
+    def _statstream(self) -> None: ...
 
 
 if sys.version_info >= (3,):

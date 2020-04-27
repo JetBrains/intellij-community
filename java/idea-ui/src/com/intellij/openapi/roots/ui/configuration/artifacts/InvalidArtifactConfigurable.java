@@ -8,9 +8,6 @@ import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
   private final String myErrorMessage;
 

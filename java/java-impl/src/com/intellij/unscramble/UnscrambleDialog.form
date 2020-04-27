@@ -22,7 +22,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/IdeBundle" key="unscramble.stacktrace.caption"/>
+          <text resource-bundle="messages/JavaBundle" key="unscramble.stacktrace.caption"/>
         </properties>
       </component>
       <grid id="26652" binding="myUnscramblePanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -39,7 +39,7 @@
             </constraints>
             <properties>
               <labelFor value="bafde"/>
-              <text resource-bundle="messages/IdeBundle" key="unscramble.unscrambler.combobox"/>
+              <text resource-bundle="messages/JavaBundle" key="unscramble.unscrambler.combobox"/>
             </properties>
           </component>
           <component id="bafde" class="javax.swing.JComboBox" binding="myUnscrambleChooser">
@@ -54,7 +54,7 @@
             </constraints>
             <properties>
               <labelFor value="c5749"/>
-              <text resource-bundle="messages/IdeBundle" key="unscramble.log.path.label"/>
+              <text resource-bundle="messages/JavaBundle" key="unscramble.log.path.label"/>
             </properties>
           </component>
           <xy id="c5749" binding="myLogFileChooserPanel" layout-manager="XYLayout" hgap="-1" vgap="-1">
@@ -72,7 +72,7 @@
             </constraints>
             <properties>
               <margin top="2" left="0" bottom="2" right="3"/>
-              <text resource-bundle="messages/IdeBundle" key="unscramble.use.unscrambler.checkbox"/>
+              <text resource-bundle="messages/JavaBundle" key="unscramble.use.unscrambler.checkbox"/>
             </properties>
           </component>
           <grid id="8ffba" binding="mySettingsPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -91,7 +91,7 @@
         </constraints>
         <properties>
           <margin top="2" left="0" bottom="2" right="3"/>
-          <text value="Automatically detect and analyze thread dumps copied to the clipboard outside of IntelliJ IDEA"/>
+          <text resource-bundle="messages/JavaBundle" key="unscramble.detect.analyze.threaddump.from.clipboard.item"/>
         </properties>
       </component>
       <grid id="28646" binding="myBottomPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

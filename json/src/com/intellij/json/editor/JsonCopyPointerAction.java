@@ -3,6 +3,7 @@ package com.intellij.json.editor;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonUtil;
 import com.intellij.json.navigation.JsonQualifiedNameKind;
 import com.intellij.json.navigation.JsonQualifiedNameProvider;
@@ -25,11 +26,11 @@ public class JsonCopyPointerAction extends CopyReferenceAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText("Copy JSON Pointer");
+    e.getPresentation().setText(JsonBundle.message("copy.json.pointer"));
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     VirtualFile file = editor == null ? null : FileDocumentManager.getInstance().getFile(editor.getDocument());
-    e.getPresentation().setVisible(file != null && JsonUtil.isJsonFile(file));
+    e.getPresentation().setVisible(file != null && JsonUtil.isJsonFile(file, editor.getProject()));
   }
 
   @Override

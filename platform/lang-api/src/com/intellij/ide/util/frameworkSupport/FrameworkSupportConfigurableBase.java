@@ -102,8 +102,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     return myVersions;
   }
 
-  @NotNull
-  public LibraryInfo[] getLibraries() {
+  public LibraryInfo @NotNull [] getLibraries() {
     return getSelectedVersion().getLibraries();
   }
 

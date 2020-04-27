@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import org.intellij.images.index.ImageInfoIndex;
+import org.intellij.images.util.ImageInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
@@ -28,30 +29,30 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {
       final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
       if (file instanceof VirtualFileWithId && !DumbService.isDumb(element.getProject())) {
-        ImageInfoIndex.processValues(file, (file1, value) -> {
-          int imageWidth = value.width;
-          int imageHeight = value.height;
+        ImageInfo imageInfo = ImageInfoIndex.getInfo(file, element.getProject());
+        if (imageInfo != null) {
+          int imageWidth = imageInfo.width;
+          int imageHeight = imageInfo.height;
 
-          int maxSize = Math.max(value.width, value.height);
+          int maxSize = Math.max(imageInfo.width, imageInfo.height);
           if (maxSize > MAX_IMAGE_SIZE) {
             double scaleFactor = (double)MAX_IMAGE_SIZE / (double)maxSize;
             imageWidth *= scaleFactor;
             imageHeight *= scaleFactor;
           }
           try {
-            String path = file1.getPath();
+            String path = file.getPath();
             if (SystemInfo.isWindows) {
               path = "/" + path;
             }
             final String url = new URI("file", null, path, null).toString();
             result.set(String.format("<img src=\"%s\" width=\"%s\" height=\"%s\"><p>%sx%s, %sbpp</p>", url, imageWidth,
-                                 imageHeight, value.width, value.height, value.bpp));
+                                     imageHeight, imageInfo.width, imageInfo.height, imageInfo.bpp));
           }
           catch (URISyntaxException ignored) {
             // nothing
           }
-          return true;
-        }, element.getProject());
+        }
       }
     }
 

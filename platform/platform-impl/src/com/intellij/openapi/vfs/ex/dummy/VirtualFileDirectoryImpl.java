@@ -16,7 +16,7 @@
  */
 package com.intellij.openapi.vfs.ex.dummy;
 
-import com.intellij.openapi.vfs.VfsBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,19 +49,18 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
 
   @Override
   public InputStream getInputStream() throws IOException {
-    throw new IOException(VfsBundle.message("file.read.error", getUrl()));
+    throw new IOException(IdeBundle.message("file.read.error", getUrl()));
   }
 
   @Override
   @NotNull
   public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
-    throw new IOException(VfsBundle.message("file.write.error", getUrl()));
+    throw new IOException(IdeBundle.message("file.write.error", getUrl()));
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() throws IOException {
-    throw new IOException(VfsBundle.message("file.read.error", getUrl()));
+  public byte @NotNull [] contentsToByteArray() throws IOException {
+    throw new IOException(IdeBundle.message("file.read.error", getUrl()));
   }
 
   @Override

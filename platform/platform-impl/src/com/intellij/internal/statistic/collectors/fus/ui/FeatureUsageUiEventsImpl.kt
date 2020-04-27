@@ -57,6 +57,13 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
     }
   }
 
+  override fun logClickOnHelpDialog(name: String, context: Class<*>) {
+    if (FeatureUsageLogger.isEnabled()) {
+      val data = FeatureUsageData().addDialogClass(name)
+      FUCounterUsageLogger.getInstance().logEvent(DIALOGS, "help.clicked", data)
+    }
+  }
+
   private fun getDialogCloseData(exitCode: Int): FeatureUsageData {
     return when (exitCode) {
       DialogWrapper.OK_EXIT_CODE -> CLOSE_OK_DIALOG_DATA

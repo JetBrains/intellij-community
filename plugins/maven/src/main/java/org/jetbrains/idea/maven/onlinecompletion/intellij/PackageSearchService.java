@@ -59,8 +59,8 @@ public class PackageSearchService implements DependencySearchProvider {
     if (url == null) {
       return;
     }
-    try {
 
+    try {
       HttpRequests.request(url)
         .userAgent(myPackageServiceConfig.getUserAgent())
         .forceHttps(true)

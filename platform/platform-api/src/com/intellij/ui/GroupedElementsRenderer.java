@@ -12,6 +12,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
+import static com.intellij.ui.RelativeFont.BOLD;
+
 public abstract class GroupedElementsRenderer {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
 
@@ -68,6 +70,10 @@ public abstract class GroupedElementsRenderer {
   protected final void setSelected(JComponent aComponent, boolean selected) {
     UIUtil.setBackgroundRecursively(aComponent, selected ? getSelectionBackground() : getBackground());
     aComponent.setForeground(selected ? getSelectionForeground() : getForeground());
+  }
+
+  protected void setSeparatorFont(Font font) {
+    mySeparatorComponent.setFont(BOLD.derive(font));
   }
 
   protected abstract Color getSelectionBackground();

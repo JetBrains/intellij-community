@@ -24,8 +24,6 @@ import java.util.NoSuchElementException;
 
 /**
  * Immutable list in functional style
- *
- * @author nik
  */
 public class FList<E> extends AbstractList<E> {
   private static final FList<?> EMPTY_LIST = new FList<>(null, null, 0);

@@ -93,9 +93,8 @@ public class GrLightField extends GrLightVariable implements GrField {
   public GrAccessorMethod getSetter() {
     return GrClassImplUtil.findSetter(this);
   }
-  @NotNull
   @Override
-  public GrAccessorMethod[] getGetters() {
+  public GrAccessorMethod @NotNull [] getGetters() {
     return GrClassImplUtil.findGetters(this);
   }
 

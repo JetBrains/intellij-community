@@ -29,7 +29,7 @@ public interface FileTypeConsumer {
 
   void consume(@NotNull FileType fileType, @NonNls String extensions);
 
-  void consume(@NotNull FileType fileType, @NotNull FileNameMatcher... matchers);
+  void consume(@NotNull FileType fileType, FileNameMatcher @NotNull ... matchers);
 
   @Nullable
   FileType getStandardFileTypeByName(@NonNls @NotNull String name);

@@ -5,10 +5,10 @@
       <output-path>$PROJECT_DIR$/out/artifacts/dir</output-path>
       <root id="root">
         <element id="archive" name="x.jar">
-          <element id="module-output" name="util" />
+          <element id="module-output" name="util2" />
         </element>
         <element id="directory" name="lib">
-          <element id="library" level="module" name="log4j" module-name="util" />
+          <element id="library" level="module" name="log4j" module-name="util2" />
           <element id="library" level="project" name="junit" />
           <element id="file-copy" path="$PROJECT_DIR$/main.iml" />
           <element id="dir-copy" path="$PROJECT_DIR$/lib/junit-anno" />
@@ -20,7 +20,7 @@
       <output-path>$PROJECT_DIR$/out/artifacts/jar</output-path>
       <root id="archive" name="jar.jar">
         <element id="module-output" name="main" />
-        <element id="module-output" name="util" />
+        <element id="module-output" name="util2" />
         <element id="artifact" artifact-name="dir" />
       </root>
     </artifact>

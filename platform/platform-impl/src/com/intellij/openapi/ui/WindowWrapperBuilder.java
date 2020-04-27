@@ -219,9 +219,8 @@ public class WindowWrapperBuilder {
       }
 
       // it is information dialog - no need to OK or Cancel. Close the dialog by clicking the cross button or pressing Esc.
-      @NotNull
       @Override
-      protected Action[] createActions() {
+      protected Action @NotNull [] createActions() {
         return new Action[0];
       }
 

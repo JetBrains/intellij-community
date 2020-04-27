@@ -433,8 +433,7 @@ public class Foundation {
       return invoke(myDelegate, "length").intValue();
     }
 
-    @NotNull
-    public byte[] bytes() {
+    public byte @NotNull [] bytes() {
       Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
       return data.getByteArray(0, length());
     }
@@ -555,7 +554,7 @@ public class Foundation {
     return result;
   }
 
-  public static ID createDict(@NotNull final String[] keys, @NotNull final Object[] values) {
+  public static ID createDict(final String @NotNull [] keys, final Object @NotNull [] values) {
     final ID nsKeys = invoke("NSArray", "arrayWithObjects:", convertTypes(keys));
     final ID nsData = invoke("NSArray", "arrayWithObjects:", convertTypes(values));
     return invoke("NSDictionary", "dictionaryWithObjects:forKeys:", nsData, nsKeys);
@@ -573,7 +572,7 @@ public class Foundation {
     return new ID(pointerType.getPointer().getLong(0));
   }
 
-  private static Object[] convertTypes(@NotNull Object[] v) {
+  private static Object[] convertTypes(Object @NotNull [] v) {
     final Object[] result = new Object[v.length];
     for (int i = 0; i < v.length; i++) {
       result[i] = convertType(v[i]);

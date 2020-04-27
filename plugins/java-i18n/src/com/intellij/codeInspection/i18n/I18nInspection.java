@@ -3,12 +3,11 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -51,10 +50,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +59,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
+  private static final HashSet<String> NON_NLS_NAMES = new HashSet<>(Arrays.asList(AnnotationUtil.NLS, AnnotationUtil.NON_NLS));
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
   @NonNls
@@ -83,9 +81,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     cacheNonNlsCommentPattern();
   }
 
-  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
+  public SuppressIntentionAction @NotNull [] getSuppressActions(PsiElement element) {
     SuppressQuickFix[] suppressActions = getBatchSuppressActions(element);
 
     if (myCachedNonNlsPattern == null) {
@@ -139,7 +136,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
+    return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override
@@ -166,7 +163,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   public JComponent createOptionsPanel() {
     final GridBagLayout layout = new GridBagLayout();
     final JPanel panel = new JPanel(layout);
-    final JCheckBox assertStatementsCheckbox = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.assert"), ignoreForAssertStatements);
+    final JCheckBox assertStatementsCheckbox = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assert"), ignoreForAssertStatements);
     assertStatementsCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
@@ -174,7 +171,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
     });
     final JCheckBox exceptionConstructorCheck =
-      new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.for.exception.constructor.arguments"),
+      new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.for.exception.constructor.arguments"),
                     ignoreForExceptionConstructors);
     exceptionConstructorCheck.addChangeListener(new ChangeListener() {
       @Override
@@ -192,42 +189,42 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     });
 
     final JCheckBox junitAssertCheckbox = new JCheckBox(
-      CodeInsightBundle.message("inspection.i18n.option.ignore.for.junit.assert.arguments"), ignoreForJUnitAsserts);
+      JavaI18nBundle.message("inspection.i18n.option.ignore.for.junit.assert.arguments"), ignoreForJUnitAsserts);
     junitAssertCheckbox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreForJUnitAsserts = junitAssertCheckbox.isSelected();
       }
     });
-    final JCheckBox classRef = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.qualified.class.names"), ignoreForClassReferences);
+    final JCheckBox classRef = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.qualified.class.names"), ignoreForClassReferences);
     classRef.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreForClassReferences = classRef.isSelected();
       }
     });
-    final JCheckBox propertyRef = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.property.keys"), ignoreForPropertyKeyReferences);
+    final JCheckBox propertyRef = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.property.keys"), ignoreForPropertyKeyReferences);
     propertyRef.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreForPropertyKeyReferences = propertyRef.isSelected();
       }
     });
-    final JCheckBox nonAlpha = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.nonalphanumerics"), ignoreForNonAlpha);
+    final JCheckBox nonAlpha = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nonalphanumerics"), ignoreForNonAlpha);
     nonAlpha.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreForNonAlpha = nonAlpha.isSelected();
       }
     });
-    final JCheckBox assignedToConstants = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.assigned.to.constants"), ignoreAssignedToConstants);
+    final JCheckBox assignedToConstants = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.assigned.to.constants"), ignoreAssignedToConstants);
     assignedToConstants.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreAssignedToConstants = assignedToConstants.isSelected();
       }
     });
-    final JCheckBox chkToString = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.tostring"), ignoreToString);
+    final JCheckBox chkToString = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.tostring"), ignoreToString);
     chkToString.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
@@ -235,7 +232,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
     });
 
-    final JCheckBox ignoreEnumConstants = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.enum"), ignoreForEnumConstants);
+    final JCheckBox ignoreEnumConstants = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.enum"), ignoreForEnumConstants);
     ignoreEnumConstants.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
@@ -243,7 +240,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
     });
 
-    final JCheckBox ignoreAllButNls = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
+    final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
     ignoreAllButNls.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
@@ -274,7 +271,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     panel.add(new FieldPanel(specifiedExceptions,
                              null,
-                             CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
+                             JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
                              openProjects.length == 0 ? null :
                              new ActionListener() {
                                @Override
@@ -307,8 +304,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     gc.weighty = 1;
     final JTextField text = new JTextField(nonNlsCommentPattern);
     final FieldPanel nonNlsCommentPatternComponent =
-      new FieldPanel(text, CodeInsightBundle.message("inspection.i18n.option.ignore.comment.pattern"),
-                     CodeInsightBundle.message("inspection.i18n.option.ignore.comment.title"), null, () -> {
+      new FieldPanel(text, JavaI18nBundle.message("inspection.i18n.option.ignore.comment.pattern"),
+                     JavaI18nBundle.message("inspection.i18n.option.ignore.comment.title"), null, () -> {
                        nonNlsCommentPattern = text.getText();
                        cacheNonNlsCommentPattern();
                      });
@@ -328,7 +325,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return new DialogWrapper(true) {
       private AddDeleteListPanel myPanel;
       {
-        setTitle(CodeInsightBundle.message(
+        setTitle(JavaI18nBundle.message(
           "inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"));
         init();
       }
@@ -346,7 +343,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
               createInheritanceClassChooser(
-                CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
+                JavaI18nBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"), scope,
                 JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope), true, true, null);
             chooser.showDialog();
             PsiClass selectedClass = chooser.getSelected();
@@ -369,9 +366,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     };
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkMethod(@NotNull UMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(method)) {
       return null;
     }
@@ -390,9 +386,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return results.isEmpty() ? null : results.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(aClass)) {
       return null;
     }
@@ -421,9 +416,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  @Nullable
   @Override
-  public ProblemDescriptor[] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor @Nullable [] checkField(@NotNull UField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (isClassNonNls(field)) {
       return null;
     }
@@ -538,19 +532,20 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
       if (canBeI18ned(myManager.getProject(), expression, stringValue, nonNlsTargets)) {
-        UField parentField = UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
+        UField parentField =
+          UastUtils.getParentOfType(expression, UField.class); // PsiTreeUtil.getParentOfType(expression, PsiField.class);
         if (parentField != null) {
-          nonNlsTargets.add(parentField);
+          nonNlsTargets.add((PsiModifierListOwner)parentField.getJavaPsi());
         }
 
-        final String description = CodeInsightBundle.message("inspection.i18n.message.general.with.value", "#ref");
+        final String description = JavaI18nBundle.message("inspection.i18n.message.general.with.value", "#ref");
 
         PsiElement sourcePsi = expression.getSourcePsi();
         
         List<LocalQuickFix> fixes = new ArrayList<>();
 
-        if (sourcePsi instanceof PsiLiteralExpression) {
-          if (myOnTheFly) {
+        if (myOnTheFly) {
+          if (sourcePsi instanceof PsiLiteralExpression) {
             if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
               fixes.add(new I18nizeConcatenationQuickFix());
             }
@@ -572,10 +567,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
               }
             }
           }
-          else if (Registry.is("i18n.for.idea.project") &&
-                   I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) == null) {
-            fixes.add(new I18nizeBatchQuickFix());
-          }
+        }
+        else if (Registry.is("i18n.for.idea.project") ) {
+          fixes.add(new I18nizeBatchQuickFix());
         }
 
         LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
@@ -617,7 +611,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
 
     if (ignoreForAllButNls) {
-      return JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NLS, null);
+      return JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NLS, null) ||
+             isReturnedFromAnnotatedMethod(expression, AnnotationUtil.NLS, null);
     }
 
     if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
@@ -640,7 +635,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return false;
     }
 
-    if (isReturnedFromNonNlsMethod(expression, nonNlsTargets)) {
+    if (isReturnedFromAnnotatedMethod(expression, AnnotationUtil.NON_NLS, nonNlsTargets)) {
       return false;
     }
     if (ignoreForAssertStatements && isArgOfAssertStatement(expression)) {
@@ -834,7 +829,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         if (annotatedAsNonNls(newVariable.getPsi())) {
           return true;
         }
-        nonNlsTargets.add(newVariable);
+        PsiElement variableJavaPsi = newVariable.getJavaPsi();
+        if (variableJavaPsi instanceof PsiModifierListOwner) {
+          nonNlsTargets.add(((PsiModifierListOwner)variableJavaPsi));
+        }
         return false;
       }
     }
@@ -860,32 +858,60 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     return false;
   }
 
-  private static boolean isReturnedFromNonNlsMethod(final ULiteralExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
+  private static boolean isReturnedFromAnnotatedMethod(final ULiteralExpression expression,
+                                                       final String fqn,
+                                                       final @Nullable Set<? super PsiModifierListOwner> nonNlsTargets) {
     PsiMethod method;
+    PsiType returnType = null;
     UNamedExpression nameValuePair = UastUtils.getParentOfType(expression, UNamedExpression.class);
     if (nameValuePair != null) {
       method = UastUtils.getAnnotationMethod(nameValuePair);
     }
     else {
-      //todo return from lambda
-      UElement parent = expression.getUastParent();
+      UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
       while (parent instanceof UCallExpression && 
              ((UCallExpression)parent).getKind() == UastCallKind.NEW_ARRAY_WITH_INITIALIZER) {
         parent = parent.getUastParent();
       }
+      if (parent == null) return false;
       final UElement returnStmt = UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
       if (!(returnStmt instanceof UReturnExpression)) {
         return false;
       }
-      UMethod uMethod = UastUtils.getParentOfType(expression, UMethod.class);
-      method = uMethod != null ? uMethod.getJavaPsi() : null;
+      UElement jumpTarget = ((UReturnExpression)returnStmt).getJumpTarget();
+      if (jumpTarget instanceof UMethod) {
+        method = ((UMethod)jumpTarget).getJavaPsi();
+      }
+      else if (jumpTarget instanceof ULambdaExpression) {
+        PsiType type = ((ULambdaExpression)jumpTarget).getFunctionalInterfaceType();
+        returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
+        if (type == null) return false;
+        method = LambdaUtil.getFunctionalInterfaceMethod(type);
+      }
+      else return false;
     }
     if (method == null) return false;
 
-    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
+    String oppositeFQN = fqn.equals(AnnotationUtil.NLS) ? AnnotationUtil.NON_NLS : AnnotationUtil.NLS;
+    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method, NON_NLS_NAMES);
+    if (annotation != null && annotation.hasQualifiedName(oppositeFQN)) {
+      return false;
+    }
+
+    if (AnnotationUtil.isAnnotated(method, fqn, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
       return true;
     }
-    nonNlsTargets.add(method);
+
+    if (returnType != null) {
+      PsiAnnotation typeAnnotation = AnnotationUtil.findAnnotationInTypeHierarchy(returnType, NON_NLS_NAMES);
+      if (typeAnnotation != null) {
+        return typeAnnotation.hasQualifiedName(fqn);
+      }
+    }
+
+    if (nonNlsTargets != null) {
+      nonNlsTargets.add(method);
+    }
     return false;
   }
 

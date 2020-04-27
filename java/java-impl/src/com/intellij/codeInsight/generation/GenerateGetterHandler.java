@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
@@ -25,7 +25,7 @@ import javax.swing.*;
 
 public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   public GenerateGetterHandler() {
-    super(CodeInsightBundle.message("generate.getter.fields.chooser.title"));
+    super(JavaBundle.message("generate.getter.fields.chooser.title"));
   }
 
   @Override
@@ -44,7 +44,7 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
   @Nullable
   @Override
   protected JComponent getHeaderPanel(final Project project) {
-    return getHeaderPanel(project, GetterTemplatesManager.getInstance(), CodeInsightBundle.message("generate.equals.hashcode.template"));
+    return getHeaderPanel(project, GetterTemplatesManager.getInstance(), JavaBundle.message("generate.equals.hashcode.template"));
   }
 
   @Override

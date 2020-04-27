@@ -19,6 +19,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
@@ -50,9 +51,9 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
 
   @NotNull
   public static JComponent createComponent(@Nullable String fileName, @Nullable DiffContext context) {
-    String message = "Can't show diff for unknown file type.";
+    String message = DiffBundle.message("error.cant.show.diff.for.unknown.file");
     if (fileName == null) return DiffUtil.createMessagePanel(message);
-    return ErrorDiffTool.createReloadMessagePanel(context, message, "Associate",
+    return ErrorDiffTool.createReloadMessagePanel(context, message, DiffBundle.message("button.associate.file.type"),
                                                   () -> FileTypeChooser.associateFileType(fileName));
   }
 

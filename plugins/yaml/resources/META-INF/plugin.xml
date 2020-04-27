@@ -2,6 +2,7 @@
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>
+  <category>Languages</category>
   <description><![CDATA[
   Adds support for the <a href="https://yaml.org/">YAML</a> language.
   ]]></description>
@@ -106,7 +107,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.yaml.customStructureViewFactory"
-                    interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory">
+                    interface="org.jetbrains.yaml.structureView.YAMLCustomStructureViewFactory"
+                    dynamic="true">
     </extensionPoint>
   </extensionPoints>
 

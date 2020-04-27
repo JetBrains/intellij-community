@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public class PatchDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Patch content viewer";
+    return VcsBundle.message("patch.content.viewer.name");
   }
 
   @Override

@@ -95,7 +95,7 @@ class ImageSvgPreCompiler {
 
     val data = svgFile.readBytes()
 
-    if (data.toString(Charsets.UTF_8).contains("xlink:href=\"data:")) {
+    if (data.toString(Charsets.UTF_8).contains("data:image")) {
       println("WARN: Image $svgFile uses data urls and WILL BE SKIPPED")
       return
     }

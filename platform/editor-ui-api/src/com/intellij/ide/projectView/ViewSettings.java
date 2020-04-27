@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.NodeOptions;
@@ -11,7 +11,8 @@ public interface ViewSettings extends NodeOptions {
   /**
    * The default view settings for the project view.
    */
-  ViewSettings DEFAULT = Immutable.DEFAULT;
+  ViewSettings DEFAULT = new ViewSettings() {
+  };
 
   /**
    * @return {@code true} if directories (folders or packages) should be separated from files, {@code false} otherwise.
@@ -25,21 +26,27 @@ public interface ViewSettings extends NodeOptions {
    *
    * @return true if class members are displayed, false otherwise.
    */
-  boolean isShowMembers();
+  default boolean isShowMembers() {
+    return false;
+  }
 
   /**
    * Checks if the project view displays the structure view pane.
    *
    * @return true if the structure view is displayed, false otherwise.
    */
-  boolean isStructureView();
+  default boolean isStructureView() {
+    return false;
+  }
 
   /**
    * Checks if modules are shown on the "Packages" tab of the project view.
    *
    * @return true if the modules are shown, false otherwise.
    */
-  boolean isShowModules();
+  default boolean isShowModules() {
+    return true;
+  }
 
   /**
    * @return {@code true} if modules should be shown in a flat list without grouping accordingly to qualified names

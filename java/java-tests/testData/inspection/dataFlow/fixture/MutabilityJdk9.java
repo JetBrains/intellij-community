@@ -7,6 +7,9 @@ public class MutabilityJdk9 {
     if(<warning descr="Condition 'list.size() > 5' is always 'false'">list.size() > 5</warning>) {
       System.out.println("impossible");
     }
+    if(Math.random() > 0.5) {
+      list.<warning descr="Immutable object is modified">clear</warning>();
+    }
     list.<warning descr="Immutable object is modified">sort</warning>(null);
   }
 
@@ -24,6 +27,10 @@ public class MutabilityJdk9 {
       System.out.println("never");
     }
     map.<warning descr="Immutable object is modified">put</warning>("foo", 6);
+  }
+
+  void testMapClear() {
+    Map.of("a", 1).<warning descr="Immutable object is modified">clear</warning>();
   }
 
   void testMapOfEntries() {

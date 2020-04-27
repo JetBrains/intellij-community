@@ -59,8 +59,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   }
 
   @Override
-  @NotNull
-  public String[] getNames(final Project project, boolean includeNonProjectItems) {
+  public String @NotNull [] getNames(final Project project, boolean includeNonProjectItems) {
     Set<String> result = new HashSet<>();
     for (Module module : getAcceptableModules(project)) {
       addNames(module, result);
@@ -69,8 +68,7 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   }
 
   @Override
-  @NotNull
-  public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
+  public NavigationItem @NotNull [] getItemsByName(final String name, final String pattern, final Project project, boolean includeNonProjectItems) {
     List<NavigationItem> result = new ArrayList<>();
     for (Module module : getAcceptableModules(project)) {
       addItems(module, name, result);

@@ -3,6 +3,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
@@ -66,24 +67,93 @@ public final class ConfigImportHelper {
   private static final String SYSTEM = "system";
 
   private static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
+  private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
   private ConfigImportHelper() { }
 
-  public static void importConfigsTo(@NotNull Path newConfigDir, @NotNull Logger log) {
+  public static void importConfigsTo(boolean veryFirstStartOnThisComputer, @NotNull Path newConfigDir, @NotNull Logger log) {
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
     ConfigImportSettings settings = null;
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass =
+        (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
         settings = ReflectionUtil.newInstance(customProviderClass);
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
 
     List<Path> guessedOldConfigDirs = findConfigDirectories(newConfigDir);
 
+    Pair<Path, Path> oldConfigDirAndOldIdePath = null;
+    if (shouldAskForConfig(log)) {
+      oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+    }
+    else if (guessedOldConfigDirs.isEmpty()) {
+      boolean importedFromCloud = false;
+      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+      if (configProvider != null) {
+        importedFromCloud = configProvider.importSettingsSilently(newConfigDir);
+      }
+
+      if (!importedFromCloud && !veryFirstStartOnThisComputer) {
+        oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs);
+      }
+    }
+     else {
+       Path bestConfigGuess = guessedOldConfigDirs.get(0);
+       oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess); // todo maybe integrate into findConfigDirectories
+     }
+
+    if (oldConfigDirAndOldIdePath != null) {
+      doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log);
+
+      if (settings != null) {
+        settings.importFinished(newConfigDir);
+      }
+
+      if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
+        if (Restarter.isSupported()) {
+          try {
+            Restarter.scheduleRestart(false);
+          }
+          catch (IOException e) {
+            Main.showMessage("Restart failed", e);
+          }
+          System.exit(0);
+        }
+        else {
+          String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
+          String message = ApplicationBundle.message("restart.import.settings");
+          String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
+          if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
+            System.exit(0);
+          }
+        }
+      }
+
+      System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+    }
+    else {
+      log.info("No configs imported, starting with clean configs at " + newConfigDir);
+    }
+  }
+
+  private static boolean shouldAskForConfig(@NotNull Logger log) {
+    try {
+      return Boolean.getBoolean(SHOW_IMPORT_CONFIG_DIALOG_PROPERTY);
+    }
+    catch (Throwable t) {
+      log.error(t);
+      return false;
+    }
+  }
+
+  @Nullable
+  private static Pair<Path, Path> showDialogAndGetOldConfigPath(@NotNull List<Path> guessedOldConfigDirs) {
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, f -> findConfigDirectoryByPath(f));
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
     AppUIUtil.updateWindowIcon(dialog);
@@ -94,33 +164,7 @@ public final class ConfigImportHelper {
       result.set(dialog.getSelectedFile());
       dialog.dispose();
     });
-
-    if (!result.isNull()) {
-      doImport(result.get().first, newConfigDir, result.get().second, log);
-
-      if (settings != null) {
-        settings.importFinished(newConfigDir);
-      }
-
-      if (Files.isRegularFile(newConfigDir.resolve(VMOptions.getCustomVMOptionsFileName()))) {
-        String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
-        String message = ApplicationBundle.message("restart.import.settings");
-        String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
-        if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
-          if (Restarter.isSupported()) {
-            try {
-              Restarter.scheduleRestart(false);
-            }
-            catch (IOException e) {
-              Main.showMessage("Restart failed", e);
-            }
-          }
-          System.exit(0);
-        }
-      }
-
-      System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
-    }
+    return result.get();
   }
 
   /** Returns {@code true} when the IDE is launched for the first time (i.e. there was no config directory). */
@@ -371,6 +415,7 @@ public final class ConfigImportHelper {
 
   private static void doImport(@NotNull Path oldConfigDir, @NotNull Path newConfigDir, @Nullable Path oldIdeHome, @NotNull Logger log) {
     if (oldConfigDir.equals(newConfigDir)) {
+      log.info("New config directory is the same as the old one, no import needed.");
       return;
     }
 
@@ -393,6 +438,9 @@ public final class ConfigImportHelper {
     Path newPluginsDir = newConfigDir.getFileSystem().getPath(PathManager.getPluginsPath());
 
     try {
+      log.info(String.format(
+        "Importing configs: oldConfigDir=[%s], newConfigDir=[%s], oldIdeHome=[%s], oldPluginsDir=[%s], newPluginsDir=[%s]",
+        oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir));
       doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, log);
     }
     catch (Exception e) {

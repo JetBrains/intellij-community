@@ -44,9 +44,6 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JavaBuilderUtil {
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 

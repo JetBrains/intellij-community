@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
@@ -26,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author max
- */
 public final class InspectionToolRegistrar extends InspectionToolsSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionToolRegistrar.class);
 
@@ -201,11 +199,11 @@ public final class InspectionToolRegistrar extends InspectionToolsSupplier {
     try {
       final String id = toolWrapper.getID();
       if (id == null || !LocalInspectionTool.isValidID(id)) {
-        message = InspectionsBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN);
+        message = AnalysisBundle.message("inspection.disabled.wrong.id", toolWrapper.getShortName(), id, LocalInspectionTool.VALID_ID_PATTERN);
       }
     }
     catch (Throwable t) {
-      message = InspectionsBundle.message("inspection.disabled.error", toolWrapper.getShortName(), t.getMessage());
+      message = AnalysisBundle.message("inspection.disabled.error", toolWrapper.getShortName(), t.getMessage());
     }
     if (message != null) {
       LOG.error(message);

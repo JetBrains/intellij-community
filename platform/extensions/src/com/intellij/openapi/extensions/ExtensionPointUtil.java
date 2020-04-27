@@ -6,38 +6,28 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExtensionPointUtil {
+public final class ExtensionPointUtil {
   @NotNull
   public static <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
                                                                           @NotNull ExtensionPointName<?> extensionPointName,
                                                                           @Nullable Disposable parentDisposable) {
-    return dropLazyValueOnChange(lazyValue, extensionPointName.getPoint(null), parentDisposable);
-  }
-
-  @NotNull
-  public static <V extends ClearableLazyValue<?>> V dropLazyValueOnChange(@NotNull V lazyValue,
-                                                                          @NotNull ExtensionPoint<?> extensionPoint,
-                                                                          @Nullable Disposable parentDisposable) {
-    extensionPoint.addExtensionPointListener(lazyValue::drop, false, parentDisposable);
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, lazyValue::drop);
-    }
+    extensionPointName.getPoint(null).addExtensionPointListener(lazyValue::drop, false, parentDisposable);
     return lazyValue;
   }
 
+  @NotNull
   public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
                                                          @NotNull ExtensionPointName<T> extensionPointName) {
     return createExtensionDisposable(extensionObject, extensionPointName.getPoint(null));
   }
 
-  public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject,
-                                                         @NotNull ExtensionPoint<T> extensionPoint) {
-    Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject.toString() + "]");
-    ComponentManager manager = ((ExtensionPointImpl<T>)extensionPoint).getComponentManager();
-    Disposer.register(manager, disposable);
+  @NotNull
+  public static <T> Disposable createExtensionDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<T> extensionPoint) {
+    Disposable disposable = createDisposable(extensionObject, extensionPoint);
     extensionPoint.addExtensionPointListener(new ExtensionPointListener<T>() {
       @Override
       public void extensionRemoved(@NotNull T removedExtension, @NotNull PluginDescriptor pluginDescriptor) {
@@ -46,6 +36,29 @@ public class ExtensionPointUtil {
         }
       }
     }, false, disposable);
+    return disposable;
+  }
+
+  @NotNull
+  public static <T> Disposable createKeyedExtensionDisposable(@NotNull T extensionObject,
+                                                              @NotNull ExtensionPoint<KeyedLazyInstance<T>> extensionPoint) {
+    Disposable disposable = createDisposable(extensionObject, extensionPoint);
+    extensionPoint.addExtensionPointListener(new ExtensionPointListener<KeyedLazyInstance<T>>() {
+      @Override
+      public void extensionRemoved(@NotNull KeyedLazyInstance<T> removedExtension, @NotNull PluginDescriptor pluginDescriptor) {
+        if (extensionObject == removedExtension.getInstance()) {
+          Disposer.dispose(disposable);
+        }
+      }
+    }, false, disposable);
+    return disposable;
+  }
+
+  @NotNull
+  private static <T> Disposable createDisposable(@NotNull T extensionObject, @NotNull ExtensionPoint<?> extensionPoint) {
+    Disposable disposable = Disposer.newDisposable("Disposable for [" + extensionObject + "]");
+    ComponentManager manager = ((ExtensionPointImpl<?>)extensionPoint).getComponentManager();
+    Disposer.register(manager, disposable);
     return disposable;
   }
 }

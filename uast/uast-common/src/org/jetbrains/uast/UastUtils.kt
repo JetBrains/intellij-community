@@ -50,6 +50,7 @@ fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out U
   }
 }
 
+@SafeVarargs
 fun <T : UElement> UElement.getParentOfType(
   parentClass: Class<out UElement>,
   strict: Boolean = true,
@@ -97,25 +98,11 @@ fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpress
     }
   }?.firstOrNull()
 
-@Deprecated(message = "This function is deprecated, use getContainingUFile, will be removed in IDEA 2019.3",
-            replaceWith = ReplaceWith("getContainingUFile()"))
-fun UElement.getContainingFile(): UFile? = getContainingUFile()
-
 fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java)
 
 fun UElement.getContainingUClass(): UClass? = getParentOfType(UClass::class.java)
 fun UElement.getContainingUMethod(): UMethod? = getParentOfType(UMethod::class.java)
 fun UElement.getContainingUVariable(): UVariable? = getParentOfType(UVariable::class.java)
-
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.3", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
-fun UElement.getContainingMethod(): PsiMethod? = getContainingUMethod()?.javaPsi
-
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.3", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
-fun UElement.getContainingClass(): PsiClass? = getContainingUClass()?.javaPsi
-
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.3",
-            replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
-fun PsiElement?.getContainingClass(): PsiClass? = this?.let { PsiTreeUtil.getParentOfType(it, PsiClass::class.java) }
 
 fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   var element = this
@@ -153,13 +140,6 @@ fun UElement.isUastChildOf(probablyParent: UElement?, strict: Boolean = false): 
 fun UElement.tryResolve(): PsiElement? = (this as? UResolvable)?.resolve()
 
 fun UElement.tryResolveNamed(): PsiNamedElement? = (this as? UResolvable)?.resolve() as? PsiNamedElement
-
-@Deprecated(message = "Useless function, will be removed in IDEA 2019.3",
-            replaceWith = ReplaceWith("(this as? UResolvable)?.resolve().toUElementOfType<UDeclaration>()"))
-@Suppress("Deprecation")
-fun UElement.tryResolveUDeclaration(context: UastContext): UDeclaration? {
-  return (this as? UResolvable)?.resolve()?.let { context.convertElementWithParent(it, null) as? UDeclaration }
-}
 
 fun UReferenceExpression?.getQualifiedName(): String? = (this?.resolve() as? PsiClass)?.qualifiedName
 
@@ -251,8 +231,9 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
   }
 
 fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
-  val annotation : UAnnotation = getParentOfType(UAnnotation::class.java, true)!!
-  val fqn = annotation.qualifiedName ?: return null
+  if (sourcePsi == null) return null
+  val annotation : UAnnotation? = getParentOfType(UAnnotation::class.java, true)
+  val fqn = annotation?.qualifiedName ?: return null
   val psiClass = JavaPsiFacade.getInstance(sourcePsi!!.project).findClass(fqn, sourcePsi!!.resolveScope)
   if (psiClass != null && psiClass.isAnnotationType) {
     return ArrayUtil.getFirstElement(psiClass.findMethodsByName(this.name ?: "value", false))

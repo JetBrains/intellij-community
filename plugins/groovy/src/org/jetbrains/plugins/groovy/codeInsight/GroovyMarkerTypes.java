@@ -287,7 +287,7 @@ public class GroovyMarkerTypes {
     return superMethods;
   }
 
-  private static StringBuilder composeText(@NotNull PsiElement[] elements, final String pattern, StringBuilder result) {
+  private static StringBuilder composeText(PsiElement @NotNull [] elements, final String pattern, StringBuilder result) {
     Set<String> names = new LinkedHashSet<>();
     for (PsiElement element : elements) {
       String methodName = ((PsiMethod)element).getName();

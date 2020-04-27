@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.ide
 import junit.framework.TestCase
 import org.jetbrains.plugins.groovy.GroovySourceRootDetector
 
-/**
- * @author nik
- */
 class GroovySourceRootDetectorTest extends TestCase {
   void testEmpty() {
     doTest("", "")

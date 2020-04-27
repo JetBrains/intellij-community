@@ -74,6 +74,13 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
     if (!"text".equals(property.getName())) {
       return false;
     }
+    
+    StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
+    String key = propertyValue.getKey();
+
+    if (key != null) {
+      propertyValue.setFormClass(formClassName);
+    }
 
     InstrumentationClassFinder.PseudoClass abstractButtonClass = componentClass.getFinder().loadClass(AbstractButton.class.getName());
     InstrumentationClassFinder.PseudoClass jLabelClass = componentClass.getFinder().loadClass(JLabel.class.getName());
@@ -81,8 +88,6 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
       return false;
     }
 
-    StringDescriptor propertyValue = (StringDescriptor)lwComponent.getPropertyValue(property);
-    String key = propertyValue.getKey();
     if (key == null) {
       String value = propertyValue.getValue();
       SupportCode.TextWithMnemonic textWithMnemonic = value == null ? null : SupportCode.parseText(value);
@@ -121,7 +126,7 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
       generator.loadThis();
       generator.loadLocal(componentLocal);
 
-      generateGetBundleString(propertyValue, formClass, generator);
+      generateGetBundleString(propertyValue, generator);
 
       Method method;
       if (abstractButtonClass.isAssignableFrom(componentClass)) {
@@ -137,10 +142,13 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
     return true;
   }
 
-  private void generateGetBundleString(StringDescriptor descriptor, Type formClass, GeneratorAdapter generator) {
+  private void generateGetBundleString(StringDescriptor descriptor, GeneratorAdapter generator) {
     generator.push(descriptor.getBundleName());
-    if (formClass != null && dynamicBundleType != null) {
-      generator.push(formClass);
+
+    String formClass = descriptor.getFormClass();
+    if (dynamicBundleType != null && formClass != null) {
+      Type type = Type.getType("L" + formClass + ";");
+      generator.push(type);
       generator.invokeStatic(dynamicBundleType, getDynamicBundleMethod);
     }
     else {
@@ -161,7 +169,7 @@ public final class StringPropertyCodeGenerator extends PropertyCodeGenerator imp
       generator.push(descriptor.getValue());
     }
     else {
-      generateGetBundleString(descriptor, null, generator);
+      generateGetBundleString(descriptor, generator);
     }
   }
 

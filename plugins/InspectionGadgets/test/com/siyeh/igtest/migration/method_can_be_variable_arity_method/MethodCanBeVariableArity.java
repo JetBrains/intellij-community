@@ -36,3 +36,12 @@ interface X {
 class Yes {
   void m(int[] is, int[] js) {}
 }
+record Line(String[] names) {
+  public Line {
+  }
+}
+record Line2(String[] names) {
+  public Line2(String[] names) {
+    this.names = names;
+  }
+}

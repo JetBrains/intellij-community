@@ -14,9 +14,6 @@ import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author nik
- */
 public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
   private static final String OPTIONS_DIR = "jps/model-serialization/testData/config/options";
 

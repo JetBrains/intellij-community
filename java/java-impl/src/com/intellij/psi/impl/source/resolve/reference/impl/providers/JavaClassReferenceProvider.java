@@ -107,20 +107,17 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   }
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     return getReferencesByElement(element);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element) {
     final int offsetInElement = ElementManipulators.getOffsetInElement(element);
     final String text = ElementManipulators.getValueText(element);
     return getReferencesByString(text, element, offsetInElement);
   }
 
-  @NotNull
-  public PsiReference[] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
+  public PsiReference @NotNull [] getReferencesByString(String str, @NotNull PsiElement position, int offsetInPosition) {
     if (myAllowEmpty && StringUtil.isEmpty(str)) {
       return PsiReference.EMPTY_ARRAY;
     }

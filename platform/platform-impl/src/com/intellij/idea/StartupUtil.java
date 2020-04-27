@@ -13,14 +13,15 @@ import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
+import com.intellij.ide.gdpr.Agreements;
 import com.intellij.ide.gdpr.EndUserAgreement;
+import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
-import com.intellij.openapi.application.DeleteOldDirectoriesHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -75,19 +76,24 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 
 public final class StartupUtil {
   public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
+  // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
+  public static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
 
-  @SuppressWarnings("SpellCheckingInspection") private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
+  private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
   private StartupUtil() { }
 
-  /* called by the app after startup */
+  public static boolean isUsingSeparateWriteThread() {
+    return Boolean.getBoolean(USE_SEPARATE_WRITE_THREAD_PROPERTY);
+  }
+
+  // called by the app after startup
   public static synchronized void addExternalInstanceListener(@Nullable Function<List<String>, Future<CliResult>> processor) {
-    if (ourSocketLock != null) {
-      ourSocketLock.setCommandProcessor(processor);
-    }
+    if (ourSocketLock == null) throw new AssertionError("Not initialized yet");
+    ourSocketLock.setCommandProcessor(processor);
   }
 
   // used externally by TeamCity plugin (as TeamCity cannot use modern API to support old IDE versions)
@@ -101,6 +107,17 @@ public final class StartupUtil {
   public static synchronized CompletableFuture<BuiltInServer> getServerFuture() {
     CompletableFuture<BuiltInServer> serverFuture = ourSocketLock == null ? null : ourSocketLock.getServerFuture();
     return serverFuture == null ? CompletableFuture.completedFuture(null) : serverFuture;
+  }
+
+  private static @Nullable Object loadEuaDocument() {
+    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
+      return null;
+    }
+
+    Activity euaActivity = StartUpMeasurer.startActivity("eua getting");
+    EndUserAgreement.Document result = EndUserAgreement.getLatestDocument();
+    euaActivity.end();
+    return result;
   }
 
   public interface AppStarter {
@@ -133,13 +150,13 @@ public final class StartupUtil {
         Method invokeMethod = clazz.getDeclaredMethod("invoke");
         invokeMethod.invoke(null);
       }
-      catch (Exception ex) {
-        log.error("Failed pre-app class init for class " + classBeforeAppProperty, ex);
+      catch (Exception e) {
+        log.error("Failed pre-app class init for class " + classBeforeAppProperty, e);
       }
     }
   }
 
-  public static void prepareApp(@NotNull String[] args, @NotNull String mainClass) throws Exception {
+  public static void prepareApp(@NotNull String @NotNull [] args, @NotNull String mainClass) throws Exception {
     LoadingState.setStrictMode();
 
     Activity activity = StartUpMeasurer.startMainActivity("ForkJoin CommonPool configuration");
@@ -160,7 +177,9 @@ public final class StartupUtil {
     configureLog4j();
 
     activity = activity.endAndStart("LaF init scheduling");
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService);
+    // EndUserAgreement.Document type is not specified to avoid class loading
+    Future<Object> euaDocument = Main.isHeadless() ? null : executorService.submit(StartupUtil::loadEuaDocument);
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument);
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -168,11 +187,11 @@ public final class StartupUtil {
     }
 
     activity = StartUpMeasurer.startMainActivity("config path computing");
-    String configPath = PathManager.getConfigPath();
+    Path configPath = PathManager.getConfigDir();
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(Paths.get(configPath));
+    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(configPath);
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
@@ -185,6 +204,8 @@ public final class StartupUtil {
     // log initialization should happen only after locking the system directory
     Logger log = setupLogger();
     activity.end();
+
+    PluginManagerCore.scheduleDescriptorLoading();
 
     NonUrgentExecutor.getInstance().execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -210,26 +231,24 @@ public final class StartupUtil {
     Class<AppStarter> aClass = mainStartFuture.get();
     activity.end();
 
-    startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance());
+    startApp(args, initUiTask, log, configImportNeeded, aClass.newInstance(), euaDocument);
   }
 
-  private static void startApp(@NotNull String[] args,
+  private static void startApp(String @NotNull [] args,
                                @NotNull CompletableFuture<?> initUiTask,
                                @NotNull Logger log,
                                boolean configImportNeeded,
-                               @NotNull AppStarter appStarter) throws Exception {
+                               @NotNull AppStarter appStarter,
+                               @Nullable Future<Object> euaDocument) throws Exception {
     if (!Main.isHeadless()) {
       Activity activity = StartUpMeasurer.startMainActivity("config importing");
-
+      boolean agreementDialogWasShown = euaDocument != null && showUserAgreementAndConsentsIfNeeded(log, initUiTask, euaDocument);
       if (configImportNeeded) {
         appStarter.beforeImportConfigs();
-        Path newConfigDir = Paths.get(PathManager.getConfigPath());
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(newConfigDir, log), initUiTask);
-        runInEdtAndWait(log, DeleteOldDirectoriesHelper::run, initUiTask);  // Android Studio: upstream?
+        Path newConfigDir = PathManager.getConfigDir();
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, log), initUiTask);
         appStarter.importFinished(newConfigDir);
       }
-
-      showUserAgreementAndConsentsIfNeeded(log, initUiTask);
 
       if (configImportNeeded && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
@@ -248,11 +267,11 @@ public final class StartupUtil {
   }
 
   @NotNull
-  private static CompletableFuture<?> scheduleInitUi(@NotNull String[] args, @NotNull ExecutorService executor) {
+  private static CompletableFuture<?> scheduleInitUi(@NotNull String @NotNull [] args, @NotNull ExecutorService executor, @Nullable Future<Object> eulaDocument) {
     // mainly call sun.util.logging.PlatformLogger.getLogger - it takes enormous time (up to 500 ms)
     // Before lockDirsAndConfigureLogger can be executed only tasks that do not require log,
     // because we don't want to complicate logging. It is OK, because lockDirsAndConfigureLogger is not so heavy-weight as UI tasks.
-    CompletableFuture<Void> future = new CompletableFuture<>();
+    CompletableFuture<Void> initUiFuture = new CompletableFuture<>();
     executor.execute(() -> {
       try {
         checkHiDPISettings();
@@ -269,11 +288,11 @@ public final class StartupUtil {
             StartupUiUtil.initDefaultLaF();
           }
           catch (Throwable e) {
-            future.completeExceptionally(e);
+            initUiFuture.completeExceptionally(e);
             return;
           }
 
-          future.complete(null);
+          initUiFuture.complete(null);
           StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
@@ -287,28 +306,57 @@ public final class StartupUtil {
           activity = activity.endAndStart("init JBUIScale");
           JBUIScale.scale(1f);
 
-          Activity prepareSplashActivity = activity.endAndStart("splash preparation");
-          EventQueue.invokeLater(() -> {
-            SplashManager.show(args);
-            prepareSplashActivity.end();
-          });
+          if (!Main.isLightEdit() && !Boolean.getBoolean(SplashManager.NO_SPLASH)) {
+            Activity prepareSplashActivity = activity.endAndStart("splash preparation");
+            EventQueue.invokeLater(() -> {
+              Activity eulaActivity = prepareSplashActivity.startChild("splash eula isAccepted");
+              boolean isEulaAccepted;
+              try {
+                isEulaAccepted = eulaDocument == null || ((EndUserAgreement.Document)eulaDocument.get()).isAccepted();
+              }
+              catch (InterruptedException | ExecutionException ignore) {
+                isEulaAccepted = true;
+              }
+              eulaActivity.end();
+
+              SplashManager.show(args, isEulaAccepted);
+              prepareSplashActivity.end();
+            });
+            return;
+          }
 
           // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater (to allow other queued events to be executed)
-          EventQueue.invokeLater(() -> StartupUiUtil.configureHtmlKitStylesheet());
+          EventQueue.invokeLater(StartupUiUtil::configureHtmlKitStylesheet);
         });
       }
       catch (Throwable e) {
-        future.completeExceptionally(e);
+        initUiFuture.completeExceptionally(e);
       }
     });
 
     if (!Main.isHeadless()) {
       // do not wait, approach like AtomicNotNullLazyValue is used under the hood
-      future.thenRunAsync(() -> {
-        updateFrameClassAndWindowIcon();
-      }, executor);
+      initUiFuture.thenRunAsync(StartupUtil::updateFrameClassAndWindowIcon, executor);
     }
-    return future;
+
+    CompletableFuture<Void> instrumentationFuture = new CompletableFuture<>();
+    if (isUsingSeparateWriteThread()) {
+      executor.execute(() -> {
+        Activity activity = StartUpMeasurer.startActivity("Write Intent Lock UI class transformer loading");
+        try {
+          WriteIntentLockInstrumenter.instrument();
+        }
+        finally {
+          activity.end();
+          instrumentationFuture.complete(null);
+        }
+      });
+    }
+    else {
+      instrumentationFuture.complete(null);
+    }
+
+    return CompletableFuture.allOf(initUiFuture, instrumentationFuture);
   }
 
   private static void updateFrameClassAndWindowIcon() {
@@ -458,7 +506,7 @@ public final class StartupUtil {
   }
 
   private static synchronized void lockSystemDirs(String[] args) throws Exception {
-    if (ourSocketLock != null) throw new AssertionError();
+    if (ourSocketLock != null) throw new AssertionError("Already initialized");
     ourSocketLock = new SocketLock(PathManager.getConfigPath(), PathManager.getSystemPath());
 
     Pair<SocketLock.ActivationStatus, CliResult> status = ourSocketLock.lockAndTryActivate(args);
@@ -515,7 +563,7 @@ public final class StartupUtil {
     }
 
     EnvironmentUtil.loadEnv()
-      .thenRun(() -> subActivity.end());
+      .thenRun(subActivity::end);
   }
 
   private static void setupSystemLibraries() {
@@ -577,7 +625,9 @@ public final class StartupUtil {
       }
     }
 
-    log.info("charsets: JNU=" + System.getProperty("sun.jnu.encoding") + " file=" + System.getProperty("file.encoding"));
+    log.info("Locale=" + Locale.getDefault() +
+             " JNU=" + System.getProperty("sun.jnu.encoding") +
+             " file.encoding=" + System.getProperty("file.encoding"));
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
@@ -657,20 +707,21 @@ public final class StartupUtil {
     IconManager.activate();
   }
 
-  private static void showUserAgreementAndConsentsIfNeeded(@NotNull Logger log, @NotNull CompletableFuture<?> initUiTask) {
-    if (!ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      return;
-    }
-
+  private static boolean showUserAgreementAndConsentsIfNeeded(@NotNull Logger log,
+                                                              @NotNull CompletableFuture<?> initUiTask,
+                                                              @NotNull Future<Object> euaDocument) throws ExecutionException, InterruptedException {
+    boolean dialogWasShown = false;
     EndUserAgreement.updateCachedContentToLatestBundledVersion();
-    EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
+    EndUserAgreement.Document agreement = (EndUserAgreement.Document)euaDocument.get();
     if (!agreement.isAccepted()) {
       // todo: does not seem to request focus when shown
-      runInEdtAndWait(log, () -> AppUIUtil.showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()), initUiTask);
-      EndUserAgreement.setAccepted(agreement);
+      runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
+      dialogWasShown = true;
     }
-
-    AppUIUtil.showConsentsAgreementIfNeeded(command -> runInEdtAndWait(log, command, initUiTask));
+    if (AppUIUtil.needToShowConsentsAgreement()) {
+      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+    }
+    return dialogWasShown;
   }
 
   private static void runInEdtAndWait(@NotNull Logger log, @NotNull Runnable runnable, @NotNull CompletableFuture<?> initUiTask) {

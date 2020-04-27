@@ -153,6 +153,30 @@ public class BTreeEnumeratorTest {
   }
 
   @Test
+  public void testValueOfForUnExistedData() throws IOException {
+    assertNull(myEnumerator.valueOf(-10));
+    assertNull(myEnumerator.valueOf(0));
+
+    assertNull(myEnumerator.valueOf(1));
+    assertNull(myEnumerator.valueOf(1000));
+
+    String string = createRandomString();
+    int value = myEnumerator.enumerate(string);
+    assertNotEquals(1000, value);
+
+    assertNull(myEnumerator.valueOf(1000));
+    assertTrue(myEnumerator.isCorrupted());
+    assertEquals(string, myEnumerator.valueOf(value));
+
+    myEnumerator.force();
+
+    assertNull(myEnumerator.valueOf(1000));
+    assertEquals(string, myEnumerator.valueOf(value));
+
+    assertTrue(myEnumerator.isCorrupted());
+  }
+
+  @Test
   public void testPerformance() throws IOException {
     IntObjectCache<String> stringCache = new IntObjectCache<>(2000);
     IntObjectCache.DeletedPairsListener listener = new IntObjectCache.DeletedPairsListener() {

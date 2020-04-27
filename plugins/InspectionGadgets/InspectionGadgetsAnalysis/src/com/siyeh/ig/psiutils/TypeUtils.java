@@ -131,7 +131,7 @@ public class TypeUtils {
   }
 
   //getTypeIfOneOfOrSubtype
-  public static String expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls @NotNull String... typeNames) {
+  public static String expressionHasTypeOrSubtype(@Nullable PsiExpression expression, @NonNls String @NotNull ... typeNames) {
     if (expression == null) {
       return null;
     }
@@ -167,7 +167,7 @@ public class TypeUtils {
     return false;
   }
 
-  public static boolean variableHasTypeOrSubtype(@Nullable PsiVariable variable, @NonNls @NotNull String... typeNames) {
+  public static boolean variableHasTypeOrSubtype(@Nullable PsiVariable variable, @NonNls String @NotNull ... typeNames) {
     if (variable == null) {
       return false;
     }

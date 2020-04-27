@@ -2,7 +2,11 @@
 package com.intellij.codeInspection.intermediaryVariable;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -547,7 +551,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
                                       @NotNull PsiVariable variable, boolean isOnTheFly) {
     String name = variable.getName();
     holder.registerProblem(returnStatement,
-                           InspectionsBundle.message("inspection.return.separated.from.computation.descriptor", name),
+                           JavaBundle.message("inspection.return.separated.from.computation.descriptor", name),
                            new VariableFix(name, isOnTheFly));
   }
 
@@ -564,14 +568,14 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     @NotNull
     @Override
     public String getName() {
-      return InspectionsBundle.message("inspection.return.separated.from.computation.quickfix", myName);
+      return JavaBundle.message("inspection.return.separated.from.computation.quickfix", myName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.return.separated.from.computation.family.quickfix");
+      return JavaBundle.message("inspection.return.separated.from.computation.family.quickfix");
     }
 
     @Override

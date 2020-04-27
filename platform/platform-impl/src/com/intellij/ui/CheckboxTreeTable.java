@@ -22,9 +22,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class CheckboxTreeTable extends TreeTableView {
   private final EventDispatcher<CheckboxTreeListener> myEventDispatcher;
 

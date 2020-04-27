@@ -74,10 +74,8 @@ public interface GrMethod extends GrMembersDeclaration, GrNamedElement, PsiMetho
   @NotNull
   Map<String, NamedArgumentDescriptor> getNamedParameters();
 
-  @NotNull
-  GrReflectedMethod[] getReflectedMethods();
+  GrReflectedMethod @NotNull [] getReflectedMethods();
 
-  @NotNull
   @Override
-  GrParameter[] getParameters();
+  GrParameter @NotNull [] getParameters();
 }

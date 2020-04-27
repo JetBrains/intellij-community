@@ -39,8 +39,7 @@ public class GrTraitType extends PsiType {
     return myTraitTypes;
   }
 
-  @NotNull
-  public PsiType[] getConjuncts() {
+  public PsiType @NotNull [] getConjuncts() {
     return myDelegate.getConjuncts();
   }
 
@@ -83,9 +82,8 @@ public class GrTraitType extends PsiType {
     return myDelegate.getResolveScope();
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     return myDelegate.getSuperTypes();
   }
 
@@ -100,7 +98,7 @@ public class GrTraitType extends PsiType {
   }
 
   @NotNull
-  public static PsiType createTraitType(@NotNull PsiType[] types) {
+  public static PsiType createTraitType(PsiType @NotNull [] types) {
     final Set<PsiType> flattened = PsiIntersectionType.flatten(types, new LinkedHashSet<PsiType>() {
       @Override
       public boolean add(PsiType type) {

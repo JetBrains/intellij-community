@@ -65,10 +65,10 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     @Override
     public String getName() {
       if (c == '\n') {
-        return "Replace with line feed character";
+        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
       }
       else if (c == '\t') {
-        return "Replace with tab character";
+        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
       }
       return CommonQuickFixBundle.message("fix.replace.with.x", c);
     }
@@ -76,7 +76,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with character";
+      return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.family.name");
     }
 
     @Override

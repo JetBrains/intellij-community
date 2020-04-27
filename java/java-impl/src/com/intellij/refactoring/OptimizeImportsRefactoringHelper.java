@@ -38,7 +38,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
   private static final String REMOVING_REDUNDANT_IMPORTS_TITLE = "Removing redundant imports";
 
   @Override
-  public Set<PsiJavaFile> prepareOperation(@NotNull final UsageInfo[] usages) {
+  public Set<PsiJavaFile> prepareOperation(final UsageInfo @NotNull [] usages) {
     Set<PsiJavaFile> javaFiles = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;

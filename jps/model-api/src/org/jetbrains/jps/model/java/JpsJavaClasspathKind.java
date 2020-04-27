@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.model.java;
 
-/**
- * @author nik
- */
 public enum JpsJavaClasspathKind {
   PRODUCTION_COMPILE, PRODUCTION_RUNTIME,
   TEST_COMPILE, TEST_RUNTIME;

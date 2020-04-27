@@ -60,8 +60,7 @@ public class XPathQuickFixFactoryImpl implements XPathQuickFixFactory {
     }
 
     @Override
-    @NotNull
-    public SuppressIntentionAction[] getSuppressActions(XPathInspection inspection) {
+    public SuppressIntentionAction @NotNull [] getSuppressActions(XPathInspection inspection) {
         return SuppressIntentionAction.EMPTY_ARRAY;
     }
 

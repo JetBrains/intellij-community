@@ -65,8 +65,8 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
                                  @NotNull Runnable rediff,
                                  @NotNull Disposable disposable,
                                  @Nullable DiffComputer diffComputer,
-                                 @NotNull IgnorePolicy[] ignorePolicies,
-                                 @NotNull HighlightPolicy[] highlightPolicies) {
+                                 IgnorePolicy @NotNull [] ignorePolicies,
+                                 HighlightPolicy @NotNull [] highlightPolicies) {
     super(settings, rediff, disposable, ignorePolicies, highlightPolicies);
     myDiffComputer = diffComputer;
   }

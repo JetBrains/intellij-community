@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
 
@@ -12,6 +13,6 @@ class ShelfFileWritingAccessProvider(val myProject: Project) : WritingAccessProv
   }
 
   override fun getReadOnlyMessage(): String {
-    return "The file is locked for editing while being shelved"
+    return VcsBundle.message("shelve.file.is.locked.for.editing.message")
   }
 }

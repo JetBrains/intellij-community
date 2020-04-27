@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ProjectStructureProblemsHolderImpl implements ProjectStructureProblemsHolder {
   private List<ProjectStructureProblemDescription> myProblemDescriptions;
 

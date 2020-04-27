@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
-public class DeviceIdManager {
+public final class DeviceIdManager {
   private static final Logger LOG = Logger.getInstance(DeviceIdManager.class);
 
   private static final String DEVICE_ID_SHARED_FILE = "PermanentDeviceId";
@@ -88,7 +88,7 @@ public class DeviceIdManager {
   }
 
   @NotNull
-  private static Preferences getPreferences(ApplicationInfoEx appInfo) {
+  private static Preferences getPreferences(@NotNull ApplicationInfoEx appInfo) {
     String companyName = appInfo.getShortCompanyName();
     String name = StringUtil.isEmptyOrSpaces(companyName) ? "jetbrains" : companyName.toLowerCase(Locale.US);
     return Preferences.userRoot().node(name);
@@ -100,7 +100,7 @@ public class DeviceIdManager {
    * Character, representing user's OS (see [getOSChar])
    * [toString] call on representation of [UUID.randomUUID]
    */
-  public static String generateId(Calendar calendar, char OSChar) {
+  public static String generateId(@NotNull Calendar calendar, char OSChar) {
     int year = calendar.get(Calendar.YEAR);
     if (year < 2000) year = 2000;
     if (year > 2099) year = 2099;

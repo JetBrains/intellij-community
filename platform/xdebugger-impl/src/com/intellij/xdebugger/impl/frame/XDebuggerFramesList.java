@@ -8,6 +8,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
@@ -18,6 +19,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -32,9 +34,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class XDebuggerFramesList extends DebuggerFramesList {
   private final Project myProject;
   private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
@@ -210,6 +209,10 @@ public class XDebuggerFramesList extends DebuggerFramesList {
           setBackground(c);
         }
       }
+      else if (Registry.is("debugger.new.debug.tool.window.view")){
+        setBackground(UIUtil.getListSelectionBackground(hasFocus));
+      }
+
       stackFrame.customizePresentation(this);
     }
 

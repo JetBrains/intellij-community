@@ -15,9 +15,6 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Stream;
 
-/**
- * @author nik
- */
 public class JpsPathUtil {
 
   public static boolean isUnder(Set<File> ancestors, File file) {
@@ -102,6 +99,12 @@ public class JpsPathUtil {
 
   public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
     Path parent = projectDir.getParent();
-    return parent != null ? parent.getFileName().toString() : UNNAMED_PROJECT;
+    if (parent != null) {
+      Path name = parent.getFileName();  // `null` when parent is a Windows disk root
+      return name != null ? name.toString() : parent.toString();
+    }
+    else {
+      return UNNAMED_PROJECT;
+    }
   }
 }

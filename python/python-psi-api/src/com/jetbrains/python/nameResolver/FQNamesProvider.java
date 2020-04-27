@@ -27,8 +27,7 @@ public interface FQNamesProvider {
   /**
    * @return one or more fully qualified names
    */
-  @NotNull
-  String[] getNames();
+  String @NotNull [] getNames();
 
 
   /**

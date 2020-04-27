@@ -28,9 +28,8 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
   private static final Set<Class<?>> ALLOWED_PARENT_CLASSES = ContainerUtil.newHashSet(GrCodeReferenceElement.class);
   private static final Set<Class<?>> STOP_SEARCHING_CLASSES = ContainerUtil.newHashSet(GroovyFile.class);
 
-  @NotNull
   @Override
-  public GrTypeElement[] getActualParameters(@NotNull GrTypeArgumentList o) {
+  public GrTypeElement @NotNull [] getActualParameters(@NotNull GrTypeArgumentList o) {
     return o.getTypeArgumentElements();
   }
 
@@ -69,9 +68,8 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     return false;
   }
 
-  @Nullable
   @Override
-  public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+  public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
     return null;
   }
 

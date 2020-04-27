@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class PackagingNodeSource {
   private final ComplexPackagingElement<?> mySourceElement;
   private final PackagingElementNode<?> mySourceParentNode;

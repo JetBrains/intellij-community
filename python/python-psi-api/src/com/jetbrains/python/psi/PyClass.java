@@ -75,8 +75,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
    * @param context
    */
-  @NotNull
-  PyClass[] getSuperClasses(@Nullable  TypeEvalContext context);
+  PyClass @NotNull [] getSuperClasses(@Nullable  TypeEvalContext context);
 
   /**
    * Returns a PSI element for the super classes list.
@@ -91,8 +90,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * <p/>
    * Operates at the AST level.
    */
-  @NotNull
-  PyExpression[] getSuperClassExpressions();
+  PyExpression @NotNull [] getSuperClassExpressions();
 
   /**
    * Collects methods defined in the class.
@@ -101,8 +99,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    *
    * @return class methods
    */
-  @NotNull
-  PyFunction[] getMethods();
+  PyFunction @NotNull [] getMethods();
 
   /**
    * Get class properties.

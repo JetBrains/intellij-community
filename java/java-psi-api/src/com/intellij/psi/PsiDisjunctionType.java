@@ -117,9 +117,8 @@ public class PsiDisjunctionType extends PsiType.Stub {
     return getLeastUpperBound().getResolveScope();
   }
 
-  @NotNull
   @Override
-  public PsiType[] getSuperTypes() {
+  public PsiType @NotNull [] getSuperTypes() {
     final PsiType lub = getLeastUpperBound();
     if (lub instanceof PsiIntersectionType) {
       return ((PsiIntersectionType)lub).getConjuncts();

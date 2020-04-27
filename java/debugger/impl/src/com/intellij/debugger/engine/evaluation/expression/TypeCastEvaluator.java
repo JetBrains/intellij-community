@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
@@ -39,7 +39,8 @@ public class TypeCastEvaluator implements Evaluator {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {
       if (myPrimitiveCastType != null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.null", myPrimitiveCastType));
+        throw EvaluateExceptionUtil.createEvaluateException(
+          JavaDebuggerBundle.message("evaluation.error.cannot.cast.null", myPrimitiveCastType));
       }
       return null;
     }
@@ -47,40 +48,41 @@ public class TypeCastEvaluator implements Evaluator {
     if (DebuggerUtils.isInteger(value)) {
       value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((PrimitiveValue)value).longValue());
       if (value == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.numeric",
-                                                                                   myPrimitiveCastType));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.cast.numeric",
+                                                                                       myPrimitiveCastType));
       }
     }
     else if (DebuggerUtils.isNumeric(value)) {
       value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((PrimitiveValue)value).doubleValue());
       if (value == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.numeric",
-                                                                                   myPrimitiveCastType));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.cast.numeric",
+                                                                                       myPrimitiveCastType));
       }
     }
     else if (value instanceof BooleanValue) {
       value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((BooleanValue)value).booleanValue());
       if (value == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.boolean",
-                                                                                   myPrimitiveCastType));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.cast.boolean",
+                                                                                       myPrimitiveCastType));
       }
     }
     else if (value instanceof CharValue) {
       value = DebuggerUtilsEx.createValue(vm, myPrimitiveCastType, ((CharValue)value).charValue());
       if (value == null) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.cast.char", myPrimitiveCastType));
+        throw EvaluateExceptionUtil.createEvaluateException(
+          JavaDebuggerBundle.message("evaluation.error.cannot.cast.char", myPrimitiveCastType));
       }
     }
     else if (value instanceof ObjectReference) {
       ReferenceType type = ((ObjectReference)value).referenceType();
       if (myTypeCastEvaluator == null) {
         throw EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myPrimitiveCastType));
+          JavaDebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), myPrimitiveCastType));
       }
       ReferenceType castType = myTypeCastEvaluator.evaluate(context);
       if (!DebuggerUtilsImpl.instanceOf(type, castType)) {
         throw EvaluateExceptionUtil.createEvaluateException(
-          DebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), castType.name()));
+          JavaDebuggerBundle.message("evaluation.error.cannot.cast.object", type.name(), castType.name()));
       }
     }
 

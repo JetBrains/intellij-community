@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.changes
 
 import com.intellij.openapi.components.service
@@ -13,8 +13,8 @@ class ChangeReminderChangesViewModifier(private val project: Project) : ChangesV
   private val userSettings = service<UserSettings>()
 
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
+    val predictionService = project.service<PredictionService>()
     if (userSettings.isPluginEnabled && project.anyGitRootsForIndexing()) {
-      val predictionService = project.service<PredictionService>()
       val prediction = predictionService.predictionDataToDisplay
       if (prediction.predictionToDisplay.isNotEmpty()) {
         val node = ChangeReminderBrowserNode(prediction, predictionService)

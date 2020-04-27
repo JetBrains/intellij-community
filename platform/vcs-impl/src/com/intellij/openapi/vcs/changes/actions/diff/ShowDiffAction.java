@@ -55,7 +55,7 @@ public class ShowDiffAction implements AnActionExtensionProvider {
     }
   }
 
-  public static boolean canShowDiff(@Nullable Project project, @Nullable Change[] changes) {
+  public static boolean canShowDiff(@Nullable Project project, Change @Nullable [] changes) {
     return changes != null && canShowDiff(project, Arrays.asList(changes));
   }
 

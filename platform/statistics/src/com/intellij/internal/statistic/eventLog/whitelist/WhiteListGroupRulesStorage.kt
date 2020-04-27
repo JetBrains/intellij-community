@@ -11,6 +11,10 @@ interface WhitelistGroupRulesStorage {
   fun update()
 }
 
+interface WhitelistTestRulesStorageHolder {
+  fun getTestGroupStorage() : WhitelistTestGroupStorage
+}
+
 /**
  * Thread unsafe
  */

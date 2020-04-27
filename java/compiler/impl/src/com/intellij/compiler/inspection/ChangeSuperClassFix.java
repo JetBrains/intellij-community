@@ -1,27 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.inspection;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -30,7 +18,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -41,7 +28,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   @NotNull
@@ -61,7 +47,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
                              final int percent,
                              final boolean isImplements) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(newSuperClass.getProject());
-    myNewSuperName = ObjectUtils.notNull(newSuperClass.getQualifiedName());
+    myNewSuperName = Objects.requireNonNull(newSuperClass.getQualifiedName());
     myTargetClass = smartPointerManager.createSmartPsiElementPointer(targetClass);
     myNewSuperClass = smartPointerManager.createSmartPsiElementPointer(newSuperClass);
     myOldSuperClass = smartPointerManager.createSmartPsiElementPointer(oldSuperClass);
@@ -72,7 +58,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   @NotNull
   @TestOnly
   public PsiClass getNewSuperClass() {
-    return ObjectUtils.notNull(myNewSuperClass.getElement());
+    return Objects.requireNonNull(myNewSuperClass.getElement());
   }
 
   @TestOnly
@@ -89,7 +75,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return GroupNames.INHERITANCE_GROUP_NAME;
+    return InspectionsBundle.message("group.names.inheritance.issues");
   }
 
   @Override
@@ -110,8 +96,8 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   /**
    * oldSuperClass and newSuperClass can be interfaces or classes in any combination
    * <p/>
-   * 1. not checks that oldSuperClass is really super of aClass
-   * 2. not checks that newSuperClass not exists in currently existed supers
+   * 1. does not check that oldSuperClass is really super of aClass
+   * 2. does not check that newSuperClass not exists in currently existed supers
    */
   private static void changeSuperClass(@NotNull final PsiClass aClass,
                                        @NotNull final PsiClass oldSuperClass,
@@ -119,12 +105,12 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
     PsiMethod[] ownMethods = aClass.getMethods();
     // first is own method, second is parent
     List<Pair<PsiMethod, Set<PsiMethod>>> oldOverridenMethods =
-      Stream.of(ownMethods).map(m -> {
+      ContainerUtil.mapNotNull(ownMethods, m -> {
         if (m.isConstructor()) return null;
         PsiMethod[] supers = m.findSuperMethods(oldSuperClass);
         if (supers.length == 0) return null;
         return Pair.create(m, ContainerUtil.set(supers));
-      }).filter(Objects::nonNull).collect(Collectors.toList());
+      });
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
     PsiElementFactory factory = psiFacade.getElementFactory();
@@ -132,8 +118,9 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
       PsiElement ref;
       if (aClass instanceof PsiAnonymousClass) {
         ref = ((PsiAnonymousClass)aClass).getBaseClassReference().replace(factory.createClassReferenceElement(newSuperClass));
-      } else {
-        PsiReferenceList extendsList = ObjectUtils.notNull(aClass.getExtendsList());
+      }
+      else {
+        PsiReferenceList extendsList = Objects.requireNonNull(aClass.getExtendsList());
         PsiJavaCodeReferenceElement[] refElements =
           ArrayUtil.mergeArrays(getReferences(extendsList), getReferences(aClass.getImplementsList()));
         for (PsiJavaCodeReferenceElement refElement : refElements) {
@@ -186,8 +173,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
     }
   }
 
-  @NotNull
-  private static PsiJavaCodeReferenceElement[] getReferences(PsiReferenceList list) {
+  private static PsiJavaCodeReferenceElement @NotNull [] getReferences(PsiReferenceList list) {
     return list == null ? PsiJavaCodeReferenceElement.EMPTY_ARRAY : list.getReferenceElements();
   }
 
@@ -205,8 +191,8 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
     DialogWrapper dlg = new DialogWrapper(project, false) {
 
       {
-        setOKButtonText("Remove");
-        setTitle("Choose Members");
+        setOKButtonText(CommonBundle.message("button.without.mnemonic.remove"));
+        setTitle(JavaCompilerBundle.message("choose.members"));
         init();
       }
       @NotNull

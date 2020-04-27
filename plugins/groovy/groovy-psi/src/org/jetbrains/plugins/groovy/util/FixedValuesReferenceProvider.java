@@ -32,18 +32,17 @@ public class FixedValuesReferenceProvider extends PsiReferenceProvider {
 
   private final boolean mySoft;
 
-  public FixedValuesReferenceProvider(@NotNull String[] values) {
+  public FixedValuesReferenceProvider(String @NotNull [] values) {
     this(values, false);
   }
 
-  public FixedValuesReferenceProvider(@NotNull String[] values, boolean soft) {
+  public FixedValuesReferenceProvider(String @NotNull [] values, boolean soft) {
     myValues = values;
     mySoft = soft;
   }
 
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     return new PsiReference[]{
       new PsiReferenceBase<PsiElement>(element, mySoft) {
         @Nullable
@@ -52,9 +51,8 @@ public class FixedValuesReferenceProvider extends PsiReferenceProvider {
           return null;
         }
 
-        @NotNull
         @Override
-        public Object[] getVariants() {
+        public Object @NotNull [] getVariants() {
           return myValues;
         }
       }

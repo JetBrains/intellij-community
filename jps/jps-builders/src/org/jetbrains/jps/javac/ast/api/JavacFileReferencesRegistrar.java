@@ -11,8 +11,6 @@ public interface JavacFileReferencesRegistrar {
 
   boolean isEnabled();
 
-  boolean onlyImports();
-
   void registerFile(CompileContext context,
                     String filePath,
                     TObjectIntHashMap<? extends JavacRef> refs,

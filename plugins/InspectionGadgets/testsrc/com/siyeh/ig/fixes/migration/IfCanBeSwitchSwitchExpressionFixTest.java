@@ -14,7 +14,7 @@ public class IfCanBeSwitchSwitchExpressionFixTest extends IGQuickFixesTestCase {
   public void setUp() throws Exception {
     super.setUp();
     final IfCanBeSwitchInspection inspection = new IfCanBeSwitchInspection();
-    inspection.minimumBranches = 2;
+    inspection.minimumBranches = 1;
     inspection.suggestIntSwitches = true;
     myFixture.enableInspections(inspection);
     myRelativePath = "migration/if_can_be_switch";
@@ -24,9 +24,10 @@ public class IfCanBeSwitchSwitchExpressionFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_13_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_14);
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
-  public void testJava12() { doTest();}
+  public void testJava14Expression() { doTest();}
+  public void testJava14Comment() { doTest();}
 }

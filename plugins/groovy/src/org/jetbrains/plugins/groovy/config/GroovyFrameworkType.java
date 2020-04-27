@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class GroovyFrameworkType extends FrameworkTypeEx {
   public GroovyFrameworkType() {
     super("Groovy");

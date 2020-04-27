@@ -59,7 +59,9 @@ public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory
   }
 
   @Override
-  public boolean isProjectConfiguredToRunInspections(@NotNull final Project project, final boolean online) {
-    return GlobalJavaInspectionContextImpl.isInspectionsEnabled(online, project);
+  public boolean isProjectConfiguredToRunInspections(@NotNull final Project project,
+                                                     final boolean online,
+                                                     @NotNull Runnable rerunAction) {
+    return GlobalJavaInspectionContextImpl.isInspectionsEnabled(online, project, rerunAction);
   }
 }

@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.testIntegration;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -133,8 +133,8 @@ public class GroovyTestGenerator implements TestGenerator {
 
   private static void showErrorLater(final Project project, final String targetClassName) {
     ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
-                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
-                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.title")));
+                                                                               JavaBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                                                               JavaBundle.message("intention.error.cannot.create.class.title")));
   }
 
   private static void generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,

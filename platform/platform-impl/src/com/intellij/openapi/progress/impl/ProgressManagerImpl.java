@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
+import com.intellij.util.concurrency.PlainEdtExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
@@ -101,10 +103,11 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   @Override
   @NotNull
   public Future<?> runProcessWithProgressAsynchronously(@NotNull Task.Backgroundable task) {
-    ProgressIndicator progressIndicator = ApplicationManager.getApplication().isHeadlessEnvironment() ?
-                                          new EmptyProgressIndicator() :
-                                          new BackgroundableProcessIndicator(task);
-    return runProcessWithProgressAsynchronously(task, progressIndicator, null);
+    CompletableFuture<ProgressIndicator> progressIndicator = CompletableFuture.supplyAsync(
+      () -> ApplicationManager.getApplication().isHeadlessEnvironment() ?
+            new EmptyProgressIndicator() :
+            new BackgroundableProcessIndicator(task), PlainEdtExecutor.INSTANCE);
+    return runProcessWithProgressAsync(task, progressIndicator, null, null, null);
   }
 
   @Override

@@ -16,7 +16,7 @@
 
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -46,9 +46,9 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
   public JComponent getComponent() {
     JPanel _panel, _panel0;
 
-    myEmulatedCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.emulated"));
-    myWatchEntryCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
-    myWatchExitCheckBox = new JCheckBox(DebuggerBundle.message("label.method.breakpoint.properties.panel.method.exit"));
+    myEmulatedCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.method.breakpoint.properties.panel.emulated"));
+    myWatchEntryCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.method.breakpoint.properties.panel.method.entry"));
+    myWatchExitCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.method.breakpoint.properties.panel.method.exit"));
     DialogUtil.registerMnemonic(myWatchEntryCheckBox);
     DialogUtil.registerMnemonic(myWatchExitCheckBox);
 
@@ -70,7 +70,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.WEST);
     _panel0.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     _panel.add(_panel0, BorderLayout.NORTH);
-    _panel.setBorder(IdeBorderFactory.createTitledBorder(DebuggerBundle.message("label.group.watch.events")));
+    _panel.setBorder(IdeBorderFactory.createTitledBorder(JavaDebuggerBundle.message("label.group.watch.events")));
 
     ActionListener listener = new ActionListener() {
       @Override

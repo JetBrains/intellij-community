@@ -91,6 +91,6 @@ public class DataViewsConfigurableUi {
   }
 
   private void createUIComponents() {
-    myEditorSettingsPanel = Panel("Editor");
+    myEditorSettingsPanel = Panel(XDebuggerBundle.message("data.views.configurable.panel.title"));
   }
 }

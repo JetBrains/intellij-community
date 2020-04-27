@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="539ac"/>
-          <text value="&amp;Path to SceneBuilder:"/>
+          <text resource-bundle="messages/JavaFXBundle" key="javafx.settings.configurable.path.to.scenebuilder"/>
         </properties>
       </component>
       <vspacer id="439f6">

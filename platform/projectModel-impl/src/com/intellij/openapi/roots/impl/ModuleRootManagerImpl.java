@@ -133,15 +133,13 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
     return myRootModel;
   }
 
-  @NotNull
   @Override
-  public ContentEntry[] getContentEntries() {
+  public ContentEntry @NotNull [] getContentEntries() {
     return myRootModel.getContentEntries();
   }
 
   @Override
-  @NotNull
-  public OrderEntry[] getOrderEntries() {
+  public OrderEntry @NotNull [] getOrderEntries() {
     return myRootModel.getOrderEntries();
   }
 
@@ -186,26 +184,22 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   }
 
   @Override
-  @NotNull
-  public Module[] getDependencies() {
+  public Module @NotNull [] getDependencies() {
     return myRootModel.getModuleDependencies();
   }
 
-  @NotNull
   @Override
-  public Module[] getDependencies(boolean includeTests) {
+  public Module @NotNull [] getDependencies(boolean includeTests) {
     return myRootModel.getModuleDependencies(includeTests);
   }
 
-  @NotNull
   @Override
-  public Module[] getModuleDependencies() {
+  public Module @NotNull [] getModuleDependencies() {
     return myRootModel.getModuleDependencies();
   }
 
-  @NotNull
   @Override
-  public Module[] getModuleDependencies(boolean includeTests) {
+  public Module @NotNull [] getModuleDependencies(boolean includeTests) {
     return myRootModel.getModuleDependencies(includeTests);
   }
 
@@ -215,8 +209,7 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   }
 
   @Override
-  @NotNull
-  public String[] getDependencyModuleNames() {
+  public String @NotNull [] getDependencyModuleNames() {
     return myRootModel.getDependencyModuleNames();
   }
 
@@ -254,55 +247,47 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getContentRoots() {
+  public VirtualFile @NotNull [] getContentRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getContentRoots();
   }
 
   @Override
-  @NotNull
-  public String[] getContentRootUrls() {
+  public String @NotNull [] getContentRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getContentRootUrls();
   }
 
   @Override
-  @NotNull
-  public String[] getExcludeRootUrls() {
+  public String @NotNull [] getExcludeRootUrls() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getExcludeRootUrls();
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getExcludeRoots() {
+  public VirtualFile @NotNull [] getExcludeRoots() {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getExcludeRoots();
   }
 
   @Override
-  @NotNull
-  public String[] getSourceRootUrls() {
+  public String @NotNull [] getSourceRootUrls() {
     return getSourceRootUrls(true);
   }
 
-  @NotNull
   @Override
-  public String[] getSourceRootUrls(boolean includingTests) {
+  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getSourceRootUrls(includingTests);
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSourceRoots() {
+  public VirtualFile @NotNull [] getSourceRoots() {
     return getSourceRoots(true);
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getSourceRoots(final boolean includingTests) {
+  public VirtualFile @NotNull [] getSourceRoots(final boolean includingTests) {
     LOG.assertTrue(!myIsDisposed);
     return myRootModel.getSourceRoots(includingTests);
   }

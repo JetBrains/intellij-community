@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -60,6 +60,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
 
   private List<ConfigurableWebBrowser> browsers;
   private boolean myShowBrowserHover = true;
+  private boolean myShowBrowserHoverXml = false;
   DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
 
   public WebBrowserManager() {
@@ -120,6 +121,9 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
     if (!myShowBrowserHover) {
       state.setAttribute("showHover", "false");
+    }
+    if (myShowBrowserHoverXml) {
+      state.setAttribute("showHoverXml", "true");
     }
 
     if (!browsers.equals(getPredefinedBrowsers())) {
@@ -430,7 +434,15 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     myShowBrowserHover = showBrowserHover;
   }
 
+  public void setShowBrowserHoverXml(boolean showBrowserHover) {
+    myShowBrowserHoverXml = showBrowserHover;
+  }
+
   public boolean isShowBrowserHover() {
     return myShowBrowserHover;
+  }
+
+  public boolean isShowBrowserHoverXml() {
+    return myShowBrowserHoverXml;
   }
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.CopyPasteDelegator;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.PlatformPackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,7 +63,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   public void doCopy(final PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     if (defaultTargetDirectory == null) {
       PsiDirectory commonParent = getCommonParentDirectory(elements);
-      if (commonParent != null && !ScratchFileService.isInScratchRoot(commonParent.getVirtualFile())) {
+      if (commonParent != null && !ScratchUtil.isScratch(commonParent.getVirtualFile())) {
         defaultTargetDirectory = commonParent;
       }
     }
@@ -114,13 +114,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       if (dialog.showAndGet()) {
         newName = elements.length == 1 ? dialog.getNewName() : null;
         targetDirectory = dialog.getTargetDirectory();
-        openInEditor = dialog.openInEditor();
+        openInEditor = dialog.isOpenInEditor();
       }
       else {
         return;
       }
     }
-
 
     if (targetDirectory != null) {
       PsiManager manager = PsiManager.getInstance(project);
@@ -207,7 +206,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
    * @param targetDirectory
    * @param openInEditor
    */
-  private static void copyImpl(@NotNull final VirtualFile[] files,
+  private static void copyImpl(final VirtualFile @NotNull [] files,
                                @Nullable final String newName,
                                @NotNull final PsiDirectory targetDirectory,
                                final boolean doClone,
@@ -230,17 +229,14 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       final int[] choice = files.length > 1 || files[0].isDirectory() ? new int[]{-1} : null;
       List<PsiFile> added = new ArrayList<>();
       PsiManager manager = PsiManager.getInstance(project);
-      ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() ->
-      {
-        for (VirtualFile file : files) {
-          PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
-          if (item == null) {
-            LOG.info("invalid file: " + file.getExtension());
-            continue;
-          }
-          copyToDirectory(item, newName, targetDirectory, choice, title, added);
+      for (VirtualFile file : files) {
+        PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
+        if (item == null) {
+          LOG.info("invalid file: " + file.getExtension());
+          continue;
         }
-      });
+        copyToDirectory(item, newName, targetDirectory, choice, title, added);
+      }
 
 
       if (!added.isEmpty()) {
@@ -283,7 +279,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   public static PsiFile copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
                                         @Nullable String newName,
                                         @NotNull PsiDirectory targetDirectory,
-                                        @Nullable int[] choice,
+                                        int @Nullable [] choice,
                                         @Nullable String title) throws IncorrectOperationException, IOException {
     ArrayList<PsiFile> added = new ArrayList<>();
     copyToDirectory(elementToCopy, newName, targetDirectory, choice, title, added);
@@ -304,7 +300,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   private static void copyToDirectory(@NotNull PsiFileSystemItem elementToCopy,
                                       @Nullable String newName,
                                       @NotNull PsiDirectory targetDirectory,
-                                      @Nullable int[] choice,
+                                      int @Nullable [] choice,
                                       @Nullable String title,
                                       @NotNull List<PsiFile> added) throws IncorrectOperationException, IOException {
     if (elementToCopy instanceof PsiFile) {
@@ -313,8 +309,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       if (checkFileExist(targetDirectory, choice, file, name, "Copy")) {
         return;
       }
-      ContainerUtil.addIfNotNull(added,
-                                 WriteCommandAction.writeCommandAction(targetDirectory.getProject()).withName(title).compute(() -> targetDirectory.copyFileFrom(name, file)));
+      ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> {
+        ContainerUtil.addIfNotNull(added, 
+                                   WriteCommandAction.writeCommandAction(targetDirectory.getProject())
+                                     .withName(title)
+                                     .compute(() -> targetDirectory.copyFileFrom(name, file)));
+      });
     }
     else if (elementToCopy instanceof PsiDirectory) {
       PsiDirectory directory = (PsiDirectory)elementToCopy;
@@ -338,17 +338,14 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       VirtualFile[] children = directory.getVirtualFile().getChildren();
       Project project = subdirectory.getProject();
       PsiManager manager = PsiManager.getInstance(project);
-      ((PsiDirectoryImpl)subdirectory).executeWithUpdatingAddedFilesDisabled(() ->
-      {
-        for (VirtualFile file : children) {
-          PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
-          if (item == null) {
-            LOG.info("invalid file: " + file.getExtension());
-            continue;
-          }
-          copyToDirectory(item, null, subdirectory, choice, title, added);
+      for (VirtualFile file : children) {
+        PsiFileSystemItem item = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
+        if (item == null) {
+          LOG.info("invalid file: " + file.getExtension());
+          continue;
         }
-      });
+        copyToDirectory(item, null, subdirectory, choice, title, added);
+      }
     }
     else {
       throw new IllegalArgumentException("unexpected elementToCopy: " + elementToCopy);
@@ -364,7 +361,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
         String message = String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath());
         String[] options = choice == null ? new String[]{"Overwrite", "Skip"}
                                           : new String[]{"Overwrite", "Skip", "Overwrite for all", "Skip for all"};
-        selection = Messages.showDialog(message, title, options, 0, Messages.getQuestionIcon());
+        selection = Messages.showDialog(targetDirectory.getProject(), message, title, options, 0, Messages.getQuestionIcon());
       }
       else {
         selection = choice[0];

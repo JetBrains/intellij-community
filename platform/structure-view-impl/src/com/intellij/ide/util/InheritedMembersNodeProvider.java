@@ -16,7 +16,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -34,12 +34,11 @@ public abstract class InheritedMembersNodeProvider<T extends TreeElement> implem
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return IdeBundle.message("file.structure.toggle.show.inherited");
+    return StructureViewBundle.message("file.structure.toggle.show.inherited");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     throw new IncorrectOperationException("see getActionIdForShortcut()");
   }
 
@@ -52,7 +51,7 @@ public abstract class InheritedMembersNodeProvider<T extends TreeElement> implem
   @Override
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"), null, AllIcons.Hierarchy.Supertypes);
+    return new ActionPresentationData(StructureViewBundle.message("action.structureview.show.inherited"), null, AllIcons.Hierarchy.Supertypes);
   }
 
   @Override

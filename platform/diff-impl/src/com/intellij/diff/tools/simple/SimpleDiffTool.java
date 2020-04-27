@@ -18,6 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.diff.DiffBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class SimpleDiffTool implements FrameDiffTool {
@@ -42,6 +43,6 @@ public class SimpleDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Side-by-side viewer";
+    return DiffBundle.message("side.by.side.viewer");
   }
 }

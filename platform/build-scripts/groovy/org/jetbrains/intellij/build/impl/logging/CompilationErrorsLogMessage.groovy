@@ -4,9 +4,6 @@ package org.jetbrains.intellij.build.impl.logging
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.LogMessage
 
-/**
- * @author nik
- */
 @CompileStatic
 class CompilationErrorsLogMessage extends LogMessage {
   final String compilerName

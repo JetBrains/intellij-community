@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -41,16 +42,17 @@ import java.util.concurrent.locks.LockSupport;
  * Write lock: sets global {@link #writeRequested} bit and waits for all readers (in global {@link #readers} list) to release their locks by checking {@link Reader#readRequested} for all readers.
  */
 class ReadMostlyRWLock {
-  private final Thread writeThread;
+  volatile Thread writeThread = null;
+  private volatile Thread writeIntendedThread = null;
   volatile boolean writeRequested;  // this writer is requesting or obtained the write access
+  private final AtomicBoolean writeIntent = new AtomicBoolean(false);
   private volatile boolean writeAcquired;   // this writer obtained the write lock
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
 
   private volatile boolean writeSuspended;
 
-  ReadMostlyRWLock(@NotNull Thread writeThread) {
-    this.writeThread = writeThread;
+  ReadMostlyRWLock() {
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
@@ -80,6 +82,14 @@ class ReadMostlyRWLock {
     assert added : readers + "; "+Thread.currentThread();
     return status;
   });
+
+  void setWriteThread(Thread thread) {
+    assert !writeAcquired;
+    assert !writeRequested;
+    assert writeThread == null;
+
+    writeThread = thread;
+  }
 
   boolean isWriteThread() {
     return Thread.currentThread() == writeThread;
@@ -190,6 +200,38 @@ class ReadMostlyRWLock {
   }
 
   private static final int SPIN_TO_WAIT_FOR_LOCK = 100;
+
+  void writeIntentLock() {
+    //checkWriteThreadAccess();
+    writeIntendedThread = Thread.currentThread();
+    for (int iter=0; ;iter++) {
+      if (writeIntent.compareAndSet(false, true)) {
+        assert !writeRequested;
+        assert !writeAcquired;
+
+        writeThread = Thread.currentThread();
+        break;
+      }
+
+      if (iter > SPIN_TO_WAIT_FOR_LOCK) {
+        LockSupport.parkNanos(this, 1_000_000);  // unparked by writeIntentUnlock
+      }
+      else {
+        Thread.yield();
+      }
+    }
+  }
+
+  void writeIntentUnlock() {
+    checkWriteThreadAccess();
+
+    assert !writeAcquired;
+    assert !writeRequested;
+
+    writeThread = null;
+    writeIntent.set(false);
+    LockSupport.unpark(writeIntendedThread);
+  }
 
   void writeLock() {
     checkWriteThreadAccess();

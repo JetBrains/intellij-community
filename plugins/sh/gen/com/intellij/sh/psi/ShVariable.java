@@ -11,7 +11,6 @@ public interface ShVariable extends ShLiteral {
   @NotNull
   PsiElement getVar();
 
-  @NotNull
   PsiReference[] getReferences();
 
 }

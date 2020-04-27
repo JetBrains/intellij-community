@@ -15,11 +15,11 @@ internal object DotnetIconsTransformation {
   /**
    * First icon with one of the suffices (according to order) corresponds to Idea light icon
    */
-  internal val dotnetLightSuffices = listOf("RiderLight", "Gray", "")
+  internal val dotnetLightSuffices = listOf("RiderLight", "Gray", "Color", "SymbolsVs11Gray", "")
   /**
-   * First icon with one of the suffices (according to order) corresponds to Idea cark icon
+   * First icon with one of the suffices (according to order) corresponds to Idea dark icon
    */
-  internal val dotnetDarkSuffices = listOf("RiderDark", "GrayDark")
+  internal val dotnetDarkSuffices = listOf("RiderDark", "GrayDark", "SymbolsVs11GrayDark")
   private val dotnetLightComparator = comparator(dotnetLightSuffices)
   private val dotnetDarkComparator = comparator(dotnetDarkSuffices)
 
@@ -44,10 +44,17 @@ internal object DotnetIconsTransformation {
     icons.filterOnly(dotnetLightSuffices).minWith(dotnetLightComparator)?.changeSuffix("")?.also {
       transformed += it
     }
-    icons.filterOnly(dotnetDarkSuffices).minWith(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
-      transformed += it
+    if (hasRiderDarkPart(icons)) {
+        icons.filterOnly(dotnetDarkSuffices).minWith(dotnetDarkComparator)?.changeSuffix(ideaDarkSuffix)?.also {
+            transformed += it
+        }
     }
     (icons - transformed).forEach(DotnetIcon::delete)
+  }
+
+  private fun hasRiderDarkPart(icons: List<DotnetIcon>): Boolean {
+      return icons.any { it.suffix == "RiderLight" }.not()
+          || (icons.any { it.suffix == "RiderLight" } && icons.any { it.suffix == "RiderDark" })
   }
 
   private fun comparator(suffices: List<String>) = Comparator<DotnetIcon> { i1, i2 ->

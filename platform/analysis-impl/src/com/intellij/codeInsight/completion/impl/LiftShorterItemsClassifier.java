@@ -85,11 +85,11 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @NotNull
   @Override
-  public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
+  public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
     return liftShorterElements(source, null, context);
   }
 
-  private Iterable<LookupElement> liftShorterElements(final Iterable<LookupElement> source,
+  private Iterable<LookupElement> liftShorterElements(final Iterable<? extends LookupElement> source,
                                                       @Nullable final THashSet<? super LookupElement> lifted, final ProcessingContext context) {
     final Set<LookupElement> srcSet = newIdentityTroveSet(source instanceof Collection ? ((Collection)source).size() : myCount);
     ContainerUtil.addAll(srcSet, source);
@@ -103,7 +103,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @NotNull
   @Override
-  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
+  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
     final THashSet<LookupElement> lifted = newIdentityTroveSet();
     Iterable<LookupElement> iterable = liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
     return ContainerUtil.map(iterable, element -> new Pair<>(element, lifted.contains(element)));
@@ -144,12 +144,12 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   private class LiftingIterable implements Iterable<LookupElement> {
     private final Set<LookupElement> mySrcSet;
     private final ProcessingContext myContext;
-    private final Iterable<LookupElement> mySource;
+    private final Iterable<? extends LookupElement> mySource;
     private final THashSet<? super LookupElement> myLifted;
 
     LiftingIterable(Set<LookupElement> srcSet,
                     ProcessingContext context,
-                    Iterable<LookupElement> source,
+                    Iterable<? extends LookupElement> source,
                     THashSet<? super LookupElement> lifted) {
       mySrcSet = srcSet;
       myContext = context;

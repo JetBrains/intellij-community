@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.ui;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packageDependencies.ui.UsagesPanel;
 import com.intellij.psi.PsiElement;
@@ -37,12 +38,12 @@ public class MigrationUsagesPanel extends UsagesPanel {
 
   @Override
   public String getInitialPositionText() {
-    return "Select root to find reasons to migrate";
+    return JavaRefactoringBundle.message("type.migration.select.suggestion");
   }
 
   @Override
   public String getCodeUsagesString() {
-    return "Found reasons to migrate";
+    return JavaRefactoringBundle.message("type.migration.reasons.to.migrate");
   }
 
   public void showRootUsages(UsageInfo root, UsageInfo migration, final TypeMigrationLabeler labeler) {

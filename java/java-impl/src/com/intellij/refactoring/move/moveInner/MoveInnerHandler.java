@@ -17,11 +17,18 @@ package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiClass;
+import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 public interface MoveInnerHandler {
   LanguageExtension<MoveInnerHandler> EP_NAME = new LanguageExtension<>("com.intellij.refactoring.moveInnerHandler");
 
   @NotNull
   PsiClass copyClass(@NotNull MoveInnerOptions options);
+
+  default void preprocessUsages(Collection<UsageInfo> results) {
+
+  }
 }

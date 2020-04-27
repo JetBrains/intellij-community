@@ -5,7 +5,7 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerExtension;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -327,7 +327,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     }
     catch (InternalException e) {
       if (e.errorCode() == JvmtiError.OPAQUE_FRAME) {
-        throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("drop.frame.error.no.information"));
+        throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("drop.frame.error.no.information"));
       }
       else throw EvaluateExceptionUtil.createEvaluateException(e);
     }

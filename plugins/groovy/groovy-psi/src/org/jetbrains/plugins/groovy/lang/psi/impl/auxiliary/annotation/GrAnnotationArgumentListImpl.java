@@ -43,8 +43,7 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  @NotNull
-  public GrAnnotationNameValuePair[] getAttributes() {
+  public GrAnnotationNameValuePair @NotNull [] getAttributes() {
     return getStubOrPsiChildren(GroovyStubElementTypes.ANNOTATION_MEMBER_VALUE_PAIR, GrAnnotationNameValuePair.EMPTY_ARRAY);
   }
 

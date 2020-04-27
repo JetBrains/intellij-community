@@ -35,10 +35,6 @@ interface WindowInfo {
 
   val isDocked: Boolean
 
-  val isFloating: Boolean
-
-  val isSliding: Boolean
-
   val isShowStripeButton: Boolean
 
   val contentUiType: ToolWindowContentUiType

@@ -31,6 +31,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
@@ -107,11 +108,15 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean hasOutgoingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
-    return getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
+    return shouldCheckIncomingOutgoing() && getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
   }
 
   public boolean shouldCheckIncoming() {
     return Registry.is("git.update.incoming.outgoing.info") && GitVcsSettings.getInstance(myProject).getIncomingCheckStrategy() != Never;
+  }
+
+  private static boolean shouldCheckIncomingOutgoing() {
+    return Registry.is("git.update.incoming.outgoing.info");
   }
 
   @NotNull
@@ -161,7 +166,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     if (!myIsUpdating.compareAndSet(false, true)) return;
     updateBranchesWithIncoming(false);
     updateBranchesWithOutgoing();
-    new Task.Backgroundable(myProject, "Update Branches Info...") {
+    new Task.Backgroundable(myProject, GitBundle.message("branches.update.info.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Semaphore semaphore = new Semaphore(0);
@@ -245,6 +250,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   private void updateBranchesWithOutgoing() {
+    if(!shouldCheckIncomingOutgoing()) return;
     synchronized (LOCK) {
       myDirtyReposWithOutgoing.addAll(GitRepositoryManager.getInstance(myProject).getRepositories());
     }
@@ -423,6 +429,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @Override
   public void repositoryChanged(@NotNull GitRepository repository) {
+    if (!shouldCheckIncomingOutgoing()) return;
     synchronized (LOCK) {
       myDirtyReposWithOutgoing.add(repository);
       myDirtyReposWithIncoming.add(repository);

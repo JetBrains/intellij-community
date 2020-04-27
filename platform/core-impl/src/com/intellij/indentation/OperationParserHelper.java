@@ -187,8 +187,7 @@ public class OperationParserHelper {
      * Provides operation priority and operands
      * @return array of TokenSets
      */
-    @NotNull
-    TokenSet[] getOperatorsByPriority();
+    TokenSet @NotNull [] getOperatorsByPriority();
 
     /**
      * Provides element types to finish postfix element marker
@@ -208,8 +207,7 @@ public class OperationParserHelper {
      * Provides element types to finish binary operation element
      * @return array of Element Types
      */
-    @NotNull
-    IElementType[] getOperationElementTypes();
+    IElementType @NotNull [] getOperationElementTypes();
   }
 
   public interface CustomBinaryOperationParser {

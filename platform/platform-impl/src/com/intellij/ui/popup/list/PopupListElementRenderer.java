@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -111,9 +111,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (step.hasSubstep(value) && isSelectable) {
       myNextStepLabel.setVisible(true);
       final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground(true));
-      myNextStepLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                  : AllIcons.Icons.Ide.NextStep
-                                         : AllIcons.Icons.Ide.NextStepGrayed);
+      myNextStepLabel.setIcon(isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                     : AllIcons.Icons.Ide.NextStep);
     }
     else {
       myNextStepLabel.setVisible(false);

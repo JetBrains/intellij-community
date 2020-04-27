@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiAnnotation;
@@ -60,7 +61,7 @@ public class FieldAnnotationChecker extends CustomAnnotationChecker {
 
     if (!GrAnnotationImpl.isAnnotationApplicableTo(annotation, PsiAnnotation.TargetType.LOCAL_VARIABLE)) {
       GrCodeReferenceElement ref = annotation.getClassReference();
-      String target = JavaErrorBundle.message("annotation.target.LOCAL_VARIABLE");
+      String target = JavaAnalysisBundle.message("annotation.target.LOCAL_VARIABLE");
       String description = JavaErrorBundle.message("annotation.not.applicable", ref.getText(), target);
       holder.newAnnotation(HighlightSeverity.ERROR, description).range(ref).create();
     }

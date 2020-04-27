@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicTextAreaUI;
 import javax.swing.text.*;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 
 public class DarculaTextAreaUI extends BasicTextAreaUI {
@@ -38,5 +39,13 @@ public class DarculaTextAreaUI extends BasicTextAreaUI {
   @Override
   protected Caret createCaret() {
     return new TextFieldWithPopupHandlerUI.MouseDragAwareCaret();
+  }
+
+  @Override
+  protected void paintSafely(Graphics g) {
+    if (SystemInfo.isMacOSCatalina) {
+      ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+    }
+    super.paintSafely(g);
   }
 }

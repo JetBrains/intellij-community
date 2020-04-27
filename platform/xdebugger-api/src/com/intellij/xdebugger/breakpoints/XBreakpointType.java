@@ -32,8 +32,6 @@ import java.util.List;
  *
  * Use this class only for breakpoints like exception breakpoints in Java. If a breakpoint will be put on some line in a file use
  * {@link XLineBreakpointType} instead 
- *
- * @author nik
  */
 public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreakpointProperties> {
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");

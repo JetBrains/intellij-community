@@ -33,7 +33,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   public static final LanguageSubstitutors INSTANCE = getInstance();
 
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
-  private static final Key<Key<Language>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
+  private static final Key<Key<String>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
   private static final AtomicBoolean REQUESTS_DRAIN_NEEDED = new AtomicBoolean(true);
   private static final ConcurrentMap<VirtualFile, SubstitutionInfo> ourReparsingRequests = ContainerUtil.newConcurrentMap();
 
@@ -78,11 +78,11 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
       //   com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl#doneInjecting
       return;
     }
-    Key<Language> projectKey = getOrCreateProjectKey(project);
-    Language prevSubstitutedLang = projectKey.get(file);
+    Key<String> projectKey = getOrCreateProjectKey(project);
+    Language prevSubstitutedLang = Language.findLanguageByID(projectKey.get(file));
     final Language prevLang = ObjectUtils.notNull(prevSubstitutedLang, originalLang);
     if (!prevLang.is(substitutedLang)) {
-      if (file.replace(projectKey, prevSubstitutedLang, substitutedLang)) {
+      if (file.replace(projectKey, prevSubstitutedLang != null ? prevSubstitutedLang.getID() : null, substitutedLang.getID())) {
         if (prevSubstitutedLang == null) {
           return; // no need to reparse for the first language substitution
         }
@@ -95,8 +95,8 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   }
 
   @NotNull
-  private static Key<Language> getOrCreateProjectKey(@NotNull Project project) {
-    Key<Language> key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
+  private static Key<String> getOrCreateProjectKey(@NotNull Project project) {
+    Key<String> key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
     if (key == null) {
       synchronized (PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY) {
         key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);

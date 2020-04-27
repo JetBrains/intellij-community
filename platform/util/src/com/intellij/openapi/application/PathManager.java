@@ -232,6 +232,11 @@ public class PathManager {
   }
 
   @NotNull
+  public static Path getConfigDir() {
+    return Paths.get(getConfigPath());
+  }
+
+  @NotNull
   public static String getConfigPath() {
     if (ourConfigPath != null) return ourConfigPath;
 
@@ -287,7 +292,7 @@ public class PathManager {
     if (explicit != null) {
       ourPluginsPath = explicit;
     }
-    else if (PATHS_SELECTOR != null && (SystemInfoRt.isMac || System.getProperty(PROPERTY_CONFIG_PATH) == null)) {
+    else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_CONFIG_PATH) == null) {
       ourPluginsPath = getDefaultPluginPathFor(PATHS_SELECTOR);
     }
     else {
@@ -353,7 +358,7 @@ public class PathManager {
     if (explicit != null) {
       ourLogPath = explicit;
     }
-    else if (PATHS_SELECTOR != null && (SystemInfoRt.isMac || System.getProperty(PROPERTY_SYSTEM_PATH) == null)) {
+    else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null) {
       ourLogPath = platformPath(PATHS_SELECTOR, "Logs", "", "LOCALAPPDATA", LOG_DIRECTORY, "XDG_CACHE_HOME", ".cache", LOG_DIRECTORY);
     }
     else {

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -333,6 +334,12 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return groups;
   }
 
+  @TestOnly
+  @Nullable
+  ModuleWizardStep getSettingsStep() {
+    return mySettingsStep;
+  }
+
   // new TemplatesGroup selected
   private void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
@@ -585,7 +592,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private void startLoadingRemoteTemplates(ChooseTemplateStep chooseTemplateStep) {
     myTemplatesList.setPaintBusy(true);
     chooseTemplateStep.getTemplateList().setPaintBusy(true);
-    ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), "Loading Templates") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myContext.getProject(), JavaUiBundle.message("progress.title.loading.templates")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         RemoteTemplatesFactory factory = new RemoteTemplatesFactory();
@@ -641,22 +648,22 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
 
   @TestOnly
   public String availableTemplateGroupsToString() {
-    ListModel model = myProjectTypeList.getModel();
+    ListModel<TemplatesGroup> model = myProjectTypeList.getModel();
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < model.getSize(); i++) {
       if (builder.length() > 0) {
         builder.append(", ");
       }
-      builder.append(((TemplatesGroup)model.getElementAt(i)).getName());
+      builder.append(model.getElementAt(i).getName());
     }
     return builder.toString();
   }
 
   @TestOnly
   public boolean setSelectedTemplate(@NotNull String group, @Nullable String name) {
-    ListModel model = myProjectTypeList.getModel();
+    ListModel<TemplatesGroup> model = myProjectTypeList.getModel();
     for (int i = 0; i < model.getSize(); i++) {
-      TemplatesGroup templatesGroup = (TemplatesGroup)model.getElementAt(i);
+      TemplatesGroup templatesGroup = model.getElementAt(i);
       if (group.equals(templatesGroup.getName())) {
         myProjectTypeList.setSelectedIndex(i);
         if (name == null) {
@@ -727,7 +734,9 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     FeatureUsageData data = new FeatureUsageData();
     data.addData("projectType", group.getId());
     data.addPluginInfo(group.getPluginInfo());
-    myFrameworksPanel.reportSelectedFrameworks(eventId, data);
+    if (myCurrentCard.equals(FRAMEWORKS_CARD)) {
+      myFrameworksPanel.reportSelectedFrameworks(eventId, data);
+    }
     ModuleWizardStep step = getCustomStep();
     if (step instanceof StatisticsAwareModuleWizardStep) {
       ((StatisticsAwareModuleWizardStep) step).addCustomFeatureUsageData(eventId, data);

@@ -99,7 +99,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Weaken type";
+      return InspectionGadgetsBundle.message("declare.collection.as.interface.fix.family.name");
     }
 
     @Override

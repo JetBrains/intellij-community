@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -23,18 +24,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class UnindexedFilesUpdater extends DumbModeTask {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
+  private final boolean myStartSuspended;
   private final PushedFilePropertiesUpdater myPusher;
 
-  public UnindexedFilesUpdater(@NotNull Project project) {
+  public UnindexedFilesUpdater(@NotNull Project project, boolean startSuspended) {
     myProject = project;
+    myStartSuspended = startSuspended;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
@@ -44,8 +44,22 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     });
   }
 
+  public UnindexedFilesUpdater(@NotNull Project project) {
+    this(project, false);
+  }
+
   private void updateUnindexedFiles(ProgressIndicator indicator) {
     if (!IndexInfrastructure.hasIndices()) return;
+
+    if (myStartSuspended) {
+      ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
+      if (suspender == null) {
+        throw new IllegalStateException("Indexing progress indicator must be suspendable!");
+      }
+      if (!suspender.isSuspended()) {
+        suspender.suspendProcess(IdeBundle.message("progress.indexing.started.as.suspended"));
+      }
+    }
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     myPusher.pushAllPropertiesNow();
@@ -106,11 +120,11 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       });
     }
     else {
-      VirtualFileManager.getInstance().syncRefresh();
+      ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().syncRefresh());
     }
   }
 
-  private void indexFiles(ProgressIndicator indicator, List<VirtualFile> files) {
+  private void indexFiles(ProgressIndicator indicator, List<? extends VirtualFile> files) {
     CacheUpdateRunner.processFiles(indicator, files, myProject, content -> myIndex.indexFileContent(myProject, content));
   }
 

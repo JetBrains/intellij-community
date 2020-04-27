@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface FacetManagerListener extends EventListener {
 
   void beforeFacetAdded(@NotNull Facet facet);

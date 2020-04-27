@@ -26,7 +26,7 @@ public abstract class SVGLoaderCache {
 
 
   @NotNull
-  private Path cacheFile(@NotNull byte[] theme, @NotNull byte[] imageBytes, double scale) {
+  private Path cacheFile(byte @NotNull [] theme, byte @NotNull [] imageBytes, double scale) {
     try {
       MessageDigest d = MessageDigest.getInstance("SHA-256");
       //caches version
@@ -42,8 +42,8 @@ public abstract class SVGLoaderCache {
   }
 
   @Nullable
-  public final BufferedImage loadFromCache(@NotNull byte[] theme,
-                                           @NotNull byte[] imageBytes,
+  public final BufferedImage loadFromCache(byte @NotNull [] theme,
+                                           byte @NotNull [] imageBytes,
                                            double scale,
                                            @NotNull ImageLoader.Dimension2DDouble docSize) {
     Path file = cacheFile(theme, imageBytes, scale);
@@ -92,8 +92,8 @@ public abstract class SVGLoaderCache {
     }
   }
 
-  public final void storeLoadedImage(@NotNull byte[] theme,
-                                     @NotNull byte[] imageBytes,
+  public final void storeLoadedImage(byte @NotNull [] theme,
+                                     byte @NotNull [] imageBytes,
                                      double scale,
                                      @NotNull BufferedImage image,
                                      @NotNull ImageLoader.Dimension2DDouble size) {

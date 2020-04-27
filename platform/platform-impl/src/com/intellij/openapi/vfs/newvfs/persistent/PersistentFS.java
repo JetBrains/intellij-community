@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -41,11 +41,9 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract void clearIdCache();
 
-  @NotNull
-  public abstract String[] listPersisted(@NotNull VirtualFile parent);
+  public abstract String @NotNull [] listPersisted(@NotNull VirtualFile parent);
 
-  @NotNull
-  public abstract FSRecords.NameId[] listAll(@NotNull VirtualFile parent);
+  public abstract FSRecords.NameId @NotNull [] listAll(@NotNull VirtualFile parent);
 
   public abstract int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
@@ -67,13 +65,11 @@ public abstract class PersistentFS extends ManagingFS {
   @Nullable
   public abstract NewVirtualFile findFileByIdIfCached(int id);
 
-  public abstract int storeUnlinkedContent(@NotNull byte[] bytes);
+  public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
 
-  @NotNull
-  public abstract byte[] contentsToByteArray(int contentId) throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray(int contentId) throws IOException;
 
-  @NotNull
-  public abstract byte[] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException;
+  public abstract byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException;
 
   public abstract int acquireContent(@NotNull VirtualFile file);
 
@@ -97,13 +93,7 @@ public abstract class PersistentFS extends ManagingFS {
   // true if FS persisted at least one child or it has never been queried for children
   public abstract boolean mayHaveChildren(int id);
 
-  @NotNull
-  public static FileAttributes toFileAttributes(int attributes) {
-    final boolean isDirectory = isSet(attributes, IS_DIRECTORY_FLAG);
-    final boolean isSpecial = isSet(attributes, IS_SPECIAL);
-    final boolean isSymlink = isSet(attributes, IS_SYMLINK);
-    final boolean isHidden = isSet(attributes, IS_HIDDEN);
-    final boolean isWritable = !isSet(attributes, IS_READ_ONLY);
-    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, -1, -1, isWritable);
+  public static @NotNull FileAttributes toFileAttributes(@Attributes int attr) {
+    return new FileAttributes(isDirectory(attr), isSpecialFile(attr), isSymLink(attr), isHidden(attr), -1, -1, isWritable(attr));
   }
 }

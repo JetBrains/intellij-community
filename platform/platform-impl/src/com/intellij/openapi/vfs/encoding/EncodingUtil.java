@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.AppTopics;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -60,7 +61,7 @@ public class EncodingUtil {
   // returns NO_WAY if the new encoding is incompatible (bytes on disk will differ)
   // returns WELL_IF_YOU_INSIST if the bytes on disk remain the same but the text will change
   @NotNull
-  static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, @NotNull byte[] bytes, @NotNull Charset charset) {
+  static Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
     byte[] bom = virtualFile.getBOM();
     if (bom != null && !CharsetToolkit.canHaveBom(charset, bom)) return Magic8.NO_WAY;
@@ -95,7 +96,7 @@ public class EncodingUtil {
   }
 
   @NotNull
-  static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, @NotNull byte[] bytesOnDisk, @NotNull Charset charset) {
+  static Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
     try {
       String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
       CharSequence textToSave = lineSeparator.equals("\n") ? text : StringUtilRt.convertLineSeparators(text, lineSeparator);
@@ -122,7 +123,9 @@ public class EncodingUtil {
     documentManager.saveDocument(document);
     boolean writable = ReadonlyStatusHandler.ensureFilesWritable(project, virtualFile);
     if (!writable) {
-      CommonRefactoringUtil.showErrorHint(project, editor, "Cannot save the file " + virtualFile.getPresentableUrl(), "Unable to Save", null);
+      CommonRefactoringUtil.showErrorHint(project, editor,
+                                          IdeBundle.message("dialog.message.cannot.save.the.file.0", virtualFile.getPresentableUrl()),
+                                          IdeBundle.message("dialog.title.unable.to.save"), null);
       return;
     }
 
@@ -136,7 +139,7 @@ public class EncodingUtil {
         });
       }
       catch (IOException io) {
-        Messages.showErrorDialog(project, io.getMessage(), "Error Writing File");
+        Messages.showErrorDialog(project, io.getMessage(), IdeBundle.message("dialog.title.error.writing.file"));
       }
     });
   }

@@ -33,7 +33,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="0" right="2"/>
-                  <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.instance.filters"/>
+                  <text resource-bundle="messages/JavaDebuggerBundle" key="breakpoint.properties.panel.option.instance.filters"/>
                 </properties>
               </component>
               <grid id="5231f" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -71,7 +71,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="0" right="2"/>
-                  <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.class.filters"/>
+                  <text resource-bundle="messages/JavaDebuggerBundle" key="breakpoint.properties.panel.option.class.filters"/>
                 </properties>
               </component>
               <grid id="9bef6" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -106,7 +106,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="0" right="2"/>
-                  <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.pass.count"/>
+                  <text resource-bundle="messages/JavaDebuggerBundle" key="breakpoint.properties.panel.option.pass.count"/>
                 </properties>
               </component>
               <grid id="71095" binding="myPassCountFieldPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -151,7 +151,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="0" right="2"/>
-                  <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.catch.class.filters"/>
+                  <text resource-bundle="messages/JavaDebuggerBundle" key="breakpoint.properties.panel.option.catch.class.filters"/>
                 </properties>
               </component>
               <grid id="63496" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -186,7 +186,7 @@
                 </constraints>
                 <properties>
                   <margin top="2" left="2" bottom="0" right="2"/>
-                  <text resource-bundle="messages/DebuggerBundle" key="breakpoint.properties.panel.option.caller.filter"/>
+                  <text resource-bundle="messages/JavaDebuggerBundle" key="breakpoint.properties.panel.option.caller.filter"/>
                 </properties>
               </component>
               <grid id="63d4d" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

@@ -19,9 +19,6 @@ import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 
-/**
- * @author nik
- */
 @Tag("plugin")
 public class DependencyOnPluginState {
   DependencyOnPluginState() {

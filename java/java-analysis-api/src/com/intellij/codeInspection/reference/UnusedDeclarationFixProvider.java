@@ -29,6 +29,5 @@ import org.jetbrains.annotations.NotNull;
 public interface UnusedDeclarationFixProvider {
   ExtensionPointName<UnusedDeclarationFixProvider> EP_NAME = ExtensionPointName.create("com.intellij.unusedDeclarationFixProvider");
 
-  @NotNull
-  IntentionAction[] getQuickFixes(@NotNull PsiElement unusedElement);
+  IntentionAction @NotNull [] getQuickFixes(@NotNull PsiElement unusedElement);
 }

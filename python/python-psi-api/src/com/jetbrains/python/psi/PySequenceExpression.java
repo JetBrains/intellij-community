@@ -21,8 +21,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public interface PySequenceExpression extends PyExpression{
-  @NotNull
-  PyExpression[] getElements();
+  PyExpression @NotNull [] getElements();
 
   /**
    * Calling {@link #getElements()} may take too much time in case of large literals with thousands of elements. If you only need to

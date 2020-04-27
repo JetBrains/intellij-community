@@ -52,9 +52,8 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
   }
 
-  @NotNull
   @Override
-  public AnAction[] getChildren(@Nullable AnActionEvent e) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myActionGroup.getChildren(e);
   }
 

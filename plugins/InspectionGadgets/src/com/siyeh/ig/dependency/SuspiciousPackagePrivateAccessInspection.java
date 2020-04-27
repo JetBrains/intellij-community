@@ -143,8 +143,8 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
             StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
           LocalQuickFix[] quickFixes =
             IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile());
-          myProblemsHolder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
-                                                      + targetModule.getName() + "'",
+          myProblemsHolder.registerProblem(sourcePsi, InspectionGadgetsBundle
+                                             .message("inspection.suspicious.package.private.access.description", elementDescription, accessType, targetModule.getName()),
                                            ArrayUtil.append(quickFixes,
                                                             new MarkModulesAsLoadedTogetherFix(sourceModule.getName(),
                                                                                                targetModule.getName())));
@@ -298,14 +298,14 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
     @NotNull
     @Override
     public String getName() {
-      return "Mark '" + myModule1 + "' and '" + myModule2 + "' modules as loaded together";
+      return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.text", myModule1, myModule2);
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Mark modules as loaded together";
+      return InspectionGadgetsBundle.message("mark.modules.as.loaded.together.fix.family.name");
     }
 
     @Override

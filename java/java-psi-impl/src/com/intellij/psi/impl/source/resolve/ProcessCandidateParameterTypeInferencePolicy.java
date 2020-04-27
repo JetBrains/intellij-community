@@ -109,8 +109,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
     return null;
   }
 
-  @NotNull
-  protected JavaResolveResult[] getResults(@NotNull PsiCallExpression contextCall, final int exprIdx) throws MethodProcessorSetupFailedException {
+  protected JavaResolveResult @NotNull [] getResults(@NotNull PsiCallExpression contextCall, final int exprIdx) throws MethodProcessorSetupFailedException {
     PsiFile containingFile = contextCall.getContainingFile();
     final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(contextCall, containingFile);
     //can't call resolve() since it obtains full substitution, that may result in infinite recursion

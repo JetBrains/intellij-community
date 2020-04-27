@@ -51,6 +51,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
@@ -83,7 +84,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
       Arrays.sort(descriptors, Comparator.comparing(PsiMetaData::getName));
       Consumer<XmlElementDescriptor> consumer = (selected) ->
-        WriteCommandAction.writeCommandAction(project, file).withName("Generate XML Tag").run(() -> {
+        WriteCommandAction.writeCommandAction(project, file).withName(XmlBundle.message("generate.xml.tag")).run(() -> {
           if (selected == null) return;
           XmlTag newTag = createTag(contextTag, selected);
 
@@ -111,7 +112,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         JBPopupFactory.getInstance()
           .createPopupChooserBuilder(ContainerUtil.newArrayList(descriptors))
           .setRenderer(new MyListCellRenderer())
-          .setTitle("Choose Tag Name")
+          .setTitle(XmlBundle.message("choose.tag.name"))
           .setItemChosenCallback(consumer)
           .setNamerForFiltering(o -> o.getName())
           .createPopup()

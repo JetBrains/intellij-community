@@ -24,62 +24,129 @@ println("Bundled: ${bundled.abs()}")
 println("Syncing")
 sync(repo, bundled)
 
-val whiteList = setOf(
+val whiteList = sequenceOf(
   "__builtin__",
   "__future__",
+  //"_ast", leads to broken tests but could be enabled
+  "_codecs",
+  "_compression",
+  "_csv",
+  "_curses",
+  "_heapq",
+  "_imp",
   "_importlib_modulespec",
   "_io",
+  "_json",
+  "_operator",
+  "_random",
+  "_thread",
   "abc",
   "argparse",
+  "array",
+  "ast",
   "asyncio",
   "attr",
+  "audioop",
+  "bdb",
+  "binascii",
   "builtins",
+  "cmath",
+  "cmd",
+  "codecs",
   "collections",
   "concurrent",
+  "configparser",
   "contextvars",
   "cPickle",
   "crypt",
+  "Crypto",
+  "cryptography",
+  "csv",
   "ctypes",
+  "curses",
   "datetime",
+  "dateutil",
+  "dbm",
+  "decimal",
+  "difflib",
+  "distutils",
   "email",
   "exceptions",
+  "fcntl",
+  //"formatter", leads to broken tests but could be enabled
   "functools",
+  "gc",
   "genericpath",
+  "gflags",
+  "hashlib",
+  "heapq",
+  "http",
+  "imaplib",
+  "inspect",
   "io",
+  "ipaddress",
   "itertools",
+  "json",
   "logging",
   "macpath",
+  "marshal",
   "math",
   "mock",
+  "modulefinder",
   "multiprocessing",
   "ntpath",
   "numbers",
-  "pathlib",
-  "queue",
+  "opcode",
+  "operator",
+  //"optparse", deprecated
+  "orjson",
   "os",
   "os2emxpath",
+  "pathlib",
+  "pdb",
+  "pickle",
+  //"platform", leads to broken tests but could be enabled
+  "plistlib",
   "posix",
   "posixpath",
+  "pprint",
+  "py_compile",
+  "pyexpat",
+  "queue",
   "re",
+  "requests",
+  "resource",
   "shutil",
   "signal",
   "six",
   "socket",
+  "socketserver",
   "sqlite3",
+  "sre_constants",
+  "sre_parse",
   "ssl",
   "subprocess",
   "sys",
+  "tempfile",
   "threading",
   "time",
+  "token",
+  "tokenize",
+  "turtle",
   "types",
   "typing",
   "typing_extensions",
   "unittest",
   "urllib",
+  "uu",
   "uuid",
+  "webbrowser",
   "werkzeug",
-  "xml"
-)
+  "xml",
+  "zipapp",
+  "zipimport",
+  "zlib"
+).mapTo(hashSetOf()) { it.toLowerCase() }
 
 println("Cleaning")
 cleanTopLevelPackages(bundled, whiteList)
@@ -102,9 +169,9 @@ fun sync(repo: Path, bundled: Path) {
                         ".gitignore",
                         ".travis.yml",
                         "CONTRIBUTING.md",
-                        "README.md",
                         "LICENSE",
-                        "requirements-tests-py2.txt",
+                        "pyproject.toml",
+                        "README.md",
                         "requirements-tests-py3.txt")
 
   Files
@@ -123,12 +190,27 @@ fun sync(repo: Path, bundled: Path) {
 }
 
 fun cleanTopLevelPackages(typeshed: Path, whiteList: Set<String>) {
+  val blackList = mutableSetOf<String>()
+
   sequenceOf(typeshed)
     .flatMap { sequenceOf(it.resolve("stdlib"), it.resolve("third_party")) }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
     .flatMap { Files.newDirectoryStream(it).asSequence() }
-    .filter { it.nameWithoutExtension() !in whiteList }
+    .filter {
+      val name = it.nameWithoutExtension().toLowerCase()
+
+      if (name !in whiteList) {
+        blackList.add(name)
+        true
+      }
+      else {
+        false
+      }
+    }
     .forEach { it.delete() }
+
+  println("White list size: ${whiteList.size}")
+  println("Black list size: ${blackList.size}")
 }
 
 fun Path.abs() = toAbsolutePath()

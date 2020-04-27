@@ -38,14 +38,12 @@ public class PsiReferenceParameterListImpl extends CompositePsiElement implement
   }
 
   @Override
-  @NotNull
-  public PsiTypeElement[] getTypeParameterElements() {
+  public PsiTypeElement @NotNull [] getTypeParameterElements() {
     return getChildrenAsPsiElements(JavaElementType.TYPE, PsiTypeElement.ARRAY_FACTORY);
   }
 
   @Override
-  @NotNull
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     return PsiImplUtil.typesByReferenceParameterList(this);
   }
 

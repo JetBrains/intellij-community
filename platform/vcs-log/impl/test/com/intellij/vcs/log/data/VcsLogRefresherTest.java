@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
@@ -19,6 +18,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.test.VcsPlatformTest;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +194,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
       }
 
       @Override
-      public void displayFatalErrorMessage(@NotNull String message) {
+      public void displayFatalErrorMessage(@Nls @NotNull String message) {
         LOG.error(message);
       }
     }, myProject);
@@ -253,7 +253,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
 
     @NotNull
     public DataPack get(long timeout, @NotNull TimeUnit timeUnit) throws InterruptedException {
-      return ObjectUtils.assertNotNull(myQueue.poll(timeout, timeUnit));
+      return Objects.requireNonNull(myQueue.poll(timeout, timeUnit));
     }
 
     public boolean failed() {

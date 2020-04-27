@@ -24,11 +24,12 @@ import gnu.trove.TObjectObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Key, Value> {
+public class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key, Value> {
   private static final boolean ourDiffUpdateEnabled = SystemProperties.getBooleanProperty("idea.disable.diff.index.update", true);
 
   @NotNull
@@ -130,8 +131,9 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
   }
 
   @NotNull
-  public Map<Key, Value> getMap() {
-    return myMap;
+  @Override
+  public Collection<Key> getKeys() {
+    return myMap.keySet();
   }
 
   private static final AtomicInteger requests = new AtomicInteger();

@@ -8,9 +8,6 @@ import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface Deployment {
   @NotNull
   String getName();

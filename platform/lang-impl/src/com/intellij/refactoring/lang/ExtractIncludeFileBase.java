@@ -147,7 +147,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
   }
 
   @NotNull
@@ -287,7 +287,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
 
   @Override
   public String getActionTitle() {
-    return "Extract Include File...";
+    return RefactoringBundle.message("extract.include.file.action.title");
   }
 
   protected String getRefactoringName() {

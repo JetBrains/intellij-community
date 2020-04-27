@@ -24,7 +24,8 @@ OCTINTEGER = 0[Oo]?("_"?{OCTDIGIT})+
 BININTEGER = 0[Bb]("_"?{BINDIGIT})+
 DECIMALINTEGER = (({NONZERODIGIT}("_"?{DIGIT})*)|0)
 INTEGER = {DECIMALINTEGER}|{OCTINTEGER}|{HEXINTEGER}|{BININTEGER}
-LONGINTEGER = {INTEGER}[Ll]
+INTEGER_SUFFIX = u|l|ll|U|L|LL|ul|ull|lu|llu|uL|Ul|UL|uLL|Ull|ULL|lU|Lu|LU|llU|LLu|LLU
+LONGINTEGER = {INTEGER}{INTEGER_SUFFIX}
 
 END_OF_LINE_COMMENT="#"[^\r\n]*
 
@@ -101,8 +102,8 @@ return yylength()-s.length();
 %%
 
 <FSTRING> {
-  {FSTRING_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
-  "\\" { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_TEXT_NO_QUOTES} { return fStringHelper.getTextTokenType(); }
+  "\\" { return fStringHelper.getTextTokenType(); }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
@@ -136,8 +137,8 @@ return yylength()-s.length();
 }
 
 <FSTRING_FRAGMENT_FORMAT> {
-  {FSTRING_FORMAT_TEXT_NO_QUOTES} { return PyTokenTypes.FSTRING_TEXT; }
-  "\\" { return PyTokenTypes.FSTRING_TEXT; }
+  {FSTRING_FORMAT_TEXT_NO_QUOTES} { return fStringHelper.getTextTokenType(); }
+  "\\" { return fStringHelper.getTextTokenType(); }
   [\n] { return fStringHelper.handleLineBreakInLiteralText(); }
   {FSTRING_QUOTES} { return fStringHelper.handleFStringEnd(); }
   "{" { return fStringHelper.handleFragmentStart(); }
@@ -147,6 +148,7 @@ return yylength()-s.length();
 }
 
 [\ ]                        { return PyTokenTypes.SPACE; }
+[\u000b]                    { return PyTokenTypes.BAD_CHARACTER; }
 [\t]                        { return PyTokenTypes.TAB; }
 [\f]                        { return PyTokenTypes.FORMFEED; }
 "\\"                        { return PyTokenTypes.BACKSLASH; }

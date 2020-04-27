@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -17,6 +16,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlDomBundle;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
 import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.highlighting.DomElementProblemDescriptor;
@@ -30,12 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import java.util.*;
 
 /**
  * @author peter
@@ -66,7 +62,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
                               @NonNls String subTagName,
                               final boolean editable,
                               ColumnInfo<T, ?>... columnInfos) {
-    this(parentElement, assertNotNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)), editable, columnInfos);
+    this(parentElement, Objects.requireNonNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)), editable, columnInfos);
   }
 
   public DomCollectionControl(@NotNull DomElement parentElement, @NotNull DomCollectionChildDescription description) {
@@ -75,7 +71,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   public DomCollectionControl(@NotNull DomElement parentElement, @NotNull @NonNls String subTagName) {
-    this(parentElement, assertNotNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)));
+    this(parentElement, Objects.requireNonNull(parentElement.getGenericInfo().getCollectionChildDescription(subTagName)));
   }
 
   public boolean isEditable() {
@@ -283,8 +279,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     return (List<T>)myChildDescription.getValues(myParentDomElement);
   }
 
-  @Nullable
-  protected AnAction[] createAdditionActions() {
+  protected AnAction @Nullable [] createAdditionActions() {
     return null;
   }
 
@@ -383,8 +378,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    @NotNull
-    protected DomCollectionChildDescription[] getDomCollectionChildDescriptions(final AnActionEvent e) {
+    protected DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e) {
       return new DomCollectionChildDescription[]{getDomCollectionControl(e).getChildDescription()};
     }
 
@@ -399,8 +393,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
     }
 
     @Override
-    @NotNull
-    public AnAction[] getChildren(final AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(final AnActionEvent e) {
       final DomCollectionControl control = getDomCollectionControl(e);
       AnAction[] actions = control.createAdditionActions();
       return actions == null ? super.getChildren(e) : actions;
@@ -419,7 +412,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   public static class EditAction extends AnAction {
 
     public EditAction() {
-      super(ApplicationBundle.message("action.edit"), null, IconUtil.getEditIcon());
+      super(XmlDomBundle.message("action.edit"), null, IconUtil.getEditIcon());
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.EDIT));
     }
 
@@ -441,7 +434,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
 
   public static class RemoveAction extends AnAction {
     public RemoveAction() {
-      super(ApplicationBundle.message("action.remove"), null, IconUtil.getRemoveIcon());
+      super(XmlDomBundle.message("action.remove"), null, IconUtil.getRemoveIcon());
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE));
     }
 

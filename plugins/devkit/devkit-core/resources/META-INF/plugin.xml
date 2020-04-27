@@ -9,12 +9,14 @@
     <a href="http://www.jetbrains.org/intellij/sdk/docs/">IntelliJ Platform SDK Docs</a>
   ]]></description>
 
-  <category>inspection</category>
+  <category>Plugin Development</category>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
   <depends>com.intellij.modules.java</depends>
   <depends>com.intellij.modules.json</depends>
+  <depends config-file="i18n-devkit.xml" optional="true">com.intellij.java-i18n</depends>
+  <depends config-file="images-devkit.xml" optional="true">com.intellij.platform.images</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
   <depends config-file="groovy-devkit.xml" optional="true">org.intellij.groovy</depends>
   <depends config-file="uidesigner-devkit.xml" optional="true">com.intellij.uiDesigner</depends>
@@ -283,14 +285,13 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.ExtensionDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
+    <psi.referenceContributor
+      language="Properties"
+      implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor"/>
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
-
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaThemeFilter"/>
-    <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DarculaHiDPIThemeFilter"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <applicationService serviceImplementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IdeExternalAnnotationsUpdater"/>
@@ -363,6 +364,7 @@
       <action id="NewApplicationService" class="org.jetbrains.idea.devkit.actions.service.NewApplicationServiceAction"/>
       <action id="NewProjectService" class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
       <action id="NewModuleService" class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.NewMessageBundleAction"/>
       <separator/>
       <action id="DevKit.NewTheme" class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>

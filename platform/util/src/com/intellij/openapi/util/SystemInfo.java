@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -13,14 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
  */
 @SuppressWarnings("unused")
-public class SystemInfo extends SystemInfoRt {
+public final class SystemInfo {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;
   public static final String OS_ARCH = System.getProperty("os.arch");
@@ -41,27 +40,17 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isUnix = SystemInfoRt.isUnix;
   public static final boolean isChromeOS = isLinux && isCrostini();
 
-  public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
-  public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
-  public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
-  public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
-  public static final boolean isAzulJvm = containsIgnoreCase(JAVA_VENDOR, "Azul");
-  public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
+  public static final boolean isAppleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Apple");
+  public static final boolean isOracleJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Oracle");
+  public static final boolean isSunJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Sun") && StringUtil
+    .containsIgnoreCase(JAVA_VENDOR, "Microsystems");
+  public static final boolean isIbmJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isAzulJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "Azul");
+  public static final boolean isJetBrainsJvm = StringUtil.containsIgnoreCase(JAVA_VENDOR, "JetBrains");
   public static final boolean isStudioJvm = isStudioJvm();
 
   @ReviseWhenPortedToJDK("9")
-  public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
-
-  @SuppressWarnings("JavaReflectionMemberAccess")
-  private static boolean isModularJava() {
-    try {
-      Class.class.getMethod("getModule");
-      return true;
-    }
-    catch (Throwable t) {
-      return false;
-    }
-  }
+  public static final boolean IS_AT_LEAST_JAVA9 = SystemInfoRt.IS_AT_LEAST_JAVA9;
 
   @SuppressWarnings("SpellCheckingInspection")
   private static boolean isCrostini() {
@@ -173,11 +162,7 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static String getOsNameAndVersion() {
-    String osName = System.getProperty("os.name");
-    if (isMacOSSierra) {
-      osName = "macOS"; //JDK always returns Mac OS X
-    }
-    return osName + " " + System.getProperty("os.version");
+    return (isMacOSSierra ? "macOS" : OS_NAME) + ' ' + OS_VERSION;
   }
 
   private static int normalize(int number) {
@@ -186,7 +171,7 @@ public class SystemInfo extends SystemInfoRt {
 
   private static int toInt(String string) {
     try {
-      return Integer.valueOf(string);
+      return Integer.parseInt(string);
     }
     catch (NumberFormatException e) {
       return 0;

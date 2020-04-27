@@ -4,6 +4,7 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.lang.Language;
@@ -137,7 +138,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       return edit != null && edit.getTemplatePresentation().isEnabled();
     });
     decorator.setEditAction(button -> performEditAction());
-    decorator.addExtraAction(new DumbAwareActionButton("Duplicate", "Duplicate", PlatformIcons.COPY_ICON) {
+    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
+                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.duplicate"),
+                                                       PlatformIcons.COPY_ICON) {
 
       @Override
       public boolean isEnabled() {
@@ -154,14 +157,20 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       }
     });
 
-    decorator.addExtraAction(new DumbAwareActionButton("Enable Selected Injections", "Enable Selected Injections", PlatformIcons.SELECT_ALL_ICON) {
+    decorator.addExtraAction(
+      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
+                                IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
+                                PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         performSelectedInjectionsEnabled(true);
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Disable Selected Injections", "Disable Selected Injections", PlatformIcons.UNSELECT_ALL_ICON) {
+    decorator.addExtraAction(
+      new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
+                                IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
+                                PlatformIcons.UNSELECT_ALL_ICON) {
 
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -169,7 +178,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         }
       });
 
-    new DumbAwareAction("Toggle") {
+    new DumbAwareAction(IdeBundle.messagePointer("action.Anonymous.text.toggle")) {
       @Override
       public void update(@NotNull AnActionEvent e) {
         SpeedSearchSupply supply = SpeedSearchSupply.getSupply(myInjectionsTable);
@@ -183,7 +192,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myInjectionsTable);
 
     if (myInfos.length > 1) {
-      AnActionButton shareAction = new DumbAwareActionButton("Move to IDE Scope", null, PlatformIcons.IMPORT_ICON) {
+      AnActionButton shareAction =
+        new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
+                                  PlatformIcons.IMPORT_ICON) {
         {
           addCustomUpdater(e -> {
             CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());
@@ -228,7 +239,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       shareAction.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK)));
       decorator.addExtraAction(shareAction);
     }
-    decorator.addExtraAction(new DumbAwareActionButton("Import", "Import", AllIcons.Actions.Install) {
+    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.import"),
+                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.import"),
+                                                       AllIcons.Actions.Install) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -236,7 +249,9 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         updateCountLabel();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.ToolbarDecorator.Export) {
+    decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.export"),
+                                                       IntelliLangBundle.messagePointer("action.AnActionButton.description.export"),
+                                                       AllIcons.ToolbarDecorator.Export) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {

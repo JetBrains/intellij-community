@@ -130,8 +130,7 @@ public class X11UiUtil {
       return values != null && values.length > 0 ? values[0] : null;
     }
 
-    @Nullable
-    private long[] getLongArrayProperty(long window, long name, long type) throws Exception {
+    private long @Nullable [] getLongArrayProperty(long window, long name, long type) throws Exception {
       return getWindowProperty(window, name, type, FORMAT_LONG);
     }
 

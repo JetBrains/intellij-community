@@ -14,6 +14,7 @@ import com.intellij.psi.impl.AllowedApiFilterExtension;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.typeMigration.TypeMigrationBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationVariableTypeFixProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert to ThreadLocal";
+    return TypeMigrationBundle.message("convert.to.threadlocal.family.name");
   }
 
   @Override

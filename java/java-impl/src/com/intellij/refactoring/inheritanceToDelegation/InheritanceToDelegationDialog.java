@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inheritanceToDelegation;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -9,7 +10,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.ClassCellRenderer;
@@ -165,7 +165,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     panel.add(classComboLabel, gbc);
     gbc.gridy++;
     panel.add(myClassCombo, gbc);
-    classComboLabel.setText(RefactoringBundle.message("replace.inheritance.from"));
+    classComboLabel.setText(JavaRefactoringBundle.message("replace.inheritance.from"));
 
     myClassComboItemListener = new MyClassComboItemListener();
     myClassCombo.addItemListener(myClassComboItemListener);
@@ -182,7 +182,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.insets = JBUI.insets(4, 0, 4, 8);
     gbc.weightx = 1.0;
     panel.add(myFieldNameField.getComponent(), gbc);
-    fieldNameLabel.setText(RefactoringBundle.message("field.name"));
+    fieldNameLabel.setText(JavaRefactoringBundle.message("field.name"));
 
     //    if(InheritanceToDelegationUtil.isInnerClassNeeded(myClass, mySuperClass)) {
     gbc.gridx = 0;
@@ -203,7 +203,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.insets = JBUI.insets(4, 4, 4, 8);
     gbc.weightx = 1.0;
     panel.add(myInnerClassNameField.getComponent(), gbc);
-    innerClassNameLabel.setText(RefactoringBundle.message("inner.class.name"));
+    innerClassNameLabel.setText(JavaRefactoringBundle.message("inner.class.name"));
 
     boolean innerClassNeeded = false;
     for (PsiClass superClass : mySuperClasses) {
@@ -231,7 +231,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.insets = JBUI.insets(4, 0, 4, 4);
 
-    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.emptyList(), null);
+    myMemberSelectionPanel = new MemberSelectionPanel(JavaRefactoringBundle.message("delegate.members"), Collections.emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);
     MyMemberInfoModel memberInfoModel = new InheritanceToDelegationDialog.MyMemberInfoModel();
     myMemberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);
@@ -241,7 +241,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridy++;
     gbc.insets = JBUI.insets(4, 8, 0, 8);
     gbc.weighty = 0.0;
-    myCbGenerateGetter = new JCheckBox(RefactoringBundle.message("generate.getter.for.delegated.component"));
+    myCbGenerateGetter = new JCheckBox(JavaRefactoringBundle.message("generate.getter.for.delegated.component"));
     myCbGenerateGetter.setFocusable(false);
     panel.add(myCbGenerateGetter, gbc);
     myCbGenerateGetter.setSelected(JavaRefactoringSettings.getInstance().INHERITANCE_TO_DELEGATION_DELEGATE_OTHER);

@@ -16,12 +16,12 @@
 
 package com.intellij.codeInspection.actions;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +45,7 @@ public abstract class CleanupIntention implements IntentionAction, LowPriorityAc
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("cleanup.in.scope");
+    return AnalysisBundle.message("cleanup.in.scope");
   }
 
   @Override

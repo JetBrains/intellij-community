@@ -74,13 +74,14 @@ class ImlReplaceBySourceTest {
     builder.replaceBySource({ true }, replaceWith.toStorage())
 
     val changes = builder.collectChanges(before).values.flatten()
-    Assert.assertEquals(3, changes.size)
+    Assert.assertEquals(5, changes.size)
 
     Assert.assertEquals(3, (changes[0] as EntityChange.Replaced<ModuleEntity>).oldEntity.dependencies.size)
     Assert.assertEquals(2, (changes[0] as EntityChange.Replaced<ModuleEntity>).newEntity.dependencies.size)
 
-    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl().url, (changes[1] as EntityChange.Added<SourceRootEntity>).entity.url.url)
-    Assert.assertEquals(true, (changes[2] as EntityChange.Added<JavaSourceRootEntity>).entity.generated)
+    // Changes 1 & 2 handle source roots ordering [ModuleSerializersFactory.SourceRootOrderEntry]
+    Assert.assertEquals(File(temp.root, "src2").toVirtualFileUrl().url, (changes[3] as EntityChange.Added<SourceRootEntity>).entity.url.url)
+    Assert.assertEquals(true, (changes[4] as EntityChange.Added<JavaSourceRootEntity>).entity.generated)
   }
 
   private fun replaceBySourceFullReplace(projectFile: File) {

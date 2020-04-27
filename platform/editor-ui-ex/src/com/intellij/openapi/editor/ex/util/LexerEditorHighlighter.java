@@ -590,7 +590,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @NotNull
-  TextAttributes convertAttributes(@NotNull TextAttributesKey[] keys) {
+  TextAttributes convertAttributes(TextAttributesKey @NotNull [] keys) {
     TextAttributes resultAttributes = new TextAttributes();
     boolean firstPass = true;
     for (TextAttributesKey key : keys) {
@@ -690,9 +690,8 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       myAttachments = new Attachment[] {new Attachment("content.txt", highlighter.myLexer.getBufferSequence().toString())};
     }
 
-    @NotNull
     @Override
-    public Attachment[] getAttachments() {
+    public Attachment @NotNull [] getAttachments() {
       return myAttachments;
     }
   }

@@ -15,8 +15,7 @@ public abstract class RestPreviewProvider {
   @Nullable
   public abstract Pair<String, String> toHtml(String text, VirtualFile virtualFile, Project project);
 
-  @NotNull
-  public static RestPreviewProvider[] getProviders() {
+  public static RestPreviewProvider @NotNull [] getProviders() {
     return EP_NAME.getExtensions();
   }
 

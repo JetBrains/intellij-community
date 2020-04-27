@@ -57,7 +57,7 @@ public class CommittedListsSequencesZipperTest {
     check(valuesWithCount, list(1, 7, 11, 111), list(1, 7, 11, 111), list(1, 7, 11, 111));
   }
 
-  private static void check(@NotNull long[][] expected, @NotNull List<CommittedChangeList>... lists) {
+  private static void check(long[] @NotNull [] expected, List<CommittedChangeList> @NotNull ... lists) {
     CommittedListsSequencesZipper zipper = new CommittedListsSequencesZipper(ConvertorZipper.ourInstance);
     int id = 0;
 
@@ -68,7 +68,7 @@ public class CommittedListsSequencesZipperTest {
     checkResult(zipper.execute(), expected);
   }
 
-  private static void checkResult(@NotNull List<CommittedChangeList> result, @NotNull long[]... numbers) {
+  private static void checkResult(@NotNull List<CommittedChangeList> result, long[] @NotNull ... numbers) {
     final Set<Long> nums = new HashSet<>();
     final Map<Long, Integer> zipped = new HashMap<>();
     for (long[] pair : numbers) {
@@ -122,7 +122,7 @@ public class CommittedListsSequencesZipperTest {
   }
 
   @NotNull
-  private static List<CommittedChangeList> list(@NotNull long... numbers) {
+  private static List<CommittedChangeList> list(long @NotNull ... numbers) {
     List<CommittedChangeList> result = new ArrayList<>(numbers.length);
 
     for (long number : numbers) {

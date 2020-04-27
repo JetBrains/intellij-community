@@ -42,7 +42,7 @@ public abstract class CompletionFinalSorter {
    * For debugging purposes, provide weights by which completion will be sorted.
    */
   @NotNull
-  public abstract Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> elements);
+  public abstract Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> elements);
 
 
   @ApiStatus.Internal
@@ -68,7 +68,7 @@ public abstract class CompletionFinalSorter {
 
     @NotNull
     @Override
-    public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<LookupElement> elements) {
+    public Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> elements) {
       return Collections.emptyMap();
     }
   };

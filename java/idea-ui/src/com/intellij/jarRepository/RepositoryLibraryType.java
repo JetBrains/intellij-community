@@ -28,9 +28,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
 
   public static final PersistentLibraryKind<RepositoryLibraryProperties>

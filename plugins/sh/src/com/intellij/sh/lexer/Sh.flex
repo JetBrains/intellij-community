@@ -86,7 +86,8 @@ EscapedChar              = "\\" [^\n]
 Quote                    = \"
 
 UnclosedRawString        = '[^']*
-RawString                = {UnclosedRawString}'
+DollarSignRawString      = "$'"([^'] | {EscapedChar})*
+RawString                = {UnclosedRawString}' | {DollarSignRawString}'
 
 WordFirst                = [[:letter:]||[:digit:]||[_/@?.*:%\^+,~-]] | {EscapedChar} | [\u00C0-\u00FF] | {LineContinuation}
 WordAfter                = {WordFirst} | [#!]

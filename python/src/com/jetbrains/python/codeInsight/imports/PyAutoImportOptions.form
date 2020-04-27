@@ -17,14 +17,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Python"/>
+        <border type="none" title-resource-bundle="messages/PyBundle" title-key="form.auto.import.python"/>
         <children>
           <component id="be5f2" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Preferred import style:"/>
+              <text resource-bundle="messages/PyBundle" key="form.auto.import.preferred.import.style"/>
             </properties>
           </component>
           <vspacer id="8f8c8">
@@ -37,7 +37,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="from &lt;module&gt; import &lt;name&gt;"/>
+              <text resource-bundle="messages/PyBundle" key="form.auto.import.from.module.import.name"/>
             </properties>
           </component>
           <component id="5a7d0" class="javax.swing.JRadioButton" binding="myRbImport">
@@ -45,7 +45,7 @@
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="import &lt;module&gt;.&lt;name&gt;"/>
+              <text resource-bundle="messages/PyBundle" key="form.auto.import.import.module.name"/>
             </properties>
           </component>
           <component id="44541" class="javax.swing.JCheckBox" binding="myShowImportPopupCheckBox" default-binding="true">
@@ -53,7 +53,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Show import popup"/>
+              <text resource-bundle="messages/PyBundle" key="form.auto.import.auto.import.show.popup"/>
             </properties>
           </component>
         </children>

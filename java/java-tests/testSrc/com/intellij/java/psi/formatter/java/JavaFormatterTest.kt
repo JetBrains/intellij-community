@@ -13,6 +13,8 @@ import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.IncorrectOperationException
 
 /**
@@ -20,6 +22,10 @@ import com.intellij.util.IncorrectOperationException
  * java formatting test classes.
  */
 class JavaFormatterTest : AbstractJavaFormatterTest() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_14
+  }
+
   fun testPaymentManager() {
     settings.KEEP_LINE_BREAKS = false
     doTest("paymentManager.java", "paymentManager_after.java")
@@ -3876,5 +3882,118 @@ public enum LevelCode {
       }
       """.trimIndent()
     )
+  }
+
+  fun testRecordHeaderLparenOnNewLine() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = true
+    }
+    doTextTest("""
+      record A(String s
+        ) {}
+    """.trimIndent(), """
+      record A(
+              String s
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderLparenNotOnNewLine() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
+    }
+    settings.KEEP_LINE_BREAKS = false
+    doTextTest("""
+      record A(String s
+        ) {}
+    """.trimIndent(), """
+      record A(String s) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderRparenOnNewLine() {
+    javaSettings.apply {
+      RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = true
+    }
+    doTextTest("""
+      record A(String s,
+            String a) {}
+    """.trimIndent(), """
+      record A(String s,
+               String a
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderRparenNotOnNewLine() {
+    javaSettings.apply {
+      RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = false
+    }
+    settings.KEEP_LINE_BREAKS = false
+    doTextTest("""
+      record A(
+            String s,
+            String a
+      ) {
+      }
+    """.trimIndent(), """
+        record A(String s, String a) {
+        }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderMultilineAlign() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
+      ALIGN_MULTILINE_RECORDS = true
+    }
+    doTextTest("""
+      record A(String s,
+        String a
+      ) {}
+    """.trimIndent(), """
+      record A(String s,
+               String a
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testRecordHeaderNotMultilineAlign() {
+    javaSettings.apply {
+      NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false
+      ALIGN_MULTILINE_RECORDS = false
+    }
+    doTextTest("""
+      record A(String s,
+        String a
+      ) {}
+    """.trimIndent(), """
+      record A(String s,
+              String a
+      ) {
+      }
+    """.trimIndent())
+  }
+
+  fun testInstanceofPatternWithGeneric() {
+
+    doTextTest("""
+      class A{
+       void foo(Object x) {
+        if (x instanceof List<String> a) {}
+       }
+      }
+    """.trimIndent(), """
+      class A {
+          void foo(Object x) {
+              if (x instanceof List<String> a) {
+              }
+          }
+      }
+    """.trimIndent())
   }
 }

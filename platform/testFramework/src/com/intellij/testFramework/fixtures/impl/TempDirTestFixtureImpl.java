@@ -180,6 +180,9 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   protected Path doCreateTempDirectory() {
     try {
       Path tempHome = getTempHome();
+      if (tempHome != null && !Files.isDirectory(tempHome)) {
+        Files.createDirectory(tempHome);
+      }
       return Files.createTempDirectory(tempHome == null ? Paths.get(FileUtil.getTempDirectory()) : tempHome, "unitTest");
     }
     catch (IOException e) {

@@ -30,9 +30,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementUtil;
 
 public class TraitMethodImplementor implements MethodImplementor {
-  @NotNull
   @Override
-  public PsiMethod[] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
+  public PsiMethod @NotNull [] createImplementationPrototypes(PsiClass inClass, PsiMethod method) throws IncorrectOperationException {
     if (!(inClass instanceof GrTypeDefinition && method instanceof GrTraitMethod)) return PsiMethod.EMPTY_ARRAY;
 
     final PsiClass containingClass = method.getContainingClass();
@@ -56,9 +55,8 @@ public class TraitMethodImplementor implements MethodImplementor {
     return new GroovyMethodImplementor.PsiMethodConsumer(targetClass, toCopyJavaDoc, baseMethod, insertOverrideIfPossible);
   }
 
-  @NotNull
   @Override
-  public PsiMethod[] getMethodsToImplement(PsiClass aClass) {
+  public PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass) {
     return PsiMethod.EMPTY_ARRAY;
   }
 }

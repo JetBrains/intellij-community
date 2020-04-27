@@ -2,7 +2,6 @@
 package org.zmlx.hg4idea.status;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -57,7 +56,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
       return;
     }
     myUpdateStarted.set(true);
-    ApplicationManager.getApplication().invokeLater(() -> new Task.Backgroundable(project, getProgressTitle(), true) {
+    new Task.Backgroundable(project, getProgressTitle(), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;
@@ -71,7 +70,7 @@ public class HgRemoteStatusUpdater implements HgUpdater {
         indicator.stop();
         myUpdateStarted.set(false);
       }
-    }.queue());
+    }.queue();
   }
 
 

@@ -26,8 +26,6 @@ import java.util.Set;
 
 /**
  * Describes a source root of a build target.
- *
- * @author nik
  */
 public abstract class BuildRootDescriptor {
   /**

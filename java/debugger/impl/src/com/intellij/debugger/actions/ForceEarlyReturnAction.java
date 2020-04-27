@@ -2,7 +2,7 @@
 
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.JavaValue;
@@ -58,7 +58,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
           method = proxy.location().method();
         }
         catch (EvaluateException e) {
-          showError(project, DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
+          showError(project, JavaDebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
           return;
         }
 
@@ -97,7 +97,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                                                  @Override
                                                  public void errorOccurred(@NotNull String errorMessage) {
                                                    showError(debugProcess.getProject(),
-                                                             DebuggerBundle.message("error.executing.finally", errorMessage));
+                                                             JavaDebuggerBundle.message("error.executing.finally", errorMessage));
                                                  }
                                                })) {
         return;
@@ -118,7 +118,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
           thread.forceEarlyReturn(value);
         }
         catch (Exception e) {
-          showError(debugProcess.getProject(), DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
+          showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
           return;
         }
         //noinspection SSBasedInspection
@@ -153,7 +153,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
 
                            @Override
                            public void errorOccurred(@NotNull final String errorMessage) {
-                             showError(project, DebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
+                             showError(project, JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
                            }
                          }, stackFrame.getSourcePosition());
     }

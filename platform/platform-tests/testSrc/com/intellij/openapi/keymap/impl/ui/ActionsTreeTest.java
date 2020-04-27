@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.diagnostic.PluginException;
@@ -23,6 +23,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
   private static final Logger LOG = Logger.getInstance(ActionsTreeTest.class);
@@ -196,32 +198,35 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
 
     List<String> failures = new SmartList<>();
     for (String id : manager.getActionIds("")) {
-      if (!ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
-        try {
-          AnAction stub = manager.getActionOrStub(id);
-          AnAction action = manager.getAction(id);
-          String message = id + " (" + action.getClass().getName() + ")";
-          if (stub != action) {
-            Presentation before = stub.getTemplatePresentation();
-            Presentation after = action.getTemplatePresentation();
-            checkPresentationProperty("icon", message, before.getIcon(), after.getIcon());
-            checkPresentationProperty("text", message, before.getText(), after.getText());
-            checkPresentationProperty("description", message, before.getDescription(), after.getDescription());
-          }
-          if (action instanceof ActionGroup) {
-            LOG.debug("ignored action group: " + message);
-          }
-          else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
-            failures.add("no text: " + message);
-          }
+      if (ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
+        continue;
+      }
+
+      try {
+        AnAction stub = manager.getActionOrStub(id);
+        AnAction action = manager.getAction(id);
+        String message = id + " (" + action.getClass().getName() + ")";
+        if (stub != action) {
+          Presentation before = stub.getTemplatePresentation();
+          Presentation after = action.getTemplatePresentation();
+          checkPresentationProperty("icon", message, before.getIcon(), after.getIcon());
+          checkPresentationProperty("text", message, before.getText(), after.getText());
+          checkPresentationProperty("description", message, before.getDescription(), after.getDescription());
         }
-        catch (PluginException exception) {
-          LOG.debug(id + " ignored because " + exception.getMessage());
+
+        if (action instanceof ActionGroup) {
+          LOG.debug("ignored action group: " + message);
         }
+        else if (StringUtil.isEmpty(action.getTemplatePresentation().getText())) {
+          failures.add("no text: " + message);
+        }
+      }
+      catch (PluginException exception) {
+        LOG.debug(id + " ignored because " + exception.getMessage());
       }
     }
 
-    assertEmpty(failures);
+    assertThat(failures).isEmpty();
   }
 
   private static void checkPresentationProperty(String name, String message, Object expected, Object actual) {

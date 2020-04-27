@@ -15,7 +15,7 @@ public class SpellCheckerNotificationUtils {
   static void showNotification(final Project project,
                                @NotNull String title,
                                @NotNull String message,
-                               @NotNull NotificationAction... actions) {
+                               NotificationAction @NotNull ... actions) {
     final Notification notification =
       new Notification(NOTIFICATION_GROUP.getDisplayId(), title, message, INFORMATION, null);
     for (NotificationAction action : actions) {

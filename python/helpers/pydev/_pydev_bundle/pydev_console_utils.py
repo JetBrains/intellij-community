@@ -12,7 +12,7 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_thrift
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from pydev_console.protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
+from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, PythonUnhandledException
 
 try:
     import cStringIO as StringIO  # may not always be available @UnusedImport

@@ -2,7 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -205,7 +205,7 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
     if (myEventSet != null) {
       return myEventSet.toString();
     }
-    return myThread != null ? myThread.toString() : DebuggerBundle.message("string.null.context");
+    return myThread != null ? myThread.toString() : JavaDebuggerBundle.message("string.null.context");
   }
 
   public void keep(ObjectReference reference) {

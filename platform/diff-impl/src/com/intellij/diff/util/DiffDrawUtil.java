@@ -6,12 +6,12 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Computable;
@@ -37,9 +37,9 @@ public class DiffDrawUtil {
   private static final Logger LOG = Logger.getInstance(DiffDrawUtil.class);
 
   public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
-  public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
-  public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
-  public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+  public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 102;
+  public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 101;
+  public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 100;
   public static final int LST_LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
 
   private static final double CTRL_PROXIMITY_X = 0.3;
@@ -198,10 +198,14 @@ public class DiffDrawUtil {
   //
 
   public static int lineToY(@NotNull Editor editor, int line) {
-    return lineToY(editor, line, true);
+    return lineToY(editor, line, true, false);
   }
 
   public static int lineToY(@NotNull Editor editor, int line, boolean lineStart) {
+    return lineToY(editor, line, lineStart, false);
+  }
+
+  public static int lineToY(@NotNull Editor editor, int line, boolean lineStart, boolean includeInlays) {
     if (line < 0) return 0;
 
     Document document = editor.getDocument();
@@ -212,12 +216,14 @@ public class DiffDrawUtil {
     }
 
     if (lineStart) {
-      LogicalPosition logicalPosition = editor.offsetToLogicalPosition(document.getLineStartOffset(line));
-      return editor.logicalPositionToXY(logicalPosition).y;
+      int visualLine = editor.offsetToVisualPosition(document.getLineStartOffset(line), false, false).line;
+      int inlay = includeInlays ? EditorUtil.getInlaysHeight(editor, visualLine, true) : 0;
+      return editor.visualLineToY(visualLine) - inlay;
     }
     else {
-      LogicalPosition logicalPosition = editor.offsetToLogicalPosition(document.getLineEndOffset(line));
-      return editor.logicalPositionToXY(logicalPosition).y + editor.getLineHeight();
+      int visualLine = editor.offsetToVisualPosition(document.getLineEndOffset(line), true, true).line;
+      int inlay = includeInlays ? EditorUtil.getInlaysHeight(editor, visualLine, false) : 0;
+      return editor.visualLineToY(visualLine) + editor.getLineHeight() + inlay;
     }
   }
 
@@ -231,16 +237,16 @@ public class DiffDrawUtil {
     int y2;
     if (startLine == endLine) {
       if (startLine == 0) {
-        y1 = lineToY(editor, 0, true) + 1;
+        y1 = lineToY(editor, 0, true, true) + 1;
       }
       else {
-        y1 = lineToY(editor, startLine - 1, false);
+        y1 = lineToY(editor, startLine - 1, false, true);
       }
       y2 = y1;
     }
     else {
-      y1 = lineToY(editor, startLine, true);
-      y2 = lineToY(editor, endLine - 1, false);
+      y1 = lineToY(editor, startLine, true, false);
+      y2 = lineToY(editor, endLine - 1, false, false);
     }
     return new MarkerRange(y1, y2);
   }

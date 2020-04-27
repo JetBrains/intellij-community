@@ -55,9 +55,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class XDebuggerEditorBase implements Expandable {
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
@@ -145,7 +142,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
 
     DataContext dataContext = DataManager.getInstance().getDataContext(getComponent());
-    return JBPopupFactory.getInstance().createActionGroupPopup("Choose Language", actions, dataContext,
+    return JBPopupFactory.getInstance().createActionGroupPopup(XDebuggerBundle.message("debugger.editor.choose.language"), actions, dataContext,
                                                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
                                                                false);
   }

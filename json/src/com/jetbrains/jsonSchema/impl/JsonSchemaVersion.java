@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import kotlin.NotImplementedError;
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +21,11 @@ public enum JsonSchemaVersion {
   public String toString() {
     switch (this) {
       case SCHEMA_4:
-        return "JSON schema version 4";
+        return JsonBundle.message("schema.of.version", 4);
       case SCHEMA_6:
-        return "JSON schema version 6";
+        return JsonBundle.message("schema.of.version", 6);
       case SCHEMA_7:
-        return "JSON schema version 7";
+        return JsonBundle.message("schema.of.version", 7);
     }
 
     throw new NotImplementedError("Unknown version: " + this);

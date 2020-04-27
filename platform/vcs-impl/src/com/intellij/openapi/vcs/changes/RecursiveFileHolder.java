@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,11 +69,7 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
   }
 
   private static boolean isFileDirty(@NotNull VcsDirtyScope scope, @NotNull FilePath filePath) {
-    final AbstractVcs[] vcsArr = new AbstractVcs[1];
-    if (scope.belongsTo(filePath, vcs -> vcsArr[0] = vcs)) {
-      return true;
-    }
-    return vcsArr[0] == null;
+    return scope.belongsTo(filePath);
   }
 
   public boolean equals(final Object o) {

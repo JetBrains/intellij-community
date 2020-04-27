@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout.config;
 
 import com.intellij.lang.ASTNode;
@@ -17,9 +17,6 @@ import com.jetbrains.python.buildout.config.psi.impl.BuildoutCfgFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author traff
- */
 public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCfgElementTypes, BuildoutCfgTokenTypes {
   private final BuildoutCfgASTFactory astFactory = new BuildoutCfgASTFactory();
 

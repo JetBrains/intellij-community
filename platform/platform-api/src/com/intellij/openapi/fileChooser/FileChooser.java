@@ -40,18 +40,16 @@ public class FileChooser {
 
   private FileChooser() { }
 
-  @NotNull
-  public static VirtualFile[] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
-                                          @Nullable final Project project,
-                                          @Nullable final VirtualFile toSelect) {
+  public static VirtualFile @NotNull [] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
+                                                    @Nullable final Project project,
+                                                    @Nullable final VirtualFile toSelect) {
     return chooseFiles(descriptor, null, project, toSelect);
   }
 
-  @NotNull
-  public static VirtualFile[] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
-                                          @Nullable final Component parent,
-                                          @Nullable final Project project,
-                                          @Nullable final VirtualFile toSelect) {
+  public static VirtualFile @NotNull [] chooseFiles(@NotNull final FileChooserDescriptor descriptor,
+                                                    @Nullable final Component parent,
+                                                    @Nullable final Project project,
+                                                    @Nullable final VirtualFile toSelect) {
     final FileChooserDialog chooser = FileChooserFactory.getInstance().createFileChooser(descriptor, project, parent);
     return chooser.choose(project, toSelect);
   }

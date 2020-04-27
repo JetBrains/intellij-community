@@ -27,6 +27,5 @@ import java.util.List;
  */
 public interface CheckinClient extends SvnClient {
 
-  @NotNull
-  CommitInfo[] commit(@NotNull List<File> paths, @NotNull String comment) throws VcsException;
+  CommitInfo @NotNull [] commit(@NotNull List<File> paths, @NotNull String comment) throws VcsException;
 }

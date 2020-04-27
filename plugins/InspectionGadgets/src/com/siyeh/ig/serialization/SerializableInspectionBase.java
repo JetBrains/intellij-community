@@ -81,8 +81,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
     return panel;
   }
 
-  @NotNull
-  protected JComponent[] createAdditionalOptions() {
+  protected JComponent @NotNull [] createAdditionalOptions() {
     return EMPTY_COMPONENT_ARRAY;
   }
 

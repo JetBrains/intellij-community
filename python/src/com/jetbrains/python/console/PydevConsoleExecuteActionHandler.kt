@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console
 
 import com.intellij.codeInsight.hint.HintManager
@@ -18,9 +18,6 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyStatementList
 import java.awt.Font
 
-/**
- * @author traff
- */
 open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageConsoleView,
                                             processHandler: ProcessHandler,
                                             final override val consoleCommunication: ConsoleCommunication) : PythonConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {

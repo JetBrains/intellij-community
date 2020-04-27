@@ -553,8 +553,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  @NotNull
-  public PsiExpression[] getActualParameters(@NotNull PsiExpressionList psiExpressionList) {
+  public PsiExpression @NotNull [] getActualParameters(@NotNull PsiExpressionList psiExpressionList) {
     return psiExpressionList.getExpressions();
   }
 

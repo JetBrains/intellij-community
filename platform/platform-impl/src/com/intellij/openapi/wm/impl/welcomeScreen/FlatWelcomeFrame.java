@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.CommonBundle;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
@@ -13,7 +15,7 @@ import com.intellij.ide.plugins.PluginDropHandler;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.impl.IdeNotificationArea;
+import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -46,6 +48,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -83,7 +86,7 @@ import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 /**
  * @author Konstantin Bulenkov
  */
-public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor {
+public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor, WelcomeFrameUpdater {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
   public static final int DEFAULT_HEIGHT = 460;
@@ -240,7 +243,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     String suffix = ProjectFrameHelper.getSuperUserSuffix();
     if (suffix != null) {
-      title += ' ' + suffix;
+      title += " (" + suffix+")";
     }
     return title;
   }
@@ -261,6 +264,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
+    private LinkLabel<Object> myUpdatePluginsLink;
     private boolean inDnd;
 
     FlatWelcomeScreen() {
@@ -383,7 +387,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
       panel.add(createLogo(), BorderLayout.NORTH);
       panel.add(createActionPanel(), BorderLayout.CENTER);
-      panel.add(createSettingsAndDocs(), BorderLayout.SOUTH);
+      panel.add(createUpdatesSettingsAndDocs(), BorderLayout.SOUTH);
+      return panel;
+    }
+
+    private JComponent createUpdatesSettingsAndDocs() {
+      JPanel panel = new NonOpaquePanel(new BorderLayout());
+      panel.add(createUpdatePluginsLink(), BorderLayout.WEST);
+      panel.add(createSettingsAndDocs(), BorderLayout.EAST);
       return panel;
     }
 
@@ -398,7 +409,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         register.update(e);
         Presentation presentation = e.getPresentation();
         if (presentation.isEnabled()) {
-          ActionLink registerLink = new ActionLink("Register", register);
+          ActionLink registerLink = new ActionLink(IdeBundle.message("action.link.register"), register);
           // Don't allow focus, as the containing panel is going to focusable.
           registerLink.setFocusable(false);
           registerLink.setNormalColor(getLinkNormalColor());
@@ -652,25 +663,31 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     @NotNull
     private JComponent createLogo() {
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+
       NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-      ApplicationInfoEx app = ApplicationInfoEx.getInstanceEx();
-      JLabel logo = new JLabel(IconLoader.getIcon(app.getWelcomeScreenLogoUrl()));
-      logo.setBorder(JBUI.Borders.empty(30,0,10,0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.NORTH);
-      final String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
-                                     ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
-                                     : ApplicationNamesInfo.getInstance().getFullProductName();
+
+      String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
+      if (welcomeScreenLogoUrl != null) {
+        JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl));
+        logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
+        logo.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(logo, BorderLayout.NORTH);
+      }
+
+      String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
+                               ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+                               : ApplicationNamesInfo.getInstance().getFullProductName();
       JLabel appName = new JLabel(applicationName);
       appName.setForeground(JBColor.foreground());
       appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
       appName.setHorizontalAlignment(SwingConstants.CENTER);
       String appVersion = "Version ";
 
-      appVersion += app.getFullVersion();
+      appVersion += appInfo.getFullVersion();
 
-      if (app.isEAP() && !app.getBuild().isSnapshot()) {
-        appVersion += " (" + app.getBuild().asStringWithoutProductCode() + ")";
+      if (appInfo.isEAP() && !appInfo.getBuild().isSnapshot()) {
+        appVersion += " (" + appInfo.getBuild().asStringWithoutProductCode() + ")";
       }
 
       JLabel version = new JLabel(appVersion);
@@ -805,6 +822,35 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     public void dispose() {
 
     }
+
+    private JComponent createUpdatePluginsLink() {
+      myUpdatePluginsLink = new LinkLabel<>(IdeBundle.message("updates.plugins.welcome.screen.link.message"), null);
+      myUpdatePluginsLink.setVisible(false);
+
+      NonOpaquePanel wrap = new NonOpaquePanel(myUpdatePluginsLink);
+      wrap.setBorder(JBUI.Borders.empty(0, 10, 8, 11));
+      return wrap;
+    }
+
+    public void showPluginUpdates(@NotNull Runnable callback) {
+      myUpdatePluginsLink.setListener((__, ___) -> callback.run(), null);
+      myUpdatePluginsLink.setVisible(true);
+    }
+
+    public void hidePluginUpdates() {
+      myUpdatePluginsLink.setListener(null, null);
+      myUpdatePluginsLink.setVisible(false);
+    }
+  }
+
+  @Override
+  public void showPluginUpdates(@NotNull Runnable callback) {
+    myScreen.showPluginUpdates(callback);
+  }
+
+  @Override
+  public void hidePluginUpdates() {
+    myScreen.hidePluginUpdates();
   }
 
   public static boolean isUseProjectGroups() {
@@ -1029,7 +1075,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private static JComponent createCancelButton(@Nullable Runnable cancelAction) {
     if (cancelAction == null) return null;
 
-    JButton cancelButton = new JButton("Cancel");
+    JButton cancelButton = new JButton(CommonBundle.getCancelButtonText());
     cancelButton.addActionListener(e -> cancelAction.run());
 
     return cancelButton;

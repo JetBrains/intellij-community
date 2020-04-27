@@ -299,7 +299,9 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
       return FList.emptyList();
     }
 
-    return matchSkippingWords(name, patternIndex, nameIndex, true, isAsciiName);
+    return matchSkippingWords(name, patternIndex,
+                              findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName, true),
+                              true, isAsciiName);
   }
 
   private boolean isTrailingSpacePattern() {
@@ -320,14 +322,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
                                               int nameIndex,
                                               boolean allowSpecialChars,
                                               boolean isAsciiName) {
-    boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex];
-
     int maxFoundLength = 0;
-    while (true) {
-      nameIndex = findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName, allowSpecialChars, wordStartsOnly);
-      if (nameIndex < 0) {
-        return null;
-      }
+    while (nameIndex >= 0) {
       int fragmentLength = seemsLikeFragmentStart(name, patternIndex, nameIndex) ? maxMatchingFragment(name, patternIndex, nameIndex) : 0;
 
       // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
@@ -342,16 +338,17 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
           return ranges;
         }
       }
-      nameIndex++;
+      nameIndex = findNextPatternCharOccurrence(name, nameIndex + 1, patternIndex, isAsciiName, allowSpecialChars);
     }
+    return null;
   }
 
   private int findNextPatternCharOccurrence(@NotNull String name,
                                             int startAt,
                                             int patternIndex,
                                             boolean isAsciiName,
-                                            boolean allowSpecialChars, boolean wordStartsOnly) {
-    int next = wordStartsOnly
+                                            boolean allowSpecialChars) {
+    int next = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex]
                ? indexOfWordStart(name, patternIndex, startAt)
                : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
 
@@ -456,10 +453,24 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
     int i = fragmentLength;
+    int minNext = Integer.MAX_VALUE;
     while (i >= minFragment || (i > 0 && isWildcard(patternIndex + i))) {
-      FList<TextRange> ranges = isWildcard(patternIndex + i) ?
-                                matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName) :
-                                matchSkippingWords(name, patternIndex + i, nameIndex + i, false, isAsciiName);
+      FList<TextRange> ranges;
+      if (isWildcard(patternIndex + i)) {
+        ranges = matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName);
+      }
+      else {
+        int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i, patternIndex + i, isAsciiName, false);
+        if (nextOccurrence >= 0 && nextOccurrence < minNext) {
+          ranges = matchSkippingWords(name, patternIndex + i, nextOccurrence, false, isAsciiName);
+
+          // If on the next iteration we go one character back in the pattern and find an occurrence one character back in the name or further,
+          // that'd mean we've already failed to match following pattern chars against this name fragment, no need to repeat that
+          minNext = nextOccurrence - 1;
+        } else {
+          ranges = null;
+        }
+      }
       if (ranges != null) {
         return prependRange(ranges, nameIndex, i);
       }

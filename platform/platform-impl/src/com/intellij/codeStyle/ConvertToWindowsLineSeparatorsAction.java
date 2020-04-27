@@ -24,6 +24,6 @@ import com.intellij.util.LineSeparator;
 public class ConvertToWindowsLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToWindowsLineSeparatorsAction() {
-    super(ApplicationBundle.message("combobox.crlf.windows"), LineSeparator.CRLF);
+    super(ApplicationBundle.messagePointer("combobox.crlf.windows"), LineSeparator.CRLF);
   }
 }

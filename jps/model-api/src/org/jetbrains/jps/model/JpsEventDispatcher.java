@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface JpsEventDispatcher {
   @NotNull
   <T extends EventListener> T getPublisher(Class<T> listenerClass);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction;
@@ -42,6 +28,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
+
 class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   private PsiMethod mySuperMethod;
   private final String[] myModifiers;
@@ -49,7 +37,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   DetectedJavaChangeInfo(@PsiModifier.ModifierConstant @NotNull String newVisibility,
                          PsiMethod method,
                          CanonicalTypes.Type newType,
-                         @NotNull ParameterInfoImpl[] newParms,
+                         ParameterInfoImpl @NotNull [] newParms,
                          ThrownExceptionInfo[] newExceptions,
                          String newName, String oldName, final boolean delegate) {
     super(newVisibility, method, newName, newType, newParms, newExceptions, delegate, new HashSet<>(), new HashSet<>(), oldName);
@@ -184,7 +172,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       }
     }) {
       @Override
-      protected void performRefactoring(@NotNull UsageInfo[] usages) {
+      protected void performRefactoring(UsageInfo @NotNull [] usages) {
         super.performRefactoring(usages);
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
         final PsiParameter[] parameters = method.getParameterList().getParameters();
@@ -220,10 +208,10 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       }
 
       if (oldParameter != null) {
-        parameterInfos[i] = new ParameterInfoImpl(oldParameter.getOldIndex(),
-                                                  oldParameter.getName(),
-                                                  oldParameter.getTypeWrapper(),
-                                                  null);
+        parameterInfos[i] = ParameterInfoImpl.create(oldParameter.getOldIndex())
+          .withName(oldParameter.getName())
+          .withType(oldParameter.getTypeWrapper())
+          .withDefaultValue(null);
         untouchedParams.put(parameterInfos[i], oldParameter.getOldIndex());
       }
     }
@@ -242,10 +230,10 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
         }
         final CanonicalTypes.Type typeWrapper = parameterInfo.getTypeWrapper();
         if (!typeWrapper.isValid()) return false;
-        parameterInfos[i] = new ParameterInfoImpl(oldParameter != null ? oldParameter.getOldIndex() : -1,
-                                                  parameterInfo.getName(),
-                                                  typeWrapper,
-                                                  null);
+        parameterInfos[i] = ParameterInfoImpl.create(oldParameter != null ? oldParameter.getOldIndex() : NEW_PARAMETER)
+          .withName(parameterInfo.getName())
+          .withType(typeWrapper)
+          .withDefaultValue(null);
       }
     }
     return true;
@@ -266,7 +254,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
       PsiMethod prototype;
       if (isGenerateDelegate()) {
         for (JavaParameterInfo info : getNewParameters()) {
-          if (info.getOldIndex() == -1) {
+          if (info.isNew()) {
             ((ParameterInfoImpl)info).setDefaultValue("null"); //to be replaced with template expr
           }
         }
@@ -287,7 +275,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
             JavaParameterInfo[] parameters = getNewParameters();
             PsiExpression[] toBeDefault =
               Arrays.stream(parameters)
-                .filter(param -> param.getOldIndex() == -1)
+                .filter(ParameterInfo::isNew)
                 .map(info -> {
                   int i = ArrayUtil.find(parameters, info);
                   return expressions[i];

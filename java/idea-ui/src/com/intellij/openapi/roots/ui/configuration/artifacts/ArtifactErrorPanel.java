@@ -20,9 +20,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author nik
- */
 public final class ArtifactErrorPanel {
   private final JPanel myMainPanel;
   private final JButton myFixButton;

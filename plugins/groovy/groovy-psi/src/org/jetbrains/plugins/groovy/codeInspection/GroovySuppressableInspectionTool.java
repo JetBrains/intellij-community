@@ -35,8 +35,7 @@ import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMB
  */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
 
-  @NotNull
-  public static SuppressQuickFix[] getSuppressActions(@NotNull String toolId) {
+  public static SuppressQuickFix @NotNull [] getSuppressActions(@NotNull String toolId) {
     if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
       // substitute id for suppression
       toolId = UNUSED_SYMBOL_SHORT_NAME;

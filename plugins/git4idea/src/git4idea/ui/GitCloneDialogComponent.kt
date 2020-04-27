@@ -1,13 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui
 
 import com.intellij.application.subscribe
+import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsCloneDialogComponent
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckoutProvider
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
@@ -16,6 +20,7 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.config.*
+import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
 import java.nio.file.Paths
 
@@ -23,9 +28,10 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
                            GitRememberedInputs.getInstance()) {
+  private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
-  private val inlineComponent = GitExecutableInlineComponent(errorComponent, mainPanel)
+  private val inlineComponent = GitExecutableInlineComponent(errorComponent, modalityState, mainPanel)
   private val errorNotifier = InlineErrorNotifier(inlineComponent, modalityState, this)
 
   private val executableProblemHandler = findGitExecutableProblemHandler(project)
@@ -34,6 +40,13 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
   override fun doClone(project: Project, listener: CheckoutProvider.Listener) {
     val parent = Paths.get(getDirectory()).toAbsolutePath().parent
+    val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
+    if (destinationValidation != null) {
+      LOG.error("Unable to create destination directory", destinationValidation.message)
+      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
+                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
+      return
+    }
 
     val lfs = LocalFileSystem.getInstance()
     var destinationParent = lfs.findFileByIoFile(parent.toFile())
@@ -41,6 +54,9 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
       destinationParent = lfs.refreshAndFindFileByIoFile(parent.toFile())
     }
     if (destinationParent == null) {
+      LOG.error("Clone Failed. Destination doesn't exist")
+      VcsNotifier.getInstance(project).notifyError(VcsBundle.getString("clone.dialog.clone.button"),
+                                                   VcsBundle.getString("clone.dialog.unable.create.destination.error"))
       return
     }
     val sourceRepositoryURL = getUrl()
@@ -64,18 +80,19 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
 
     if (!listenerInstalled) {
       listenerInstalled = true
+      scheduleCheckVersion()
+
       ApplicationActivationListener.TOPIC.subscribe(this, object : ApplicationActivationListener {
         override fun applicationActivated(ideFrame: IdeFrame) {
           scheduleCheckVersion()
         }
       })
     }
-    scheduleCheckVersion()
   }
 
   private fun checkGitVersion(dialogStateListener: VcsCloneDialogComponentStateListener) {
     invokeAndWaitIfNeeded(modalityState) {
-      inlineComponent.showProgress("Checking Git version...")
+      inlineComponent.showProgress(GitBundle.message("clone.dialog.checking.git.version"))
     }
 
     try {
@@ -96,7 +113,9 @@ class GitCloneDialogComponent(project: Project, private val modalityState: Modal
     }
     catch (t: Throwable) {
       invokeAndWaitIfNeeded(modalityState) {
-        executableProblemHandler.showError(t, errorNotifier)
+        executableProblemHandler.showError(t, errorNotifier, onErrorResolved = {
+          dialogStateListener.onOkActionEnabled(true)
+        })
         dialogStateListener.onOkActionEnabled(false)
       }
     }

@@ -102,6 +102,11 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return 11;
   }
 
+  @Override
+  public boolean needsForwardIndexWhenSharing() {
+    return false;
+  }
+
   /**
    * Externalizer for primary method keys.
    */

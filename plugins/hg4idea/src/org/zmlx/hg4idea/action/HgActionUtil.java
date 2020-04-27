@@ -20,24 +20,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collection;
-import java.util.List;
-
 public class HgActionUtil {
-
-  @NotNull
-  public static List<HgRepository> collectRepositoriesFromFiles(@NotNull final HgRepositoryManager repositoryManager,
-                                                                @NotNull Collection<? extends VirtualFile> files) {
-    return ContainerUtil.mapNotNull(files, file -> repositoryManager.getRepositoryForFile(file));
-  }
 
   @Nullable
   @CalledInAwt

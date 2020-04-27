@@ -31,12 +31,10 @@ public interface BinaryContentRevision extends ByteBackedContentRevision {
    * @return content of the revision
    * @throws com.intellij.openapi.vcs.VcsException in case when content retrieval fails
    */
-  @Nullable
-  byte[] getBinaryContent() throws VcsException;
+  byte @Nullable [] getBinaryContent() throws VcsException;
 
-  @Nullable
   @Override
-  default byte[] getContentAsBytes() throws VcsException {
+  default byte @Nullable [] getContentAsBytes() throws VcsException {
     return getBinaryContent();
   }
 }

@@ -15,11 +15,11 @@
  */
 package com.intellij.refactoring.util.duplicates;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 
 import java.util.List;
@@ -68,6 +68,6 @@ class ConstantMatchProvider implements MatchProvider {
 
   @Override
   public String getReplaceDuplicatesTitle(int idx, int size) {
-    return RefactoringBundle.message("process.duplicates.title", idx, size);
+    return JavaRefactoringBundle.message("process.duplicates.title", idx, size);
   }
 }

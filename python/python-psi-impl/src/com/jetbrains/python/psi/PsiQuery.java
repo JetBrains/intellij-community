@@ -49,7 +49,7 @@ public final class PsiQuery<T extends PsiElement> {
 
 
   @SuppressWarnings("MethodCanBeVariableArityMethod") // To prevent type safety
-  public PsiQuery(@NotNull final T[] elementsToStart) {
+  public PsiQuery(final T @NotNull [] elementsToStart) {
     this(Arrays.asList(elementsToStart));
   }
 

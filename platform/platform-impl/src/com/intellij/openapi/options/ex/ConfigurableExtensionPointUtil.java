@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.ex;
 
-import com.intellij.BundleBase;
+import com.intellij.AbstractBundle;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,12 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * @author nik
- * @author Sergey.Malenkov
- */
-public class ConfigurableExtensionPointUtil {
-
+public final class ConfigurableExtensionPointUtil {
   private final static Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
 
   private ConfigurableExtensionPointUtil() {
@@ -233,7 +228,7 @@ public class ConfigurableExtensionPointUtil {
     if (node.myValue == null) {
       int weight = getInt(bundle, id + ".settings.weight");
       String help = getString(bundle, id + ".settings.help.topic");
-      String name = getString(bundle, id + ".settings.display.name");
+      String name = getName(bundle, id + ".settings.display.name");
       if (name != null && project != null) {
         if (!project.isDefault() && !name.contains("{")) {
           String named = getString(bundle, id + ".named.settings.display.name");
@@ -398,10 +393,6 @@ public class ConfigurableExtensionPointUtil {
     if (configurable == null) {
       return false;
     }
-    OptionalConfigurable optional = ConfigurableWrapper.cast(OptionalConfigurable.class, configurable);
-    if (optional != null && !optional.needDisplay()) {
-      return false;
-    }
     return project == null || !project.isDefault() || !ConfigurableWrapper.isNonDefaultProject(configurable);
   }
 
@@ -433,8 +424,17 @@ public class ConfigurableExtensionPointUtil {
   private static String getString(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
-      // mimic CommonBundle.message(..) behavior
-      return BundleBase.replaceMnemonicAmpersand(bundle.getString(resource));
+      return bundle.getString(resource);
+    }
+    catch (MissingResourceException ignored) {
+      return null;
+    }
+  }
+
+  private static String getName(ResourceBundle bundle, @NonNls String resource) {
+    if (bundle == null) return null;
+    try {
+      return AbstractBundle.message(bundle, resource);
     }
     catch (MissingResourceException ignored) {
       return null;

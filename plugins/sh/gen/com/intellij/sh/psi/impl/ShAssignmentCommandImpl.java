@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShAssignmentCommandImpl extends ShCommandImpl implements ShAssignmentCommand {
+public class ShAssignmentCommandImpl extends ShAssignmentCommandMixin implements ShAssignmentCommand {
 
   public ShAssignmentCommandImpl(ASTNode node) {
     super(node);

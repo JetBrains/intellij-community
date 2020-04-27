@@ -56,9 +56,8 @@ public class MvcRunTargetDialog extends DialogWrapper {
     init();
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     boolean hasOneSupportedModule = false;
     for (Module module : ModuleManager.getInstance(myModule.getProject()).getModules()) {
       if (module == myModule || myFramework.hasSupport(module)) {

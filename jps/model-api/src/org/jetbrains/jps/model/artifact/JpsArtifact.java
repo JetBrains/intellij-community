@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.JpsReferenceableElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
-/**
- * @author nik
- */
 public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<JpsArtifact>, JpsCompositeElement {
   @NotNull
   JpsArtifactType<?> getArtifactType();

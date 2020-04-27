@@ -28,9 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class LayoutTreeSelection {
   private final List<PackagingElementNode<?>> mySelectedNodes = new ArrayList<>();
   private final List<PackagingElement<?>> mySelectedElements = new ArrayList<>();

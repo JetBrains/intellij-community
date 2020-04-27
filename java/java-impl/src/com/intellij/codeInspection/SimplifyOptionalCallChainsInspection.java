@@ -142,7 +142,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       PsiLambdaExpression lambda = LambdaRefactoringUtil.createLambda(methodRef, true);
       if (lambda != null) {
-        LambdaRefactoringUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
+        LambdaUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
         return lambda;
       }
     }
@@ -760,7 +760,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     @NotNull
     @Override
     public String getName(@NotNull Context context) {
-      return InspectionGadgetsBundle.message("fix.replace.map.with.flat.map.name");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "map()", "flatMap()");
     }
 
     @NotNull

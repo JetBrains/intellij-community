@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * <p>
  * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for all implementations of this interface
  * </p>
- * @author nik
  */
 public interface JpsElementType<P extends JpsElement> {
   @NotNull

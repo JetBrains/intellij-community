@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
-  public ProjectExtensionPointName(@NotNull String name) {
+  public ProjectExtensionPointName(@NotNull @NonNls String name) {
     super(name);
   }
 

@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.options.SettingsEditor;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @return the editor tab title, or null if this extension doesn't provide any UI for editing the settings.
    */
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected String getEditorTitle() {
     return null;
   }

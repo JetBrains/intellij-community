@@ -35,8 +35,7 @@ public class XmlEncodingReferenceProvider extends PsiReferenceProvider {
   @NonNls private static final String CHARSET_PREFIX = "charset=";
 
   @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
     LOG.assertTrue(element instanceof XmlAttributeValue);
     XmlAttributeValue value = (XmlAttributeValue)element;
 

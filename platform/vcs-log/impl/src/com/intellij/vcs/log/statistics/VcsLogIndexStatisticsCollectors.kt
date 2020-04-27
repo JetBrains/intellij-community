@@ -16,8 +16,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.TimeUnit
 
+@NonNls
 class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesCollector() {
   override fun getMetrics(): MutableSet<MetricEvent> {
     val metricEvents = mutableSetOf<MetricEvent>()

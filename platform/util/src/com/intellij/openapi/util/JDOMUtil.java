@@ -139,6 +139,24 @@ public final class JDOMUtil {
            && areElementContentsEqual(e1, e2, ignoreEmptyAttrValues);
   }
 
+  /**
+   * Returns hash code which is consistent with {@link #areElementsEqual(Element, Element, boolean)}
+   */
+  public static int hashCode(@Nullable Element e, boolean ignoreEmptyAttrValues) {
+    if (e == null) return 0;
+    int hashCode = e.getName().hashCode();
+    for (Attribute attribute : getAttributes(e)) {
+      if (!ignoreEmptyAttrValues || NOT_EMPTY_VALUE_CONDITION.test(attribute)) {
+        hashCode = hashCode * 31 * 31 + attribute.getName().hashCode() * 31 + attribute.getValue().hashCode();
+      }
+    }
+    for (Content content : e.getContent(CONTENT_FILTER)) {
+      int contentHash = content instanceof Element ? hashCode((Element)content, ignoreEmptyAttrValues) : e.getValue().hashCode();
+      hashCode = hashCode * 31 + contentHash;
+    }
+    return hashCode;
+  }
+
   public static boolean areElementContentsEqual(@NotNull Element e1, @NotNull Element e2, boolean ignoreEmptyAttrValues) {
     return contentListsEqual(e1.getContent(CONTENT_FILTER), e2.getContent(CONTENT_FILTER), ignoreEmptyAttrValues);
   }
@@ -148,9 +166,8 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link Element#getChildren} instead
    */
-  @NotNull
   @Deprecated
-  public static Element[] getElements(@NotNull Element m) {
+  public static Element @NotNull [] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
     return list.toArray(new Element[0]);
   }
@@ -673,9 +690,9 @@ public final class JDOMUtil {
     return new ElementInfo(buf, hasNullAttributes);
   }
 
-  public static void updateFileSet(@NotNull File[] oldFiles,
-                                   @NotNull String[] newFilePaths,
-                                   @NotNull Document[] newFileDocuments,
+  public static void updateFileSet(File @NotNull [] oldFiles,
+                                   String @NotNull [] newFilePaths,
+                                   Document @NotNull [] newFileDocuments,
                                    String lineSeparator)
     throws IOException {
     getLogger().assertTrue(newFilePaths.length == newFileDocuments.length);
@@ -993,5 +1010,41 @@ public final class JDOMUtil {
       .setAttribute(y, Integer.toString(bounds.y))
       .setAttribute(width, Integer.toString(bounds.width))
       .setAttribute(height, Integer.toString(bounds.height));
+  }
+
+  /**
+   * Copies attributes and elements from {@code source} node to {@code target}
+   * node if they are not present in the latter one.
+   * <p>
+   * Preserves {@code target} element's name.
+   *
+   * @param source the source element to copy from
+   * @param target the target element to copy to
+   */
+  public static void copyMissingContent(@NotNull Element source, @NotNull Element target) {
+    Element targetClone = target.clone();
+    for (Attribute attribute : source.getAttributes()) {
+      if (!hasAttribute(targetClone, attribute.getName())) {
+        target.setAttribute(attribute.clone());
+      }
+    }
+    for (Content content : source.getContent()) {
+      if (!hasContent(targetClone, content)) {
+        target.addContent(content.clone());
+      }
+    }
+  }
+
+  private static boolean hasAttribute(@NotNull Element element, @NotNull String name) {
+    return element.getAttribute(name) != null;
+  }
+
+  private static boolean hasContent(@NotNull Element element, @NotNull Content content) {
+    if (content instanceof Element) {
+      return !element.getChildren(((Element)content).getName()).isEmpty();
+    }
+    else {
+      return false;
+    }
   }
 }

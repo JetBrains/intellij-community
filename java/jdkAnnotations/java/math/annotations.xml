@@ -1,4 +1,13 @@
 <root>
+  <item name='java.math.BigDecimal ONE'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.math.BigDecimal TEN'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.math.BigDecimal ZERO'>
+      <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.math.BigInteger java.lang.String toString(int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

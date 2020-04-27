@@ -208,8 +208,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     return -1;
   }
 
-  @NotNull
-  public abstract SimpleNode[] getChildren();
+  public abstract SimpleNode @NotNull [] getChildren();
 
   public void accept(@NotNull SimpleNodeVisitor visitor) {
     visitor.accept(this);
@@ -264,8 +263,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
   }
 
   @Override
-  @NotNull
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return NONE;
   }
 

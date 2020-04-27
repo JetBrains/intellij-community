@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -36,6 +37,10 @@ public abstract class AbstractCreateFormAction extends CreateElementActionBase i
                                   @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                                   Icon icon) {
     super(text, description, icon);
+  }
+
+  public AbstractCreateFormAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Override

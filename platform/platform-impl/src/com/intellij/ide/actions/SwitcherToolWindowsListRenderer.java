@@ -42,6 +42,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer<Object> {
     myShowEdited = showEdited;
   }
 
+  @DirtyUI
   @Override
   protected void customizeCellRenderer(@NotNull JList<?> list,
                                        Object value,

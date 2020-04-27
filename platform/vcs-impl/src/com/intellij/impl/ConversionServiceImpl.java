@@ -32,9 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-/**
- * @author nik
- */
 public final class ConversionServiceImpl extends ConversionService {
   private static final Logger LOG = Logger.getInstance(ConversionServiceImpl.class);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference.driver.closure
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -87,7 +87,7 @@ fun analyzeClosureUsages(closureParameter: ParameterizedClosure,
     else {
       val mapping = resolveResult.candidate?.argumentMapping ?: continue
       val requiredArgument = mapping.arguments.find { it.isReferenceTo(parameter) } ?: continue
-      val innerParameter = mapping.targetParameter(requiredArgument) ?: continue
+      val innerParameter = mapping.targetParameter(requiredArgument)?.psi ?: continue
       val signature = extractSignature(innerParameter, resolveResult, nearestCall)
       collectClosureParamsDependencies(innerParameter, closureParameter, builder, signature)
       processDelegatesToAnnotation(innerParameter, resolveResult, closureParameter.delegatesToCombiner)
@@ -181,7 +181,7 @@ private fun trySetParameterDelegate(annotation: PsiAnnotation, combiner: Delegat
   val mapping = resolveResult.candidate?.argumentMapping ?: return
   val methodParameters = resolveResult.candidate?.method?.parameters?.takeIf { it.size > 1 }?.asList() ?: return
   val targetParameter = findTargetParameter(annotation, methodParameters)
-  val argument = mapping.arguments.find { mapping.targetParameter(it) == targetParameter } ?: return
+  val argument = mapping.arguments.find { mapping.targetParameter(it)?.psi == targetParameter } ?: return
   val argumentExpression = (argument as? ExpressionArgument)?.expression
   if (argumentExpression != null) {
     combiner.setDelegate(argumentExpression)
@@ -275,24 +275,7 @@ data class AnnotatingResult(val parameter: GrParameter, val annotationText: Stri
 
 fun getBlock(parameter: GrParameter): GrClosableBlock? = when (parameter) {
   is ClosureSyntheticParameter -> parameter.closure
-  else -> {
-    with(parameter.parentOfType<GrClosableBlock>()) { return if (this == null) null else extractBlock(this, parameter) }
-  }
-}
-
-private fun extractBlock(block: GrClosableBlock, parameter: GrParameter): GrClosableBlock? {
-  if (block.parameterList.getParameterNumber(parameter) == -1) {
-    val outerBlock = block.parentOfType<GrClosableBlock>()
-    if (outerBlock != null) {
-      return extractBlock(outerBlock, parameter)
-    }
-    else {
-      return null
-    }
-  }
-  else {
-    return block
-  }
+  else -> parameter.parentOfType<GrClosableBlock>()?.takeIf { it.parameterList.getParameterNumber(parameter) != -1 }
 }
 
 internal infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor {
@@ -307,23 +290,23 @@ internal infix fun PsiSubstitutor.compose(right: PsiSubstitutor): PsiSubstitutor
 inline fun PsiType.anyComponent(crossinline predicate: (PsiType) -> Boolean): Boolean {
   var mark = false
   accept(object : PsiTypeVisitor<Unit>() {
-    override fun visitClassType(classType: PsiClassType?) {
-      if (predicate(classType ?: return)) {
+    override fun visitClassType(classType: PsiClassType) {
+      if (predicate(classType)) {
         mark = true
       }
       classType.parameters.forEach { it.accept(this) }
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType?) {
-      wildcardType?.bound?.accept(this)
+    override fun visitWildcardType(wildcardType: PsiWildcardType) {
+      wildcardType.bound?.accept(this)
     }
 
-    override fun visitIntersectionType(intersectionType: PsiIntersectionType?) {
-      intersectionType?.conjuncts?.forEach { it.accept(this) }
+    override fun visitIntersectionType(intersectionType: PsiIntersectionType) {
+      intersectionType.conjuncts?.forEach { it.accept(this) }
     }
 
-    override fun visitArrayType(arrayType: PsiArrayType?) {
-      arrayType?.componentType?.accept(this)
+    override fun visitArrayType(arrayType: PsiArrayType) {
+      arrayType.componentType.accept(this)
     }
   })
   return mark

@@ -129,9 +129,8 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myRoot;
   }
 
-  @NotNull
   @Override
-  public Object[] getChildElements(@NotNull Object element) {
+  public Object @NotNull [] getChildElements(@NotNull Object element) {
     return ((FilteringNode) element).getChildren();
   }
 
@@ -239,9 +238,8 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       }
     }
 
-    @NotNull
     @Override
-    public SimpleNode[] getChildren() {
+    public SimpleNode @NotNull [] getChildren() {
       List<FilteringNode> nodes = myNodesCache.get(this);
       if (nodes == null) {
         return myDelegate instanceof SimpleNode ? ContainerUtil.map(((SimpleNode)myDelegate).getChildren(),
@@ -266,8 +264,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     }
 
     @Override
-    @NotNull
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return new Object[]{myDelegate};
     }
 

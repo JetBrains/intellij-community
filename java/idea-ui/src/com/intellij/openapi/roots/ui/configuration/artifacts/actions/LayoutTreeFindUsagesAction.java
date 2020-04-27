@@ -22,9 +22,6 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
 import com.intellij.packaging.elements.PackagingElement;
 
-/**
-* @author nik
-*/
 public class LayoutTreeFindUsagesAction extends ArtifactEditorFindUsagesActionBase {
   private final LayoutTreeComponent myLayoutTreeComponent;
 

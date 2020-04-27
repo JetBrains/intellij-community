@@ -39,8 +39,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue<AntDomElement> genericDomValue, final PsiElement element, ConvertContext context) {
     final AntDomElement invocationElement = AntSupport.getInvocationAntDomElement(context);
     return new PsiReference[] {new AntDomReferenceBase(element, true) {
       @Override
@@ -56,8 +55,7 @@ public class AntDomRefIdConverter extends Converter<AntDomElement> implements Cu
         return PomService.convertToPsi(element.getProject(), target);
       }
       @Override
-      @NotNull
-      public Object[] getVariants() {
+      public Object @NotNull [] getVariants() {
         if (invocationElement == null) {
           return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
         }

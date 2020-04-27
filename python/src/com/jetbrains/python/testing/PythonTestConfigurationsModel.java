@@ -25,7 +25,7 @@ import java.util.List;
 
 public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   /**
-   * Use {code {@link #getPythonsUnittestName()}} instead
+   * @deprecated Use {@link #getPythonsUnittestName()} instead
    */
   @Deprecated
   public static final String PYTHONS_UNITTEST_NAME = "Unittests";

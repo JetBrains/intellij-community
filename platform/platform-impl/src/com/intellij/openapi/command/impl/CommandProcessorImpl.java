@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.CommandToken;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
@@ -48,7 +49,8 @@ class CommandProcessorImpl extends CoreCommandProcessor {
           undoManager.undo(editor);
         }
       }
-      Messages.showErrorDialog(project, "Cannot perform operation. Too complex, sorry.", "Failed to Perform Operation");
+      Messages.showErrorDialog(project, IdeBundle.message("dialog.message.cannot.perform.operation.too.complex.sorry"),
+                               IdeBundle.message("dialog.title.failed.to.perform.operation"));
     }
   }
 
@@ -62,12 +64,12 @@ class CommandProcessorImpl extends CoreCommandProcessor {
   }
 
   @Override
-  public void addAffectedDocuments(Project project, @NotNull Document... docs) {
+  public void addAffectedDocuments(Project project, Document @NotNull ... docs) {
     getUndoManager(project).addAffectedDocuments(docs);
   }
 
   @Override
-  public void addAffectedFiles(Project project, @NotNull VirtualFile... files) {
+  public void addAffectedFiles(Project project, VirtualFile @NotNull ... files) {
     getUndoManager(project).addAffectedFiles(files);
   }
 }

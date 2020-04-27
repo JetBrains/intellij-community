@@ -80,7 +80,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Fix shift value";
+      return InspectionGadgetsBundle.message("shift.out.of.range.fix.family.name");
     }
 
     @Override

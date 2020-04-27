@@ -27,7 +27,7 @@ public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher
 
   @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<>();
 
-  public CompositeArrangementEntryMatcher(@NotNull ArrangementEntryMatcher... matchers) {
+  public CompositeArrangementEntryMatcher(ArrangementEntryMatcher @NotNull ... matchers) {
     myMatchers.addAll(Arrays.asList(matchers));
   }
 

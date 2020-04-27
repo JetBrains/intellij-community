@@ -4,6 +4,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends optional="true" config-file="sh-terminal.xml">org.jetbrains.plugins.terminal</depends>
   <name>Shell Script</name>
+  <category>Languages</category>
   <resource-bundle>messages.ShBundle</resource-bundle>
   <description><![CDATA[
 Adds support for working with shell script files
@@ -19,6 +20,9 @@ Adds support for working with shell script files
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.ShCommenter"/>
     <lang.quoteHandler language="Shell Script" implementationClass="com.intellij.sh.ShQuoteHandler"/>
+    <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.codeInsight.ShFindUsagesProvider"/>
+    <lang.elementManipulator forClass="com.intellij.sh.psi.ShLiteral"
+                             implementationClass="com.intellij.sh.psi.manipulator.ShLiteralManipulator" />
     <editor.backspaceModeOverride language="Shell Script" implementationClass="com.intellij.sh.ShBackspaceModeOverride"/>
 
     <lang.psiStructureViewFactory language="Shell Script" implementationClass="com.intellij.sh.ShStructureViewFactory"/>
@@ -39,8 +43,9 @@ Adds support for working with shell script files
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
 
     <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
-    <stepsBeforeRunProvider implementation="com.intellij.sh.run.ShBeforeRunTaskProvider"/>
     <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
+    <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
+    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
     <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>

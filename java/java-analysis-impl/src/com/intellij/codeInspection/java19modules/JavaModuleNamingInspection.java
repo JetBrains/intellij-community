@@ -3,8 +3,8 @@ package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -27,7 +27,7 @@ public class JavaModuleNamingInspection extends AbstractBaseJavaLocalInspectionT
         psiTraverser().children(name).filter(PsiIdentifier.class).forEach(id -> {
           String text = id.getText();
           if (text.length() > 0 && Character.isDigit(text.charAt(text.length() - 1))) {
-            String message = InspectionsBundle.message("inspection.java.module.naming.terminal.digits", text);
+            String message = JavaAnalysisBundle.message("inspection.java.module.naming.terminal.digits", text);
             if (newName.isNull()) {
               newName.set(StringUtil.join(psiTraverser().children(name).filter(PsiIdentifier.class).map(i -> trimDigits(i.getText())), "."));
             }

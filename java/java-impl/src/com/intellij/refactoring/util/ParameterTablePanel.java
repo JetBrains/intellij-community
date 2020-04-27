@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
@@ -168,7 +169,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
   private static class TypeColumnInfo extends ColumnInfo<VariableData, PsiType> {
 
     TypeColumnInfo() {
-      super("Type");
+      super(JavaRefactoringBundle.message("parameter.type.table.column.title"));
     }
 
     @Override

@@ -14,6 +14,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -137,7 +138,8 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         if (!suitableMethod) return;
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
         if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
-          holder.registerProblem(referenceNameElement, "Method call can be simplified", fix);
+          holder.registerProblem(referenceNameElement,
+                                 InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"), fix);
         }
       }
     };
@@ -286,7 +288,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace method call on lambda with lambda body";
+      return InspectionGadgetsBundle.message("replace.with.lambda.body.fix.family.name");
     }
 
     @Override
@@ -305,7 +307,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace method call on method reference with corresponding method call";
+      return InspectionGadgetsBundle.message("replace.with.method.reference.fix.family.name");
     }
 
     @Override
@@ -329,7 +331,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace call with method body";
+      return InspectionGadgetsBundle.message("replace.anonymous.with.lambda.body.fix.family.name");
     }
 
     @Override

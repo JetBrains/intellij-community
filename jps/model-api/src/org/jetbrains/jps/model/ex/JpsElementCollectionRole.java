@@ -18,9 +18,6 @@ package org.jetbrains.jps.model.ex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 
-/**
- * @author nik
- */
 public class JpsElementCollectionRole<E extends JpsElement> extends JpsElementChildRoleBase<JpsElementCollection<E>>
                                                             implements JpsElementCreator<JpsElementCollection<E>> {
   private final JpsElementChildRole<E> myChildRole;

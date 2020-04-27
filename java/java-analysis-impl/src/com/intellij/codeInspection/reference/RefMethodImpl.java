@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -19,9 +19,6 @@ import org.jetbrains.uast.*;
 
 import java.util.*;
 
-/**
- * @author max
- */
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
   private static final RefParameter[] EMPTY_PARAMS_ARRAY = new RefParameter[0];
@@ -78,7 +75,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     List<RefEntity> superChildren = super.getChildren();
     if (myParameters == null) return superChildren;
     if (superChildren.isEmpty()) return Arrays.asList(myParameters);
-    
+
     List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
     allChildren.addAll(superChildren);
     Collections.addAll(allChildren, myParameters);
@@ -100,8 +97,8 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     PsiMethod javaPsi = method.getJavaPsi();
     setConstructor(method.isConstructor());
     final PsiType returnType = method.getReturnType();
-    setFlag(returnType == null || 
-            PsiType.VOID.equals(returnType) || 
+    setFlag(returnType == null ||
+            PsiType.VOID.equals(returnType) ||
             returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID), IS_RETURN_VALUE_USED_MASK);
 
     RefClass ownerClass = getOwnerClass();
@@ -278,8 +275,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  @NotNull
-  public synchronized RefParameter[] getParameters() {
+  public synchronized RefParameter @NotNull [] getParameters() {
     return ObjectUtils.notNull(myParameters, EMPTY_PARAMS_ARRAY);
   }
 
@@ -616,8 +612,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Override
-  @Nullable
-  public synchronized PsiClass[] getUnThrownExceptions() {
+  public synchronized PsiClass @Nullable [] getUnThrownExceptions() {
     if (getRefManager().isOfflineView()) {
       LOG.debug("Should not traverse graph offline");
     }

@@ -1,23 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
-import com.intellij.ide.hierarchy.newAPI.HierarchyBrowserManager;
-import com.intellij.ide.hierarchy.newAPI.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.newAPI.HierarchyTreeStructure;
+import com.intellij.ide.hierarchy.HierarchyBrowserManager;
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
+import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
+  private static final Comparator<PsiMethod> SUPER_METHOD_COMPARATOR = Comparator.comparing(
+    PsiMethod::getContainingClass, Comparator.nullsLast(
+      Comparator.comparing(PsiClass::isInterface).thenComparing(PsiClass::getQualifiedName)));
   private final SmartPsiElementPointer<PsiMethod> myMethod;
   private final String myScopeType;
 
@@ -56,7 +59,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
   private static List<PsiClass> buildSuperChain(PsiMethod method) {
     List<PsiClass> superClasses = new ArrayList<>();
     while (true) {
-      PsiMethod superMethod = ArrayUtil.getFirstElement(method.findSuperMethods());
+      PsiMethod superMethod = Stream.of(method.findSuperMethods()).min(SUPER_METHOD_COMPARATOR).orElse(null);
       if (superMethod == null || superClasses.contains(superMethod.getContainingClass())) break;
       superClasses.addAll(0, findInheritanceChain(method.getContainingClass(), superMethod.getContainingClass()));
       method = superMethod;
@@ -88,9 +91,8 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return myMethod.getElement();
   }
 
-  @NotNull
   @Override
-  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+  protected final Object @NotNull [] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final PsiElement psiElement = ((MethodHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (!(psiElement instanceof PsiClass)) return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     final PsiClass psiClass = (PsiClass)psiElement;

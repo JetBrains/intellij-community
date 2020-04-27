@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -10,15 +11,14 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteOverridingMethodUsageInfo;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.ui.Table;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,16 +44,14 @@ class OverridingMethodsDialog extends DialogWrapper {
   private final boolean[] myChecked;
 
   private static final int CHECK_COLUMN = 0;
-  private Table myTable;
+  private JBTable myTable;
    private final UsagePreviewPanel myUsagePreviewPanel;
 
   OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];
-    for (int i = 0; i < myChecked.length; i++) {
-      myChecked[i] = true;
-    }
+    Arrays.fill(myChecked, true);
 
     myMethodText = new String[myOverridingMethods.size()];
     for (int i = 0; i < myMethodText.length; i++) {
@@ -64,7 +63,7 @@ class OverridingMethodsDialog extends DialogWrapper {
       );
     }
     myUsagePreviewPanel = new UsagePreviewPanel(project, new UsageViewPresentation());
-    setTitle(RefactoringBundle.message("unused.overriding.methods.title"));
+    setTitle(JavaRefactoringBundle.message("unused.overriding.methods.title"));
     init();
   }
 
@@ -92,8 +91,8 @@ class OverridingMethodsDialog extends DialogWrapper {
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(new JLabel(RefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")));
-    panel.add(new JLabel(RefactoringBundle.message("choose.the.ones.you.want.to.be.deleted")));
+    panel.add(new JLabel(JavaRefactoringBundle.message("there.are.unused.methods.that.override.methods.you.delete")));
+    panel.add(new JLabel(JavaRefactoringBundle.message("choose.the.ones.you.want.to.be.deleted")));
     return panel;
   }
 
@@ -113,7 +112,7 @@ class OverridingMethodsDialog extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(8, 0, 4, 0));
     final MyTableModel tableModel = new MyTableModel();
-    myTable = new Table(tableModel);
+    myTable = new JBTable(tableModel);
     myTable.setShowGrid(false);
 
     TableColumnModel columnModel = myTable.getColumnModel();
@@ -199,7 +198,7 @@ class OverridingMethodsDialog extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == CHECK_COLUMN ? " " : RefactoringBundle.message("method.column");
+      return column == CHECK_COLUMN ? " " : JavaRefactoringBundle.message("method.column");
     }
 
     @Override

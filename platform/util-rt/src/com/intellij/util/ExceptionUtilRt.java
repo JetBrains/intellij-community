@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-/**
- * @author nik
- */
 public class ExceptionUtilRt {
   public static void rethrowUnchecked(@Nullable Throwable t) {
     if (t instanceof Error) throw (Error)t;

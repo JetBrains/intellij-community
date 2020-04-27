@@ -40,9 +40,6 @@ import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-/**
- * @author Sergey.Malenkov
- */
 public final class FileTreeModel extends AbstractTreeModel implements Identifiable, InvokerSupplier {
   private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final State state;

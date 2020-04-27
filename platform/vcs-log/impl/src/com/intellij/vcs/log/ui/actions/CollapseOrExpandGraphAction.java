@@ -28,17 +28,35 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
 
-abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
-  private static final String LINEAR_BRANCHES = "Linear Branches";
-  private static final String LINEAR_BRANCHES_DESCRIPTION = "linear branches";
-  private static final String MERGES = "Merges";
-  private static final String MERGES_DESCRIPTION = "merges";
+import java.util.function.Supplier;
 
-  CollapseOrExpandGraphAction(@NotNull String action) {
-    super(action + " " + LINEAR_BRANCHES, action + " " + LINEAR_BRANCHES_DESCRIPTION, null);
+abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
+  private final Supplier<String> myLinearBranchesAction;
+  private final Supplier<String> myLinearBranchesDescription;
+  private final Supplier<String> myMergesAction;
+  private final Supplier<String> myMergesDescription;
+  //private static final String LINEAR_BRANCHES = "Linear Branches";
+  //private static final String LINEAR_BRANCHES_DESCRIPTION = "linear branches";
+  //private static final String MERGES = "Merges";
+  //private static final String MERGES_DESCRIPTION = "merges";
+
+  protected CollapseOrExpandGraphAction(@NotNull Supplier<String> linearBranchesAction,
+                                        @NotNull Supplier<String> linearBranchesDescription,
+                                        @NotNull Supplier<String> mergesAction,
+                                        @NotNull Supplier<String> mergesDescription) {
+    super(linearBranchesAction, linearBranchesDescription, null);
+    myLinearBranchesAction = linearBranchesAction;
+    myLinearBranchesDescription = linearBranchesDescription;
+    myMergesAction = mergesAction;
+    myMergesDescription = mergesDescription;
   }
+
+  //CollapseOrExpandGraphAction(@NotNull String mergesAction) {
+  //  super(mergesAction + " " + LINEAR_BRANCHES, mergesAction + " " + LINEAR_BRANCHES_DESCRIPTION, null);
+  //}
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -59,30 +77,28 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
       }
 
       if (properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek) {
-        e.getPresentation().setText(getPrefix() + MERGES);
-        e.getPresentation().setDescription(getPrefix() + MERGES_DESCRIPTION);
+        e.getPresentation().setText(myMergesAction.get());
+        e.getPresentation().setDescription(myMergesDescription.get());
       }
       else {
-        e.getPresentation().setText(getPrefix() + LINEAR_BRANCHES);
-        e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
+        e.getPresentation().setText(myLinearBranchesAction.get());
+        e.getPresentation().setDescription(myLinearBranchesDescription.get());
       }
     }
     else {
       e.getPresentation().setEnabled(false);
     }
 
-    e.getPresentation().setText(getPrefix() + LINEAR_BRANCHES);
-    e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
+    e.getPresentation().setText(myLinearBranchesAction.get());
+    e.getPresentation().setDescription(myLinearBranchesDescription.get());
   }
 
   protected abstract void executeAction(@NotNull MainVcsLogUi vcsLogUi);
 
-  @NotNull
-  protected abstract String getPrefix();
-
   protected void performLongAction(@NotNull MainVcsLogUi logUi, @NotNull GraphAction graphAction, @NotNull String title) {
+    VisiblePack dataPack = logUi.getDataPack();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ActionController<Integer> actionController = logUi.getDataPack().getVisibleGraph().getActionController();
+      ActionController<Integer> actionController = dataPack.getVisibleGraph().getActionController();
       GraphAnswer<Integer> answer = actionController.performAction(graphAction);
       Runnable updater = answer.getGraphUpdater();
       ApplicationManager.getApplication().invokeLater(() -> {

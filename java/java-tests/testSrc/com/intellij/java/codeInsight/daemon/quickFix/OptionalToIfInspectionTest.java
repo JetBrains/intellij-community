@@ -15,9 +15,8 @@ import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTes
  */
 public class OptionalToIfInspectionTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new OptionalToIfInspection()};
   }
 

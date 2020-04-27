@@ -230,9 +230,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return TypeInferenceHelper.getTopContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public PsiType[] getTypeArguments() {
+  public PsiType @NotNull [] getTypeArguments() {
     if (shouldInferTypeArguments(this)) {
       return getDiamondTypes(this);
     }
@@ -247,9 +246,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return doGetKind(this);
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return findChildrenByType(GroovyStubElementTypes.ANNOTATION, GrAnnotation.class);
   }
 }

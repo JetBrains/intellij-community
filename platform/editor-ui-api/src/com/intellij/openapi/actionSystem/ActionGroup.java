@@ -12,6 +12,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Represents a group of actions.
@@ -25,9 +26,8 @@ public abstract class ActionGroup extends AnAction {
   private boolean myPopup;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return EMPTY_ARRAY;
     }
   };
@@ -59,6 +59,10 @@ public abstract class ActionGroup extends AnAction {
    *  otherwise
    */
   public ActionGroup(@Nls(capitalization = Nls.Capitalization.Title) String shortName, boolean popup){
+    this(() -> shortName, popup);
+  }
+
+  public ActionGroup(@NotNull Supplier<String> shortName, boolean popup){
     super(shortName);
     setPopup(popup);
   }
@@ -67,6 +71,10 @@ public abstract class ActionGroup extends AnAction {
                      @Nls(capitalization = Nls.Capitalization.Sentence) String description,
                      Icon icon) {
     super(text, description, icon);
+  }
+
+  public ActionGroup(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   /**
@@ -124,11 +132,9 @@ public abstract class ActionGroup extends AnAction {
    *
    * @return An array representing children of this group. All returned children must be not {@code null}.
    */
-  @NotNull
-  public abstract AnAction[] getChildren(@Nullable AnActionEvent e);
+  public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
-  @NotNull
-  public AnAction[] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
+  public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     return getChildren(null);
   }
 

@@ -27,6 +27,5 @@ public interface FileStructureFilter extends Filter {
   @NotNull
   String getCheckBoxText();
 
-  @NotNull
-  Shortcut[] getShortcut();
+  Shortcut @NotNull [] getShortcut();
 }

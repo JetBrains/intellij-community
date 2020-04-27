@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class DiffShelvedChangesWithLocalActionProvider implements AnActionExtensionProvider {
@@ -28,7 +29,7 @@ public class DiffShelvedChangesWithLocalActionProvider implements AnActionExtens
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    e.getPresentation().setDescription("Compare shelved version with current");
+    e.getPresentation().setDescription(VcsBundle.messagePointer("action.presentation.DiffShelvedChangesWithLocalActionProvider.description"));
     e.getPresentation().setEnabled(DiffShelvedChangesActionProvider.isEnabled(e.getDataContext()));
   }
 

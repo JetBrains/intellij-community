@@ -24,7 +24,10 @@
 
     <stubElementTypeHolder class="com.jetbrains.python.PyStubElementTypes" externalIdPrefix="py."/>
 
+    <gotoDeclarationHandler implementation="com.jetbrains.python.codeInsight.PyBreakContinueGotoProvider" order="FIRST"/>
     <gotoDeclarationHandler implementation="com.jetbrains.python.psi.impl.PyGotoDeclarationHandler"/>
+
+    <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
 
     <filePropertyPusher implementation="com.jetbrains.python.psi.impl.PythonLanguageLevelPusher"/>
 
@@ -54,8 +57,6 @@
     <applicationService serviceImplementation="com.jetbrains.python.documentation.PyDocumentationSettings$AppService"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor" language="Python"/>
-    <!-- We run it before FilePathCompletionContributor (id="filePath") to get help text about full path results in the extended completion -->
-    <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PySoftFileReferenceContributor" language="Python" order="before filePath"/>
     <psi.referenceContributor implementation="com.jetbrains.python.documentation.docstrings.DocStringReferenceContributor"
                               language="Python"/>
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PythonFormattedStringReferenceContributor"
@@ -76,6 +77,8 @@
         serviceImplementation="com.jetbrains.python.PythonRuntimeService"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.PythonCodeStyleService"/>
+
+    <applicationService serviceImplementation="com.jetbrains.python.PythonUiService"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySuperMethodCompletionContributor"/>
@@ -108,6 +111,8 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyModulePackageCompletionContributor"/>
 
+    <lang.tokenSeparatorGenerator language="Python" implementationClass="com.jetbrains.python.PyTokenSeparatorGenerator"/>
+
     <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.psi.impl.PythonASTFactory"/>
   </extensions>
 
@@ -121,6 +126,7 @@
       <with attribute="implementationClass" implements="com.jetbrains.python.psi.PythonVisitorFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker" interface="com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker"/>
+    <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider" interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -147,7 +153,6 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyTypedDictOverridingTypeProvider"/>
-    <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
@@ -170,7 +175,29 @@
     <!-- Type from ancestors -->
     <typeProvider implementation="com.jetbrains.python.codeInsight.typing.PyAncestorTypeProvider" order="last"/>
 
+    <!-- NumPy -->
+    <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider" order="before pythonDocstringTypeProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyClassMembersProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyModuleMembersProvider"/>
+    <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
+
+    <!--stdlib-->
+    <canonicalPathProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibCanonicalPathProvider"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.stdlib.PyStdlibInspectionExtension"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassOverridingTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleOverridingTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyOverridingClassDunderMembersProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
+
 
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.importCandidateProvider" interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"/>
+  </extensionPoints>
 
 </idea-plugin>

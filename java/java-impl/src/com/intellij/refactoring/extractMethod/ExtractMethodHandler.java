@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -35,6 +36,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -45,6 +47,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
@@ -56,6 +59,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +67,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   private static final Logger LOG = Logger.getInstance(ExtractMethodHandler.class);
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (dataContext != null) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -149,7 +153,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, @NotNull PsiElement[] elements) {
+  public static void invokeOnElements(@NotNull Project project, final Editor editor, PsiFile file, PsiElement @NotNull [] elements) {
     getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
       @Override
       public void pass(ExtractMethodProcessor processor) {
@@ -186,6 +190,14 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
   }
 
   private static void doRefactoring(@NotNull Project project, @NotNull ExtractMethodProcessor processor) {
+    if (Registry.is("java.refactoring.extractMethod.newImplementation")) {
+      final MethodExtractor extractor = MethodExtractor.getInstance(Arrays.asList(processor.myElements));
+      extractor
+        .methodName(processor.myMethodName)
+        .tryToRemapParameters(processor.myVariableDatum)
+        .extract();
+      return;
+    }
     try {
       final RefactoringEventData beforeData = new RefactoringEventData();
       beforeData.addElements(processor.myElements);
@@ -224,7 +236,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       if (element instanceof PsiStatement && JavaHighlightUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
         if (showErrorMessages) {
           String message = RefactoringBundle
-            .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
+            .getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
         }
         return null;
@@ -232,7 +244,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       if (element instanceof PsiStatement && PsiTreeUtil.getParentOfType(element, PsiClass.class) == null) {
         if (showErrorMessages) {
           String message = RefactoringBundle
-            .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.statement.outside.of.class"));
+            .getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.contains.statement.outside.of.class"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.EXTRACT_METHOD);
         }
         return null;

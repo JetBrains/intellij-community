@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 /**
  * An action which has a selected state, and which toggles its selected state when performed.
@@ -17,6 +18,10 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   }
 
   public ToggleAction(@Nullable @Nls(capitalization = Nls.Capitalization.Title) final String text) {
+    super(() -> text);
+  }
+
+  public ToggleAction(@NotNull Supplier<String> text) {
     super(text);
   }
 
@@ -24,6 +29,16 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
                       @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) final String description,
                       @Nullable final Icon icon) {
     super(text, description, icon);
+  }
+
+  public ToggleAction(@NotNull Supplier<String> text,
+                      @NotNull Supplier<String> description,
+                      @Nullable final Icon icon) {
+    super(text, description, icon);
+  }
+
+  public ToggleAction(@NotNull Supplier<String> text, @Nullable final Icon icon) {
+    super(text, Presentation.NULL_STRING, icon);
   }
 
   @Override

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class DeploymentConfigurator<D extends DeploymentConfiguration, S extends ServerConfiguration> {
   @NotNull
   public abstract List<DeploymentSource> getAvailableDeploymentSources();

@@ -106,8 +106,9 @@ public class ExtractMethodHelper {
         .message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
                  ApplicationNamesInfo.getInstance().getProductName(), duplicates.size());
       final boolean isUnittest = ApplicationManager.getApplication().isUnitTestMode();
+      boolean isPerformanceScript = System.getProperty("testscript.filename") != null;
       final Project project = callElement.getProject();
-      final int exitCode = !isUnittest ? Messages.showYesNoDialog(project, message,
+      final int exitCode = !isUnittest && !isPerformanceScript ? Messages.showYesNoDialog(project, message,
                                                                   RefactoringBundle.message("refactoring.extract.method.dialog.title"),
                                                                   Messages.getInformationIcon()) :
                            Messages.YES;
@@ -121,7 +122,7 @@ public class ExtractMethodHelper {
             highlightInEditor(project, match, editor, highlighterMap);
 
             int promptResult = FindManager.PromptResult.ALL;
-            if (!isUnittest) {
+            if (!isUnittest && !isPerformanceScript) {
               ReplacePromptDialog promptDialog =
                 new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);
               promptDialog.show();
@@ -153,7 +154,8 @@ public class ExtractMethodHelper {
 
   private static void replaceDuplicate(final Project project, final Consumer<? super Pair<SimpleMatch, PsiElement>> replacer,
                                        final Pair<SimpleMatch, PsiElement> replacement) {
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> replacer.consume(replacement)), "Replace duplicate", null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> replacer.consume(replacement)),
+                                                  RefactoringBundle.message("extract.method.replace.duplicate.command.name"), null);
   }
 
 

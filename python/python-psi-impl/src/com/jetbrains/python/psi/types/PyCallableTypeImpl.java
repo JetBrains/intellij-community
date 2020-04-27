@@ -6,9 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -22,10 +20,23 @@ import java.util.List;
 public class PyCallableTypeImpl implements PyCallableType {
   @Nullable private final List<PyCallableParameter> myParameters;
   @Nullable private final PyType myReturnType;
+  @Nullable private final PyCallable myCallable;
+  @Nullable private final PyFunction.Modifier myModifier;
+  private final int myImplicitOffset;
 
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters, @Nullable PyType returnType) {
+    this(parameters, returnType, null, null, 0);
+  }
+  public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters,
+                            @Nullable PyType returnType,
+                            @Nullable PyCallable callable,
+                            @Nullable PyFunction.Modifier modifier,
+                            int offset) {
     myParameters = parameters;
     myReturnType = returnType;
+    myCallable = callable;
+    myModifier = modifier;
+    myImplicitOffset = offset;
   }
 
   @Nullable
@@ -95,5 +106,22 @@ public class PyCallableTypeImpl implements PyCallableType {
 
   @Override
   public void assertValid(String message) {
+  }
+
+  @Override
+  @Nullable
+  public PyCallable getCallable() {
+    return myCallable;
+  }
+
+  @Override
+  @Nullable
+  public PyFunction.Modifier getModifier() {
+    return myModifier;
+  }
+
+  @Override
+  public int getImplicitOffset() {
+    return myImplicitOffset;
   }
 }

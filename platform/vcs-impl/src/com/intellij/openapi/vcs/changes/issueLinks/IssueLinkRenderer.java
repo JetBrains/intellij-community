@@ -21,12 +21,11 @@ import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.ui.JBColor.blue;
 
 /**
  * @author yole
@@ -84,7 +83,8 @@ public class IssueLinkRenderer {
   private static SimpleTextAttributes getLinkAttributes(final SimpleTextAttributes baseStyle) {
     Color color = baseStyle.getFgColor();
     int alpha = color != null ? color.getAlpha() : 255;
-    @SuppressWarnings("UseJBColor") Color resultColor = new Color(blue.getRed(), blue.getGreen(), blue.getBlue(), alpha);
+    Color linkColor = JBUI.CurrentTheme.Link.linkColor();
+    @SuppressWarnings("UseJBColor") Color resultColor = new Color(linkColor.getRed(), linkColor.getGreen(), linkColor.getBlue(), alpha);
     return new SimpleTextAttributes(baseStyle.getStyle() | SimpleTextAttributes.STYLE_UNDERLINE, resultColor);
   }
 }

@@ -17,9 +17,6 @@ package org.jetbrains.jps.builders.java
 
 import org.jetbrains.jps.incremental.BuilderService
 
-/**
- * @author nik
- */
 class TestBuildersService : BuilderService() {
   override fun createModuleLevelBuilders() = listOf(MockPackageFacadeGenerator(), SkipMarkingSomeFilesAsDirtyBuilder())
 }

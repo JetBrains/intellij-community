@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
 import com.intellij.psi.PsiAnnotation
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter
 
 class InferredDelegatesToProvider : GrDelegatesToProvider {
 
@@ -29,7 +30,7 @@ class InferredDelegatesToProvider : GrDelegatesToProvider {
     virtualMethod ?: return null
     val argumentMapping = result.candidate?.argumentMapping ?: return null
     val parameterMapping = setUpParameterMapping(method, virtualMethod)
-    val targetParameter = argumentMapping.targetParameter(ExpressionArgument(expression)) as? GrParameter ?: return null
+    val targetParameter = argumentMapping.targetParameter(ExpressionArgument(expression))?.psi as? GrParameter ?: return null
     val virtualParameter = virtualMethod.parameters[method.parameterList.getParameterNumber(targetParameter)] ?: return null
     val delegatesTo = virtualParameter.modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO) ?: return null
     val strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"))
@@ -44,13 +45,13 @@ class InferredDelegatesToProvider : GrDelegatesToProvider {
 
   private fun getFromVirtualTarget(parameterList: PsiParameterList,
                                    delegatesTo: PsiAnnotation,
-                                   mapping: ArgumentMapping,
+                                   mapping: ArgumentMapping<PsiCallParameter>,
                                    parameterMapping: Map<GrParameter, GrParameter>): PsiType? {
     val target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target") ?: return null
     val parameter = findTargetParameter(parameterList, target) ?: return null
     // genericTypeIndex can not appear after inference process
     return mapping.arguments.firstOrNull {
-      parameterMapping[mapping.targetParameter(it)] == parameter
+      parameterMapping[mapping.targetParameter(it)?.psi] == parameter
     }?.type ?: return null
   }
 

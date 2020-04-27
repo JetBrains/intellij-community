@@ -2,7 +2,7 @@
 package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.structureView.StructureViewBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.util.Key;
@@ -99,7 +99,7 @@ public class SuperTypesGrouper implements Grouper{
   @Override
   @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.group.methods.by.defining.type"), null,
+    return new ActionPresentationData(StructureViewBundle.message("action.structureview.group.methods.by.defining.type"), null,
                                       AllIcons.General.ImplementingMethod);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ProjectGroupActionGroup;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -67,9 +68,9 @@ public class OpenSelectedProjectsAction extends RecentProjectsWelcomeScreenActio
     if (ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())) {
       presentation.setEnabledAndVisible(true);
       if (selectedElements.size() == 1 && selectedElements.get(0) instanceof ProjectGroupActionGroup) {
-        presentation.setText("Open All Projects in Group");
+        presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group"));
       } else {
-        presentation.setText("Open Selected");
+        presentation.setText(IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.selected"));
       }
     } else {
       presentation.setEnabledAndVisible(false);

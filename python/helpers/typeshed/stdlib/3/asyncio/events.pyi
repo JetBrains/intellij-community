@@ -7,6 +7,8 @@ from asyncio.futures import Future
 from asyncio.protocols import BaseProtocol
 from asyncio.tasks import Task
 from asyncio.transports import BaseTransport
+from asyncio.unix_events import AbstractChildWatcher
+
 from _types import FileDescriptorLike
 
 _T = TypeVar('_T')
@@ -125,7 +127,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
             proto: int = ...,
             flags: int = ...,
             sock: None = ...,
-            local_addr: Optional[str] = ...,
+            local_addr: Optional[Tuple[str, int]] = ...,
             server_hostname: Optional[str] = ...,
             ssl_handshake_timeout: Optional[float] = ...,
             happy_eyeballs_delay: Optional[float] = ...,
@@ -155,7 +157,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
         @abstractmethod
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ...,
-                                    sock: None = ..., local_addr: Optional[str] = ..., server_hostname: Optional[str] = ...,
+                                    sock: None = ..., local_addr: Optional[Tuple[str, int]] = ..., server_hostname: Optional[str] = ...,
                                     ssl_handshake_timeout: Optional[float] = ...) -> _TransProtPair: ...
         @overload
         @abstractmethod
@@ -168,7 +170,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
         @abstractmethod
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: str = ..., port: int = ..., *,
                                     ssl: _SSLContext = ..., family: int = ..., proto: int = ..., flags: int = ..., sock: None = ...,
-                                    local_addr: Optional[str] = ..., server_hostname: Optional[str] = ...) -> _TransProtPair: ...
+                                    local_addr: Optional[Tuple[str, int]] = ..., server_hostname: Optional[str] = ...) -> _TransProtPair: ...
         @overload
         @abstractmethod
         async def create_connection(self, protocol_factory: _ProtocolFactory, host: None = ..., port: None = ..., *,
@@ -310,9 +312,9 @@ class AbstractEventLoopPolicy(metaclass=ABCMeta):
     def new_event_loop(self) -> AbstractEventLoop: ...
     # Child processes handling (Unix only).
     @abstractmethod
-    def get_child_watcher(self) -> Any: ...  # TODO: unix_events.AbstractChildWatcher
+    def get_child_watcher(self) -> AbstractChildWatcher: ...
     @abstractmethod
-    def set_child_watcher(self, watcher: Any) -> None: ...  # TODO: unix_events.AbstractChildWatcher
+    def set_child_watcher(self, watcher: AbstractChildWatcher) -> None: ...
 
 class BaseDefaultEventLoopPolicy(AbstractEventLoopPolicy, metaclass=ABCMeta):
     def __init__(self) -> None: ...
@@ -327,14 +329,13 @@ def get_event_loop() -> AbstractEventLoop: ...
 def set_event_loop(loop: Optional[AbstractEventLoop]) -> None: ...
 def new_event_loop() -> AbstractEventLoop: ...
 
-def get_child_watcher() -> Any: ...  # TODO: unix_events.AbstractChildWatcher
-def set_child_watcher(watcher: Any) -> None: ...  # TODO: unix_events.AbstractChildWatcher
+def get_child_watcher() -> AbstractChildWatcher: ...
+def set_child_watcher(watcher: AbstractChildWatcher) -> None: ...
 
 def _set_running_loop(loop: Optional[AbstractEventLoop]) -> None: ...
 def _get_running_loop() -> AbstractEventLoop: ...
 
 if sys.version_info >= (3, 7):
     def get_running_loop() -> AbstractEventLoop: ...
-
-if sys.version_info < (3, 8):
-    class SendfileNotAvailableError(RuntimeError): ...
+    if sys.version_info < (3, 8):
+        class SendfileNotAvailableError(RuntimeError): ...

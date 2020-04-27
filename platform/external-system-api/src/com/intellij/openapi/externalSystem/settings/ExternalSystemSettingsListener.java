@@ -38,6 +38,14 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
    */
   void onProjectRenamed(@NotNull String oldName, @NotNull String newName);
 
+  /**
+   * Happens after loading of project settings
+   *
+   * @see AbstractExternalSystemSettings#loadState
+   * @see com.intellij.openapi.components.PersistentStateComponent#loadState
+   */
+  default void onProjectsLoaded(@NotNull Collection<S> settings) {}
+
   void onProjectsLinked(@NotNull Collection<S> settings);
 
   void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths);

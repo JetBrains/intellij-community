@@ -37,9 +37,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class AppEngineUtil {
   @NonNls public static final String APP_ENGINE_WEB_XML_NAME = "appengine-web.xml";
   @NonNls public static final String APP_ENGINE_APPLICATION_XML_NAME = "appengine-application.xml";

@@ -11,7 +11,7 @@ public final class TodoIndexPatternProvider implements IndexPatternProvider {
   }
 
   @Override
-  @NotNull public IndexPattern[] getIndexPatterns() {
+  public IndexPattern @NotNull [] getIndexPatterns() {
     return TodoConfiguration.getInstance().getIndexPatterns();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.impl;
 
@@ -42,6 +42,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.util.BitUtil;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -62,6 +63,7 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
  * @author Eugene Belyaev
  */
 public class StructureViewWrapperImpl implements StructureViewWrapper, Disposable {
+  public static final Topic<Runnable> STRUCTURE_CHANGED = new Topic<>("structure view changed", Runnable.class);
   private static final Logger LOG = Logger.getInstance(StructureViewWrapperImpl.class);
   private static final DataKey<StructureViewWrapper> WRAPPER_DATA_KEY = DataKey.create("WRAPPER_DATA_KEY");
   private static final int REFRESH_TIME = 100; // time to check if a context file selection is changed or not
@@ -138,7 +140,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
         }
       }
     });
-    myToolWindow.getContentManager().addContentManagerListener(new ContentManagerAdapter() {
+    myToolWindow.getContentManager().addContentManagerListener(new ContentManagerListener() {
       @Override
       public void selectionChanged(@NotNull ContentManagerEvent event) {
         if (myStructureView instanceof StructureViewComposite) {
@@ -155,8 +157,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     Disposer.register(myToolWindow.getContentManager(), this);
 
     PsiStructureViewFactory.EP_NAME.addExtensionPointListener(this::clearCaches, this);
-    
+
     StructureViewBuilder.EP_NAME.addExtensionPointListener(this::clearCaches, this);
+    getApplication().getMessageBus().connect(this).subscribe(STRUCTURE_CHANGED, this::clearCaches);
   }
 
   private void clearCaches() {
@@ -164,7 +167,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (myStructureView != null) {
       myStructureView.disableStoreState();
     }
-    rebuild();
+    scheduleRebuild();
   }
 
   private void checkUpdate() {

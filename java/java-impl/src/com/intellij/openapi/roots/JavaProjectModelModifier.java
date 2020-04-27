@@ -31,8 +31,6 @@ import java.util.Collection;
  * extensions refuse to handle modification by returning {@code null}.
  *
  * @see JavaProjectModelModificationService
- *
- * @author nik
  */
 public abstract class JavaProjectModelModifier {
   public static final ExtensionPointName<JavaProjectModelModifier> EP_NAME = ExtensionPointName.create("com.intellij.projectModelModifier");

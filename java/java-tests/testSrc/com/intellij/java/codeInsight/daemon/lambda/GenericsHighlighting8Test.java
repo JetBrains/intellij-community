@@ -47,9 +47,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     enableInspectionTool(new UnusedImportInspection());
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new UncheckedWarningLocalInspection()};
   }
 
@@ -1130,6 +1129,29 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
                       "</tr>" +
                       "<tr><td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
                       "<td style='padding: 0px 4px 0px 0px;'><font color='" + red + "'>int</font></td></tr>" +
+                      "</table></body></html>";
+
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals(expected, info.getToolTip()));
+  }
+
+  public void testTooltipWithCapture() {
+    doTest();
+    String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
+    String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
+    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String expected = "<html><body><table>" +
+                      "<tr>" +
+                      "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
+                      "<td style='padding: 0px 4px 8px 0px;'><font color='" + toolTipForeground + "'>Class</font></td>" +
+                      "<td style='padding: 0px 0px 8px 0px;'>&lt;<font color='" + toolTipForeground + "'>capture of ?</font>&gt;</td>" +
+                      "</tr>" +
+                      "<tr>" +
+                      "<td style='padding: 0px 16px 0px 4px;color: " + greyed + "'>Provided:</td>" +
+                      "<td style='padding: 0px 4px 0px 0px;'><font color='" + toolTipForeground + "'>Class</font></td>" +
+                      "<td style='padding: 0px 0px 0px 0px;'>&lt;<font color='" + red + "'>capture of ?</font>&gt;</td></tr>" +
                       "</table></body></html>";
 
     doHighlighting()

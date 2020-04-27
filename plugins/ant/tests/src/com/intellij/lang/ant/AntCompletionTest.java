@@ -192,8 +192,7 @@ public class AntCompletionTest extends LightJavaCodeInsightTestCase {
     return lookup.getCurrentItem();
   }
 
-  @NotNull
-  private LookupElement[] getItems() {
+  private LookupElement @NotNull [] getItems() {
     final List<LookupElement> list = LookupManager.getInstance(getProject()).getActiveLookup().getItems();
     return list.toArray(LookupElement.EMPTY_ARRAY);
   }

@@ -2,6 +2,7 @@
 
 package com.intellij.ide.scopeView;
 
+import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -253,8 +254,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     });
   }
 
-  @NotNull
-  private PsiElement[] getSelectedPsiElements() {
+  private PsiElement @NotNull [] getSelectedPsiElements() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       Set<PsiElement> result = new HashSet<>();
@@ -297,7 +297,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     }, settings);
     myTree.setPaintBusy(true);
     myBuilder.setTree(myTree);
-    myTree.getEmptyText().setText("Loading...");
+    myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
     myActionCallback = new ActionCallback();
     ComponentUtil.putClientProperty(myTree, TreeState.CALLBACK, new WeakReference<ActionCallback>(myActionCallback));
     myTree.setModel(myBuilder.build(myProject, true, () -> {
@@ -382,8 +382,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     return null;
   }
 
-  @Nullable
-  private Module[] getSelectedModules() {
+  private Module @Nullable [] getSelectedModules() {
     final TreePath[] treePaths = myTree.getSelectionPaths();
     if (treePaths != null) {
       Set<Module> result = new HashSet<>();
@@ -785,9 +784,8 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       return null;
     }
 
-    @NotNull
     @Override
-    public PsiDirectory[] getDirectories() {
+    public PsiDirectory @NotNull [] getDirectories() {
       PsiDirectory directory = getDirectory();
       return directory == null ? PsiDirectory.EMPTY_ARRAY : new PsiDirectory[]{directory};
     }

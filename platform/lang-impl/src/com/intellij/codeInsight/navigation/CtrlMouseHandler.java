@@ -366,7 +366,8 @@ public final class CtrlMouseHandler {
   }
 
   private static void showDumbModeNotification(@NotNull Project project) {
-    DumbService.getInstance(project).showDumbModeNotification("Element information is not available during index update");
+    DumbService.getInstance(project).showDumbModeNotification(
+      CodeInsightBundle.message("notification.element.information.is.not.available.during.index.update"));
   }
 
   private static class InfoSingle extends Info {
@@ -480,8 +481,7 @@ public final class CtrlMouseHandler {
       final PsiElement element = TargetElementUtil.getInstance().findTargetElement(editor, ImplementationSearcher.getFlags(), offset);
       PsiElement[] targetElements = new ImplementationSearcher() {
         @Override
-        @NotNull
-        protected PsiElement[] searchDefinitions(final PsiElement element, Editor editor) {
+        protected PsiElement @NotNull [] searchDefinitions(final PsiElement element, Editor editor) {
           final List<PsiElement> found = new ArrayList<>(2);
           DefinitionsScopedSearch.search(element, getSearchScope(element, editor)).forEach(psiElement -> {
             found.add(psiElement);

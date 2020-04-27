@@ -151,8 +151,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
     return getValue() != null && CopyPasteManager.getInstance().isCutElement(getValue().getPackage());
   }
 
-  @NotNull
-  public VirtualFile[] getVirtualFiles() {
+  public VirtualFile @NotNull [] getVirtualFiles() {
     final PackageElement value = getValue();
     if (value == null) {
       return VirtualFile.EMPTY_ARRAY;

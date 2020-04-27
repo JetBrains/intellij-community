@@ -1,20 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
@@ -32,6 +30,7 @@ import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LocationOnDragTracker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +41,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
@@ -50,25 +48,25 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final String HIDE_ID_LABEL = "HideIdLabel";
   private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
 
-  private ContentManager contentManager;
+  private final @NotNull ContentManager contentManager;
 
-  public ContentManager getContentManager() {
+  public @NotNull ContentManager getContentManager() {
     return contentManager;
   }
 
-  private final JPanel myContent = new JPanel(new BorderLayout());
-  final ToolWindowImpl myWindow;
+  private final JPanel contentComponent;
+  final ToolWindowImpl window;
 
-  private TabbedContentAction.CloseAllAction myCloseAllAction;
-  private TabbedContentAction.MyNextTabAction myNextTabAction;
-  private TabbedContentAction.MyPreviousTabAction myPreviousTabAction;
+  private final TabbedContentAction.CloseAllAction closeAllAction;
+  private final TabbedContentAction.MyNextTabAction nextTabAction;
+  private final TabbedContentAction.MyPreviousTabAction previousTabAction;
 
-  private ShowContentAction myShowContent;
+  private final ShowContentAction showContent;
 
-  private final TabContentLayout myTabsLayout;
+  private final TabContentLayout tabsLayout;
   private ContentLayout myComboLayout;
 
-  private ToolWindowContentUiType myType;
+  private ToolWindowContentUiType type;
 
   public Predicate<Point> isResizableArea = p -> true;
 
@@ -79,94 +77,21 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return tabComponent;
   }
 
-  public ToolWindowContentUi(@NotNull ToolWindowImpl window, @NotNull ToolWindowContentUiType contentUiType) {
-    myType = contentUiType;
-    myTabsLayout = new TabContentLayout(this);
-    myWindow = window;
-    myContent.setOpaque(false);
-    myContent.setFocusable(false);
-  }
+  public ToolWindowContentUi(@NotNull ToolWindowImpl window,
+                             @NotNull ContentManager contentManager,
+                             @NotNull JPanel contentComponent) {
+    this.contentManager = contentManager;
+    type = window.getWindowInfo().getContentUiType();
+    tabsLayout = new TabContentLayout(this);
+    this.window = window;
+    this.contentComponent = contentComponent;
 
-  @NotNull
-  public String getToolWindowId() {
-    return myWindow.getId();
-  }
-
-  private boolean isResizeable() {
-    if (myWindow.getType() == ToolWindowType.FLOATING || myWindow.getType() == ToolWindowType.WINDOWED) {
-      return false;
-    }
-    if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) {
-      return true;
-    }
-    if (myWindow.getAnchor() == ToolWindowAnchor.TOP || !myWindow.isSplitMode()) {
-      return false;
-    }
-
-    ToolWindowManagerImpl manager = myWindow.getToolWindowManager();
-    for (String id : manager.getIdsOn(myWindow.getAnchor())) {
-      if (id.equals(myWindow.getId())) {
-        continue;
-      }
-      ToolWindow window = manager.getToolWindow(id);
-      if (window != null && window.isVisible() && (window.getType() == ToolWindowType.DOCKED || window.getType() == ToolWindowType.SLIDING)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isResizeable(@NotNull Point point) {
-    return isResizableArea.apply(point);
-  }
-
-  public void setType(@NotNull ToolWindowContentUiType type) {
-    if (myType == type) {
-      return;
-    }
-
-    if (myType != null) {
-      getCurrentLayout().reset();
-    }
-
-    myType = type;
-
-    getCurrentLayout().init();
-    rebuild();
-  }
-
-  @NotNull
-  private ContentLayout getCurrentLayout() {
-    if (myType == ToolWindowContentUiType.TABBED) {
-      return myTabsLayout;
-    }
-    else {
-      if (myComboLayout == null) {
-        myComboLayout = new ComboContentLayout(this);
-      }
-      return myComboLayout;
-    }
-  }
-
-  @Override
-  public JComponent getComponent() {
-    return myContent;
-  }
-
-  @Override
-  public void setManager(@NotNull ContentManager manager) {
-    if (contentManager != null) {
-      getCurrentLayout().reset();
-    }
-
-    contentManager = manager;
-
-    getCurrentLayout().init();
+    getCurrentLayout().init(contentManager);
 
     contentManager.addContentManagerListener(new ContentManagerListener() {
       private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
         @Override
-        public void propertyChange(PropertyChangeEvent evt) {
+        public void propertyChange(PropertyChangeEvent event) {
           update();
         }
       };
@@ -184,6 +109,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
+
+        if (contentManager.getContentCount() == 0 && window.isToHideOnEmptyContent()) {
+          window.hide(null);
+        }
       }
 
       @Override
@@ -191,41 +120,109 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         ensureSelectedContentVisible();
 
         update();
-
-        myContent.revalidate();
-        myContent.repaint();
+        contentComponent.revalidate();
+        contentComponent.repaint();
       }
     });
 
     initMouseListeners(tabComponent, this, true);
 
-    rebuild();
+    closeAllAction = new TabbedContentAction.CloseAllAction(contentManager);
+    nextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
+    previousTabAction = new TabbedContentAction.MyPreviousTabAction(contentManager);
+    showContent = new ShowContentAction(window, contentComponent, contentManager);
+  }
 
-    myCloseAllAction = new TabbedContentAction.CloseAllAction(contentManager);
-    myNextTabAction = new TabbedContentAction.MyNextTabAction(contentManager);
-    myPreviousTabAction = new TabbedContentAction.MyPreviousTabAction(contentManager);
-    myShowContent = new ShowContentAction(myWindow, myContent, contentManager);
+  @NotNull
+  public String getToolWindowId() {
+    return window.getId();
+  }
+
+  private boolean isResizeable() {
+    if (window.getType() == ToolWindowType.FLOATING || window.getType() == ToolWindowType.WINDOWED) {
+      return false;
+    }
+    if (window.getAnchor() == ToolWindowAnchor.BOTTOM) {
+      return true;
+    }
+    if (window.getAnchor() == ToolWindowAnchor.TOP || !window.isSplitMode()) {
+      return false;
+    }
+
+    ToolWindowManagerImpl manager = window.getToolWindowManager();
+    for (String id : manager.getIdsOn(window.getAnchor())) {
+      if (id.equals(window.getId())) {
+        continue;
+      }
+      ToolWindow window = manager.getToolWindow(id);
+      if (window != null && window.isVisible() && (window.getType() == ToolWindowType.DOCKED || window.getType() == ToolWindowType.SLIDING)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isResizeable(@NotNull Point point) {
+    return isResizableArea.apply(point);
+  }
+
+  public void setType(@NotNull ToolWindowContentUiType type) {
+    if (this.type == type) {
+      return;
+    }
+
+    if (this.type != null) {
+      getCurrentLayout().reset();
+    }
+
+    this.type = type;
+
+    getCurrentLayout().init(contentManager);
+    rebuild();
+  }
+
+  @NotNull
+  private ContentLayout getCurrentLayout() {
+    if (type == ToolWindowContentUiType.TABBED) {
+      return tabsLayout;
+    }
+    else {
+      if (myComboLayout == null) {
+        myComboLayout = new ComboContentLayout(this);
+      }
+      return myComboLayout;
+    }
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return contentComponent;
+  }
+
+  @Override
+  public void setManager(@NotNull ContentManager manager) {
+    throw new UnsupportedOperationException();
   }
 
   private void ensureSelectedContentVisible() {
     Content selected = contentManager.getSelectedContent();
     if (selected == null) {
-      myContent.removeAll();
+      contentComponent.removeAll();
       return;
     }
 
-    if (myContent.getComponentCount() == 1) {
-      Component visible = myContent.getComponent(0);
+    if (contentComponent.getComponentCount() == 1) {
+      Component visible = contentComponent.getComponent(0);
       if (visible == selected.getComponent()) {
         return;
       }
     }
 
-    myContent.removeAll();
-    myContent.add(selected.getComponent(), BorderLayout.CENTER);
+    contentComponent.removeAll();
+    contentComponent.add(selected.getComponent(), BorderLayout.CENTER);
 
-    myContent.revalidate();
-    myContent.repaint();
+    contentComponent.revalidate();
+    contentComponent.repaint();
   }
 
   private void rebuild() {
@@ -234,14 +231,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     tabComponent.revalidate();
     tabComponent.repaint();
-
-    if (contentManager != null && contentManager.getContentCount() == 0 && myWindow.isToHideOnEmptyContent()) {
-      myWindow.hide(null);
-    }
   }
 
   private void update() {
     getCurrentLayout().update();
+    getCurrentLayout().layout();
 
     tabComponent.revalidate();
     tabComponent.repaint();
@@ -291,8 +285,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return getCurrentLayout().getNextContentActionName();
   }
 
-  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
-    myTabsLayout.setTabDoubleClickActions(actions);
+  public void setTabDoubleClickActions(@NotNull List<AnAction> actions) {
+    tabsLayout.setTabDoubleClickActions(actions);
   }
 
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
@@ -353,7 +347,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       @Override
-      public void mousePressed(MouseEvent e) {
+      public void mousePressed(@NotNull MouseEvent e) {
         PointerInfo info = MouseInfo.getPointerInfo();
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
@@ -363,13 +357,13 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
             if (allowResize && ui.isResizeable()) {
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
-            ui.myWindow.fireActivated();
+            ui.window.fireActivated();
           }
         }
       }
 
       @Override
-      public void mouseReleased(MouseEvent e) {
+      public void mouseReleased(@NotNull MouseEvent e) {
         if (!e.isPopupTrigger()) {
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             ui.processHide(e);
@@ -423,12 +417,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     c.addMouseMotionListener(mouseAdapter);
     c.addMouseListener(mouseAdapter);
 
-
     c.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         final Content content = c instanceof BaseLabel ? ((BaseLabel)c).getContent() : null;
-        ui.showContextMenu(comp, x, y, ui.myWindow.getPopupGroup(), content);
+        ui.showContextMenu(comp, x, y, ui.window.getPopupGroup(), content);
       }
     });
 
@@ -442,7 +435,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
     group.addSeparator();
     group.add(new TabbedContentAction.CloseAction(content));
-    group.add(myCloseAllAction);
+    group.add(closeAllAction);
     group.add(new TabbedContentAction.CloseAllButThisAction(content));
     group.addSeparator();
     if (content.isPinnable()) {
@@ -450,9 +443,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       group.addSeparator();
     }
 
-    group.add(myNextTabAction);
-    group.add(myPreviousTabAction);
-    group.add(myShowContent);
+    group.add(nextTabAction);
+    group.add(previousTabAction);
+    group.add(showContent);
 
     if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
       group.addAction(createSplitTabsAction((TabbedContent)content));
@@ -461,7 +454,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     if (Boolean.TRUE == content.getUserData(Content.TABBED_CONTENT_KEY)) {
       final String groupName = content.getUserData(Content.TAB_GROUP_NAME_KEY);
       if (groupName != null) {
-        group.addAction(createMergeTabsAction(contentManager, groupName));
+        group.addAction(createMergeTabsAction(contentManager, groupName, ContentUtilEx.getDisplayPrefix(content)));
       }
     }
 
@@ -490,7 +483,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   @NotNull
   private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
-    return new DumbAwareAction("Split '" + content.getTitlePrefix() + "' group") {
+    return new DumbAwareAction(IdeBundle.message("action.text.split.0.group", ContentUtilEx.getDisplayPrefix(content))) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         content.split();
@@ -499,34 +492,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @NotNull
-  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, String tabPrefix) {
-    return new DumbAwareAction("Merge tabs to '" + tabPrefix + "' group") {
+  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NonNls String tabPrefix, @Nls String displayPrefix) {
+    return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.0.group", displayPrefix)) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        final Content selectedContent = manager.getSelectedContent();
-        final List<Pair<String, JComponent>> tabs = new ArrayList<>();
-        int selectedTab = -1;
-        List<Content> mergedContent = new ArrayList<>();
-        for (Content content : manager.getContents()) {
-          if (tabPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY))) {
-            final String label = content.getTabName().substring(tabPrefix.length() + 2);
-            final JComponent component = content.getComponent();
-            if (content == selectedContent) {
-              selectedTab = tabs.size();
-            }
-            tabs.add(Pair.create(label, component));
-            manager.removeContent(content, false);
-            content.setComponent(null);
-            content.setShouldDisposeContent(false);
-            mergedContent.add(content);
-          }
-        }
-        PropertiesComponent.getInstance().unsetValue(TabbedContent.SPLIT_PROPERTY_PREFIX + tabPrefix);
-        for (int i = 0; i < tabs.size(); i++) {
-          final Pair<String, JComponent> tab = tabs.get(i);
-          ContentUtilEx.addTabbedContent(manager, tab.second, tabPrefix, tab.first, i == selectedTab);
-        }
-        mergedContent.forEach(Disposer::dispose);
+        ContentUtilEx.mergeTabs(manager, tabPrefix);
       }
     };
   }
@@ -557,10 +527,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private void hideWindow(@NotNull MouseEvent e) {
     if (e.isControlDown()) {
-      myWindow.fireHiddenSide();
+      window.fireHiddenSide();
     }
     else {
-      myWindow.fireHidden();
+      window.fireHidden();
     }
   }
 
@@ -568,10 +538,10 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   @Nullable
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
-      return myWindow;
+      return window;
     }
     else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myWindow.getToolWindowManager().getProject();
+      return window.getToolWindowManager().getProject();
     }
     else if (CloseAction.CloseTarget.KEY.is(dataId)) {
       return computeCloseTarget();
@@ -598,7 +568,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   private final class HideToolwindowTarget implements CloseAction.CloseTarget {
     @Override
     public void close() {
-      myWindow.fireHidden();
+      window.fireHidden();
     }
   }
 

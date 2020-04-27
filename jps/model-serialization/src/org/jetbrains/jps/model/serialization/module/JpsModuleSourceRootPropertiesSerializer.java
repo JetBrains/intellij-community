@@ -21,9 +21,6 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JpsElementPropertiesSerializer;
 
-/**
- * @author nik
- */
 public abstract class JpsModuleSourceRootPropertiesSerializer<P extends JpsElement> extends JpsElementPropertiesSerializer<P, JpsModuleSourceRootType<P>> {
   public JpsModuleSourceRootPropertiesSerializer(JpsModuleSourceRootType<P> type, String typeId) {
     super(type, typeId);

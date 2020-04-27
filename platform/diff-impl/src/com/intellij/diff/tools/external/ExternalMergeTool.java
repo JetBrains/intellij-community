@@ -23,6 +23,7 @@ import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.ThreesideMergeRequest;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -57,7 +58,7 @@ public class ExternalMergeTool {
     }
     catch (Throwable e) {
       LOG.warn(e);
-      Messages.showErrorDialog(project, e.getMessage(), "Can't Show Merge In External Tool");
+      Messages.showErrorDialog(project, e.getMessage(),DiffBundle.message("can.t.show.merge.in.external.tool"));
     }
   }
 

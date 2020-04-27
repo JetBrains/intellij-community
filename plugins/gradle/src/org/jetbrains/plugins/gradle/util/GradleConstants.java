@@ -11,6 +11,7 @@ import java.util.Set;
 public class GradleConstants {
 
   @NotNull @NonNls public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
+  @NotNull @NonNls public static final String GRADLE_NAME = "Gradle";
 
   @NotNull @NonNls public static final String EXTENSION           = "gradle";
   @NotNull @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
@@ -19,7 +20,7 @@ public class GradleConstants {
   @NotNull @NonNls public static final String SETTINGS_FILE_NAME  = "settings.gradle";
   @NotNull @NonNls public static final String KOTLIN_DSL_SETTINGS_FILE_NAME  = "settings.gradle.kts";
 
-  @NotNull @NonNls public static final String[] BUILD_FILE_EXTENSIONS = {EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION};
+  @NonNls public static final String @NotNull [] BUILD_FILE_EXTENSIONS = {EXTENSION, KOTLIN_DSL_SCRIPT_EXTENSION};
 
   @NotNull public static final Set<String> KNOWN_GRADLE_FILES = ContainerUtil.immutableSet(DEFAULT_SCRIPT_NAME,
                                                                                            KOTLIN_DSL_SCRIPT_NAME,

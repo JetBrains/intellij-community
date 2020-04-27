@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.makeStatic;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +62,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner)) return;
 
     final PsiTypeParameterListOwner member = (PsiTypeParameterListOwner)elements[0];
@@ -95,7 +96,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
           (Runnable)() -> hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(reference -> {
             final PsiElement element = reference.getElement();
             return !(element instanceof PsiMethodReferenceExpression);
-          }), "Search for method references", true, project)) return;
+          }), JavaRefactoringBundle.message("make.static.method.references.progress"), true, project)) return;
       }
 
       if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {
@@ -147,6 +148,6 @@ public class MakeStaticHandler implements RefactoringActionHandler {
   }
 
   public static String getRefactoringName() {
-    return RefactoringBundle.message("make.method.static.title");
+    return JavaRefactoringBundle.message("make.method.static.title");
   }
 }

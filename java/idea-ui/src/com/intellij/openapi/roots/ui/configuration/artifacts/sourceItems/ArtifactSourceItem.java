@@ -33,9 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ArtifactSourceItem extends PackagingSourceItem {
   private final Artifact myArtifact;
 

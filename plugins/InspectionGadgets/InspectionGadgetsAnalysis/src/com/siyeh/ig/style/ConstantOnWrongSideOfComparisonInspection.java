@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.PsiBinaryExpression;
@@ -48,7 +49,7 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
         myConstantShouldGoLeft = (e.getItem() == left);
       }
     });
-    final JLabel label = new JLabel("Constant should be on this side of a comparison:");
+    final JLabel label = new JLabel(JavaAnalysisBundle.message("inspection.constant.on.wrong.side.of.a.comparison.side.option"));
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
     panel.add(label);
     panel.add(comboBox);

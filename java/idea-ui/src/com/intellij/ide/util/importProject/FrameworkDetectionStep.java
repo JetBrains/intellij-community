@@ -23,6 +23,7 @@ import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.framework.detection.impl.FrameworkDetectionProcessor;
 import com.intellij.framework.detection.impl.FrameworkDetectionUtil;
 import com.intellij.framework.detection.impl.ui.DetectedFrameworksComponent;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
@@ -30,7 +31,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Comparing;
@@ -43,9 +43,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<? extends DetectedFrameworkDescription>>
   implements ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater {
   private final Icon myIcon;
@@ -57,7 +54,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   private final FrameworkDetectionContext myContext;
 
   protected FrameworkDetectionStep(final Icon icon, final ProjectFromSourcesBuilder builder) {
-    super(ProjectBundle.message("message.text.stop.searching.for.frameworks", ApplicationNamesInfo.getInstance().getProductName()));
+    super(JavaUiBundle.message("message.text.stop.searching.for.frameworks", ApplicationNamesInfo.getInstance().getProductName()));
     myIcon = icon;
     myContext = new FrameworkDetectionInWizardContext() {
       @Override
@@ -84,7 +81,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
 
   @Override
   protected String getProgressText() {
-    return ProjectBundle.message("progress.text.searching.frameworks");
+    return JavaUiBundle.message("progress.text.searching.frameworks");
   }
 
   @Override
@@ -123,10 +120,10 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
   protected void onFinished(final List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
     myDetectedFrameworksComponent.getTree().rebuildTree(result);
     if (result.isEmpty()) {
-      myFrameworksDetectedLabel.setText(ProjectBundle.message("label.text.no.frameworks.detected"));
+      myFrameworksDetectedLabel.setText(JavaUiBundle.message("label.text.no.frameworks.detected"));
     }
     else {
-      myFrameworksDetectedLabel.setText(ProjectBundle.message("label.text.the.following.frameworks.are.detected"));
+      myFrameworksDetectedLabel.setText(JavaUiBundle.message("label.text.the.following.frameworks.are.detected"));
     }
     myFrameworksPanel.setVisible(!result.isEmpty());
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -14,7 +14,10 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManagerEvent;
+import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -240,8 +243,8 @@ public final class VcsLogTabsWatcher implements Disposable {
     }
   }
 
-  private static abstract class VcsLogTabsListener extends ContentManagerAdapter
-    implements ToolWindowManagerListener, PropertyChangeListener {
+  private static abstract class VcsLogTabsListener
+    implements ToolWindowManagerListener, PropertyChangeListener, ContentManagerListener {
     @NotNull private final ToolWindow myToolWindow;
     private boolean myIsVisible;
 

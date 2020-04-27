@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +35,7 @@ public class ClassInitializerTreeElement extends PsiTreeElementBase<PsiClassInit
     PsiClassInitializer initializer = getElement();
     assert initializer != null;
     String isStatic = initializer.hasModifierProperty(PsiModifier.STATIC) ? PsiModifier.STATIC + " " : "";
-    return CodeInsightBundle.message("static.class.initializer", isStatic);
+    return JavaStructureViewBundle.message("static.class.initializer", isStatic);
   }
 
   @Override

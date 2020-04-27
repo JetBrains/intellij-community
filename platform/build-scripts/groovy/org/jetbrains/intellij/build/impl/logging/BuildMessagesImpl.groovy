@@ -12,9 +12,6 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.LogMessage
 
 import java.util.function.BiFunction
-/**
- * @author nik
- */
 @CompileStatic
 class BuildMessagesImpl implements BuildMessages {
   private final BuildMessageLogger logger

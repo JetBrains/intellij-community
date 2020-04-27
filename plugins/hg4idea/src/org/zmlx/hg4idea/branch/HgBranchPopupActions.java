@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -152,7 +153,7 @@ public class HgBranchPopupActions {
 
     HgCloseBranchAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super("Close " + StringUtil.pluralize("branch", repositories.size()),
-            "Close current " + StringUtil.pluralize("branch", repositories.size()), AllIcons.Actions.Delete);
+            "Close current " + StringUtil.pluralize("branch", repositories.size()), AllIcons.Actions.Cancel);
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
     }
@@ -226,7 +227,7 @@ public class HgBranchPopupActions {
     @NotNull Collection<Hash> myHeads;
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
-      super(null, true);
+      super(Presentation.NULL_STRING, true);
       myRepository = repository;
       myCurrentBranchName = repository.getCurrentBranch();
       getTemplatePresentation().setText(String.format("Unnamed heads for %s", myCurrentBranchName));
@@ -249,9 +250,8 @@ public class HgBranchPopupActions {
       return branchWithHashes;
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       List<AnAction> branchHeadActions = new ArrayList<>();
       for (Hash hash : myHeads) {
         branchHeadActions
@@ -284,9 +284,8 @@ public class HgBranchPopupActions {
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return AnAction.EMPTY_ARRAY;
     }
   }
@@ -300,9 +299,8 @@ public class HgBranchPopupActions {
       super(project, repositories, branchName, HgBranchType.BOOKMARK);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return ArrayUtil.append(super.getChildren(e), new DeleteBookmarkAction(myProject, myRepositories, myBranchName));
     }
 
@@ -331,9 +329,8 @@ public class HgBranchPopupActions {
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{new BookmarkActions.DeleteBookmarkAction(myProject, myRepositories, myBranchName)};
     }
   }

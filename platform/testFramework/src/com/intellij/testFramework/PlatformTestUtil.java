@@ -72,7 +72,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.InternalPromiseUtil;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -350,10 +349,11 @@ public class PlatformTestUtil {
       }
       catch (TimeoutException ignore) {
       }
-      catch (java.util.concurrent.ExecutionException | InternalPromiseUtil.MessageError e) {
+      catch (Exception e) {
         if (assertSucceeded) {
           throw new AssertionError(e);
-        } else {
+        }
+        else {
           return null;
         }
       }
@@ -429,7 +429,8 @@ public class PlatformTestUtil {
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
                                    "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
-                                   "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
+                                   "\n invocatorEdtQueue=" + LaterInvocator.getLaterInvocatorEdtQueue() +
+                                   "\n invocatorWtQueue=" + LaterInvocator.getLaterInvocatorWtQueue()
           );
         }
       }
@@ -1078,8 +1079,7 @@ public class PlatformTestUtil {
   }
 
   public static void useAppConfigDir(ThrowableRunnable<? extends Exception> task) throws Exception {
-    Path configDir = Paths.get(PathManager.getConfigPath());
-
+    Path configDir = PathManager.getConfigDir();
     Path configCopy;
     if (Files.exists(configDir)) {
       configCopy = Files.move(configDir, Paths.get(configDir + "_bak"), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);

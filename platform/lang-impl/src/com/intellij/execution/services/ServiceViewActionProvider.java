@@ -125,7 +125,7 @@ class ServiceViewActionProvider {
     return (ServiceView)contextComponent;
   }
 
-  private static final AnAction EMPTY_ACTION = new DumbAwareAction(null, null, EmptyIcon.ICON_16) {
+  private static final AnAction EMPTY_ACTION = new DumbAwareAction(EmptyIcon.ICON_16) {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(false);
@@ -184,8 +184,7 @@ class ServiceViewActionProvider {
     }
   }
 
-  @NotNull
-  private static AnAction[] doGetActions(@Nullable AnActionEvent e, boolean toolbar) {
+  private static AnAction @NotNull [] doGetActions(@Nullable AnActionEvent e, boolean toolbar) {
     if (e == null) return AnAction.EMPTY_ARRAY;
 
     Project project = e.getProject();
@@ -212,17 +211,15 @@ class ServiceViewActionProvider {
   }
 
   public static class ItemToolbarActionGroup extends ActionGroup {
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, true);
     }
   }
 
   public static class ItemPopupActionGroup extends ActionGroup {
-    @NotNull
     @Override
-    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       return doGetActions(e, false);
     }
   }

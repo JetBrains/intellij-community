@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -34,7 +35,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Limit body line";
+    return VcsBundle.message("inspection.BodyLimitInspection.display.name");
   }
 
   @NotNull
@@ -43,12 +44,11 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
     return new BodyLimitInspectionOptions(this);
   }
 
-  @Nullable
   @Override
-  protected ProblemDescriptor[] checkFile(@NotNull PsiFile file,
-                                          @NotNull Document document,
-                                          @NotNull InspectionManager manager,
-                                          boolean isOnTheFly) {
+  protected ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file,
+                                                     @NotNull Document document,
+                                                     @NotNull InspectionManager manager,
+                                                     boolean isOnTheFly) {
     return range(1, document.getLineCount())
       .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
                                          format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix(),

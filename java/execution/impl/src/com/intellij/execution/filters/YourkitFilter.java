@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -96,7 +97,7 @@ public class YourkitFilter implements Filter{
         final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
           .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
           .setRenderer(renderer)
-          .setTitle("Choose file")
+          .setTitle(ExecutionBundle.message("choose.file"))
           .setItemsChosenCallback((selectedElements) -> {
             for (PsiFile element : selectedElements) {
               Navigatable descriptor = EditSourceUtil.getDescriptor(element);

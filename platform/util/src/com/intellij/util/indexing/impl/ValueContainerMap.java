@@ -35,7 +35,7 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
                     @NotNull KeyDescriptor<Key> keyKeyDescriptor,
                     @NotNull DataExternalizer<Value> valueExternalizer,
                     boolean keyIsUniqueForIndexedFile,
-                    @NotNull IntIntFunction inputRemapping) throws IOException {
+                    @NotNull ValueContainerInputRemapping inputRemapping) throws IOException {
     super(file, keyKeyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping));
     myValueExternalizer = valueExternalizer;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
@@ -71,9 +71,9 @@ class ValueContainerMap<Key, Value> extends PersistentHashMap<Key, UpdatableValu
 
   private static final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
     @NotNull private final DataExternalizer<T> myValueExternalizer;
-    @NotNull private final IntIntFunction myInputRemapping;
+    @NotNull private final ValueContainerInputRemapping myInputRemapping;
 
-    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull IntIntFunction inputRemapping) {
+    private ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
       myValueExternalizer = valueExternalizer;
       myInputRemapping = inputRemapping;
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.psi.PsiElement;
@@ -20,9 +6,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Implemented by a custom language plugin to add annotations to files in the language.
- *
+ * <p>
  * DO NOT STORE any state inside annotator.
  * If you absolutely must, clear the state upon exit from the {@link #annotate(PsiElement, AnnotationHolder)} method.
+ * <p/>
+ * See <a href="https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/syntax_highlighting_and_error_highlighting.html#annotator">Syntax Highlighting and Error Highlighting</a> for an overview.
  *
  * @author max
  * @see com.intellij.lang.LanguageAnnotators

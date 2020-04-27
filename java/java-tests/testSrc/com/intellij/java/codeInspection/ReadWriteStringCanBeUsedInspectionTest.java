@@ -15,9 +15,8 @@ public class ReadWriteStringCanBeUsedInspectionTest extends LightQuickFixParamet
     return LanguageLevel.JDK_11;
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ReadWriteStringCanBeUsedInspection()};
   }
 

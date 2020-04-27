@@ -4,6 +4,7 @@ package com.intellij.ui.components;
 import com.intellij.ui.AnchorableComponent;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,11 +23,11 @@ public class JBCheckBox extends JCheckBox implements AnchorableComponent {
     this(null);
   }
 
-  public JBCheckBox(@Nullable String text) {
+  public JBCheckBox(@Nullable @Nls String text) {
     this(text, false);
   }
 
-  public JBCheckBox(@Nullable String text, boolean selected) {
+  public JBCheckBox(@Nullable @Nls String text, boolean selected) {
     super(text, null, selected);
   }
 

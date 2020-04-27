@@ -12,17 +12,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class FacetModelBase implements FacetModel {
   private volatile Map<FacetTypeId<?>, Collection<Facet<?>>> myType2Facets;
   private volatile Map<Pair<Facet<?>, FacetTypeId<?>>, Collection<Facet<?>>> myChildFacets;
   private volatile Facet<?>[] mySortedFacets;
 
   @Override
-  @NotNull
-  public Facet<?>[] getSortedFacets() {
+  public Facet<?> @NotNull [] getSortedFacets() {
     if (mySortedFacets == null) {
       final Facet<?>[] allFacets = getAllFacets();
       if (allFacets.length == 0) {
@@ -73,7 +69,7 @@ public abstract class FacetModelBase implements FacetModel {
 
   @Override
   @NotNull
-  public String getFacetName(@NotNull Facet facet) {
+  public String getFacetName(@NotNull Facet<?> facet) {
     return facet.getName();
   }
 

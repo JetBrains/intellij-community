@@ -18,13 +18,13 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 
 public class SafeVarargsCanBeUsedTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new PossibleHeapPollutionVarargsInspection(),
     };
@@ -35,4 +35,8 @@ public class SafeVarargsCanBeUsedTest extends LightQuickFixParameterizedTestCase
     return "/codeInsight/daemonCodeAnalyzer/quickFix/safeVarargs";
   }
 
+  @Override
+  protected LanguageLevel getLanguageLevel() {
+    return LanguageLevel.JDK_14_PREVIEW;
+  }
 }

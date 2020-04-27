@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.pom.wrappers;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.PomModelAspect;
@@ -20,15 +20,16 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class PsiEventWrapperAspect implements PomModelAspect{
+public final class PsiEventWrapperAspect implements PomModelAspect{
   private final TreeAspect myTreeAspect;
 
-  public PsiEventWrapperAspect(PomModel model, TreeAspect aspect) {
-    myTreeAspect = aspect;
-    model.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton(aspect));
+  public PsiEventWrapperAspect(@NotNull Project project) {
+    myTreeAspect = TreeAspect.getInstance(project);
+    project.getService(PomModel.class).registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton(myTreeAspect));
   }
 
   @Override
@@ -53,7 +54,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
   private static void promoteNonPhysicalChangesToDocument(ASTNode rootElement, PsiFile file) {
     if (file instanceof DummyHolder) return;
     if (((PsiDocumentManagerBase)PsiDocumentManager.getInstance(file.getProject())).isCommitInProgress()) return;
-    
+
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     if (vFile instanceof LightVirtualFile && !(vFile instanceof VirtualFileWindow)) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(vFile);

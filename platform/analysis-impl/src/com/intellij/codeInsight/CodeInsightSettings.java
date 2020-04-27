@@ -174,8 +174,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
    */
   @Property(surroundWithTag = false)
   @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
-  @NotNull
-  public String[] EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  public String @NotNull [] EXCLUDED_PACKAGES = ArrayUtilRt.EMPTY_STRING_ARRAY;
 
   @Override
   public void loadState(@NotNull Element state) {

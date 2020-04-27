@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -20,7 +6,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -80,8 +65,7 @@ class MarkerCache {
     return answer;
   }
 
-  @NotNull
-  private static ManualRangeMarker[] createMarkers(List<? extends SelfElementInfo> infos) {
+  private static ManualRangeMarker @NotNull [] createMarkers(List<? extends SelfElementInfo> infos) {
     ManualRangeMarker[] markers = new ManualRangeMarker[infos.size()];
     int i = 0;
     while (i < markers.length) {
@@ -109,17 +93,12 @@ class MarkerCache {
     ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
     for (DocumentEvent event : events) {
       final FrozenDocument before = frozen;
-      final DocumentEvent corrected;
-      if (event instanceof RetargetRangeMarkers) {
-        RetargetRangeMarkers retarget = (RetargetRangeMarkers)event;
-        corrected = new RetargetRangeMarkers(frozen, retarget.getStartOffset(), retarget.getEndOffset(), retarget.getMoveDestinationOffset());
-      }
-      else {
-        frozen = frozen.applyEvent(event, 0);
-        corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(),
-                                          event.isWholeTextReplaced(),
-                                          ((DocumentEventImpl) event).getInitialStartOffset(), ((DocumentEventImpl) event).getInitialOldLength());
-      }
+      frozen = frozen.applyEvent(event, 0);
+      final DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
+                                                            event.getOldTimeStamp(), event.isWholeTextReplaced(),
+                                                            ((DocumentEventImpl)event).getInitialStartOffset(),
+                                                            ((DocumentEventImpl)event).getInitialOldLength(),
+                                                            event.getMoveOffset());
 
       int i = 0;
       while (i < resultMarkers.length) {
@@ -203,7 +182,8 @@ class MarkerCache {
                                          ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(),
                                                                  event.getNewFragment(), event.getOldTimeStamp(), true,
                                                                  ((DocumentEventImpl)event).getInitialStartOffset(),
-                                                                 ((DocumentEventImpl)event).getInitialOldLength()) : event);
+                                                                 ((DocumentEventImpl)event).getInitialOldLength(),
+                                                                 event.getMoveOffset()) : event);
     UpdatedRanges updated = applyEvents(newEvents, ranges);
     return updated.myMarkers[0];
   }
@@ -225,7 +205,7 @@ class MarkerCache {
     UpdatedRanges(int eventCount,
                   @NotNull FrozenDocument resultDocument,
                   @NotNull List<SelfElementInfo> sortedInfos,
-                  @NotNull ManualRangeMarker[] markers) {
+                  ManualRangeMarker @NotNull [] markers) {
       myEventCount = eventCount;
       myResultDocument = resultDocument;
       mySortedInfos = sortedInfos;

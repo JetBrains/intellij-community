@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.remote.ext.CredentialsCase;
@@ -9,10 +10,9 @@ import com.intellij.remote.ext.UnknownCredentialsHolder;
 import com.intellij.remote.ext.UnknownTypeRemoteCredentialHandler;
 import org.jetbrains.annotations.Nls;
 
-/**
- * @author traff
- */
 public abstract class CredentialsType<T> {
+
+  public static final ExtensionPointName<CredentialsType<?>> EP_NAME = ExtensionPointName.create("com.intellij.remote.credentialsType");
 
   public static final Key<UnknownCredentialsHolder> UNKNOWN_CREDENTIALS = Key.create("UNKNOWN_CREDENTIALS");
 
@@ -62,6 +62,10 @@ public abstract class CredentialsType<T> {
   }
 
   public abstract T createCredentials();
+
+  public int getWeight() {
+    return Integer.MAX_VALUE;
+  }
 
   public void saveCredentials(RemoteSdkAdditionalData data, CredentialsCase... cases) {
     for (CredentialsCase credentialsCase : cases) {

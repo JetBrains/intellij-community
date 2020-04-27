@@ -104,7 +104,7 @@ public class MultilineEditor extends JPanel {
     }
 
     private void addHistoryPagers() {
-        final DefaultActionGroup pagerGroup = new DefaultActionGroup(null, false);
+        final DefaultActionGroup pagerGroup = new DefaultActionGroup();
         pagerGroup.add(new ItemAction("PreviousOccurence", this) {
             @Override
             public void update(@NotNull AnActionEvent e) {

@@ -16,9 +16,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class Settings {
   public static final DataKey<Settings> KEY = DataKey.create("settings.editor");
 

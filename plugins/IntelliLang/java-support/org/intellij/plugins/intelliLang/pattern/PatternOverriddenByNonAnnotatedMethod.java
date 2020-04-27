@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
 import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
@@ -48,7 +49,8 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
           if (annotationFromHierarchy.length > 0) {
             final String annotationClassname = annotationFromHierarchy[annotationFromHierarchy.length - 1].getQualifiedName();
             final String argList = annotationFromHierarchy[annotationFromHierarchy.length - 1].getParameterList().getText();
-            holder.registerProblem(psiIdentifier, "Non-annotated Method overrides @Pattern Method",
+            holder.registerProblem(psiIdentifier,
+                                   IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"),
                                    new AnnotateFix(annotationClassname, argList));
           }
         }

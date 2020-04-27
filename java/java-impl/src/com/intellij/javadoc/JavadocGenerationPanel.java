@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javadoc;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.PsiKeyword;
@@ -35,7 +36,7 @@ final class JavadocGenerationPanel extends JPanel {
   JCheckBox myLinkToJdkDocs;
 
   JavadocGenerationPanel() {
-    myTfOutputDir.addBrowseFolderListener(JavadocBundle.message("javadoc.generate.output.directory.browse"), null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myTfOutputDir.addBrowseFolderListener(JavaBundle.message("javadoc.generate.output.directory.browse"), null, null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
     myIndex.addChangeListener(e -> mySeparateIndex.setEnabled(myIndex.isSelected()));
     myTagDeprecated.addChangeListener(e -> myDeprecatedList.setEnabled(myTagDeprecated.isSelected()));
 

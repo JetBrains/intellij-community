@@ -6,9 +6,6 @@ import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.mock.MockFacetConfiguration;
 import com.intellij.facet.mock.MockFacetType;
 
-/**
- * @author nik
- */
 public class FacetTreeModelTest extends FacetTestCase {
   private FacetTreeModel myModel;
 

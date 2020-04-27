@@ -24,13 +24,13 @@ import com.intellij.facet.impl.invalid.InvalidFacetType;
 import com.intellij.facet.ui.DefaultFacetSettingsEditor;
 import com.intellij.facet.ui.FacetEditor;
 import com.intellij.facet.ui.MultipleFacetSettingsEditor;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -41,9 +41,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class FacetTypeEditor extends UnnamedConfigurableGroup {
   private final Project myProject;
   private final StructureConfigurableContext myContext;
@@ -145,7 +142,7 @@ public class FacetTypeEditor extends UnnamedConfigurableGroup {
 
     @Override
     public String getDisplayName() {
-      return ProjectBundle.message("tab.name.all.facets");
+      return JavaUiBundle.message("tab.name.all.facets");
     }
 
     @Override

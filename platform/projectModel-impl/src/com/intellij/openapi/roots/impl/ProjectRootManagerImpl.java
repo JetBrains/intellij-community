@@ -2,7 +2,9 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -50,6 +52,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   private final OrderRootsCache myRootsCache;
 
   protected boolean myStartupActivityPerformed;
+  private boolean myStateLoaded = false;
 
   private final RootProviderChangeListener myRootProviderChangeListener = new RootProviderChangeListener();
 
@@ -129,8 +132,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   @Override
-  @NotNull
-  public VirtualFile[] getContentRoots() {
+  public VirtualFile @NotNull [] getContentRoots() {
     final List<VirtualFile> result = new ArrayList<>();
     Module[] modules = getModuleManager().getModules();
     for (Module module : modules) {
@@ -144,9 +146,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getContentSourceRoots() {
+  public VirtualFile @NotNull [] getContentSourceRoots() {
     final List<VirtualFile> result = new ArrayList<>();
     for (Module module : getModuleManager().getModules()) {
       final VirtualFile[] sourceRoots = ModuleRootManager.getInstance(module).getSourceRoots();
@@ -177,9 +178,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return new ModulesOrderEnumerator(modules);
   }
 
-  @NotNull
   @Override
-  public VirtualFile[] getContentRootsFromAllModules() {
+  public VirtualFile @NotNull [] getContentRootsFromAllModules() {
     List<VirtualFile> result = new ArrayList<>();
     final Module[] modules = getModuleManager().getSortedModules();
     for (Module module : modules) {
@@ -276,6 +276,20 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
     myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
+
+    if (myStateLoaded) {
+      Application app = ApplicationManager.getApplication();
+      if (app != null) {
+        app.invokeLater(() -> projectJdkChanged(), app.getNoneModalityState());
+      }
+    } else {
+      myStateLoaded = true;
+    }
+  }
+
+  @Override
+  public void noStateLoaded() {
+    myStateLoaded = true;
   }
 
   @Override
@@ -489,10 +503,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private static class ListenerContainer<T> {
     private final Set<T> myListeners = new LinkedHashSet<>();
-    @NotNull private final T[] myEmptyArray;
+    private final T @NotNull [] myEmptyArray;
     private T[] myListenersArray;
 
-    private ListenerContainer(@NotNull T[] emptyArray) {
+    private ListenerContainer(T @NotNull [] emptyArray) {
       myEmptyArray = emptyArray;
     }
 
@@ -507,8 +521,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       return myListeners.isEmpty();
     }
 
-    @NotNull
-    synchronized T[] getListeners() {
+    synchronized T @NotNull [] getListeners() {
       if (myListenersArray == null) {
         myListenersArray = myListeners.toArray(myEmptyArray);
       }

@@ -27,7 +27,7 @@ import java.util.List;
  * @author yole
  */
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
-  @Nullable private volatile PyExpression[] myTargets;
+  private volatile PyExpression @Nullable [] myTargets;
 
   public PyAssignmentStatementImpl(ASTNode astNode) {
     super(astNode);
@@ -39,8 +39,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
   }
 
   @Override
-  @NotNull
-  public PyExpression[] getTargets() {
+  public PyExpression @NotNull [] getTargets() {
     PyExpression[] result = myTargets;
     if (result == null) {
       myTargets = result = calcTargets(false);
@@ -48,14 +47,12 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return result;
   }
 
-  @NotNull
   @Override
-  public PyExpression[] getRawTargets() {
+  public PyExpression @NotNull [] getRawTargets() {
     return calcTargets(true);
   }
 
-  @NotNull
-  private PyExpression[] calcTargets(boolean raw) {
+  private PyExpression @NotNull [] calcTargets(boolean raw) {
     final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
     if (eqSigns.length == 0) {
       return PyExpression.EMPTY_ARRAY;

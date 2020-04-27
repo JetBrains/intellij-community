@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,7 +32,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Add Math.max(0, count) to avoid possible semantics change", this, "ADD_MATH_MAX");
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("label.add.math.max.0.count.to.avoid.possible.semantics.change"), this, "ADD_MATH_MAX");
   }
 
   @NotNull
@@ -52,7 +53,8 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
         if (var.getType().equals(PsiType.LONG) || VariableAccessUtils.variableIsUsed(var, call)) return;
         PsiExpression arg = call.getArgumentList().getExpressions()[0];
         if (SideEffectChecker.mayHaveSideEffects(arg)) return;
-        holder.registerProblem(statement.getFirstChild(), "Can be replaced with 'String.repeat()'",
+        holder.registerProblem(statement.getFirstChild(), JavaBundle.message(
+          "inspection.message.can.be.replaced.with.string.repeat"),
                                new StringRepeatCanBeUsedFix(ADD_MATH_MAX));
       }
     };

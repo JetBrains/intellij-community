@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -97,7 +97,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   @Override
   public String getDisplayName() {
     if (!isValid()) {
-      return DebuggerBundle.message("status.breakpoint.invalid");
+      return JavaDebuggerBundle.message("status.breakpoint.invalid");
     }
     return getClassPattern() + "." + getMethodName() + "()";
   }

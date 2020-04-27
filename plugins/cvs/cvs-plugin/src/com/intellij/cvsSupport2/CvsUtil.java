@@ -502,8 +502,7 @@ public class CvsUtil {
     return storedRevisionFile;
   }
 
-  @Nullable
-  public static byte[] getCachedStoredContent(final VirtualFile parent, final String name, final String revision) {
+  public static byte @Nullable [] getCachedStoredContent(final VirtualFile parent, final String name, final String revision) {
     try {
       File storedRevisionFile = getCachedContentFile(parent, name, revision);
       if (storedRevisionFile == null) return null;

@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -19,14 +19,11 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.split.declaration.family");
+    return JavaBundle.message("intention.split.declaration.family");
   }
 
   @Override
@@ -75,7 +72,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         parent = parent.getNextSibling();
       }
     }
-    setText(CodeInsightBundle.message("intention.split.declaration.assignment.text"));
+    setText(JavaBundle.message("intention.split.declaration.assignment.text"));
     return true;
   }
 

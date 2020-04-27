@@ -178,7 +178,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @SafeVarargs
   @NotNull
-  public static <E> JBIterable<E> of(@Nullable E... elements) {
+  public static <E> JBIterable<E> of(E @Nullable ... elements) {
     return elements == null || elements.length == 0 ? empty() : from(ContainerUtil.newArrayList(elements));
   }
 
@@ -342,8 +342,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
         Functions.<E, Iterable<E>>identity());
     }
 
-    @NotNull
-    private Iterable<? extends E>[] getIterables() {
+    private Iterable<? extends E> @NotNull [] getIterables() {
       int size = 0;
       for (Appended<? extends E> p = this; p != null; p = p.parent) size++;
       //noinspection unchecked
@@ -366,7 +365,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * followed by the {@code elements}.
    */
   @NotNull
-  public final JBIterable<E> append(@NotNull E[] elements) {
+  public final JBIterable<E> append(E @NotNull [] elements) {
     return this == EMPTY ? of(elements) : append(of(elements));
   }
 
@@ -858,8 +857,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * Synonym for {@code toList().toArray(array)}.
    * @see List#toArray(Object[])
    */
-  @NotNull
-  public final E[] toArray(@NotNull E[] array) {
+  public final E @NotNull [] toArray(E @NotNull [] array) {
     Iterable<E> itt = asIterable();
     if (itt == null) {
       return Collections.singletonList(asElement()).toArray(array);

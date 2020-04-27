@@ -61,10 +61,9 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
   protected Pattern m_regexPattern = Pattern.compile(m_regex);
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
-                                                @NotNull InspectionManager inspectionManager,
-                                                @NotNull GlobalInspectionContext globalInspectionContext) {
+  public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity, @NotNull AnalysisScope analysisScope,
+                                                           @NotNull InspectionManager inspectionManager,
+                                                           @NotNull GlobalInspectionContext globalInspectionContext) {
     if (!(refEntity instanceof RefPackage)) {
       return null;
     }

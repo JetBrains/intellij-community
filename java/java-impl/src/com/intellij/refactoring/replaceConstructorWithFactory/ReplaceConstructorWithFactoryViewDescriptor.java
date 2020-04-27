@@ -15,10 +15,10 @@
  */
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +43,7 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     if (myConstructor != null) {
       return new PsiElement[] {myConstructor};
     } else {
@@ -55,9 +54,9 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   @Override
   public String getProcessedElementsHeader() {
     if (myConstructor != null) {
-      return RefactoringBundle.message("replace.constructor.with.factory.method");
+      return JavaRefactoringBundle.message("replace.constructor.with.factory.method");
     } else {
-      return RefactoringBundle.message("replace.default.constructor.with.factory.method");
+      return JavaRefactoringBundle.message("replace.default.constructor.with.factory.method");
     }
   }
 }

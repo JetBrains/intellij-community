@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 /**
  * @author Denis Zhdanov
  */
@@ -27,8 +29,12 @@ public class ExternalSystemBundle extends DynamicBundle {
   @NonNls public static final String PATH_TO_BUNDLE = "messages.ExternalSystemBundle";
   private static final ExternalSystemBundle BUNDLE = new ExternalSystemBundle();
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
     return BUNDLE.getMessage(key, params);
+  }
+
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
+    return BUNDLE.getLazyMessage(key, params);
   }
 
   public ExternalSystemBundle() {

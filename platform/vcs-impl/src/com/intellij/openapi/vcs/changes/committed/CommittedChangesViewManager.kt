@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.Disposable
@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
+import java.util.function.Supplier
 
 private fun Project.getCommittedChangesProvider(): CommittedChangesProvider<*, *>? =
   ProjectLevelVcsManager.getInstance(this).allActiveVcss
@@ -35,7 +36,7 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
     createCommittedChangesPanel().let {
       panel = it
       content.component = it
-      content.disposer = Disposable { panel = null }
+      content.setDisposer(Disposable { panel = null })
 
       with(project.messageBus.connect(it)) {
         subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdtIfNotDisposed { updateCommittedChangesProvider() } })
@@ -82,6 +83,10 @@ class CommittedChangesViewManager(private val project: Project) : ChangesViewCon
   class VisibilityPredicate : NotNullFunction<Project, Boolean> {
     override fun `fun`(project: Project): Boolean =
       ProjectLevelVcsManager.getInstance(project).allActiveVcss.any { isCommittedChangesAvailable(it) }
+  }
+
+  class DisplayNameSupplier : Supplier<String> {
+    override fun get(): String = VcsBundle.getString("committed.changes.tab")
   }
 
   companion object {

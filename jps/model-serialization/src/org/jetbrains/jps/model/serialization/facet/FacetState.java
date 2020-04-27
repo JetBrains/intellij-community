@@ -12,9 +12,6 @@ import org.jetbrains.jps.model.serialization.SerializationConstants;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
-*/
 @Tag(JpsFacetSerializer.FACET_TAG)
 public class FacetState {
   private String myFacetType;

@@ -5,9 +5,6 @@ import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class RemoteServerImpl<C extends ServerConfiguration> implements RemoteServer<C> {
   private String myName;
   private final ServerType<C> myType;

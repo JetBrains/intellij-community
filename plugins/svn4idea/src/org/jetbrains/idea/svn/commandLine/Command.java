@@ -52,7 +52,7 @@ public class Command {
     CommandUtil.put(myParameters, condition, parameter);
   }
 
-  public void put(@NonNls @NotNull String... parameters) {
+  public void put(@NonNls String @NotNull ... parameters) {
     put(Arrays.asList(parameters));
   }
 

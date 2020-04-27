@@ -14,6 +14,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+import static com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION;
+
 /**
  * This class fires events to SMTRunnerEventsListener in event dispatch thread.
  *
@@ -134,6 +136,11 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
     SMTestProxy parentSuite = getCurrentSuite();
     SMTestProxy testProxy = findChild(parentSuite, locationUrl != null ? locationUrl : fullName, false);
+
+    if (testProxy != null && CLASS_CONFIGURATION.equals(fullName)) {
+      parentSuite = testProxy;
+      testProxy = null;
+    }
     if (testProxy == null) {
       // creates test
       testProxy = new SMTestProxy(testName, false, locationUrl, testStartedEvent.getMetainfo(), false);
@@ -143,10 +150,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       if (myLocator != null) {
         testProxy.setLocator(myLocator);
       }
-
       parentSuite.addChild(testProxy);
     }
-
     // adds to running tests map
     myRunningTestsFullNameToProxy.put(fullName, testProxy);
 

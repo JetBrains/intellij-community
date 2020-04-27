@@ -31,9 +31,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class XDebuggerTreeState {
   private final NodeInfo myRootInfo;
   private Rectangle myLastVisibleNodeRect;

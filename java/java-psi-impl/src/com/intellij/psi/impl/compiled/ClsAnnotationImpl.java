@@ -74,8 +74,7 @@ public class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotationStub
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getChildren() {
+  public PsiElement @NotNull [] getChildren() {
     return new PsiElement[]{myReferenceElement.getValue(), getParameterList()};
   }
 

@@ -25,10 +25,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ResourceBundleEditorViewElement {
 
-  @Nullable
-  IProperty[] getProperties();
+  IProperty @Nullable [] getProperties();
 
-  @Nullable
-  PsiFile[] getFiles();
+  PsiFile @Nullable [] getFiles();
 
 }

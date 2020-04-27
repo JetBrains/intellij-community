@@ -96,8 +96,7 @@ class FormatDecode {
     }
   }
 
-  @NotNull
-  public static Validator[] decode(String formatString, int argumentCount) {
+  public static Validator @NotNull [] decode(String formatString, int argumentCount) {
     final ArrayList<Validator> parameters = new ArrayList<>();
 
     final Matcher matcher = fsPattern.matcher(formatString);

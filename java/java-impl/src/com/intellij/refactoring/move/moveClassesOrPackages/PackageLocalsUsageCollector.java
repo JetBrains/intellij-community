@@ -15,16 +15,16 @@
  */
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.PackageWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
@@ -66,7 +66,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
               }
               PsiElement container = ConflictsUtil.getContainer(reference);
               if (!reportedRefs.contains(container)) {
-                final String message = RefactoringBundle.message("0.uses.a.package.local.1",
+                final String message = JavaRefactoringBundle.message("0.uses.a.package.local.1",
                                                                  RefactoringUIUtil.getDescription(container, true),
                                                                  RefactoringUIUtil.getDescription(resolved, true));
                 myConflicts.putValue(resolved, CommonRefactoringUtil.capitalize(message));

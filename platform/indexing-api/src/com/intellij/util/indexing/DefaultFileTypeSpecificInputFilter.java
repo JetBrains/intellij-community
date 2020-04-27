@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultFileTypeSpecificInputFilter implements FileBasedIndex.FileTypeSpecificInputFilter {
   private final FileType[] myFileTypes;
 
-  public DefaultFileTypeSpecificInputFilter(@NotNull FileType... fileTypes) {
+  public DefaultFileTypeSpecificInputFilter(FileType @NotNull ... fileTypes) {
     myFileTypes = fileTypes;
   }
 

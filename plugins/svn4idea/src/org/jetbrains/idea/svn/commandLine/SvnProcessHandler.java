@@ -59,7 +59,7 @@ public class SvnProcessHandler extends OSProcessHandler {
     }
 
     @Override
-    protected void onBinaryAvailable(@NotNull byte[] data, int size) {
+    protected void onBinaryAvailable(byte @NotNull [] data, int size) {
       myBinaryOutput.write(data, 0, size);
     }
 

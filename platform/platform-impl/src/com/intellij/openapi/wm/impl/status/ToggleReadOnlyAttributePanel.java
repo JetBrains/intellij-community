@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -12,6 +13,10 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.UIBundle;
@@ -61,18 +66,28 @@ public final class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multi
   @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
+    myStatusBar.updateWidget(ID());
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
+        @Override
+        public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+          if (VirtualFile.PROP_WRITABLE.equals(event.getPropertyName())) {
+            myStatusBar.updateWidget(ID());
+          }
+        }
+      }));
+
     Project project = statusBar.getProject();
     if (project == null) {
       return;
     }
-
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
-        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-          if (myStatusBar != null) {
-            myStatusBar.updateWidget(ID());
-          }
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        if (myStatusBar != null) {
+          myStatusBar.updateWidget(ID());
         }
+      }
     });
   }
 

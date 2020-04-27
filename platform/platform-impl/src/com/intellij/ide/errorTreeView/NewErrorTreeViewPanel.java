@@ -32,6 +32,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.StatusText;
@@ -258,13 +259,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   @Override
-  public void addMessage(int type, @NotNull String[] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
+  public void addMessage(int type, String @NotNull [] text, @Nullable VirtualFile file, int line, int column, @Nullable Object data) {
     addMessage(type, text, null, file, line, column, data);
   }
 
   @Override
   public void addMessage(int type,
-                         @NotNull String[] text,
+                         String @NotNull [] text,
                          @Nullable VirtualFile underFileGroup,
                          @Nullable VirtualFile file,
                          int line,
@@ -307,7 +308,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   @Override
   public void addMessage(int type,
-                         @NotNull String[] text,
+                         String @NotNull [] text,
                          @Nullable String groupName,
                          @NotNull Navigatable navigatable,
                          @Nullable String exportTextPrefix,
@@ -326,6 +327,24 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     updateAddedElement(myErrorViewStructure.addNavigatableMessage(
       groupName, navigatable, kind, text, data, exportPrefix, renderPrefix, file
     ));
+  }
+
+  public boolean removeMessage(int type, @NotNull String groupName, @NotNull Navigatable navigatable) {
+    final ErrorTreeElementKind kind = ErrorTreeElementKind.convertMessageFromCompilerErrorType(type);
+    List<NavigatableMessageElement> removed = myErrorViewStructure.removeNavigatableMessage(groupName, kind, navigatable);
+    if (removed.isEmpty()) return false;
+    removed.forEach(this::updateAddedElement);
+    return true;
+  }
+
+  public void removeAllInGroup(@NotNull String name) {
+    List<NavigatableMessageElement> removed = myErrorViewStructure.removeAllNavigatableMessagesInGroup(name);
+    removed.forEach(this::updateAddedElement);
+  }
+
+  public NavigatableMessageElement @Nullable [] getNavigatableMessages(@NotNull String groupName) {
+    ErrorTreeElement[] childElements = myErrorViewStructure.getChildElements(new GroupingElement(groupName, null, null));
+    return ObjectUtils.tryCast(childElements, NavigatableMessageElement[].class);
   }
 
   public ErrorViewStructure getErrorViewStructure() {
@@ -621,7 +640,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class StopAction extends DumbAwareAction {
     StopAction() {
-      super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
+      super(IdeBundle.messagePointer("action.stop"), AllIcons.Actions.Suspend);
     }
 
     @Override
@@ -646,7 +665,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowWarningsAction extends ToggleAction implements DumbAware {
     ShowWarningsAction() {
-      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
+      super(IdeBundle.messagePointer("action.show.warnings"), AllIcons.General.ShowWarning);
     }
 
     @Override
@@ -666,7 +685,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
   private class ShowInfosAction extends ToggleAction implements DumbAware {
     ShowInfosAction() {
-      super(IdeBundle.message("action.show.infos"), null, AllIcons.General.ShowInfos);
+      super(IdeBundle.messagePointer("action.show.infos"), AllIcons.General.ShowInfos);
     }
 
     @Override

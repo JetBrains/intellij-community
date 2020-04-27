@@ -90,8 +90,7 @@ public class TestVirtualFile extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public byte[] contentsToByteArray() {
+  public byte @NotNull [] contentsToByteArray() {
     return myContent == null ? ArrayUtilRt.EMPTY_BYTE_ARRAY : myContent.getBytes(StandardCharsets.UTF_8);
   }
 

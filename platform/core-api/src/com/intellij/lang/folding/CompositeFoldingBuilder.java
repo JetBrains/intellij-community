@@ -29,8 +29,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
   }
 
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     final List<FoldingDescriptor> descriptors = new ArrayList<>();
     final Set<TextRange> rangesCoveredByDescriptors = new HashSet<>();
 

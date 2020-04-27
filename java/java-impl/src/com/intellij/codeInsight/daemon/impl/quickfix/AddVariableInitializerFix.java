@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,6 +9,7 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -40,13 +40,13 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
   @NotNull
   public String getText() {
     PsiVariable variable = ObjectUtils.tryCast(myStartElement.getElement(), PsiVariable.class);
-    return variable == null ? getFamilyName() : CodeInsightBundle.message("quickfix.add.variable.text", variable.getName());
+    return variable == null ? getFamilyName() : JavaBundle.message("quickfix.add.variable.text", variable.getName());
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("quickfix.add.variable.family.name");
+    return JavaBundle.message("quickfix.add.variable.family.name");
   }
 
   @Override
@@ -87,11 +87,11 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
   }
 
   static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
-                                    @NotNull final LookupElement[] suggestedInitializers,
+                                    final LookupElement @NotNull [] suggestedInitializers,
                                     @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
-    final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
+    final PsiExpression initializer = Objects.requireNonNull(ContainerUtil.getFirstItem(initializers));
     PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
     if (context == null) return;
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);
@@ -101,8 +101,7 @@ public class AddVariableInitializerFix extends LocalQuickFixAndIntentionActionOn
     builder.run(editor, false);
   }
 
-  @NotNull
-  static LookupElement[] suggestInitializer(final PsiVariable variable) {
+  static LookupElement @NotNull [] suggestInitializer(final PsiVariable variable) {
     PsiType type = variable.getType();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 

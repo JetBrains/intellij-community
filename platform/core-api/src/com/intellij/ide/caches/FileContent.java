@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.caches;
 
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author max
- */
 public class FileContent extends UserDataHolderBase {
   private final VirtualFile myVirtualFile;
   private byte[] myCachedBytes;
@@ -22,8 +19,7 @@ public class FileContent extends UserDataHolderBase {
     myVirtualFile = virtualFile;
   }
 
-  @NotNull
-  public byte[] getBytesOrEmptyArray() {
+  public byte @NotNull [] getBytesOrEmptyArray() {
     try {
       return getBytes();
     } catch (IOException e) {
@@ -31,8 +27,7 @@ public class FileContent extends UserDataHolderBase {
     }
   }
 
-  @NotNull
-  public byte[] getBytes() throws IOException {
+  public byte @NotNull [] getBytes() throws IOException {
     if (myCachedBytes == null) {
       if (myVirtualFile.isValid()) {
         myCachedTimeStamp = myVirtualFile.getTimeStamp();

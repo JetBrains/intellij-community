@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.layout.*
-import java.nio.file.Paths
 import javax.swing.JCheckBox
 
 internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings>("ics", icsMessage("ics.settings"), "reference.settings.ics") {
@@ -17,12 +17,13 @@ internal class IcsConfigurable : ConfigurableBase<IcsConfigurableUi, IcsSettings
 }
 
 internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
-  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(Paths.get(PathManager.getConfigPath()).resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
+  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(PathManager.getConfigDir().resolve("settingsRepository")) else org.jetbrains.settingsRepository.icsManager
 
   private val repositoryListEditor = createRepositoryListEditor(icsManager)
   private val editors = listOf(repositoryListEditor, createReadOnlySourcesEditor())
-  private val autoSync = JCheckBox("Auto Sync")
-  private val includeHostIntoCommitMessage = JCheckBox("Include hostname into commit message")
+  private val autoSync = JCheckBox(IdeBundle.message("settings.settings.repository.auto.sync"))
+  private val includeHostIntoCommitMessage = JCheckBox(
+    IdeBundle.message("settings.settings.repository.include.hostname.into.commit.message"))
 
   override fun dispose() {
     icsManager.autoSyncManager.enabled = true
@@ -59,8 +60,8 @@ internal class IcsConfigurableUi : ConfigurableUi<IcsSettings>, Disposable {
 
   override fun getComponent() = panel {
     repositoryListEditor.buildUi(this)
-    row { autoSync(comment = "Use VCS -> Sync Settings to sync when you want") }
+    row { autoSync(comment = IdeBundle.message("settings.settings.repository.use.vcs.sync.settings.to.sync.when.you.want")) }
     row { includeHostIntoCommitMessage() }
-    row { panel("Read-only sources:", editors.get(1).component, false) }
+    row { panel(IdeBundle.message("settings.settings.repository.read.only.sources"), editors.get(1).component, false) }
   }
 }

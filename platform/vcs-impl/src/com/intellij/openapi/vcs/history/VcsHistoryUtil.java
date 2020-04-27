@@ -132,8 +132,7 @@ public class VcsHistoryUtil {
     return null;
   }
 
-  @NotNull
-  public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
+  public static byte @NotNull [] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.loadContent();
     if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
     return content;
@@ -154,7 +153,7 @@ public class VcsHistoryUtil {
   }
 
   @NotNull
-  private static DiffContent createContent(@NotNull Project project, @NotNull byte[] content, @NotNull VcsFileRevision revision,
+  private static DiffContent createContent(@NotNull Project project, byte @NotNull [] content, @NotNull VcsFileRevision revision,
                                            @NotNull FilePath filePath) throws IOException {
     DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
     if (isCurrent(revision)) {
@@ -185,7 +184,7 @@ public class VcsHistoryUtil {
                                                  @NotNull final FilePath filePath,
                                                  @NotNull final VcsFileRevision older,
                                                  @NotNull final VcsFileRevision newer) {
-    new Task.Backgroundable(project, "Comparing Revisions...") {
+    new Task.Backgroundable(project, VcsBundle.message("file.history.diff.revisions.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {

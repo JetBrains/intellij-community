@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -25,7 +12,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.ui.ScrollPaneFactory;
@@ -53,8 +39,8 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   protected JavaVisibilityPanel myVisibilityPanel;
   protected final String myRefactoringName;
 
-  public MoveInstanceMethodDialogBase(PsiMethod method, Object[] variables, String refactoringName) {
-    super(method.getProject(), true);
+  public MoveInstanceMethodDialogBase(PsiMethod method, Object[] variables, String refactoringName, boolean addOpenInEditorCheckBox) {
+    super(method.getProject(), true, addOpenInEditorCheckBox);
     myMethod = method;
     myVariables = variables;
     myRefactoringName = refactoringName;
@@ -113,14 +99,14 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     if (targetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
-        final String message = RefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
+        final String message = JavaRefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
           .getDescriptiveName(targetClass));
 
         Messages.showErrorDialog(project, message, myRefactoringName);
         return false;
       }
 
-      final String message = RefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
+      final String message = JavaRefactoringBundle.message("0.is.an.interface.method.implementation.will.be.added.to.all.directly.implementing.classes",
                                                        DescriptiveNameUtil.getDescriptiveName(targetClass));
 
       final int result = Messages.showYesNoDialog(project, message, myRefactoringName,

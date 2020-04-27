@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -28,9 +26,6 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.stream.IntStream;
 
-/**
- * @author max
- */
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER =
     (project, propertiesFiles, key, value, parameters) -> createProperty(project, propertiesFiles, key, value, true);
@@ -80,7 +75,15 @@ public class JavaI18nUtil extends I18nUtil {
     if (parameter == null) return false;
     int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
     if (paramIndex == -1) return false;
-    return isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, null, null);
+    @Nullable Ref<PsiAnnotationMemberValue> ref = resourceBundleRef != null ? new Ref<>() : null;
+    boolean isAnnotated = isMethodParameterAnnotatedWith(psiMethod, paramIndex, null, AnnotationUtil.PROPERTY_KEY, ref, null);
+    if (ref != null) {
+      PsiAnnotationMemberValue memberValue = ref.get();
+      if (memberValue != null) {
+        resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
+      }
+    }
+    return isAnnotated;
   }
 
   static boolean isPassedToAnnotatedParam(@NotNull PsiExpression expression,
@@ -125,8 +128,23 @@ public class JavaI18nUtil extends I18nUtil {
     if (!idx.isPresent()) return false;
 
     PsiMethod method = callExpression.resolve();
-    return method != null && isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets);
-    
+    if (method == null) return false;
+    if (isMethodParameterAnnotatedWith(method, idx.getAsInt(), null, annFqn, null, nonNlsTargets)) {
+      return true;
+    }
+    PsiParameter parameter = method.getParameterList().getParameter(idx.getAsInt());
+    if (parameter != null) {
+      PsiType parameterType = parameter.getType();
+      PsiElement psi = callExpression.getSourcePsi();
+      if (psi instanceof PsiMethodCallExpression) {
+        PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
+        parameterType = substitutor.substitute(parameterType);
+      }
+      if (AnnotationUtil.findAnnotationInTypeHierarchy(parameterType, Collections.singleton(annFqn)) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

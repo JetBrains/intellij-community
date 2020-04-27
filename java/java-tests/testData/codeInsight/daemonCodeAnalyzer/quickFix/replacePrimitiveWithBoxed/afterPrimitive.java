@@ -1,4 +1,4 @@
-// "Convert 'int' to 'java.lang.Integer'" "true"
+// "Replace 'int' with 'java.lang.Integer'" "true"
 import java.util.*;
 
 class Test {

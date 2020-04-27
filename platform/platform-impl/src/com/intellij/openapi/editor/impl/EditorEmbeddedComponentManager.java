@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -45,11 +46,12 @@ public class EditorEmbeddedComponentManager {
   }
 
   @Nullable
-  public Disposable addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
+  public Inlay<?> addComponent(@NotNull EditorEx editor, @NotNull JComponent component, @NotNull Properties properties) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     ComponentInlays inlays = getComponentInlaysFor(editor);
-    return inlays.add(component, properties.resizePolicy, properties.relatesToPrecedingText, properties.showAbove,
+    return inlays.add(component, properties.resizePolicy, properties.rendererFactory,
+                      properties.relatesToPrecedingText, properties.showAbove,
                       properties.priority, properties.offset);
   }
 
@@ -96,17 +98,24 @@ public class EditorEmbeddedComponentManager {
 
   public static class Properties {
     final ResizePolicy resizePolicy;
+    final RendererFactory rendererFactory;
     final boolean relatesToPrecedingText;
     final boolean showAbove;
     final int priority;
     final int offset;
 
-    public Properties(@NotNull ResizePolicy resizePolicy, boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+    public Properties(@NotNull ResizePolicy resizePolicy, @Nullable RendererFactory rendererFactory,
+                      boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
       this.resizePolicy = resizePolicy;
+      this.rendererFactory = rendererFactory;
       this.relatesToPrecedingText = relatesToPrecedingText;
       this.showAbove = showAbove;
       this.priority = priority;
       this.offset = offset;
+    }
+
+    public interface RendererFactory {
+      @Nullable GutterIconRenderer createRenderer(@NotNull Inlay<?> inlay);
     }
   }
 
@@ -115,14 +124,24 @@ public class EditorEmbeddedComponentManager {
 
     final ResizePolicy resizePolicy;
 
+    private final Properties.RendererFactory myRendererFactory;
     private int myCustomWidth = UNDEFINED;
     private int myCustomHeight = UNDEFINED;
 
-    MyRenderer(@NotNull JComponent component, @NotNull ResizePolicy resizePolicy) {
+    MyRenderer(@NotNull JComponent component,
+               @NotNull ResizePolicy resizePolicy,
+               @Nullable Properties.RendererFactory rendererFactory) {
       super(new BorderLayout());
       this.resizePolicy = resizePolicy;
+      myRendererFactory = rendererFactory;
       add(component, BorderLayout.CENTER);
       setOpaque(false);
+    }
+
+    @Nullable
+    @Override
+    public GutterIconRenderer calcGutterIconRenderer(@NotNull Inlay inlay) {
+      return myRendererFactory == null ? null : myRendererFactory.createRenderer(inlay);
     }
 
     void setCustomWidth(int customWidth) {
@@ -192,8 +211,9 @@ public class EditorEmbeddedComponentManager {
 
 
     @Nullable
-    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
-      MyRenderer renderer = new MyRenderer(component, policy);
+    Inlay<MyRenderer> add(@NotNull JComponent component, @NotNull ResizePolicy policy, @Nullable Properties.RendererFactory rendererFactory,
+                          boolean relatesToPrecedingText, boolean showAbove, int priority, int offset) {
+      MyRenderer renderer = new MyRenderer(component, policy, rendererFactory);
       Inlay<MyRenderer> inlay = myEditor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, priority, renderer);
       if (inlay == null) return null;
 

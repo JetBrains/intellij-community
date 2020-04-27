@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl;
 
+import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.ui.ChooserOption;
 import com.intellij.debugger.streams.ui.ElementChooser;
 import com.intellij.openapi.editor.Editor;
@@ -12,8 +13,8 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.components.JBList;
@@ -75,12 +76,12 @@ public class ElementChooserImpl<T extends ChooserOption> implements ElementChoos
     });
 
     final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setTitle("Multiple chains found")
+      .setTitle(StreamDebuggerBundle.message("multiple.chains.popup.title"))
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(() -> callBack.chosen(list.getSelectedValue()))
-      .addListener(new JBPopupAdapter() {
+      .addListener(new JBPopupListener() {
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters();

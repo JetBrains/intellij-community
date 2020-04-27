@@ -27,8 +27,7 @@ public interface PsiParameterList extends PsiElement {
   /**
    * Returns the array of parameters in the list (excluding type annotation receiver).
    */
-  @NotNull
-  PsiParameter[] getParameters();
+  PsiParameter @NotNull [] getParameters();
 
   /**
    * Returns the index of the specified parameter in the list.

@@ -27,7 +27,7 @@ public abstract class ActiveRunnable extends ComparableObject.Impl {
     super(object);
   }
 
-  protected ActiveRunnable(@NotNull Object[] objects) {
+  protected ActiveRunnable(Object @NotNull [] objects) {
     super(objects);
   }
 

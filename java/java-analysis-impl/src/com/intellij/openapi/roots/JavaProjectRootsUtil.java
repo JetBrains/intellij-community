@@ -23,9 +23,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 
 import java.util.*;
 
-/**
- * @author nik
- */
 public class JavaProjectRootsUtil {
   public static boolean isOutsideJavaSourceRoot(@Nullable PsiFile psiFile) {
     if (psiFile == null) return false;

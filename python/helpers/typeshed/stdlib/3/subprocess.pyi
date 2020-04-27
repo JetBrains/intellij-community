@@ -813,7 +813,7 @@ class TimeoutExpired(SubprocessError):
     stderr: Any
 
 
-class CalledProcessError(Exception):
+class CalledProcessError(SubprocessError):
     returncode: int
     # morally: _CMD
     cmd: Any
@@ -832,9 +832,9 @@ class CalledProcessError(Exception):
 
 class Popen(Generic[AnyStr]):
     args: _CMD
-    stdin: IO[AnyStr]
-    stdout: IO[AnyStr]
-    stderr: IO[AnyStr]
+    stdin: Optional[IO[AnyStr]]
+    stdout: Optional[IO[AnyStr]]
+    stderr: Optional[IO[AnyStr]]
     pid: int
     returncode: int
 
@@ -1156,7 +1156,10 @@ class Popen(Generic[AnyStr]):
                     pass_fds: Any = ...) -> Popen[Any]: ...
 
     def poll(self) -> int: ...
-    def wait(self, timeout: Optional[float] = ...) -> int: ...
+    if sys.version_info >= (3, 7):
+        def wait(self, timeout: Optional[float] = ...) -> int: ...
+    else:
+        def wait(self, timeout: Optional[float] = ..., endtime: Optional[float] = ...) -> int: ...
     # Return str/bytes
     def communicate(self,
                     input: Optional[AnyStr] = ...,

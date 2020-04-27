@@ -77,8 +77,7 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  @NotNull
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     return getStubOrPsiChildren(GroovyStubElementTypes.PARAMETER, GrParameter.ARRAY_FACTORY);
   }
 

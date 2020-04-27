@@ -50,9 +50,8 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
     return presentation;
   }
 
-  @NotNull
   @Override
-  public TreeElement[] getChildren() {
+  public TreeElement @NotNull [] getChildren() {
     JsonElement value = null;
     if (myElement instanceof JsonFile) {
       value = ((JsonFile)myElement).getTopLevelValue();

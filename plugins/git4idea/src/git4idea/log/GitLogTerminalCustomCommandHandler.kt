@@ -26,7 +26,7 @@ class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
       return false
     }
 
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(VcsUtil.getFilePath(workingDirectory))
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(VcsUtil.getFilePath(workingDirectory))
     if (repository == null) {
       LOG.warn("Cannot find repository for working directory: $workingDirectory")
       return false
@@ -74,7 +74,7 @@ class GitLogTerminalCustomCommandHandler : TerminalShellCommandHandler {
     }
 
     if (workingDirectory == null
-        || GitRepositoryManager.getInstance(project).getRepositoryForFile(VcsUtil.getFilePath(workingDirectory)) == null) {
+        || GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(VcsUtil.getFilePath(workingDirectory)) == null) {
       return null
     }
 

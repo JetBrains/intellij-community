@@ -76,9 +76,8 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
     return findChildByClass(GrDocParameterReference.class);
   }
 
-  @NotNull
   @Override
-  public PsiElement[] getDataElements() {
+  public PsiElement @NotNull [] getDataElements() {
     final List<PsiElement> list = findChildrenByType(VALUE_BIT_SET);
     return PsiUtilCore.toPsiElementArray(list);
   }

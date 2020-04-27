@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.CreateSwitchBranchesUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -42,7 +43,7 @@ public class CreateDefaultBranchFix extends BaseSwitchFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Insert 'default' branch";
+    return InspectionGadgetsBundle.message("create.default.branch.fix.family.name");
   }
 
   @Override

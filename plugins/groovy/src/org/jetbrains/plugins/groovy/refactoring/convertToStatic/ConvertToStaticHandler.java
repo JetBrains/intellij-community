@@ -28,7 +28,7 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     invokeInner(project, elements);
   }
 
@@ -38,7 +38,7 @@ public class ConvertToStaticHandler implements RefactoringActionHandler {
     new ConvertToStaticProcessor(project, files.toArray(GroovyFile.EMPTY_ARRAY)).run();
   }
 
-  public static Set<GroovyFile> collectFilesForProcessing(@NotNull PsiElement[] elements) {
+  public static Set<GroovyFile> collectFilesForProcessing(PsiElement @NotNull [] elements) {
     Set<GroovyFile> files = new HashSet<>();
     for (PsiElement element : elements) {
       PsiFile containingFile = element.getContainingFile();

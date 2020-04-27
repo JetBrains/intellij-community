@@ -121,7 +121,7 @@ public class CvsUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   @NotNull
-  public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator,
+  public UpdateSession updateDirectories(FilePath @NotNull [] contentRoots, final UpdatedFiles updatedFiles, ProgressIndicator progressIndicator,
                                          @NotNull final Ref<SequentialUpdatesContext> contextRef) {
     CvsConfiguration cvsConfiguration = CvsConfiguration.getInstance(myProject);
     if (!myLastUpdateWasConfigured) {

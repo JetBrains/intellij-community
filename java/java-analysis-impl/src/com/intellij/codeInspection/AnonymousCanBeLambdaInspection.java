@@ -3,10 +3,10 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -43,7 +43,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @Override
@@ -60,7 +60,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Report when interface is not annotated with @FunctionalInterface", this, "reportNotAnnotatedInterfaces");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
   }
 
   @NotNull
@@ -83,7 +83,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
               type = ProblemHighlightType.INFORMATION;
             }
           }
-          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
+          holder.registerProblem(parent, JavaAnalysisBundle.message("anonymous.ref.loc.can.be.replaced.with.lambda"),
                                  type, rangeInElement, new ReplaceWithLambdaFix());
         }
       }
@@ -381,7 +381,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with lambda";
+      return JavaAnalysisBundle.message("replace.with.lambda");
     }
 
     @Override

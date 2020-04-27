@@ -385,7 +385,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NonNls
   @Override
   public String toString() {
-    return getClass().getName() + "{myVirtualFile=" + myVirtualFile + ", content=" + getContent() + '}';
+    return getClass().getName() + "{vFile=" + myVirtualFile + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
   }
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);

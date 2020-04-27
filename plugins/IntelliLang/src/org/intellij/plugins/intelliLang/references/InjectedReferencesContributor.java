@@ -35,8 +35,8 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
     return reference != null && reference.getElement().getUserData(INJECTED_REFERENCES) != null;
   }
 
-  @Nullable
-  public static PsiReference[] getInjectedReferences(PsiElement element) {
+  public static PsiReference @Nullable [] getInjectedReferences(PsiElement element) {
+    element.putUserData(INJECTED_REFERENCES, null);
     element.getReferences();
     return element.getUserData(INJECTED_REFERENCES);
   }
@@ -45,9 +45,8 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final List<ReferenceInjector> extensions = ReferenceInjector.EXTENSION_POINT_NAME.getExtensionList();
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(), new PsiReferenceProvider() {
-      @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
         final List<PsiReference> references = new SmartList<>();
         Project project = element.getProject();
         Configuration configuration = Configuration.getProjectInstance(project);

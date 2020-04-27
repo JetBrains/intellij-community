@@ -20,8 +20,7 @@ import java.util.List;
  */
 public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   @Override
-  @NotNull
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
     return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
@@ -56,12 +55,22 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
 
     @Override
       public void visitMethod(PsiMethod method) {
-      if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName()) ||
-          AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
-          AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD.equals(method.getName()) ||
-          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(method.getName()) ||
-          AsmCodeGenerator.GET_FONT_METHOD_NAME.equals(method.getName())) {
+      String methodName = method.getName();
+      if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(methodName) ||
+          AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(methodName) ||
+          AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD.equals(methodName) ||
+          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(methodName) ||
+          AsmCodeGenerator.GET_FONT_METHOD_NAME.equals(methodName) ||
+          AsmCodeGenerator.GET_MESSAGE_FROM_BUNDLE.equals(methodName)) {
+
         addFoldingData(method);
+      }
+    }
+
+    @Override
+    public void visitField(PsiField field) {
+      if (AsmCodeGenerator.CACHED_GET_BUNDLE_METHOD.equals(field.getName())) {
+        addFoldingData(field);
       }
     }
 

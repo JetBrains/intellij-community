@@ -26,8 +26,7 @@ public interface PsiClassOwner extends PsiFile {
   /**
    * @return classes owned by this element.
    */
-  @NotNull
-  PsiClass[] getClasses();
+  PsiClass @NotNull [] getClasses();
 
   /**
    * Returns the name of the package to which the file belongs.

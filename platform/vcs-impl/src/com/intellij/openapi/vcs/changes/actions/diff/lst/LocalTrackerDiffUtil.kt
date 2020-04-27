@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -362,6 +363,7 @@ object LocalTrackerDiffUtil {
     return selectedLines
   }
 
+  @DirtyUI
   class ExcludeAllCheckboxPanel(private val viewer: DiffViewerBase, private val editor: EditorEx)
     : JPanel(BorderLayout()) {
 

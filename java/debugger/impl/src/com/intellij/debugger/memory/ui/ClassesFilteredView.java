@@ -185,7 +185,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
                           @NotNull ReferenceType ref,
                           @NotNull TrackingType type,
                           boolean isTrackerEnabled) {
-    LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!debugProcess.getVirtualMachineProxy().canBeModified()) {
       return;
     }

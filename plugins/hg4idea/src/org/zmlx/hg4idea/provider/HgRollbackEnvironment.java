@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -47,6 +48,8 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @NotNull
   public String getRollbackOperationName() {
     return HgBundle.message("hg4idea.revert");
   }

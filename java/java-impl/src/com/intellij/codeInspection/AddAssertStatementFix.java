@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -38,7 +39,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return InspectionsBundle.message("inspection.assert.quickfix", myText);
+    return JavaBundle.message("inspection.assert.quickfix", myText);
   }
 
   @Override
@@ -64,6 +65,6 @@ public class AddAssertStatementFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.quickfix.assert.family");
+    return JavaBundle.message("inspection.quickfix.assert.family");
   }
 }

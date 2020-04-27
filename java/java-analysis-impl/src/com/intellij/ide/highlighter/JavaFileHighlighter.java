@@ -101,8 +101,7 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     return pack(ourMap1.get(tokenType), ourMap2.get(tokenType));
   }
 }

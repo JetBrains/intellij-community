@@ -27,7 +27,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImpo
  */
 public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper<Set<GroovyFile>> {
   @Override
-  public Set<GroovyFile> prepareOperation(@NotNull UsageInfo[] usages) {
+  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages) {
     Set<GroovyFile> files = new HashSet<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) continue;

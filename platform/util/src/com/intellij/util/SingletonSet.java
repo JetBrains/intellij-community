@@ -50,15 +50,13 @@ public class SingletonSet<E> implements Set<E> {
     return new SingletonIterator<>(theElement);
   }
 
-  @NotNull
   @Override
-  public Object[] toArray() {
+  public Object @NotNull [] toArray() {
     return new Object[]{theElement};
   }
 
-  @NotNull
   @Override
-  public <T> T[] toArray(@NotNull T[] a) {
+  public <T> T @NotNull [] toArray(T @NotNull [] a) {
     if (a.length == 0) {
       a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
     }

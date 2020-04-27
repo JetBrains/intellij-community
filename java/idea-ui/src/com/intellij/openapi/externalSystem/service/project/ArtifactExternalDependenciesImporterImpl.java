@@ -37,9 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class ArtifactExternalDependenciesImporterImpl implements ArtifactExternalDependenciesImporter {
   private final ManifestFilesInfo myManifestFiles = new ManifestFilesInfo();
   private final Map<Artifact, List<PackagingElement<?>>> myExternalDependencies = new HashMap<>();

@@ -26,9 +26,8 @@ public class NonNlsAnnotationProvider implements AnnotationProvider {
     return type != null && TypeUtils.isJavaLangString(type.getDeepComponentType());
   }
 
-  @NotNull
   @Override
-  public String[] getAnnotationsToRemove(Project project) {
+  public String @NotNull [] getAnnotationsToRemove(Project project) {
     return new String[]{"org.jetbrains.annotations.Nls"};
   }
 }

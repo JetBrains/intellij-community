@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -219,7 +220,7 @@ public class AnnotationsHighlightUtil {
         PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(owner);
         PsiAnnotation.TargetType applicable = AnnotationTargetUtil.findAnnotationTarget(container, targets);
         if (applicable == null) {
-          String target = JavaErrorBundle.message("annotation.target." + targets[0]);
+          String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
           String message = JavaErrorBundle.message("annotation.container.not.applicable", container.getName(), target);
           return annotationError(annotationToCheck, message);
         }
@@ -360,7 +361,7 @@ public class AnnotationsHighlightUtil {
     if (applicable == PsiAnnotation.TargetType.UNKNOWN) return null;
 
     if (applicable == null) {
-      String target = JavaErrorBundle.message("annotation.target." + targets[0]);
+      String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
       String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
       return annotationError(annotation, message);
     }
@@ -726,24 +727,24 @@ public class AnnotationsHighlightUtil {
   public static class AnnotationReturnTypeVisitor extends PsiTypeVisitor<Boolean> {
     public static final AnnotationReturnTypeVisitor INSTANCE = new AnnotationReturnTypeVisitor();
     @Override
-    public Boolean visitType(PsiType type) {
+    public Boolean visitType(@NotNull PsiType type) {
       return Boolean.FALSE;
     }
 
     @Override
-    public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
+    public Boolean visitPrimitiveType(@NotNull PsiPrimitiveType primitiveType) {
       return PsiType.VOID.equals(primitiveType) || PsiType.NULL.equals(primitiveType) ? Boolean.FALSE : Boolean.TRUE;
     }
 
     @Override
-    public Boolean visitArrayType(PsiArrayType arrayType) {
+    public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
       if (arrayType.getArrayDimensions() != 1) return Boolean.FALSE;
       PsiType componentType = arrayType.getComponentType();
       return componentType.accept(this);
     }
 
     @Override
-    public Boolean visitClassType(PsiClassType classType) {
+    public Boolean visitClassType(@NotNull PsiClassType classType) {
       if (classType.getParameters().length > 0) {
         PsiClassType rawType = classType.rawType();
         return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
@@ -768,7 +769,7 @@ public class AnnotationsHighlightUtil {
     @NotNull
     @Override
     public String getText() {
-      return "Remove";
+      return JavaAnalysisBundle.message("intention.text.remove.annotation");
     }
 
     @NotNull

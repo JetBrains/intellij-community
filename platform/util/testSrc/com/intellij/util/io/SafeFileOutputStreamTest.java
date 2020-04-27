@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -22,10 +22,10 @@ import java.util.EnumSet;
 import java.util.Random;
 import java.util.Set;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
 import static java.nio.file.attribute.PosixFilePermission.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 public class SafeFileOutputStreamTest {
   private static final String TEST_BACKUP_EXT = ".bak";
@@ -54,7 +54,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void keepingAttributes() throws IOException {
-    assumeTrue("Unix-only", SystemInfo.isUnix);
+    assumeUnix();
 
     File target = tempDir.newFile("test.txt");
     Set<PosixFilePermission> permissions = EnumSet.of(OWNER_READ, OWNER_WRITE, OTHERS_EXECUTE);
@@ -74,7 +74,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void newFileInReadOnlyDirectory() throws IOException {
-    assumeTrue("Unix-only", SystemInfo.isUnix);
+    assumeUnix();
 
     File dir = tempDir.newFolder("dir");
     Files.setPosixFilePermissions(dir.toPath(), EnumSet.of(OWNER_READ, OWNER_EXECUTE));
@@ -82,7 +82,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void existingFileInReadOnlyDirectory() throws IOException {
-    assumeTrue("Unix-only", SystemInfo.isUnix);
+    assumeUnix();
 
     File target = tempDir.newFile("dir/test.txt");
     Files.write(target.toPath(), new byte[]{'.'});
@@ -110,7 +110,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void backupRemovalNotCritical() throws IOException {
-    assumeTrue("Unix-only", SystemInfo.isUnix);
+    assumeUnix();
 
     File target = tempDir.newFile("dir/test.txt"), backup = new File(target.getParent(), target.getName() + TEST_BACKUP_EXT);
     try (OutputStream out = openStream(target)) {

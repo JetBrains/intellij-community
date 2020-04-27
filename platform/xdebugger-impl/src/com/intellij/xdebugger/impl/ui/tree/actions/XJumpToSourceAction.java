@@ -21,9 +21,6 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class XJumpToSourceAction extends XJumpToSourceActionBase {
   @Override
   protected void startComputingSourcePosition(XValue value, XNavigatable navigatable) {

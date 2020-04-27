@@ -14,9 +14,8 @@ public class ObjectEqualityInspectionMerger extends InspectionElementsMerger {
     return "ObjectEquality";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "EqualityOperatorComparesObjects",
       "ObjectEquality"

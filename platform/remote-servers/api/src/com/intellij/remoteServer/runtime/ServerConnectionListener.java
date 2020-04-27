@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-/**
- * @author nik
- */
 public interface ServerConnectionListener extends EventListener {
   Topic<ServerConnectionListener> TOPIC = Topic.create("server connections", ServerConnectionListener.class);
 

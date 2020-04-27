@@ -37,8 +37,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     final String s = genericDomValue.getStringValue();
     if (s != null) {
       final int offset = ElementManipulators.getOffsetInElement(element);

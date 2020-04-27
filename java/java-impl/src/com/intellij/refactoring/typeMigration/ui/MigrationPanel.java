@@ -2,8 +2,10 @@
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +23,6 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
@@ -82,7 +83,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     myRootsTree = new MyTree();
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
-    StructureTreeModel model = new StructureTreeModel<>(structure, this, AlphaComparator.INSTANCE);
+    StructureTreeModel model = new StructureTreeModel<>(structure, AlphaComparator.INSTANCE, this);
     myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);
@@ -149,7 +150,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     final JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gc = new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 1, GridBagConstraints.NORTHWEST,
                                                    GridBagConstraints.NONE, JBUI.insets(5, 10, 5, 0), 0, 0);
-    final JButton performButton = new JButton(RefactoringBundle.message("type.migration.migrate.button.text"));
+    final JButton performButton = new JButton(JavaRefactoringBundle.message("type.migration.migrate.button.text"));
     performButton.addActionListener(new ActionListener() {
       private void expandTree(MigrationNode migrationNode) {
         if (!migrationNode.getInfo().isExcluded() || migrationNode.areChildrenInitialized()) { //do not walk into excluded collapsed nodes: nothing to migrate can be found
@@ -193,7 +194,7 @@ public class MigrationPanel extends JPanel implements Disposable {
                 }
                 WriteCommandAction.writeCommandAction(myProject).run(() -> TypeMigrationProcessor.change(usages, myLabeler, myProject));
               }, myProject.getDisposed());
-            }, "Type Migration", false, myProject);
+            }, JavaRefactoringBundle.message("type.migration.action.name"), false, myProject);
           }
         }
         UsageViewContentManager.getInstance(myProject).closeContent(myContent);
@@ -209,7 +210,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       }
     });
     panel.add(closeButton, gc);
-    final JButton rerunButton = new JButton(RefactoringBundle.message("type.migration.rerun.button.text"));
+    final JButton rerunButton = new JButton(JavaRefactoringBundle.message("type.migration.rerun.button.text"));
     rerunButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
@@ -313,7 +314,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
   private class ExcludeAction extends ExcludeIncludeActionBase {
     ExcludeAction() {
-      super(RefactoringBundle.message("type.migration.exclude.action.text"));
+      super(JavaRefactoringBundle.message("type.migration.exclude.action.text"));
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myRootsTree);
     }
 
@@ -325,7 +326,7 @@ public class MigrationPanel extends JPanel implements Disposable {
 
   private class IncludeAction extends ExcludeIncludeActionBase {
     IncludeAction() {
-      super(RefactoringBundle.message("type.migration.include.action.text"));
+      super(JavaRefactoringBundle.message("type.migration.include.action.text"));
       registerCustomShortcutSet(CommonShortcuts.INSERT, myRootsTree);
     }
 
@@ -356,8 +357,7 @@ public class MigrationPanel extends JPanel implements Disposable {
       super(text);
     }
 
-    @Nullable
-    private TypeMigrationUsageInfo[] getUsages(AnActionEvent context) {
+    private TypeMigrationUsageInfo @Nullable [] getUsages(AnActionEvent context) {
       return context.getData(MIGRATION_USAGES_KEYS);
     }
 
@@ -433,7 +433,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             else {
               location = null;
             }
-            if (location != null) location = PsiBundle.message("aux.context.display", location);
+            if (location != null) location = JavaPsiBundle.message("aux.context.display", location);
           }
           if (location != null) {
             append(location, SimpleTextAttributes.GRAYED_ATTRIBUTES);

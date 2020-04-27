@@ -215,7 +215,7 @@ public class Py3QuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
+  protected void doInspectionTest(@NonNls String @NotNull [] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,
                                   boolean applyFix,

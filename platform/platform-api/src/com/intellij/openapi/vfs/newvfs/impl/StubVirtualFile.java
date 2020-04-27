@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.Key;
@@ -13,13 +13,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
-/**
- * @author max
- */
 public class StubVirtualFile extends VirtualFile {
-  @NotNull
   @Override
-  public byte[] contentsToByteArray() throws IOException {
+  public byte @NotNull [] contentsToByteArray() throws IOException {
     throw unsupported();
   }
 
@@ -152,12 +148,12 @@ public class StubVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp) {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp) {
     throw unsupported();
   }
 
   @Override
-  public void setBinaryContent(@NotNull byte[] content, long newModificationStamp, long newTimeStamp, Object requestor) {
+  public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) {
     throw unsupported();
   }
 
@@ -167,7 +163,7 @@ public class StubVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void setBOM(@Nullable byte[] BOM) {
+  public void setBOM(byte @Nullable [] BOM) {
     throw unsupported();
   }
 

@@ -26,8 +26,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
  * &lt;/extensions&gt;
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
- *
- * @author nik
  */
 public class GeneralSettingsConfigurableEP extends ConfigurableEP<SearchableConfigurable> {
 }

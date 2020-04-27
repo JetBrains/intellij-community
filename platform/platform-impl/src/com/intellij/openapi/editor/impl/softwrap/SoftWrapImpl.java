@@ -52,9 +52,8 @@ public class SoftWrapImpl implements SoftWrap {
     return myChange.getText();
   }
 
-  @NotNull
   @Override
-  public char[] getChars() {
+  public char @NotNull [] getChars() {
     return myChange.getChars();
   }
 

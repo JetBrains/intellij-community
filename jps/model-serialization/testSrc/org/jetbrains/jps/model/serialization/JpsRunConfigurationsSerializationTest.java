@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.serialization.runConfigurations.JpsUnknownRunConf
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsRunConfigurationsSerializationTest extends JpsSerializationTestCase {
   public void testLoadIpr() {
     doTest("jps/model-serialization/testData/run-configurations/run-configurations.ipr");

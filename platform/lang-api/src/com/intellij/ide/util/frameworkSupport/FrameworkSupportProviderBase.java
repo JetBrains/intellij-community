@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvider {
 
   protected FrameworkSupportProviderBase(final @NonNls @NotNull String id, final @NotNull String title) {

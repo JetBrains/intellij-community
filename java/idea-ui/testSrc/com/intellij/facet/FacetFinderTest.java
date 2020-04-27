@@ -14,9 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class FacetFinderTest extends FacetTestCase {
   private FacetFinder myFacetFinder;
 

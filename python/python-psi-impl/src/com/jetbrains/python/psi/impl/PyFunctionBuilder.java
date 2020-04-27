@@ -50,7 +50,7 @@ public class PyFunctionBuilder {
    * @return builder configured by this function
    */
   @NotNull
-  public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, @NotNull final String... decoratorsToCopyIfExist) {
+  public static PyFunctionBuilder copySignature(@NotNull final PyFunction source, final String @NotNull ... decoratorsToCopyIfExist) {
     final String name = source.getName();
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {

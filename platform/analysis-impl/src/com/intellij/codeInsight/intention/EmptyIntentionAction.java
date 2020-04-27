@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight.intention;
 
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -36,7 +36,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
   @Override
   @NotNull
   public String getText() {
-    return InspectionsBundle.message("inspection.options.action.text", myName);
+    return AnalysisBundle.message("inspection.options.action.text", myName);
   }
 
   @Override

@@ -32,7 +32,7 @@ public class CollectionElementNameMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     if (params.length != 1) {
       return null;
     }
@@ -63,7 +63,7 @@ public class CollectionElementNameMacro extends Macro {
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     Result result = calculateResult(params, context);
     if (result == null) {
       return null;

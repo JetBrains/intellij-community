@@ -104,8 +104,7 @@ public class BackgroundTaskQueueTest extends HeavyPlatformTestCase {
     }
   }
 
-  @NotNull
-  private static TestTask[] createSeveralTasks(@NotNull Project project) {
+  private static TestTask @NotNull [] createSeveralTasks(@NotNull Project project) {
     final TestTask[] tasks = new TestTask[10];
     for (int i = 0; i < tasks.length; i++) {
       tasks[i] = new TestTask(project);

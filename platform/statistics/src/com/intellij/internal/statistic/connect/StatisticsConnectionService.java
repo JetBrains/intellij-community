@@ -31,12 +31,11 @@ public class StatisticsConnectionService extends SettingsConnectionService {
   }
 
   public StatisticsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
-    super(settingsUrl, defaultServiceUrl);
+    super(settingsUrl, defaultServiceUrl, "IntelliJ", null);
   }
 
-  @NotNull
   @Override
-  public String[] getAttributeNames() {
+  public String @NotNull [] getAttributeNames() {
     return ArrayUtil.mergeArrays(super.getAttributeNames(), PERMISSION_ATTR_NAME);
   }
 

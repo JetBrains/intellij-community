@@ -99,7 +99,9 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return ApplicationManager.getApplication().isUnitTestMode() ? (super.getFamilyName() + " (side effects)") : super.getFamilyName();
+      return ApplicationManager.getApplication().isUnitTestMode() ? (InspectionGadgetsBundle
+                                                                       .message("side.effects.method.ref.to.lambda.fix.family.name",
+                                                                                super.getFamilyName())) : super.getFamilyName();
     }
 
     @Override

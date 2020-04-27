@@ -66,8 +66,7 @@ public class DomUtil {
     return null;
   }
 
-  @NotNull
-  public static String[] getElementNames(@NotNull Collection<? extends DomElement> list) {
+  public static String @NotNull [] getElementNames(@NotNull Collection<? extends DomElement> list) {
     ArrayList<String> result = new ArrayList<>(list.size());
     if (list.size() > 0) {
       for (DomElement element: list) {
@@ -92,8 +91,7 @@ public class DomUtil {
     return result;
   }
 
-  @NotNull
-  public static XmlTag[] getElementTags(@NotNull DomElement[] list) {
+  public static XmlTag @NotNull [] getElementTags(DomElement @NotNull [] list) {
     XmlTag[] result = new XmlTag[list.length];
     int i = 0;
     for (DomElement element: list) {

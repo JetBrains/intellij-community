@@ -198,7 +198,7 @@ public final class NameUtil {
   @NotNull
   private static String compoundSuggestion(@NotNull String prefix,
                                            boolean upperCaseStyle,
-                                           @NotNull String[] words,
+                                           String @NotNull [] words,
                                            int wordCount,
                                            @NotNull String startWord,
                                            char c,
@@ -255,13 +255,11 @@ public final class NameUtil {
     return suggestion;
   }
 
-  @NotNull
-  public static String[] splitNameIntoWords(@NotNull String name) {
+  public static String @NotNull [] splitNameIntoWords(@NotNull String name) {
     return NameUtilCore.splitNameIntoWords(name);
   }
 
-  @NotNull
-  public static String[] nameToWords(@NotNull String name) {
+  public static String @NotNull [] nameToWords(@NotNull String name) {
     return NameUtilCore.nameToWords(name);
   }
 

@@ -20,8 +20,7 @@ public class AddNullableAnnotationFix extends AddNullableNotNullAnnotationFix {
           getNotNulls(owner));
   }
 
-  @NotNull
-  private static String[] getNotNulls(@NotNull PsiModifierListOwner owner) {
+  private static String @NotNull [] getNotNulls(@NotNull PsiModifierListOwner owner) {
     final List<String> notnulls = NullableNotNullManager.getInstance(owner.getProject()).getNotNulls();
     return ArrayUtilRt.toStringArray(notnulls);
   }

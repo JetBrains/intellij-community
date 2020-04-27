@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
+import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.java.index.StringIndex
@@ -55,7 +56,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
-import com.intellij.psi.stubs.ObjectStubBase
 import com.intellij.psi.stubs.ObjectStubTree
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
@@ -73,6 +73,7 @@ import com.intellij.util.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
+import com.intellij.util.indexing.impl.forward.IntForwardIndex
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentHashMap
@@ -508,7 +509,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
-    GCWatcher.tracking(((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)).tryGc()
+    GCWatcher.tracking(((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)).ensureCollected()
     assert !((PsiManagerEx)psiManager).fileManager.getCachedPsiFile(vFile)
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
@@ -642,7 +643,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
 
-    GCWatcher.fromClearedRef(clazz).tryGc()
+    GCWatcher.fromClearedRef(clazz).ensureCollected()
 
     assertNull(findClass("Foo"))
 
@@ -656,7 +657,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
 
-    GCWatcher.fromClearedRef(clazz).tryGc()
+    GCWatcher.fromClearedRef(clazz).ensureCollected()
 
     assertNull(findClass("Foo2"))
   }
@@ -1292,6 +1293,31 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     } finally {
       FileTypeManager.getInstance().removeAssociation(JavaFileType.INSTANCE, matcher)
     }
+  }
+
+  void "test composite index with snapshot mappings hash id"() {
+    def groovyFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.groovy", "class Foo {}").virtualFile).getId()
+    def javaFileId = ((VirtualFileWithId)myFixture.addFileToProject("Foo.java", "class Foo {}").virtualFile).getId()
+
+    def fbi = FileBasedIndex.getInstance()
+    fbi.ensureUpToDate(IdIndex.NAME, getProject(), GlobalSearchScope.allScope(getProject()))
+    fbi.ensureUpToDate(TrigramIndex.INDEX_ID, getProject(), GlobalSearchScope.allScope(getProject()))
+    def idIndex = ((FileBasedIndexImpl)fbi).getIndex(IdIndex.NAME)
+    def trigramIndex = ((FileBasedIndexImpl)fbi).getIndex(TrigramIndex.INDEX_ID)
+
+    assertTrue(FileBasedIndex.ourSnapshotMappingsEnabled)
+    def idIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)idIndex).getForwardIndex()
+    def trigramIndexForwardIndex = (IntForwardIndex)((VfsAwareMapReduceIndex)trigramIndex).getForwardIndex()
+
+    // id index depends on file type
+    assertFalse(idIndexForwardIndex.getInt(javaFileId) == 0)
+    assertFalse(idIndexForwardIndex.getInt(groovyFileId) == 0)
+    assertFalse(idIndexForwardIndex.getInt(groovyFileId) == idIndexForwardIndex.getInt(javaFileId))
+
+    // trigram index is not a composite index
+    assertFalse(trigramIndexForwardIndex.getInt(javaFileId) == 0)
+    assertFalse(trigramIndexForwardIndex.getInt(groovyFileId) == 0)
+    assertEquals(trigramIndexForwardIndex.getInt(groovyFileId), trigramIndexForwardIndex.getInt(javaFileId))
   }
 
   private boolean findWordInDumbMode(String word, VirtualFile file, boolean inDumbMode) {

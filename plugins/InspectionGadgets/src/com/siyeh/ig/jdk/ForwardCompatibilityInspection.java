@@ -12,6 +12,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
@@ -60,7 +61,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
             }
             break;
           case PsiKeyword.YIELD:
-            if (languageLevel.isLessThan(LanguageLevel.JDK_X) && parent instanceof PsiClass) {
+            if (languageLevel.isLessThan(LanguageLevel.JDK_14) && parent instanceof PsiClass) {
               return JavaErrorBundle.message("yield.identifier.warn");
             }
             break;
@@ -73,7 +74,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         PsiReferenceExpression ref = expression.getMethodExpression();
         PsiElement nameElement = ref.getReferenceNameElement();
         if (nameElement != null && PsiKeyword.YIELD.equals(nameElement.getText()) && ref.getQualifierExpression() == null &&
-            languageLevel.isLessThan(LanguageLevel.JDK_X)) {
+            languageLevel.isLessThan(LanguageLevel.JDK_14)) {
           PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(expression.getMethodExpression());
           holder.registerProblem(nameElement, JavaErrorBundle.message("yield.unqualified.method.warn"),
                                    qualifier == null ? null : new QualifyCallFix(), new RenameFix());
@@ -106,7 +107,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Qualify call";
+      return InspectionGadgetsBundle.message("qualify.call.fix.family.name");
     }
 
     @Override

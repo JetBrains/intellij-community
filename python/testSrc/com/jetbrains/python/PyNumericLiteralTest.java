@@ -369,6 +369,33 @@ public class PyNumericLiteralTest extends PyTestCase {
     doTestMoreThanLongComplexLiteral("9_22_337_2036_85477_5808J", expectedInt2, new BigDecimal("9223372036854775808"));
   }
 
+  // PY-14844
+  public void testIntegerLiteralSuffix() {
+    doTestSuffix("1000", "u");
+    doTestSuffix("1000", "l");
+    doTestSuffix("1000", "ll");
+    doTestSuffix("1000", "U");
+    doTestSuffix("1000", "L");
+    doTestSuffix("1000", "LL");
+    doTestSuffix("1000", "ul");
+    doTestSuffix("1000", "Ul");
+    doTestSuffix("1000", "uL");
+    doTestSuffix("1000", "UL");
+    doTestSuffix("1000", "lu");
+    doTestSuffix("1000", "Lu");
+    doTestSuffix("1000", "lU");
+    doTestSuffix("1000", "LU");
+    doTestSuffix("1000", "ull");
+    doTestSuffix("1000", "Ull");
+    doTestSuffix("1000", "uLL");
+    doTestSuffix("1000", "ULL");
+    doTestSuffix("1000", "llu");
+    doTestSuffix("1000", "LLu");
+    doTestSuffix("1000", "llU");
+    doTestSuffix("1000", "LLU");
+    doTestSuffix("1000", null);
+  }
+
   private void doTestIntegerLiteral(@NotNull String text, int expected) {
     doTestLiteral(text, true, Long.valueOf(expected), BigInteger.valueOf(expected), BigDecimal.valueOf(expected), "int");
   }
@@ -409,6 +436,11 @@ public class PyNumericLiteralTest extends PyTestCase {
     final PyType type = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(literal);
     assertNotNull(type);
     assertEquals(expectedType, type.getName());
+  }
+
+  private void doTestSuffix(@NotNull String text, @Nullable String suffix) {
+    final PyNumericLiteralExpression literal = configureByText(text + (suffix == null ? "" : suffix));
+    assertEquals(suffix, literal.getIntegerLiteralSuffix());
   }
 
   @NotNull

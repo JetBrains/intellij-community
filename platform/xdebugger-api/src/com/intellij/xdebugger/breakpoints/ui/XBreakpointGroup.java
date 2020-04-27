@@ -20,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public abstract class XBreakpointGroup implements Comparable<XBreakpointGroup> {
   @Nullable
   public Icon getIcon(boolean isOpen) {

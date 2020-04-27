@@ -54,9 +54,8 @@ public class InferenceVariable extends LightTypeParameter {
     myInstantiation = instantiation;
   }
 
-  @NotNull
   @Override
-  public PsiClassType[] getExtendsListTypes() {
+  public PsiClassType @NotNull [] getExtendsListTypes() {
     final List<PsiClassType> result = new ArrayList<>();
     for (PsiType type : getBounds(InferenceBound.UPPER)) {
       if (type instanceof PsiClassType) {
@@ -69,21 +68,8 @@ public class InferenceVariable extends LightTypeParameter {
   public static void addBound(PsiType inferenceVariableType, PsiType boundType, InferenceBound inferenceBound, InferenceSession session) {
     final InferenceVariable variable = session.getInferenceVariable(inferenceVariableType);
     if (variable != null) {
-      boundType = modifyAnnotations(boundType, (b, modifier) -> modifier.boundAppeared(inferenceVariableType, b));
       variable.addBound(boundType, inferenceBound, session.myIncorporationPhase);
     }
-  }
-
-  static PsiType modifyAnnotations(PsiType type, BiFunction<? super PsiType, ? super TypeAnnotationModifier, ? extends TypeAnnotationProvider> executeModifier) {
-    for (TypeAnnotationModifier modifier : TypeAnnotationModifier.EP_NAME.getExtensions()) {
-      if (type instanceof PsiClassType) {
-        final TypeAnnotationProvider annotationProvider = executeModifier.apply(type, modifier);
-        if (annotationProvider != null) {
-          type = type.annotate(annotationProvider);
-        }
-      }
-    }
-    return type;
   }
 
   boolean addBound(PsiType classType, InferenceBound inferenceBound, @Nullable InferenceIncorporationPhase incorporationPhase) {

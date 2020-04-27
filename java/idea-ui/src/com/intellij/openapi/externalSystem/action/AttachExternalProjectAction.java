@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,7 +13,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 public class AttachExternalProjectAction extends DumbAwareAction {
 
   public AttachExternalProjectAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.attach.external.project.text", "External"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.attach.external.project.description", "external"));
+    getTemplatePresentation().setText(JavaUiBundle.messagePointer("action.attach.external.project.text", "External"));
+    getTemplatePresentation().setDescription(JavaUiBundle.messagePointer("action.attach.external.project.description", "external"));
   }
 
   @Override
@@ -34,8 +34,8 @@ public class AttachExternalProjectAction extends DumbAwareAction {
     ProjectSystemId externalSystemId = e.getData(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID);
     if (externalSystemId != null) {
       String name = externalSystemId.getReadableName();
-      presentation.setText(ExternalSystemBundle.message("action.attach.external.project.text", name));
-      presentation.setDescription(ExternalSystemBundle.message("action.attach.external.project.description", name));
+      presentation.setText(JavaUiBundle.messagePointer("action.attach.external.project.text", name));
+      presentation.setDescription(JavaUiBundle.messagePointer("action.attach.external.project.description", name));
     }
 
     presentation.setIcon(AllIcons.General.Add);

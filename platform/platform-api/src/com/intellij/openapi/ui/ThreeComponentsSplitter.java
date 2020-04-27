@@ -822,7 +822,9 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     protected void processMouseMotionEvent(MouseEvent e) {
       super.processMouseMotionEvent(e);
 
-      if (!isShowing()) return;
+      if (!isShowing()) {
+        return;
+      }
 
       if (MouseEvent.MOUSE_DRAGGED == e.getID() && myWasPressedOnMe) {
         myDragging = true;
@@ -855,12 +857,14 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           }
         }
         ThreeComponentsSplitter.this.doLayout();
-      } else if (MouseEvent.MOUSE_MOVED == e.getID()) {
+      }
+      else if (MouseEvent.MOUSE_MOVED == e.getID()) {
         if (myGlassPane != null) {
           if (isInside(e.getPoint())) {
             myGlassPane.setCursor(getResizeCursor(), myListener);
             e.consume();
-          } else {
+          }
+          else {
             myGlassPane.setCursor(null, myListener);
           }
         }

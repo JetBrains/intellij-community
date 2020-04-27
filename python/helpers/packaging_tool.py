@@ -77,29 +77,16 @@ def run_pip(args):
 
 def do_pyvenv(args):
     import runpy
-    # We cannot rely on automatic installation of setuptools and pip and
-    # have to bootstrap these packages ourselves, since some distributions
-    # of CPython on Ubuntu and MacOS don't include "ensurepip" module.
-    sys.argv[1:] = ['--without-pip'] + args
+    try:
+        import ensurepip
+        sys.argv[1:] = args
+    except ImportError:
+        sys.argv[1:] = ['--without-pip'] + args
+
     try:
         runpy.run_module('venv', run_name='__main__', alter_sys=True)
     except ImportError:
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
-
-
-def do_untar(name):
-    import tempfile
-
-    directory_name = tempfile.mkdtemp("pycharm-management")
-
-    import tarfile
-
-    tar = tarfile.open(name)
-    for item in tar:
-        tar.extract(item, directory_name)
-
-    sys.stdout.write(directory_name+chr(10))
-    sys.stdout.flush()
 
 
 def mkdtemp_ifneeded():
@@ -147,11 +134,6 @@ def main():
                     import shutil
                     shutil.rmtree(rmdir)
 
-        elif cmd == 'untar':
-            if len(sys.argv) < 2:
-                usage()
-            name = sys.argv[2]
-            do_untar(name)
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:
                 usage()

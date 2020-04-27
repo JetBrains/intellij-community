@@ -5,9 +5,6 @@ import com.intellij.openapi.module.impl.splitStringByDotsJoiningIncorrectIdentif
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * @author nik
- */
 class SplitStringByDotsJoiningIncorrectIdentifiersTest {
   @Test
   fun simple() {

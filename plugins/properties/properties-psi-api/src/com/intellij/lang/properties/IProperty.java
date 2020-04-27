@@ -4,6 +4,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.lang.properties.psi.PropertyKeyValueFormat;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.pom.Navigatable;
@@ -51,6 +52,10 @@ public interface IProperty extends Navigatable, Iconable {
   String getUnescapedKey();
 
   void setValue(@NonNls @NotNull String value) throws IncorrectOperationException;
+
+  default void setValue(@NotNull String value, @NotNull PropertyKeyValueFormat format) throws IncorrectOperationException {
+    setValue(value);
+  }
 
   PropertiesFile getPropertiesFile() throws PsiInvalidElementAccessException;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -43,10 +43,7 @@ import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -98,6 +95,9 @@ public abstract class DialogWrapper {
   }
 
   public enum DialogStyle {NO_STYLE, COMPACT}
+
+  @ApiStatus.Internal
+  public static final @NotNull String IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY = "isVisualPaddingCompensatedOnComponentLevel";
 
   /**
    * The default exit code for "OK" action.
@@ -1086,16 +1086,14 @@ public abstract class DialogWrapper {
    * @see #createSouthPanel
    * @see #createJButtonForAction
    */
-  @NotNull
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     Action helpAction = getHelpAction();
     return helpAction == myHelpAction && getHelpId() == null ?
            new Action[]{getOKAction(), getCancelAction()} :
            new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
-  @NotNull
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return new Action[0];
   }
 
@@ -1336,7 +1334,8 @@ public abstract class DialogWrapper {
       }
     }
 
-    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    boolean isVisualPaddingCompensatedOnComponentLevel =
+      centerPanel == null || centerPanel.getClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY) == null;
     if (isVisualPaddingCompensatedOnComponentLevel) {
       // see comment about visual paddings in the MigLayoutBuilder.build
       root.setBorder(createContentPaneBorder());
@@ -1512,7 +1511,7 @@ public abstract class DialogWrapper {
   @Deprecated
   protected final void setCancelButtonIcon(@SuppressWarnings("unused") Icon icon) { }
 
-  protected final void setCancelButtonText(@NotNull String text) {
+  protected final void setCancelButtonText(@Nls @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
 
@@ -1541,7 +1540,7 @@ public abstract class DialogWrapper {
    *             {@link AbstractButton#setText(String)}
    *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
    */
-  protected final void setOKButtonText(@NotNull String text) {
+  protected final void setOKButtonText(@Nls @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
   }
 
@@ -1549,7 +1548,7 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
   }
 
-  protected final void setOKButtonTooltip(String text) {
+  protected final void setOKButtonTooltip(@Nls String text) {
     myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
@@ -1562,6 +1561,7 @@ public abstract class DialogWrapper {
 
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
+      logClickOnHelpDialogEvent();
       String helpId = getHelpId();
       if (helpId != null) {
         HelpManager.getInstance().invokeHelp(helpId);
@@ -1810,6 +1810,14 @@ public abstract class DialogWrapper {
     }
   }
 
+  private void logClickOnHelpDialogEvent() {
+    if (!canRecordDialogId()) return;
+    final String dialogId = getClass().getName();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
+    }
+  }
+
   /**
    * If dialog open/close events should be recorded in user event log, it can be used to understand how often this dialog is used.
    */
@@ -1891,7 +1899,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  private void recordAction(String name, AWTEvent event) {
+  private void recordAction(@NonNls String name, AWTEvent event) {
     if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       ActionsCollector.getInstance().record(name, (KeyEvent)event, getClass());
     }
@@ -1957,11 +1965,11 @@ public abstract class DialogWrapper {
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
    * @param text the error text to display
    */
-  protected void setErrorText(@Nullable final String text) {
+  protected void setErrorText(@Nls @Nullable final String text) {
     setErrorText(text, null);
   }
 
-  protected void setErrorText(@Nullable final String text, @Nullable final JComponent component) {
+  protected void setErrorText(@Nls @Nullable final String text, @Nullable final JComponent component) {
     setErrorInfoAll(text == null ?
                     Collections.emptyList() :
                     Collections.singletonList(new ValidationInfo(text, component)));
@@ -2009,13 +2017,13 @@ public abstract class DialogWrapper {
         }
 
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
       });
     }
     else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
-          myErrorText.appendError(vi.message);
+          myErrorText.appendError(vi);
         }
       };
       if (headless) {
@@ -2059,7 +2067,7 @@ public abstract class DialogWrapper {
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private final List<String> errors = new ArrayList<>();
+    private final List<ValidationInfo> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
@@ -2096,26 +2104,28 @@ public abstract class DialogWrapper {
       }
     }
 
-    private void appendError(String text) {
-      errors.add(text);
-      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
-      errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
-      sb.append("</font></html>");
+    private void appendError(@NotNull ValidationInfo info) {
+      errors.add(info);
+
+      StringBuilder sb = new StringBuilder("<html>");
+      errors.forEach(
+        vi -> {
+          Color color = vi.warning ? MessageType.WARNING.getTitleForeground() : ERROR_FOREGROUND_COLOR;
+          sb.append("<font color='#").append(ColorUtil.toHex(color)).append("'>")
+            .append("<left>")
+            .append(vi.message)
+            .append("</left></font><br/>");
+        }
+      );
+      sb.append("</html>");
+
       myLabel.setText(sb.toString());
       setVisible(true);
       updateSize();
     }
 
     private boolean isTextSet(@NotNull List<ValidationInfo> info) {
-      if (info.isEmpty()) {
-        return errors.isEmpty();
-      }
-      else if (errors.size() == info.size()) {
-        return errors.equals(ContainerUtil.map(info, i -> i.message));
-      }
-      else {
-        return false;
-      }
+      return errors.equals(info);
     }
   }
 
@@ -2223,6 +2233,7 @@ public abstract class DialogWrapper {
     boolean shouldSaveOptionsOnCancel();
 
     @NotNull
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     String getDoNotShowMessage();
   }
 

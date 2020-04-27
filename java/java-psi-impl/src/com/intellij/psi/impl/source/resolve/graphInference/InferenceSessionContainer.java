@@ -49,12 +49,12 @@ public class InferenceSessionContainer {
     }
   }
 
-  static PsiSubstitutor infer(@NotNull PsiTypeParameter[] typeParameters,
-                              @NotNull PsiParameter[] parameters,
-                              @NotNull PsiExpression[] arguments,
+  static PsiSubstitutor infer(PsiTypeParameter @NotNull [] typeParameters,
+                              PsiParameter @NotNull [] parameters,
+                              PsiExpression @NotNull [] arguments,
                               @NotNull PsiSubstitutor partialSubstitutor,
                               @NotNull PsiElement parent,
-                              @NotNull ParameterTypeInferencePolicy policy, 
+                              @NotNull ParameterTypeInferencePolicy policy,
                               @Nullable MethodCandidateInfo currentMethod) {
     final PsiExpressionList argumentList = InferenceSession.getArgumentList(parent);
     class NoContainer {
@@ -126,8 +126,8 @@ public class InferenceSessionContainer {
     return new NoContainer().infer(false);
   }
 
-  private static PsiSubstitutor inferNested(@NotNull final PsiParameter[] parameters,
-                                            @NotNull final PsiExpression[] arguments,
+  private static PsiSubstitutor inferNested(final PsiParameter @NotNull [] parameters,
+                                            final PsiExpression @NotNull [] arguments,
                                             @NotNull final PsiCall parent,
                                             @NotNull final MethodCandidateInfo currentMethod,
                                             @NotNull final InferenceSession parentSession) {

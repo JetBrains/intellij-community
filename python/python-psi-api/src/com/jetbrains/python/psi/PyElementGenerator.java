@@ -136,7 +136,7 @@ public abstract class PyElementGenerator {
   public abstract PyPassStatement createPassStatement();
 
   @NotNull
-  public abstract PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts);
+  public abstract PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
 
   /**
    * Creates new line whitespace

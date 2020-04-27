@@ -18,6 +18,5 @@ package org.intellij.lang.xpath.psi;
 import org.jetbrains.annotations.NotNull;
 
 public interface XPath2Sequence extends XPathExpression {
-  @NotNull
-  XPathExpression[] getSequence();
+  XPathExpression @NotNull [] getSequence();
 }

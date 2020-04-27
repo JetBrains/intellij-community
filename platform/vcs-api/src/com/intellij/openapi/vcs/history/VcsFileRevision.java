@@ -48,8 +48,7 @@ public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription 
     }
 
     @Override
-    @NotNull
-    public byte[] loadContent() {
+    public byte @NotNull [] loadContent() {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
   };

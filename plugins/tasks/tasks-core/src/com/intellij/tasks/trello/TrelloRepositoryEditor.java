@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.tasks.trello.model.TrelloBoard;
@@ -183,7 +184,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
     myListLabel = new JBLabel("List:", SwingConstants.RIGHT);
     myListLabel.setLabelFor(myListComboBox);
 
-    myAllCardsCheckBox = new JBCheckBox("Include cards not assigned to me");
+    myAllCardsCheckBox = new JBCheckBox(TaskBundle.message("checkbox.include.cards.not.assigned.to.me"));
 
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myBoardLabel, myBoardComboBox)

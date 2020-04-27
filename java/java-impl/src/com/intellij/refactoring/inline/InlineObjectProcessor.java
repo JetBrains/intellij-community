@@ -58,7 +58,7 @@ public class InlineObjectProcessor extends BaseRefactoringProcessor {
 
   @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myMethod);
   }
 
@@ -68,14 +68,13 @@ public class InlineObjectProcessor extends BaseRefactoringProcessor {
     return Collections.singletonList(myReference.getElement());
   }
 
-  @NotNull
   @Override
-  protected UsageInfo[] findUsages() {
+  protected UsageInfo @NotNull [] findUsages() {
     return new UsageInfo[]{new UsageInfo(myReference)};
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usages) {
+  protected void performRefactoring(UsageInfo @NotNull [] usages) {
     ChangeContextUtil.encodeContextInfo(myMethod, false);
     PsiMethod ctorCopy = (PsiMethod)myMethod.copy();
     ChangeContextUtil.clearContextInfo(myMethod);

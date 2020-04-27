@@ -31,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author nik
- */
 public class ProjectStructureDaemonAnalyzer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectStructureDaemonAnalyzer.class);
   private final Map<ProjectStructureElement, ProjectStructureProblemsHolderImpl> myProblemHolders = new HashMap<>();
@@ -289,9 +286,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       return myElement.equals(other.myElement) && (!other.myCheck || myCheck) && (!other.myCollectUsages || myCollectUsages);
     }
 
-    @NotNull
     @Override
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return myEqualityObjects;
     }
 
@@ -318,9 +314,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       myEqualityObjects = new Object[]{element, "usages collected"};
     }
 
-    @NotNull
     @Override
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return myEqualityObjects;
     }
 
@@ -347,9 +342,8 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       myEqualityObjects = new Object[]{element, "problems computed"};
     }
 
-    @NotNull
     @Override
-    public Object[] getEqualityObjects() {
+    public Object @NotNull [] getEqualityObjects() {
       return myEqualityObjects;
     }
 

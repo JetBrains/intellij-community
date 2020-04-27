@@ -5,6 +5,7 @@ package com.intellij.xml.util;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,7 @@ public class XmlStringUtil {
    * @return HTML where specified lines separated by &lt;br&gt; and each line wrapped in &lt;nobr&gt; to prevent breaking text inside
    */
   @NotNull
-  public static String wrapInHtmlLines(@NotNull CharSequence...lines) {
+  public static String wrapInHtmlLines(CharSequence @NotNull ... lines) {
     StringBuilder sb = new StringBuilder(HTML_START);
     for (int i = 0; i < lines.length; i++) {
       CharSequence sequence = lines[i];
@@ -129,6 +130,11 @@ public class XmlStringUtil {
       sb.append("<nobr>").append(sequence).append("</nobr>");
     }
     return sb.append(HTML_END).toString();
+  }
+
+  @NotNull
+  public static String wrapInHtmlTag(@NotNull String text, @NonNls @NotNull String tagWord) {
+    return String.format("<%s>%s</%s>", tagWord, text, tagWord);
   }
 
   public static boolean isWrappedInHtml(@NotNull String tooltip) {

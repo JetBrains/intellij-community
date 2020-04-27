@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,22 +45,21 @@ public final class CustomShortcutSet implements ShortcutSet {
    *
    * @param shortcuts keyboard shortcuts
    */
-  public CustomShortcutSet(@NotNull Shortcut... shortcuts){
+  public CustomShortcutSet(Shortcut @NotNull ... shortcuts){
     myShortcuts = shortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : shortcuts.clone();
   }
 
-  public CustomShortcutSet(@NotNull Integer... keyCodes) {
+  public CustomShortcutSet(Integer @NotNull ... keyCodes) {
     myShortcuts = ContainerUtil.map(keyCodes, integer -> new KeyboardShortcut(KeyStroke.getKeyStroke(integer, 0), null), Shortcut.EMPTY_ARRAY);
   }
 
   @Override
-  @NotNull
-  public Shortcut[] getShortcuts(){
+  public Shortcut @NotNull [] getShortcuts(){
     return myShortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : myShortcuts.clone();
   }
 
   @NotNull
-  public static CustomShortcutSet fromString(@NotNull String... keyboardShortcuts) {
+  public static CustomShortcutSet fromString(@NonNls String @NotNull ... keyboardShortcuts) {
     final KeyboardShortcut[] shortcuts = new KeyboardShortcut[keyboardShortcuts.length];
     for (int i = 0; i < keyboardShortcuts.length; i++) {
       shortcuts[i] = KeyboardShortcut.fromString(keyboardShortcuts[i]);

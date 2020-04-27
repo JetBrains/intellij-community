@@ -42,11 +42,9 @@ public interface StartBuildEvent extends StartEvent {
   @Nullable
   ExecutionEnvironment getExecutionEnvironment();
 
-  @NotNull
-  AnAction[] getRestartActions();
+  AnAction @NotNull [] getRestartActions();
 
-  @NotNull
-  Filter[] getExecutionFilters();
+  Filter @NotNull [] getExecutionFilters();
 
   @Nullable
   Supplier<RunContentDescriptor> getContentDescriptorSupplier();

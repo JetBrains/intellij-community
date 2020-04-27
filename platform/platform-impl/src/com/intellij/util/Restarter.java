@@ -98,7 +98,7 @@ public class Restarter {
     return restarter != null && restarter.isFile() && restarter.canExecute() ? null : "not an executable file: " + restarter;
   }
 
-  public static void scheduleRestart(boolean elevate, @NotNull String... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
     if (SystemInfo.isWindows) {
       restartOnWindows(elevate, beforeRestart);
     }

@@ -15,13 +15,15 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super("Show Details", "Display details panel", null);
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.details"),
+          VcsLogBundle.messagePointer("vcs.log.action.description.show.details"), null);
   }
 
   @Override

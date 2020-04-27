@@ -168,6 +168,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return path.endsWith("." + GROOVY_EXTENSION);
   }
 
+  @NotNull
   @Override
   public List<String> getCompilableFileExtensions() {
     return Collections.singletonList(GROOVY_EXTENSION);

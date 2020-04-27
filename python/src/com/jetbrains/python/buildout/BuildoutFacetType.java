@@ -7,6 +7,7 @@ import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ import javax.swing.*;
  */
 public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetConfiguration> {
   private BuildoutFacetType() {
-    super(ID, "buildout-python", "Buildout Support");
+    super(ID, "buildout-python", PyBundle.message("buildout.facet.title"));
   }
 
   @Override

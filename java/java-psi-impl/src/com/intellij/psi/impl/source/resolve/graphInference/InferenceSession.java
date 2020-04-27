@@ -287,24 +287,24 @@ public class InferenceSession {
   }
 
 
-  PsiSubstitutor collectAdditionalAndInfer(@NotNull PsiParameter[] parameters,
-                                           @NotNull PsiExpression[] args,
+  PsiSubstitutor collectAdditionalAndInfer(PsiParameter @NotNull [] parameters,
+                                           PsiExpression @NotNull [] args,
                                            @NotNull MethodCandidateInfo properties,
                                            @NotNull PsiSubstitutor psiSubstitutor) {
     return performGuardedInference(parameters, args, myContext, properties, psiSubstitutor, false);
   }
 
   @NotNull
-  public PsiSubstitutor infer(@Nullable PsiParameter[] parameters,
-                              @Nullable PsiExpression[] args,
+  public PsiSubstitutor infer(PsiParameter @Nullable [] parameters,
+                              PsiExpression @Nullable [] args,
                               @Nullable PsiElement parent,
                               @Nullable MethodCandidateInfo currentMethod) {
     return performGuardedInference(parameters, args, parent, currentMethod, PsiSubstitutor.EMPTY, false);
   }
 
   @NotNull
-  PsiSubstitutor performGuardedInference(@Nullable PsiParameter[] parameters,
-                                         @Nullable PsiExpression[] args,
+  PsiSubstitutor performGuardedInference(PsiParameter @Nullable [] parameters,
+                                         PsiExpression @Nullable [] args,
                                          @Nullable PsiElement parent,
                                          @Nullable MethodCandidateInfo currentMethod,
                                          @NotNull PsiSubstitutor initialSubstitutor,
@@ -334,8 +334,8 @@ public class InferenceSession {
     }, prohibitCaching);
   }
 
-  private void doInfer(@Nullable PsiParameter[] parameters,
-                       @Nullable PsiExpression[] args,
+  private void doInfer(PsiParameter @Nullable [] parameters,
+                       PsiExpression @Nullable [] args,
                        @Nullable PsiElement parent,
                        @Nullable MethodCandidateInfo properties,
                        @NotNull PsiSubstitutor initialSubstitutor) {
@@ -595,7 +595,7 @@ public class InferenceSession {
 
   public InferenceVariable[] initBounds(PsiElement context,
                                         final PsiSubstitutor siteSubstitutor,
-                                        @NotNull PsiTypeParameter... typeParameters) {
+                                        PsiTypeParameter @NotNull ... typeParameters) {
     List<InferenceVariable> result = new ArrayList<>(typeParameters.length);
     for (PsiTypeParameter parameter : typeParameters) {
       String name = parameter.getName();
@@ -884,29 +884,29 @@ public class InferenceSession {
     if (type == null) return true;
     final Boolean isProper = type.accept(new PsiTypeVisitor<Boolean>() {
       @Override
-      public Boolean visitType(PsiType type) {
+      public Boolean visitType(@NotNull PsiType type) {
         return true;
       }
 
       @Override
-      public Boolean visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+      public Boolean visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
         return true;
       }
 
       @Override
-      public Boolean visitArrayType(PsiArrayType arrayType) {
+      public Boolean visitArrayType(@NotNull PsiArrayType arrayType) {
         return arrayType.getComponentType().accept(this);
       }
 
       @Override
-      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+      public Boolean visitWildcardType(@NotNull PsiWildcardType wildcardType) {
         final PsiType bound = wildcardType.getBound();
         if (bound == null) return true;
         return bound.accept(this);
       }
 
       @Override
-      public Boolean visitClassType(PsiClassType classType) {
+      public Boolean visitClassType(@NotNull PsiClassType classType) {
         final InferenceVariable inferenceVariable = fun.fun(classType);
         if (inferenceVariable != null) {
           if (dependencies != null) {
@@ -1174,7 +1174,7 @@ public class InferenceSession {
       }
     }
     else {
-      type = InferenceVariable.modifyAnnotations(lowerBound, (lb, modifier) -> modifier.modifyLowerBoundAnnotations(lb, upperBound));
+      type = lowerBound;
     }
 
     if (type == PsiType.NULL) {
@@ -1791,8 +1791,9 @@ public class InferenceSession {
     if (arg instanceof PsiMethodReferenceExpression && ((PsiMethodReferenceExpression)arg).isExact()) {
       final PsiParameter[] sParameters = sInterfaceMethod.getParameterList().getParameters();
       final PsiParameter[] tParameters = tInterfaceMethod.getParameterList().getParameters();
-      LOG.assertTrue(sParameters.length == tParameters.length, 
-                     "s: " + sInterfaceMethod.getParameterList().getText() + "; t: " + tInterfaceMethod.getParameterList().getText());
+      if (sParameters.length != tParameters.length) {
+        LOG.error("s: " + sInterfaceMethod.getParameterList().getText() + "; t: " + tInterfaceMethod.getParameterList().getText());
+      }
       for (int i = 0; i < tParameters.length; i++) {
         final PsiType tSubstituted = tSubstitutor.substitute(tParameters[i].getType());
         final PsiType sSubstituted = sSubstitutor.substitute(sParameters[i].getType());

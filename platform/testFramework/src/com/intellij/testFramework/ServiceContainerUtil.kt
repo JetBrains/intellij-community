@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.util.Disposer
 import com.intellij.serviceContainer.PlatformComponentManagerImpl
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
@@ -18,7 +19,16 @@ fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T
 
 @TestOnly
 fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
-  (this as PlatformComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
+  val serviceContainer = this as PlatformComponentManagerImpl
+  if (PlatformComponentManagerImpl.isLightService(serviceInterface)) {
+    serviceContainer.registerServiceInstance(serviceInterface, instance)
+    Disposer.register(parentDisposable, Disposable {
+      serviceContainer.picoContainer.unregisterComponent(serviceInterface)
+    })
+  }
+  else {
+    serviceContainer.replaceServiceInstance(serviceInterface, instance, parentDisposable)
+  }
 }
 
 /**

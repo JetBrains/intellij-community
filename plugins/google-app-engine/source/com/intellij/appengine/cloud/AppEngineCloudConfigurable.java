@@ -23,9 +23,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
-* @author nik
-*/
 public class AppEngineCloudConfigurable extends RemoteServerConfigurable implements Configurable {
   public static final String EMAIL_KEY = "GOOGLE_APP_ENGINE_ACCOUNT_EMAIL";
   private final AppEngineServerConfiguration myConfiguration;

@@ -76,9 +76,6 @@ import java.util.List;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author max
- */
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   static {
@@ -86,6 +83,7 @@ public final class UIUtil {
   }
 
   public static final String BORDER_LINE = "<hr size=1 noshade>";
+  public static final @NonNls String BR = "<br/>";
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
@@ -507,34 +505,6 @@ public final class UIUtil {
     }
   }
 
-  public static boolean hasLeakingAppleListeners() {
-    // in version 1.6.0_29 Apple introduced a memory leak in JViewport class - they add a PropertyChangeListeners to the CToolkit
-    // but never remove them:
-    // JViewport.java:
-    // public JViewport() {
-    //   ...
-    //   final Toolkit toolkit = Toolkit.getDefaultToolkit();
-    //   if(toolkit instanceof CToolkit)
-    //   {
-    //     final boolean isRunningInHiDPI = ((CToolkit)toolkit).runningInHiDPI();
-    //     if(isRunningInHiDPI) setScrollMode(0);
-    //     toolkit.addPropertyChangeListener("apple.awt.contentScaleFactor", new PropertyChangeListener() { ... });
-    //   }
-    // }
-
-    return SystemInfo.isMac && System.getProperty("java.runtime.version").startsWith("1.6.0_29");
-  }
-
-  public static void removeLeakingAppleListeners() {
-    if (!hasLeakingAppleListeners()) return;
-
-    Toolkit toolkit = Toolkit.getDefaultToolkit();
-    String name = "apple.awt.contentScaleFactor";
-    for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
-      toolkit.removePropertyChangeListener(name, each);
-    }
-  }
-
   public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
     return Boolean.TRUE.equals(getWindowClientProperty(window, key));
   }
@@ -643,6 +613,7 @@ public final class UIUtil {
 
   public static boolean isReallyTypedEvent(@NotNull KeyEvent e) {
     char c = e.getKeyChar();
+    if (c == KeyEvent.CHAR_UNDEFINED) return false; // ignore CHAR_UNDEFINED, like Swing text components do
     if (c < 0x20 || c == 0x7F) return false;
 
     // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
@@ -766,8 +737,7 @@ public final class UIUtil {
     WavePainter.forColor(g.getColor()).paint(g, (int)rectangle.getMinX(), (int) rectangle.getMaxX(), (int) rectangle.getMaxY());
   }
 
-  @NotNull
-  public static String[] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
+  public static String @NotNull [] splitText(@NotNull String text, @NotNull FontMetrics fontMetrics, int widthLimit, char separator) {
     ArrayList<String> lines = new ArrayList<>();
     StringBuilder currentLine = new StringBuilder();
     StringBuilder currentAtom = new StringBuilder();
@@ -1400,8 +1370,7 @@ public final class UIUtil {
     return SystemInfo.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
-  @NotNull
-  public static String[] getValidFontNames(final boolean familyName) {
+  public static String @NotNull [] getValidFontNames(final boolean familyName) {
     Set<String> result = new TreeSet<>();
 
     // adds fonts that can display symbols at [A, Z] + [a, z] + [0, 9]
@@ -1425,8 +1394,7 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  @NotNull
-  public static String[] getStandardFontSizes() {
+  public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
 
@@ -1803,6 +1771,7 @@ public final class UIUtil {
   }
 
   /**
+   * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
    * @see #pump()
    */
@@ -1810,7 +1779,8 @@ public final class UIUtil {
   public static void dispatchAllInvocationEvents() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    Method dispatchEventMethod = ObjectUtils.notNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
+    Method dispatchEventMethod =
+      Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
@@ -1951,7 +1921,6 @@ public final class UIUtil {
     return SwingUtilities.isDescendingFrom(owner, component);
   }
 
-
   public static boolean isCloseClick(@NotNull MouseEvent e) {
     return isCloseClick(e, MouseEvent.MOUSE_PRESSED);
   }
@@ -2010,12 +1979,12 @@ public final class UIUtil {
   }
 
   public static void layoutRecursively(@NotNull Component component) {
-    if (component instanceof JComponent) {
-      component.doLayout();
-      for (Component child : ((JComponent)component).getComponents()) {
-        layoutRecursively(child);
-      }
+    if (!(component instanceof JComponent)) {
+      return;
     }
+    forEachComponentInHierarchy(component, c -> {
+      component.doLayout();
+    });
   }
 
   @NotNull
@@ -2259,13 +2228,16 @@ public final class UIUtil {
     return toRender;
   }
 
+  /**
+   * @deprecated This method is a hack. Please avoid it and create borderless {@code JScrollPane} manually using
+   * {@link com.intellij.ui.ScrollPaneFactory#createScrollPane(Component, boolean)}.
+   */
+  @Deprecated
   public static void removeScrollBorder(final Component c) {
-    for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
-      if (!uiParents(scrollPane, true)
-        .takeWhile(Conditions.notEqualTo(c))
-        .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
-        .isEmpty()) continue;
-
+    JBIterable<JScrollPane> scrollPanes = uiTraverser(c)
+      .expand(o -> o == c || o instanceof JPanel || o instanceof JLayeredPane)
+      .filter(JScrollPane.class);
+    for (JScrollPane scrollPane : scrollPanes) {
       Integer keepBorderSides = ComponentUtil.getClientProperty(scrollPane, KEEP_BORDER_SIDES);
       if (keepBorderSides != null) {
         if (scrollPane.getBorder() instanceof LineBorder) {
@@ -2799,7 +2771,7 @@ public final class UIUtil {
   }
 
   @Nullable
-  public static JComponent mergeComponentsWithAnchor(@NotNull PanelWithAnchor... panels) {
+  public static JComponent mergeComponentsWithAnchor(PanelWithAnchor @NotNull ... panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
 
@@ -2825,18 +2797,28 @@ public final class UIUtil {
     return maxWidthAnchor;
   }
 
-  /**
-   * @deprecated Not required.
-   */
-  @Deprecated
-  public static void setNotOpaqueRecursively(@SuppressWarnings("unused") @NotNull Component component) {
+  public static void setNotOpaqueRecursively(@NotNull Component component) {
+    if (!(component instanceof JComponent)) {
+      return;
+    }
+    forEachComponentInHierarchy(component, c -> {
+      if (c instanceof JComponent) {
+        ((JComponent)c).setOpaque(false);
+      }
+    });
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
-    component.setBackground(bg);
+    forEachComponentInHierarchy(component, c -> {
+      c.setBackground(bg);
+    });
+  }
+
+  private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<Component> action) {
+    action.consume(component);
     if (component instanceof Container) {
       for (Component c : ((Container)component).getComponents()) {
-        setBackgroundRecursively(c, bg);
+        forEachComponentInHierarchy(c, action);
       }
     }
   }
@@ -3147,7 +3129,7 @@ public final class UIUtil {
    * Indicates whether the specified component is instance of one of the specified types
    * or it contains an instance of one of the specified types.
    */
-  public static boolean hasComponentOfType(@NotNull Component component, @NotNull Class<?>... types) {
+  public static boolean hasComponentOfType(@NotNull Component component, Class<?> @NotNull ... types) {
     for (Class<?> type : types) {
       if (type.isAssignableFrom(component.getClass())) {
         return true;

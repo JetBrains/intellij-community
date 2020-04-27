@@ -37,19 +37,19 @@
           <component id="2514b" class="javax.swing.JLabel" binding="myWarningLabel">
             <constraints/>
             <properties>
-              <text value="Invalid path."/>
+              <text resource-bundle="messages/ShBundle" key="sh.invalid.path"/>
             </properties>
           </component>
           <component id="156ed" class="com.intellij.ui.components.labels.ActionLink" binding="myShellcheckDownloadLink" custom-create="true">
             <constraints/>
             <properties>
-              <text value="Download"/>
+              <text resource-bundle="messages/ShBundle" key="sh.download"/>
             </properties>
           </component>
           <component id="6ea2d" class="javax.swing.JLabel">
             <constraints/>
             <properties>
-              <text value=" missing shellcheck"/>
+              <text resource-bundle="messages/ShBundle" key="sh.shellcheck.missing"/>
             </properties>
           </component>
         </children>

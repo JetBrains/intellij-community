@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
   @Override
-  @Nullable
-  public int[] getMethodNavigationOffsets(PsiFile file, int caretOffset) {
+  public int @Nullable [] getMethodNavigationOffsets(PsiFile file, int caretOffset) {
     if (file instanceof PsiJavaFile) {
       return MethodUpDownUtil.offsetsFromElements(SyntaxTraverser.psiTraverser(file).filter(e -> shouldStopAt(e)).toList());
     }

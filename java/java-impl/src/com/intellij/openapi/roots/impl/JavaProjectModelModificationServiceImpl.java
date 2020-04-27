@@ -29,9 +29,6 @@ import org.jetbrains.concurrency.Promises;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
 
@@ -83,8 +80,7 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
     return Promises.rejectedPromise();
   }
 
-  @NotNull
-  private JavaProjectModelModifier[] getModelModifiers() {
+  private JavaProjectModelModifier @NotNull [] getModelModifiers() {
     return JavaProjectModelModifier.EP_NAME.getExtensions(myProject);
   }
 }

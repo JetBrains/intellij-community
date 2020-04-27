@@ -4,9 +4,9 @@ package com.intellij.openapi.roots.impl.libraries
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.projectModel.ProjectModelBundle
 
 @State(name = "libraryTable", storages = [(Storage(value = "libraries", stateSplitter = LibraryStateSplitter::class))])
 class ProjectLibraryTableImpl(val parentProject: Project) : LibraryTableBase(), ProjectLibraryTable {
@@ -18,9 +18,9 @@ class ProjectLibraryTableImpl(val parentProject: Project) : LibraryTableBase(), 
 }
 
 val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
-  override fun getDisplayName(plural: Boolean) = ProjectBundle.message("project.library.display.name", if (plural) 2 else 1)
+  override fun getDisplayName(plural: Boolean) = ProjectModelBundle.message("project.library.display.name", if (plural) 2 else 1)
 
-  override fun getDescription() = ProjectBundle.message("libraries.node.text.project")
+  override fun getDescription() = ProjectModelBundle.message("libraries.node.text.project")
 
-  override fun getLibraryTableEditorTitle() = ProjectBundle.message("library.configure.project.title")
+  override fun getLibraryTableEditorTitle() = ProjectModelBundle.message("library.configure.project.title")
 }

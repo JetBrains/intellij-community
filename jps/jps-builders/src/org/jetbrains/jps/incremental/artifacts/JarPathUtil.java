@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class JarPathUtil {
   public static final String JAR_SEPARATOR = "!/";
 

@@ -456,8 +456,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  @NotNull
-  protected AbstractTableColumnDescriptor[] getColumnDescriptors() {
+  protected AbstractTableColumnDescriptor @NotNull [] getColumnDescriptors() {
     return new AbstractTableColumnDescriptor[]{
       new AbstractTableColumnDescriptor("Class", TypeInfo.class) {
         @Override

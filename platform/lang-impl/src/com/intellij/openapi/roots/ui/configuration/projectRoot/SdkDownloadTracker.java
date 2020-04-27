@@ -21,15 +21,16 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.io.File;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SdkDownloadTracker implements Disposable {
   private static final Logger LOG = Logger.getInstance(SdkDownloadTracker.class);
@@ -86,14 +87,14 @@ public class SdkDownloadTracker implements Disposable {
     PendingDownload task = findTask(original);
     if (task == null) return;
 
-    LOG.assertTrue(findTask(editable) == null, "Download is already running for the Sdk " + editable);
+    LOG.assertTrue(findTask(editable) == null, "Download is already running for the SDK " + editable);
     task.registerEditableSdk(editable);
   }
 
   public void registerSdkDownload(@NotNull Sdk originalSdk,
                                   @NotNull SdkDownloadTask item) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the Sdk " + originalSdk);
+    LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the SDK " + originalSdk);
 
     PendingDownload pd = new PendingDownload(originalSdk, item);
     pd.configureSdk(originalSdk);
@@ -110,6 +111,26 @@ public class SdkDownloadTracker implements Disposable {
   }
 
   /**
+   * Looks into the currently downloading SDK instances
+   * and returns one with matching name
+   */
+  @NotNull
+  public List<Sdk> findDownloadingSdks(@Nullable String sdkName) {
+    if (sdkName == null) return Collections.emptyList();
+
+    List<Sdk> result = new ArrayList<>();
+    for (PendingDownload task : myPendingTasks) {
+      for (Sdk sdk : task.myEditableSdks.copy()) {
+        if (Objects.equals(sdkName, sdk.getName())) {
+          result.add(sdk);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Checks if there is an activity for a given Sdk
    * @return true is there is an activity
    */
@@ -123,8 +144,8 @@ public class SdkDownloadTracker implements Disposable {
    * @param sdk                        the Sdk instance that to check (it could be it's #clone())
    * @param lifetime                   unsubscribe callback
    * @param indicator                  progress indicator to deliver progress
-   * @param onDownloadCompleteCallback called once (with {@code true} to indicate success and {@code false} for a failure)
-   *                                   download is completed from ETD to update the UI,
+   * @param onDownloadCompleteCallback called once download is completed from EDT thread,
+   *                                   with {@code true} to indicate success and {@code false} for a failure
    * @return true if the given Sdk is downloading right now
    */
   public boolean tryRegisterDownloadingListener(@NotNull Sdk sdk,
@@ -170,34 +191,38 @@ public class SdkDownloadTracker implements Disposable {
     }
   }
 
-  // synchronized newIdentityHashSet
-  // (Collections.synchronizedSet does not help the iterator)
-  private static class SdkSet {
-    final Set<Sdk> myEditableSdks = Sets.newIdentityHashSet();
+  // synchronized newIdentityHashSet (Collections.synchronizedSet does not help the iterator)
+  private static class SynchronizedIdentityHashSet<T> {
+    private final Set<T> myCollection = Sets.newIdentityHashSet();
 
-    synchronized void add(@NotNull Sdk sdk) {
-      myEditableSdks.add(sdk);
+    synchronized boolean add(@NotNull T sdk) {
+      return myCollection.add(sdk);
     }
 
-    synchronized boolean contains(@NotNull Sdk sdk) {
-      return myEditableSdks.contains(sdk);
+    synchronized void remove(@NotNull T sdk) {
+      myCollection.remove(sdk);
+    }
+
+    synchronized boolean contains(@NotNull T sdk) {
+      return myCollection.contains(sdk);
     }
 
     @NotNull
-    synchronized List<Sdk> copy() {
-      return new ArrayList<>(myEditableSdks);
+    synchronized List<T> copy() {
+      return new ArrayList<>(myCollection);
     }
   }
 
   private static class PendingDownload {
     final SdkDownloadTask myTask;
-    final SdkSet myEditableSdks = new SdkSet();
     final ProgressIndicatorBase myProgressIndicator = new ProgressIndicatorBase();
-    final Set<Consumer<Boolean>> myCompleteListeners = Sets.newIdentityHashSet();
-    final Set<Disposable> myDisposables = Sets.newIdentityHashSet();
     final PendingDownloadModalityTracker myModalityTracker = new PendingDownloadModalityTracker();
 
-    boolean myIsDownloading = false;
+    final SynchronizedIdentityHashSet<Sdk> myEditableSdks = new SynchronizedIdentityHashSet<>();
+    final SynchronizedIdentityHashSet<Consumer<Boolean>> myCompleteListeners = new SynchronizedIdentityHashSet<>();
+    final SynchronizedIdentityHashSet<Disposable> myDisposables = new SynchronizedIdentityHashSet<>();
+
+    final AtomicBoolean myIsDownloading = new AtomicBoolean(false);
 
     PendingDownload(@NotNull Sdk sdk, @NotNull SdkDownloadTask task) {
       myEditableSdks.add(sdk);
@@ -224,10 +249,8 @@ public class SdkDownloadTracker implements Disposable {
     }
 
     void startDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-
-      if (myIsDownloading || myProgressIndicator.isCanceled()) return;
-      myIsDownloading = true;
+      if (!myIsDownloading.compareAndSet(false, true)) return;
+      if (myProgressIndicator.isCanceled()) return;
 
       myModalityTracker.updateModality();
       SdkType type = (SdkType)sdkFromTable.getSdkType();
@@ -242,14 +265,23 @@ public class SdkDownloadTracker implements Disposable {
           try {
             // we need a progress indicator from the outside, to avoid race condition
             // (progress may start with a delay, but UI would need a PI)
-            myProgressIndicator.addStateDelegate((ProgressIndicatorEx)indicator);
+            ProgressIndicatorBase middleMan = new ProgressIndicatorBase() {
+              @Override
+              protected void delegateProgressChange(@NotNull IndicatorAction action) {
+                action.execute((ProgressIndicatorEx)indicator);
+              }
+            };
+            myProgressIndicator.addStateDelegate(middleMan);
             myProgressIndicator.checkCanceled();
             try {
               myTask.doDownload(myProgressIndicator);
             }
             finally {
-              myProgressIndicator.removeStateDelegate((ProgressIndicatorEx)indicator);
+              myProgressIndicator.removeStateDelegate(middleMan);
             }
+
+            // make sure VFS has the right image of our SDK to avoid empty SDK from being created
+            VfsUtil.markDirtyAndRefresh(false, true, true, new File(myTask.getPlannedHomeDir()));
 
             onSdkDownloadCompleted(false);
           }
@@ -271,7 +303,6 @@ public class SdkDownloadTracker implements Disposable {
     void registerListener(@NotNull Disposable lifetime,
                           @NotNull ProgressIndicator uiIndicator,
                           @NotNull Consumer<Boolean> completedCallback) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
       myModalityTracker.updateModality();
 
       //there is no need to add yet another copy of the same component
@@ -283,8 +314,6 @@ public class SdkDownloadTracker implements Disposable {
       Disposable unsubscribe = new Disposable() {
         @Override
         public void dispose() {
-          ApplicationManager.getApplication().assertIsDispatchThread();
-
           myProgressIndicator.removeStateDelegate((ProgressIndicatorEx)uiIndicator);
           myCompleteListeners.remove(completedCallback);
           myDisposables.remove(this);
@@ -313,33 +342,34 @@ public class SdkDownloadTracker implements Disposable {
                 modificator.setVersionString(actualVersion);
                 modificator.commitChanges();
               } catch (Exception e) {
-                LOG.warn("Failed to configure a downloaded sdk. " + e.getMessage(), e);
+                LOG.warn("Failed to configure a downloaded SDK. " + e.getMessage(), e);
               }
 
               sdkType.setupSdkPaths(sdk);
             }
             catch (Exception e) {
-              LOG.warn("Failed to setup Sdk " + sdk + ". " + e.getMessage(), e);
+              LOG.warn("Failed to set up SDK " + sdk + ". " + e.getMessage(), e);
             }
           }
         }));
       }
 
       // dispose our own state
-      myModalityTracker.invokeLater(() -> disposeNow(!failed));
+      disposeNow(!failed);
     }
 
     void disposeNow(boolean succeeded) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      getInstance().removeTask(this);
-      //collections may change from the callbacks
-      new ArrayList<>(myCompleteListeners).forEach(it -> it.consume(succeeded));
-      new ArrayList<>(myDisposables).forEach(it -> Disposer.dispose(it));
+      myModalityTracker.invokeLater(() -> {
+        getInstance().removeTask(this);
+        //collections may change from the callbacks
+        myCompleteListeners.copy().forEach(it -> it.consume(succeeded));
+        myDisposables.copy().forEach(it -> Disposer.dispose(it));
+      });
     }
 
     void cancel() {
       myProgressIndicator.cancel();
-      myModalityTracker.invokeLater(() -> disposeNow(false));
+      disposeNow(false);
     }
 
     void configureSdk(@NotNull Sdk sdk) {

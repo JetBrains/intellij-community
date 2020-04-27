@@ -64,7 +64,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   }
 
   @Override
-  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+  public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
@@ -73,7 +73,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull final Processor<? super NavigationItem> processor,
                                       @NotNull final FindSymbolParameters parameters) {
     String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
     boolean hasDollar = namePattern.contains("$");

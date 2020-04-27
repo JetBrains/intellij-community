@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class MentionOnlyUndoableAction implements UndoableAction {
   private final DocumentReference[] myRefs;
 
-  protected MentionOnlyUndoableAction(@NotNull DocumentReference[] refs) {
+  protected MentionOnlyUndoableAction(DocumentReference @NotNull [] refs) {
     myRefs = refs;
   }
 

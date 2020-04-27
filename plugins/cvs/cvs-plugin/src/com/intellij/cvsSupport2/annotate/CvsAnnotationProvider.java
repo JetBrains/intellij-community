@@ -140,7 +140,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     return operation;
   }
 
-  private static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, @NotNull Annotation[] lineAnnotations) {
+  private static void adjustAnnotation(@Nullable List<VcsFileRevision> revisions, Annotation @NotNull [] lineAnnotations) {
     if (revisions != null) {
       final Map<String, VcsFileRevision> revisionMap = new HashMap<>();
       for (VcsFileRevision vcsFileRevision : revisions) {

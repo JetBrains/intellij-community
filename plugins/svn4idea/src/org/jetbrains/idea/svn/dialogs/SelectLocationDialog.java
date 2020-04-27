@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -25,6 +25,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.Objects;
 
 import static com.intellij.openapi.util.Pair.create;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -65,7 +66,7 @@ public class SelectLocationDialog extends DialogWrapper {
     SelectLocationDialog dialog =
       openDialog(project, url, dstLabel, dstName, showFiles, false, SvnBundle.message("select.location.invalid.url.message", url));
 
-    return dialog == null || !dialog.isOK() ? null : append(notNull(dialog.getSelectedURL()), dialog.getDestinationName());
+    return dialog == null || !dialog.isOK() ? null : append(Objects.requireNonNull(dialog.getSelectedURL()), dialog.getDestinationName());
   }
 
   @Nullable

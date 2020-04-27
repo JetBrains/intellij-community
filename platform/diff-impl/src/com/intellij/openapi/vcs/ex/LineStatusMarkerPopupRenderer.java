@@ -18,10 +18,12 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -43,6 +45,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -404,7 +407,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @NotNull private final Range myRange;
     @NotNull private final Editor myEditor;
 
-    public RangeMarkerAction(@NotNull Editor editor, @NotNull Range range, @Nullable String actionId) {
+    public RangeMarkerAction(@NotNull Editor editor, @NotNull Range range, @Nullable @NonNls String actionId) {
       myRange = range;
       myEditor = editor;
       if (actionId != null) ActionUtil.copyFrom(this, actionId);
@@ -427,7 +430,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     protected abstract void actionPerformed(@NotNull Editor editor, @NotNull Range range);
   }
 
-  public class ShowNextChangeMarkerAction extends RangeMarkerAction {
+  public class ShowNextChangeMarkerAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowNextChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, "VcsShowNextChangeMarker");
     }
@@ -446,7 +449,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class ShowPrevChangeMarkerAction extends RangeMarkerAction {
+  public class ShowPrevChangeMarkerAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowPrevChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, "VcsShowPrevChangeMarker");
     }
@@ -465,7 +468,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class CopyLineStatusRangeAction extends RangeMarkerAction {
+  public class CopyLineStatusRangeAction extends RangeMarkerAction implements LightEditCompatible {
     public CopyLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, IdeActions.ACTION_COPY);
     }
@@ -482,7 +485,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class ShowLineStatusRangeDiffAction extends RangeMarkerAction {
+  public class ShowLineStatusRangeDiffAction extends RangeMarkerAction implements LightEditCompatible {
     public ShowLineStatusRangeDiffAction(@NotNull Editor editor, @NotNull Range range) {
       super(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
@@ -530,7 +533,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     }
   }
 
-  public class ToggleByWordDiffAction extends ToggleAction implements DumbAware {
+  public class ToggleByWordDiffAction extends ToggleAction implements DumbAware, LightEditCompatible {
     @NotNull private final Editor myEditor;
     @NotNull private final Range myRange;
     @Nullable private final Point myMousePosition;
@@ -538,7 +541,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     public ToggleByWordDiffAction(@NotNull Editor editor,
                                   @NotNull Range range,
                                   @Nullable Point position) {
-      super("Highlight Words", null, AllIcons.Actions.Highlighting);
+      super(DiffBundle.message("highlight.words"), null, AllIcons.Actions.Highlighting);
       myEditor = editor;
       myRange = range;
       myMousePosition = position;

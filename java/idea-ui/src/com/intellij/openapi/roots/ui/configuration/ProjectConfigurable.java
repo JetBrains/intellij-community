@@ -2,8 +2,9 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.core.JavaCoreBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -119,8 +120,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
     if (ProjectKt.isDirectoryBased(myProject)) {
       final JPanel namePanel = new JPanel(new BorderLayout());
-      final JLabel label =
-        new JLabel("<html><body><b>Project name:</b></body></html>", SwingConstants.LEFT);
+      final JLabel label = new JLabel(JavaUiBundle.message("settings.project.name"), SwingConstants.LEFT);
       namePanel.add(label, BorderLayout.NORTH);
 
       myProjectName = new JTextField();
@@ -256,7 +256,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   @Override
   public String getBannerSlogan() {
-    return ProjectBundle.message("project.roots.project.banner.text", myProject.getName());
+    return JavaUiBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 
   @Override
@@ -305,7 +305,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   private void createUIComponents() {
-    myLanguageLevelCombo = new LanguageLevelCombo(JavaCoreBundle.message("default.language.level.description")) {
+    myLanguageLevelCombo = new LanguageLevelCombo(JavaPsiBundle.message("default.language.level.description")) {
       @Override
       protected LanguageLevel getDefaultLevel() {
         Sdk sdk = myProjectJdkConfigurable.getSelectedProjectJdk();
@@ -318,7 +318,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     outputPathsChooserDescriptor.setHideIgnored(false);
-    BrowseFilesListener listener = new BrowseFilesListener(textField, "", ProjectBundle.message("project.compiler.output"), outputPathsChooserDescriptor);
+    BrowseFilesListener listener = new BrowseFilesListener(textField, "", JavaUiBundle.message("project.compiler.output"), outputPathsChooserDescriptor);
     myProjectCompilerOutput = new FieldPanel(textField, null, null, listener, EmptyRunnable.getInstance());
     FileChooserFactory.getInstance().installFileCompletion(myProjectCompilerOutput.getTextField(), outputPathsChooserDescriptor, true, null);
   }

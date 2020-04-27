@@ -30,8 +30,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
   public static final ArrayFactory<PsiType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiType[count];
 
-  @NotNull
-  public static PsiType[] createArray(int count) {
+  public static PsiType @NotNull [] createArray(int count) {
     return ARRAY_FACTORY.create(count);
   }
 
@@ -40,7 +39,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   /**
    * Constructs a PsiType with given annotations
    */
-  protected PsiType(@NotNull final PsiAnnotation[] annotations) {
+  protected PsiType(final PsiAnnotation @NotNull [] annotations) {
     this(TypeAnnotationProvider.Static.create(annotations));
   }
 
@@ -77,7 +76,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   @Deprecated
   @NotNull
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
+  public PsiArrayType createArrayType(PsiAnnotation @NotNull ... annotations) {
     return new PsiArrayType(this, annotations);
   }
 
@@ -285,8 +284,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    *
    * @return the array of superclass types, or an empty array if the type is not a class type.
    */
-  @NotNull
-  public abstract PsiType[] getSuperTypes();
+  public abstract PsiType @NotNull [] getSuperTypes();
 
   /**
    * @return provider for this type's annotations. Can be used to construct other PsiType instances
@@ -301,8 +299,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @return annotations for this type. Uses {@link #getAnnotationProvider()} to retrieve the annotations.
    */
   @Override
-  @NotNull
-  public PsiAnnotation[] getAnnotations() {
+  public PsiAnnotation @NotNull [] getAnnotations() {
     return myAnnotationProvider.getAnnotations();
   }
 
@@ -323,8 +320,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     return getAnnotations();
   }
 
@@ -334,7 +330,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   protected abstract static class Stub extends PsiType {
-    protected Stub(@NotNull PsiAnnotation[] annotations) {
+    protected Stub(PsiAnnotation @NotNull [] annotations) {
       super(annotations);
     }
 

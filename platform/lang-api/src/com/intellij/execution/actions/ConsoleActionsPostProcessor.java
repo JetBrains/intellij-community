@@ -38,13 +38,11 @@ public abstract class ConsoleActionsPostProcessor {
    * @param actions     console actions that will be used by default
    * @return            actions to use within the given console instance (given actions may be returned by default)
    */
-  @NotNull
-  public AnAction[] postProcess(@NotNull ConsoleView console, @NotNull AnAction[] actions) {
+  public AnAction @NotNull [] postProcess(@NotNull ConsoleView console, AnAction @NotNull [] actions) {
     return actions;
   }
 
-  @NotNull
-  public AnAction[] postProcessPopupActions(@NotNull ConsoleView console, @NotNull AnAction[] actions) {
+  public AnAction @NotNull [] postProcessPopupActions(@NotNull ConsoleView console, AnAction @NotNull [] actions) {
     return actions;
   }
 }

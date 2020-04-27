@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class ProjectWideFacetListenersTest extends FacetTestCase {
   public void testAddRemoveFacet() {
     final MyProjectWideFacetListener listener = new MyProjectWideFacetListener();

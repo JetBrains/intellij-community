@@ -49,8 +49,7 @@ import java.util.List;
 class FilePointerPartNode {
   private static final FilePointerPartNode[] EMPTY_ARRAY = new FilePointerPartNode[0];
   private final int nameId; // name id of the VirtualFile corresponding to this node
-  @NotNull
-  FilePointerPartNode[] children = EMPTY_ARRAY; // sorted by this.getName()
+  FilePointerPartNode @NotNull [] children = EMPTY_ARRAY; // sorted by this.getName()
   final FilePointerPartNode parent;
   // file pointers for this exact path (e.g. concatenation of all "part" fields down from the root).
   // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g. after file rename onto existing pointer)

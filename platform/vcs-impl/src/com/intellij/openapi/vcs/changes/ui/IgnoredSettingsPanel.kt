@@ -43,9 +43,8 @@ internal class IgnoredSettingsPanel(private val project: Project) : BoundConfigu
                                            CurrentProjectManage,
                                            DoNotManageForCurrentProject,
                                            DoNotManageForAllProject)),
-              ::selectedManageIgnoreOption,
-              GrowPolicy.MEDIUM_TEXT
-            )
+              ::selectedManageIgnoreOption
+            ).growPolicy(GrowPolicy.MEDIUM_TEXT)
           }
         }
       }

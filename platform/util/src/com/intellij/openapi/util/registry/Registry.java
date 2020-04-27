@@ -34,12 +34,12 @@ public final class Registry  {
   private volatile boolean myLoaded = false;
 
   @NotNull
-  public static RegistryValue get(@NotNull String key) {
+  public static RegistryValue get(@NonNls @NotNull String key) {
     return getInstance().doGet(key);
   }
 
   @NotNull
-  private RegistryValue doGet(@NotNull String key) {
+  private RegistryValue doGet(@NonNls @NotNull String key) {
     RegistryValue value = myValues.get(key);
     if (value != null) {
       return value;
@@ -50,11 +50,11 @@ public final class Registry  {
     return prev == null ? value : prev;
   }
 
-  public static boolean is(@NotNull String key) throws MissingResourceException {
+  public static boolean is(@NonNls @NotNull String key) throws MissingResourceException {
     return get(key).asBoolean();
   }
 
-  public static boolean is(@NotNull String key, boolean defaultValue) {
+  public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
     if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
@@ -68,11 +68,11 @@ public final class Registry  {
     }
   }
 
-  public static int intValue(@NotNull String key) throws MissingResourceException {
+  public static int intValue(@NonNls @NotNull String key) throws MissingResourceException {
     return get(key).asInteger();
   }
 
-  public static int intValue(@NotNull String key, int defaultValue) {
+  public static int intValue(@NonNls @NotNull String key, int defaultValue) {
     if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       LoadingState.LAF_INITIALIZED.checkOccurred();
       return defaultValue;
@@ -86,16 +86,16 @@ public final class Registry  {
     }
   }
 
-  public static double doubleValue(@NotNull String key) throws MissingResourceException {
+  public static double doubleValue(@NonNls @NotNull String key) throws MissingResourceException {
     return get(key).asDouble();
   }
 
   @NotNull
-  public static String stringValue(@NotNull String key) throws MissingResourceException {
+  public static String stringValue(@NonNls @NotNull String key) throws MissingResourceException {
     return get(key).asString();
   }
 
-  public static Color getColor(@NotNull String key, Color defaultValue) throws MissingResourceException {
+  public static Color getColor(@NonNls @NotNull String key, Color defaultValue) throws MissingResourceException {
     return get(key).asColor(defaultValue);
   }
 
@@ -109,8 +109,7 @@ public final class Registry  {
     return bundle;
   }
 
-
-  public String getBundleValue(@NotNull String key, boolean mustExist) throws MissingResourceException {
+  public String getBundleValue(@NonNls @NotNull String key, boolean mustExist) throws MissingResourceException {
     if (myContributedKeys.containsKey(key)) {
       return myContributedKeys.get(key).getDefaultValue();
     }
@@ -186,7 +185,7 @@ public final class Registry  {
 
     Map<String, RegistryKeyDescriptor> contributedKeys = getInstance().myContributedKeys;
     while (keys.hasMoreElements()) {
-      final String each = keys.nextElement();
+      @NonNls final String each = keys.nextElement();
       if (each.endsWith(".description") || each.endsWith(".restartRequired") || contributedKeys.containsKey(each)) continue;
       result.add(get(each));
     }
@@ -237,7 +236,7 @@ public final class Registry  {
     }
   }
 
-  public static synchronized void removeKey(String key) {
+  public static synchronized void removeKey(@NonNls @NotNull String key) {
     ourInstance.myContributedKeys.remove(key);
     ourInstance.myValues.remove(key);
   }
@@ -246,7 +245,7 @@ public final class Registry  {
    * @deprecated Use extension point `com.intellij.registryKey`.
    */
   @Deprecated
-  public static synchronized void addKey(@NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
+  public static synchronized void addKey(@NonNls @NotNull String key, @NotNull String description, int defaultValue, boolean restartRequired) {
     getInstance().myContributedKeys.put(key, new RegistryKeyDescriptor(key, description, Integer.toString(defaultValue), restartRequired, null));
   }
 }

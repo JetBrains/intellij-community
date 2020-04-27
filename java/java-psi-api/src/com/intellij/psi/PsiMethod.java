@@ -116,8 +116,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findSuperMethods();
+  PsiMethod @NotNull [] findSuperMethods();
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -131,8 +130,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *                    is private. If true, an empty result list is returned for private methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findSuperMethods(boolean checkAccess);
+  PsiMethod @NotNull [] findSuperMethods(boolean checkAccess);
 
   /**
    * Searches the superclasses and base interfaces of the specified class to find
@@ -143,8 +141,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    * @param parentClass the class to search for super methods.
    * @return the array of super methods, or an empty array if no methods are found.
    */
-  @NotNull
-  PsiMethod[] findSuperMethods(PsiClass parentClass);
+  PsiMethod @NotNull [] findSuperMethods(PsiClass parentClass);
 
   /**
    * Searches the superclasses and base interfaces of the containing class to find
@@ -172,8 +169,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   @Nullable
   PsiMethod findDeepestSuperMethod();
 
-  @NotNull
-  PsiMethod[] findDeepestSuperMethods();
+  PsiMethod @NotNull [] findDeepestSuperMethods();
 
   @Override
   @NotNull
@@ -195,15 +191,13 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
     return !getParameterList().isEmpty();
   }
 
-  @NotNull
   @Override
-  default JvmParameter[] getParameters() {
+  default JvmParameter @NotNull [] getParameters() {
     return getParameterList().getParameters();
   }
 
-  @NotNull
   @Override
-  default JvmReferenceType[] getThrowsTypes() {
+  default JvmReferenceType @NotNull [] getThrowsTypes() {
     return getThrowsList().getReferencedTypes();
   }
 }

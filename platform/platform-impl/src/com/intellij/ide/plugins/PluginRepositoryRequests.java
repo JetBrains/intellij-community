@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonToken;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
@@ -18,20 +19,26 @@ import org.jetbrains.io.JsonUtil;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
  */
-public class PluginRepositoryRequests {
+public final class PluginRepositoryRequests {
+  public static String getBuildForPluginRepositoryRequests() {
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    String compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild();
+    if (compatibleBuild != null) {
+      return Objects.requireNonNull(BuildNumber.fromStringWithProductCode(compatibleBuild, instance.getBuild().getProductCode())).asString();
+    }
+    return instance.getApiVersion();
+  }
+
   @NotNull
   public static Url createSearchUrl(@NotNull String query, int count) {
     ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
     return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
+                               "&build=" + URLUtil.encodeURIComponent(getBuildForPluginRepositoryRequests()) +
                                "&max=" + count);
   }
 

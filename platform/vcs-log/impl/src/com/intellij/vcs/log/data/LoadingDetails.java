@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.data;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,6 @@ import java.util.List;
  */
 public class LoadingDetails implements VcsFullCommitDetails {
   private static final VcsUserImpl STUB_USER = new VcsUserImpl("", "");
-  private static final String LOADING = "Loading...";
 
   @NotNull private final Computable<? extends CommitId> myCommitIdComputable;
   private final long myLoadingTaskIndex;
@@ -73,7 +73,7 @@ public class LoadingDetails implements VcsFullCommitDetails {
   @NotNull
   @Override
   public String getSubject() {
-    return LOADING;
+    return CommonBundle.getLoadingTreeNodeText();
   }
 
   @NotNull

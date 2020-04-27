@@ -1,6 +1,6 @@
 class SimpleComment {
 
-  void foo(<warning descr="Missorted modifiers 'final/* comment */ @Deprecated'">final/* comment */ @Depr<caret>ecated</warning> String project) {
+  void foo(<warning descr="Missorted modifiers 'final @Deprecated'">final<caret></warning>/* comment */ @Deprecated String project) {
 
   }
 }

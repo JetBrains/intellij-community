@@ -9,9 +9,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class CancelComparingNewFilesWithEachOtherAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,8 +25,10 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (!isConvertableProject(project) || Messages.showOkCancelDialog(project,
-                                                                   "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
-                                                                   "Save Project to Directory-Based Format",
+                                                                      IdeBundle.message(
+                                                                        "message.project.will.be.saved.and.reopened.in.new.directory.based.format"),
+                                                                      IdeBundle
+                                                                        .message("dialog.title.save.project.to.directory.based.format"),
                                                                    Messages.getWarningIcon()) != Messages.OK) {
       return;
     }
@@ -43,7 +46,8 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
       ProjectUtil.openProject(baseDir, null, false);
     }
     else {
-      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error Saving Project!");
+      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir),
+                               IdeBundle.message("dialog.title.error.saving.project"));
     }
   }
 

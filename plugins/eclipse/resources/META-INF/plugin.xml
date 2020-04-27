@@ -1,6 +1,7 @@
 <idea-plugin>
   <name>Eclipse Interoperability</name>
   <id>org.jetbrains.idea.eclipse</id>
+  <category>Other Tools</category>
   <description>
       <![CDATA[
         Enables interoperability with Eclipse and provides the following features:

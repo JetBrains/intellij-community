@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
@@ -68,7 +69,7 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
           tag.getDescriptor() instanceof JavaFxPropertyTagDescriptor &&
           parentTag.getDescriptor() instanceof JavaFxClassTagDescriptorBase) {
 
-        setText("Collapse tag '" + tag.getName() + "' to attribute");
+        setText(JavaFXBundle.message("javafx.collapse.subtag.to.attribute.intention",tag.getName()));
         return true;
       }
     }
@@ -78,6 +79,6 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Collapse tag to attribute";
+    return JavaFXBundle.message("javafx.collapse.subtag.to.attribute.intention.family.name");
   }
 }

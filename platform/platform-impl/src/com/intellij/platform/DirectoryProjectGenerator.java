@@ -4,11 +4,11 @@ package com.intellij.platform;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +21,7 @@ public interface DirectoryProjectGenerator<T> {
   ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   default String getDescription() {
     return null;
   }
@@ -38,6 +39,7 @@ public interface DirectoryProjectGenerator<T> {
   }
 
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getName();
 
   @NotNull

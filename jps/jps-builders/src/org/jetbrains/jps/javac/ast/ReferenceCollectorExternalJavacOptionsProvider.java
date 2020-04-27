@@ -22,52 +22,25 @@ import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
 public class ReferenceCollectorExternalJavacOptionsProvider implements ExternalJavacOptionsProvider {
   @NotNull
   @Override
   public Collection<String> getOptions(@NotNull JavaCompilingTool tool) {
-    List<String> options = new ArrayList<>(2);
     if (tool.getId().equals(JavaCompilers.JAVAC_ID)) {
-      final JavacReferenceCollectorOptions
-        javacReferenceCollectorOptions = new JavacReferenceCollectorOptions();
-      options.add("-D" + ExternalRefCollectorCompilerToolExtension.ENABLED_PARAM + "=" + javacReferenceCollectorOptions.isEnabled());
-      if (javacReferenceCollectorOptions.isEnabled() && javacReferenceCollectorOptions.isImportRefsDivided()) {
-        options.add("-D" + ExternalRefCollectorCompilerToolExtension.DIVIDE_IMPORTS_PARAM + "=true");
-      }
+      return Collections.singletonList("-D" + ExternalRefCollectorCompilerToolExtension.ENABLED_PARAM + "=" + isEnabled());
     }
-    return options;
+    return Collections.emptyList();
   }
 
-  private static class JavacReferenceCollectorOptions {
-    private final boolean myEnabled;
-    private final boolean myDivideImportRefs;
-
-    private JavacReferenceCollectorOptions() {
-      boolean enabled = false;
-      boolean divideImportRefs = false;
-      for (JavacFileReferencesRegistrar listener : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
-        if (listener.isEnabled()) {
-          enabled = true;
-          if (listener.onlyImports()) {
-            divideImportRefs = true;
-          }
-        }
+  private static boolean isEnabled() {
+    for (JavacFileReferencesRegistrar listener : JpsServiceManager.getInstance().getExtensions(JavacFileReferencesRegistrar.class)) {
+      if (listener.isEnabled()) {
+        return true;
       }
-
-      myEnabled = enabled;
-      myDivideImportRefs = divideImportRefs;
     }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-
-    public boolean isImportRefsDivided() {
-      return myDivideImportRefs;
-    }
+    return false;
   }
 }

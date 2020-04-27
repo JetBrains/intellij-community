@@ -135,11 +135,10 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     return null;
   }
 
-  @NotNull
-  public static PsiAnnotation[] getAnnotationFrom(PsiModifierListOwner owner,
-                                                  Pair<String, ? extends Set<String>> annotationName,
-                                                  boolean allowIndirect,
-                                                  boolean inHierarchy) {
+  public static PsiAnnotation @NotNull [] getAnnotationFrom(PsiModifierListOwner owner,
+                                                            Pair<String, ? extends Set<String>> annotationName,
+                                                            boolean allowIndirect,
+                                                            boolean inHierarchy) {
     if (!isLanguageAnnotationTargetGroovy(owner)) return PsiAnnotation.EMPTY_ARRAY;
 
     return AnnotationUtilEx.getAnnotationsFromImpl(owner, annotationName, allowIndirect, inHierarchy);

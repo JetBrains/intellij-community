@@ -61,7 +61,7 @@ class InstructionKeySet {
       super(Math.max(initialCapacity, 2));
     }
 
-    private void add(int offset, @NotNull int[] stack, int level) {
+    private void add(int offset, int @NotNull [] stack, int level) {
       if (level < stack.length) {
         Node node = get(offset);
         if (node == null) {
@@ -77,7 +77,7 @@ class InstructionKeySet {
       }
     }
 
-    private boolean contains(int offset, @NotNull int[] stack, int level) {
+    private boolean contains(int offset, int @NotNull [] stack, int level) {
       if (level < stack.length) {
         Node node = get(offset);
         if (node != null) {

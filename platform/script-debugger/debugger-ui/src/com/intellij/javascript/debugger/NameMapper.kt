@@ -29,11 +29,12 @@ open class NameMapper(private val document: Document, private val transpiledDocu
 
   // PsiNamedElement, JSVariable for example
   // returns generated name
-  open fun map(identifierOrNamedElement: PsiElement): String? {
-    return doMap(identifierOrNamedElement, false)
+  @JvmOverloads
+  open fun map(identifierOrNamedElement: PsiElement, saveMapping: Boolean = true): String? {
+    return doMap(identifierOrNamedElement, false, saveMapping)
   }
 
-  protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean): String? {
+  protected fun doMap(identifierOrNamedElement: PsiElement, mapBySourceCode: Boolean, saveMapping: Boolean = true): String? {
     val mappings = getMappingsForElement(identifierOrNamedElement)
     if (mappings == null || mappings.isEmpty()) return null
     val sourceEntry = mappings[0]
@@ -54,7 +55,9 @@ open class NameMapper(private val document: Document, private val transpiledDocu
       sourceName = (identifierOrNamedElement as? PsiNamedElement)?.name ?: identifierOrNamedElement.text ?: sourceName ?: return null
     }
 
-    addMapping(generatedName, sourceName)
+    if (saveMapping) {
+      addMapping(generatedName, sourceName)
+    }
     return generatedName
   }
 

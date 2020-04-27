@@ -35,8 +35,8 @@ import java.util.Map;
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
   private static final Logger LOG = Logger.getInstance(HtmlHighlightingLexer.class);
 
-  private static final int EMBEDDED_LEXER_ON = 0x1 << BASE_STATE_SHIFT;
-  private static final int EMBEDDED_LEXER_STATE_SHIFT = BASE_STATE_SHIFT + 1;
+  private final int EMBEDDED_LEXER_ON = 0x1 << getBaseStateShift();
+  private final int EMBEDDED_LEXER_STATE_SHIFT = getBaseStateShift() + 1;
 
   private final FileType ourStyleFileType;// = FileTypeManager.getInstance().getStdFileType("CSS");
   protected Lexer elLexer;
@@ -71,7 +71,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     super.start(buffer, startOffset, endOffset, initialState);
 
     if ((initialState & EMBEDDED_LEXER_ON) != 0) {
-      int state = initialState >> EMBEDDED_LEXER_STATE_SHIFT;
+      int state = getEmbeddedLexerState(initialState);
       setEmbeddedLexer();
       LOG.assertTrue(embeddedLexer != null);
       embeddedLexer.start(buffer, startOffset, skipToTheEndOfTheEmbeddment(), state);
@@ -81,6 +81,10 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       scriptLexers.clear();
       styleLexers.clear();
     }
+  }
+
+  protected int getEmbeddedLexerState(int initialState) {
+    return initialState >> EMBEDDED_LEXER_STATE_SHIFT;
   }
 
   protected Lexer getInlineScriptHighlightingLexer() {

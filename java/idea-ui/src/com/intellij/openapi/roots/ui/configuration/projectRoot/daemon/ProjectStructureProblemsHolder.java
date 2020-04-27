@@ -18,9 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface ProjectStructureProblemsHolder {
   void registerProblem(@NotNull String message, @Nullable String description, @NotNull ProjectStructureProblemType problemType,
                        @NotNull PlaceInProjectStructure place, @Nullable ConfigurationErrorQuickFix fix);

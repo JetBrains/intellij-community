@@ -82,7 +82,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make field volatile";
+      return InspectionGadgetsBundle.message("double.checked.locking.fix.family.name");
     }
 
     @Override

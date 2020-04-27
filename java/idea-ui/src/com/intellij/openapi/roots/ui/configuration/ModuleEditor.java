@@ -130,8 +130,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myModifiableRootModel;
   }
 
-  @NotNull
-  public OrderEntry[] getOrderEntries() {
+  public OrderEntry @NotNull [] getOrderEntries() {
     if (myModifiableRootModel == null) { // do not clone all model if not necessary
       return ModuleRootManager.getInstance(getModule()).getOrderEntries();
     }
@@ -210,8 +209,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  @NotNull
-  private static ModuleConfigurationEditorProvider[] collectProviders(@NotNull Module module) {
+  private static ModuleConfigurationEditorProvider @NotNull [] collectProviders(@NotNull Module module) {
     List<ModuleConfigurationEditorProvider> result = new ArrayList<>(module.getComponentInstancesOfType(ModuleConfigurationEditorProvider.class));
     for (ModuleConfigurationEditorProvider component : result) {
       reportDeprecatedModuleEditor(component.getClass());

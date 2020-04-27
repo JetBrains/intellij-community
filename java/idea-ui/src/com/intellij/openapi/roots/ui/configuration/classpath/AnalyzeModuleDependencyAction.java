@@ -3,7 +3,8 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.CommonBundle;
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.AnalysisScopeBundle;
+import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +33,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
   private final ClasspathPanel myPanel;
 
   AnalyzeModuleDependencyAction(final ClasspathPanel panel) {
-    super("Analyze This Dependency");
+    super(JavaUiBundle.message("action.text.analyze.this.dependency"));
     myPanel = panel;
   }
 
@@ -67,8 +68,8 @@ class AnalyzeModuleDependencyAction extends AnAction {
         Set<GlobalSearchScope> usedScopes = findUsedScopes(builders, scopes);
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
-                                   "Dependencies were successfully collected in \"" +
-                                   ToolWindowId.DEPENDENCIES + "\" toolwindow",
+                                   JavaUiBundle
+                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
                                    getTemplateText());
           return true;
         }
@@ -117,7 +118,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
 
   private String generateSkipImportsWarning() {
     if (DependencyVisitorFactory.VisitorOptions.fromSettings(myPanel.getProject()).skipImports()) {
-      return " " + AnalysisScopeBundle.message("dependencies.in.imports.message");
+      return " " + CodeInsightBundle.message("dependencies.in.imports.message");
     }
     return "";
   }

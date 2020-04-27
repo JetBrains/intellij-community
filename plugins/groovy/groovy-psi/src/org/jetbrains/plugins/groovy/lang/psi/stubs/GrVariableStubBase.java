@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 public abstract class GrVariableStubBase<V extends GrVariable> extends StubBase<V> implements NamedStub<V> {
 
   private final @Nullable StringRef myNameRef;
-  private final @NotNull String[] myAnnotations;
+  private final String @NotNull [] myAnnotations;
   private final @Nullable String myTypeText;
 
   private SoftReference<GrTypeElement> myTypeElement;
@@ -38,7 +38,7 @@ public abstract class GrVariableStubBase<V extends GrVariable> extends StubBase<
   protected GrVariableStubBase(StubElement parent,
                                IStubElementType elementType,
                                @Nullable StringRef ref,
-                               @NotNull String[] annotations,
+                               String @NotNull [] annotations,
                                @Nullable String text) {
     super(parent, elementType);
     myNameRef = ref;
@@ -52,8 +52,7 @@ public abstract class GrVariableStubBase<V extends GrVariable> extends StubBase<
     return StringRef.toString(myNameRef);
   }
 
-  @NotNull
-  public String[] getAnnotations() {
+  public String @NotNull [] getAnnotations() {
     return myAnnotations;
   }
 

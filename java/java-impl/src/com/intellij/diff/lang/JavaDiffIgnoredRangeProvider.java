@@ -15,6 +15,7 @@
  */
 package com.intellij.diff.lang;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -30,7 +31,7 @@ public class JavaDiffIgnoredRangeProvider extends LangDiffIgnoredRangeProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Ignore imports and formatting";
+    return JavaBundle.message("ignore.imports.and.formatting");
   }
 
   @Override

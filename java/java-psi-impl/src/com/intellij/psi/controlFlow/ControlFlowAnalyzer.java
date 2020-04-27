@@ -2,7 +2,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -224,7 +224,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
       ProgressManager.checkCanceled();
       if (child instanceof PsiErrorElement &&
-          !Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaErrorBundle.message("expected.semicolon"))) {
+          !Comparing.strEqual(((PsiErrorElement)child).getErrorDescription(), JavaPsiBundle.message("expected.semicolon"))) {
         // do not perform control flow analysis for incomplete code
         throw new AnalysisCanceledSoftException(element);
       }
@@ -328,11 +328,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiElement finallyBlock = findEnclosingFinallyBlockElement(throwingElement, elementToJumpTo);
     if (finallyBlock == null) return false;
 
-    List<PsiElement> unhandledExceptionCatchBlocks = finallyBlockToUnhandledExceptions.get(finallyBlock);
-    if (unhandledExceptionCatchBlocks == null) {
-      unhandledExceptionCatchBlocks = new ArrayList<>();
-      finallyBlockToUnhandledExceptions.put(finallyBlock, unhandledExceptionCatchBlocks);
-    }
+    List<PsiElement> unhandledExceptionCatchBlocks =
+      finallyBlockToUnhandledExceptions.computeIfAbsent(finallyBlock, k -> new ArrayList<>());
     int index = unhandledExceptionCatchBlocks.indexOf(elementToJumpTo);
     if (index == -1) {
       index = unhandledExceptionCatchBlocks.size();
@@ -612,8 +609,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     for (PsiParameter catchParameter : myCatchParameters) {
       ProgressManager.checkCanceled();
       PsiType type = catchParameter.getType();
-      if (type instanceof PsiClassType) {
-        generateThrow((PsiClassType)type, statement);
+      List<PsiType> types =
+        type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
+      for (PsiType subType : types) {
+        if (subType instanceof PsiClassType) {
+          generateThrow((PsiClassType)subType, statement);
+        }
       }
     }
     finishElement(statement);
@@ -1601,6 +1602,15 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final PsiExpression operand = expression.getOperand();
     operand.accept(this);
+
+    PsiPattern pattern = expression.getPattern();
+    if (pattern instanceof PsiTypeTestPattern) {
+      PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+
+      if (variable != null) {
+        myCurrentFlow.addInstruction(new WriteVariableInstruction(variable));
+      }
+    }
 
     finishElement(expression);
   }

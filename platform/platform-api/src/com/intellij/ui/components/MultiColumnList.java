@@ -187,6 +187,7 @@ public class MultiColumnList extends JTable {
     return myPrefSize;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void main(String[] args) {
     final JFrame frame = new JFrame("Test");
     frame.setSize(300, 300);

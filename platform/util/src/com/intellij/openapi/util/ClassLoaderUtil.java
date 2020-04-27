@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.ThrowableRunnable;
@@ -43,7 +43,7 @@ public final class ClassLoaderUtil {
 
   @Nullable
   public static ClassLoader getPlatformLoaderParentIfOnJdk9() {
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
       try {
         //noinspection JavaReflectionMemberAccess

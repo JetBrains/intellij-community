@@ -163,6 +163,7 @@ object UpdateInfoPanelUI {
     return "$message<br><br>" + newBuildInfo.buttons
       .filter { !it.isDownload }
       .filter { it.name != "More Information"}
+      .filter { it.name != "Release Notes"}
       .joinToString("<br><br>") { "<a href=\"${it.url}\">${it.name}</href>" }
   }
 

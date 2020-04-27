@@ -22,27 +22,23 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
+import java.util.function.Supplier;
 
 public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
   private static final int BORDER_SIZE = 2;
 
-  @NotNull protected final String myName;
+  @NotNull private final Supplier<String> myDisplayName;
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
 
-  protected VcsLogPopupComponent(@NotNull String name) {
-    myName = name;
+  protected VcsLogPopupComponent(@NotNull Supplier<String> displayName) {
+    myDisplayName = displayName;
   }
 
   public JComponent initUi() {
-    myNameLabel = shouldDrawLabel() ? new JLabel(myName + ": ") : null;
-    myValueLabel = new JLabel() {
-      @Override
-      public String getText() {
-        return getCurrentText();
-      }
-    };
+    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + ": ") : null;
+    myValueLabel = new DynamicLabel(this::getCurrentText);
     setDefaultForeground();
     setFocusable(true);
     setBorder(createUnfocusedBorder());
@@ -195,6 +191,18 @@ public abstract class VcsLogPopupComponent extends JPanel {
       ((Graphics2D)g).fill(area);
 
       config.restore();
+    }
+  }
+
+  private static class DynamicLabel extends JLabel {
+    private final Supplier<String> myText;
+
+    private DynamicLabel(@NotNull Supplier<String> text) {myText = text;}
+
+    @Override
+    public String getText() {
+      if (myText == null) return "";
+      return myText.get();
     }
   }
 }

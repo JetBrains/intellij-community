@@ -71,4 +71,12 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "  }\n" +
            "}");
   }
+
+  public void testBrokenCode6() {
+    doTestIntentionNotAvailable("class A{\n" +
+           "  {\n" +
+           "    ((LookupElementBuilder)variants[0]).rendeFragment>/*_Flip '>' to '<'*/ fragments = presentation.getTailFragments();" +
+           "  }\n" +
+           "}");
+  }
 }

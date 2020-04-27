@@ -235,8 +235,8 @@ public class PyProtectedMemberInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
-    panel.addCheckbox("Ignore annotations", "ignoreAnnotations");
+    panel.addCheckbox(PyBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
+    panel.addCheckbox(PyBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
     return panel;
   }
 }

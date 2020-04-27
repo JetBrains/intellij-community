@@ -44,8 +44,7 @@ public final class IntroRectangleProperty extends IntrospectedProperty<Rectangle
   }
 
   @Override
-  @NotNull
-  public Property[] getChildren(final RadComponent component){
+  public Property @NotNull [] getChildren(final RadComponent component){
     return myChildren;
   }
 

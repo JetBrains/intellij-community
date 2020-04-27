@@ -3,14 +3,14 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.addPluginInfoTo
-import com.intellij.internal.statistic.utils.getPluginType
-import com.intellij.internal.statistic.utils.getProjectId
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
@@ -20,6 +20,8 @@ import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
+
+private val LOG = logger<FeatureUsageData>()
 
 /**
  * <p>FeatureUsageData represents additional data for reported event.</p>
@@ -37,14 +39,12 @@ import java.util.*
  * </p>
  */
 class FeatureUsageData {
-  private val LOG = Logger.getInstance(FeatureUsageData::class.java)
   private var data: MutableMap<String, Any> = HashMap()
 
   companion object {
     // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
-    val platformDataKeys: MutableList<String> = Arrays.asList(
-      "plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place", "file_path", "anonymous_id"
-    )
+    val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
+                                                "file_path", "anonymous_id")
   }
 
   /**
@@ -56,7 +56,7 @@ class FeatureUsageData {
    */
   fun addProject(project: Project?): FeatureUsageData {
     if (project != null) {
-      data["project"] = getProjectId(project)
+      data["project"] = StatisticsUtil.getProjectId(project)
     }
     return this
   }
@@ -94,7 +94,8 @@ class FeatureUsageData {
     return if (SystemInfo.isLinux) "Linux" else "Other"
   }
 
-  @FeatureUsageDataBuilder(additionalDataFields = ["plugin:util#plugin", "plugin_type:util#plugin_type"])
+  @FeatureUsageDataBuilder(additionalDataFields = ["plugin:util#plugin", "plugin_type:util#plugin_type",
+    "plugin_version:util#plugin_version"])
   fun addPluginInfo(info: PluginInfo?): FeatureUsageData {
     info?.let {
       addPluginInfoTo(info, data)
@@ -122,7 +123,7 @@ class FeatureUsageData {
 
   private fun addLanguageInternal(fieldName: String, language: Language?): FeatureUsageData {
     language?.let {
-      val type = getPluginType(language.javaClass)
+      val type = getPluginInfo(language.javaClass)
       if (type.isSafeToReport()) {
         data[fieldName] = language.id
       }
@@ -201,6 +202,12 @@ class FeatureUsageData {
   }
 
   @FeatureUsageDataBuilder(additionalDataFields = ["value::0"])
+  fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
+    data[key] = value?.let { EventLogConfiguration.anonymize(value) } ?: "undefined"
+    return this
+  }
+
+  @FeatureUsageDataBuilder(additionalDataFields = ["value"])
   fun addValue(value: Any): FeatureUsageData {
     if (value is String || value is Boolean || value is Int || value is Long || value is Float || value is Double) {
       return addDataInternal("value", value)

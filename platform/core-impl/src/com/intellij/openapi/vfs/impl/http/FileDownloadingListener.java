@@ -18,9 +18,6 @@ package com.intellij.openapi.vfs.impl.http;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/**
- * @author nik
-*/
 public interface FileDownloadingListener {
 
   void fileDownloaded(@NotNull VirtualFile localFile);

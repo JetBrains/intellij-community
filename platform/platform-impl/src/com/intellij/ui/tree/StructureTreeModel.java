@@ -9,12 +9,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -32,9 +30,6 @@ import java.util.function.Function;
 import static java.util.Collections.*;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-/**
- * @author Sergey.Malenkov
- */
 public class StructureTreeModel<Structure extends AbstractTreeStructure>
   extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
 
@@ -46,40 +41,25 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Structure structure;
   private volatile Comparator<? super Node> comparator;
 
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent,
-                            @NotNull NotNullFunction<Disposable, Invoker> invokerCreator) {
-    this.structure = structure;
-    description = format(structure.toString());
-    invoker = invokerCreator.fun(this);
-    Disposer.register(parent, this);
+  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent) {
+    this(structure, null, parent);
   }
 
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent,
-                            @NotNull NotNullFunction<Disposable, Invoker> invokerCreator,
-                            @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
-    this(structure, parent, invokerCreator);
-    if (comparator != null) this.comparator = wrapToNodeComparator(comparator);
-  }
-
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parent,
-                            @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
-    this(structure, parent, Invoker::forBackgroundThreadWithReadAction, comparator);
-  }
-
-  public StructureTreeModel(@NotNull Structure structure, @NotNull Disposable parentDisposable) {
-    this(structure, parentDisposable, Invoker::forBackgroundThreadWithReadAction);
-  }
-
-  /**
-   * @deprecated use {@link #StructureTreeModel(AbstractTreeStructure, Disposable, Comparator)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public StructureTreeModel(@NotNull Structure structure,
-                            @NotNull Comparator<? super NodeDescriptor<?>> comparator,
-                            @NotNull Disposable parentDisposable) {
-    this(structure, parentDisposable);
-    this.comparator = wrapToNodeComparator(comparator);
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                            @NotNull Disposable parent) {
+    this(structure, comparator, Invoker.forBackgroundThreadWithReadAction(parent), parent);
+  }
+
+  public StructureTreeModel(@NotNull Structure structure,
+                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                            @NotNull Invoker invoker,
+                            @NotNull Disposable parent) {
+    this.structure = structure;
+    this.description = format(structure.toString());
+    this.invoker = invoker;
+    this.comparator = comparator == null ? null : wrapToNodeComparator(comparator);
+    Disposer.register(parent, this);
   }
 
   @NotNull

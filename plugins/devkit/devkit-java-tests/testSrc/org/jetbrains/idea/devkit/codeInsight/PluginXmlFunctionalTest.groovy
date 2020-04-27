@@ -102,15 +102,19 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testListeners() {
+    myFixture.addClass("public class MyCollectionWithoutDefaultCTOR implements java.util.Collection {" +
+                       " public MyCollectionWithoutDefaultCTOR(String something) {}" +
+                       "}")
     doHighlightingTest("Listeners.xml")
   }
 
-  void testListenersNoSinceBuild() {
-    doHighlightingTest("ListenersNoSinceBuild.xml")
-  }
-
+  // absence of since-build only in DevKit setup: PluginXmlPluginModuleTest.testListenersNoSinceBuild
   void testListenersPre193() {
     doHighlightingTest("ListenersPre193.xml")
+  }
+
+  void testListenersOsAttributePre201() {
+    doHighlightingTest("ListenersOsAttributePre201.xml")
   }
 
   void testListenersDepends() {

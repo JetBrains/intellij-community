@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
@@ -19,7 +20,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectReloadState
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.processOpenedProjects
@@ -44,7 +44,7 @@ private val CHANGED_FILES_KEY = Key<LinkedHashMap<ComponentStoreImpl, LinkedHash
 private val CHANGED_SCHEMES_KEY = Key<LinkedHashMap<SchemeChangeApplicator, LinkedHashSet<SchemeChangeEvent>>>("CHANGED_SCHEMES_KEY")
 
 /**
- * This service is temporary allowed to be overriden to support reloading of new project model entities. It should be removed after merging
+ * This service is temporary allowed to be overridden to support reloading of new project model entities. It should be removed after merging
  * new project model modules to community project.
  */
 @ApiStatus.Internal
@@ -238,7 +238,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       return true
     }
 
-    val changes = LinkedHashSet<StateStorage>(changedApplicationFiles)
+    val changes = LinkedHashSet(changedApplicationFiles)
     changedApplicationFiles.clear()
 
     return reloadAppStore(changes)
@@ -269,7 +269,7 @@ internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentSto
     catch (e: Throwable) {
       LOG.warn(e)
       AppUIUtil.invokeOnEdt {
-        Messages.showWarningDialog(ProjectBundle.message("project.reload.failed", e.message), ProjectBundle.message("project.reload.failed.title"))
+        Messages.showWarningDialog(ConfigurationStoreBundle.message("project.reload.failed", e.message), ConfigurationStoreBundle.message("project.reload.failed.title"))
       }
       return ReloadComponentStoreStatus.ERROR
     }
@@ -318,17 +318,18 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
     message.append("reload project?")
   }
 
-  if (Messages.showYesNoDialog(message.toString(), "$storeName Files Changed", Messages.getQuestionIcon()) == Messages.YES) {
-    if (changedStorages != null) {
-      for (storage in changedStorages) {
-        if (storage is StateStorageBase<*>) {
-          storage.disableSaving()
-        }
+  if (Messages.showYesNoDialog(message.toString(), "$storeName Files Changed", Messages.getQuestionIcon()) != Messages.YES) {
+    return false
+  }
+
+  if (changedStorages != null) {
+    for (storage in changedStorages) {
+      if (storage is StateStorageBase<*>) {
+        storage.disableSaving()
       }
     }
-    return true
   }
-  return false
+  return true
 }
 
 internal enum class ReloadComponentStoreStatus {
@@ -347,22 +348,22 @@ private fun <T : Any> Key<T>.getAndClear(holder: UserDataHolderEx): T? {
 private fun doReloadProject(project: Project) {
   val projectRef = Ref.create(project)
   ProjectReloadState.getInstance(project).onBeforeAutomaticProjectReload()
-  ApplicationManager.getApplication().invokeLater({
+  AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit {
     LOG.debug("Reloading project.")
     val project1 = projectRef.get()
     // Let it go
     projectRef.set(null)
 
     if (project1.isDisposed) {
-      return@invokeLater
+      return@submit
     }
 
     // must compute here, before project dispose
     val presentableUrl = project1.presentableUrl
     if (!ProjectManagerEx.getInstanceEx().closeAndDispose(project1)) {
-      return@invokeLater
+      return@submit
     }
 
     ProjectUtil.openProject(Objects.requireNonNull<String>(presentableUrl), null, true)
-  }, ModalityState.NON_MODAL)
+  }
 }

@@ -60,9 +60,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     return panel;
   }
 
-  @NotNull
   @Override
-  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> result = new SmartList<>();
     final PsiExpression expression = (PsiExpression)infos[1];
     final String methodName = (String)infos[2];

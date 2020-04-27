@@ -50,14 +50,12 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
   }
 
   @Override
-  @NotNull
-  public AttributesDescriptor[] getAttributeDescriptors() {
+  public AttributesDescriptor @NotNull [] getAttributeDescriptors() {
     return new AttributesDescriptor[0];
   }
 
   @Override
-  @NotNull
-  public ColorDescriptor[] getColorDescriptors() {
+  public ColorDescriptor @NotNull [] getColorDescriptors() {
     List<ColorDescriptor> descriptors = new ArrayList<>();
 
     descriptors.add(new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.added.lines"), EditorColors.ADDED_LINES_COLOR, ColorDescriptor.Kind.BACKGROUND));

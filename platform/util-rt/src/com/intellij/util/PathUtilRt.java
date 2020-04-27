@@ -13,9 +13,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class PathUtilRt {
   @NotNull
   public static String getFileName(@Nullable String path) {

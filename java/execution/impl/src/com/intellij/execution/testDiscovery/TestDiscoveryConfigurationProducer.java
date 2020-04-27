@@ -102,7 +102,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   public abstract boolean isApplicable(@NotNull Location<PsiMethod> testMethod);
 
   @NotNull
-  public abstract RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
+  public abstract RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
                                                 Module module,
                                                 RunConfiguration configuration,
                                                 ExecutionEnvironment environment);
@@ -188,7 +188,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     return position != null && position.equals(getPosition(configuration));
   }
 
-  protected static LinkedHashSet<String> collectMethodPatterns(@NotNull Location<PsiMethod>[] testMethods) {
+  protected static LinkedHashSet<String> collectMethodPatterns(Location<PsiMethod> @NotNull [] testMethods) {
     return Arrays.stream(testMethods)
           .map(method -> {
             Iterator<Location<PsiClass>> ancestors = method.getAncestors(PsiClass.class, true);
@@ -274,9 +274,8 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       return myConfiguration;
     }
 
-    @NotNull
     @Override
-    public Module[] getModules() {
+    public Module @NotNull [] getModules() {
       return myConfiguration.getModules();
     }
   }

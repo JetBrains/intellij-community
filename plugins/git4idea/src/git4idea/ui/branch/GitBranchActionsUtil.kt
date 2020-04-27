@@ -1,10 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch
 
+import com.intellij.dvcs.branch.GroupingKey
+import com.intellij.dvcs.branch.isGroupingEnabled
+import com.intellij.dvcs.branch.setGrouping
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -13,9 +19,13 @@ import git4idea.GitVcs
 import git4idea.branch.GitBrancher
 import git4idea.branch.GitNewBranchDialog
 import git4idea.branch.GitNewBranchOptions
+import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
 import git4idea.history.GitHistoryUtils
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 object L {
   val LOG: Logger = Logger.getInstance(L::class.java)
@@ -26,8 +36,11 @@ internal fun checkCommitsUnderProgress(project: Project,
                                        startRef: String,
                                        branchName: String): Boolean =
   ProgressManager.getInstance().runProcessWithProgressSynchronously<Boolean, RuntimeException>({
-    checkCommitsBetweenRefAndBranchName(project, repositories, startRef, branchName)
-  }, "Checking Existing Commits...", true, project)
+                                                                                                 checkCommitsBetweenRefAndBranchName(
+                                                                                                   project, repositories, startRef,
+                                                                                                   branchName)
+                                                                                               }, GitBundle.message(
+    "branches.checking.existing.commits.process"), true, project)
 
 private fun checkCommitsBetweenRefAndBranchName(project: Project,
                                                 repositories: List<GitRepository>,
@@ -44,7 +57,7 @@ private fun hasCommits(project: Project, repository: GitRepository, startRef: St
     return GitHistoryUtils.collectTimedCommits(project, repository.root, "$startRef..$endRef").isNotEmpty()
   }
   catch (ex: VcsException) {
-    L.LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef")
+    L.LOG.warn("Couldn't collect commits in ${repository.presentableUrl} for $startRef..$endRef") // NON-NLS
     return true
   }
 }
@@ -74,7 +87,8 @@ internal fun checkoutOrReset(project: Project,
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
       VcsNotifier.getInstance(project)
-        .notifyError("Checkout Failed", "Can't overwrite $name branch because some commits can be lost")
+        .notifyError(GitBundle.message("branches.checkout.failed.title"),
+                     GitBundle.message("branches.checkout.failed.description", name))
       return
     }
     val brancher = GitBrancher.getInstance(project)
@@ -88,8 +102,8 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
   if (options.reset) {
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
-      VcsNotifier.getInstance(project).notifyError("New Branch Creation Failed",
-                                                   "Can't overwrite $name branch because some commits can be lost")
+      VcsNotifier.getInstance(project).notifyError(GitBundle.message("branches.creation.failed.title"),
+                                                   GitBundle.message("branches.checkout.failed.description", name))
       return
     }
 
@@ -112,7 +126,8 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
 internal fun createOrCheckoutNewBranch(project: Project,
                                        repositories: List<GitRepository>,
                                        startPoint: String,
-                                       title: String = "Create New Branch",
+                                       @Nls(capitalization = Nls.Capitalization.Title)
+                                       title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
                                        initialName: String? = null) {
   val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, true).showAndGetOptions() ?: return
   if (options.checkout) {
@@ -128,7 +143,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
     repositories.associateWith { it.branchTrackInfos.filter { info -> branchNames.contains(info.localBranch.name) } }
   if (repoToTrackingInfos.isEmpty()) return
 
-  GitVcs.runInBackground(object : Task.Backgroundable(project, "Updating branches...", true) {
+  GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("branches.updating.process"), true) {
     var successFetches = 0
     override fun run(indicator: ProgressIndicator) {
       val fetchSupport = GitFetchSupport.fetchSupport(project)
@@ -137,11 +152,11 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
           val branchName = trackingInfo.localBranch.name
           val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$branchName:$branchName")
           try {
-            fetchResult.throwExceptionIfFailed();
+            fetchResult.throwExceptionIfFailed()
             successFetches += 1
           }
           catch (ignored: VcsException) {
-            fetchResult.showNotificationIfFailed("Update Failed")
+            fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
           }
         }
       }
@@ -149,17 +164,34 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
 
     override fun onSuccess() {
       if (successFetches > 0) {
-        VcsNotifier.getInstance(myProject).notifySuccess("Branches updated")
+        VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("branches.selected.branches.updated.title",
+                                                                           branchNames.size))
       }
     }
   })
 }
 
 internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<GitRepository>) =
-    repositories
-      .flatMap(GitRepository::getBranchTrackInfos)
-      .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
+  repositories
+    .flatMap(GitRepository::getBranchTrackInfos)
+    .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }
 
 internal fun hasRemotes(project: Project): Boolean {
   return GitUtil.getRepositories(project).any { repository -> !repository.remotes.isEmpty() }
+}
+
+internal abstract class BranchGroupingAction(private val key: GroupingKey,
+                                             icon: Icon? = null) : ToggleAction(key.text, key.description, icon), DumbAware {
+
+  abstract fun setSelected(key: GroupingKey, state: Boolean)
+
+  override fun isSelected(e: AnActionEvent) =
+    e.project?.let { GitVcsSettings.getInstance(it).branchSettings.isGroupingEnabled(key) } ?: false
+
+  override fun setSelected(e: AnActionEvent, state: Boolean) {
+    val project = e.project ?: return
+    val branchSettings = GitVcsSettings.getInstance(project).branchSettings
+    branchSettings.setGrouping(key, state)
+    setSelected(key, state)
+  }
 }

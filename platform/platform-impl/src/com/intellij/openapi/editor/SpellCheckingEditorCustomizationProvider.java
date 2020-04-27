@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class SpellCheckingEditorCustomizationProvider {
   @NotNull
   public static SpellCheckingEditorCustomizationProvider getInstance() {

@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
@@ -22,6 +21,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
+import com.intellij.xml.XmlBundle
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -42,7 +42,7 @@ internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolea
     }
   }
   catch (e: WebBrowserUrlProvider.BrowserException) {
-    Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
+    Messages.showErrorDialog(e.message, XmlBundle.message("browser.error"))
   }
   catch (e: Exception) {
     LOG.error(e)
@@ -60,7 +60,7 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
-      val applicable = request != null && WebBrowserServiceImpl.getProvider(request) != null
+      val applicable = request != null && WebBrowserServiceImpl.getProviders(request).findAny().isPresent
       event.presentation.isEnabledAndVisible = applicable
       return if (applicable) request else  null
     }
@@ -99,15 +99,14 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
     var description = templatePresentation.text
     if (ActionPlaces.CONTEXT_TOOLBAR == e.place) {
       val shortcutInfo = buildString {
-        val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts("WebOpenInAction")
-        val exists = shortcuts.isNotEmpty()
-        if (exists) {
-          append(KeymapUtil.getShortcutText(shortcuts[0]))
+        val shortcut = KeymapUtil.getPrimaryShortcut("WebOpenInAction")
+        if (shortcut != null) {
+          append(KeymapUtil.getShortcutText(shortcut))
         }
 
         if (HtmlUtil.isHtmlFile(result.file)) {
-          append(if (exists) ", " else "")
-          append("hold Shift to open URL of local file")
+          append(if (shortcut != null) ", " else "")
+          append(XmlBundle.message("browser.shortcut"))
         }
       }
       if (shortcutInfo.isNotEmpty()) {
@@ -168,7 +167,7 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
       label.icon = AllIcons.Nodes.Servlet
       label.text = (value as Url).toDecodedForm()
     })
-    .setTitle("Choose Url")
+    .setTitle(XmlBundle.message("browser.url.popup"))
     .setItemChosenCallback { value ->
       result.setResult(value)
     }

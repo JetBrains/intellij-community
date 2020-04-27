@@ -85,8 +85,7 @@ fun PsiType.forceWildcardsAsTypeArguments(): PsiType {
   val manager = resolve()?.manager ?: return this
   val factory = GroovyPsiElementFactory.getInstance(manager.project)
   return accept(object : PsiTypeMapper() {
-    override fun visitClassType(classType: PsiClassType?): PsiType? {
-      classType ?: return classType
+    override fun visitClassType(classType: PsiClassType): PsiType? {
       val mappedParameters = classType.parameters.map {
         val accepted = it.accept(this)
         when {
@@ -116,8 +115,8 @@ fun PsiType?.isClosureTypeDeep(): Boolean {
 tailrec fun PsiSubstitutor.recursiveSubstitute(type: PsiType, recursionDepth: Int = 20): PsiType {
   if (recursionDepth == 0) {
     return type.accept(object : PsiTypeMapper() {
-      override fun visitClassType(classType: PsiClassType?): PsiType? {
-        return classType?.rawType()
+      override fun visitClassType(classType: PsiClassType): PsiType? {
+        return classType.rawType()
       }
     })
   }
@@ -240,14 +239,16 @@ fun createVirtualMethod(method: GrMethod, typeParameterList: PsiTypeParameterLis
   return newMethod
 }
 
-fun convertToGroovyMethod(method: PsiMethod): GrMethod {
+fun convertToGroovyMethod(method: PsiMethod): GrMethod? {
   // because method may be ClsMethod
   val factory = GroovyPsiElementFactory.getInstance(method.project)
   return if (method.isConstructor) {
-    factory.createConstructorFromText(method.name, method.text, method)
+    val constructorBody = method.body?.text ?: return null
+    factory.createConstructorFromText(method.name, constructorBody, method)
   }
   else {
-    factory.createMethodFromText(method.text, method)
+    val methodText = method.text ?: return null
+    factory.createMethodFromText(methodText, method)
   }
 }
 
@@ -261,8 +262,7 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
   val unboundedWildcard = PsiWildcardType.createUnbounded(method.manager)
 
   class ForeignTypeParameterEraser : PsiTypeMapper() {
-    override fun visitClassType(classType: PsiClassType?): PsiType? {
-      classType ?: return classType
+    override fun visitClassType(classType: PsiClassType): PsiType? {
       val typeParameter = classType.typeParameter()
       if (typeParameter != null && typeParameter !in allowedTypeParameters) {
         return (compress(typeParameter.extendsListTypes.asList()) ?: getJavaLangObject(method)).accept(this)
@@ -274,12 +274,11 @@ fun PsiSubstitutor.removeForeignTypeParameters(method: GrMethod): PsiSubstitutor
       }
     }
 
-    override fun visitIntersectionType(intersectionType: PsiIntersectionType?): PsiType? {
-      return compress(intersectionType?.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
+    override fun visitIntersectionType(intersectionType: PsiIntersectionType): PsiType? {
+      return compress(intersectionType.conjuncts?.filterNotNull()?.mapNotNull { it.accept(this) })
     }
 
-    override fun visitWildcardType(wildcardType: PsiWildcardType?): PsiType? {
-      wildcardType ?: return null
+    override fun visitWildcardType(wildcardType: PsiWildcardType): PsiType? {
       val bound = wildcardType.bound?.accept(this) ?: return wildcardType
       return when {
         wildcardType.isExtends -> PsiWildcardType.createExtends(method.manager, bound)

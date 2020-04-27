@@ -22,9 +22,6 @@ import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class PythonConfigurationFactoryBase extends ConfigurationFactory {
   protected PythonConfigurationFactoryBase(@NotNull ConfigurationType type) {
     super(type);

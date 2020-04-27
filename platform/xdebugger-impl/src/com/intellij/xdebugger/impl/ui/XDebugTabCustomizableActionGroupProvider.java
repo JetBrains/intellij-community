@@ -16,16 +16,14 @@
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
-/**
- * @author nik
- */
 public class XDebugTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
-    registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP, "Debug Tool Window Top Toolbar");
-    registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP, "Debug Tool Window Left Toolbar");
-    registrar.addCustomizableActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP, "Debug Watches Toolbar");
+    registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP, XDebuggerBundle.message("debug.tool.window.top.toolbar"));
+    registrar.addCustomizableActionGroup(XDebuggerActions.TOOL_WINDOW_LEFT_TOOLBAR_GROUP, XDebuggerBundle.message("debug.tool.window.left.toolbar"));
+    registrar.addCustomizableActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP, XDebuggerBundle.message("debug.watches.toolbar"));
   }
 }

@@ -28,9 +28,8 @@ public class SerializableClassInSecureContextMerger extends InspectionElementsMe
     return "SerializableDeserializableClassInSecureContext";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[] {
       "DeserializableClassInSecureContext",
       "SerializableClassInSecureContext"

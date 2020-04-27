@@ -16,9 +16,9 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,14 +37,13 @@ public class InfoDialog extends DialogWrapper{
     super(project, false);
     myText = text;
     setButtonsAlignment(SwingUtilities.CENTER);
-    setTitle(RefactoringBundle.message("information.title"));
+    setTitle(JavaRefactoringBundle.message("information.title"));
     init();
-    setOKButtonText(RefactoringBundle.message("ok.button"));
+    setOKButtonText(JavaRefactoringBundle.message("ok.button"));
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions(){
+  protected Action @NotNull [] createActions(){
     return new Action[]{getOKAction()};
   }
 
@@ -57,7 +56,7 @@ public class InfoDialog extends DialogWrapper{
     JPanel cbPanel = new JPanel(new BorderLayout());
     cbPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
     myShowInFutureCheckBox = new JCheckBox();
-    myShowInFutureCheckBox.setText(RefactoringBundle.message("do.not.show.this.message.in.the.future"));
+    myShowInFutureCheckBox.setText(JavaRefactoringBundle.message("do.not.show.this.message.in.the.future"));
     panel.add(cbPanel, BorderLayout.SOUTH);
     cbPanel.add(myShowInFutureCheckBox, BorderLayout.WEST);
 

@@ -36,7 +36,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="Using &amp;file system"/>
+              <text resource-bundle="messages/IdeBundle" key="radio.button.using.file.system"/>
             </properties>
           </component>
           <component id="72145" class="javax.swing.JRadioButton" binding="myUsingVcsRadioButton" default-binding="true">
@@ -46,7 +46,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="Using &amp;version control integration"/>
+              <text resource-bundle="messages/IdeBundle" key="radio.button.using.version.control.integration"/>
             </properties>
           </component>
           <component id="440b" class="javax.swing.JComboBox" binding="myChangelist">
@@ -64,7 +64,7 @@
             <properties>
               <horizontalAlignment value="11"/>
               <labelFor value="440b"/>
-              <text value="   Change &amp;list:"/>
+              <text resource-bundle="messages/IdeBundle" key="label.change.list.for.unlocked.files"/>
             </properties>
           </component>
         </children>

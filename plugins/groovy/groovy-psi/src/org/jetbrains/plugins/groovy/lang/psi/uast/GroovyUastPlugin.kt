@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.psi.uast
 import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.strictParents
+import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
@@ -46,7 +46,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
     }?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true }
 
   private fun makeUParent(element: PsiElement) =
-    element.strictParents().mapNotNull { convertElementWithParent(it, null) }.firstOrNull()
+    element.parents.mapNotNull { convertElementWithParent(it, null) }.firstOrNull()
 
   override fun getMethodCallExpression(element: PsiElement,
                                        containingClassFqName: String?,

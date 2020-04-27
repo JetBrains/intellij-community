@@ -37,9 +37,8 @@ public class CommandLineSyntaxHighlighter implements SyntaxHighlighter {
     return new FlexAdapter(new _CommandLineLexer());
   }
 
-  @NotNull
   @Override
-  public TextAttributesKey[] getTokenHighlights(final IElementType tokenType) {
+  public TextAttributesKey @NotNull [] getTokenHighlights(final IElementType tokenType) {
     final TextAttributesKey attributesKey = ATTRIBUTES.get(tokenType);
     return attributesKey == null ? TextAttributesKey.EMPTY_ARRAY : new TextAttributesKey[]{attributesKey};
   }

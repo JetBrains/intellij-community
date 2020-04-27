@@ -40,9 +40,6 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class AppEngineFacetEditor extends FacetEditorTab {
   private final AppEngineFacetConfiguration myFacetConfiguration;
   private final FacetEditorContext myContext;

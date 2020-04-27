@@ -1,11 +1,9 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    PIPELINE_COMMAND
-      PIPELINE
-        ASSIGNMENT_COMMAND
-          LITERAL
-            PsiElement(word)('a')
-          PsiElement(=)('=')
+    ASSIGNMENT_COMMAND
+      LITERAL
+        PsiElement(word)('a')
+      PsiElement(=)('=')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     EVAL_COMMAND

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,7 +35,7 @@ public class RemoveTrailingBlankLinesFix implements LocalQuickFix, IntentionActi
   @NotNull
   @Override
   public String getText() {
-    return "Remove trailing blank lines";
+    return PyBundle.message("QFIX.remove.trailing.blank.lines");
   }
 
   @Override

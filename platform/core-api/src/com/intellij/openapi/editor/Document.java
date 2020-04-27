@@ -76,9 +76,8 @@ public interface Document extends UserDataHolder {
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
-  @NotNull
   @Deprecated
-  default char[] getChars() {
+  default char @NotNull [] getChars() {
     return CharArrayUtil.fromSequence(getImmutableCharSequence());
   }
 

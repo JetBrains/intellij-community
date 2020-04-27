@@ -31,7 +31,7 @@
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Name"/>
+          <text resource-bundle="messages/MavenDomBundle" key="property.introduce.name"/>
         </properties>
       </component>
       <component id="52af0" class="javax.swing.JLabel">
@@ -39,7 +39,7 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Value"/>
+          <text resource-bundle="messages/MavenDomBundle" key="property.introduce.value"/>
         </properties>
       </component>
     </children>

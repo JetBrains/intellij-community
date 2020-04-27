@@ -2,7 +2,7 @@
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -26,7 +26,7 @@ public class ConvertToBasicLatinTest extends LightJavaCodeInsightFixtureTestCase
   private void doTest() {
     doEncodingTest(getProject(), "UTF-8", null, () -> {
       String name = getTestName(false);
-      String intention = CodeInsightBundle.message("intention.convert.to.basic.latin");
+      String intention = JavaBundle.message("intention.convert.to.basic.latin");
       CodeInsightTestUtil.doIntentionTest(myFixture, intention, name + ".java", name + "_after.java");
     });
   }

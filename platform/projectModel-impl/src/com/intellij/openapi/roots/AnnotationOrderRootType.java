@@ -30,8 +30,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     return true;
   }
 
-  @NotNull
-  public static VirtualFile[] getFiles(@NotNull OrderEntry entry) {
+  public static VirtualFile @NotNull [] getFiles(@NotNull OrderEntry entry) {
     List<VirtualFile> result = new ArrayList<>();
     RootPolicy<List<VirtualFile>> policy = new RootPolicy<List<VirtualFile>>() {
       @Override
@@ -57,8 +56,7 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  @NotNull
-  public static String[] getUrls(@NotNull OrderEntry entry) {
+  public static String @NotNull [] getUrls(@NotNull OrderEntry entry) {
     List<String> result = new ArrayList<>();
     RootPolicy<List<String>> policy = new RootPolicy<List<String>>() {
       @Override

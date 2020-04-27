@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -22,7 +22,10 @@ import git4idea.GitUtil.HEAD
 import git4idea.GitVcs
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.rebase.*
+import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
+import git4idea.rebase.interactive.dialog.GitRebaseEntryWithEditedMessage
 import git4idea.repo.GitRepository
 
 private val LOG = logger("Git.Interactive.Rebase.Using.Log")
@@ -91,7 +94,7 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
   val project = repository.project
   val root = repository.root
 
-  object : Task.Backgroundable(project, "Preparing to Rebase${StringUtil.ELLIPSIS}") {
+  object : Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.preparing.title")) {
     private var generatedEntries: List<GitRebaseEntryGeneratedUsingLog>? = null
 
     override fun run(indicator: ProgressIndicator) {
@@ -120,7 +123,7 @@ internal fun startInteractiveRebase(
   commit: VcsShortCommitDetails,
   editorHandler: GitRebaseEditorHandler? = null
 ) {
-  object : Task.Backgroundable(repository.project, "Rebasing${StringUtil.ELLIPSIS}") {
+  object : Task.Backgroundable(repository.project, GitBundle.message("rebase.progress.indicator.title")) {
     override fun run(indicator: ProgressIndicator) {
       val params = GitRebaseParams.editCommits(repository.vcs.version, commit.parents.first().asString(), editorHandler, false)
       GitRebaseUtils.rebase(repository.project, listOf(repository), params, indicator)
@@ -133,10 +136,22 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
   private val entriesGeneratedUsingLog: List<GitRebaseEntryGeneratedUsingLog>,
   private val newEntries: List<GitRebaseEntryWithEditedMessage>
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {
-  override fun collectNewEntries(entries: List<GitRebaseEntry>): List<GitRebaseEntry> {
+  private var rebaseFailed = false
+
+  override fun collectNewEntries(entries: List<GitRebaseEntry>): List<GitRebaseEntry>? {
+    if (rebaseFailed) {
+      return super.collectNewEntries(entries)
+    }
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
       val realEntry = entries[i]
       if (!generatedEntry.equalsWithReal(realEntry)) {
+        myRebaseEditorShown = false
+        rebaseFailed = true
+        LOG.error(
+          "Incorrect git-rebase-todo file was generated",
+          Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
+          Attachment("expected.txt", entries.joinToString("\n"))
+        )
         throw VcsException("Couldn't start Rebase using Log")
       }
     }

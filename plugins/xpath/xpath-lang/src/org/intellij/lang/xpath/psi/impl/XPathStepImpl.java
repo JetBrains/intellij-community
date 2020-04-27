@@ -89,8 +89,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
   }
 
   @Override
-  @NotNull
-  public XPathPredicate[] getPredicates() {
+  public XPathPredicate @NotNull [] getPredicates() {
     final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.PREDICATES);
     final XPathPredicate[] predicates = new XPathPredicate[nodes.length];
     for (int i = 0; i < predicates.length; i++) {

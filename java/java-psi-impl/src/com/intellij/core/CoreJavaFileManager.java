@@ -180,9 +180,8 @@ public class CoreJavaFileManager implements JavaFileManager {
     return curClass;
   }
 
-  @NotNull
   @Override
-  public PsiClass[] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
+  public PsiClass @NotNull [] findClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     List<PsiClass> result = new ArrayList<>();
     for (VirtualFile file : roots()) {
       final PsiClass psiClass = findClassInClasspathRoot(qName, file, myPsiManager, scope);

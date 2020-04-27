@@ -16,8 +16,8 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.psi.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -31,24 +31,23 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getElements() {
+  public PsiElement @NotNull [] getElements() {
     return new PsiElement[] {myElement};
   }
 
   @Override
   public String getProcessedElementsHeader() {
     if (myElement instanceof PsiField) {
-      return RefactoringBundle.message("inline.field.elements.header");
+      return JavaRefactoringBundle.message("inline.field.elements.header");
     }
     if (myElement instanceof PsiVariable) {
-      return RefactoringBundle.message("inline.vars.elements.header");
+      return JavaRefactoringBundle.message("inline.vars.elements.header");
     }
     if (myElement instanceof PsiClass) {
-      return RefactoringBundle.message("inline.class.elements.header");
+      return JavaRefactoringBundle.message("inline.class.elements.header");
     }
     if (myElement instanceof PsiMethod) {
-      return RefactoringBundle.message("inline.method.elements.header");
+      return JavaRefactoringBundle.message("inline.method.elements.header");
     }
     return "Unknown element";
   }
@@ -56,12 +55,12 @@ class InlineViewDescriptor implements UsageViewDescriptor{
   @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("invocations.to.be.inlined", UsageViewBundle.getReferencesString(usagesCount, filesCount));
+    return JavaRefactoringBundle.message("invocations.to.be.inlined", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
   @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
-    return RefactoringBundle.message("comments.elements.header",
+    return JavaRefactoringBundle.message("comments.elements.header",
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));
   }
 

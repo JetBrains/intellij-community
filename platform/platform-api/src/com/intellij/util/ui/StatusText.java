@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import java.util.List;
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
   /**
-   * Use {code {@link #getDefaultEmptyText()}} instead
+   * @deprecated Use {@link #getDefaultEmptyText()} instead
    */
   @Deprecated
   public static final String DEFAULT_EMPTY_TEXT = "Nothing to show";
@@ -178,11 +179,11 @@ public abstract class StatusText {
     return myText;
   }
 
-  public StatusText setText(String text) {
+  public StatusText setText(@Nls String text) {
     return setText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText setText(String text, SimpleTextAttributes attrs) {
+  public StatusText setText(@Nls String text, SimpleTextAttributes attrs) {
     return clear().appendText(text, attrs);
   }
 
@@ -201,15 +202,15 @@ public abstract class StatusText {
     if (myOwner != null && isStatusVisible()) myOwner.repaint();
   }
 
-  public StatusText appendText(String text) {
+  public StatusText appendText(@Nls(capitalization = Nls.Capitalization.Sentence) String text) {
     return appendText(text, DEFAULT_ATTRIBUTES);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs) {
+  public StatusText appendText(@Nls(capitalization = Nls.Capitalization.Sentence) String text, SimpleTextAttributes attrs) {
     return appendText(text, attrs, null);
   }
 
-  public StatusText appendText(String text, SimpleTextAttributes attrs, ActionListener listener) {
+  public StatusText appendText(@Nls(capitalization = Nls.Capitalization.Sentence) String text, SimpleTextAttributes attrs, ActionListener listener) {
     if (myIsDefaultText) {
       clear();
       myIsDefaultText = false;
@@ -230,7 +231,7 @@ public abstract class StatusText {
   }
 
   @NotNull
-  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+  public StatusText appendSecondaryText(@NotNull @Nls String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
     mySecondaryComponent.append(text, attrs);
     mySecondaryListeners.add(listener);
     if (listener != null) {

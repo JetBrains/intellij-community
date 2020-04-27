@@ -5,14 +5,18 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.BaseChangeListsTest
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.DocumentUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.commit
+import org.junit.Assume.assumeFalse
 
 class GitDirtyScopeTest : GitSingleRepoTest() {
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
@@ -117,8 +121,44 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
     assertFalse(isDirtyPath(file))
 
-    emptyBulkChange(file)
+    writeAction {
+      DocumentUtil.executeInBulk(file.document, true) {
+        // do nothing
+      }
+    }
 
+    assertFalse(isDirtyPath(file))
+  }
+
+  fun testCaseOnlyRename() {
+    assumeFalse(SystemInfo.isFileSystemCaseSensitive)
+
+    val file = repo.root.createFile("file.txt", "initial")
+    git("add .")
+    commit("initial")
+
+    editDocument(file, "initial")
+    saveDocument(file)
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+
+    changeListManager.forceStopInTestMode()
+
+    writeAction {
+      val parent = file.parent
+      file.delete(this)
+      parent.createFile("FILE.txt", "initial")
+    }
+    git("add .")
+    VcsDirtyScopeVfsListener.getInstance(project).waitForAsyncTaskCompletion()
+
+    changeListManager.forceGoInTestMode()
+    changeListManager.waitUntilRefreshed()
+
+    assertChanges {
+      rename("file.txt", "FILE.txt")
+    }
     assertFalse(isDirtyPath(file))
   }
 
@@ -144,19 +184,19 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     }
   }
 
-  private fun emptyBulkChange(file: VirtualFile) {
+  private fun writeAction(task: () -> Unit) {
     runInEdtAndWait {
       WriteCommandAction.runWriteCommandAction(project) {
-        val document = file.document
-        DocumentUtil.executeInBulk(document, true) {
-          // do nothing
-        }
+        task()
       }
     }
   }
 
   private fun isDirtyPath(file: VirtualFile): Boolean {
-    val filePath = VcsUtil.getFilePath(file)
+    return isDirtyPath(VcsUtil.getFilePath(file))
+  }
+
+  private fun isDirtyPath(filePath: FilePath): Boolean {
     val dirtyPaths = dirtyScopeManager.whatFilesDirty(listOf(filePath))
     return dirtyPaths.contains(filePath)
   }

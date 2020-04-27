@@ -34,8 +34,7 @@ public class ReturnInstruction extends GoToInstruction {
     return "RETURN FROM " + getProcBegin() + (offset == 0 ? "" : " TO "+offset);
   }
 
-  @NotNull
-  int[] getPossibleReturnOffsets() {
+  int @NotNull [] getPossibleReturnOffsets() {
     return offset == 0 ?
         new int[]{
           getProcBegin() - 5, // call normal

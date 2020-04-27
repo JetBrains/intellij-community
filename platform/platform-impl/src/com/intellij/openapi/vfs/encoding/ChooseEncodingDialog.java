@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.encoding;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TreeUIHelper;
@@ -38,7 +39,7 @@ public class ChooseEncodingDialog extends DialogWrapper {
     super(false);
     myCharsets = charsets;
     myDefaultCharset = defaultCharset;
-    setTitle("Choose Encoding for the '"+virtualFile.getName()+"'");
+    setTitle(IdeBundle.message("dialog.title.choose.encoding.for.the.0", virtualFile.getName()));
     init();
   }
 

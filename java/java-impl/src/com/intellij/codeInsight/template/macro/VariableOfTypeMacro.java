@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.template.macro;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -41,7 +41,7 @@ public class VariableOfTypeMacro extends Macro {
 
   @Override
   public String getPresentableName() {
-    return CodeInsightBundle.message("macro.variable.of.type");
+    return JavaBundle.message("macro.variable.of.type");
   }
 
   @Override
@@ -51,14 +51,14 @@ public class VariableOfTypeMacro extends Macro {
   }
 
   @Override
-  public Result calculateResult(@NotNull Expression[] params, ExpressionContext context) {
+  public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length == 0) return null;
     return new JavaPsiElementResult(vars[0]);
   }
 
   @Override
-  public LookupElement[] calculateLookupItems(@NotNull Expression[] params, final ExpressionContext context) {
+  public LookupElement[] calculateLookupItems(Expression @NotNull [] params, final ExpressionContext context) {
     final PsiElement[] vars = getVariables(params, context);
     if (vars == null || vars.length < 2) return null;
     final Set<LookupElement> set = new LinkedHashSet<>();
@@ -68,8 +68,7 @@ public class VariableOfTypeMacro extends Macro {
     return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  protected PsiElement[] getVariables(Expression[] params, final ExpressionContext context) {
+  protected PsiElement @Nullable [] getVariables(Expression[] params, final ExpressionContext context) {
     if (params.length != 1) return null;
     final Result result = params[0].calculateResult(context);
     if (result == null) return null;

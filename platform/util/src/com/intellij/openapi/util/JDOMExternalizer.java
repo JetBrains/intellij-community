@@ -122,7 +122,7 @@ public class JDOMExternalizer {
   public static void saveStringsList(@NotNull final Element parent,
                                      @NotNull final String nodeName,
                                      @NotNull final String attrName,
-                                     @NotNull final String... values) {
+                                     final String @NotNull ... values) {
     for (final String value : values) {
       final Element node = new Element(nodeName);
       node.setAttribute(attrName, value);

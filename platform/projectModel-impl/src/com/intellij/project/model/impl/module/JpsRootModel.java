@@ -29,9 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   private final Module myModule;
   private final List<ContentEntry> myContentEntries;
@@ -55,9 +52,8 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
     return myContentEntries;
   }
 
-  @NotNull
   @Override
-  public OrderEntry[] getOrderEntries() {
+  public OrderEntry @NotNull [] getOrderEntries() {
     return OrderEntry.EMPTY_ARRAY;
   }
 

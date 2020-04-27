@@ -20,8 +20,7 @@ public class OrderRootType {
 
   public static final ExtensionPointName<OrderRootType> EP_NAME = ExtensionPointName.create("com.intellij.orderRootType");
 
-  @NotNull
-  static PersistentOrderRootType[] ourPersistentOrderRootTypes = new PersistentOrderRootType[0];
+  static PersistentOrderRootType @NotNull [] ourPersistentOrderRootTypes = new PersistentOrderRootType[0];
 
   protected OrderRootType(@NotNull String name) {
     myName = name;
@@ -81,13 +80,11 @@ public class OrderRootType {
     return false;
   }
 
-  @NotNull
-  public static synchronized OrderRootType[] getAllTypes() {
+  public static synchronized OrderRootType @NotNull [] getAllTypes() {
     return getAllPersistentTypes();
   }
 
-  @NotNull
-  public static PersistentOrderRootType[] getAllPersistentTypes() {
+  public static PersistentOrderRootType @NotNull [] getAllPersistentTypes() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
       EP_NAME.getExtensionList();

@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij.java-i18n">
+    <resourceBundleManager implementation="org.jetbrains.idea.devkit.i18n.IntelliJProjectResourceBundleManager"/>
+  </extensions>
+</idea-plugin>

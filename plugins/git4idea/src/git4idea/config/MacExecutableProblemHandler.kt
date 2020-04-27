@@ -5,33 +5,109 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
+import java.io.File
 
 class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   companion object {
     val LOG = logger<MacExecutableProblemHandler>()
   }
 
-  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
+  private val tempPath = FileUtil.createTempDirectory("git-install", null)
+  private val mountPoint = File(tempPath, "mount")
+
+  override fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
     when {
       isXcodeLicenseError(exception) -> showXCodeLicenseError(errorNotifier)
       isInvalidActiveDeveloperPath(exception) -> showInvalidActiveDeveloperPathError(errorNotifier)
-      else -> showGenericError(exception, errorNotifier)
+      else -> showGenericError(exception, errorNotifier, onErrorResolved)
     }
   }
 
-  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier) {
-    errorNotifier.showError(getPrettyErrorMessage(exception), ErrorNotifier.FixOption.Standard("Install") {
-      errorNotifier.executeTask("Starting system installer", false) {
-        execXCodeSelectInstall(errorNotifier)
+  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
+                            ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
+      errorNotifier.executeTask(GitBundle.message("install.downloading.progress"), false) {
+        try {
+          val installer = fetchInstaller(errorNotifier) { it.os == "macOS" && it.pkgFileName != null}
+          if (installer != null) {
+            val fileName = installer.fileName
+            val dmgFile = File(tempPath, fileName)
+            val pkgFileName = installer.pkgFileName!!
+            if (downloadGit(installer, dmgFile, project, errorNotifier)) {
+              errorNotifier.changeProgressTitle(GitBundle.message("install.installing.progress"))
+              installGit(dmgFile, pkgFileName, errorNotifier, onErrorResolved)
+            }
+          }
+        }
+        finally {
+          FileUtil.delete(tempPath)
+        }
       }
     })
   }
 
+  private fun installGit(dmgFile: File, pkgFileName: String, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+    if (attachVolume(dmgFile, errorNotifier)) {
+      try {
+        if (installPackageOrShowError(pkgFileName, errorNotifier)) {
+          errorNotifier.showMessage(GitBundle.message("install.success.message"))
+          onErrorResolved()
+          errorNotifier.resetGitExecutable()
+        }
+      }
+      finally {
+        detachVolume()
+      }
+    }
+  }
+
+  private fun attachVolume(file: File, errorNotifier: ErrorNotifier): Boolean {
+    val cmd = GeneralCommandLine("hdiutil", "attach", "-readonly", "-noautoopen", "-noautofsck", "-nobrowse",
+                                 "-mountpoint", mountPoint.path, file.path)
+    return runOrShowError(cmd, errorNotifier, sudo = false)
+  }
+
+  private fun installPackageOrShowError(pkgFileName: String, errorNotifier: ErrorNotifier) =
+    runOrShowError(GeneralCommandLine("installer", "-package", "${mountPoint}/$pkgFileName", "-target", "/"),
+                   errorNotifier, sudo = true)
+
+  private fun detachVolume() {
+    runCommand(GeneralCommandLine("hdiutil", "detach", mountPoint.path), sudo = false, onError = {})
+  }
+
+  private fun runOrShowError(commandLine: GeneralCommandLine, errorNotifier: ErrorNotifier, sudo: Boolean): Boolean {
+    return runCommand(commandLine, sudo) {
+      showCouldntInstallError(errorNotifier)
+    }
+  }
+
+  private fun runCommand(commandLine: GeneralCommandLine, sudo: Boolean, onError: () -> Unit): Boolean {
+    try {
+      val cmd = if (sudo) ExecUtil.sudoCommand(commandLine, "Install Git") else commandLine
+      val output = ExecUtil.execAndGetOutput(cmd)
+      if (output.checkSuccess(LOG)) {
+        return true
+      }
+      LOG.warn(output.stderr)
+      onError()
+      return false
+    }
+    catch (e: Exception) {
+      LOG.warn(e)
+      onError()
+      return false
+    }
+  }
+
+  private fun showCouldntInstallError(errorNotifier: ErrorNotifier) {
+    errorNotifier.showError(GitBundle.message("install.general.error"), getLinkToConfigure(project))
+  }
+
   private fun showCouldntStartInstallerError(errorNotifier: ErrorNotifier) {
-    errorNotifier.showError("Couldn't Install Command Line Tools", getLinkToConfigure(project))
+    errorNotifier.showError(GitBundle.message("install.mac.error.couldnt.start.command.line.tools"), getLinkToConfigure(project))
   }
 
   private fun showXCodeLicenseError(errorNotifier: ErrorNotifier) {
@@ -41,12 +117,12 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   }
 
   private fun showInvalidActiveDeveloperPathError(errorNotifier: ErrorNotifier) {
-    val fixPathOption = ErrorNotifier.FixOption.Standard("Fix Path") {
-      errorNotifier.executeTask("Requesting XCode Command Line Developer Tools" + StringUtil.ELLIPSIS, false) {
+    val fixPathOption = ErrorNotifier.FixOption.Standard(GitBundle.message("executable.mac.fix.path.action")) {
+      errorNotifier.executeTask(GitBundle.message("install.mac.requesting.command.line.tools") + StringUtil.ELLIPSIS, false) {
         execXCodeSelectInstall(errorNotifier)
       }
     }
-    errorNotifier.showError("Invalid path to Command Line Tools", fixPathOption)
+    errorNotifier.showError(GitBundle.message("executable.mac.error.invalid.path.to.command.line.tools"), fixPathOption)
   }
 
   /**

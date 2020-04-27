@@ -15,7 +15,7 @@
         <properties>
           <enabled value="true"/>
           <font/>
-          <text resource-bundle="messages/ProjectBundle" key="label.text.please.select.desired.technologies"/>
+          <text resource-bundle="messages/JavaUiBundle" key="label.text.please.select.desired.technologies"/>
         </properties>
       </component>
       <grid id="4fc0e" binding="myFrameworksPanel" layout-manager="BorderLayout" hgap="0" vgap="0">

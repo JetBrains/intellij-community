@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementGenerator;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLDocument;
@@ -24,24 +25,29 @@ import org.jetbrains.yaml.psi.YAMLValue;
 public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> implements InsertHandler<T> {
 
   @NotNull
-  protected abstract YAMLKeyValue createNewEntry(@NotNull YAMLDocument document, T item);
+  protected abstract YAMLKeyValue createNewEntry(@NotNull YAMLDocument document, T item,
+                                                 @Nullable YAMLKeyValue parent);
 
   @Override
   public void handleInsert(@NotNull InsertionContext context, @NotNull T item) {
     final PsiElement currentElement = context.getFile().findElementAt(context.getStartOffset());
     assert currentElement != null : "no element at " + context.getStartOffset();
 
+    YAMLKeyValue parent = PsiTreeUtil.getParentOfType(currentElement, YAMLKeyValue.class);
     final YAMLDocument holdingDocument = PsiTreeUtil.getParentOfType(currentElement, YAMLDocument.class);
     assert holdingDocument != null;
 
     final YAMLValue oldValue = (holdingDocument.getTopLevelValue() instanceof YAMLMapping) ?
                                deleteLookupTextAndRetrieveOldValue(context, currentElement) :
                                null; // Inheritors must handle lookup text removal since otherwise holdingDocument may become invalid.
-    final YAMLKeyValue created = createNewEntry(holdingDocument, item);
+    final YAMLKeyValue created = createNewEntry(holdingDocument, item, parent);
 
     context.getEditor().getCaretModel().moveToOffset(created.getTextRange().getEndOffset());
     if (oldValue != null) {
-      WriteCommandAction.runWriteCommandAction(context.getProject(), () -> created.setValue(oldValue));
+      WriteCommandAction.runWriteCommandAction(context.getProject(),
+                                               YAMLBundle.message("YamlKeyCompletionInsertHandler.insert.value"),
+                                               null,
+                                               () -> created.setValue(oldValue));
     }
 
     PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
@@ -86,7 +92,10 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
     }
 
     context.setTailOffset(keyValue.getTextRange().getEndOffset());
-    WriteCommandAction.runWriteCommandAction(context.getProject(), () -> keyValue.getParentMapping().deleteKeyValue(keyValue));
+    WriteCommandAction.runWriteCommandAction(context.getProject(),
+                                             YAMLBundle.message("YamlKeyCompletionInsertHandler.remove.key"),
+                                             null,
+                                             () -> keyValue.getParentMapping().deleteKeyValue(keyValue));
     return oldValue;
   }
 

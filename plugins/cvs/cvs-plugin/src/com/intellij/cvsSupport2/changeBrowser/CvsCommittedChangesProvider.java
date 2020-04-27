@@ -115,9 +115,8 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new CvsRepositoryLocation(root.getVirtualFile(), connectionSettings, module);
   }
 
-  @NotNull
   @Override
-  public ChangeListColumn[] getColumns() {
+  public ChangeListColumn @NotNull [] getColumns() {
     return new ChangeListColumn[] { ChangeListColumn.DATE, ChangeListColumn.NAME, ChangeListColumn.DESCRIPTION, BRANCH_COLUMN };
   }
 

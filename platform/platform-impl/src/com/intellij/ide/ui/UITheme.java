@@ -171,7 +171,7 @@ public class UITheme {
           }
 
           @Nullable
-          private SVGLoader.SvgElementColorPatcher newPatcher(@Nullable byte[] digest,
+          private SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
                                                               @NotNull Map<String, String> newPalette,
                                                               @NotNull Map<String, Integer> alphas) {
             if (newPalette.isEmpty()) {
@@ -501,8 +501,7 @@ public class UITheme {
 
     private byte[] hash = null;
 
-    @NotNull
-    byte[] digest() {
+    byte @NotNull [] digest() {
       if (hash != null) return hash;
 
       final Hasher hasher = Hashing.sha256().newHasher();

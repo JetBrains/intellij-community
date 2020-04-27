@@ -42,7 +42,7 @@ public class SearchScopeProvider {
   /** @deprecated Use {@link GlobalSearchScopes#executionScope(Collection)}*/
   @Deprecated
   @Nullable
-  public static GlobalSearchScope createSearchScope(@NotNull Module[] modules) {
+  public static GlobalSearchScope createSearchScope(Module @NotNull [] modules) {
     return GlobalSearchScopes.executionScope(Arrays.asList(modules));
   }
 }

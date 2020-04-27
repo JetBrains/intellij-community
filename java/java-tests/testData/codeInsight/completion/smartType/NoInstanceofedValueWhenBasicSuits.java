@@ -1,4 +1,4 @@
-public class TestCase extends Zzz {
+public class TestCase {
 
     Object ooo() {}
 
@@ -6,6 +6,6 @@ public class TestCase extends Zzz {
         if (!(ooo() instanceof String)) {
           return;
         }
-        Object s = o<caret>
+        Object s = oo<caret>
     }
 }

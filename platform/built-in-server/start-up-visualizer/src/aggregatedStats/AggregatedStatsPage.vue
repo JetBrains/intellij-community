@@ -19,7 +19,7 @@
 
           <el-form-item label="Project">
             <el-select v-model="chartSettings.selectedProject" filterable>
-              <el-option v-for="project in projects" :key="project" :label="projectNameToTitle.get(project)" :value="project"/>
+              <el-option v-for="project in projects" :key="project" :label="projectNameToTitle.get(project) || project" :value="project"/>
             </el-select>
           </el-form-item>
 

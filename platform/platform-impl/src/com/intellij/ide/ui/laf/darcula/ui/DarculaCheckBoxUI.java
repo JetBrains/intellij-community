@@ -19,13 +19,12 @@ import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isMultiLineHTML;
-import static com.intellij.util.ui.JBUI.scale;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
-  private static final Icon DEFAULT_ICON = scale(EmptyIcon.create(18)).asUIResource();
+  private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(18)).asUIResource();
 
   private final PropertyChangeListener textChangedListener = e -> updateTextPosition((AbstractButton)e.getSource());
 

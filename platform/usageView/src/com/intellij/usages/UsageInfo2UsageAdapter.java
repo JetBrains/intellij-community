@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -39,9 +39,6 @@ import java.lang.ref.Reference;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author max
- */
 public class UsageInfo2UsageAdapter implements UsageInModule,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage, Comparable<UsageInfo2UsageAdapter>,
@@ -101,8 +98,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return document.getLineNumber(startOffset);
   }
 
-  @NotNull
-  private TextChunk[] initChunks() {
+  private TextChunk @NotNull [] initChunks() {
     TextChunk[] chunks;
     VirtualFile file = getFile();
     boolean isNullOrBinary = file == null || file.getFileType().isBinary();
@@ -414,8 +410,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     reference.handleElementRename(newName);
   }
 
-  @NotNull
-  public static UsageInfo2UsageAdapter[] convert(@NotNull UsageInfo[] usageInfos) {
+  public static UsageInfo2UsageAdapter @NotNull [] convert(UsageInfo @NotNull [] usageInfos) {
     UsageInfo2UsageAdapter[] result = new UsageInfo2UsageAdapter[usageInfos.length];
     for (int i = 0; i < result.length; i++) {
       result[i] = new UsageInfo2UsageAdapter(usageInfos[i]);
@@ -435,8 +430,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     }
   }
 
-  @NotNull
-  public UsageInfo[] getMergedInfos() {
+  public UsageInfo @NotNull [] getMergedInfos() {
     Object infos = myMergedUsageInfos;
     return infos instanceof UsageInfo ? new UsageInfo[]{(UsageInfo)infos} : (UsageInfo[])infos;
   }
@@ -448,14 +442,12 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   @Override
-  @NotNull
-  public TextChunk[] getText() {
+  public TextChunk @NotNull [] getText() {
     return doUpdateCachedText();
   }
 
-  @Nullable
   @Override
-  public TextChunk[] getCachedText() {
+  public TextChunk @Nullable [] getCachedText() {
     return SoftReference.dereference(myTextChunks);
   }
 
@@ -464,8 +456,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     doUpdateCachedText();
   }
 
-  @NotNull
-  private TextChunk[] doUpdateCachedText() {
+  private TextChunk @NotNull [] doUpdateCachedText() {
     TextChunk[] chunks = SoftReference.dereference(myTextChunks);
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;

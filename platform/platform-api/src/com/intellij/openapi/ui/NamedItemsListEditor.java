@@ -7,6 +7,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -269,7 +270,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   private class CopyAction extends DumbAwareAction {
     CopyAction() {
-      super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
+      super(IdeBundle.messagePointer("action.NamedItemsListEditor.CopyAction.text.copy"),
+            IdeBundle.messagePointer("action.NamedItemsListEditor.CopyAction.description.copy"), MasterDetailsComponent.COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
 
@@ -298,7 +300,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   private class AddAction extends DumbAwareAction {
     AddAction() {
-      super("Add", "Add", IconUtil.getAddIcon());
+      super(IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.text.add"),
+            IdeBundle.messagePointer("action.NamedItemsListEditor.AddAction.description.add"), IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 

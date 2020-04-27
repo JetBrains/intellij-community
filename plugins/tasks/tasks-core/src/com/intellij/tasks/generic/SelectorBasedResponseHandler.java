@@ -155,9 +155,8 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     return mySelectors.hashCode();
   }
 
-  @NotNull
   @Override
-  public final Task[] parseIssues(@NotNull String response, int max) throws Exception {
+  public final Task @NotNull [] parseIssues(@NotNull String response, int max) throws Exception {
     if (StringUtil.isEmpty(getSelectorPath(TASKS)) ||
         StringUtil.isEmpty(getSelectorPath(ID)) ||
         (StringUtil.isEmpty(getSelectorPath(SUMMARY)) && !myRepository.getDownloadTasksInSeparateRequests())) {

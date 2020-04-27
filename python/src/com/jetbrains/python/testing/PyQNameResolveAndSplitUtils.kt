@@ -33,7 +33,7 @@ import java.util.*
  * @author Ilya.Kazakevich
  */
 
-internal data class QualifiedNameParts(val fileName: QualifiedName, val elementName: QualifiedName, val file: PyFile) {
+data class QualifiedNameParts(val fileName: QualifiedName, val elementName: QualifiedName, val file: PyFile) {
   override fun toString() = elementName.toString()
 
   /**

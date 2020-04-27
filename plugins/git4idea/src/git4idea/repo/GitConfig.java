@@ -1,4 +1,4 @@
-  // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+  // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
   import com.intellij.openapi.diagnostic.Logger;
@@ -34,8 +34,7 @@ package git4idea.repo;
  *
  * TODO: note, that other git configuration files (such as ~/.gitconfig) are not handled yet.
  */
-public class GitConfig {
-
+public final class GitConfig {
   private static final Logger LOG = Logger.getInstance(GitConfig.class);
 
   private static final Pattern REMOTE_SECTION = Pattern.compile("(?:svn-)?remote \"(.*)\"", Pattern.CASE_INSENSITIVE);

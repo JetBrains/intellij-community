@@ -14,9 +14,8 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
  * @author Pavel.Dolgov
  */
 public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     if (!(element instanceof XmlAttribute) || !JavaFxFileTypeFactory.isFxml(element.getContainingFile())) return PsiReference.EMPTY_ARRAY;
 
     final XmlAttribute xmlAttribute = (XmlAttribute)element;

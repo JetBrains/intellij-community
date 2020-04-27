@@ -16,6 +16,7 @@
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.VcsPushReferenceStrategy;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.ui.ComboBox;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ public class DvcsStrategyPanel extends JPanel {
     DefaultComboBoxModel comboModel = new DefaultComboBoxModel(VcsPushReferenceStrategy.values());
     myReferenceStrategyCombobox.setModel(comboModel);
     JPanel bottomPanel = new JPanel(new FlowLayout());
-    JLabel referenceStrategyLabel = new JLabel("Push Reference Strategy: ");
+    JLabel referenceStrategyLabel = new JLabel(DvcsBundle.message("push.reference.strategy.label"));
     bottomPanel.add(referenceStrategyLabel, FlowLayout.LEFT);
     bottomPanel.add(myReferenceStrategyCombobox);
     add(bottomPanel, BorderLayout.WEST);

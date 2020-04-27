@@ -6,7 +6,7 @@ import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.PsiTypesUtil.getPsiClass
 import com.intellij.psi.util.PsiUtil.substituteTypeParameter
-import com.intellij.psi.util.parents
+import com.intellij.psi.util.parentsWithSelf
 import org.jetbrains.plugins.groovy.dgm.GdkMethodHolder.getHolderForClass
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 fun processCategoriesInScope(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState): Boolean {
   if (!shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true
 
-  for (parent in place.parents()) {
+  for (parent in place.parentsWithSelf) {
     if (parent is GrMember) break
     if (parent !is GrFunctionalExpression) continue
     val call = checkMethodCall(parent) ?: continue

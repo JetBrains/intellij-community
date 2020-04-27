@@ -33,9 +33,6 @@ import org.jetbrains.jps.model.ex.JpsElementBase;
 
 import java.io.File;
 
-/**
- * @author nik
- */
 public class MavenEjbArtifactRootCopyingHandlerProvider extends ArtifactRootCopyingHandlerProvider {
   @Nullable
   @Override

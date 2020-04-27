@@ -25,15 +25,18 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
   }
 
   private fun pushFString(prefixAndQuotes: String): PyElementType {
-    val openingQuotes = prefixAndQuotes.substring(PyStringLiteralUtil.getPrefixLength(prefixAndQuotes))
-    myFStringStates.push(FStringState(myLexer.yystate(), myLexer.tokenStart, openingQuotes))
+    val prefixLength = PyStringLiteralUtil.getPrefixLength(prefixAndQuotes)
+    val openingQuotes = prefixAndQuotes.substring(prefixLength)
+    val prefix = prefixAndQuotes.substring(0, prefixLength)
+    myFStringStates.push(FStringState(myLexer.yystate(), myLexer.tokenStart, prefix, openingQuotes))
     myLexer.yybegin(_PythonLexer.FSTRING)
     return PyTokenTypes.FSTRING_START
   }
 
   fun handleFStringEnd(): IElementType {
+    val textType = getTextTokenType()
     val (type, offset) = findFStringTerminator(myLexer.yytext().toString())
-    return if (offset == 0) type!! else PyTokenTypes.FSTRING_TEXT
+    return if (offset == 0) type!! else textType
   }
 
   fun handleFragmentStart(): IElementType {
@@ -96,7 +99,7 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     val text = myLexer.yytext().toString()
     val (_, offset) = findFStringTerminator(text)
     if (offset == text.length) {
-      return PyTokenTypes.FSTRING_TEXT
+      return getTextTokenType()
     }
     return PyTokenTypes.LINE_BREAK
   }
@@ -169,7 +172,18 @@ class PyLexerFStringHelper(private val myLexer: FlexLexerEx) {
     myFStringStates.clear()
   }
 
-  private data class FStringState(val oldState: Int, val offset: Int, val openingQuotes: String) {
+  fun getTextTokenType(): IElementType {
+    assert(myFStringStates.isNotEmpty())
+    if (PyStringLiteralUtil.isRawPrefix(myFStringStates.peek().prefix)) {
+      return PyTokenTypes.FSTRING_RAW_TEXT
+    }
+    return PyTokenTypes.FSTRING_TEXT
+  }
+
+  private data class FStringState(val oldState: Int,
+                                  val offset: Int,
+                                  val prefix: String,
+                                  val openingQuotes: String) {
     val fragmentStates = Stack<FragmentState>()
   }
 

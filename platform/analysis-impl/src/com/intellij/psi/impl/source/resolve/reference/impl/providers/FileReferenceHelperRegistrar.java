@@ -17,8 +17,7 @@ public class FileReferenceHelperRegistrar {
   private FileReferenceHelperRegistrar() {
   }
 
-  @NotNull
-  public static FileReferenceHelper[] getHelpers() {
+  public static FileReferenceHelper @NotNull [] getHelpers() {
     return FileReferenceHelper.EP_NAME.getExtensions();
   }
 

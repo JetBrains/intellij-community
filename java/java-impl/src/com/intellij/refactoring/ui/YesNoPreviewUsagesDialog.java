@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.ui;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -54,7 +55,7 @@ public class YesNoPreviewUsagesDialog extends DialogWrapper {
   protected JComponent createSouthPanel() {
     myCbPreviewResults = new JCheckBox();
     myCbPreviewResults.setSelected(myToPreviewUsages);
-    myCbPreviewResults.setText(RefactoringBundle.message("preview.usages.to.be.changed"));
+    myCbPreviewResults.setText(JavaRefactoringBundle.message("preview.usages.to.be.changed"));
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(super.createSouthPanel(), BorderLayout.CENTER);
     panel.add(myCbPreviewResults, BorderLayout.WEST);

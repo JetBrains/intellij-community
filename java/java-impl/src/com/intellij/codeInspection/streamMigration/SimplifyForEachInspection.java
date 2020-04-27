@@ -1,10 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
+    return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
   @NotNull
@@ -213,7 +213,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify forEach lambda";
+      return JavaBundle.message("quickfix.family.simplify.foreach.lambda");
     }
 
     @Override
@@ -240,7 +240,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
       else {
         myContext = context;
-        setText("Avoid mutation using Stream API '" + simplifyContext.myMigration.getReplacement() + "' operation");
+        setText(JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
       }
     }
 
@@ -280,7 +280,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Avoid mutation using Stream API";
+      return JavaBundle.message("quickfix.family.avoid.mutation.using.stream.api");
     }
   }
 }

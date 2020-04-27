@@ -26,8 +26,7 @@ public interface PyImportStatementBase extends PyStatement {
   /**
    * @return elements that constitute the "import" clause
    */
-  @NotNull
-  PyImportElement[] getImportElements();
+  PyImportElement @NotNull [] getImportElements();
 
   /**
    * @return qualified names of imported elements regardless way they were imported.

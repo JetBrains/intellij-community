@@ -15,9 +15,6 @@
  */
 package org.jetbrains.jps.builders.java;
 
-/**
- * @author nik
- */
 public class CannotCreateJavaCompilerException extends Exception {
   public CannotCreateJavaCompilerException(String message) {
     super(message);

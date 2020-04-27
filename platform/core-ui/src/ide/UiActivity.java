@@ -13,20 +13,19 @@ import java.util.List;
 public class UiActivity implements ComparableObject {
   private final List<String> myElements = new ArrayList<>();
 
-  public UiActivity(@NotNull String ... elements) {
+  public UiActivity(String @NotNull ... elements) {
     this(elements, null);
   }
 
-  protected UiActivity(@NotNull String[] elements1, @Nullable String[] elements2) {
+  protected UiActivity(String @NotNull [] elements1, String @Nullable [] elements2) {
     myElements.addAll(Arrays.asList(elements1));
     if (elements2 != null) {
       myElements.addAll(Arrays.asList(elements2));
     }
   }
 
-  @NotNull
   @Override
-  public Object[] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[] {myElements};
   }
 

@@ -2,9 +2,6 @@ package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public interface DeploymentNode extends ServersTreeNode {
 
   @NotNull

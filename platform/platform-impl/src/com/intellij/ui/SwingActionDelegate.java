@@ -16,9 +16,6 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
-/**
- * @author Sergey.Malenkov
- */
 public class SwingActionDelegate extends AnAction implements DumbAware {
   private static final Key<Function<String, JComponent>> FUNCTION = Key.create("SwingActionsMapping");
   private final String mySwingActionId;
@@ -69,7 +66,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
    * @param actions   a list of supported actions
    */
   @ApiStatus.Experimental
-  public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, @NotNull String... actions) {
+  public static void configureMapping(@NotNull JComponent base, @NotNull JComponent dependant, String @NotNull ... actions) {
     HashMap<String, JComponent> map = new HashMap<>();
     for (String action : actions) map.put(action, dependant);
     configureMapping(base, map::get);

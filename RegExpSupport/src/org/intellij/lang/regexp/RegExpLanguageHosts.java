@@ -180,14 +180,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.getQuantifierValue(valueElement);
   }
 
-  @NotNull
-  public String[][] getAllKnownProperties(@NotNull final PsiElement element) {
+  public String[] @NotNull [] getAllKnownProperties(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllKnownProperties() : myDefaultProvider.getAllKnownProperties();
   }
 
-  @NotNull
-  public String[][] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
+  public String[] @NotNull [] getAllPropertyValues(@NotNull PsiElement element, @NotNull String propertyName) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllPropertyValues(propertyName) : RegExpLanguageHost.EMPTY_COMPLETION_ITEMS_ARRAY;
   }
@@ -198,8 +196,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host != null ?  host.getPropertyDescription(name) : myDefaultProvider.getPropertyDescription(name);
   }
 
-  @NotNull
-  String[][] getKnownCharacterClasses(@NotNull final PsiElement element) {
+  String[] @NotNull [] getKnownCharacterClasses(@NotNull final PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getKnownCharacterClasses() : myDefaultProvider.getKnownCharacterClasses();
   }

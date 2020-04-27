@@ -18,6 +18,7 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.util.*;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -146,7 +147,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
                           modifiedSide != ThreeSide.BASE && isChange(modifiedSide);
       if (!isChanged) return null;
 
-      String text = "Accept";
+      String text = DiffBundle.message("action.presentation.diff.accept.text");
       Side arrowDirection = Side.fromLeft(sourceSide == ThreeSide.LEFT ||
                                           modifiedSide == ThreeSide.RIGHT);
       Icon icon = DiffUtil.getArrowIcon(arrowDirection);
@@ -167,7 +168,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
         if (!isValid()) return;
         final Project project = myViewer.getProject();
         final Document document = myViewer.getEditor(modifiedSide).getDocument();
-        DiffUtil.executeWriteCommand(document, project, "Replace change", perform);
+        DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.replace.change.command"), perform);
       }
     };
   }

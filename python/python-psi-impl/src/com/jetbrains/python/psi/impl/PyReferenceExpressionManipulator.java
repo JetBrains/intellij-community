@@ -22,9 +22,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author oleg
- */
 public class PyReferenceExpressionManipulator extends AbstractElementManipulator<PyReferenceExpression> {
   @Override
   public PyReferenceExpression handleContentChange(@NotNull final PyReferenceExpression element, @NotNull final TextRange range, final String newContent)

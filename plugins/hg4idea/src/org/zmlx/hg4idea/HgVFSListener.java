@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
@@ -127,7 +126,7 @@ public class HgVFSListener extends VcsVFSListener {
 
   @NotNull
   VcsRepositoryIgnoredFilesHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
-    return ObjectUtils.assertNotNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
+    return Objects.requireNonNull(HgUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
   }
   /**
    * The version of execute add before overriding
@@ -329,7 +328,8 @@ public class HgVFSListener extends VcsVFSListener {
       }
 
       private void handleRenameError() {
-        NotificationAction viewFilesAction = NotificationAction.createSimple("View Files...", () -> {
+        NotificationAction viewFilesAction =
+          NotificationAction.createSimple(HgBundle.messagePointer("action.NotificationAction.HgVFSListener.text.view.files"), () -> {
           DialogWrapper dialog =
             new ProcessedFilePathsDialog(myProject, map2List(failedToMove, movedInfo -> VcsUtil.getFilePath(movedInfo.myOldPath)));
           dialog.setTitle("Failed to Rename");
@@ -382,9 +382,8 @@ public class HgVFSListener extends VcsVFSListener {
       super(project, files, null, null, null, null, false);
     }
 
-    @NotNull
     @Override
-    protected Action[] createActions() {
+    protected Action @NotNull [] createActions() {
       return new Action[]{getOKAction()};
     }
   }

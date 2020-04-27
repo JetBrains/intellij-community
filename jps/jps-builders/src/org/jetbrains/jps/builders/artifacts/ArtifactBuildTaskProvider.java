@@ -25,8 +25,6 @@ import java.util.List;
  * Allows to perform additional tasks when artifacts are built. Implementations of this class are registered as Java services, by creating
  * a file META-INF/services/org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider containing the qualified name of your
  * implementation class.
- *
- * @author nik
  */
 public abstract class ArtifactBuildTaskProvider {
   public enum ArtifactBuildPhase {

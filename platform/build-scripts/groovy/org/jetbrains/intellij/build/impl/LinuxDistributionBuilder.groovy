@@ -5,9 +5,6 @@ import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
-/**
- * @author nik
- */
 class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final File ideaProperties
@@ -55,16 +52,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           buildTarGz(null, osSpecificDistPath, "-no-jbr")
         }
       }
-      if (buildContext.bundledJreManager.doBundleSecondJre()) {
-        String jreDirectoryPath = buildContext.bundledJreManager.extractSecondBundledJreForLinux()
-        if (jreDirectoryPath != null) {
-          buildTarGz(jreDirectoryPath, osSpecificDistPath, buildContext.bundledJreManager.secondJreSuffix())
-        }
-        else {
-          buildContext.messages.info("Skipping building Linux distribution with bundled JRE because JRE archive is missing")
-        }
+
+      if (customizer.includeX86Files) {
+        buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
       }
-      // Used for Snap packages
+
       String jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
       buildTarGz(jreDirectoryPath, osSpecificDistPath, "")
 
@@ -88,6 +80,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
     }
 
+    String linkToX86Jre = (customizer.includeX86Files ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.LINUX) : null) ?: ""
+
     buildContext.ant.copy(todir: "${unixDistPath}/bin") {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
@@ -100,6 +94,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: name)
+        filter(token: "x86_jre_url", value: linkToX86Jre)
       }
     }
 
@@ -184,6 +179,10 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     ] + customizer.extraExecutables
     if (includeJre) {
       patterns += "jbr/bin/*"
+      patterns += "jbr/lib/jexec"
+      patterns += "jbr/lib/jcef_helper"
+      patterns += "jbr/lib/jspawnhelper"
+      patterns += "jbr/lib/chrome-sandbox"
     }
     return patterns
   }

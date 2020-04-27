@@ -37,18 +37,18 @@ public abstract class CustomMethodInvocator {
   protected abstract boolean invoke(@NotNull ExpressionGenerator generator,
                                     @NotNull PsiMethod method,
                                     @Nullable GrExpression caller,
-                                    @NotNull GrExpression[] exprs,
-                                    @NotNull GrNamedArgument[] namedArgs,
-                                    @NotNull GrClosableBlock[] closures,
+                                    GrExpression @NotNull [] exprs,
+                                    GrNamedArgument @NotNull [] namedArgs,
+                                    GrClosableBlock @NotNull [] closures,
                                     @NotNull PsiSubstitutor substitutor,
                                     @NotNull GroovyPsiElement context);
 
   public static boolean invokeMethodOn(@NotNull ExpressionGenerator generator,
                                        @NotNull GrGdkMethod method,
                                        @Nullable GrExpression caller,
-                                       @NotNull GrExpression[] exprs,
-                                       @NotNull GrNamedArgument[] namedArgs,
-                                       @NotNull GrClosableBlock[] closures,
+                                       GrExpression @NotNull [] exprs,
+                                       GrNamedArgument @NotNull [] namedArgs,
+                                       GrClosableBlock @NotNull [] closures,
                                        @NotNull PsiSubstitutor substitutor,
                                        @NotNull GroovyPsiElement context) {
     final PsiMethod staticMethod = method.getStaticMethod();

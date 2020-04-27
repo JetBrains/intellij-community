@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author nik
- */
 public abstract class FrameworkDetectionInWizardContext extends FrameworkDetectionContextBase {
   protected FrameworkDetectionInWizardContext() {
   }

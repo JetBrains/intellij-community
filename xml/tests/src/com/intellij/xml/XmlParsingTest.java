@@ -32,7 +32,7 @@ public class XmlParsingTest extends ParsingTestCase {
     super("psi/xml", "xml", new XMLParserDefinition());
   }
 
-  protected XmlParsingTest(@NotNull String dataPath, @NotNull String fileExt, @NotNull ParserDefinition... definitions) {
+  protected XmlParsingTest(@NotNull String dataPath, @NotNull String fileExt, ParserDefinition @NotNull ... definitions) {
     super(dataPath, fileExt, definitions);
   }
 

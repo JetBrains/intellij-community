@@ -11,6 +11,7 @@ import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformUtils;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,8 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
   @Nls
   @Override
   public String getDisplayName() {
-    return PlatformUtils.isPyCharm() ? "External Documentation" : "Python External Documentation";
+    return PlatformUtils.isPyCharm() ? PyBundle.message("external.documentation.pycharm")
+                                     : PyBundle.message("external.documentation.python.plugin");
   }
 
   @Override

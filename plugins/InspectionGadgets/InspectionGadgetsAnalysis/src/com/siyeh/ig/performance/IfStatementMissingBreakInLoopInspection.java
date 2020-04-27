@@ -133,8 +133,7 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
         .anyMatch(ss -> Arrays.stream(ss).allMatch(s -> getAssignment(s) != null));
     }
 
-    @NotNull
-    private static PsiStatement[] getStatements(@NotNull PsiIfStatement ifStatement) {
+    private static PsiStatement @NotNull [] getStatements(@NotNull PsiIfStatement ifStatement) {
       if (ifStatement.getElseBranch() != null) return PsiStatement.EMPTY_ARRAY;
       PsiStatement branch = ifStatement.getThenBranch();
       if (branch == null) return PsiStatement.EMPTY_ARRAY;
@@ -193,9 +192,8 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
       }
     }
 
-    @NotNull
     @Contract("null -> new")
-    private static PsiStatement[] getStatements(@NotNull PsiStatement statement) {
+    private static PsiStatement @NotNull [] getStatements(@NotNull PsiStatement statement) {
       if (statement instanceof PsiBlockStatement) return ((PsiBlockStatement)statement).getCodeBlock().getStatements();
       return new PsiStatement[]{statement};
     }

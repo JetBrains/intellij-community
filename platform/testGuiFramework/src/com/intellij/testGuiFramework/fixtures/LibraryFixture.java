@@ -29,7 +29,7 @@ public class LibraryFixture {
   }
 
   @NotNull
-  public LibraryFixture requireJavadocUrls(@NotNull String... urls) {
+  public LibraryFixture requireJavadocUrls(String @NotNull ... urls) {
     String[] actualUrls = myLibrary.getUrls(JavadocOrderRootType.getInstance());
     assertThat(actualUrls).as("Javadoc URLs").containsOnly((Object[])urls);
     return this;

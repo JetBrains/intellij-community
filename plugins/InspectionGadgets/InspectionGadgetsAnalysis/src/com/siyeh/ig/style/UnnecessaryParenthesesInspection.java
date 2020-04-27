@@ -54,7 +54,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.option"), "ignoreClarifyingParentheses");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("unnecessary.parentheses.conditional.option"),
                              "ignoreParenthesesOnConditionals");
-    optionsPanel.addCheckbox("Ignore parentheses around single no formal type lambda parameter", "ignoreParenthesesOnLambdaParameter");
+    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("ignore.parentheses.around.single.no.formal.type.lambda.parameter"), "ignoreParenthesesOnLambdaParameter");
     return optionsPanel;
   }
 

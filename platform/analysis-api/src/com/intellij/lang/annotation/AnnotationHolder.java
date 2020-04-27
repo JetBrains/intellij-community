@@ -1,13 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 /**
  * Allows a custom language plugin to define annotations for files in that language.
@@ -23,10 +20,10 @@ public interface AnnotationHolder {
    * @param elt     the element over which the annotation is created.
    * @param message the error message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createErrorAnnotation(@NotNull PsiElement elt, @Nullable String message);
+  Annotation createErrorAnnotation(@NotNull PsiElement elt, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an error annotation with the specified message over the specified AST node.
@@ -34,10 +31,10 @@ public interface AnnotationHolder {
    * @param node    the node over which the annotation is created.
    * @param message the error message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createErrorAnnotation(@NotNull ASTNode node, @Nullable String message);
+  Annotation createErrorAnnotation(@NotNull ASTNode node, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an error annotation with the specified message over the specified text range.
@@ -45,10 +42,10 @@ public interface AnnotationHolder {
    * @param range   the text range over which the annotation is created.
    * @param message the error message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createErrorAnnotation(@NotNull TextRange range, @Nullable String message);
+  Annotation createErrorAnnotation(@NotNull TextRange range, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified PSI element.
@@ -56,10 +53,10 @@ public interface AnnotationHolder {
    * @param elt     the element over which the annotation is created.
    * @param message the warning message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable String message);
+  Annotation createWarningAnnotation(@NotNull PsiElement elt, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified AST node.
@@ -67,10 +64,10 @@ public interface AnnotationHolder {
    * @param node    the node over which the annotation is created.
    * @param message the warning message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable String message);
+  Annotation createWarningAnnotation(@NotNull ASTNode node, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates a warning annotation with the specified message over the specified text range.
@@ -78,10 +75,10 @@ public interface AnnotationHolder {
    * @param range   the text range over which the annotation is created.
    * @param message the warning message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable String message);
+  Annotation createWarningAnnotation(@NotNull TextRange range, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
@@ -90,10 +87,11 @@ public interface AnnotationHolder {
    * @param elt     the element over which the annotation is created.
    * @param message the info message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWeakWarningAnnotation(@NotNull PsiElement elt, @Nullable String message);
+  Annotation createWeakWarningAnnotation(@NotNull PsiElement elt,
+                                         @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
@@ -102,10 +100,11 @@ public interface AnnotationHolder {
    * @param node    the node over which the annotation is created.
    * @param message the info message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWeakWarningAnnotation(@NotNull ASTNode node, @Nullable String message);
+  Annotation createWeakWarningAnnotation(@NotNull ASTNode node,
+                                         @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
@@ -114,10 +113,11 @@ public interface AnnotationHolder {
    * @param range   the text range over which the annotation is created.
    * @param message the info message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createWeakWarningAnnotation(@NotNull TextRange range, @Nullable String message);
+  Annotation createWeakWarningAnnotation(@NotNull TextRange range,
+                                         @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -126,10 +126,10 @@ public interface AnnotationHolder {
    * @param elt     the element over which the annotation is created.
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createInfoAnnotation(@NotNull PsiElement elt, @Nullable String message);
+  Annotation createInfoAnnotation(@NotNull PsiElement elt, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
@@ -138,22 +138,22 @@ public interface AnnotationHolder {
    * @param node    the node over which the annotation is created.
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createInfoAnnotation(@NotNull ASTNode node, @Nullable String message);
+  Annotation createInfoAnnotation(@NotNull ASTNode node, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an information annotation (colored highlighting only, with no gutter mark and not participating in
-   * "Next Error/Warning" navigation)with the specified message over the specified text range.
+   * "Next Error/Warning" navigation) with the specified message over the specified text range.
    *
    * @param range   the text range over which the annotation is created.
    * @param message the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable String message);
+  Annotation createInfoAnnotation(@NotNull TextRange range, @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an annotation with the given severity (colored highlighting only, with no gutter mark and not participating in
@@ -163,10 +163,12 @@ public interface AnnotationHolder {
    * @param range    the text range over which the annotation is created.
    * @param message  the information message.
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
-  Annotation createAnnotation(@NotNull HighlightSeverity severity, @NotNull TextRange range, @Nullable String message);
+  Annotation createAnnotation(@NotNull HighlightSeverity severity,
+                              @NotNull TextRange range,
+                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message);
 
   /**
    * Creates an annotation with the given severity (colored highlighting only, with no gutter mark and not participating in
@@ -177,12 +179,12 @@ public interface AnnotationHolder {
    * @param message     the information message.
    * @param htmlTooltip the tooltip to show (usually the message, but escaped as HTML and surrounded by a {@code <html>} tag
    * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {{@link #newAnnotation(HighlightSeverity, String)}} instead
+   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
    */
   @Deprecated
   Annotation createAnnotation(@NotNull HighlightSeverity severity,
                               @NotNull TextRange range,
-                              @Nullable String message,
+                              @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @Nullable String htmlTooltip);
 
   @NotNull
@@ -191,18 +193,26 @@ public interface AnnotationHolder {
   boolean isBatchMode();
 
   /**
-   * Begin creating a new annotation for this range with severity and message.
+   * Begin constructing a new annotation.
+   * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
    * For example: <p>{@code holder.newAnnotation(HighlightSeverity.WARNING, "My warning message").create();}</p>
+   *
+   * @param severity The severity of the annotation.
+   * @param message  The message this annotation will show in the status bar and the tooltip.
    */
   @Contract(pure = true)
   @NotNull
-  default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull String message) {
+  default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
+                                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use standard provided one instead");
   }
 
   /**
-   * Begin creating a new annotation for this range with severity but with no any message.
+   * Begin constructing a new annotation with no message.
+   * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
    * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
+   *
+   * @param severity The severity of the annotation.
    */
   @Contract(pure = true)
   @NotNull

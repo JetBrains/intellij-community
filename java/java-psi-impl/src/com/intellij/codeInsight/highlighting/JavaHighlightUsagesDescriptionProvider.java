@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.highlighting;
 
-import com.intellij.lang.LangBundle;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -38,27 +38,27 @@ public class JavaHighlightUsagesDescriptionProvider implements ElementDescriptio
       if (elementName == null) {
         elementName = ((PsiClass)element).getName();
       }
-      elementName = (LangBundle.message(((PsiClass)element).isInterface() ? "java.terms.interface" : "java.terms.class")) + ' ' + elementName;
+      elementName = (JavaPsiBundle.message(((PsiClass)element).isInterface() ? "java.terms.interface" : "java.terms.class")) + ' ' + elementName;
     }
     else if (element instanceof PsiMethod) {
       elementName = PsiFormatUtil.formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, METHOD_FLAGS, PsiFormatUtilBase.SHOW_TYPE);
-      elementName = LangBundle.message("java.terms.method") + ' ' + elementName;
+      elementName = JavaPsiBundle.message("java.terms.method") + ' ' + elementName;
     }
     else if (element instanceof PsiVariable) {
       elementName = PsiFormatUtil.formatVariable((PsiVariable)element, VARIABLE_FLAGS, PsiSubstitutor.EMPTY);
       if (element instanceof PsiField) {
-        elementName = LangBundle.message("java.terms.field") + ' ' + elementName;
+        elementName = JavaPsiBundle.message("java.terms.field") + ' ' + elementName;
       }
       else if (element instanceof PsiParameter) {
-        elementName = LangBundle.message("java.terms.parameter") + ' ' + elementName;
+        elementName = JavaPsiBundle.message("java.terms.parameter") + ' ' + elementName;
       }
       else {
-        elementName = LangBundle.message("java.terms.variable") + ' ' + elementName;
+        elementName = JavaPsiBundle.message("java.terms.variable") + ' ' + elementName;
       }
     }
     else if (element instanceof PsiPackage) {
       elementName = ((PsiPackage)element).getQualifiedName();
-      elementName = LangBundle.message("java.terms.package") + ' ' + elementName;
+      elementName = JavaPsiBundle.message("java.terms.package") + ' ' + elementName;
     }
 
     return elementName;

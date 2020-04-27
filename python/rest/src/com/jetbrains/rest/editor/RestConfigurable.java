@@ -26,7 +26,7 @@ public class RestConfigurable implements SearchableConfigurable, Configurable.No
     myComboBox.setSelectedItem(RestSettings.getInstance().getCurrentPanel());
     LabeledComponent<JComponent> component = new LabeledComponent<>();
     component.setComponent(myComboBox);
-    component.setText("Preview panel:");
+    component.setText(RestBundle.message("preview.panel"));
     component.setLabelLocation(BorderLayout.WEST);
     myPanel.add(component, BorderLayout.NORTH);
   }

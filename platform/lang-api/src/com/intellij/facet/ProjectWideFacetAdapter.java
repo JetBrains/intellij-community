@@ -18,9 +18,6 @@ package com.intellij.facet;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class ProjectWideFacetAdapter<F extends Facet> implements ProjectWideFacetListener<F> {
   @Override
   public void firstFacetAdded() {

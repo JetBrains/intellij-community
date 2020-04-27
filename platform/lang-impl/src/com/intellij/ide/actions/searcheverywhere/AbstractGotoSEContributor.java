@@ -45,7 +45,6 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -237,7 +236,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       try {
         ChooseByNameItemProvider provider = popup.getProvider();
         GlobalSearchScope scope = Registry.is("search.everywhere.show.scopes")
-                                  ? (GlobalSearchScope)ObjectUtils.notNull(myScopeDescriptor.getScope())
+                                  ? (GlobalSearchScope)Objects.requireNonNull(myScopeDescriptor.getScope())
                                   : null;
 
         boolean everywhere = scope == null ? myEverywhere : scope.isSearchInLibraries();
@@ -461,7 +460,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
     @Override public boolean canBePerformed(@NotNull DataContext context) { return true; }
     @Override public boolean isPopup() { return true; }
-    @NotNull @Override public AnAction[] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
+    @Override public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
 
     @NotNull @Override
     public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -504,7 +503,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         CHOOSE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
       String shortcutText2 = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(
         TOGGLE, MnemonicHelper.getFocusAcceleratorKeyMask(), true));
-      e.getPresentation().setDescription("Choose scope (" + shortcutText + ")\n" +
+      e.getPresentation().setDescription("Choose scope (" + shortcutText + ")<p/>" +
                                          "Toggle scope (" + shortcutText2 + ")");
       JComponent button = e.getPresentation().getClientProperty(CustomComponentAction.COMPONENT_KEY);
       if (button != null) {

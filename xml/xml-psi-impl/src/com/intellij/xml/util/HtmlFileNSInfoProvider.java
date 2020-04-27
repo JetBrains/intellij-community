@@ -26,9 +26,8 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class HtmlFileNSInfoProvider implements XmlFileNSInfoProvider {
-  @Nullable
   @Override
-  public String[][] getDefaultNamespaces(@NotNull XmlFile file) {
+  public String[] @Nullable [] getDefaultNamespaces(@NotNull XmlFile file) {
     return null;
   }
 

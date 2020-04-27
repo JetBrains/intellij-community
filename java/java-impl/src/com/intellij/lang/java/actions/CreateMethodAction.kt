@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
+import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil.setModifierProperty
 
@@ -45,12 +46,8 @@ internal class CreateMethodAction(
   override fun getText(): String {
     val what = request.methodName
     val where = getNameForClass(target, false)
-    return if (abstract) {
-      message("create.abstract.method.from.usage.full.text", what, where)
-    }
-    else {
-      message("create.method.from.usage.full.text", what, where)
-    }
+    val kind = if (abstract) JavaElementKind.ABSTRACT_METHOD else JavaElementKind.METHOD
+    return message("create.element.in.class", kind.`object`(), what, where)
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author mike
- */
 public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDocTagValue, Constants {
   public PsiDocMethodOrFieldRef() {
     super(DOC_METHOD_OR_FIELD_REF);
@@ -135,8 +132,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return name != null ? SourceTreeToPsiMap.treeToPsiNotNull(name) : null;
   }
 
-  @Nullable
-  public String[] getSignature() {
+  public String @Nullable [] getSignature() {
     PsiElement element = getNameElement();
     if (element == null) return null;
 
@@ -186,11 +182,10 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return JavaResolveUtil.getContextClass(this);
   }
 
-  @NotNull
-  public static PsiMethod[] findMethods(@Nullable MethodSignature methodSignature,
-                                        @NotNull PsiClass scope,
-                                        @Nullable String name,
-                                        @NotNull PsiMethod[] allMethods) {
+  public static PsiMethod @NotNull [] findMethods(@Nullable MethodSignature methodSignature,
+                                                  @NotNull PsiClass scope,
+                                                  @Nullable String name,
+                                                  PsiMethod @NotNull [] allMethods) {
     final PsiClass superClass = scope.getSuperClass();
     final PsiSubstitutor substitutor = superClass == null ? PsiSubstitutor.EMPTY :
                                        TypeConversionUtil.getSuperClassSubstitutor(superClass, scope, PsiSubstitutor.EMPTY);
@@ -217,8 +212,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     return candidates.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
+  public static PsiMethod @NotNull [] getAllMethods(PsiElement scope, PsiElement place) {
     final SmartList<PsiMethod> result = new SmartList<>();
     scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
     return result.toArray(PsiMethod.EMPTY_ARRAY);
@@ -264,16 +258,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     @Override
-    @NotNull
-    public JavaResolveResult[] multiResolve(boolean incompleteCode) {
+    public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
       return Arrays.stream(myReferredElements)
         .map(myReferredElement -> new CandidateInfo(myReferredElement, PsiSubstitutor.EMPTY))
         .toArray(JavaResolveResult[]::new);
     }
 
     @Override
-    @NotNull
-    public PsiElement[] getVariants(){
+    public PsiElement @NotNull [] getVariants(){
       throw new UnsupportedOperationException();
     }
 

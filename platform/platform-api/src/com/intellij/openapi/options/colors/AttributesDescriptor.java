@@ -33,7 +33,7 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
    * @param displayName the name of the attribute shown in the colors list.
    * @param key         the attributes key for which the colors are specified.
    */
-  public AttributesDescriptor(@Nls @NotNull String displayName, @NotNull TextAttributesKey key) {
+  public AttributesDescriptor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String displayName, @NotNull TextAttributesKey key) {
     super(displayName, key);
   }
 

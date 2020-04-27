@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  * 'Create Test' feature.
  * <p/>
  * <strong>This API isn't stable for now and may be changed in future. Also it isn't possible to change this in UI.</strong>
- * @author nik
  */
 public abstract class TestModuleProperties {
   public static TestModuleProperties getInstance(@NotNull Module module) {

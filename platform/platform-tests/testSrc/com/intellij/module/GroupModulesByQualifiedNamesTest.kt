@@ -21,9 +21,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert
 import org.junit.Test
 
-/**
- * @author nik
- */
 class GroupModulesByQualifiedNamesTest : HeavyPlatformTestCase() {
   @Test
   fun `test single module`() {

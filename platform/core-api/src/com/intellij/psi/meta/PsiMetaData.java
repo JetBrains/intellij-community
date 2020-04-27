@@ -27,16 +27,14 @@ public interface PsiMetaData {
    * @return objects this meta data depends on.
    * @see com.intellij.psi.util.CachedValue
    */
-  @NotNull
-  default Object[] getDependencies() {
+  default Object @NotNull [] getDependencies() {
     //noinspection deprecation
     return getDependences();
   }
 
   /** @deprecated use {@link PsiMetaData#getDependencies()} */
   @Deprecated
-  @NotNull
-  default Object[] getDependences() {
+  default Object @NotNull [] getDependences() {
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 }

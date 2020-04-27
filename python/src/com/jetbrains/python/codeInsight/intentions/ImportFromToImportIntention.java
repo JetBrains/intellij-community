@@ -88,8 +88,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   }
 
   // given module "...foo.bar". returns "...foo" and "bar"; if not strict, undefined names become "?".
-  @Nullable
-  private static String[] getRelativeNames(boolean strict, InfoHolder info) {
+  private static String @Nullable [] getRelativeNames(boolean strict, InfoHolder info) {
     String remaining_name = "?";
     String separated_name = "?";
     boolean failure = true;

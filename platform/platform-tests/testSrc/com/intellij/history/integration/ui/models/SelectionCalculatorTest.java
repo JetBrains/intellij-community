@@ -120,7 +120,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
 
   private static class MyIdeaGateway extends IdeaGateway {
     @Override
-    public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {
+    public String stringFromBytes(byte @NotNull [] bytes, @NotNull String path) {
       return new String(bytes, StandardCharsets.UTF_8);
     }
   }

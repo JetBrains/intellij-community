@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -45,6 +44,7 @@ public final class PluginDownloader {
   private final @Nullable String myProductCode;
   private final Date myReleaseDate;
   private final int myReleaseVersion;
+  private final boolean myLicenseOptional;
   private final String myDescription;
   private final List<PluginId> myDepends;
 
@@ -64,6 +64,7 @@ public final class PluginDownloader {
     myProductCode = descriptor.getProductCode();
     myReleaseDate = descriptor.getReleaseDate();
     myReleaseVersion = descriptor.getReleaseVersion();
+    myLicenseOptional = descriptor.isLicenseOptional();
     myDescription = descriptor.getDescription();
     myDepends = descriptor instanceof PluginNode ? ((PluginNode)descriptor).getDepends() : Arrays.asList(descriptor.getDependentPluginIds());
 
@@ -108,6 +109,10 @@ public final class PluginDownloader {
 
   public int getReleaseVersion() {
     return myReleaseVersion;
+  }
+
+  public boolean isLicenseOptional() {
+    return myLicenseOptional;
   }
 
   @Nullable
@@ -327,15 +332,16 @@ public final class PluginDownloader {
   }
 
   // creators-converters
-
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor) throws IOException {
     return createDownloader(descriptor, null, null);
   }
 
   @NotNull
-  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
-                                                  @Nullable String host,
-                                                  @Nullable BuildNumber buildNumber) throws IOException {
+  public static PluginDownloader createDownloader(
+    @NotNull IdeaPluginDescriptor descriptor,
+    @Nullable String host,
+    @Nullable BuildNumber buildNumber
+  ) throws IOException {
     String url;
     try {
       if (host != null && descriptor instanceof PluginNode) {
@@ -345,26 +351,25 @@ public final class PluginDownloader {
         }
       }
       else {
-        Application app = ApplicationManager.getApplication();
-        ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-
-        String buildNumberAsString = buildNumber != null ? buildNumber.asString() :
-                                     app != null ? ApplicationInfo.getInstance().getApiVersion() :
-                                     appInfo.getBuild().asString();
-
-        Map<String, String> parameters = new LinkedHashMap<>();
-        parameters.put("action", "download");
+        final Map<String, String> parameters = new HashMap<>();
         parameters.put("id", descriptor.getPluginId().getIdString());
-        parameters.put("build", buildNumberAsString);
+        parameters.put("build", getBuildNumberForDownload(buildNumber));
         parameters.put("uuid", PermanentInstallationID.get());
-        url = Urls.newFromEncoded(appInfo.getPluginsDownloadUrl()).addParameters(parameters).toExternalForm();
+        url = Urls
+          .newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
+          .addParameters(parameters)
+          .toExternalForm();
       }
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
-
     return new PluginDownloader(descriptor, url, buildNumber);
+  }
+
+  @NotNull
+  public static String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
+    return buildNumber != null ? buildNumber.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests();
   }
 
   @NotNull
@@ -379,6 +384,7 @@ public final class PluginDownloader {
     node.setProductCode(downloader.getProductCode());
     node.setReleaseDate(downloader.getReleaseDate());
     node.setReleaseVersion(downloader.getReleaseVersion());
+    node.setLicenseOptional(downloader.isLicenseOptional());
     node.setVersion(downloader.getPluginVersion());
     node.setRepositoryName(host);
     node.setDownloadUrl(downloader.myPluginUrl);

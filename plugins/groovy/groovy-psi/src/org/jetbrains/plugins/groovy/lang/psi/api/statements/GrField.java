@@ -36,8 +36,7 @@ public interface GrField extends GrVariable, GrMember, PsiField, GrDocCommentOwn
   @Nullable
   GrAccessorMethod getSetter();
 
-  @NotNull
-  GrAccessorMethod[] getGetters();
+  GrAccessorMethod @NotNull [] getGetters();
 
   @NotNull
   Map<String, NamedArgumentDescriptor> getNamedParameters();

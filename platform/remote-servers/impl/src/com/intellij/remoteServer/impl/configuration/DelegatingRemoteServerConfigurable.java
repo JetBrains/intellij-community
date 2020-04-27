@@ -22,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* @author nik
-*/
 class DelegatingRemoteServerConfigurable extends RemoteServerConfigurable {
   private final UnnamedConfigurable myDelegate;
 

@@ -34,7 +34,7 @@ public class CachingPainter {
    * and it cannot be determined when cached image is produced.
    */
   public static void paint(@NotNull Graphics2D g, float x, float y, float width, float height, @NotNull Consumer<Graphics2D> painter,
-                           @NotNull Object key, @NotNull Object... parameters) {
+                           @NotNull Object key, Object @NotNull ... parameters) {
     GraphicsConfiguration config = g.getDeviceConfiguration();
     float scale = JBUIScale.sysScale(config);
     if ((int) scale != scale) {

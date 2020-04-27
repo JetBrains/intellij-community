@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 import javax.swing.*;
 import java.io.File;
 
-/**
- * @author nik
- */
 public class GantLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   private static final LibraryKind GANT_KIND = LibraryKind.create("gant");
 

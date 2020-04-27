@@ -21,7 +21,7 @@ public final class PluginId implements Comparable<PluginId> {
   }
 
   @Nullable
-  public static synchronized PluginId findId(@NotNull String... idStrings) {
+  public static synchronized PluginId findId(String @NotNull ... idStrings) {
     for (String idString : idStrings) {
       PluginId pluginId = ourRegisteredIds.get(idString);
       if (pluginId != null) {

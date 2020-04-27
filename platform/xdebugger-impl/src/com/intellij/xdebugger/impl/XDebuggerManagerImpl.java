@@ -14,6 +14,9 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.ide.plugins.CannotUnloadPluginException;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,9 +74,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author nik
- */
 @State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState> {
   public static final NotificationGroup NOTIFICATION_GROUP =
@@ -160,10 +160,29 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       }
     });
 
+    ApplicationManager.getApplication().getMessageBus().connect(project).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      
+      @Override
+      public void checkUnloadPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+        XDebugSession[] sessions = getDebugSessions();
+        for (XDebugSession session : sessions) {
+          XDebugProcess process = session.getDebugProcess();
+          if (process.dependsOnPlugin(pluginDescriptor)) {
+            throw new CannotUnloadPluginException("Plugin is not unload-safe because of the started debug session");
+          }
+        }
+      }
+    });
+
     DebuggerEditorListener listener = new DebuggerEditorListener();
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
     eventMulticaster.addEditorMouseMotionListener(listener, myProject);
     eventMulticaster.addEditorMouseListener(listener, myProject);
+  }
+
+  @Override
+  public void initializeComponent() {
+    myBreakpointManager.init();
   }
 
   private void updateExecutionPoint(@NotNull VirtualFile file, boolean navigate) {
@@ -289,8 +308,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   }
 
   @Override
-  @NotNull
-  public XDebugSession[] getDebugSessions() {
+  public XDebugSession @NotNull [] getDebugSessions() {
     // ConcurrentHashMap.values().toArray(new T[0]) guaranteed to return array with no nulls
     return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }
@@ -362,6 +380,11 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myBreakpointManager.loadState(state.getBreakpointManagerState());
     myWatchesManager.loadState(state.getWatchesManagerState());
     myPinToTopManager.loadState(state.getPinToTopManagerState());
+  }
+
+  @Override
+  public void noStateLoaded() {
+    myBreakpointManager.noStateLoaded();
   }
 
   public void showExecutionPosition() {

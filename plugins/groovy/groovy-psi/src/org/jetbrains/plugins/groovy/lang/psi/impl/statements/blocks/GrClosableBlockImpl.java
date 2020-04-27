@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
@@ -26,13 +26,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
+import org.jetbrains.plugins.groovy.lang.typing.GroovyPsiClosureType;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.psi.util.CachedValueProvider.Result.create;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.FunctionalExpressionsKt.*;
-import static org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType.create;
 
 /**
  * @author ilyas
@@ -75,9 +75,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return "Closable block";
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getParameters() {
+  public GrParameter @NotNull [] getParameters() {
     if (hasParametersSection()) {
       GrParameterListImpl parameterList = getParameterList();
       return parameterList.getParameters();
@@ -86,9 +85,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return GrParameter.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public GrParameter[] getAllParameters() {
+  public GrParameter @NotNull [] getAllParameters() {
     if (hasParametersSection()) return getParameters();
     return getSyntheticItParameter();
   }
@@ -134,7 +132,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
   @Override
   public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, it -> create(it, true));
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, GroovyPsiClosureType::new);
   }
 
   @Override

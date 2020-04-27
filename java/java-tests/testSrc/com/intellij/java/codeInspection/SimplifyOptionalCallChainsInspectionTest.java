@@ -29,9 +29,8 @@ public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParam
     return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk9());
   }
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new SimplifyOptionalCallChainsInspection()};
   }
 

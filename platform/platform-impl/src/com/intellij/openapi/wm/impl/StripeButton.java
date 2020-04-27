@@ -59,7 +59,7 @@ public final class StripeButton extends AnchoredButton implements DataProvider {
           toolWindow.getToolWindowManager().hideToolWindow(id, false);
         }
         else {
-          toolWindow.getToolWindowManager().activated(toolWindow);
+          toolWindow.getToolWindowManager().activated$intellij_platform_ide_impl(toolWindow);
         }
 
         myPressedWhenSelected = false;

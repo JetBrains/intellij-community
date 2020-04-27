@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.DataManager
@@ -24,7 +24,6 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
@@ -32,14 +31,12 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionDataContext
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContext
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRCommentsUIUtil
+import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentServiceAdapter
@@ -52,8 +49,6 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.event.AdjustmentListener
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
@@ -83,13 +78,10 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
 
-    val detailsReloader = DetailsReloader(dataProvider, disposable)
     fun handleDetails() {
       dataProvider.detailsRequest.handleOnEdt(disposable) { pr, _ ->
         if (pr != null) {
           detailsModel.value = pr
-          if (pr.mergeable == GHPullRequestMergeableState.UNKNOWN) detailsReloader.start()
-          else detailsReloader.stop()
         }
       }
     }
@@ -130,21 +122,19 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         layout = MigLayout(LC().gridGap("0", "0")
                              .insets("0", "0", "0", "0")
                              .fillX()
-                             .flowY()).apply {
-          columnConstraints = AC().fill().size("0:$maxWidth:$maxWidth")
-        }
+                             .flowY(),
+                           AC().size(":$maxWidth:$maxWidth").gap("push"))
 
         emptyText.clear()
 
-        add(header, CC().width("0:$maxWidth:$maxWidth"))
-        add(timeline, CC().width("0:$maxWidth:$maxWidth"))
-        add(loadingIcon, CC().width("0:$maxWidth:$maxWidth").hideMode(2).alignX("center"))
+        add(header)
+        add(timeline, CC().growX().minWidth(""))
+        add(loadingIcon, CC().hideMode(2).alignX("center"))
 
         with(context.commentService) {
           if (canComment()) {
             val commentServiceAdapter = GHPRCommentServiceAdapter.create(this, dataProvider)
-            add(createCommentField(project, commentServiceAdapter, avatarIconsProvider, context.currentUser),
-                CC().width("0:$maxWidth:$maxWidth"))
+            add(createCommentField(commentServiceAdapter, avatarIconsProvider, context.currentUser), CC().growX())
           }
         }
       }
@@ -179,12 +169,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     Disposer.register(loaderPanel, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
-    val statePanel = GHPRStatePanel.create(project, detailsModel,
-                                           dataProvider,
-                                           context.securityService,
-                                           context.busyStateTracker,
-                                           context.stateService,
-                                           disposable)
+    val statePanel = GHPRStatePanel(project, dataProvider, context.securityService, context.stateService, detailsModel, disposable)
 
     val contentPanel = JBUI.Panels.simplePanel(loaderPanel).addToBottom(statePanel).andTransparent()
 
@@ -215,13 +200,13 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     }
   }
 
-  private fun createCommentField(project: Project,
-                                 commentService: GHPRCommentServiceAdapter,
+  private fun createCommentField(commentService: GHPRCommentServiceAdapter,
                                  avatarIconsProvider: GHAvatarIconsProvider,
                                  currentUser: GHUser): JComponent {
-    return GHPRCommentsUIUtil.createCommentField(project, avatarIconsProvider, currentUser) {
+    val model = GHPRSubmittableTextField.Model {
       commentService.addComment(EmptyProgressIndicator(), it)
     }
+    return GHPRSubmittableTextField.create(model, avatarIconsProvider, currentUser)
   }
 
   private fun createItemComponentFactory(project: Project,
@@ -233,39 +218,11 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
 
     val diffFactory = GHPRReviewThreadDiffComponentFactory(FileTypeRegistry.getInstance(), project, EditorFactory.getInstance())
     val eventsFactory = GHPRTimelineEventComponentFactoryImpl(avatarIconsProvider)
-    return GHPRTimelineItemComponentFactory(project, reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
+    return GHPRTimelineItemComponentFactory(reviewService, avatarIconsProvider, reviewThreadsModelsProvider, diffFactory,
                                             eventsFactory,
                                             currentUser)
   }
 
   override fun getEditorTypeId(): String = "GHPR"
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
-
-  private inner class DetailsReloader(private val dataProvider: GHPRDataProvider,
-                                      private val disposable: Disposable) {
-
-    private var scheduler: ScheduledFuture<*>? = null
-
-    init {
-      Disposer.register(disposable, Disposable {
-        stop()
-      })
-    }
-
-    @CalledInAwt
-    fun start() {
-      if (Disposer.isDisposed(disposable)) error("Already disposed")
-
-      if (scheduler == null) {
-        scheduler = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay({ dataProvider.reloadDetails() },
-                                                                                     3, 3, TimeUnit.SECONDS)
-      }
-    }
-
-    @CalledInAwt
-    fun stop() {
-      scheduler?.cancel(true)
-      scheduler = null
-    }
-  }
 }

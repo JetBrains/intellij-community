@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * For project level extension points please use {@link ProjectExtensionPointName}.
  */
 public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
-  public ExtensionPointName(@NotNull String name) {
+  public ExtensionPointName(@NotNull @NonNls String name) {
     super(name);
   }
 
@@ -33,8 +33,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Prefer to use {@link #getExtensionList()}.
    */
-  @NotNull
-  public T[] getExtensions() {
+  public T @NotNull [] getExtensions() {
     return getPointImpl(null).getExtensions();
   }
 
@@ -92,8 +91,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   /**
    * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
-  @NotNull
-  public T[] getExtensions(@Nullable AreaInstance areaInstance) {
+  public T @NotNull [] getExtensions(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance).getExtensions();
   }
 
@@ -154,7 +152,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   @ApiStatus.Experimental
   @ApiStatus.Internal
   public void processWithPluginDescriptor(@NotNull BiConsumer<? super T, ? super PluginDescriptor> consumer) {
-    getPointImpl(null).processWithPluginDescriptor(consumer);
+    getPointImpl(null).processWithPluginDescriptor(/* shouldBeSorted = */ true, consumer);
   }
 
   public void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,

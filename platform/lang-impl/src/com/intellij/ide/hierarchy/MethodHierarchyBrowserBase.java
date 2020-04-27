@@ -28,16 +28,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
 
-/**
- * Use {@link com.intellij.ide.hierarchy.newAPI.MethodHierarchyBrowserBase} instead
- */
-@Deprecated
 public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  /**
-   * Use {code {@link #getMethodType()}} instead
-   */
-  @Deprecated
   public static final String METHOD_TYPE = "Method {0}";
 
   public static final DataKey<MethodHierarchyBrowserBase> DATA_KEY = DataKey.create("com.intellij.ide.hierarchy.MethodHierarchyBrowserBase");
@@ -50,6 +45,13 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   @NotNull
   protected String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.prev.occurence.name");
+  }
+
+  @Override
+  protected Map<String, Supplier<String>> getPresentableNameMap() {
+    HashMap<String, Supplier<String>> map = new HashMap<>();
+    map.put(METHOD_TYPE, MethodHierarchyBrowserBase::getMethodType);
+    return map;
   }
 
   @Override
@@ -107,7 +109,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   private final class ShowImplementationsOnlyAction extends ToggleAction {
     private ShowImplementationsOnlyAction() {
-      super(IdeBundle.message("action.hide.non.implementations"), null, AllIcons.General.Filter);
+      super(IdeBundle.messagePointer("action.hide.non.implementations"), AllIcons.General.Filter);
     }
 
     @Override
@@ -132,7 +134,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), DATA_KEY.getName(), LanguageMethodHierarchy.INSTANCE);
+      super(IdeBundle.messagePointer("action.base.on.this.method"), DATA_KEY.getName(), LanguageMethodHierarchy.INSTANCE);
     }
   }
 

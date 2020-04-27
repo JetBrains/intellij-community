@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author nik
- */
 public class OrderRootTypeElement extends LibraryTableTreeContentElement<OrderRootTypeElement> {
   private final OrderRootType myRootType;
 

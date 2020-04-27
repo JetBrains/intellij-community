@@ -25,9 +25,6 @@ import com.intellij.openapi.module.ModuleType;
 
 import java.util.Collection;
 
-/**
- * @author nik
- */
 public interface FacetEditorFacade {
 
   boolean nodeHasFacetOfType(final @Nullable FacetInfo facet, FacetTypeId typeId);

@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class PackagingElementDraggingObject {
   private PackagingElementNode<?> myTargetNode;
   private CompositePackagingElement<?> myTargetElement;

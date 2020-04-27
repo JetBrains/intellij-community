@@ -93,9 +93,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     values.clear();
     values.addAll(copyItemsFromModel(myContext.getModel()));
     JList<?> popupList = getList();
-    updateVisibleRowCount();
     ((ListPopupModel<?>)popupList.getModel()).syncModel();
-    popupList.setVisibleRowCount(Math.min(values.size(), myContext.getMaximumRowCount()));
 
     //AbstractPopup#show sets preferred size, we need to turn if off shortly
     JComponent content = getContent();

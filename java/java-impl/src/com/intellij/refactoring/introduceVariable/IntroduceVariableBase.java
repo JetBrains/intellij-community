@@ -10,6 +10,7 @@ import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -61,6 +62,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -179,7 +181,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
               }
             },
-            new PsiExpressionTrimRenderer.RenderFunction(), "Expressions", preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
+            new PsiExpressionTrimRenderer.RenderFunction(), RefactoringBundle.message("introduce.target.chooser.expressions.title"), preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
           return;
         }
       }
@@ -584,7 +586,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (expr == null || !expr.isPhysical()) {
       if (ReassignVariableUtil.reassign(editor)) return false;
       if (expr == null) {
-        String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.an.expression"));
+        String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.block.should.represent.an.expression"));
         showErrorMessage(project, editor, message);
         return false;
       }
@@ -599,15 +601,25 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (originalType == null || LambdaUtil.notInferredType(originalType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("unknown.expression.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
       showErrorMessage(project, editor, message);
       return false;
     }
 
     if (PsiType.VOID.equals(originalType)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.expression.has.void.type"));
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
       showErrorMessage(project, editor, message);
       return false;
+    }
+
+    for (PsiPatternVariable variable : JavaPsiPatternUtil.getExposedPatternVariables(expr)) {
+      if (VariableAccessUtils.getVariableReferences(variable, variable.getDeclarationScope()).stream()
+        .anyMatch(ref -> !PsiTreeUtil.isAncestor(expr, ref, true))) {
+        String message = RefactoringBundle.getCannotRefactorMessage(
+          JavaRefactoringBundle.message("selected.expression.introduces.pattern.variable", variable.getName()));
+        showErrorMessage(project, editor, message);
+        return false;
+      }
     }
 
 
@@ -783,7 +795,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   @Contract("_, _, null -> null")
   protected PsiElement checkAnchorStatement(Project project, Editor editor, PsiElement anchorStatement) {
     if (anchorStatement == null) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
+      String message = JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       showErrorMessage(project, editor, message);
       return null;
     }
@@ -792,7 +804,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiElement tempContainer = anchorStatement.getParent();
 
     if (!(tempContainer instanceof PsiCodeBlock) && !RefactoringUtil.isLoopOrIf(tempContainer) && !(tempContainer instanceof PsiLambdaExpression) && (tempContainer.getParent() instanceof PsiLambdaExpression)) {
-      String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
+      String message = JavaRefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", getRefactoringName());
       showErrorMessage(project, editor, message);
       return null;
     }
@@ -1103,7 +1115,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         PsiMethod method = ((PsiMethodCallExpression)enclosingExpr).resolveMethod();
         if (method != null && method.isConstructor()) {
           //This is either 'this' or 'super', both must be the first in the respective constructor
-          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("invalid.expression.context"));
+          String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("invalid.expression.context"));
           CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpID);
           return true;
         }
@@ -1129,10 +1141,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
-        final String message = RefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
+        final String message = JavaRefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
         conflicts.putValue(variable, CommonRefactoringUtil.capitalize(message));
       }
-      conflicts.putValue(occurence, RefactoringBundle.message("introducing.variable.may.break.code.logic"));
+      conflicts.putValue(occurence, JavaRefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
   }
 

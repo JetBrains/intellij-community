@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.structureView.newStructureView;
 
 import com.intellij.ide.CopyPasteDelegator;
@@ -72,6 +71,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -608,11 +608,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
+  private final class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler implements Disposable {
     private FileEditorPositionListener myFileEditorPositionListener;
 
-    private MyAutoScrollFromSourceHandler(Project project, Disposable parentDisposable) {
+    private MyAutoScrollFromSourceHandler(Project project, @NotNull Disposable parentDisposable) {
       super(project, getTree(), parentDisposable);
+
+      Disposer.register(parentDisposable, this);
     }
 
     @Override
@@ -626,7 +628,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     @Override
     public void dispose() {
-      super.dispose();
       if (myFileEditorPositionListener != null) {
         myTreeModel.removeEditorPositionListener(myFileEditorPositionListener);
       }
@@ -1050,7 +1051,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           return provider.isAutoExpand((StructureViewTreeElement)value);
         }
         else if (value instanceof GroupWrapper) {
-          Group group = ObjectUtils.notNull(((GroupWrapper)value).getValue());
+          Group group = Objects.requireNonNull(((GroupWrapper)value).getValue());
           for (TreeElement treeElement : group.getChildren()) {
             if (treeElement instanceof StructureViewTreeElement && !provider.isAutoExpand((StructureViewTreeElement)treeElement)) {
               return false;

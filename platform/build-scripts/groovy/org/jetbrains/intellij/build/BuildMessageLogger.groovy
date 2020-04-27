@@ -17,9 +17,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 
-/**
- * @author nik
- */
 @CompileStatic
 abstract class BuildMessageLogger {
   abstract void processMessage(LogMessage message)

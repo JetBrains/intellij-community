@@ -18,9 +18,6 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class StepOutAction extends XDebuggerActionBase {
   @Override
   @NotNull

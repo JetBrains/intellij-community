@@ -2,7 +2,6 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManagerImpl;
@@ -19,7 +18,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.BidirectionalMap;
 import gnu.trove.THashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +34,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
-    return GroupNames.DECLARATION_REDUNDANCY;
+    return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
@@ -48,7 +46,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Ignore '@SuppressWarning(\"ALL\")'", this, "IGNORE_ALL");
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.redundant.suppression.option", "@SuppressWarning(\"ALL\")"), this, "IGNORE_ALL");
   }
 
   @Override
@@ -86,10 +84,9 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
     }
   }
 
-  @NotNull
-  public ProblemDescriptor[] checkElement(@NotNull final PsiFile psiElement,
-                                          RedundantSuppressionDetector extension,
-                                          @NotNull final InspectionManager manager) {
+  public ProblemDescriptor @NotNull [] checkElement(@NotNull final PsiFile psiElement,
+                                                    RedundantSuppressionDetector extension,
+                                                    @NotNull final InspectionManager manager) {
     final Map<PsiElement, Collection<String>> suppressedScopes = new THashMap<>();
     psiElement.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -143,6 +140,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
           GlobalInspectionTool globalTool = global.getTool();
           //when graph is needed, results probably depend on outer files so absence of results on one file (in current context) doesn't guarantee anything
           if (globalTool.isGraphNeeded()) continue;
+          if (globalTool instanceof RedundantSuppressInspection) continue;
           descriptors = new ArrayList<>(InspectionEngine.runInspectionOnFile(file, global, globalContext));
         }
         else {
@@ -267,8 +265,7 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
            ? ((RedundantSuppressionDetector)suppressor).createRemoveRedundantSuppressionFix(toolAndLang[0]) : null;
   }
 
-  @NotNull
-  protected InspectionToolWrapper<?, ?>[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
+  protected InspectionToolWrapper<?,?> @NotNull [] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
     String currentProfileName = ((InspectionManagerBase)manager).getCurrentProfile();
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(manager.getProject());
     InspectionProfileImpl usedProfile = profileManager.getProfile(currentProfileName, false);

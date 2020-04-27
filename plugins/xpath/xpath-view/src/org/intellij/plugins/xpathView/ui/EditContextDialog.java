@@ -24,15 +24,15 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.*;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
-import com.intellij.util.ui.Table;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.context.*;
@@ -55,14 +55,13 @@ import java.util.*;
 import static org.intellij.plugins.xpathView.util.Copyable.Util.copy;
 
 public class EditContextDialog extends DialogWrapper {
-  private final DimensionService myDimensionService = DimensionService.getInstance();
 
   private final Set<String> myUnresolvedPrefixes;
 
-  private final JTable myVariableTable;
+  private final JBTable myVariableTable;
   private final VariableTableModel myVariableTableModel;
 
-  private final JTable myNamespaceTable;
+  private final JBTable myNamespaceTable;
   private final NamespaceTableModel myNamespaceTableModel;
   private final ContextProvider myContextProvider;
   private JBSplitter mySplitter;
@@ -82,7 +81,7 @@ public class EditContextDialog extends DialogWrapper {
 
     final List<Variable> m = copy(variables);
     myVariableTableModel = new VariableTableModel(m, project, XPathFileType.XPATH);
-    myVariableTable = new Table(myVariableTableModel);
+    myVariableTable = new JBTable(myVariableTableModel);
     myVariableTable.setDefaultRenderer(String.class, new VariableCellRenderer(m));
     myVariableTable.setDefaultRenderer(Expression.class, new ExpressionCellRenderer(project));
     myVariableTable.setDefaultEditor(Expression.class, new ExpressionCellEditor(project));
@@ -90,17 +89,17 @@ public class EditContextDialog extends DialogWrapper {
     int width = new JLabel("Name").getPreferredSize().width;
     myVariableTable.getColumnModel().getColumn(0).setMinWidth(width);
     myVariableTable.getColumnModel().getColumn(0).setMaxWidth(width * 5);
-    myVariableTable.setPreferredScrollableViewportSize(new Dimension(200, 130));
+    myVariableTable.setPreferredScrollableViewportSize(JBUI.size(200, 130));
 
     final List<Namespace> n = copy(namespaces);
     myNamespaceTableModel = new NamespaceTableModel(n);
-    myNamespaceTable = new Table(myNamespaceTableModel);
+    myNamespaceTable = new JBTable(myNamespaceTableModel);
     myNamespaceTable.setDefaultRenderer(String.class, new NamespaceCellRenderer(n));
 
     width = new JLabel("Prefix").getPreferredSize().width;
     myNamespaceTable.getColumnModel().getColumn(0).setMinWidth(width);
     myNamespaceTable.getColumnModel().getColumn(0).setMaxWidth(width * 4);
-    myNamespaceTable.setPreferredScrollableViewportSize(new Dimension(200, 150));
+    myNamespaceTable.setPreferredScrollableViewportSize(JBUI.size(200, 150));
 
     init();
   }
@@ -473,8 +472,7 @@ public class EditContextDialog extends DialogWrapper {
 
   private class MyVariableContext extends SimpleVariableContext {
     @Override
-    @NotNull
-    public String[] getVariablesInScope(XPathElement element) {
+    public String @NotNull [] getVariablesInScope(XPathElement element) {
       final Collection<Variable> variables = myVariableTableModel.getVariables();
       return Variable.asSet(variables).toArray(new String[variables.size()]);
     }

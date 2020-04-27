@@ -29,7 +29,7 @@ public class QuickFixManagerImpl extends QuickFixManager<GlassLayer> {
   }
 
   @Override
-  @NotNull protected ErrorInfo[] getErrorInfos() {
+  protected ErrorInfo @NotNull [] getErrorInfos() {
     final ArrayList<RadComponent> list = FormEditingUtil.getSelectedComponents(getEditor());
     if (list.size() != 1) {
       return ErrorInfo.EMPTY_ARRAY;

@@ -50,8 +50,7 @@ public class FileAttribute {
     return ManagingFS.getInstance().writeAttribute(file, this);
   }
 
-  @Nullable
-  public byte[] readAttributeBytes(VirtualFile file) throws IOException {
+  public byte @Nullable [] readAttributeBytes(VirtualFile file) throws IOException {
     try (DataInputStream stream = readAttribute(file)) {
       if (stream == null) return null;
       int len = stream.readInt();
@@ -59,7 +58,7 @@ public class FileAttribute {
     }
   }
 
-  public void writeAttributeBytes(VirtualFile file, @NotNull byte[] bytes) throws IOException {
+  public void writeAttributeBytes(VirtualFile file, byte @NotNull [] bytes) throws IOException {
     writeAttributeBytes(file, bytes, 0, bytes.length);
   }
 

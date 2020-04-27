@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FullValueEvaluatorProvider;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -12,9 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author egor
- */
 public class GraphicsObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   public GraphicsObjectRenderer() {
     super("Graphics", null, null);
@@ -43,7 +40,7 @@ public class GraphicsObjectRenderer extends CompoundReferenceRenderer implements
       if (!(type instanceof ReferenceType) || !DebuggerUtils.instanceOf(type, "java.awt.Image")) {
         return null;
       }
-      return new ImageObjectRenderer.IconPopupEvaluator(DebuggerBundle.message("message.node.show.image"), evaluationContext) {
+      return new ImageObjectRenderer.IconPopupEvaluator(JavaDebuggerBundle.message("message.node.show.image"), evaluationContext) {
         @Override
         protected Icon getData() {
           return ImageObjectRenderer.getIcon(getEvaluationContext(), bufImgValue, "imageToBytes");

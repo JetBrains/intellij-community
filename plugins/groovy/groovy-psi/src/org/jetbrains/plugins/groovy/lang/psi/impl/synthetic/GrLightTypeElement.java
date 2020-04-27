@@ -41,9 +41,8 @@ public class GrLightTypeElement extends LightElement implements GrTypeElement {
     return "light type element";
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return GrAnnotation.EMPTY_ARRAY;
   }
 }

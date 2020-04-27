@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.rename.inplace.MyLookupExpression;
@@ -60,7 +61,8 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
           final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
           if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
             PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-              () -> WriteCommandAction.writeCommandAction(project).withName("Normalize declaration").run(() -> node.getTreeParent().addChild(astNode, node)));
+              () -> WriteCommandAction.writeCommandAction(project).withName(
+                RefactoringBundle.message("introduce.normalize.declaration.command.name")).run(() -> node.getTreeParent().addChild(astNode, node)));
           }
         }
       }
@@ -178,8 +180,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
       return myPointer.getElement();
     }
 
-    @Nullable
-    private LookupElement[] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
+    private LookupElement @Nullable [] createLookupItems(String name, Editor editor, PsiNamedElement psiVariable) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
       if (psiVariable != null) {
         final TextResult insertedValue =

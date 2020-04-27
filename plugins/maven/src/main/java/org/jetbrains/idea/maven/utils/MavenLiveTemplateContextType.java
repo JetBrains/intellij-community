@@ -23,9 +23,12 @@ import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 
+import static org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NAME_PRESENTABLE;
+import static org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NAME_UPCASE;
+
 public class MavenLiveTemplateContextType extends TemplateContextType {
   public MavenLiveTemplateContextType() {
-    super("MAVEN", "Maven");
+    super(MAVEN_NAME_UPCASE, MAVEN_NAME_PRESENTABLE);
   }
 
   @Override

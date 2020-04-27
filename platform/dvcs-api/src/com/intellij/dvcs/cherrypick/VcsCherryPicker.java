@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,7 @@ public abstract class VcsCherryPicker {
    * @return CherryPick Action name for supported vcs
    */
   @NotNull
+  @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getActionTitle();
 
   /**

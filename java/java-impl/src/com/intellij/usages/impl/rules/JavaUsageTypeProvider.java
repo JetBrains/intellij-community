@@ -40,7 +40,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Override
-  public UsageType getUsageType(PsiElement element, @NotNull UsageTarget[] targets) {
+  public UsageType getUsageType(PsiElement element, UsageTarget @NotNull [] targets) {
     UsageType classUsageType = getClassUsageType(element, targets);
     if (classUsageType != null) return classUsageType;
 
@@ -151,7 +151,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
   }
 
   @Nullable
-  private static UsageType getClassUsageType(@NotNull PsiElement element, @NotNull UsageTarget[] targets) {
+  private static UsageType getClassUsageType(@NotNull PsiElement element, UsageTarget @NotNull [] targets) {
     final PsiJavaCodeReferenceElement codeReference = PsiTreeUtil.getParentOfType(element, PsiJavaCodeReferenceElement.class);
     if(codeReference != null && isNestedClassOf(codeReference,targets)){
       return UsageType.CLASS_NESTED_CLASS_ACCESS;
@@ -243,7 +243,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return null;
   }
 
-  private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, @NotNull UsageTarget[] targets) {
+  private static boolean isAnonymousClassOf(@Nullable PsiAnonymousClass anonymousClass, UsageTarget @NotNull [] targets) {
     if (anonymousClass == null) {
       return false;
     }
@@ -251,7 +251,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return qualifiesToTargetClasses(anonymousClass.getBaseClassReference(), targets);
   }
 
-  private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, @NotNull UsageTarget[] targets) {
+  private static boolean isNestedClassOf(PsiJavaCodeReferenceElement classReference, UsageTarget @NotNull [] targets) {
     if (classReference instanceof PsiMethodReferenceExpression) return false;
     final PsiElement qualifier = classReference.getQualifier();
     if (qualifier instanceof PsiJavaCodeReferenceElement) {
@@ -260,7 +260,7 @@ public class JavaUsageTypeProvider implements UsageTypeProviderEx {
     return false;
   }
 
-  private static boolean qualifiesToTargetClasses(@NotNull PsiJavaCodeReferenceElement qualifier, @NotNull UsageTarget[] targets) {
+  private static boolean qualifiesToTargetClasses(@NotNull PsiJavaCodeReferenceElement qualifier, UsageTarget @NotNull [] targets) {
     for (UsageTarget target : targets) {
       if (target instanceof PsiElementUsageTarget) {
         PsiElement element = ((PsiElementUsageTarget)target).getElement();

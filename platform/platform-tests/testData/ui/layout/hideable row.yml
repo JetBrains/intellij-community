@@ -29,7 +29,7 @@ columnConstraints:
   count: 2
 componentConstrains:
   Foo [label]: {}
-  'JTextField #1':
+  'JBTextField #1':
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true
@@ -37,7 +37,7 @@ componentConstrains:
     horizontal: {grow: 100.0}
     spanX: INF
     wrap: true
-  'JTextField #3':
+  'JBTextField #3':
     hideMode: 0
     horizontal:
       gapBefore:

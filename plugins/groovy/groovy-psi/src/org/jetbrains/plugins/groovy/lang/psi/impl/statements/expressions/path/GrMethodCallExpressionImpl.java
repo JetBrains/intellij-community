@@ -66,8 +66,7 @@ public class GrMethodCallExpressionImpl extends GrMethodCallImpl implements GrMe
   }
 
   @Override
-  @NotNull
-  public GrClosableBlock[] getClosureArguments() {
+  public GrClosableBlock @NotNull [] getClosureArguments() {
     return getChildrenOfTypeAsList(this, GrClosableBlock.class).toArray(GrClosableBlock.EMPTY_ARRAY);
   }
 }

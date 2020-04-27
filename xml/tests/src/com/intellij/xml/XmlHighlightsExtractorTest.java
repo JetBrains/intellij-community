@@ -33,7 +33,7 @@ public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
     ArrayList<HighlightData> highlights = new ArrayList<>();
     String s = new HighlightsExtractor(map, INLINE_ELEMENT_DESCRIPTORS, COLOR_KEY_MAPPING).extractHighlights(page.getDemoText(),
                                                                                                              highlights);
-    assertEquals(6, highlights.size());
+    assertEquals(8, highlights.size());
     assertEquals("<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
                  "<!DOCTYPE index>\n" +
                  "<!-- Some xml example -->\n" +
@@ -43,6 +43,7 @@ public class XmlHighlightsExtractorTest extends LightPlatformTestCase {
                  "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
                  "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
                  "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n" +
+                 "   <indexitem>Matched tag name</indexitem>\n" +
                  "   <someTextWithEntityRefs>&amp; &#x00B7;</someTextWithEntityRefs>\n" +
                  "   <withCData><![CDATA[\n" +
                  "          <object class=\"MyClass\" key=\"constant\">\n" +

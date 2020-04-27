@@ -33,9 +33,6 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class FormsBuilderTest extends JpsBuildTestCase {
   private static final String SIMPLE_FORM_PATH = "plugins/ui-designer/jps-plugin/testData/build/simple";
 

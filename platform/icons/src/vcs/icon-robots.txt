@@ -1,2 +1,0 @@
-deprecated: checkSpelling.png; to be removed in IDEA 2020
-deprecated: mergeSourcesTree.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree

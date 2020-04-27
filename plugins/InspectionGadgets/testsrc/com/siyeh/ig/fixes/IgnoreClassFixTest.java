@@ -16,9 +16,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class IgnoreClassFixTest extends LightQuickFixParameterizedTestCase {
 
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new SizeReplaceableByIsEmptyInspection(),
       new ResultOfObjectAllocationIgnoredInspection(),

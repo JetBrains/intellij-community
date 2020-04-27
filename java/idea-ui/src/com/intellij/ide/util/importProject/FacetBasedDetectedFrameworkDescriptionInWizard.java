@@ -17,9 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author nik
- */
 public class FacetBasedDetectedFrameworkDescriptionInWizard<F extends Facet, C extends FacetConfiguration> extends FacetBasedDetectedFrameworkDescription<F, C> {
   private static final Logger LOG = Logger.getInstance(FacetBasedDetectedFrameworkDescriptionInWizard.class);
   private final ModuleDescriptor myModuleDescriptor;

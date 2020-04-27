@@ -220,12 +220,17 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
     }
   }
 
-  private class MavenExecConfigurationFactory extends ConfigurationFactory {
+  private static class MavenExecConfigurationFactory extends ConfigurationFactory {
     private final ApplicationConfiguration myApplicationConfiguration;
 
     protected MavenExecConfigurationFactory(ApplicationConfiguration applicationConfiguration) {
       super(MavenRunConfigurationType.getInstance());
       myApplicationConfiguration = applicationConfiguration;
+    }
+
+    @Override
+    public @NotNull String getId() {
+      return "Maven";
     }
 
     @NotNull

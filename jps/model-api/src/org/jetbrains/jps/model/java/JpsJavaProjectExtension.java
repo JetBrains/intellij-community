@@ -17,9 +17,6 @@ package org.jetbrains.jps.model.java;
 
 import org.jetbrains.jps.model.JpsElement;
 
-/**
- * @author nik
- */
 public interface JpsJavaProjectExtension extends JpsElement {
   String getOutputUrl();
 

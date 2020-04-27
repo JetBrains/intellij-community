@@ -26,8 +26,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 public interface FindPopupScopeUI {
-  @NotNull
-  Pair<ScopeType, JComponent>[] getComponents();
+  Pair<ScopeType, JComponent> @NotNull [] getComponents();
 
   @NotNull
   ScopeType initByModel(@NotNull FindModel findModel);
@@ -59,7 +58,7 @@ public interface FindPopupScopeUI {
     }
 
     /**
-     * Use {@link #ScopeType(String, Supplier, Icon)}
+     * @deprecated Use {@link #ScopeType(String, Supplier, Icon)}
      */
     @Deprecated
     public ScopeType(String name, String text, Icon icon) {

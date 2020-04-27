@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
@@ -19,7 +19,7 @@ public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspe
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.requires.auto.module.option"), this, "TRANSITIVE_ONLY");
+    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.requires.auto.module.option"), this, "TRANSITIVE_ONLY");
   }
 
   @NotNull
@@ -34,10 +34,10 @@ public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspe
           PsiJavaModule target = statement.resolve();
           if (target instanceof LightJavaModule) {
             if (!TRANSITIVE_ONLY) {
-              holder.registerProblem(refElement, InspectionsBundle.message("inspection.requires.auto.module.message"));
+              holder.registerProblem(refElement, JavaAnalysisBundle.message("inspection.requires.auto.module.message"));
             }
             else if (statement.hasModifierProperty(PsiModifier.TRANSITIVE)) {
-              holder.registerProblem(refElement, InspectionsBundle.message("inspection.requires.auto.module.transitive"));
+              holder.registerProblem(refElement, JavaAnalysisBundle.message("inspection.requires.auto.module.transitive"));
             }
           }
         }

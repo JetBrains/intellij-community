@@ -16,6 +16,7 @@ import gnu.trove.TObjectLongHashMap;
 import gnu.trove.TObjectLongProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -148,7 +149,19 @@ public class IndexingStamp {
 
   public static boolean versionDiffers(@NotNull ID<?,?> indexId, final int currentIndexVersion) {
     IndexVersion version = getIndexVersion(indexId);
-    return version.myIndexVersion != currentIndexVersion || version.myCommonIndicesVersion != VERSION || version.myVfsCreationStamp != ourVfsCreationStamp;
+    if (version.myIndexVersion != currentIndexVersion) {
+      FileBasedIndexImpl.LOG.info("index version changed for '" + indexId + "'; old = " + version.myIndexVersion + ", new = " + currentIndexVersion);
+      return true;
+    }
+    if (version.myCommonIndicesVersion != VERSION) {
+      FileBasedIndexImpl.LOG.info("common index version changed for '" + indexId + "'; old = " + version.myIndexVersion + ", new = " + currentIndexVersion);
+      return true;
+    }
+    if (version.myVfsCreationStamp != ourVfsCreationStamp) {
+      FileBasedIndexImpl.LOG.info("vfs creation stamp changed; old = " + version.myIndexVersion + ", new = " + currentIndexVersion);
+      return true;
+    }
+    return false;
   }
   
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
@@ -342,6 +355,13 @@ public class IndexingStamp {
       return 0;
     } finally {
       readLock.unlock();
+    }
+  }
+
+  @TestOnly
+  public static void dropIndexingTimeStamps(int fileId) throws IOException {
+    try (DataOutputStream out =  FSRecords.writeAttribute(fileId, Timestamps.PERSISTENCE)) {
+      new Timestamps(null).writeToStream(out);
     }
   }
 

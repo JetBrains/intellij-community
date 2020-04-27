@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -219,7 +219,7 @@ public class JVMNameUtil {
         return allClasses.get(0).name();
       }
 
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.not.loaded", getDisplayName(process)));
     }
 
     @Override
@@ -377,7 +377,7 @@ public class JVMNameUtil {
           return Pair.create(positionFile.getName(), true);
         }
 
-        return Pair.create(DebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine()), true);
+        return Pair.create(JavaDebuggerBundle.message("string.file.line.position", positionFile.getName(), position.getLine()), true);
       }
       return Pair.create(calcClassDisplayName(psiClass), true);
     });

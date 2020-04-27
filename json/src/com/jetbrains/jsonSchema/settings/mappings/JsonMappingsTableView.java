@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.settings.mappings;
 
+import com.intellij.json.JsonBundle;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.StatusText;
@@ -20,8 +21,8 @@ class JsonMappingsTableView extends TableView<UserDefinedJsonSchemaConfiguration
         return isEmpty();
       }
     };
-    myEmptyText.setText("No schema mappings defined")
-               .appendSecondaryText("Add mapping for a ", SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
+    myEmptyText.setText(JsonBundle.message("no.schema.mappings.defined"))
+               .appendSecondaryText(JsonBundle.message("add.mapping.for.a"), SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
 
     JsonMappingKind[] values = JsonMappingKind.values();
     for (int i = 0; i < values.length; i++) {

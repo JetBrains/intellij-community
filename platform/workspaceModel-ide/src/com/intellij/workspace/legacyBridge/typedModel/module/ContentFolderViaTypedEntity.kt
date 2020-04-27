@@ -32,12 +32,13 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
   : ContentFolderViaTypedEntity(entry, sourceRootEntity.url), SourceFolder {
 
   private var packagePrefixVar: String? = null
+  private val sourceRootType: JpsModuleSourceRootType<*> by lazy { getSourceRootType(sourceRootEntity.rootType) }
 
+  override fun getRootType() = sourceRootType
   override fun isTestSource() = sourceRootEntity.tests
   override fun getPackagePrefix() = packagePrefixVar ?:
                                     sourceRootEntity.asJavaSourceRoot()?.packagePrefix ?:
                                     sourceRootEntity.asJavaResourceRoot()?.relativeOutputPath?.replace('/', '.') ?: ""
-  override fun getRootType() = getSourceRootType(sourceRootEntity.rootType)
 
   override fun getJpsElement(): JpsModuleSourceRoot {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
@@ -139,11 +140,14 @@ internal class SourceFolderViaTypedEntity(private val entry: ContentEntryViaType
     packagePrefixVar = packagePrefix
   }
 
-  private fun getSourceRootType(rootType: String): JpsModuleSourceRootType<*> =
-    JpsModelSerializerExtension.getExtensions()
-      .flatMap { it.moduleSourceRootPropertiesSerializers }
-      .firstOrNull { it.typeId == rootType }
-      ?.type ?: JavaSourceRootType.SOURCE
+  private fun getSourceRootType(rootType: String): JpsModuleSourceRootType<*> {
+    JpsModelSerializerExtension.getExtensions().forEach { extensions ->
+      extensions.moduleSourceRootPropertiesSerializers.forEach {
+        if (it.typeId == rootType) return it.type
+      }
+    }
+    return JavaSourceRootType.SOURCE
+  }
 
   companion object {
     val LOG by lazy { logger<ContentFolderViaTypedEntity>() }

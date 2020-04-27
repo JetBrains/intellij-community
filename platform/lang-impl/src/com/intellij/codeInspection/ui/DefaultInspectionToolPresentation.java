@@ -17,7 +17,9 @@ import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,6 +54,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   public static final String INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT = "problem_class";
   public static final String INSPECTION_RESULTS_SEVERITY_ATTRIBUTE = "severity";
   public static final String INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE = "attribute_key";
+  public static final String INSPECTION_RESULTS_ID_ATTRIBUTE = "id";
   public static final String INSPECTION_RESULTS_DESCRIPTION_ELEMENT = "description";
   public static final String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
   public static final String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
@@ -99,9 +102,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return myResolvedElements.keys();
   }
 
-  @NotNull
   @Override
-  public CommonProblemDescriptor[] getResolvedProblems(@NotNull RefEntity entity) {
+  public CommonProblemDescriptor @NotNull [] getResolvedProblems(@NotNull RefEntity entity) {
     return myResolvedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
@@ -128,34 +130,35 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return mySuppressedElements.containsValue(descriptor);
   }
 
-  @NotNull
   @Override
-  public CommonProblemDescriptor[] getSuppressedProblems(@NotNull RefEntity entity) {
+  public CommonProblemDescriptor @NotNull [] getSuppressedProblems(@NotNull RefEntity entity) {
     return mySuppressedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable
   @Override
   public HighlightSeverity getSeverity(@NotNull RefElement element) {
-    final PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
-    if (psiElement != null) {
-      final GlobalInspectionContextImpl context = getContext();
-      final String shortName = getSeverityDelegateName();
-      final Tools tools = context.getTools().get(shortName);
-      if (tools != null) {
-        for (ScopeToolState state : tools.getTools()) {
-          InspectionToolWrapper toolWrapper = state.getTool();
-          if (toolWrapper == getToolWrapper()) {
-            return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
+    return ReadAction.nonBlocking(() -> {
+      final PsiElement psiElement = ((RefElement)element.getRefManager().getRefinedElement(element)).getPointer().getContainingFile();
+      if (psiElement != null) {
+        final GlobalInspectionContextImpl context = getContext();
+        final String shortName = getSeverityDelegateName();
+        final Tools tools = context.getTools().get(shortName);
+        if (tools != null) {
+          for (ScopeToolState state : tools.getTools()) {
+            InspectionToolWrapper toolWrapper = state.getTool();
+            if (toolWrapper == getToolWrapper()) {
+              return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
+            }
           }
         }
-      }
 
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
-      final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
-      return level.getSeverity();
-    }
-    return null;
+        final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getCurrentProfile();
+        final HighlightDisplayLevel level = profile.getErrorLevel(HighlightDisplayKey.find(shortName), psiElement);
+        return level.getSeverity();
+      }
+      return null;
+    }).executeSynchronously();
   }
 
   @Override
@@ -229,12 +232,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void addProblemElement(@Nullable RefEntity refElement, @NotNull CommonProblemDescriptor... descriptions){
+  public void addProblemElement(@Nullable RefEntity refElement, CommonProblemDescriptor @NotNull ... descriptions){
     addProblemElement(refElement, true, descriptions);
   }
 
   @Override
-  public void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, @NotNull final CommonProblemDescriptor... descriptors) {
+  public void addProblemElement(@Nullable RefEntity refElement, boolean filterSuppressed, final CommonProblemDescriptor @NotNull ... descriptors) {
     if (refElement == null || descriptors.length == 0) {
       return;
     }
@@ -275,7 +278,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return isDisposed;
   }
 
-  private synchronized void writeOutput(@NotNull CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) throws IOException {
+  private synchronized void writeOutput(CommonProblemDescriptor @NotNull [] descriptions, @NotNull RefEntity refElement) throws IOException {
     Path file = ExportHTMLAction.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
     boolean exists = Files.exists(file);
     Files.createDirectories(file.getParent());
@@ -323,8 +326,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  @Nullable
-  public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
+  public CommonProblemDescriptor @Nullable [] getDescriptions(@NotNull RefEntity refEntity) {
     final CommonProblemDescriptor[] problems = getProblemElements().getOrDefault(refEntity, null);
     if (problems == null) return null;
 
@@ -355,14 +357,23 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     }
   }
 
-  protected void exportResults(@NotNull final CommonProblemDescriptor[] descriptors,
-                             @NotNull RefEntity refEntity,
-                             @NotNull Consumer<? super Element> problemSink,
-                             @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
+  protected void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
+                               @NotNull RefEntity refEntity,
+                               @NotNull Consumer<? super Element> problemSink,
+                               @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (isDescriptorExcluded.test(descriptor)) continue;
       int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
-      Element element = refEntity.getRefManager().export(refEntity, line);
+      Element element = null;
+      try {
+        element = refEntity.getRefManager().export(refEntity, line);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
       if (element == null) return;
       exportResult(refEntity, descriptor, element);
       problemSink.accept(element);
@@ -374,6 +385,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
       final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
+      problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
       problemClassElement.addContent(myToolWrapper.getDisplayName());
 
       final HighlightSeverity severity = InspectionToolPresentation.getSeverity(refEntity, psiElement, this);
@@ -477,8 +489,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  @NotNull
-  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+  public QuickFixAction @NotNull [] getQuickFixes(RefEntity @NotNull ... refElements) {
     return QuickFixAction.EMPTY;
   }
 

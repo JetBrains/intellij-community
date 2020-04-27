@@ -217,7 +217,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     myPaintingDispatcher.getMulticaster().componentPainted();
   }
 
-  private void select(@NotNull TreePath[] paths) {
+  private void select(TreePath @NotNull [] paths) {
     if (myIgnoreExternalSelectionEvents) {
       return;
     }
@@ -256,7 +256,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   @NotNull
-  private Rectangle optimizeRowsCountInVisibleRect(@NotNull int[] rows) {
+  private Rectangle optimizeRowsCountInVisibleRect(int @NotNull [] rows) {
     // a simple scan-line algorithm to find an optimal subset of visible rows (maximum)
     final Rectangle visibleRect = getVisibleRect();
     final int height = visibleRect.height;

@@ -13,9 +13,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class QuickEvaluateAction extends XDebuggerActionBase {
   public QuickEvaluateAction() {
     super(true);

@@ -55,7 +55,7 @@ public class PyMakeMethodTopLevelProcessor extends PyBaseMakeFunctionTopLevelPro
   }
 
   @Override
-  protected void updateUsages(@NotNull Collection<String> newParamNames, @NotNull UsageInfo[] usages) {
+  protected void updateUsages(@NotNull Collection<String> newParamNames, UsageInfo @NotNull [] usages) {
     // Field usages
     for (String attrName : myAttributeReferences.keySet()) {
       final Collection<PyReferenceExpression> reads = myAttributeReferences.get(attrName);

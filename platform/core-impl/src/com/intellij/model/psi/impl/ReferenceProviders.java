@@ -30,10 +30,12 @@ public final class ReferenceProviders {
   private final Map<Class<? extends Symbol>, List<PsiSymbolReferenceProviderBean>> myByTargetClass = new ConcurrentHashMap<>();
 
   public ReferenceProviders() {
-    EP_NAME.addExtensionPointListener(() -> {
-      myByHostLanguage.clear();
-      myByTargetClass.clear();
-    }, ApplicationManager.getApplication());
+    EP_NAME.addExtensionPointListener(this::clearCaches, ApplicationManager.getApplication());
+  }
+
+  public void clearCaches() {
+    myByHostLanguage.clear();
+    myByTargetClass.clear();
   }
 
   @NotNull

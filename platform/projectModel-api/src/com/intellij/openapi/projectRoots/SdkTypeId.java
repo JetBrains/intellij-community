@@ -35,10 +35,22 @@ public interface SdkTypeId {
    */
   @NotNull
   default Comparator<Sdk> versionComparator() {
+    Comparator<String> versionStringComparator = versionStringComparator();
     return (sdk1, sdk2) -> {
       assert sdk1.getSdkType() == this : sdk1;
       assert sdk2.getSdkType() == this : sdk2;
-      return StringUtil.compareVersionNumbers(sdk1.getVersionString(), sdk2.getVersionString());
+      return versionStringComparator.compare(sdk1.getVersionString(), sdk2.getVersionString());
     };
+  }
+
+  /**
+   * A comparator to compare versions of SDKs of that SdkType, e.g. versions from
+   * {@link Sdk#getVersionString()} or {@link SdkType#getVersionString}
+   * <br />
+   * The implementation has to be synchronized with {@link #versionComparator()}
+   */
+  @NotNull
+  default Comparator<String> versionStringComparator() {
+    return (v1, v2) -> StringUtil.compareVersionNumbers(v1, v2);
   }
 }

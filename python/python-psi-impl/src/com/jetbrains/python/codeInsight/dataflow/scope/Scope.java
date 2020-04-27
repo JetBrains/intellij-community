@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author oleg
- */
 public interface Scope {
   /*
    * @return defined scope local/instance/class variables and parameters, using reaching defs

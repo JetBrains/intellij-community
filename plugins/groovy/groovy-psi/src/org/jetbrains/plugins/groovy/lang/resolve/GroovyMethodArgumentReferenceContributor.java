@@ -42,9 +42,8 @@ public final class GroovyMethodArgumentReferenceContributor extends PsiReference
   }
 
   private static class MyProvider extends PsiReferenceProvider {
-    @NotNull
     @Override
-    public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
       GrExpression argument = (GrExpression)element;
       PsiElement parent = element.getParent();
 

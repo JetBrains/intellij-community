@@ -3,7 +3,7 @@ package com.jetbrains.python.testing
 
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.inspections.PyUnusedLocalInspection
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection
 import com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection
 
 /**

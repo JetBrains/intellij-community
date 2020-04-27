@@ -91,9 +91,8 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
     if (NonProjectScopeDisablerEP.isSearchInNonProjectDisabled()) {
       return null;
     }
-    return IdeBundle.message("checkbox.include.non.project.files", IdeUICustomization.getInstance().getProjectConceptName());
+    return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
   }
-
 
   @NotNull
   @Override
@@ -166,8 +165,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   }
 
   @Override
-  @NotNull
-  public String[] getSeparators() {
+  public String @NotNull [] getSeparators() {
     return new String[] {"/", "\\"};
   }
 

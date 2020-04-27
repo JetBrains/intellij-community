@@ -77,12 +77,14 @@ public class DirDiffTableCellRenderer extends DefaultTableCellRenderer {
 
       Color fg = isSelected ? UIUtil.getTableSelectionForeground() : op.getTextColor();
       label.setForeground(fg);
-      final String name = table.getColumnName(column);
-      if (DirDiffTableModel.COLUMN_DATE.equals(name)) {
+      final DirDiffTableModel.ColumnType type = ((DirDiffTableModel)table.getModel()).getColumnType(column);
+      if (type == DirDiffTableModel.ColumnType.DATE) {
         label.setHorizontalAlignment(CENTER);
-      } else if (DirDiffTableModel.COLUMN_SIZE.equals(name)) {
+      }
+      else if (type == DirDiffTableModel.ColumnType.SIZE) {
         label.setHorizontalAlignment(RIGHT);
-      } else {
+      }
+      else {
         label.setHorizontalAlignment(LEFT);
         final String text = label.getText();
         label.setText("  " + text);

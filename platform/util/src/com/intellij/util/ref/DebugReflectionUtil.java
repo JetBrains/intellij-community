@@ -57,8 +57,7 @@ public class DebugReflectionUtil {
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
 
-  @NotNull
-  private static Field[] getAllFields(@NotNull Class<?> aClass) {
+  private static Field @NotNull [] getAllFields(@NotNull Class<?> aClass) {
     Field[] cached = allFields.get(aClass);
     if (cached == null) {
       try {

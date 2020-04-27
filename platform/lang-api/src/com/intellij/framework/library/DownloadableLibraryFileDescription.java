@@ -18,9 +18,6 @@ package com.intellij.framework.library;
 import com.intellij.util.download.DownloadableFileDescription;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public interface DownloadableLibraryFileDescription extends DownloadableFileDescription {
   @Nullable
   DownloadableFileDescription getSourcesDescription();

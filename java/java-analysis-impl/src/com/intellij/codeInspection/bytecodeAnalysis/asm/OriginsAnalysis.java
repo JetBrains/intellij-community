@@ -78,8 +78,7 @@ public class OriginsAnalysis {
    * @return array, array[i] == true means that the result of a method execution may originate at an i-th instruction
    * @throws AnalyzerException
    */
-  @NotNull
-  public static boolean[] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
+  public static boolean @NotNull [] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
     throws AnalyzerException {
     TIntArrayList[] backTransitions = new TIntArrayList[instructions.size()];
     for (int i = 0; i < backTransitions.length; i++) {

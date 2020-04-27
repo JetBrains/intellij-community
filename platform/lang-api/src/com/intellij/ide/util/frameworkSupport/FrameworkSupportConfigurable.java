@@ -29,9 +29,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class FrameworkSupportConfigurable implements Disposable {
   private final EventDispatcher<FrameworkSupportConfigurableListener> myDispatcher = EventDispatcher.create(FrameworkSupportConfigurableListener.class);
 

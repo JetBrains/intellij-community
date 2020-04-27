@@ -1,7 +1,9 @@
 package org.intellij.plugins.intelliLang;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ui.Messages;
@@ -87,6 +89,32 @@ public class ReferenceInjectionTest extends AbstractLanguageInjectionTestCase {
     assertTrue(reference instanceof FileReference);
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
+    assertNull(getInjectedReferences());
+  }
+
+  public void testInjectionDoesntSurviveLiteralReplacement() {
+    myFixture.configureByText("Survive.java", "class Survive {\n" +
+                                          "    String bar() {\n" +
+                                          "        return \"ba<caret>r.xml\";\n" +
+                                          "    }    \n" +
+                                          "}");
+    assertNull(getInjectedReferences());
+
+    InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector());
+    PsiReference[] references = getInjectedReferences();
+    PsiReference reference = assertOneElement(references);
+    assertTrue(reference instanceof FileReference);
+
+    String textToReplace = "\"bar.xml\"";
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      PsiDocumentManager manager = PsiDocumentManager.getInstance(getProject());
+      Document document = manager.getDocument(getFile());
+      int start = document.getText().indexOf(textToReplace);
+      document.replaceString(start, start + textToReplace.length(), "null");
+      manager.commitDocument(document);
+    });
+
     assertNull(getInjectedReferences());
   }
 

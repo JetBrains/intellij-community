@@ -58,8 +58,7 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   }
 
   @Override
-  @NotNull
-  public Class[] getPatternClasses() {
+  public Class @NotNull [] getPatternClasses() {
     return new Class[] {GroovyPatterns.class};
   }
 

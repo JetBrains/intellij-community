@@ -2,9 +2,12 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 public interface PathMacroContributor {
   ExtensionPointName<PathMacroContributor> EP_NAME = ExtensionPointName.create("com.intellij.pathMacroContributor");
 
-  void registerPathMacros(PathMacros macros);
+  void registerPathMacros(@NotNull Map<String, String> macros, @NotNull Map<String, String> legacyMacros);
 }

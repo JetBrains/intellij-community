@@ -29,6 +29,7 @@ public abstract class Difference {
   public static final int SUPERCLASS = 16;
   public static final int USAGES = 32;
   public static final int ANNOTATIONS = 64;
+  public static final int CONSTANT_REFERENCES = 128;
 
   public interface Specifier<T, D extends Difference> {
     Collection<T> added();

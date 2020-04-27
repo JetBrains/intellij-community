@@ -22,8 +22,7 @@ public interface MavenRootModelAdapterInterface {
 
   ModifiableRootModel getRootModel();
 
-  @NotNull
-  String[] getSourceRootUrls(boolean includingTests);
+  String @NotNull [] getSourceRootUrls(boolean includingTests);
 
   Module getModule();
 

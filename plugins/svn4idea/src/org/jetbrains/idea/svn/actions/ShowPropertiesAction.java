@@ -46,7 +46,7 @@ public class ShowPropertiesAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
+  protected void batchPerform(@NotNull SvnVcs vcs, VirtualFile @NotNull [] files, @NotNull DataContext context) {
     File[] ioFiles = toIoFiles(files);
     ToolWindow w = ToolWindowManager.getInstance(vcs.getProject()).getToolWindow(PropertiesComponent.ID);
     PropertiesComponent component;

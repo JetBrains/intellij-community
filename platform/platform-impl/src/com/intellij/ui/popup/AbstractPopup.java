@@ -129,6 +129,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private static final WeakList<JBPopup> all = new WeakList<>();
 
+  private boolean mySpeedSearchAlwaysShown;
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
     boolean searchFieldShown;
 
@@ -137,7 +138,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       mySpeedSearchPatternField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       onSpeedSearchPatternChanged();
       mySpeedSearchPatternField.setText(getFilter());
-      if (!myAlwaysShown) {
+      if (!mySpeedSearchAlwaysShown) {
         if (isHoldingFilter() && !searchFieldShown) {
           setHeaderComponent(mySpeedSearchPatternField);
           searchFieldShown = true;
@@ -173,7 +174,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
 
-  private void debugState(@NotNull String message, @NotNull State... states) {
+  private void debugState(@NotNull String message, State @NotNull ... states) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(hashCode() + " - " + message);
       if (!ApplicationManager.getApplication().isDispatchThread()) {
@@ -217,7 +218,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                      @Nullable MaskProvider maskProvider,
                      boolean inStack,
                      boolean modalContext,
-                     @Nullable Component[] focusOwners,
+                     Component @Nullable [] focusOwners,
                      @Nullable String adText,
                      int adTextAlignment,
                      boolean headerAlwaysFocusable,
@@ -1105,6 +1106,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
+
+    afterShowSync();
   }
 
   public void focusPreferredComponent() {
@@ -1143,7 +1146,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     UiActivityMonitor.getInstance().removeActivity(myActivityKey);
   }
 
-  private void prepareToShow() {
+  protected void prepareToShow() {
     final MouseAdapter mouseAdapter = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
@@ -1190,7 +1193,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         mySpeedSearch.reset();
       }
     };
-    mySpeedSearchPatternField.getTextEditor().setFocusable(false);
+    mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
+      mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+      mySpeedSearchPatternField.getTextEditor().setBorder(JBUI.Borders.empty());
+    }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
@@ -1242,6 +1250,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   protected void afterShow() {
   }
 
+  protected void afterShowSync() {
+  }
+
   protected final boolean requestFocus() {
     if (!myFocusable) return false;
 
@@ -1253,10 +1264,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private void _requestFocus() {
     if (!myFocusable) return;
 
-    if (myPreferredFocusedComponent != null) {
+    JComponent toFocus = ObjectUtils.chooseNotNull(myPreferredFocusedComponent,
+                                                   mySpeedSearchAlwaysShown ? mySpeedSearchPatternField : null);
+    if (toFocus != null) {
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
         if (!myDisposed) {
-          IdeFocusManager.getGlobalInstance().requestFocus(myPreferredFocusedComponent, true);
+          IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true);
         }
       });
     }
@@ -1335,6 +1348,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         int delta = screen.width + screen.x - location.x;
         if (size.width > delta) {
           size.width = delta;
+          if (!SystemInfo.isMac || Registry.is("mac.scroll.horizontal.gap")) {
+            // we shrank horizontally - need to increase height to fit the horizontal scrollbar
+            JScrollPane scrollPane = ScrollUtil.findScrollPane(myContent);
+            if (scrollPane != null && scrollPane.getHorizontalScrollBarPolicy() != ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
+              JScrollBar scrollBar = scrollPane.getHorizontalScrollBar();
+              if (scrollBar != null) {
+                prefSize.height += scrollBar.getPreferredSize().height;
+              }
+            }
+          }
         }
       }
     }
@@ -1685,6 +1708,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     }
   }
 
+  public void setSpeedSearchAlwaysShown(boolean value) {
+    assert myState == State.INIT;
+    mySpeedSearchAlwaysShown = value;
+  }
+
   private class MyWindowListener extends WindowAdapter {
 
     @Override
@@ -1764,7 +1792,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return isFocused(myFocusOwners);
   }
 
-  public static boolean isFocused(@Nullable Component[] components) {
+  public static boolean isFocused(Component @Nullable [] components) {
     if (components == null) return false;
 
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -1807,10 +1835,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       myHeaderPanel.add(c, BorderLayout.CENTER);
       myHeaderComponent = c;
 
-      final Dimension size = myContent.getSize();
-      if (size.height < c.getPreferredSize().height * 2) {
-        size.height += c.getPreferredSize().height;
-        setSize(size);
+      if (isVisible()) {
+        final Dimension size = myContent.getSize();
+        if (size.height < c.getPreferredSize().height * 2) {
+          size.height += c.getPreferredSize().height;
+          setSize(size);
+        }
       }
 
       doRevalidate = true;

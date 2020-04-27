@@ -23,9 +23,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class JpsContentFolderBase implements Disposable, ContentFolder {
   protected final JpsContentEntry myContentEntry;
   protected VirtualFilePointer myFilePointer;

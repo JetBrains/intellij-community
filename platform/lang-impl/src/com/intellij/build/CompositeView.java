@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,13 +97,11 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     return viewClass.isInstance(view) ? viewClass.cast(view) : null;
   }
 
-  @NotNull
-  public AnAction[] createConsoleActions() {
+  public AnAction @NotNull [] createConsoleActions() {
     return AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public AnAction[] getSwitchActions() {
+  public AnAction @NotNull [] getSwitchActions() {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addSeparator();
     actionGroup.add(mySwitchViewAction);
@@ -149,10 +148,9 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     return mySelectionStateKey == null ? null : PropertiesComponent.getInstance().getValue(mySelectionStateKey);
   }
 
-  private class SwitchViewAction extends ToggleAction implements DumbAware {
+  private final class SwitchViewAction extends ToggleAction implements DumbAware {
     SwitchViewAction() {
-      super("Toggle view", null,
-            AllIcons.Actions.ChangeView);
+      super(IdeBundle.messagePointer("action.ToggleAction.text.toggle.view"), Presentation.NULL_STRING, AllIcons.Actions.ChangeView);
     }
 
     @Override

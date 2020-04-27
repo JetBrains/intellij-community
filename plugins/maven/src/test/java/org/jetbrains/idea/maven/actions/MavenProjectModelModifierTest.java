@@ -19,9 +19,6 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author nik
- */
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   private static final ExternalLibraryDescriptor COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 =
     new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");

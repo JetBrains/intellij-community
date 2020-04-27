@@ -50,7 +50,7 @@ public class ReplaceConstructorWithBuilderAction extends BaseJavaRefactoringActi
   }
 
   @Override
-  protected boolean isEnabledOnElements(@NotNull final PsiElement[] elements) {
+  protected boolean isEnabledOnElements(final PsiElement @NotNull [] elements) {
     return false;
   }
 

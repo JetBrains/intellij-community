@@ -103,9 +103,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       registerProblems(sections, emptyIndices, problems, true);
     }
 
-    private void registerProblems(@NotNull CatchSectionWrapper[] sections,
-                                  @Nullable CatchSectionIndices[] sectionIndices,
-                                  @NotNull boolean[] problems,
+    private void registerProblems(CatchSectionWrapper @NotNull [] sections,
+                                  CatchSectionIndices @Nullable [] sectionIndices,
+                                  boolean @NotNull [] problems,
                                   boolean empty) {
       if (sectionIndices == null) return;
 
@@ -120,7 +120,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       }
     }
 
-    private void registerProblem(@NotNull CatchSectionWrapper[] sections, int at, int collapseIntoIndex, boolean empty) {
+    private void registerProblem(CatchSectionWrapper @NotNull [] sections, int at, int collapseIntoIndex, boolean empty) {
       final PsiCatchSection section = sections[at].myCatchSection;
       final PsiJavaToken rParenth = section.getRParenth();
       if (rParenth != null) {
@@ -131,10 +131,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
   }
 
-  @Nullable
-  static CatchSectionIndices[] getCatchSectionIndices(@NotNull CatchSectionWrapper[] sections,
-                                                      @NotNull boolean[][] canSwap,
-                                                      @NotNull BiPredicate<? super CatchSectionWrapper, ? super CatchSectionWrapper> equals) {
+  static CatchSectionIndices @Nullable [] getCatchSectionIndices(CatchSectionWrapper @NotNull [] sections,
+                                                                 boolean[] @NotNull [] canSwap,
+                                                                 @NotNull BiPredicate<? super CatchSectionWrapper, ? super CatchSectionWrapper> equals) {
     final CatchSectionIndices[] indices = new CatchSectionIndices[sections.length];
     for (int index = 0; index < sections.length; index++) {
       indices[index] = new CatchSectionIndices(index);
@@ -174,7 +173,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     return indices;
   }
 
-  private static boolean[][] collectCanSwap(@NotNull CatchSectionWrapper[] sections) {
+  private static boolean[][] collectCanSwap(CatchSectionWrapper @NotNull [] sections) {
     final boolean[][] canSwap = new boolean[sections.length][sections.length];
     for (int from = 0; from < sections.length; from++) {
       for (int to = from + 1; to < sections.length; to++) {
@@ -208,7 +207,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       duplicate.myHasDuplicate = true;
     }
 
-    void computeInsertionRange(@NotNull boolean[][] canSwap) {
+    void computeInsertionRange(boolean[] @NotNull [] canSwap) {
       boolean[] canSwapWith = canSwap[myIndex];
 
       for (int before = myIndex; ; before--) {
@@ -294,8 +293,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       return true;
     }
 
-    @Nullable
-    static CatchSectionWrapper[] createWrappers(@NotNull PsiTryStatement statement) {
+    static CatchSectionWrapper @Nullable [] createWrappers(@NotNull PsiTryStatement statement) {
       final PsiCatchSection[] catchSections = statement.getCatchSections();
       if (catchSections.length < 2) {
         return null;
@@ -488,7 +486,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       tracker.deleteAndRestoreComments(duplicateSection.myCatchSection);
     }
 
-    private static int getSectionIndex(@NotNull CatchSectionWrapper[] sections, @NotNull PsiElement catchSection) {
+    private static int getSectionIndex(CatchSectionWrapper @NotNull [] sections, @NotNull PsiElement catchSection) {
       for (int i = 0; i < sections.length; i++) {
         if (sections[i].myCatchSection == catchSection) {
           return i;

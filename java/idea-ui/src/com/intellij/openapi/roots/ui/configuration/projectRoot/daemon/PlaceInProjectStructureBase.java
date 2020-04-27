@@ -21,9 +21,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.ui.navigation.Place;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class PlaceInProjectStructureBase extends PlaceInProjectStructure {
   private final Project myProject;
   private final Place myPlace;

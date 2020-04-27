@@ -90,7 +90,7 @@
               <component id="7f4a6" class="javax.swing.JTextPane" binding="myInheritanceLabel">
                 <constraints/>
                 <properties>
-                  <text value="labl"/>
+                  <text value="labl" noi18n="true"/>
                 </properties>
               </component>
             </children>

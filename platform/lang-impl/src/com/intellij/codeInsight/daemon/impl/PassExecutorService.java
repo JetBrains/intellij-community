@@ -75,23 +75,24 @@ final class PassExecutorService implements Disposable {
     for (Job<Void> submittedPass : mySubmittedPasses.values()) {
       submittedPass.cancel();
     }
-    if (waitForTermination) {
-      try {
+    try {
+      if (waitForTermination) {
         while (!waitFor(50)) {
           int i = 0;
         }
       }
-      catch (ProcessCanceledException ignored) {
-
-      }
-      catch (Error | RuntimeException e) {
-        throw e;
-      }
-      catch (Throwable throwable) {
-        LOG.error(throwable);
-      }
     }
-    mySubmittedPasses.clear();
+    catch (ProcessCanceledException ignored) {
+    }
+    catch (Error | RuntimeException e) {
+      throw e;
+    }
+    catch (Throwable throwable) {
+      LOG.error(throwable);
+    }
+    finally {
+      mySubmittedPasses.clear();
+    }
   }
 
   void submitPasses(@NotNull Map<FileEditor, HighlightingPass[]> passesMap, @NotNull DaemonProgressIndicator updateProgress) {
@@ -270,6 +271,10 @@ final class PassExecutorService implements Disposable {
   private FileEditor getPreferredFileEditor(Document document, @NotNull Collection<? extends FileEditor> fileEditors) {
     assert !fileEditors.isEmpty();
     if (document != null) {
+      FileEditor focusedEditor = ContainerUtil.find(fileEditors, it -> it instanceof TextEditor &&
+                                                                       ((TextEditor)it).getEditor().getContentComponent().isFocusOwner());
+      if (focusedEditor != null) return focusedEditor;
+
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file != null) {
         final FileEditor selected = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
@@ -519,12 +524,17 @@ final class PassExecutorService implements Disposable {
         HighlightingSessionImpl.waitForAllSessionsHighlightInfosApplied(updateProgress);
         log(updateProgress, pass, "Stopping ");
         updateProgress.stopIfRunning();
+        clearStaleEntries();
       }
       else {
         log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
       }
       callbackOnApplied.run();
     }, updateProgress.getModalityState());
+  }
+
+  private void clearStaleEntries() {
+    mySubmittedPasses.keySet().removeIf(pass -> pass.myUpdateProgress.isCanceled());
   }
 
   private void repaintErrorStripeAndIcon(@NotNull FileEditor fileEditor) {
@@ -559,7 +569,7 @@ final class PassExecutorService implements Disposable {
     return StringUtil.parseInt(num, 0);
   }
 
-  static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls @NotNull Object... info) {
+  static void log(ProgressIndicator progressIndicator, TextEditorHighlightingPass pass, @NonNls Object @NotNull ... info) {
     if (LOG.isDebugEnabled()) {
       CharSequence docText = pass == null || pass.getDocument() == null ? "" : ": '" + StringUtil.first(pass.getDocument().getCharsSequence(), 10, true)+ "'";
       synchronized (PassExecutorService.class) {

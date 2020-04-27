@@ -341,7 +341,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     private fun updateTitle() {
-      ProjectFrameHelper.updateTitle(this, frameTitle, fileTitle, file)
+      ProjectFrameHelper.updateTitle(this, frameTitle, fileTitle, file, null)
     }
 
     override fun dispose() {

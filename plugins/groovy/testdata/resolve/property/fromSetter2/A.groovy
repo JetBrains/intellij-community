@@ -1,4 +1,4 @@
-class A {
+class X {
     int j
 
     def r() {
@@ -7,4 +7,4 @@ class A {
 
 }
 
-new A().<ref>j=10
+new X().<ref>j=10

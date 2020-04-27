@@ -31,8 +31,7 @@ import java.util.Iterator;
  */
 @ApiStatus.NonExtendable
 public interface LibraryTable {
-  @NotNull
-  Library[] getLibraries();
+  Library @NotNull [] getLibraries();
 
   @NotNull
   Library createLibrary();
@@ -93,8 +92,7 @@ public interface LibraryTable {
     @Nullable
     Library getLibraryByName(@NotNull String name);
 
-    @NotNull
-    Library[] getLibraries();
+    Library @NotNull [] getLibraries();
 
     boolean isChanged();
   }

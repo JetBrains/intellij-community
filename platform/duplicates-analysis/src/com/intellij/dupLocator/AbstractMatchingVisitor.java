@@ -35,7 +35,7 @@ public abstract class AbstractMatchingVisitor {
 
   protected abstract boolean doMatchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2);
 
-  public boolean matchSequentially(@NotNull PsiElement[] elements1, @NotNull PsiElement[] element2) {
+  public boolean matchSequentially(PsiElement @NotNull [] elements1, PsiElement @NotNull [] element2) {
     return matchSequentially(new FilteringNodeIterator(new ArrayBackedNodeIterator(elements1), getNodeFilter()),
                              new FilteringNodeIterator(new ArrayBackedNodeIterator(element2), getNodeFilter()));
   }
@@ -85,13 +85,13 @@ public abstract class AbstractMatchingVisitor {
                            new FilteringNodeIterator(new SiblingNodeIterator(e2), getNodeFilter()));
   }
 
-  public boolean matchOptionally(@NotNull PsiElement[] elements1, @NotNull PsiElement[] elements2) {
+  public boolean matchOptionally(PsiElement @NotNull [] elements1, PsiElement @NotNull [] elements2) {
     return (elements1.length == 0 && isLeftLooseMatching()) ||
            (elements2.length == 0 && isRightLooseMatching()) ||
            matchSequentially(elements1, elements2);
   }
 
-  public final boolean matchInAnyOrder(@NotNull PsiElement[] elements, @NotNull PsiElement[] elements2) {
+  public final boolean matchInAnyOrder(PsiElement @NotNull [] elements, PsiElement @NotNull [] elements2) {
     return elements == elements2 || matchInAnyOrder(new ArrayBackedNodeIterator(elements), new ArrayBackedNodeIterator(elements2));
   }
 

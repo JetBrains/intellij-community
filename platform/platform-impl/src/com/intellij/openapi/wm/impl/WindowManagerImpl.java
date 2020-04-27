@@ -39,7 +39,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
@@ -142,21 +145,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     }
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
-
-    if (UIUtil.hasLeakingAppleListeners()) {
-      UIUtil.addAwtListener(event -> {
-        if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
-          if (((ContainerEvent)event).getChild() instanceof JViewport) {
-            UIUtil.removeLeakingAppleListeners();
-          }
-        }
-      }, AWTEvent.CONTAINER_EVENT_MASK, application);
-    }
   }
 
   @Override
-  @NotNull
-  public ProjectFrameHelper[] getAllProjectFrames() {
+  public ProjectFrameHelper @NotNull [] getAllProjectFrames() {
     return myProjectToFrame.values().toArray(new ProjectFrameHelper[0]);
   }
 
@@ -520,8 +512,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   public void assignFrame(@NotNull ProjectFrameHelper frameHelper, @NotNull Project project) {
     LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
-    frameHelper.setProject(project);
     myProjectToFrame.put(project, frameHelper);
+    frameHelper.setProject(project);
 
     IdeFrameImpl frame = frameHelper.getFrame();
     frame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(project));
@@ -531,12 +523,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project) {
-    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(), null));
+    return allocateFrame(project, () -> new ProjectFrameHelper(ProjectFrameAllocatorKt.createNewProjectFrame(false), null));
   }
 
   @NotNull
   public final ProjectFrameHelper allocateFrame(@NotNull Project project,
-                                                @NotNull Supplier<? extends ProjectFrameHelper> projectFrameHelperSupplier) {
+                                                @NotNull Supplier<@NotNull ? extends ProjectFrameHelper> projectFrameHelperFactory) {
     ProjectFrameHelper frame = getFrameHelper(project);
     if (frame != null) {
       myEventDispatcher.getMulticaster().frameCreated(frame);
@@ -547,7 +539,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     boolean isNewFrame = frame == null;
     FrameInfo frameInfo = null;
     if (isNewFrame) {
-      frame = projectFrameHelperSupplier.get();
+      frame = projectFrameHelperFactory.get();
       frame.init();
 
       frameInfo = ProjectFrameBounds.getInstance(project).getFrameInfoInDeviceSpace();
@@ -656,13 +648,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final Component getFocusedComponent(@NotNull final Window window) {
+  public final Component getFocusedComponent(@NotNull Window window) {
     return myWindowWatcher.getFocusedComponent(window);
   }
 
   @Override
-  @Nullable
-  public final Component getFocusedComponent(@Nullable final Project project) {
+  public final @Nullable Component getFocusedComponent(@Nullable Project project) {
     return myWindowWatcher.getFocusedComponent(project);
   }
 
@@ -744,7 +735,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
   }
 
   @Override
-  public final DesktopLayout getLayout() {
+  public final @NotNull DesktopLayout getLayout() {
     return myLayout;
   }
 

@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
@@ -62,7 +63,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     @NotNull
     @Override
     public String getDisplayName() {
-      return "Syntax error";
+      return AnalysisBundle.message("inspection.display.name.syntax.error");
     }
 
     @NotNull

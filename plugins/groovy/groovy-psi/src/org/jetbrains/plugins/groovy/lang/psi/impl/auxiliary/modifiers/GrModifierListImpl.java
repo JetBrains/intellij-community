@@ -131,8 +131,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
   }
 
   @Override
-  @NotNull
-  public PsiElement[] getModifiers() {
+  public PsiElement @NotNull [] getModifiers() {
     final ArrayList<PsiElement> result = new ArrayList<>();
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrAnnotation || TokenSets.MODIFIERS.contains(cur.getNode().getElementType())) {
@@ -191,9 +190,8 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
     }
   }
 
-  @NotNull
   @Override
-  public GrAnnotation[] getRawAnnotations() {
+  public GrAnnotation @NotNull [] getRawAnnotations() {
     return getStubOrPsiChildren(GroovyElementTypes.ANNOTATION, GrAnnotation.ARRAY_FACTORY);
   }
 
@@ -264,8 +262,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
   }
 
   @Override
-  @NotNull
-  public GrAnnotation[] getAnnotations() {
+  public GrAnnotation @NotNull [] getAnnotations() {
     return CachedValuesManager.getCachedValue(this, () -> Result.create(
       GrAnnotationCollector.getResolvedAnnotations(this),
       PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, this
@@ -273,8 +270,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation[] getApplicableAnnotations() {
+  public PsiAnnotation @NotNull [] getApplicableAnnotations() {
     //todo[medvedev]
     return getAnnotations();
   }

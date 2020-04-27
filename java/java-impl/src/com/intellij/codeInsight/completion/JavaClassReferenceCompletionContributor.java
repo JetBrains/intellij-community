@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,8 +60,9 @@ public class JavaClassReferenceCompletionContributor extends CompletionContribut
         reference.processSubclassVariants((PsiPackage)context, extendClassNames, result.withPrefixMatcher(fullPrefix));
         return;
       }
-      result.addLookupAdvertisement("Press " + KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION) + " to see inheritors of " +
-                                    StringUtil.join(extendClassNames, ", "));
+      result.addLookupAdvertisement(JavaBundle.message("press.0.to.see.inheritors.of.1",
+                                                             KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION),
+                                                             StringUtil.join(extendClassNames, ", ")));
     }
 
     if (parameters.getCompletionType() == CompletionType.SMART) {

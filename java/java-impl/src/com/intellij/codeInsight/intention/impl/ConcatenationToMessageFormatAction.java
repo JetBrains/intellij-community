@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -32,13 +33,13 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.family");
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.family");
   }
 
   @Override
   @NotNull
   public String getText() {
-    return CodeInsightBundle.message("intention.replace.concatenation.with.formatted.output.text");
+    return JavaBundle.message("intention.replace.concatenation.with.formatted.output.text");
   }
 
   @Override
@@ -56,9 +57,15 @@ public class ConcatenationToMessageFormatAction implements IntentionAction {
     boolean textBlocks = Arrays.stream(concatenation.getOperands())
       .anyMatch(operand -> operand instanceof PsiLiteralExpressionImpl &&
                            ((PsiLiteralExpressionImpl)operand).getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL);
-    final String expressionText = textBlocks
-                                  ? "\"\"\"\n" + PsiLiteralUtil.escapeTextBlockCharacters(formatString) + "\"\"\""
-                                  : "\"" + StringUtil.escapeStringCharacters(formatString) + "\"";
+    final String expressionText;
+    if (textBlocks) {
+      expressionText = Arrays.stream(formatString.split("\n"))
+        .map(s -> PsiLiteralUtil.escapeTextBlockCharacters(s))
+        .collect(Collectors.joining("\n", "\"\"\"\n", "\"\"\""));
+    }
+    else {
+      expressionText = "\"" + StringUtil.escapeStringCharacters(formatString) + "\"";
+    }
     PsiExpression formatArgument = factory.createExpressionFromText(expressionText, null);
     argumentList.add(formatArgument);
     if (PsiUtil.isLanguageLevel5OrHigher(file)) {

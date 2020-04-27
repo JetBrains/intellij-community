@@ -24,9 +24,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
-/**
- * @author nik
- */
 public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTestCase {
   public void testAddRoot() {
     String dir1 = PathUtil.getParentPath(createFile("dir1/a.txt", "a"));

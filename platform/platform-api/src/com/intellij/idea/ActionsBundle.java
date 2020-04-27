@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import java.util.function.Supplier;
+
 public class ActionsBundle extends DynamicBundle {
   @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
@@ -29,8 +31,13 @@ public class ActionsBundle extends DynamicBundle {
     super(IDEA_ACTIONS_BUNDLE);
   }
 
-  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, @NotNull Object... params) {
+  public static String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
+  }
+
+  @NotNull
+  public static Supplier<String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
+    return ourInstance.getLazyMessage(key, params);
   }
 
   public static String actionText(@NonNls String actionId) {

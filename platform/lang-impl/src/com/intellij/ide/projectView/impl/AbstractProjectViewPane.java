@@ -36,6 +36,7 @@ import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
@@ -71,8 +72,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private static final Logger LOG = Logger.getInstance(AbstractProjectViewPane.class);
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   protected DnDAwareTree myTree;
   protected AbstractTreeStructure myTreeStructure;
   private AbstractTreeBuilder myTreeBuilder;
@@ -128,17 +128,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected final void fireTreeChangeListener() {
   }
 
-  @NotNull
-  public abstract String getTitle();
+  public abstract @NotNull String getTitle();
 
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @NotNull
-  public abstract String getId();
+  public abstract @NotNull String getId();
 
-  @Nullable
-  public final String getSubId() {
+  public boolean isDefaultPane(@SuppressWarnings("unused") @NotNull Project project) {
+    return false;
+  }
+
+  public final @Nullable String getSubId() {
     return mySubId;
   }
 
@@ -160,8 +160,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return false;
   }
 
-  @NotNull
-  protected String getManualOrderOptionText() {
+  protected @NotNull String getManualOrderOptionText() {
     return IdeBundle.message("action.manual.order");
   }
 
@@ -169,8 +168,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
    * @return all supported sub views IDs.
    * should return empty array if there is no subViews as in Project/Packages view.
    */
-  @NotNull
-  public String[] getSubIds(){
+  public String @NotNull [] getSubIds(){
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 
@@ -191,7 +189,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTree;
   }
 
-  public void expand(@Nullable final Object[] path, final boolean requestFocus){
+  public void expand(final Object @Nullable [] path, final boolean requestFocus){
     if (getTreeBuilder() == null || path == null) return;
     AbstractTreeUi ui = getTreeBuilder().getUi();
     if (ui != null) ui.buildNodeForPath(path);
@@ -371,8 +369,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return elements.length == 1 ? elements[0] : null;
   }
 
-  @NotNull
-  public final PsiElement[] getSelectedPSIElements() {
+  public final PsiElement @NotNull [] getSelectedPSIElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
     List<PsiElement> result = new ArrayList<>();
@@ -412,8 +409,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
-  @NotNull
-  public final Object[] getSelectedElements() {
+  public final Object @NotNull [] getSelectedElements() {
     TreePath[] paths = getSelectionPaths();
     if (paths == null) return PsiElement.EMPTY_ARRAY;
     ArrayList<Object> list = new ArrayList<>(paths.length);
@@ -545,8 +541,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTree;
   }
 
-  @NotNull
-  public PsiDirectory[] getSelectedDirectories() {
+  public PsiDirectory @NotNull [] getSelectedDirectories() {
     List<PsiDirectory> directories = new ArrayList<>();
     for (PsiDirectoryNode node : getSelectedNodes(PsiDirectoryNode.class)) {
       PsiDirectory directory = node.getValue();
@@ -609,8 +604,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return PsiDirectory.EMPTY_ARRAY;
   }
 
-  @NotNull
-  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
+  protected PsiDirectory @NotNull [] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
       if (module != null && !module.isDisposed()) {
@@ -641,8 +635,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   // Drag'n'Drop stuff
 
-  @Nullable
-  public static PsiElement[] getTransferedPsiElements(@NotNull Transferable transferable) {
+  public static PsiElement @Nullable [] getTransferedPsiElements(@NotNull Transferable transferable) {
     try {
       final Object transferData = transferable.getTransferData(DnDEventImpl.ourDataFlavor);
       if (transferData instanceof TransferableWrapper) {
@@ -655,8 +648,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-   @Nullable
-  public static TreeNode[] getTransferedTreeNodes(@NotNull Transferable transferable) {
+   public static TreeNode @Nullable [] getTransferedTreeNodes(@NotNull Transferable transferable) {
     try {
       final Object transferData = transferable.getTransferData(DnDEventImpl.ourDataFlavor);
       if (transferData instanceof TransferableWrapper) {
@@ -761,7 +753,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return true;
   }
 
-  private class MyDragSource implements DnDSource {
+  private final class MyDragSource implements DnDSource {
     @Override
     public boolean canStartDragging(DnDAction action, Point dragOrigin) {
       if ((action.getActionId() & DnDConstants.ACTION_COPY_OR_MOVE) == 0) return false;
@@ -781,9 +773,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           return PsiCopyPasteManager.asFileList(psiElements);
         }
 
-        @Nullable
         @Override
-        public TreePath[] getTreePaths() {
+        public TreePath @Nullable [] getTreePaths() {
           return paths;
         }
 
@@ -810,8 +801,8 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       final JLabel label = new JLabel(count + " " + StringUtil.pluralize("item", count));
       label.setOpaque(true);
-      label.setForeground(myTree.getForeground());
-      label.setBackground(myTree.getBackground());
+      label.setForeground(RenderingUtil.getForeground(myTree));
+      label.setBackground(RenderingUtil.getBackground(myTree));
       label.setFont(myTree.getFont());
       label.setSize(label.getPreferredSize());
       final BufferedImage image = ImageUtil.createImage(label.getWidth(), label.getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -825,7 +816,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  private static boolean canDragElements(@NotNull Object[] elements, @NotNull DataContext dataContext, int dragAction) {
+  private static boolean canDragElements(Object @NotNull [] elements, @NotNull DataContext dataContext, int dragAction) {
     for (Object element : elements) {
       if (element instanceof Module) {
         return true;
@@ -860,12 +851,26 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return TreeUtil.promiseVisit(myTree, visitor);
   }
 
+  @ApiStatus.Internal
+  public boolean isVisibleAndSelected(Object element) {
+    JTree tree = getTree();
+    if (tree == null) return false;
+    TreePath path = TreeUtil.getSelectedPathIfOne(tree);
+    if (path == null) return false;
+    Rectangle bounds = tree.getPathBounds(path);
+    if (bounds == null) return false;
+    Rectangle visible = tree.getVisibleRect();
+    if (bounds.y < visible.y || bounds.y > visible.y + visible.height - bounds.height) return false;
+    AbstractTreeNode<?> node = TreeUtil.getLastUserObject(AbstractTreeNode.class, path);
+    return node != null && node.canRepresent(element);
+  }
+
   AsyncProjectViewSupport getAsyncSupport() {
     return null;
   }
 
   @NotNull
-  static List<TreeVisitor> createVisitors(@NotNull Object... objects) {
+  static List<TreeVisitor> createVisitors(Object @NotNull ... objects) {
     return StreamEx.of(objects).map(AbstractProjectViewPane::createVisitor).nonNull().toImmutableList();
   }
 

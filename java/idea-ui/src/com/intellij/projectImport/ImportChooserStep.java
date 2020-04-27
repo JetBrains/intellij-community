@@ -2,11 +2,11 @@
 
 package com.intellij.projectImport;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.projectWizard.ImportFromSourcesProvider;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -45,8 +45,8 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     myProviders = providers;
     mySequence = sequence;
 
-    myImportFrom.setText(ProjectBundle.message("project.new.wizard.import.title", context.getPresentationName()));
-    myCreateFromSources.setText(ProjectBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName()));
+    myImportFrom.setText(JavaUiBundle.message("project.new.wizard.import.title", context.getPresentationName()));
+    myCreateFromSources.setText(JavaUiBundle.message("project.new.wizard.from.existent.sources.title", context.getPresentationName()));
     final DefaultListModel model = new DefaultListModel();
     for (ProjectImportProvider provider : sorted(providers)) {
       if (provider instanceof ImportFromSourcesProvider) {

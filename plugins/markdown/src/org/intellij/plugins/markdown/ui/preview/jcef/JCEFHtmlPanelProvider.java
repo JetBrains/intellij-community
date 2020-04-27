@@ -17,6 +17,7 @@ public class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
   @Override
   public AvailabilityInfo isAvailable() {
     try {
+      // [tav] todo: we bundle jcef.jar with API in IDEA that anyway provides this class. So we should check for jcef module presence in JBR.
       if (Class.forName("org.cef.browser.CefBrowser", false, getClass().getClassLoader()) != null) {
         return AvailabilityInfo.AVAILABLE;
       }

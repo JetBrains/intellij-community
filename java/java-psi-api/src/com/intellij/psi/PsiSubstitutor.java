@@ -100,7 +100,7 @@ public interface PsiSubstitutor {
    */
   @NotNull
   @Contract(pure = true)
-  default PsiSubstitutor putAll(@NotNull Map<PsiTypeParameter, PsiType> map) {
+  default PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return putAll(createSubstitutor(map));
   }
 
@@ -119,7 +119,7 @@ public interface PsiSubstitutor {
    * @return a substitutor backed by the supplied map
    */
   @NotNull
-  static PsiSubstitutor createSubstitutor(@Nullable Map<PsiTypeParameter, PsiType> map) {
+  static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     if (map == null || map.isEmpty()) return EMPTY;
     return EMPTY.putAll(map);
   }

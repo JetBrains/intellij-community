@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,13 +40,13 @@ public class ConvertIndentsFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return myToSpaces ? "Convert indents to spaces" : "Convert indents to tabs";
+    return myToSpaces ? PyBundle.message("QFIX.convert.indents.to.spaces") : PyBundle.message("QFIX.convert.indents.to.tabs");
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Convert indents";
+    return PyBundle.message("QFIX.convert.indents");
   }
 
   @Override

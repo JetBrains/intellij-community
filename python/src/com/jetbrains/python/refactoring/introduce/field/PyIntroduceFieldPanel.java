@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public class PyIntroduceFieldPanel {
   public PyIntroduceFieldPanel(Project project, EnumSet<IntroduceHandler.InitPlace> initPlaces) {
     KeyboardComboSwitcher.setupActions(myInitializerPlaceCombo, project);
     if (initPlaces.contains(IntroduceHandler.InitPlace.SET_UP)) {
-      ((DefaultComboBoxModel) myInitializerPlaceCombo.getModel()).addElement("setUp() method");
+      ((DefaultComboBoxModel) myInitializerPlaceCombo.getModel()).addElement(PyBundle.message("refactoring.introduce.field.setup.method"));
     }
   }
 

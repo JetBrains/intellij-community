@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Denis Zhdanov
  */
-public class TextComponentFoldingModel implements FoldingModel {
+class TextComponentFoldingModel implements FoldingModel {
 
   @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
@@ -34,9 +34,8 @@ public class TextComponentFoldingModel implements FoldingModel {
   public void removeFoldRegion(@NotNull FoldRegion region) {
   }
 
-  @NotNull
   @Override
-  public FoldRegion[] getAllFoldRegions() {
+  public FoldRegion @NotNull [] getAllFoldRegions() {
     return FoldRegion.EMPTY_ARRAY;
   }
 

@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -13,7 +14,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -95,8 +95,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>",
-                                                     SwingConstants.CENTER);
+  private final JLabel myEmptySelection = new JLabel(
+    JavaUiBundle.message("project.structure.empty.text"),
+    SwingConstants.CENTER);
 
   private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
 
@@ -140,7 +141,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   @Override
   @Nls
   public String getDisplayName() {
-    return ProjectBundle.message("project.settings.display.name");
+    return JavaUiBundle.message("project.settings.display.name");
   }
 
   @Override
@@ -193,7 +194,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
     boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
 
     mySidePanel = new SidePanel(this);
-    mySidePanel.addSeparator("Project Settings");
+    mySidePanel.addSeparator(JavaUiBundle.message("project.settings.title"));
     addProjectConfig();
     if (!isDefaultProject) {
       addModulesConfig();
@@ -212,7 +213,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
       }
     }
 
-    mySidePanel.addSeparator("Platform Settings");
+    mySidePanel.addSeparator(JavaUiBundle.message("project.structure.platform.title"));
     addJdkListConfig();
     addGlobalLibrariesConfig();
 

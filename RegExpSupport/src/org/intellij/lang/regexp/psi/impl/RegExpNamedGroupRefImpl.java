@@ -137,8 +137,7 @@ public class RegExpNamedGroupRefImpl extends RegExpElementImpl implements RegExp
       }
 
       @Override
-      @NotNull
-      public Object[] getVariants() {
+      public Object @NotNull [] getVariants() {
         final PsiElementProcessor.CollectFilteredElements<RegExpGroup> processor = new PsiElementProcessor.CollectFilteredElements<>(
           e -> e instanceof RegExpGroup && ((RegExpGroup)e).isAnyNamedGroup()
         );

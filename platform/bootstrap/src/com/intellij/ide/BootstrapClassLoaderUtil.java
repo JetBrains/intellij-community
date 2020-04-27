@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ClassLoaderUtil;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +23,6 @@ import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/**
- * @author max
- */
 public final class BootstrapClassLoaderUtil {
   public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
 
@@ -95,7 +92,7 @@ public final class BootstrapClassLoaderUtil {
   }
 
   private static void addParentClasspath(@NotNull Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
-    if (SystemInfo.IS_AT_LEAST_JAVA9) {
+    if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       if (!ext) {
         // ManagementFactory.getRuntimeMXBean().getClassPath() = System.getProperty("java.class.path"), but 100 times faster
         parseClassPathString(System.getProperty("java.class.path"), classpath);

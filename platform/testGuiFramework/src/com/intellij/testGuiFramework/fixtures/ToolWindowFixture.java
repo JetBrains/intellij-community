@@ -170,8 +170,7 @@ public abstract class ToolWindowFixture {
     waitUntilIsVisible(Timeout.timeout(budget));
   }
 
-  @NotNull
-  public Content[] getContents() {
+  public Content @NotNull [] getContents() {
     //noinspection ConstantConditions
     return GuiTestUtilKt.INSTANCE.computeOnEdt(() -> myToolWindow.getContentManager().getContents());
   }

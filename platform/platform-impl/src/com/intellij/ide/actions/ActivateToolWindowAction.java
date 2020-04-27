@@ -11,9 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.SizedIcon;
-import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +36,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     return myToolWindowId;
   }
 
-  public static void ensureToolWindowActionRegistered(@NotNull ToolWindowImpl toolWindow) {
+  public static void ensureToolWindowActionRegistered(@NotNull ToolWindow toolWindow) {
     ActionManager actionManager = ActionManager.getInstance();
     String actionId = getActionIdForToolWindow(toolWindow.getId());
     AnAction action = actionManager.getAction(actionId);
@@ -49,7 +47,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
     }
   }
 
-  public static void updateToolWindowActionPresentation(@NotNull ToolWindowImpl toolWindow) {
+  public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
     AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.getId()));
     if (action instanceof ActivateToolWindowAction) {
       ((ActivateToolWindowAction)action).updatePresentation(action.getTemplatePresentation(), toolWindow);
@@ -79,7 +77,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
   private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     String title = toolWindow.getStripeTitle();
     presentation.setText(title);
-    presentation.setDescription(IdeBundle.message("action.activate.tool.window", title));
+    presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
     Icon icon = toolWindow.getIcon();
     if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
       icon = AllIcons.Ide.Notification.InfoEvents;
@@ -96,25 +94,12 @@ public class ActivateToolWindowAction extends DumbAwareAction {
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     ToolWindow window = windowManager.getToolWindow(myToolWindowId);
-    InputEvent event = e.getInputEvent();
-    Runnable run = null;
-    if (event instanceof KeyEvent && event.isShiftDown()) {
-      Content[] contents = window.getContentManager().getContents();
-      if (contents.length > 0 && window.getContentManager().getSelectedContent() != contents[0]) {
-        run = () -> window.getContentManager().setSelectedContent(contents[0], true, true);
-      }
-    }
 
-    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId()) || run != null) {
-      if (run != null && window.isActive()) {
-        run.run();
-      }
-      else {
-        window.activate(run);
-      }
+    if (windowManager.isEditorComponentActive() || !myToolWindowId.equals(windowManager.getActiveToolWindowId())) {
+      window.activate(null);
     }
     else {
-      windowManager.getToolWindow(myToolWindowId).hide(null);
+      window.hide(null);
     }
   }
 
@@ -125,6 +110,7 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    * @param id {@code id} of tool window to be activated.
    */
   @NonNls
+  @NotNull
   public static String getActionIdForToolWindow(@NotNull String id) {
     return "Activate" + id.replaceAll(" ", "") + "ToolWindow";
   }
@@ -135,9 +121,9 @@ public class ActivateToolWindowAction extends DumbAwareAction {
    * Mac OS X user, because Alt+digit types strange characters into the
    * editor.
    */
-  public static int getMnemonicForToolWindow(@NotNull String id) {
+  public static int getMnemonicForToolWindow(@NotNull String toolWindowId) {
     Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
-    for (Shortcut shortcut : activeKeymap.getShortcuts(getActionIdForToolWindow(id))) {
+    for (Shortcut shortcut : activeKeymap.getShortcuts(getActionIdForToolWindow(toolWindowId))) {
       if (!(shortcut instanceof KeyboardShortcut)) {
         continue;
       }

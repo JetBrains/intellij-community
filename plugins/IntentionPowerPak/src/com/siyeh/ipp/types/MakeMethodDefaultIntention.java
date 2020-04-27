@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionAction {
@@ -23,7 +24,7 @@ public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Make method default";
+    return IntentionPowerPackBundle.message("make.method.вdefault.family.name");
   }
 
   @Override

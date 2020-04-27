@@ -19,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an IntelliJ IDEA project and a set of relevant application-level settings (e.g. the JDK configuration) in JPS.
- *
- * @author nik
  */
 public interface JpsModel {
   @NotNull

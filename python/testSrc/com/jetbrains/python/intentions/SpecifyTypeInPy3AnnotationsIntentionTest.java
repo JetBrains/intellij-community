@@ -1,12 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * @author traff
- */
 public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCase {
   public void testCaretOnDefinition() {
     doTestReturnType();

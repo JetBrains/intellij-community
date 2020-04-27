@@ -70,7 +70,7 @@ public class CollectionsMustHaveInitialCapacityInspection
   public JComponent createOptionsPanel() {
     return new FormBuilder()
       .addComponentFillVertically(mySettings.createOptionsPanel(), 0)
-      .addComponent(new CheckBox("Don't report field initializers", this, "myIgnoreFields"))
+      .addComponent(new CheckBox(InspectionGadgetsBundle.message("inspection.collection.must.have.initial.capacity.initializers.option"), this, "myIgnoreFields"))
       .getPanel();
   }
 

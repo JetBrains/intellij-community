@@ -17,7 +17,6 @@
 package com.intellij.xdebugger.breakpoints;
 
 /**
- * @author nik
  * @deprecated use {@link XBreakpointListener}
  */
 @Deprecated

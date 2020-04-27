@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.ui.search;
 
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -123,7 +122,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         while (resources.hasMoreElements()) {
           final URL url = resources.nextElement();
           if (URLUtil.JAR_PROTOCOL.equals(url.getProtocol())) {
-            final Pair<String, String> parts = ObjectUtils.notNull(URLUtil.splitJarUrl(url.getFile()));
+            final Pair<String, String> parts = Objects.requireNonNull(URLUtil.splitJarUrl(url.getFile()));
             final File file = new File(parts.first);
             try (final JarFile jar = new JarFile(file)) {
               final Enumeration<JarEntry> entries = jar.entries();
@@ -374,15 +373,14 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     return result;
   }
 
-  @Override
   @Nullable
-  public String getInnerPath(SearchableConfigurable configurable, @NonNls String option) {
-    loadHugeFilesIfNecessary();
+  private Set<OptionDescription> getOptionDescriptionsByWords(SearchableConfigurable configurable, Set<String> words) {
     Set<OptionDescription> path = null;
-    final Set<String> words = getProcessedWordsWithoutStemming(option);
+
     for (String word : words) {
       Set<OptionDescription> configs = getAcceptableDescriptions(word);
       if (configs == null) return null;
+
       final Set<OptionDescription> paths = new HashSet<>();
       for (OptionDescription config : configs) {
         if (Comparing.strEqual(config.getConfigurableId(), configurable.getId())) {
@@ -394,27 +392,40 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       }
       path.retainAll(paths);
     }
-    if (path == null || path.isEmpty()) {
-      return null;
-    }
-    else {
-      OptionDescription result = null;
+    return path;
+  }
+
+  @Override
+  public Set<String> getInnerPaths(SearchableConfigurable configurable, String option) {
+    loadHugeFilesIfNecessary();
+    final Set<String> words = getProcessedWordsWithoutStemming(option);
+    final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+
+    HashSet<String> resultSet = new HashSet<>();
+    if (path != null && !path.isEmpty()) {
+      OptionDescription theOnlyResult = null;
       for (OptionDescription description : path) {
         final String hit = description.getHit();
         if (hit != null) {
           boolean theBest = true;
           for (String word : words) {
-            if (!hit.contains(word)) {
+            if (!StringUtil.containsIgnoreCase(hit, word)) {
               theBest = false;
               break;
             }
           }
-          if (theBest) return description.getPath();
+          if (theBest) {
+            resultSet.add(description.getPath());
+          }
         }
-        result = description;
+        theOnlyResult = description;
       }
-      return result.getPath();
+
+      if (resultSet.isEmpty())
+        resultSet.add(theOnlyResult.getPath());
     }
+
+    return resultSet;
   }
 
   @Override

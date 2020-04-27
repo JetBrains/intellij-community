@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -39,7 +40,7 @@ public class SuspiciousIntegerDivAssignmentInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox("Report suspicious but possibly exact divisions", "myReportPossiblyExactDivision");
+    panel.addCheckbox(JavaAnalysisBundle.message("inspection.suspicious.integer.div.assignment.option"), "myReportPossiblyExactDivision");
     return panel;
   }
 

@@ -83,6 +83,6 @@ public class BitSetFlags implements Flags {
 
   @Override
   public String toString() {
-    return myBitSet + ", size = " + mySize;
+    return myBitSet + ", size = " + mySize; // NON-NLS
   }
 }

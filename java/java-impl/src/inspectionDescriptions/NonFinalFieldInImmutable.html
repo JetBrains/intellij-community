@@ -1,6 +1,15 @@
 <html>
 <body>
-                Reports any non-final field in a class with @Immutable annotation
-                (net.jcip.annotations|javax.annotation.concurrent|org.apache.http.annotation). This violates the contract of the @Immutable annotation.
+Reports any non-final field in a class with <b>@Immutable</b> annotation.
+This violates the contract of the <b>@Immutable</b> annotation.
+Supported <b>@GuardedBy</b> annotations are:
+<ul>
+  <li>net.jcip.annotations.GuardedBy</li>
+  <li>javax.annotation.concurrent.GuardedBy</li>
+  <li>org.apache.http.annotation.GuardedBy</li>
+  <li>com.android.annotations.concurrency.GuardedBy</li>
+  <li>androidx.annotation.GuardedBy</li>
+  <li>com.google.errorprone.annotations.concurrent.GuardedBy</li>
+</ul>
 </body>
 </html>

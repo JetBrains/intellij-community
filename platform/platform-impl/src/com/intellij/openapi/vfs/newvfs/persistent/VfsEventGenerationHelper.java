@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ReadAction;
@@ -81,8 +81,7 @@ class VfsEventGenerationHelper {
         LOG.warn("Invalid child name: '" + childName + "'", e);
       }
     }
-    VFileCreateEvent event = new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children);
-    myEvents.add(event);
+    myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
   }
 
   private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
@@ -112,8 +111,11 @@ class VfsEventGenerationHelper {
   }
 
   // scan all children of "root" (except excluded dirs) recursively and return them in the ChildInfo[] array
-  @Nullable // null means error during scan
-  private static ChildInfo[] scanChildren(@NotNull Path root, @NotNull Path[] excluded, @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled) throws RefreshWorker.RefreshCancelledException {
+  // null means error during scan
+  private static ChildInfo @Nullable [] scanChildren(@NotNull Path root,
+                                                     Path @NotNull [] excluded,
+                                                     @NotNull ThrowableRunnable<RefreshWorker.RefreshCancelledException> checkCanceled)
+  throws RefreshWorker.RefreshCancelledException {
     // top of the stack contains list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, "", null, null, null);
@@ -143,13 +145,11 @@ class VfsEventGenerationHelper {
         String name = file.getFileName().toString();
         boolean isSymLink = false;
         if (attrs.isSymbolicLink()) {
-          // under windows the isDirectory attribute for symlink is incorrect - reread it again
           isSymLink = true;
-          attrs = Files.readAttributes(file, BasicFileAttributes.class);
-
+          attrs = Files.readAttributes(file, BasicFileAttributes.class); // under Windows, the isDirectory attribute for symlink is incorrect, re-read
         }
         FileAttributes attributes = LocalFileSystemRefreshWorker.toFileAttributes(file, attrs, isSymLink);
-        String symLinkTarget = attributes.isSymLink() ? file.toRealPath().toString() : null;
+        String symLinkTarget = isSymLink ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
         ChildInfo info = new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
@@ -164,6 +164,12 @@ class VfsEventGenerationHelper {
         ChildInfo[] children = childInfos.toArray(ChildInfo.EMPTY_ARRAY);
         ChildInfo newInfo = new ChildInfoImpl(parentInfo.getId(), parentInfo.getNameId(), parentInfo.getFileAttributes(), children, parentInfo.getSymLinkTarget());
         parentInfos.set(parentInfos.size() - 1, newInfo);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) {
+        // ignore exceptions when e.g. compiler quickly creates a temp file, FileWalker tries to read its attributes but by then it already deleted
         return FileVisitResult.CONTINUE;
       }
     };

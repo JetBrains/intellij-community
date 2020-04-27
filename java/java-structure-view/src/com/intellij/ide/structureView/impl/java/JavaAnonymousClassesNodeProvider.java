@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.util.FileStructureNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
@@ -56,12 +55,11 @@ public class JavaAnonymousClassesNodeProvider
   @NotNull
   @Override
   public String getCheckBoxText() {
-    return IdeBundle.message("file.structure.toggle.show.anonymous.classes");
+    return JavaStructureViewBundle.message("file.structure.toggle.show.anonymous.classes");
   }
 
-  @NotNull
   @Override
-  public Shortcut[] getShortcut() {
+  public Shortcut @NotNull [] getShortcut() {
     return new Shortcut[]{KeyboardShortcut.fromString(SystemInfo.isMac ? "meta I" : "control I")};
   }
 

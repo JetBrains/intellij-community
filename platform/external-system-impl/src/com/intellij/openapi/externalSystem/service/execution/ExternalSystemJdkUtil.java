@@ -18,6 +18,7 @@ import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
 import java.util.Arrays;
@@ -46,8 +47,10 @@ public class ExternalSystemJdkUtil {
       case USE_INTERNAL_JAVA:
         return getInternalJdk();
       case USE_PROJECT_JDK:
-        if (projectSdk != null) return projectSdk;
-        throw new ProjectJdkNotFoundException();
+        if (projectSdk == null) {
+          throw new ProjectJdkNotFoundException();
+        }
+        return resolveDependentJdk(projectSdk);
       case USE_JAVA_HOME:
         return getJavaHomeJdk();
       default:
@@ -82,10 +85,7 @@ public class ExternalSystemJdkUtil {
     String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
     if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
     if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
-
-    SimpleJavaSdkType sdkType = SimpleJavaSdkType.getInstance();
-    String sdkName = sdkType.suggestSdkName(null, javaHome);
-    return sdkType.createJdk(sdkName, javaHome);
+    return ExternalSystemJdkProvider.getInstance().createJdk(null, javaHome);
   }
 
   @Nullable
@@ -107,7 +107,7 @@ public class ExternalSystemJdkUtil {
         return pair(USE_PROJECT_JDK, projectJdk);
       }
 
-      Sdk referencedJdk = findReferencedJDK(project);
+      Sdk referencedJdk = findReferencedJdk(project);
       if (referencedJdk != null) {
         return pair(USE_PROJECT_JDK, referencedJdk);
       }
@@ -141,8 +141,9 @@ public class ExternalSystemJdkUtil {
       .findFirst().orElse(null);
   }
 
-  private static Sdk findReferencedJDK(Project project) {
-    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+  @Nullable
+  @Contract("null -> null")
+  private static Sdk findReferencedJdk(Sdk projectSdk) {
     if (projectSdk != null
         && projectSdk.getSdkType() instanceof DependentSdkType
         && projectSdk.getSdkType() instanceof JavaSdkType) {
@@ -159,6 +160,19 @@ public class ExternalSystemJdkUtil {
     }
   }
 
+  @Nullable
+  private static Sdk findReferencedJdk(Project project) {
+    Sdk projectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+    return findReferencedJdk(projectSdk);
+  }
+
+  @NotNull
+  public static Sdk resolveDependentJdk(@NotNull Sdk sdk) {
+    Sdk parentSdk = findReferencedJdk(sdk);
+    if (parentSdk == null) return sdk;
+    return parentSdk;
+  }
+
   @NotNull
   public static Collection<String> suggestJdkHomePaths() {
     return getJavaSdkType().suggestHomePaths();
@@ -172,8 +186,7 @@ public class ExternalSystemJdkUtil {
   @Contract("null -> false")
   public static boolean isValidJdk(@Nullable Sdk jdk) {
     if (jdk == null) return false;
-    SdkType javaSdkType = getJavaSdkType();
-    if (!javaSdkType.equals(jdk.getSdkType())) return false;
+    if (!(jdk.getSdkType() instanceof JavaSdkType)) return false;
     if (SdkDownloadTracker.getInstance().isDownloading(jdk)) return true;
     return isValidJdk(jdk.getHomePath());
   }
@@ -185,7 +198,10 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   public static Sdk addJdk(String homePath) {
-    Sdk jdk = ExternalSystemJdkProvider.getInstance().createJdk(null, homePath);
+    ExternalSystemJdkProvider jdkProvider = ExternalSystemJdkProvider.getInstance();
+    List<Sdk> sdks = Arrays.asList(ProjectJdkTable.getInstance().getAllJdks());
+    String name = SdkConfigurationUtil.createUniqueSdkName(jdkProvider.getJavaSdkType(), homePath, sdks);
+    Sdk jdk = jdkProvider.createJdk(name, homePath);
     SdkConfigurationUtil.addSdk(jdk);
     return jdk;
   }
@@ -198,5 +214,12 @@ public class ExternalSystemJdkUtil {
   @NotNull
   private static Sdk getInternalJdk() {
     return ExternalSystemJdkProvider.getInstance().getInternalJdk();
+  }
+
+  @Contract("null -> false")
+  public static boolean isJdk9orLater(@Nullable String javaHome) {
+    JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
+      javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
+    return jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
   }
 }

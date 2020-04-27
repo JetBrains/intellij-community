@@ -285,8 +285,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
       return substitutions.stream().anyMatch(s -> offset >= s.getStartIndex() && offset <= s.getEndIndex());
     }
 
-    @NotNull
-    private static PyExpression[] getFormatFunctionKeyWordArguments(@NotNull final PsiElement original) {
+    private static PyExpression @NotNull [] getFormatFunctionKeyWordArguments(@NotNull final PsiElement original) {
       final PsiElement pyReferenceExpression = PsiTreeUtil.getParentOfType(original, PyReferenceExpression.class);
       final PyArgumentList argumentList = PsiTreeUtil.getNextSiblingOfType(pyReferenceExpression, PyArgumentList.class);
       return argumentList != null ? argumentList.getArguments() : PyExpression.EMPTY_ARRAY;

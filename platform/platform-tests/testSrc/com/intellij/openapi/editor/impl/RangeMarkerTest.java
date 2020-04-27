@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
@@ -29,7 +29,6 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -46,9 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-/**
- * @author mike
- */
 public class RangeMarkerTest extends LightPlatformTestCase {
   private PsiDocumentManagerImpl documentManager;
   private PsiToDocumentSynchronizer synchronizer;
@@ -1359,7 +1355,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeMarkerContinuesToReceiveEventsFromDocumentAfterItsBeingGcedAndRecreatedAgain_NoCommand() {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
-    PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
+    PsiFile psiFile = Objects.requireNonNull(getPsiManager().findFile(vf));
     RangeMarker[] marker = {createMarker(psiFile, 0, 4)};
     RangeMarker[] persistentMarker = {document.createRangeMarker(0, 4, true)};
     int docHash0 = System.identityHashCode(document);
@@ -1367,7 +1363,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertTrue(marker[0].isValid());
     assertTrue(persistentMarker[0].isValid());
 
-    document = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
     int docHash1 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
 
@@ -1396,7 +1392,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testRangeMarkerUpdatesItselfEvenWhenDocumentIsGCedAndVirtualFileChanges_NoCommand() throws IOException {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
-    PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
+    PsiFile psiFile = Objects.requireNonNull(getPsiManager().findFile(vf));
     RangeMarker[] marker = {createMarker(psiFile, 1, 3)};
     RangeMarker[] persistentMarker = {document.createRangeMarker(1, 3, true)};
     int docHash0 = System.identityHashCode(document);
@@ -1410,7 +1406,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       return null;
     });
 
-    document = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
     int docHash1 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
     assertEquals(newText, document.getText());
@@ -1424,8 +1420,8 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private void checkRMTreesAreGCedWhenNoReachableRangeMarkersLeft(@NotNull VirtualFile vf,
-                                                                         @NotNull RangeMarker[] marker,
-                                                                         @NotNull RangeMarker[] persistentMarker) {
+                                                                         RangeMarker @NotNull [] marker,
+                                                                         RangeMarker @NotNull [] persistentMarker) {
     Reference<RangeMarker> markerRef = new WeakReference<>(marker[0]);
     Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
     marker[0] = null;
@@ -1447,7 +1443,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   public void testDocumentGcedThenRecreatedThenNewRangeMarkerCreatedThenDocumentGcedThenRecreated_NoCommand() {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
-    PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
+    PsiFile psiFile = Objects.requireNonNull(getPsiManager().findFile(vf));
     document = documentManager.getDocument(psiFile);
     int docHash0 = System.identityHashCode(document);
     RangeMarker[] oldmarker = {createMarker(psiFile, 1, 3)};
@@ -1466,7 +1462,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     gcDocument();
 
     // 2nd resurrection
-    document = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
     int docHash2 = System.identityHashCode(document);
     assertNotSame(docHash0, docHash1);
     assertNotSame(docHash0, docHash2);

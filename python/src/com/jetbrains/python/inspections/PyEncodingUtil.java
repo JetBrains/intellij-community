@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.PyBundle;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -46,7 +48,7 @@ public class PyEncodingUtil {
     c.anchor = GridBagConstraints.NORTH;
     c.gridx = 0;
     c.gridy = 0;
-    final JLabel encodingLabel = new JLabel("Select default encoding: ");
+    final JLabel encodingLabel = new JLabel(PyBundle.message("code.insight.select.default.encoding"));
     final JPanel encodingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     encodingPanel.add(encodingLabel);
     optionsPanel.add(encodingPanel, c);
@@ -58,7 +60,7 @@ public class PyEncodingUtil {
     c.gridx = 0;
     c.gridy = 1;
     c.weighty = 1;
-    final JLabel formatLabel = new JLabel("Encoding comment format:");
+    final JLabel formatLabel = new JLabel(PyBundle.message("code.insight.encoding.comment.format"));
     final JPanel formatPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     formatPanel.add(formatLabel);
     optionsPanel.add(formatPanel, c);

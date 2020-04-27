@@ -1,3 +1,3 @@
 class C {
-    String s = "\u00c1\u00ee";
+    String s = "\u00C1\u00EE";
 }

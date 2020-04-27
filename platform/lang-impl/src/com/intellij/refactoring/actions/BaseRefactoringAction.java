@@ -10,6 +10,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
@@ -37,7 +38,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
 
   protected abstract boolean isAvailableInEditorOnly();
 
-  protected abstract boolean isEnabledOnElements(@NotNull PsiElement[] elements);
+  protected abstract boolean isEnabledOnElements(PsiElement @NotNull [] elements);
 
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element,
                                                         @NotNull Editor editor,
@@ -120,7 +121,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
         Runnable command = () -> ((LookupImpl)lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR);
         Document doc = editor.getDocument();
         DocCommandGroupId group = DocCommandGroupId.noneGroupId(doc);
-        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, "Completion", group, UndoConfirmationPolicy.DEFAULT, doc);
+        CommandProcessor.getInstance().executeCommand(editor.getProject(), command, ApplicationBundle.message("title.code.completion"), group, UndoConfirmationPolicy.DEFAULT, doc);
       }
     }
 
@@ -274,8 +275,7 @@ public abstract class BaseRefactoringAction extends AnAction implements UpdateIn
     return true;
   }
 
-  @NotNull
-  public static PsiElement[] getPsiElementArray(@NotNull DataContext dataContext) {
+  public static PsiElement @NotNull [] getPsiElementArray(@NotNull DataContext dataContext) {
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements == null || psiElements.length == 0) {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);

@@ -201,7 +201,7 @@ public class JBScrollPane extends JScrollPane {
         boolean isAdjustedDeltaZero = bar instanceof JBScrollBar && ((JBScrollBar)bar).getDeltaAdjusted(event) == 0.0;
 
         if (isWheelScrollEnabled && isBarVisible && !isAdjustedDeltaZero) {
-          if (UISettings.getShadowInstance().getAnimatedScrolling()) {
+          if (UISettings.getShadowInstance().getAnimatedScrolling() || TouchScrollUtil.isTouchScroll(event)) {
             if (mySmoothScroll == null) {
               mySmoothScroll = MouseWheelSmoothScroll.create(() -> {
                 return ScrollSettings.isEligibleFor(pane);

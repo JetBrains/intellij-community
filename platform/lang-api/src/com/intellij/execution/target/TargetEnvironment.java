@@ -16,6 +16,8 @@ public interface TargetEnvironment {
   @NotNull
   Process createProcess(@NotNull TargetedCommandLine commandLine, @NotNull ProgressIndicator indicator) throws ExecutionException;
 
+  TargetEnvironmentRequest getRequest();
+
   @NotNull
   TargetPlatform getRemotePlatform();
 }

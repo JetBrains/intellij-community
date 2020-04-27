@@ -20,9 +20,6 @@ import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author traff
- */
 public class PythonConsoleData {
   private boolean myIPythonEnabled;
   private boolean myIPythonAutomagic = true;
@@ -49,7 +46,7 @@ public class PythonConsoleData {
     myIPythonMagicCommands.clear();
     myIPythonMagicCommands.addAll(IPythonMagicCommands);
   }
-  
+
   public boolean isMagicCommand(String command) {
     return myIPythonMagicCommands.contains(command);
   }

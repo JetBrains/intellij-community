@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   @NotNull
   @Override
   public String getFamilyName() {
-    return "Edit method contract";
+    return JavaBundle.message("intention.family.edit.method.contract");
   }
 
   @Nullable
@@ -59,7 +60,8 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     final PsiMethod method = getTargetMethod(editor, file);
     if (method != null) {
       boolean hasContract = JavaMethodContractUtil.findContractAnnotation(method) != null;
-      setText(hasContract ? "Edit method contract of '" + method.getName() + "'" : "Add method contract to '" + method.getName() + "'");
+      setText(hasContract ? JavaBundle.message("intention.text.edit.method.contract.of.0", method.getName())
+                          : JavaBundle.message("intention.text.add.method.contract.to.0", method.getName()));
       return true;
     }
     return false;
@@ -130,7 +132,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     constraints.gridy = 1;
     constraints.gridwidth = 1;
     constraints.weightx = 1;
-    JLabel contractLabel = new JLabel("Contract:");
+    JLabel contractLabel = new JLabel(JavaBundle.message("label.contract"));
     contractLabel.setDisplayedMnemonic('c');
     contractLabel.setLabelFor(contractText);
     panel.add(contractLabel, constraints);
@@ -148,7 +150,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       constraints.gridy = 3;
       constraints.weightx = 1;
       constraints.gridwidth = 1;
-      JLabel mutatesLabel = new JLabel("Mutates:");
+      JLabel mutatesLabel = new JLabel(JavaBundle.message("label.mutates"));
       mutatesLabel.setDisplayedMnemonic('m');
       mutatesLabel.setLabelFor(mutatesText);
       panel.add(mutatesLabel, constraints);
@@ -157,7 +159,8 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
       panel.add(mutatesText, constraints);
     }
 
-    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Method Contract");
+    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title(JavaBundle.message(
+      "dialog.title.edit.method.contract"));
     builder.setPreferredFocusComponent(contractText);
     builder.setHelpId("define_contract_dialog");
     return builder;

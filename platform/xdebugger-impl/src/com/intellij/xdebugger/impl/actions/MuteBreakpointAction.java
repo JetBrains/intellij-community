@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public class MuteBreakpointAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull final AnActionEvent e) {

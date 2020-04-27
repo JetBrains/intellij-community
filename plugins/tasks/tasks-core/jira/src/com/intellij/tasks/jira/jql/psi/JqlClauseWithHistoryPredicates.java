@@ -28,6 +28,5 @@ public interface JqlClauseWithHistoryPredicates extends JqlElement {
   @Nullable
   JqlOperand getTo();
 
-  @NotNull
-  JqlHistoryPredicate[] getHistoryPredicates();
+  JqlHistoryPredicate @NotNull [] getHistoryPredicates();
 }

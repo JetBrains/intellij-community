@@ -110,7 +110,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with cast";
+      return InspectionGadgetsBundle.message("replace.with.cast.fix.family.name");
     }
 
     @NotNull

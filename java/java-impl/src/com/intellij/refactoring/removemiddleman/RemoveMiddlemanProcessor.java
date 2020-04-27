@@ -56,7 +56,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
   @Override
   @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usageInfos) {
+  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usageInfos) {
     return new RemoveMiddlemanUsageViewDescriptor(field);
   }
 
@@ -110,7 +110,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
+  protected void performRefactoring(UsageInfo @NotNull [] usageInfos) {
     if (getter != null) {
       try {
         if (containingClass.findMethodBySignature(getter, false) == null) {

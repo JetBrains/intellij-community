@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.serialization.Property;
 import com.intellij.serialization.PropertyMapping;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import static com.intellij.openapi.util.text.StringUtil.nullize;
 /**
  * @author Denis Zhdanov
  */
+@SuppressWarnings("JavadocReference")
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
   @NotNull private final Map<ExternalSystemSourceType, String> compileOutputPaths = new HashMap<>();
   @NotNull private final Map<ExternalSystemSourceType, String> externalCompilerOutputPaths = new HashMap<>();
@@ -33,10 +35,16 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String version;
   @Nullable private String description;
   @NotNull private List<File> artifacts;
-  @Nullable private String[] ideModuleGroup;
+  private String @Nullable [] ideModuleGroup;
+
   @Nullable private String sourceCompatibility;
   @Nullable private String targetCompatibility;
   @Nullable private String sdkName;
+
+  private boolean isSetSourceCompatibility = false;
+  private boolean isSetTargetCompatibility = false;
+  private boolean isSetSdkName = false;
+
   @Nullable private String productionModuleId;
   @NotNull private String moduleName;
 
@@ -195,41 +203,118 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     this.artifacts = artifacts;
   }
 
-  @Nullable
-  public String[] getIdeModuleGroup() {
+  public String @Nullable [] getIdeModuleGroup() {
     return ideModuleGroup;
   }
 
-  public void setIdeModuleGroup(@Nullable String[] ideModuleGroup) {
+  public void setIdeModuleGroup(String @Nullable [] ideModuleGroup) {
     this.ideModuleGroup = ideModuleGroup;
   }
 
+  /**
+   * @deprecated use {@link JavaModuleData#getLanguageLevel())} instead
+   */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public String getSourceCompatibility() {
     return sourceCompatibility;
   }
 
+  /**
+   * @deprecated use {@link JavaModuleData#setLanguageLevel(LanguageLevel))} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
+    this.isSetSourceCompatibility = true;
     this.sourceCompatibility = sourceCompatibility;
   }
 
+  /**
+   * @deprecated use {@link JavaModuleData#getTargetBytecodeVersion())} instead
+   */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public String getTargetCompatibility() {
     return targetCompatibility;
   }
 
+  /**
+   * @deprecated use {@link JavaModuleData#setTargetBytecodeVersion(String))} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setTargetCompatibility(@Nullable String targetCompatibility) {
+    this.isSetTargetCompatibility = true;
     this.targetCompatibility = targetCompatibility;
   }
 
+  /**
+   * @deprecated use {@link ModuleSdkData#getSdkName)} instead
+   */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public String getSdkName() {
     return sdkName;
   }
 
+  /**
+   * @deprecated use {@link ModuleSdkData#setSdkName} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void setSdkName(@Nullable String sdkName) {
+    this.isSetSdkName = true;
     this.sdkName = sdkName;
   }
+
+  // Remove it in version 2021.1
+  //<editor-fold desc="Backward compatibility preserving methods">
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public void internalSetSourceCompatibility(@Nullable String sourceCompatibility) {
+    this.sourceCompatibility = sourceCompatibility;
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public void internalSetTargetCompatibility(@Nullable String targetCompatibility) {
+    this.targetCompatibility = targetCompatibility;
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public void internalSetSdkName(@Nullable String sdkName) {
+    this.sdkName = sdkName;
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public boolean isSetSourceCompatibility() {
+    return isSetSourceCompatibility;
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public boolean isSetTargetCompatibility() {
+    return isSetTargetCompatibility;
+  }
+
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @SuppressWarnings("MissingDeprecatedAnnotation")
+  public boolean isSetSdkName() {
+    return isSetSdkName;
+  }
+  //</editor-fold>
 
   @Nullable
   public String getProperty(String key) {

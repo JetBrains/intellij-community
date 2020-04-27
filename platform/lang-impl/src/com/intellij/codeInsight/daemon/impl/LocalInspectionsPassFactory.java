@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,13 +23,17 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, true, Pass.LOCAL_INSPECTIONS);
+    int[] GHP = {Pass.UPDATE_ALL};
+    boolean runInspectionsAfterCompletionOfGeneralHighlightPass =
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).isRunInspectionsAfterCompletionOfGeneralHighlightPass();
+    registrar.registerTextEditorHighlightingPass(this, runInspectionsAfterCompletionOfGeneralHighlightPass ? GHP : null,
+                                                 runInspectionsAfterCompletionOfGeneralHighlightPass ? null : GHP, true, Pass.LOCAL_INSPECTIONS);
   }
 
   @NotNull
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    TextRange textRange = calculateRangeToProcess(editor);
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
     if (textRange == null){
       return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     }
@@ -43,10 +48,6 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
     final TextRange textRange = file.getTextRange();
     LOG.assertTrue(textRange != null, "textRange is null for " + file + " (" + PsiUtilCore.getVirtualFile(file) + ")");
     return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, highlightInfoProcessor);
-  }
-
-  private static TextRange calculateRangeToProcess(Editor editor) {
-    return FileStatusMap.getDirtyTextRange(editor, Pass.LOCAL_INSPECTIONS);
   }
 
   private static class MyLocalInspectionsPass extends LocalInspectionsPass {

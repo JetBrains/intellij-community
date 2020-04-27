@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard;
 
 import com.google.common.collect.Sets;
@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @State(
@@ -71,7 +72,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final ReentrantReadWriteLock myServiceLock = new ReentrantReadWriteLock();
   private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
   private String myToolWindowId;
-  private final Condition<Content> myReuseCondition;
+  private final Predicate<Content> myReuseCondition;
   private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
 
   public RunDashboardManagerImpl(@NotNull Project project) {
@@ -327,7 +328,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   @NotNull
   @Override
-  public Condition<Content> getReuseCondition() {
+  public Predicate<Content> getReuseCondition() {
     return myReuseCondition;
   }
 
@@ -690,7 +691,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
-  private class ServiceContentManagerListener extends ContentManagerAdapter {
+  private class ServiceContentManagerListener implements ContentManagerListener {
     @Override
     public void selectionChanged(@NotNull ContentManagerEvent event) {
       boolean onAdd = event.getOperation() == ContentManagerEvent.ContentOperation.add;

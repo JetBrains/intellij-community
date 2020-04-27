@@ -10,9 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author nik
- */
 public interface XWatchesView {
   DataKey<XWatchesView> DATA_KEY = DataKey.create("XDEBUGGER_WATCHES_VIEW");
 

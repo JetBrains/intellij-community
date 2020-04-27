@@ -44,6 +44,6 @@ public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
   @Override
   public void update(AnActionEvent e, DomModelTreeView treeView) {
     e.getPresentation().setVisible(treeView.getTree().getSelectedNode() instanceof BaseDomElementNode);
-    e.getPresentation().setText(ActionsBundle.message("action.EditSource.text"));
+    e.getPresentation().setText(ActionsBundle.messagePointer("action.EditSource.text"));
   }
 }

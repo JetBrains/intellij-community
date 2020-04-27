@@ -21,9 +21,6 @@ import com.intellij.testFramework.EdtTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author nik
- */
 public class CompilerTestUtil {
   private CompilerTestUtil() {
   }

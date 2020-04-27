@@ -18,8 +18,7 @@ package com.intellij.ide.util.treeView;
 import org.jetbrains.annotations.NotNull;
 
 class SelectionRequest {
-  @NotNull
-  private final Object[] myElements;
+  private final Object @NotNull [] myElements;
   private final Runnable myOnDone;
   private final boolean myAddToSelection;
   private final boolean myCheckCurrentSelection;
@@ -28,7 +27,7 @@ class SelectionRequest {
   private final boolean myDeferred;
   private final boolean myCanSmartExpand;
 
-  SelectionRequest(@NotNull Object[] elements,
+  SelectionRequest(Object @NotNull [] elements,
                    Runnable onDone,
                    boolean addToSelection,
                    boolean checkCurrentSelection,

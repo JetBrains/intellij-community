@@ -15,7 +15,7 @@ public class HtmlParsingTest extends XmlParsingTest {
 
   protected HtmlParsingTest(@NotNull String dataPath,
                             @NotNull String fileExt,
-                            @NotNull ParserDefinition... definitions) {
+                            ParserDefinition @NotNull ... definitions) {
     super(dataPath, fileExt, definitions);
   }
 

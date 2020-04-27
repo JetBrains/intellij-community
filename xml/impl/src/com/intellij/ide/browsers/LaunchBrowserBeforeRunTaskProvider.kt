@@ -29,7 +29,7 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     val ID = Key.create<LaunchBrowserBeforeRunTask>("LaunchBrowser.Before.Run")
   }
 
-  override fun getName() = "Launch Web Browser"
+  override fun getName() = XmlBundle.message("task.browser.launch")
 
   override fun getId() = ID
 
@@ -59,15 +59,15 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     val startJavaScriptDebuggerCheckBox = if (JavaScriptDebuggerStarter.Util.hasStarters()) CheckBox(XmlBundle.message("start.browser.with.js.debugger"), state.withDebugger) else null
 
     val panel = panel {
-      row("Browser:") {
+      row(XmlBundle.message("task.browser.label")) {
         browserComboBox()
         startJavaScriptDebuggerCheckBox?.invoke()
       }
-      row("Url:") {
+      row(XmlBundle.message("task.browser.url")) {
         url(growPolicy = GrowPolicy.MEDIUM_TEXT)
       }
     }
-    dialog("Launch Web Browser", panel = panel, resizable = true, focusedComponent = url)
+    dialog(XmlBundle.message("task.browser.launch"), panel = panel, resizable = true, focusedComponent = url)
       .show()
 
     state.browser = browserSelector.selected

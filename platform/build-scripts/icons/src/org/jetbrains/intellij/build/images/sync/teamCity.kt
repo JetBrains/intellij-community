@@ -106,4 +106,4 @@ private val triggeredByName by lazy {
 }
 
 internal fun triggerBuild(buildId: String, branch: String) =
-  teamCityPost("buildQueue", """<build branchName="$branch"/><buildType id="$buildId"/></build>""")
+  teamCityPost("buildQueue", """<build branchName="$branch"><buildType id="$buildId"/></build>""")

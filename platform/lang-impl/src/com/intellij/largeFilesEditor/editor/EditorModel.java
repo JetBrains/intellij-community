@@ -2,6 +2,7 @@
 package com.intellij.largeFilesEditor.editor;
 
 import com.google.common.collect.EvictingQueue;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.largeFilesEditor.file.ReadingPageResultHandler;
 import com.intellij.largeFilesEditor.search.SearchResult;
@@ -61,6 +62,9 @@ public class EditorModel {
   private boolean isRealCaretAndSelectionCanAffectOnTarget = true;
   private boolean isNeedToShowCaret = false;
   private final SelectionState targetSelectionState = new SelectionState();
+
+  private boolean wasViewPortInTheEndOfFileLastTime = false;
+  private boolean isAllowedToFollowTheEndOfFile = false;
 
   private boolean isNeedToHighlightCloseSearchResults = false;
   private boolean isHighlightedSearchResultsAreStabilized = false;
@@ -273,8 +277,8 @@ public class EditorModel {
     }
     catch (IOException e) {
       LOG.info(e);
-      Messages.showErrorDialog("[Large File Editor Subsystem] EditorMode.update():"
-                               + " Error while working with file. Try to reopen it.", "ERROR");
+      Messages.showErrorDialog(EditorBundle.message("large.file.editor.message.error.while.working.with.file.try.to.reopen.it"),
+                               CommonBundle.getErrorTitle());
       return;
     }
 
@@ -308,6 +312,14 @@ public class EditorModel {
     }
 
     normalizePagesInDocumentListEnding();
+
+    ensureDocumentLastPageIsValid(pagesAmountInFile);
+
+    if (wasViewPortInTheEndOfFileLastTime && isAllowedToFollowTheEndOfFile) {
+      targetVisiblePosition.set(Long.MAX_VALUE, 0);
+      isNeedToShowCaret = false;
+      isAllowedToFollowTheEndOfFile = false;
+    }
 
     tryReflectTargetCaretPositionToReal();
 
@@ -351,7 +363,22 @@ public class EditorModel {
       }
     }
 
+    wasViewPortInTheEndOfFileLastTime = false;
+    if (documentOfPagesModel.getLastPage().getPageNumber() == pagesAmountInFile - 1 &&
+        myLocalInvisibleScrollBar.getValue() + myLocalInvisibleScrollBar.getHeight() == myLocalInvisibleScrollBar.getMaximum()) {
+      wasViewPortInTheEndOfFileLastTime = true;
+    }
+
     tryHighlightSearchResultsIfNeed();
+  }
+
+  // IDEA-232158
+  private void ensureDocumentLastPageIsValid(long pagesAmountInFile) {
+    Page lastPageInDocument = documentOfPagesModel.getLastPage();
+    if (lastPageInDocument.isLastInFile() != (lastPageInDocument.getPageNumber() == pagesAmountInFile - 1)) {
+      removeLastPageFromDocument();
+      pagesCash.removeIf(page -> lastPageInDocument.getPageNumber() == page.getPageNumber());
+    }
   }
 
   private boolean isNeedToTurnOnSoftWrapping() {
@@ -768,10 +795,12 @@ public class EditorModel {
     int targetTopOfVisibleArea = topOfTargetVisiblePage + targetVisiblePosition.verticalScrollOffset;
 
     if (editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y != targetTopOfVisibleArea) {
+      editor.getScrollingModel().disableAnimation();
       editor.getScrollingModel().scrollVertically(targetTopOfVisibleArea);
+      editor.getScrollingModel().enableAnimation();
     }
 
-    if (editor.getScrollingModel().getVisibleArea().y == targetTopOfVisibleArea) {
+    if (editor.getScrollingModel().getVisibleAreaOnScrollingFinished().y == targetTopOfVisibleArea) {
       isLocalScrollBarStabilized = true;
     }
   }
@@ -996,11 +1025,26 @@ public class EditorModel {
   }
 
   @CalledInAwt
-  public void fireEncodingWasChanged() {
-    pagesCash.clear();
+  public void onFileChanged(Page lastPage) {
     isLocalScrollBarStabilized = false;
-    runCaretAndSelectionListeningTransparentCommand(
-      () -> documentOfPagesModel.removeAllPages(dataProvider.getProject()));
+    pagesCash.clear();
+    runCaretAndSelectionListeningTransparentCommand(() -> {
+      documentOfPagesModel.removeLastPage(dataProvider.getProject());
+    });
+    if (lastPage != null) {
+      pagesCash.add(lastPage);
+    }
+    isAllowedToFollowTheEndOfFile = true;
+    update();
+  }
+
+  @CalledInAwt
+  public void onEncodingChanged() {
+    isLocalScrollBarStabilized = false;
+    pagesCash.clear();
+    runCaretAndSelectionListeningTransparentCommand(() -> {
+      documentOfPagesModel.removeAllPages(dataProvider.getProject());
+    });
     requestUpdate();
   }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
@@ -208,7 +209,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         addAndSplitDockedComponentCmd(decorator, info, dirtyMode, manager);
       }
     }
-    else if (info.isSliding()) {
+    else if (info.getType() == ToolWindowType.SLIDING) {
       addSlidingComponent(decorator, info, dirtyMode);
     }
     else {
@@ -712,15 +713,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     // if all components are hidden for anchor we should find the second component to put in a splitter
     // otherwise we add empty splitter
     if (c == null) {
-      List<ToolWindowImpl> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
-      for (Iterator<ToolWindowImpl> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
-        ToolWindowImpl window = iterator.next();
+      List<ToolWindowEx> toolWindows = manager.getToolWindowsOn(anchor, Objects.requireNonNull(info.getId()));
+      for (Iterator<ToolWindowEx> iterator = toolWindows.iterator(); iterator.hasNext(); ) {
+        ToolWindow window = iterator.next();
         if (window == null || window.isSplitMode() == info.isSplit() || !window.isVisible()) {
           iterator.remove();
         }
       }
       if (!toolWindows.isEmpty()) {
-        c = toolWindows.get(0).getDecoratorComponent();
+        c = ((ToolWindowImpl)toolWindows.get(0)).getDecoratorComponent();
       }
       if (c == null) {
         LOG.error("Empty splitter @ " + anchor + " during AddAndSplitDockedComponentCmd for " + info.getId());
@@ -835,15 +836,15 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private void removeSlidingComponent(@NotNull Component component, @NotNull WindowInfo info, boolean dirtyMode) {
     UISettings uiSettings = UISettings.getInstance();
     if (!dirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
-      final Rectangle bounds = component.getBounds();
+      Rectangle bounds = component.getBounds();
       // Prepare top image. This image is scrolling over bottom image. It contains
       // picture of component is being removed.
-      final Image topImage = layeredPane.getTopImage();
+      Image topImage = layeredPane.getTopImage();
       useSafely(topImage.getGraphics(), topGraphics -> component.paint(topGraphics));
 
       // Prepare bottom image. This image contains picture of component that is located
       // under the component to is being removed.
-      final Image bottomImage = layeredPane.getBottomImage();
+      Image bottomImage = layeredPane.getBottomImage();
 
       Point2D bottomImageOffset = PaintUtil.getFractOffsetInRootPane(layeredPane);
       useSafely(bottomImage.getGraphics(), bottomGraphics -> {
@@ -854,8 +855,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       });
 
       // Remove component from the layered pane and start animation.
-      final Surface surface =
-        new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, info.getAnchor(), UISettings.ANIMATION_DURATION);
+      Surface surface = new Surface(topImage, bottomImage, PaintUtil.negate(bottomImageOffset), -1, info.getAnchor(), UISettings.ANIMATION_DURATION);
       layeredPane.add(surface, JLayeredPane.PALETTE_LAYER);
       surface.setBounds(bounds);
       layeredPane.validate();

@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeHighlighting.Pass;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -40,14 +42,14 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
       }
 
       MyInfo info = new MyInfo(element, color, provider);
-      NavigateAction.setNavigateAction(info, "Choose color", null);
+      NavigateAction.setNavigateAction(info, "Choose color", null, AllIcons.Actions.Colors);
       return info;
     });
   }
 
   @Override
   public String getName() {
-    return "Color preview";
+    return CodeInsightBundle.message("gutter.color.preview");
   }
 
   @NotNull
@@ -73,7 +75,8 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
               assert editor != null;
 
               if (Registry.is("ide.new.color.picker")) {
-                ColorPicker.showColorPickerPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)));
+                RelativePoint relativePoint = new RelativePoint(e.getComponent(), e.getPoint());
+                ColorPicker.showColorPickerPopup(element.getProject(), color, (c, l) -> WriteAction.run(() -> colorProvider.setColorTo(elt, c)), relativePoint);
               } else {
                 final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(), "Choose Color", color, true);
                 if (c != null) {

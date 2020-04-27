@@ -116,11 +116,11 @@ public class InheritanceUtil {
   }
 
 
-    private static void getSuperClassesOfList(@NotNull PsiClassType[] types,
-                                            @NotNull Set<? super PsiClass> results,
-                                            boolean includeNonProject,
-                                            @NotNull Set<? super PsiClass> visited,
-                                            @NotNull PsiManager manager) {
+    private static void getSuperClassesOfList(PsiClassType @NotNull [] types,
+                                              @NotNull Set<? super PsiClass> results,
+                                              boolean includeNonProject,
+                                              @NotNull Set<? super PsiClass> visited,
+                                              @NotNull PsiManager manager) {
     for (PsiClassType type : types) {
       PsiClass resolved = type.resolve();
       if (resolved != null && visited.add(resolved)) {

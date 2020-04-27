@@ -32,7 +32,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
+import com.jetbrains.python.codeInsight.PyPsiIndexUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.*;
@@ -55,12 +55,12 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
   @Override
   public UsageInfo[] findUsages(ChangeInfo info) {
     if (info instanceof PyChangeInfo) {
-      final List<UsageInfo> usages = PyCodeFragmentUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
+      final List<UsageInfo> usages = PyPsiIndexUtil.findUsages(((PyChangeInfo)info).getMethod(), true);
       final Query<PyFunction> search = PyOverridingMethodsSearch.search(((PyChangeInfo)info).getMethod(), true);
       final Collection<PyFunction> functions = search.findAll();
       for (PyFunction function : functions) {
         usages.add(new UsageInfo(function));
-        usages.addAll(PyCodeFragmentUtil.findUsages(function, true));
+        usages.addAll(PyPsiIndexUtil.findUsages(function, true));
       }
       return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }

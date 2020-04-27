@@ -6,9 +6,6 @@ import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class GroovyLibraryProperties extends LibraryProperties<GroovyLibraryProperties> {
   private final String myVersion;
 

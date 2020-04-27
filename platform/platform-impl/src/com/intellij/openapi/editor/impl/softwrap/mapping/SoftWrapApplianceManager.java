@@ -337,13 +337,10 @@ public class SoftWrapApplianceManager implements Dumpable {
     // We want to adjust viewport's 'y' coordinate on complete recalculation, so, we remember number of soft-wrapped lines
     // before the target offset on recalculation start and compare it with the number of soft-wrapped lines before the same offset
     // after the recalculation.
-    int softWrapsBefore = -1;
     final ScrollingModelEx scrollingModel = myEditor.getScrollingModel();
     int yScrollOffset = scrollingModel.getVerticalScrollOffset();
     int anchorOffset = myLastTopLeftCornerOffset;
-    if (myVisibleAreaWidth != QUICK_DUMMY_WRAPPING) { // don't scroll after soft-wrap recalculation if it's the first time editor is showing
-      softWrapsBefore = getNumberOfSoftWrapsBefore(anchorOffset);
-    }
+    int softWrapsBefore = getNumberOfSoftWrapsBefore(anchorOffset);
 
     // Drop information about processed lines.
     reset();
@@ -355,16 +352,14 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
 
     // Adjust viewport's 'y' coordinate if necessary.
-    if (softWrapsBefore >= 0) {
-      int softWrapsNow = getNumberOfSoftWrapsBefore(anchorOffset);
-      if (softWrapsNow != softWrapsBefore) {
-        scrollingModel.disableAnimation();
-        try {
-          scrollingModel.scrollVertically(yScrollOffset + (softWrapsNow - softWrapsBefore) * myEditor.getLineHeight());
-        }
-        finally {
-          scrollingModel.enableAnimation();
-        }
+    int softWrapsNow = getNumberOfSoftWrapsBefore(anchorOffset);
+    if (softWrapsNow != softWrapsBefore) {
+      scrollingModel.disableAnimation();
+      try {
+        scrollingModel.scrollVertically(yScrollOffset + (softWrapsNow - softWrapsBefore) * myEditor.getLineHeight());
+      }
+      finally {
+        scrollingModel.enableAnimation();
       }
     }
     updateLastTopLeftCornerOffset();
@@ -372,10 +367,16 @@ public class SoftWrapApplianceManager implements Dumpable {
   }
 
   private void updateLastTopLeftCornerOffset() {
-    int visualLine = 1 + myEditor.getScrollingModel().getVisibleArea().y / myEditor.getLineHeight();
-    myLastTopLeftCornerOffset = myEditor.visualLineStartOffset(visualLine);
+    int visibleAreaTopY = myEditor.getScrollingModel().getVisibleArea().y;
+    if (visibleAreaTopY == 0) {
+      myLastTopLeftCornerOffset = 0;
+    }
+    else {
+      int visualLine = 1 + myEditor.yToVisualLine(visibleAreaTopY);
+      myLastTopLeftCornerOffset = myEditor.visualLineStartOffset(visualLine);
+    }
   }
-  
+
   private int getNumberOfSoftWrapsBefore(int offset) {
     final int i = myStorage.getSoftWrapIndex(offset);
     return i >= 0 ? i : -i - 1;

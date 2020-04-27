@@ -104,7 +104,7 @@ public class VcsDiffUtil {
 
     BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMPARE_WITH, file);
 
-    final Task.Backgroundable task = new Task.Backgroundable(project, "Collecting Changes...", true) {
+    final Task.Backgroundable task = new Task.Backgroundable(project, VcsBundle.message("file.history.diff.with.local.process"), true) {
       private Collection<Change> changes;
       private VcsRevisionNumber currentRevNumber;
 

@@ -15,7 +15,13 @@ class CheckboxDescriptor(val name: String,
     : this(name, mutableProperty.toBinding(), comment, groupName)
 
   fun asOptionDescriptor(): BooleanOptionDescription {
-    val optionName = if (groupName != null) "$groupName: $name" else name
+    val optionName = when {
+      groupName != null -> {
+        val prefix = groupName.trim().removeSuffix(":")
+        "$prefix: $name"
+      }
+      else -> name
+    }
     return object : BooleanOptionDescription(optionName, ID) {
       override fun setOptionState(enabled: Boolean) {
         binding.set(enabled)

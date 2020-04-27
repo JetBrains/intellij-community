@@ -47,7 +47,7 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
 
   @NotNull
   @Override
-  public Iterable<LookupElement> classify(@NotNull Iterable<LookupElement> source, @NotNull ProcessingContext context) {
+  public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
     if (!myWeigher.isPrefixDependent() && myPrimitive) {
       return myNext.classify(source, context);
     }
@@ -66,7 +66,7 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
 
   @NotNull
   @Override
-  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<LookupElement> items, @NotNull ProcessingContext context) {
+  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
     checkPrefixChanged(context);
     return super.getSortingWeights(items, context);
   }

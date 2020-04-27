@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -50,11 +51,12 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   private static final Logger LOG = Logger.getInstance(CodeInspectionAction.class);
   private static final String LAST_SELECTED_PROFILE_PROP = "run.code.analysis.last.selected.profile";
 
+  private int myRunId = 0;
   private GlobalInspectionContextImpl myGlobalInspectionContext;
   protected InspectionProfileImpl myExternalProfile;
 
   public CodeInspectionAction() {
-    super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
+    super(InspectionsBundle.messagePointer("inspection.action.title"), InspectionsBundle.messagePointer("inspection.action.noun"));
   }
 
   public CodeInspectionAction(String title, String analysisNoon) {
@@ -73,11 +75,29 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
   }
 
-  protected void runInspections(Project project, AnalysisScope scope) {
+  protected void runInspections(@NotNull Project project,
+                                @NotNull AnalysisScope scope) {
+    int runId = ++myRunId;
     scope.setSearchInLibraries(false);
     FileDocumentManager.getInstance().saveAllDocuments();
+
+    InspectionProfileImpl externalProfile = myExternalProfile;
     final GlobalInspectionContextImpl inspectionContext = getGlobalInspectionContext(project);
-    inspectionContext.setExternalProfile(myExternalProfile);
+    inspectionContext.setRerunAction(() -> ApplicationManager.getApplication().invokeLater(() -> {
+      //someone called the runInspections before us, we cannot restore the state
+      if (runId != myRunId) return;
+      if (project.isDisposed()) return;
+      if (!scope.isValid()) return;
+
+      //restore current state
+      myExternalProfile = externalProfile;
+      myGlobalInspectionContext = inspectionContext;
+
+      FileDocumentManager.getInstance().saveAllDocuments();
+      analyze(project, scope);
+    }));
+
+    inspectionContext.setExternalProfile(externalProfile);
     inspectionContext.setCurrentScope(scope);
     inspectionContext.doInspections(scope);
   }

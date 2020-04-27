@@ -15,7 +15,7 @@ public abstract class PyExpressionSurrounder implements Surrounder {
   private static final Logger LOG = Logger.getInstance(PyExpressionSurrounder.class);
 
   @Override
-  public boolean isApplicable(@NotNull PsiElement[] elements) {
+  public boolean isApplicable(PsiElement @NotNull [] elements) {
     LOG.assertTrue(elements.length == 1 && elements[0] instanceof PyExpression);
     return isApplicable((PyExpression)elements[0]);
   }
@@ -26,7 +26,7 @@ public abstract class PyExpressionSurrounder implements Surrounder {
     throws IncorrectOperationException;
 
   @Override
-  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement[] elements)
+  public TextRange surroundElements(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
     throws IncorrectOperationException {
     return surroundExpression(project, editor, (PyExpression)elements[0]);
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.Configurable;
@@ -52,11 +52,11 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     int newLimit = getInt(myEntriesLimit);
 
     if (newStartIndex < 0) {
-      throw new ConfigurationException(DebuggerBundle.message("error.array.renderer.configurable.start.index.less.than.zero"));
+      throw new ConfigurationException(JavaDebuggerBundle.message("error.array.renderer.configurable.start.index.less.than.zero"));
     }
 
     if (newEndIndex < newStartIndex) {
-      throw new ConfigurationException(DebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
+      throw new ConfigurationException(JavaDebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
     }
 
     if (newStartIndex >= 0 && newEndIndex >= 0) {
@@ -73,8 +73,8 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
       if(showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
         final int answer = Messages.showOkCancelDialog(
           myPanel.getRootPane(),
-          DebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
-          DebuggerBundle.message("title.range.too.big"),
+          JavaDebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
+          JavaDebuggerBundle.message("title.range.too.big"),
           Messages.getWarningIcon());
         if(answer != Messages.OK) {
           return;
@@ -103,13 +103,13 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
     myEndIndex.setMinimumSize(minSize);
     myEntriesLimit.setMinimumSize(minSize);
 
-    JLabel startIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.start.index"));
+    JLabel startIndexLabel = new JLabel(JavaDebuggerBundle.message("label.array.renderer.configurable.start.index"));
     startIndexLabel.setLabelFor(myStartIndex);
 
-    JLabel endIndexLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.end.index"));
+    JLabel endIndexLabel = new JLabel(JavaDebuggerBundle.message("label.array.renderer.configurable.end.index"));
     endIndexLabel.setLabelFor(myEndIndex);
 
-    JLabel entriesLimitLabel = new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count1"));
+    JLabel entriesLimitLabel = new JLabel(JavaDebuggerBundle.message("label.array.renderer.configurable.max.count1"));
     entriesLimitLabel.setLabelFor(myEntriesLimit);
 
     myPanel.add(startIndexLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsRight(8), 0, 0));
@@ -119,7 +119,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
 
     myPanel.add(entriesLimitLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
     myPanel.add(myEntriesLimit, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(4, 0, 0, 8), 0, 0));
-    myPanel.add(new JLabel(DebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
+    myPanel.add(new JLabel(JavaDebuggerBundle.message("label.array.renderer.configurable.max.count2")), new GridBagConstraints(2, GridBagConstraints.RELATIVE, 2, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
     // push other components up
     myPanel.add(new JLabel(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));

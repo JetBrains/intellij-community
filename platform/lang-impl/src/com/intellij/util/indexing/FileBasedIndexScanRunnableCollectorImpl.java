@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -17,14 +18,17 @@ import java.util.*;
 final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRunnableCollector {
   private final Project myProject;
   private final ProjectFileIndex myProjectFileIndex;
+  private final boolean myDisabled;
 
   FileBasedIndexScanRunnableCollectorImpl(@NotNull Project project) {
     myProject = project;
     myProjectFileIndex = ProjectFileIndex.getInstance(myProject);
+    myDisabled = LightEdit.owns(myProject);
   }
 
   @Override
   public boolean shouldCollect(@NotNull VirtualFile file) {
+    if (myDisabled) return false;
     if (myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibrary(file)) {
       return !FileTypeManager.getInstance().isFileIgnored(file);
     }
@@ -33,6 +37,9 @@ final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRu
 
   @Override
   public List<Runnable> collectScanRootRunnables(@NotNull ContentIterator processor, ProgressIndicator indicator) {
+    if (myDisabled) {
+      return Collections.emptyList();
+    }
     return ReadAction.compute(() -> {
       if (myProject.isDisposed()) {
         return Collections.emptyList();
@@ -82,9 +89,12 @@ final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRu
       }
 
       // iterate associated libraries
+      Set<OrderEntry> allEntries = new HashSet<>();
+
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
         OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
         for (OrderEntry orderEntry : orderEntries) {
+          allEntries.add(orderEntry);
           if (!(orderEntry instanceof LibraryOrSdkOrderEntry) || !orderEntry.isValid()) {
             continue;
           }
@@ -105,6 +115,8 @@ final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRu
           }
         }
       }
+
+      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processProjectEntries(myProject, allEntries, indicator));
 
       return tasks;
     });

@@ -11,6 +11,9 @@ import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
@@ -18,9 +21,13 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
+import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -35,7 +42,7 @@ class MavenSyncConsole(private val myProject: Project) {
   private var finished = false
   private var started = false
   private var hasErrors = false
-
+  private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
@@ -45,9 +52,22 @@ class MavenSyncConsole(private val myProject: Project) {
     if (started) {
       return
     }
+    val restartAction: AnAction = object : AnAction() {
+      override fun update(e: AnActionEvent) {
+        e.presentation.isEnabled = !started || finished
+        e.presentation.icon = AllIcons.Actions.Refresh
+      }
+
+      override fun actionPerformed(e: AnActionEvent) {
+        e.project?.let {
+          MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
+        }
+      }
+    }
     started = true
     finished = false
     hasErrors = false
+    hasUnresolved = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
     val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
     mySyncView = syncView
@@ -56,9 +76,10 @@ class MavenSyncConsole(private val myProject: Project) {
     runDescr.isActivateToolWindowWhenAdded = false
     mySyncView.onEvent(mySyncId,
                        StartBuildEventImpl(descriptor, "Sync ${myProject.name}")
-                         .withContentDescriptorSupplier {
+                         .withContentDescriptorSupplier
+                         {
                            runDescr
-                         })
+                         }.withRestartAction(restartAction))
     debugLog("maven sync: started importing $myProject")
   }
 
@@ -74,6 +95,11 @@ class MavenSyncConsole(private val myProject: Project) {
     }
     val toPrint = if (text.endsWith('\n')) text else "$text\n"
     mySyncView.onEvent(mySyncId, OutputBuildEventImpl(parentId, toPrint, stdout))
+  }
+
+  @Synchronized
+  fun addWarning(@Nls text: String, @Nls description: String) = doIfImportInProcess {
+    mySyncView.onEvent(mySyncId, MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, "Compiler", text, description))
   }
 
   @Synchronized
@@ -106,8 +132,8 @@ class MavenSyncConsole(private val myProject: Project) {
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
     return when (type) {
-      MavenServerProgressIndicator.ResolveType.PLUGIN ->ArtifactSyncListenerImpl("maven.sync.plugins")
-      MavenServerProgressIndicator.ResolveType.DEPENDENCY ->ArtifactSyncListenerImpl("maven.sync.dependencies")
+      MavenServerProgressIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
+      MavenServerProgressIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
     }
   }
 
@@ -118,6 +144,16 @@ class MavenSyncConsole(private val myProject: Project) {
     tasks.forEach { completeTask(it.first, it.second, DerivedResultImpl()) }
     mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
                                                       if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
+    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings
+    if (hasUnresolved && generalSettings.isWorkOffline) {
+      mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue{
+        override val title: String = "Dependency Resolution Failed"
+        override val description: String = "<a href=\"${OffMavenOfflineModeQuickFix.ID}\">Switch Off Offline Mode</a>\n"
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(OffMavenOfflineModeQuickFix())
+
+        override fun getNavigatable(project: Project): Navigatable? = null
+      }, MessageEvent.Kind.ERROR))
+    }
     finished = true
     started = false
   }
@@ -125,6 +161,7 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   private fun showError(keyPrefix: String, dependency: String) = doIfImportInProcess {
     hasErrors = true
+    hasUnresolved = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
     val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
     startTask(mySyncId, umbrellaString)
@@ -143,7 +180,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   private fun completeTask(parentId: Any, taskName: String, result: EventResult) = doIfImportInProcess {
-    hasErrors =  hasErrors || result is FailureResultImpl
+    hasErrors = hasErrors || result is FailureResultImpl
 
     debugLog("Maven sync: complete $taskName with $result")
     if (myStartedSet.remove(parentId to taskName)) {
@@ -157,13 +194,13 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun completeUmbrellaEvents(keyPrefix: String) = doIfImportInProcess{
+  private fun completeUmbrellaEvents(keyPrefix: String) = doIfImportInProcess {
     val taskName = SyncBundle.message("${keyPrefix}.resolve")
     completeTask(mySyncId, taskName, DerivedResultImpl())
   }
 
   @Synchronized
-  private fun downloadEventStarted(keyPrefix: String, dependency: String) = doIfImportInProcess{
+  private fun downloadEventStarted(keyPrefix: String, dependency: String) = doIfImportInProcess {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
     startTask(mySyncId, downloadString)
@@ -171,7 +208,7 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  private fun downloadEventCompleted(keyPrefix: String, dependency: String) = doIfImportInProcess{
+  private fun downloadEventCompleted(keyPrefix: String, dependency: String) = doIfImportInProcess {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)
     addText(downloadArtifactString, downloadArtifactString, true)
@@ -180,7 +217,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
 
   @Synchronized
-  private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) = doIfImportInProcess{
+  private fun downloadEventFailed(keyPrefix: String, dependency: String, error: String, stackTrace: String?) = doIfImportInProcess {
     val downloadString = SyncBundle.message("${keyPrefix}.download")
 
     val downloadArtifactString = SyncBundle.message("${keyPrefix}.artifact.download", dependency)

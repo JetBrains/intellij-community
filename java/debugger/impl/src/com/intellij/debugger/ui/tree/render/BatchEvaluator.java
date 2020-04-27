@@ -94,7 +94,7 @@ public class BatchEvaluator {
   }
 
   public void invoke(ToStringCommand command) {
-    LOG.assertTrue(DebuggerManager.getInstance(myDebugProcess.getProject()).isDebuggerManagerThread());
+    DebuggerManagerThreadImpl.assertIsManagerThread();
 
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();

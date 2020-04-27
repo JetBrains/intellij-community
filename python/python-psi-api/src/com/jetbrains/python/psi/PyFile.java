@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   PyFunction findTopLevelFunction(@NotNull String name);
 
   @Nullable
-  PyClass findTopLevelClass(@NotNull String name);
+  PyClass findTopLevelClass(@NonNls @NotNull String name);
 
   @Nullable
   PyTargetExpression findTopLevelAttribute(@NotNull String name);

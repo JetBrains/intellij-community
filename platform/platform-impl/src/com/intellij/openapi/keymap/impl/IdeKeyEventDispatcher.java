@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
-import com.intellij.diagnostic.EventsWatcher;
+import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.diagnostic.LoggableEventsWatcher;
+import com.intellij.diagnostic.LoggableEventWatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -790,10 +790,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return;
     }
 
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+    if (actionManager == null) {
+      return;
+    }
+
     KeymapManager keymapManager = KeymapManager.getInstance();
     Keymap keymap = keymapManager == null ? null : keymapManager.getActiveKeymap();
     String[] actionIds = keymap == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : keymap.getActionIds(shortcut);
-    ActionManager actionManager = ActionManager.getInstance();
     for (String actionId : actionIds) {
       AnAction action = actionManager.getAction(actionId);
       if (action != null && (!myContext.isModalContext() || action.isEnabledInModalContext())) {
@@ -909,14 +913,12 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static void invokeAction(@NotNull final AnAction action, final DataContext ctx) {
-      TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
-          final AnActionEvent event =
-            new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                              ActionManager.getInstance(), 0);
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-            ActionUtil.performActionDumbAware(action, event);
-          }
-        });
+      AnActionEvent event =
+        new AnActionEvent(null, ctx, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
+                          ActionManager.getInstance(), 0);
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+        ActionUtil.performActionDumbAware(action, event);
+      }
     }
 
     @Override
@@ -1005,9 +1007,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   private static void logTimeMillis(long startedAt, @NotNull AnAction action) {
-    EventsWatcher watcher = EventsWatcher.getInstance();
-    if (watcher instanceof LoggableEventsWatcher) {
-      ((LoggableEventsWatcher)watcher).logTimeMillis(action.toString(), startedAt);
+    EventWatcher watcher = EventWatcher.getInstance();
+    if (watcher instanceof LoggableEventWatcher) {
+      ((LoggableEventWatcher)watcher).logTimeMillis(action.toString(), startedAt);
     }
   }
 

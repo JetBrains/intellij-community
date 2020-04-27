@@ -51,14 +51,6 @@ public class ObjectNotifyInspection extends BaseInspection {
   }
 
   private static class ObjectNotifyFix extends AbstractReplaceWithAnotherMethodCallFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "object.notify.replace.quickfix");
-    }
-
     @Override
     protected String getMethodName() {
       return HardcodedMethodConstants.NOTIFY_ALL;

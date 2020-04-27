@@ -36,9 +36,8 @@ import java.util.List;
 
 public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
   private static final Logger LOG = Logger.getInstance(SuppressWarningsFoldingBuilder.class);
-  @NotNull
   @Override
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
+  public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!(root instanceof PsiJavaFile) || quick || !JavaCodeFoldingSettings.getInstance().isCollapseSuppressWarnings()) {
       return FoldingDescriptor.EMPTY;
     }

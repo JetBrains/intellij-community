@@ -13,9 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * @author Mike
- */
 public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTagChild, XmlNamedReferenceHost {
   XmlTag[] EMPTY = new XmlTag[0];
 
@@ -26,7 +23,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   @Nullable XmlElementDescriptor getDescriptor();
 
-  @NotNull XmlAttribute[] getAttributes();
+  XmlAttribute @NotNull [] getAttributes();
 
   @Nullable XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace);
 
@@ -46,7 +43,7 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    *
    * @param qname qualified attribute name, like "ns:name" or "name".
    * @return null if the attribute not exist.
-   * @see #getAttributeValue(String, String)  
+   * @see #getAttributeValue(String, String)
    */
   @Nullable String getAttributeValue(@NonNls String qname);
 
@@ -64,14 +61,14 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @Nullable @NonNls String bodyText, boolean enforceNamespacesDeep);
   XmlTag addSubTag(XmlTag subTag, boolean first);
 
-  @NotNull XmlTag[] getSubTags();
-  @NotNull XmlTag[] findSubTags(@NonNls String qname);
+  XmlTag @NotNull [] getSubTags();
+  XmlTag @NotNull [] findSubTags(@NonNls String qname);
 
   /**
    * @param localName non-qualified tag name.
    * @param namespace if null, name treated as qualified name to find.
    */
-  @NotNull XmlTag[] findSubTags(@NonNls String localName, @Nullable String namespace);
+  XmlTag @NotNull [] findSubTags(@NonNls String localName, @Nullable String namespace);
 
   @Nullable XmlTag findFirstSubTag(@NonNls String qname);
 

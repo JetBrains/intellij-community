@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.highlighting
 
 import com.intellij.JavaTestUtil
@@ -6,9 +6,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.openapi.util.Segment
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 /**
@@ -16,6 +18,11 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
  */
 class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
   final String basePath = JavaTestUtil.relativeJavaTestDataPath
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14
+  }
 
   void testHighlightImport() {
     configureFile()
@@ -278,6 +285,11 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
     assertRangeText 'in', 'FileInputStream', 'FileInputStream', 'catch'
   }
 
+  void testMethodParameterEndOfIdentifier() {
+    configureFile()
+    assertElementUnderCaretRangesAndTexts("28:33 param", "60:65 param", "68:73 param")
+  }
+
   void testRecordComponents() {
     myFixture.configureByText 'A.java', '''
       record A(String s) {
@@ -302,11 +314,31 @@ class HighlightUsagesHandlerTest extends LightJavaCodeInsightFixtureTestCase {
     assertRangesAndTexts "17:18 s", "32:33 s"
   }
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp()
+    myFixture.setReadEditorMarkupModel(true)
+  }
+
   /**
    * @param expected sorted by startOffset
    */
   private void assertRangesAndTexts(String... expected) {
     def highlighters = myFixture.editor.markupModel.allHighlighters
+    assertSegments(highlighters, expected)
+  }
+
+  private void assertElementUnderCaretRangesAndTexts(String... expected) {
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled {
+      def infos = myFixture.doHighlighting()
+      Segment[] segments = infos.findAll {
+        it.severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY
+      }
+      assertSegments(segments, expected)
+    }
+  }
+
+  private void assertSegments(Segment[] highlighters, String... expected) {
     def actual = highlighters
       .sort { it.startOffset }
       .collect { "$it.startOffset:$it.endOffset ${myFixture.file.text.substring(it.startOffset, it.endOffset)}".toString() }

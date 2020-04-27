@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
@@ -44,12 +44,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Collections.singletonList;
 
 /**
@@ -207,7 +203,7 @@ public class GitUnstashDialog extends DialogWrapper {
       myPopStashCheckBox.setSelected(true);
       myReinstateIndexCheckBox.setEnabled(false);
       myReinstateIndexCheckBox.setSelected(true);
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(getGitRoot());
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(getGitRoot());
       if (repository != null) {
         ValidationInfo branchValidationInfo = GitBranchValidatorKt.validateName(singletonList(repository), branch);
         if (branchValidationInfo != null) {
@@ -267,7 +263,7 @@ public class GitUnstashDialog extends DialogWrapper {
         listModel.addElement(info);
       }
       myBranches.clear();
-      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
+      GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(root);
       if (repository != null) {
         myBranches.addAll(GitBranchUtil.convertBranchesToNames(repository.getBranches().getLocalBranches()));
       }
@@ -334,7 +330,8 @@ public class GitUnstashDialog extends DialogWrapper {
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       StashInfo stash = getSelectedStash();
-      GitRepository repository = notNull(GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root));
+      //better to use quick to keep consistent state with ui
+      GitRepository repository = Objects.requireNonNull(GitRepositoryManager.getInstance(myProject).getRepositoryForRootQuick(root));
       Hash hash = Git.getInstance().resolveReference(repository, stash.getStash());
       GitStashUtils.unstash(myProject, Collections.singletonMap(root, hash), r -> h,
                             new UnstashConflictResolver(myProject, root, stash));

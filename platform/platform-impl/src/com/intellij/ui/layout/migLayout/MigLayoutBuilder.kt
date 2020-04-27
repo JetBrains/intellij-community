@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -57,9 +58,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   override var validateCallbacks: MutableList<() -> ValidationInfo?> = mutableListOf()
   override var componentValidateCallbacks: MutableMap<JComponent, () -> ValidationInfo?> = hashMapOf()
   override var customValidationRequestors: MultiMap<JComponent, (() -> Unit) -> Unit> = MultiMap()
-  override var applyCallbacks: MutableList<() -> Unit> = mutableListOf()
-  override var resetCallbacks: MutableList<() -> Unit> = mutableListOf()
-  override var isModifiedCallbacks: MutableList<() -> Boolean> = mutableListOf()
+  override var applyCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap()
+  override var resetCallbacks: MultiMap<JComponent?, () -> Unit> = MultiMap()
+  override var isModifiedCallbacks: MultiMap<JComponent?, () -> Boolean> = MultiMap()
 
   val topButtonGroup: ButtonGroup?
     get() = buttonGroupStack.lastOrNull()
@@ -71,7 +72,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     try {
       body()
 
-      resetCallbacks.add {
+      resetCallbacks.putValue(null) {
         selectRadioButtonInGroup(buttonGroup)
       }
 
@@ -136,7 +137,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
     lc.hideMode = 2
 
     val rowConstraints = AC()
-    (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
+    (container as JComponent).putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
       override fun layoutContainer(parent: Container) {

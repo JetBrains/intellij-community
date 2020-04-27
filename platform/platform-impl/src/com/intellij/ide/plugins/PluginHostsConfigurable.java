@@ -195,7 +195,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     myTable.repaint();
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Checking Plugins Repository...", true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(null, IdeBundle.message("progress.title.checking.plugins.repository"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (int i = 0, size = infos.size(); i < size; i++) {

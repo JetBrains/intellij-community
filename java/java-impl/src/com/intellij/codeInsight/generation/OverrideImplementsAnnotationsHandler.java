@@ -42,9 +42,8 @@ public interface OverrideImplementsAnnotationsHandler {
    * @deprecated Use {@link #getAnnotations(PsiFile)}
    */
   @Deprecated
-  @NotNull
   @Contract(pure = true)
-  default String[] annotationsToRemove(Project project, @NotNull String fqName) {
+  default String @NotNull [] annotationsToRemove(Project project, @NotNull String fqName) {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
 

@@ -34,6 +34,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     if (tag != null) {
       final Set<String> ns = tag.getLocalNamespaceDeclarations().keySet();
       final String nsPrefix =
-        Messages.showInputDialog(project, "Namespace Prefix:", StringUtil.capitalize(NAME), Messages.getInformationIcon(), "",
+        Messages.showInputDialog(project, XmlBundle.message("namespace.prefix"), StringUtil.capitalize(NAME), Messages.getInformationIcon(), "",
                                  new InputValidator() {
                                    @Override
                                    public boolean checkInput(String inputString) {

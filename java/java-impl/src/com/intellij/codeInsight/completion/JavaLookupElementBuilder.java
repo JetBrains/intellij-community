@@ -24,9 +24,6 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public class JavaLookupElementBuilder {
   private JavaLookupElementBuilder() {
   }

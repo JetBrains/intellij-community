@@ -1,11 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing.worktree
 
+import com.intellij.facet.FacetManager
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider.EP_NAME
 import com.intellij.openapi.externalSystem.service.project.ModifiableModel
+import com.intellij.openapi.externalSystem.service.project.ModifiableModelsProviderExtension
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.UnloadedModuleDescription
@@ -17,7 +20,9 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.ClassMap
 import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.legacyBridge.facet.FacetManagerViaWorkspaceModel
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleRootComponent
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
@@ -28,13 +33,24 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
                                               builder: TypedEntityStorageBuilder) : IdeModifiableModelsProvider {
   private val legacyBridgeModuleManagerComponent = LegacyBridgeModuleManagerComponent.getInstance(project)
   private val myProductionModulesForTestModules = HashMap<Module, String>()
+  private val myModifiableModels = ClassMap<ModifiableModel>()
   private val myUserData = UserDataHolderBase()
+  private val modifiableFacetsModels = HashMap<Module, ModifiableFacetModel>()
 
   var diff = builder
+
+  init {
+    EP_NAME.forEachExtensionSafe { extension: ModifiableModelsProviderExtension<ModifiableModel?> ->
+      val pair = extension.create(
+        project, this)
+      myModifiableModels.put(pair.first, pair.second)
+    }
+  }
 
   private val modifiableModuleModel = lazy {
     legacyBridgeModuleManagerComponent.getModifiableModel(diff)
   }
+
 
   private val bridgeProjectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project) as LegacyBridgeProjectLibraryTable
 
@@ -51,11 +67,13 @@ class LegacyBrigdeIdeModifiableModelsProvider(val project: Project,
   }
 
   override fun <T : ModifiableModel?> getModifiableModel(instanceOf: Class<T>): T {
-    TODO()
+    return myModifiableModels.get(instanceOf) as? T ?: throw NotImplementedError("${instanceOf.canonicalName} not implemented")
   }
 
-  override fun getModifiableFacetModel(module: Module?): ModifiableFacetModel {
-    TODO()
+  override fun getModifiableFacetModel(module: Module): ModifiableFacetModel {
+    return modifiableFacetsModels.computeIfAbsent(module) {
+      (it.getComponent(FacetManager::class.java) as FacetManagerViaWorkspaceModel).createModifiableModel(diff)
+    }
   }
 
   override fun findIdeModule(module: ModuleData): Module? {

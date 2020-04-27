@@ -25,9 +25,6 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author nik
- */
 public class DetectedRootsChooser {
   private static final int CHECKBOX_COLUMN_WIDTH = new JCheckBox().getPreferredSize().width + 4;
   private final ColumnInfo<DetectedRootData,Boolean> myIncludedColumn = new ColumnInfo<DetectedRootData, Boolean>("") {

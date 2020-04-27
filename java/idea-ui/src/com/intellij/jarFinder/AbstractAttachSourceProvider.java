@@ -16,6 +16,7 @@
 package com.intellij.jarFinder;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -151,7 +152,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     @Override
     public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
       final ActionCallback callback = new ActionCallback();
-      Task task = new Task.Backgroundable(myProject, "Downloading Sources", true) {
+      Task task = new Task.Backgroundable(myProject, JavaUiBundle.message("progress.title.downloading.sources"), true) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           final byte[] bytes;
@@ -163,8 +164,8 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
           catch (IOException e) {
             LOG.warn(e);
             ApplicationManager.getApplication().invokeLater(() -> {
-              String message = "Failed to download sources: " + myUrl;
-              new Notification(myMessageGroupId, "Downloading failed", message, NotificationType.ERROR).notify(getProject());
+              String message = JavaUiBundle.message("error.message.failed.to.download.sources.0", myUrl);
+              new Notification(myMessageGroupId, JavaUiBundle.message("notification.title.downloading.failed"), message, NotificationType.ERROR).notify(getProject());
               callback.setDone();
             });
             return;

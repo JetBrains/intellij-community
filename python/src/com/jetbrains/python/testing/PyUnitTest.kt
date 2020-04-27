@@ -106,4 +106,6 @@ class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.getPythonsUnittestName()
+
+  override fun getId(): String = "Unittests"
 }

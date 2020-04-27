@@ -54,7 +54,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @NotNull
   @Override
   public String getGroupName() {
-    return "Actions";
+    return IdeBundle.message("search.everywhere.group.name.actions");
   }
 
   @NotNull
@@ -172,6 +172,9 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     if (selected instanceof BooleanOptionDescription) {
       final BooleanOptionDescription option = (BooleanOptionDescription)selected;
       option.setOptionState(!option.isOptionEnabled());
+      if (selected instanceof BooleanOptionDescription.RequiresRebuild) {
+        myModel.rebuildActions();
+      }
       return false;
     }
 

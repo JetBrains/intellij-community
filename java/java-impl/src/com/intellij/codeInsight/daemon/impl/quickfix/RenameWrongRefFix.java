@@ -73,8 +73,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
-  @NotNull
-  private LookupElement[] collectItems() {
+  private LookupElement @NotNull [] collectItems() {
     Set<LookupElement> items = new LinkedHashSet<>();
     boolean qualified = myRefExpr.getQualifierExpression() != null;
 
@@ -204,7 +203,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
       }
       JBPopupFactory.getInstance()
         .createPopupChooserBuilder(Arrays.asList(myItems))
-        .setTitle("Rename Reference")
+        .setTitle(QuickFixBundle.message("rename.reference"))
         .setRenderer(new DefaultListCellRenderer() {
           @Override
           public Component getListCellRendererComponent(JList<?> list,

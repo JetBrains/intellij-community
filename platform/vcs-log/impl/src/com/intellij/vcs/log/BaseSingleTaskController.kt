@@ -29,7 +29,7 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
 
       val requests = popRequests()
       if (requests.isEmpty()) break
-      result = process(requests)
+      result = process(requests, result)
     }
 
     taskCompleted(result)
@@ -37,7 +37,7 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
 
   protected open fun createProgressIndicator() = EmptyProgressIndicator()
 
-  abstract fun process(requests: List<Request>): Result
+  abstract fun process(requests: List<Request>, previousResult: Result?): Result
 }
 
 fun runInEdt(disposable: Disposable, action: () -> Unit) {

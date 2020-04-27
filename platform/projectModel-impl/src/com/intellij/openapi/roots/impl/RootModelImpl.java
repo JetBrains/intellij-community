@@ -43,7 +43,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   private final List<OrderEntry> myOrderEntries = new Order();
   // cleared by myOrderEntries modification, see Order
-  @Nullable private OrderEntry[] myCachedOrderEntries;
+  private OrderEntry @Nullable [] myCachedOrderEntries;
 
   @NotNull private final ModuleLibraryTable myModuleLibraryTable;
   final ModuleRootManagerImpl myModuleRootManager;
@@ -209,8 +209,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  @NotNull
-  public OrderEntry[] getOrderEntries() {
+  public OrderEntry @NotNull [] getOrderEntries() {
     OrderEntry[] cachedOrderEntries = myCachedOrderEntries;
     if (cachedOrderEntries == null) {
       myCachedOrderEntries = cachedOrderEntries = myOrderEntries.toArray(OrderEntry.EMPTY_ARRAY);
@@ -324,20 +323,20 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   @Override
-  public void rearrangeOrderEntries(@NotNull OrderEntry[] newEntries) {
+  public void rearrangeOrderEntries(OrderEntry @NotNull [] newEntries) {
     assertWritable();
     assertValidRearrangement(newEntries);
     myOrderEntries.clear();
     ContainerUtil.addAll(myOrderEntries, newEntries);
   }
 
-  private void assertValidRearrangement(@NotNull OrderEntry[] newEntries) {
+  private void assertValidRearrangement(OrderEntry @NotNull [] newEntries) {
     String error = checkValidRearrangement(newEntries);
     LOG.assertTrue(error == null, error);
   }
 
   @Nullable
-  private String checkValidRearrangement(@NotNull OrderEntry[] newEntries) {
+  private String checkValidRearrangement(OrderEntry @NotNull [] newEntries) {
     if (newEntries.length != myOrderEntries.size()) {
       return "Size mismatch: old size=" + myOrderEntries.size() + "; new size=" + newEntries.length;
     }
@@ -627,10 +626,16 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
                       && Comparing.equal(libraryOrderEntry1.getLibraryLevel(), libraryOrderEntry2.getLibraryLevel());
       if (!equal) return false;
 
-      Library library1 = libraryOrderEntry1.getLibrary();
-      Library library2 = libraryOrderEntry2.getLibrary();
+      LibraryEx library1 = (LibraryEx) libraryOrderEntry1.getLibrary();
+      LibraryEx library2 = (LibraryEx) libraryOrderEntry2.getLibrary();
       if (library1 != null && library2 != null) {
-        if (!Arrays.equals(((LibraryEx)library1).getExcludedRootUrls(), ((LibraryEx)library2).getExcludedRootUrls())) {
+        if (!Arrays.equals(library1.getExcludedRootUrls(), library2.getExcludedRootUrls())) {
+          return false;
+        }
+        if (!Comparing.equal(library1.getKind(), library2.getKind())) {
+          return false;
+        }
+        if (!Comparing.equal(library1.getProperties(), library2.getProperties())) {
           return false;
         }
       }

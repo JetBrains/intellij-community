@@ -20,7 +20,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -40,9 +40,12 @@ public class ThisEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Value objRef = myTraverser.traverse((ObjectReference)context.computeThisObject());
+    Value objRef = context.computeThisObject(); // may be a primitive
+    if (objRef instanceof ObjectReference) {
+      objRef = myTraverser.traverse((ObjectReference)objRef);
+    }
     if(objRef == null) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.this.not.avalilable"));
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.this.not.avalilable"));
     }
     return objRef;
   }

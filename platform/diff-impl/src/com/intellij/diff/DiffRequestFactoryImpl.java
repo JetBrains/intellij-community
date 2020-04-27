@@ -331,8 +331,10 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                                   @NotNull VirtualFile output,
                                                   @NotNull List<? extends VirtualFile> fileContents,
                                                   @Nullable Consumer<? super MergeResult> applyCallback) throws InvalidDiffRequestException {
-    String title = "Merge " + output.getPresentableUrl();
-    List<String> titles = Arrays.asList("Your Version", "Base Version", "Their Version");
+    String title = DiffBundle.message("merge.window.title.file", output.getPresentableUrl());
+    List<String> titles = Arrays.asList(DiffBundle.message("merge.version.title.our"),
+                                        DiffBundle.message("merge.version.title.base"),
+                                        DiffBundle.message("merge.version.title.their"));
     return createMergeRequestFromFiles(project, output, fileContents, title, titles, applyCallback);
   }
 

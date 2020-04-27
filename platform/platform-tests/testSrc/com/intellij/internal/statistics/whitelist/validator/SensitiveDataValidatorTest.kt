@@ -12,6 +12,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.LocalEnumCustomWhitelistRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpWhiteListRule
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.WhiteListSimpleRuleFactory.parseSimpleExpression
+import com.intellij.internal.statistic.eventLog.whitelist.EventLogServerWhitelistLoader
+import com.intellij.internal.statistic.eventLog.whitelist.EventLogWhitelistLoader
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.Disposer
@@ -151,6 +153,14 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     elg = EventLogGroup("my.simple.regexp.node.ref", 1)
     assertEventAccepted(validator, elg, "aaa/java.lang.String")
     assertEventRejected(validator, elg, "java.lang.String")
+
+    elg = EventLogGroup("my.simple.regexp.with.number.of.elements", 1)
+    assertEventAccepted(validator, elg, "0512345678ABCD023543")
+    assertEventAccepted(validator, elg, "1154265567ABCD-23-43")
+    assertEventAccepted(validator, elg, "0512345678QWER012-43")
+    assertEventAccepted(validator, elg, "9965430987ASDF-01003")
+    assertEventRejected(validator, elg, "aa65430987ASDF-01003")
+    assertEventRejected(validator, elg, "999965430987ASDF-01003")
   }
 
   @Test
@@ -553,12 +563,20 @@ class SensitiveDataValidatorTest : UsefulTestCase() {
     }
   }
 
-  class TestWhitelistStorage(myContent: String) : WhitelistStorage("TEST", TestEventLogWhitelistPersistence(myContent))
+  class TestWhitelistStorage(myContent: String) : WhitelistStorage(
+    "TEST", TestEventLogWhitelistPersistence(myContent), TestEventLogWhitelistLoader(myContent)
+  )
 
   class TestEventLogWhitelistPersistence(private val myContent: String) : EventLogWhitelistPersistence("TEST") {
     override fun getCachedWhitelist(): String? {
       return myContent
     }
+  }
+
+  class TestEventLogWhitelistLoader(private val myContent: String) : EventLogWhitelistLoader {
+    override fun getLastModifiedOnServer(): Long = 0
+
+    override fun loadWhiteListFromServer(): String = myContent
   }
 
   internal enum class TestCustomActionId {FIRST, SECOND, THIRD}

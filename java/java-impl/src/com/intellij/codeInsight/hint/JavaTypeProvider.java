@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,7 +55,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @NotNull
   @Override
   public String getErrorHint() {
-    return "No expression found";
+    return JavaBundle.message("error.hint.no.expression.found");
   }
 
   @NotNull

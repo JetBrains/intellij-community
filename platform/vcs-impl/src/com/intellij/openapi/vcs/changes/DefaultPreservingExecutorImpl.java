@@ -43,10 +43,9 @@ class DefaultPreservingExecutorImpl {
   public void execute() {
     Runnable operation = () -> {
       LOG.debug("starting");
-      Ref<Boolean> savedSuccessfully = Ref.create();
-      ProgressManager.getInstance().executeNonCancelableSection(() -> savedSuccessfully.set(save()));
-      LOG.debug("save result: " + savedSuccessfully.get());
-      if (savedSuccessfully.get()) {
+      boolean savedSuccessfully = save();
+      LOG.debug("save result: " + savedSuccessfully);
+      if (savedSuccessfully) {
         try {
           LOG.debug("running operation");
           myOperation.run();
@@ -64,11 +63,10 @@ class DefaultPreservingExecutorImpl {
   }
 
   private boolean save() {
-    Ref<Boolean> result = Ref.create();
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       try {
         mySaver.save(myRootsToSave);
-        result.set(true);
+        return true;
       }
       catch (VcsException e) {
         LOG.info("Couldn't save local changes", e);
@@ -76,9 +74,8 @@ class DefaultPreservingExecutorImpl {
           "Couldn't save uncommitted changes.",
           String.format("Tried to save uncommitted changes in shelve before %s, but failed with an error.<br/>%s",
                         myOperationTitle, join(e.getMessages())));
-        result.set(false);
+        return false;
       }
     });
-    return result.get();
   }
 }

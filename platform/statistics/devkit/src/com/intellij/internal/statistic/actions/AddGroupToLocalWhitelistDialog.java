@@ -58,14 +58,14 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
   private final EditorEx myValidationRulesEditor;
   private final List<PsiFile> myTempFiles = new ArrayList<>();
 
-  protected AddGroupToLocalWhitelistDialog(@NotNull Project project) {
+  public AddGroupToLocalWhitelistDialog(@NotNull Project project, @Nullable String groupId, @Nullable String rules) {
     super(project);
     myProject = project;
     myRecorderLabel.setLabelFor(myRecorderComboBox);
     myGroupIdLabel.setLabelFor(myGroupIdTextField);
 
-    myValidationRulesEditor = initEditor(project, myAddCustomRulePanel);
-    myAddCustomRuleCheckBox.setSelected(false);
+    myValidationRulesEditor = initEditor(project, myAddCustomRulePanel, rules);
+    myAddCustomRuleCheckBox.setSelected(StringUtil.isNotEmpty(rules));
     myAddCustomRuleCheckBox.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent event) {
@@ -77,6 +77,9 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
     myMainPanel.setPreferredSize(new Dimension(500, 200));
     Disposer.register(project, getDisposable());
     setTitle("Add Test Group to Local Whitelist");
+    if (groupId != null) {
+      myGroupIdTextField.setText(groupId);
+    }
     init();
   }
 
@@ -123,19 +126,24 @@ public class AddGroupToLocalWhitelistDialog extends DialogWrapper {
   }
 
   @NotNull
-  private EditorEx initEditor(@NotNull Project project, @NotNull JPanel panel) {
-    final String templateText =
-      "{\n" +
-      "  \"event_id\": [],\n" +
-      "  \"event_data\": {\n  }\n" +
-      "}";
-    final PsiFile file = createTempFile(project, "event-log-validation-rules", templateText);
+  private EditorEx initEditor(@NotNull Project project, @NotNull JPanel panel, @Nullable String rules) {
+    final String text;
+    if (StringUtil.isNotEmpty(rules)) {
+      text = rules;
+    }
+    else {
+      text = "{\n" +
+             "  \"event_id\": [],\n" +
+             "  \"event_data\": {\n  }\n" +
+             "}";
+    }
+    final PsiFile file = createTempFile(project, "event-log-validation-rules", text);
     assert file != null;
 
     myTempFiles.add(file);
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) {
-      document = EditorFactory.getInstance().createDocument(templateText);
+      document = EditorFactory.getInstance().createDocument(text);
     }
 
     final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, project, file.getVirtualFile(), false);

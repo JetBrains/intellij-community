@@ -35,8 +35,7 @@ public interface GrTypeParameterListOwner extends PsiTypeParameterListOwner {
   PsiTypeParameterList getTypeParameterList();
 
   @Override
-  @NotNull
-  PsiTypeParameter[] getTypeParameters();
+  PsiTypeParameter @NotNull [] getTypeParameters();
 
 
 }

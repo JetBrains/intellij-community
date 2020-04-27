@@ -24,7 +24,7 @@
         </constraints>
         <properties>
           <labelFor value="c3779"/>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.duplicates.option"/>
+          <text resource-bundle="messages/JavaI18nBundle" key="inspection.duplicates.option"/>
         </properties>
       </component>
       <component id="6b0a4" class="javax.swing.JCheckBox" binding="myIgnorePropertyKeyExpressions">
@@ -32,7 +32,7 @@
           <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text resource-bundle="messages/InspectionsBundle" key="inspection.duplicates.option.report.propertykey.expressions"/>
+          <text resource-bundle="messages/JavaI18nBundle" key="inspection.duplicates.option.report.propertykey.expressions"/>
         </properties>
       </component>
       <vspacer id="e824d">

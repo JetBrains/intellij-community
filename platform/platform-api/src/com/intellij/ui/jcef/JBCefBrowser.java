@@ -23,53 +23,41 @@ import java.awt.*;
  */
 @ApiStatus.Experimental
 public class JBCefBrowser implements JBCefDisposable {
+  private static final String BLANK_URI = "about:blank";
+
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
   @NotNull private final CefBrowser myCefBrowser;
   @NotNull private final CefFocusHandler myCefFocusHandler;
-  @NotNull private final CefLifeSpanHandler myLifeSpanHandler;
+  @Nullable private final CefLifeSpanHandler myLifeSpanHandler;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
   private final boolean myIsDefaultClient;
   private volatile boolean myIsCefBrowserCreated;
-  @Nullable private volatile DeferLoader myDeferLoader;
+  @Nullable private volatile LoadDeferrer myLoadDeferrer;
 
-  // CEF demands async loading
-  private enum DeferLoader {
-    URL {
-      @Override
-      public void load(@NotNull CefBrowser browser) {
-        EventQueue.invokeLater(() -> browser.loadURL(url));
+  private static class LoadDeferrer {
+    @Nullable protected final String myHtml;
+    @NotNull protected final String myUrl;
+
+    LoadDeferrer(@NotNull String url) {
+      this(null, url);
+    }
+
+    LoadDeferrer(@Nullable String html, @NotNull String url) {
+      myHtml = html;
+      myUrl = url;
+    }
+
+    public void load(@NotNull CefBrowser browser) {
+      // JCEF demands async loading.
+      if (myHtml == null) {
+        EventQueue.invokeLater(() -> browser.loadURL(myUrl));
       }
-
-      @NotNull
-      @Override
-      public DeferLoader with(@NotNull String value) {
-        this.url = value;
-        return this;
+      else {
+        EventQueue.invokeLater(() -> browser.loadString(myHtml, myUrl));
       }
-    },
-    HTML {
-      @Override
-      public void load(@NotNull CefBrowser browser) {
-        EventQueue.invokeLater(() -> browser.loadString(html, "about:blank"));
-      }
-
-      @NotNull
-      @Override
-      public DeferLoader with(@NotNull String value) {
-        this.html = value;
-        return this;
-      }
-    };
-
-    @NotNull protected String html = "";
-    @NotNull protected String url = "about:blank";
-
-    @NotNull
-    public abstract DeferLoader with(@NotNull String value);
-
-    public abstract void load(@NotNull CefBrowser browser);
+    }
   }
 
   /**
@@ -79,7 +67,15 @@ public class JBCefBrowser implements JBCefDisposable {
     this(client, false, url);
   }
 
+  public JBCefBrowser(@NotNull CefBrowser cefBrowser) {
+    this(cefBrowser, new JBCefClient(cefBrowser.getClient()), false, null);
+  }
+
   private JBCefBrowser(@NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
+    this(null, client, isDefaultClient, url);
+  }
+
+  private JBCefBrowser(@Nullable CefBrowser cefBrowser, @NotNull JBCefClient client, boolean isDefaultClient, @Nullable String url) {
     if (client.isDisposed()) {
       throw new IllegalArgumentException("JBCefClient is disposed");
     }
@@ -89,22 +85,27 @@ public class JBCefBrowser implements JBCefDisposable {
     myComponent = new MyComponent(new BorderLayout());
     myComponent.setBackground(JBColor.background());
 
-    myCefBrowser = myCefClient.getCefClient().createBrowser(url != null ? url : "about:blank", false, false);
+    myCefBrowser = cefBrowser != null ?
+      cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, false, false);
     myComponent.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
 
-    myCefClient.
-      addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
-      @Override
-      public void onAfterCreated(CefBrowser browser) {
-        myIsCefBrowserCreated = true;
-        DeferLoader loader = myDeferLoader;
-        if (loader != null) {
-          loader.load(browser);
-          myDeferLoader = null;
-        }
-      }
-    }, myCefBrowser).
-      addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
+    if (cefBrowser == null) {
+      myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
+          @Override
+          public void onAfterCreated(CefBrowser browser) {
+            myIsCefBrowserCreated = true;
+            LoadDeferrer loader = myLoadDeferrer;
+            if (loader != null) {
+              loader.load(browser);
+              myLoadDeferrer = null;
+            }
+          }
+        }, myCefBrowser);
+    }
+    else {
+      myLifeSpanHandler = null;
+    }
+    myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
@@ -118,22 +119,38 @@ public class JBCefBrowser implements JBCefDisposable {
     }, myCefBrowser);
   }
 
+  /**
+   * Loads URL.
+   */
   public void loadURL(@NotNull String url) {
     if (myIsCefBrowserCreated) {
       myCefBrowser.loadURL(url);
     }
     else {
-      myDeferLoader = DeferLoader.URL.with(url);
+      myLoadDeferrer = new LoadDeferrer(url);
     }
   }
 
-  public void loadHTML(@NotNull String html) {
+  /**
+   * Loads html content.
+   *
+   * @param html content to load
+   * @param url a dummy URL that may affect restriction policy applied to the content
+   */
+  public void loadHTML(@NotNull String html, @NotNull String url) {
     if (myIsCefBrowserCreated) {
-      myCefBrowser.loadString(html, "about:blank");
+      myCefBrowser.loadString(html, url);
     }
     else {
-      myDeferLoader = DeferLoader.HTML.with(html);
+      myLoadDeferrer = new LoadDeferrer(html, url);
     }
+  }
+
+  /**
+   * Loads html content.
+   */
+  public void loadHTML(@NotNull String html) {
+    loadHTML(html, BLANK_URI);
   }
 
   /**
@@ -172,7 +189,7 @@ public class JBCefBrowser implements JBCefDisposable {
   public void dispose() {
     myDisposeHelper.dispose(() -> {
       myCefClient.removeFocusHandler(myCefFocusHandler, myCefBrowser);
-      myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
+      if (myLifeSpanHandler != null) myCefClient.removeLifeSpanHandler(myLifeSpanHandler, myCefBrowser);
       myCefBrowser.stopLoad();
       myCefBrowser.close(false);
       if (myIsDefaultClient) {

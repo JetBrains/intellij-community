@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
@@ -35,7 +36,7 @@ class PyAddExistingSdkPanel(project: Project?,
                             newProjectPath: String?,
                             preferredSdk: Sdk?) : PyAddSdkPanel() {
 
-  override val panelName: String = "Existing interpreter"
+  override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.existing.interpreter")
 
   /**
    * Path mappings of current synchronizer.
@@ -79,7 +80,7 @@ class PyAddExistingSdkPanel(project: Project?,
       }
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Interpreter:", sdkChooserCombo)
+      .addLabeledComponent(PyBundle.message("interpreter"), sdkChooserCombo)
       .addComponent(remotePathField.mainPanel)
       .panel
     add(formPanel, BorderLayout.NORTH)
@@ -109,7 +110,7 @@ class PyAddExistingSdkPanel(project: Project?,
   private fun validateRemotePathField(): ValidationInfo? {
     val path = remotePath
     return when {
-      path != null && path.isBlank() -> ValidationInfo("Remote path not provided")
+      path != null && path.isBlank() -> ValidationInfo(PyBundle.message("python.new.project.remote.path.not.provided"))
       else -> null
     }
   }

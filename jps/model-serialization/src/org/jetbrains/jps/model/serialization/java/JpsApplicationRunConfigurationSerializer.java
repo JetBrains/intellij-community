@@ -26,8 +26,6 @@ import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurati
 
 /**
  * Currently java run configurations aren't used in external compiler so this serializer is registered for tests only for performance reasons
- *
- * @author nik
  */
 public class JpsApplicationRunConfigurationSerializer extends JpsRunConfigurationPropertiesSerializer<JpsApplicationRunConfigurationProperties> {
   public JpsApplicationRunConfigurationSerializer() {

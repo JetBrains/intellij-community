@@ -628,8 +628,10 @@ class socket:
         def getblocking(self) -> bool: ...
     def gettimeout(self) -> Optional[float]: ...
 
-    if sys.platform == 'win32':
-        def ioctl(self, control: object, option: Tuple[int, int, int]) -> None: ...
+    if sys.platform == 'win32' and sys.version_info >= (3, 6):
+        def ioctl(self, control: int, option: Union[int, Tuple[int, int, int], bool]) -> None: ...
+    elif sys.platform == 'win32':
+        def ioctl(self, control: int, option: Union[int, Tuple[int, int, int]]) -> None: ...
 
     if sys.version_info >= (3, 5):
         def listen(self, __backlog: int = ...) -> None: ...
@@ -730,12 +732,20 @@ if sys.platform == 'win32' and sys.version_info >= (3, 3):
 # the 5th tuple item is an address
 # TODO the "Tuple[Any, ...]" should be "Union[Tuple[str, int], Tuple[str, int, int, int]]" but that triggers
 # https://github.com/python/mypy/issues/2509
-def getaddrinfo(host: Optional[Union[bytearray, bytes, Text]],
-                port: Union[str, int, None],
-                family: int = ...,
-                socktype: int = ...,
-                proto: int = ...,
-                flags: int = ...) -> List[Tuple[AddressFamily, SocketKind, int, str, Tuple[Any, ...]]]: ...
+if sys.version_info >= (3,):
+    def getaddrinfo(host: Optional[Union[bytearray, bytes, Text]],
+                    port: Union[str, int, None],
+                    family: int = ...,
+                    type: int = ...,
+                    proto: int = ...,
+                    flags: int = ...) -> List[Tuple[AddressFamily, SocketKind, int, str, Tuple[Any, ...]]]: ...
+else:
+    def getaddrinfo(host: Optional[Union[bytearray, bytes, Text]],
+                    port: Union[str, int, None],
+                    family: int = ...,
+                    socktype: int = ...,
+                    proto: int = ...,
+                    flags: int = ...) -> List[Tuple[AddressFamily, SocketKind, int, str, Tuple[Any, ...]]]: ...
 
 def getfqdn(name: str = ...) -> str: ...
 def gethostbyname(hostname: str) -> str: ...

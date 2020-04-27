@@ -26,9 +26,8 @@ public class GrLightTypeParameterList extends LightElement implements GrTypePara
     this(context.getManager(), context.getLanguage());
   }
 
-  @NotNull
   @Override
-  public GrTypeParameter[] getTypeParameters() {
+  public GrTypeParameter @NotNull [] getTypeParameters() {
     return myTypeParameters.toArray(GrTypeParameter.EMPTY_ARRAY);
   }
 

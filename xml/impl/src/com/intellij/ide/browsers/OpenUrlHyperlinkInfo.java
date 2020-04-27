@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.PlatformIcons;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +60,7 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
     DefaultActionGroup group = new DefaultActionGroup();
     for (final WebBrowser browser : WebBrowserManager.getInstance().getActiveBrowsers()) {
       if (browserCondition.value(browser)) {
-        group.add(new AnAction("Open in " + browser.getName(), "Open URL in " + browser.getName(), browser.getIcon()) {
+        group.add(new AnAction(XmlBundle.message("open.in.0", browser.getName()), XmlBundle.message("open.url.in.0", browser.getName()), browser.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             BrowserLauncher.getInstance().browse(url, browser, e.getProject());
@@ -68,7 +69,9 @@ public final class OpenUrlHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
       }
     }
 
-    group.add(new AnAction("Copy URL", "Copy URL to clipboard", PlatformIcons.COPY_ICON) {
+    group.add(new AnAction(XmlBundle.messagePointer("action.OpenUrlHyperlinkInfo.Anonymous.text.copy.url"),
+                           XmlBundle.messagePointer("action.OpenUrlHyperlinkInfo.Anonymous.description.copy.url.to.clipboard"),
+                           PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         CopyPasteManager.getInstance().setContents(new StringSelection(url));

@@ -22,17 +22,16 @@ import static com.intellij.sh.completion.ShCompletionUtil.endsWithDot;
 class ShKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {
   private static final int PRIORITY = 10;
 
-  @NotNull
-  private final String[] myKeywords;
+  private final String @NotNull [] myKeywords;
   @NotNull
   private final String myFeatureActionId;
   private final boolean myWithDescription;
 
-  ShKeywordCompletionProvider(@NotNull String featureActionId, @NonNls @NotNull String... keywords) {
+  ShKeywordCompletionProvider(@NotNull String featureActionId, @NonNls String @NotNull ... keywords) {
     this(featureActionId, false, keywords);
   }
 
-  ShKeywordCompletionProvider(@NotNull String featureActionId, boolean withDescription, @NonNls @NotNull String... keywords) {
+  ShKeywordCompletionProvider(@NotNull String featureActionId, boolean withDescription, @NonNls String @NotNull ... keywords) {
     myKeywords = keywords;
     myFeatureActionId = featureActionId;
     myWithDescription = withDescription;

@@ -35,9 +35,6 @@ import java.util.function.Function;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @author max
- */
 class ImportOldConfigsPanel extends JDialog {
   private JPanel myRootPanel;
   private JRadioButton myRbImportAuto;

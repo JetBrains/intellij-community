@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.execution.Location;
@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -95,9 +94,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     myUiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
     myProjectsManager = ExternalProjectsManagerImpl.getInstance(myProject);
 
-    String toolWindowId =
-      toolWindow instanceof ToolWindowImpl ? ((ToolWindowImpl)toolWindow).getId() : myExternalSystemId.getReadableName();
-
+    String toolWindowId = toolWindow.getId();
     String notificationId = "notification.group.id." + StringUtil.toLowerCase(externalSystemId.getId());
     NotificationGroup registeredGroup = NotificationGroup.findRegisteredGroup(notificationId);
     myNotificationGroup = registeredGroup != null ? registeredGroup : NotificationGroup.toolWindowGroup(notificationId, toolWindowId);
@@ -184,6 +181,9 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         boolean visible = myToolWindow.isVisible();
         if (!visible || wasVisible) {
           wasVisible = visible;
+          if (!visible) {
+            scheduleStructureCleanupCache();
+          }
           return;
         }
 
@@ -193,23 +193,13 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     });
 
     getShortcutsManager().addListener(() -> {
-      scheduleTasksUpdate();
-
-      scheduleStructureRequest(() -> {
-        assert myStructure != null;
-        myStructure.updateNodes(RunConfigurationNode.class);
-      });
+      scheduleTaskAndRunConfigUpdate();
     });
 
     getTaskActivator().addListener(new ExternalSystemTaskActivator.Listener() {
       @Override
       public void tasksActivationChanged() {
-        scheduleTasksUpdate();
-
-        scheduleStructureRequest(() -> {
-          assert myStructure != null;
-          myStructure.updateNodes(RunConfigurationNode.class);
-        });
+        scheduleTaskAndRunConfigUpdate();
       }
     });
 
@@ -241,6 +231,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     scheduleStructureUpdate();
   }
+
+  private void scheduleTaskAndRunConfigUpdate() {
+    scheduleStructureRequest(() -> {
+      assert myStructure != null;
+      myStructure.updateNodesAsync(Arrays.asList(TaskNode.class, RunConfigurationNode.class));
+    });
+  }
+
 
   @Override
   public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
@@ -342,6 +340,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     });
   }
 
+  private void scheduleStructureCleanupCache() {
+    scheduleStructureRequest(() -> {
+      if (myStructure != null) {
+        myStructure.cleanupCache();
+      }
+    });
+  }
+
   protected boolean isUnitTestMode() {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
@@ -422,7 +428,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   @Nullable
   public ExternalProjectsViewState getState() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertIsWriteThread();
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");
@@ -510,14 +516,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       for (T tasksNode : myStructure.getNodes(nodeClass)) {
         tasksNode.cleanUpCache();
       }
-      myStructure.updateNodes(nodeClass);
-    });
-  }
-
-  private void scheduleTasksUpdate() {
-    scheduleStructureRequest(() -> {
-      assert myStructure != null;
-      myStructure.updateNodes(TaskNode.class);
+      myStructure.updateNodesAsync(Collections.singleton(nodeClass));
     });
   }
 

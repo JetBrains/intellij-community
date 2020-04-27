@@ -67,9 +67,8 @@ public class CvsContentRevision implements ByteBackedContentRevision {
     return content == null ? null : CharsetToolkit.bytesToString(content, myLocalFile.getCharset());
   }
 
-  @Nullable
   @Override
-  public byte[] getContentAsBytes() throws VcsException {
+  public byte @Nullable [] getContentAsBytes() throws VcsException {
     if (myContent == null) {
       final GetFileContentOperation operation = new GetFileContentOperation(myFile, myEnvironment, myRevision);
       CvsOperationExecutor executor = new CvsOperationExecutor(myProject);

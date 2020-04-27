@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -411,7 +412,7 @@ public class RefactoringUtil {
     }
   }
 
-  public static PsiElement getAnchorElementForMultipleExpressions(@NotNull PsiExpression[] occurrences, PsiElement scope) {
+  public static PsiElement getAnchorElementForMultipleExpressions(PsiExpression @NotNull [] occurrences, PsiElement scope) {
     PsiElement anchor = null;
     for (PsiExpression occurrence : occurrences) {
       if (scope != null && !PsiTreeUtil.isAncestor(scope, occurrence, false)) {
@@ -1025,7 +1026,7 @@ public class RefactoringUtil {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
       if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
-        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
+        return RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
       }
     }
     return null;
@@ -1137,11 +1138,18 @@ public class RefactoringUtil {
     fixJavadocsForParams(method, newParameters, eqCondition, Conditions.alwaysTrue());
   }
 
-  public static void fixJavadocsForParams(PsiMethod method,
-                                          Set<? extends PsiParameter> newParameters,
-                                          Condition<? super Pair<PsiParameter, String>> eqCondition,
-                                          Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
-    final PsiDocComment docComment = method.getDocComment();
+  public static void fixJavadocsForParams(@NotNull PsiMethod method,
+                                          @NotNull Set<? extends PsiParameter> newParameters,
+                                          @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
+    fixJavadocsForParams(method, method.getDocComment(), newParameters, eqCondition, matchedToOldParam);
+  }
+
+  public static void fixJavadocsForParams(@NotNull PsiMethod method,
+                                          @Nullable PsiDocComment docComment,
+                                          @NotNull Set<? extends PsiParameter> newParameters,
+                                          @NotNull Condition<? super Pair<PsiParameter, String>> eqCondition,
+                                          @NotNull Condition<? super String> matchedToOldParam) throws IncorrectOperationException {
     if (docComment == null) return;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     final PsiDocTag[] paramTags = docComment.findTagsByName("param");
@@ -1321,20 +1329,20 @@ public class RefactoringUtil {
   }
 
   @Nullable
-  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@NotNull final PsiElement... elements) {
+  public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(final PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(null, elements);
   }
 
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
-                                                                                   @NotNull final PsiElement... elements) {
+                                                                                   final PsiElement @NotNull ... elements) {
     return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.alwaysTrue(), elements);
   }
 
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    Condition<? super PsiTypeParameter> filter,
-                                                                                   @NotNull final PsiElement... elements) {
+                                                                                   final PsiElement @NotNull ... elements) {
     if (elements.length == 0) return null;
     final Set<PsiTypeParameter> used = new HashSet<>();
     for (final PsiElement element : elements) {

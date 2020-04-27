@@ -41,12 +41,11 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
 
   @Override
   public String toString() {
-    return "Light parameter lsit";
+    return "Light parameter list";
   }
 
-  @NotNull
   @Override
-  public PsiParameter[] getParameters() {
+  public PsiParameter @NotNull [] getParameters() {
     if (myCachedParameters == null) {
       if (myParameters.isEmpty()) {
         myCachedParameters = PsiParameter.EMPTY_ARRAY;

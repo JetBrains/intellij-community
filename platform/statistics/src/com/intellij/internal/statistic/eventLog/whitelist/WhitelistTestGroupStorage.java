@@ -1,25 +1,26 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
+import com.intellij.internal.statistic.eventLog.EventLogBuildNumber;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
+import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
-  private static final ConcurrentMap<String, WhitelistTestGroupStorage> ourTestInstances = ContainerUtil.newConcurrentMap();
-
   protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
   private final Object myLock = new Object();
   @NotNull
@@ -29,14 +30,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   @NotNull
   private final String myRecorderId;
 
-  public static WhitelistTestGroupStorage getInstance(@NotNull String recorderId) {
-    return ourTestInstances.computeIfAbsent(
-      recorderId,
-      id -> new WhitelistTestGroupStorage(id)
-    );
-  }
-
-  private WhitelistTestGroupStorage(@NotNull String recorderId) {
+  WhitelistTestGroupStorage(@NotNull String recorderId) {
     myTestWhitelistPersistence = new EventLogTestWhitelistPersistence(recorderId);
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
     updateValidators();
@@ -51,9 +45,10 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
 
   @Override
   public void update() {
+    updateValidators();
   }
 
-  private void updateValidators() {
+  public void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();
       isWhiteListInitialized.set(false);
@@ -69,7 +64,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   @NotNull
   protected Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups, @NotNull WLGroups productionGroups) {
     final WLRule rules = merge(groups.rules, productionGroups.rules);
-    final BuildNumber buildNumber = BuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
+    final EventLogBuildNumber buildNumber = EventLogBuildNumber.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> group.accepts(buildNumber)).
       collect(Collectors.toMap(group -> group.id, group -> createRules(group, rules)));
@@ -112,7 +107,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     updateValidators();
   }
 
-  public void cleanup() {
+  protected void cleanup() {
     synchronized (myLock) {
       eventsValidators.clear();
       myTestWhitelistPersistence.cleanup();
@@ -120,8 +115,32 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   }
 
   public static void cleanupAll() {
-    for (WhitelistTestGroupStorage value : ourTestInstances.values()) {
-      value.cleanup();
+    List<String> recorders = StatisticsEventLoggerKt.getEventLogProviders().stream().
+      filter(provider -> provider.isRecordEnabled()).
+      map(provider -> provider.getRecorderId()).
+      collect(Collectors.toList());
+    cleanupAll(recorders);
+  }
+
+  public static void cleanupAll(List<String> recorders) {
+    for (String recorderId : recorders) {
+      WhitelistTestGroupStorage testWhitelist = getTestStorage(recorderId);
+      if (testWhitelist != null) {
+        testWhitelist.cleanup();
+      }
+    }
+  }
+
+  @Nullable
+  public static WhitelistTestGroupStorage getTestStorage(String recorderId) {
+    SensitiveDataValidator validator = SensitiveDataValidator.getIfInitialized(recorderId);
+    WhitelistGroupRulesStorage storage = validator != null ? validator.getWhiteListStorage() : null;
+    return storage instanceof WhitelistTestRulesStorageHolder ? ((WhitelistTestRulesStorageHolder)storage).getTestGroupStorage() : null;
+  }
+
+  public int size() {
+    synchronized (myLock) {
+      return eventsValidators.size();
     }
   }
 }

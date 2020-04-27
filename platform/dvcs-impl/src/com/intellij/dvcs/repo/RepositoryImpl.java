@@ -21,9 +21,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Nadya Zabrodina
- */
 public abstract class RepositoryImpl implements Repository {
 
   @NotNull private final Project myProject;
@@ -58,6 +55,11 @@ public abstract class RepositoryImpl implements Repository {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @Override
+  public boolean isFresh() {
+    return getCurrentRevision() == null;
   }
 
   @Override

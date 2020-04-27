@@ -53,7 +53,8 @@ class B implements AnnotationBuilder {
     this.message = message;
     myCurrentElement = currentElement;
     holder.annotationBuilderCreated(this);
-    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() ? ThrowableInterner.intern(new Throwable()) : null;
+    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal() ?
+                           ThrowableInterner.intern(new Throwable()) : null;
   }
 
   private void assertNotSet(Object o, String description) {
@@ -130,6 +131,11 @@ class B implements AnnotationBuilder {
       }
       fixes.add(this);
       return B.this;
+    }
+
+    @Override
+    public String toString() {
+      return fix+(range==null?"":" at "+range)+(batch == null ? "" : " batch")+(universal == null ? "" : " universal");
     }
   }
 

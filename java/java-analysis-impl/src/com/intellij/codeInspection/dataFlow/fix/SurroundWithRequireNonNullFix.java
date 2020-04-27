@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
@@ -41,14 +41,14 @@ public class SurroundWithRequireNonNullFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return InspectionsBundle.message("inspection.surround.requirenonnull.quickfix", myText);
+    return JavaAnalysisBundle.message("inspection.surround.requirenonnull.quickfix", myText);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionsBundle.message("inspection.surround.requirenonnull.quickfix", "");
+    return JavaAnalysisBundle.message("inspection.surround.requirenonnull.quickfix", "");
   }
 
   @Override

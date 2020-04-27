@@ -30,7 +30,7 @@ public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryTyp
                                         @NotNull String libraryTypeId,
                                         @NotNull String groupId,
                                         @Nullable Icon icon,
-                                        @NotNull URL... localUrls) {
+                                        URL @NotNull ... localUrls) {
     super(libraryCategoryName, libraryTypeId, groupId, icon, localUrls);
   }
 }

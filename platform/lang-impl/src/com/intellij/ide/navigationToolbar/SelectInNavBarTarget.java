@@ -9,12 +9,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDirectoryContainer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,15 +48,15 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
 
   @Override
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
-    selectInNavBar();
+    selectInNavBar(false);
   }
 
   @Override
   protected void select(final PsiElement element, boolean requestFocus) {
-    selectInNavBar();
+    selectInNavBar(false);
   }
 
-  private static void selectInNavBar() {
+  public static void selectInNavBar(boolean showPopup) {
     DataManager.getInstance().getDataContextFromFocus()
       .doWhenDone((Consumer<DataContext>)context -> {
         IdeFrame frame = IdeFrame.KEY.getData(context);
@@ -64,12 +66,12 @@ final class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Dum
             final JComponent c = navBarExt.getComponent();
             final NavBarPanel panel = (NavBarPanel)c.getClientProperty("NavBarPanel");
             panel.rebuildAndSelectItem((list) -> {
-              if (Registry.is("navBar.show.members")) {
+              if (UISettings.getInstance().getShowMembersInNavigationBar()) {
                 int lastDirectory = ContainerUtil.lastIndexOf(list, (item) -> item.getObject() instanceof PsiDirectory || item.getObject() instanceof PsiDirectoryContainer);
                 if (lastDirectory >= 0 && lastDirectory < list.size() - 1) return lastDirectory;
               }
               return list.size() - 1;
-            });
+            }, showPopup);
           }
         }
       });

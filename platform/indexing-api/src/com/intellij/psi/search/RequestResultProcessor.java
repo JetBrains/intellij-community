@@ -22,7 +22,7 @@ public abstract class RequestResultProcessor {
   /**
    * @param equality this processor's equals/hashCode will delegate to this object
    */
-  protected RequestResultProcessor(@NotNull Object... equality) {
+  protected RequestResultProcessor(Object @NotNull ... equality) {
     myEquality = Arrays.asList(equality);
   }
 
@@ -60,7 +60,7 @@ public abstract class RequestResultProcessor {
     public BulkResultProcessor() {
     }
 
-    public BulkResultProcessor(@NotNull Object... equality) {
+    public BulkResultProcessor(Object @NotNull ... equality) {
       super(equality);
     }
 

@@ -48,9 +48,8 @@ public class RedundantStreamOptionalCallInspectionTest extends LightJavaInspecti
   }
 
   public static class RedundantStreamOptionalCallFixTest extends LightQuickFixParameterizedTestCase {
-    @NotNull
     @Override
-    protected LocalInspectionTool[] configureLocalInspectionTools() {
+    protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
       return new LocalInspectionTool[]{new RedundantStreamOptionalCallInspection()};
     }
 

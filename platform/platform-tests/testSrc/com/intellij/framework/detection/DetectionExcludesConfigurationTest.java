@@ -26,9 +26,6 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class DetectionExcludesConfigurationTest extends HeavyPlatformTestCase {
   private VirtualFile myTempDir;
   private VirtualFile myTempFile;
@@ -48,9 +45,21 @@ public class DetectionExcludesConfigurationTest extends HeavyPlatformTestCase {
     assertEquals("type", assertOneElement(getState().getFrameworkTypes()));
   }
 
+  public void testAddExcludedFrameworkIfDetectionIsDisabled() {
+    disableDetection();
+    getConfiguration().addExcludedFramework(getType());
+    assertEmpty(getState().getFrameworkTypes());
+  }
+
   public void testAddExcludedFile() {
     getConfiguration().addExcludedFile(myTempDir, null);
     assertEquals(myTempDir.getUrl(), assertOneElement(getState().getFiles()).getUrl());
+  }
+
+  public void testAddExcludedFileIfDetectionIsDisabled() {
+    disableDetection();
+    getConfiguration().addExcludedFile(myTempDir, null);
+    assertEmpty(getState().getFiles());
   }
 
   public void testAddExcludedFileForExcludedFramework() {
@@ -112,6 +121,11 @@ public class DetectionExcludesConfigurationTest extends HeavyPlatformTestCase {
     assertEquals(2, getState().getFiles().size());
   }
 
+  private void disableDetection() {
+    ExcludesConfigurationState state = new ExcludesConfigurationState();
+    state.setDetectionEnabled(false);
+    getConfiguration().loadState(state);
+  }
 
   private ExcludesConfigurationState getState() {
     final ExcludesConfigurationState state = getConfiguration().getState();

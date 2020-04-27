@@ -17,7 +17,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -56,10 +58,18 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       return getFamilyName();
     }
     String suffix = "";
-    if (SideEffectChecker.mayHaveSideEffects(subExpression)) {
+    if (SideEffectChecker.mayHaveSideEffects(subExpression, e -> shouldIgnore(e, subExpression))) {
       suffix = canExtractSideEffect(subExpression) ? " extracting side effects" : " (may change semantics)";
     }
     return getIntentionText(subExpression, mySubExpressionValue) + suffix;
+  }
+
+  private boolean shouldIgnore(PsiElement e, PsiExpression subExpression) {
+    return e instanceof PsiInstanceOfExpression &&
+           JavaPsiPatternUtil.getExposedPatternVariables(((PsiInstanceOfExpression)e))
+             .stream()
+             .map(var -> PatternResolveState.stateAtParent(var, subExpression))
+             .noneMatch(PatternResolveState.fromBoolean(mySubExpressionValue)::equals);
   }
 
   private boolean canExtractSideEffect(PsiExpression subExpression) {
@@ -146,7 +156,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         LOG.error("anchor is null", new Attachment("subExpression.txt", subExpression.getText()));
         return;
       }
-      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(subExpression);
+      PsiExpression finalSubExpression = subExpression;
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(
+        subExpression, e -> shouldIgnore(e, finalSubExpression));
       sideEffects.forEach(ct::markUnchanged);
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, subExpression);
       if (statements.length > 0) {

@@ -146,7 +146,7 @@ public class SvnChangelistListener implements ChangeListListener {
     addToChangeList(changeList, changes, null);
   }
 
-  private void addToChangeList(@NotNull String changeList, @NotNull Collection<Change> changes, @Nullable String[] changeListsToOperate) {
+  private void addToChangeList(@NotNull String changeList, @NotNull Collection<Change> changes, String @Nullable [] changeListsToOperate) {
     for (FilePath path : getPathsFromChanges(changes)) {
       try {
         File file = path.getIOFile();

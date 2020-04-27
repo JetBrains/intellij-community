@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -15,6 +15,7 @@ import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
 import git4idea.stash.GitChangesSaver;
@@ -81,29 +82,45 @@ class GitAbortRebaseProcess {
 
   @NotNull
   private AbortChoice confirmAbort() {
-    String title = "Abort Rebase";
+    String title = GitBundle.getString("rebase.abort.dialog.title");
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
-        String message = "Abort rebase" + GitUtil.mention(myRepositoryToAbort) + "?";
+        String message = GitBundle.message("rebase.abort.dialog.message", getShortRepositoryName(myRepositoryToAbort));
         if (canShowMacSheetPanel()) {
           title = message;
           message = "";
         }
-        int choice = DialogManager.showOkCancelDialog(myProject, message, title, "Abort", getCancelButtonText(), getQuestionIcon());
+        int choice = DialogManager.showOkCancelDialog(
+          myProject,
+          message,
+          title,
+          GitBundle.getString("rebase.abort.dialog.ok.button.text"),
+          getCancelButtonText(),
+          getQuestionIcon()
+        );
         if (choice == Messages.OK) {
           return AbortChoice.ABORT;
         }
       }
       else {
-        String message = String.format("Abort rebase in %s only or also rollback rebase in %s?",
-                                       getShortRepositoryName(myRepositoryToAbort),
-                                       joinShortNames(myRepositoriesToRollback.keySet(), 5));
+        String message = GitBundle.message(
+          "rebase.abort.and.rollback.dialog.message",
+          getShortRepositoryName(myRepositoryToAbort),
+          joinShortNames(myRepositoriesToRollback.keySet(), 5)
+        );
         if (canShowMacSheetPanel()) {
           title = message;
           message = "";
         }
-        int choice = DialogManager.showYesNoCancelDialog(myProject, message, title, "Abort and Rollback", "Abort Only",
-                                                         getCancelButtonText(), getQuestionIcon());
+        int choice = DialogManager.showYesNoCancelDialog(
+          myProject,
+          message,
+          title,
+          GitBundle.getString("rebase.abort.and.rollback.dialog.yes.button.text"),
+          GitBundle.getString("rebase.abort.and.rollback.dialog.no.button.text"),
+          getCancelButtonText(),
+          getQuestionIcon()
+        );
         if (choice == Messages.YES) {
           return AbortChoice.ROLLBACK_AND_ABORT;
         }
@@ -117,8 +134,18 @@ class GitAbortRebaseProcess {
         LOG.error(new Throwable());
       }
       else {
-        String description = "Do you want to rollback the successful rebase" + GitUtil.mention(myRepositoriesToRollback.keySet()) + "?";
-        int choice = DialogManager.showOkCancelDialog(myProject, description, title, "Rollback", getCancelButtonText(), getQuestionIcon());
+        String description = GitBundle.message(
+          "rebase.abort.rollback.successful.rebase.dialog.message",
+          joinShortNames(myRepositoriesToRollback.keySet(), -1)
+        );
+        int choice = DialogManager.showOkCancelDialog(
+          myProject,
+          description,
+          title,
+          GitBundle.getString("rebase.abort.rollback.successful.rebase.dialog.ok.button.text"),
+          getCancelButtonText(),
+          getQuestionIcon()
+        );
         if (choice == Messages.YES) {
           return AbortChoice.ROLLBACK_AND_ABORT;
         }
@@ -137,40 +164,70 @@ class GitAbortRebaseProcess {
     new GitFreezingProcess(myProject, "rebase", () -> {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
         if (myRepositoryToAbort != null) {
-          myIndicator.setText2("git rebase --abort" + GitUtil.mention(myRepositoryToAbort));
+          myIndicator.setText2(GitBundle.message(
+            "rebase.abort.progress.indicator.command.in.repo.title",
+            "git rebase --abort",
+            getShortRepositoryName(myRepositoryToAbort)
+          ));
           Hash startHash = GitUtil.getHead(myRepositoryToAbort);
           GitCommandResult result = myGit.rebaseAbort(myRepositoryToAbort);
           if (result.success()) {
             GitUtil.updateAndRefreshChangedVfs(myRepositoryToAbort, startHash);
           }
           else {
-            myNotifier.notifyError("Rebase Abort Failed",
-                                   result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver));
+            myNotifier.notifyError(
+              GitBundle.getString("rebase.abort.notification.failed.title"),
+              result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver)
+            );
             return;
           }
         }
 
         if (rollback) {
           for (GitRepository repo : myRepositoriesToRollback.keySet()) {
-            myIndicator.setText2("git reset --keep" + GitUtil.mention(repo));
+            myIndicator.setText2(GitBundle.message(
+              "rebase.abort.progress.indicator.command.in.repo.title",
+              "git reset --keep",
+              getShortRepositoryName(repo)
+            ));
             Hash startHash = GitUtil.getHead(repo);
             GitCommandResult res = myGit.reset(repo, GitResetMode.KEEP, myRepositoriesToRollback.get(repo));
 
             if (res.success()) {
               String initialBranchPosition = myInitialCurrentBranches.get(repo);
               if (initialBranchPosition != null && !initialBranchPosition.equals(repo.getCurrentBranchName())) {
-                myIndicator.setText2("git checkout " + initialBranchPosition + GitUtil.mention(repo));
+                myIndicator.setText2(GitBundle.message(
+                  "rebase.abort.progress.indicator.command.in.repo.title",
+                  "git checkout " + initialBranchPosition,
+                  getShortRepositoryName(repo)
+                ));
                 res = myGit.checkout(repo, initialBranchPosition, null, true, false);
               }
             }
 
             if (!res.success()) {
-              String description = myRepositoryToAbort != null ?
-                                   "Rebase abort was successful" + GitUtil.mention(myRepositoryToAbort) + ", but rollback failed" :
-                                   "Rollback failed";
-              description += GitUtil.mention(repo) + ":" + res.getErrorOutputAsHtmlString() +
-                             mentionLocalChangesRemainingInStash(mySaver);
-              myNotifier.notifyImportantWarning("Rebase Rollback Failed", description);
+              String description;
+              if (myRepositoryToAbort != null) {
+                description = GitBundle.message(
+                  "rebase.abort.notification.warning.rollback.failed.with.repo.message",
+                  getShortRepositoryName(myRepositoryToAbort),
+                  repo,
+                  res.getErrorOutputAsHtmlString(),
+                  mentionLocalChangesRemainingInStash(mySaver)
+                );
+              }
+              else {
+                description = GitBundle.message(
+                  "rebase.abort.notification.warning.rollback.failed.message",
+                  getShortRepositoryName(repo),
+                  res.getErrorOutputAsHtmlString(),
+                  mentionLocalChangesRemainingInStash(mySaver)
+                );
+              }
+              myNotifier.notifyImportantWarning(
+                GitBundle.getString("rebase.abort.notification.warning.rollback.failed.title"),
+                description
+              );
               return;
             }
 
@@ -182,7 +239,7 @@ class GitAbortRebaseProcess {
           mySaver.load();
         }
         if (myNotifySuccess) {
-          myNotifier.notifySuccess("Rebase abort succeeded");
+          myNotifier.notifySuccess(GitBundle.getString("rebase.abort.notification.successful.message"));
         }
       }
     }).execute();

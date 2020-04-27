@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class ModuleGroupItem extends PackagingSourceItem {
   private final String myGroupName;
   private final List<String> myPath;

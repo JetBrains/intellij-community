@@ -28,7 +28,7 @@ import java.util.Iterator;
 /**
  * @author Eugene Zhuravlev
  */
-public class SourceToOutputMappingImpl implements SourceToOutputMapping {
+public class SourceToOutputMappingImpl implements SourceToOutputMapping, StorageOwner {
   private final OneToManyPathsMapping myMapping;
 
   public SourceToOutputMappingImpl(File storePath, PathRelativizerService relativizer) throws IOException {
@@ -78,14 +78,17 @@ public class SourceToOutputMappingImpl implements SourceToOutputMapping {
     return myMapping.getKeysIterator();
   }
 
+  @Override
   public void flush(boolean memoryCachesOnly) {
     myMapping.flush(memoryCachesOnly);
   }
 
+  @Override
   public void close() throws IOException {
     myMapping.close();
   }
 
+  @Override
   public void clean() throws IOException {
     myMapping.clean();
   }

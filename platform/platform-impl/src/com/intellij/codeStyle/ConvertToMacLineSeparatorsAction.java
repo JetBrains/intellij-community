@@ -23,6 +23,6 @@ import com.intellij.util.LineSeparator;
  */
 public class ConvertToMacLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
   public ConvertToMacLineSeparatorsAction() {
-    super(ApplicationBundle.message("combobox.crlf.mac"), LineSeparator.CR);
+    super(ApplicationBundle.messagePointer("combobox.crlf.mac"), LineSeparator.CR);
   }
 }

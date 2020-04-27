@@ -18,7 +18,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper> {
    * The constructor
    * @param data the data element
    */
-  public ByteArrayWrapper(@NotNull byte[] data) {
+  public ByteArrayWrapper(byte @NotNull [] data) {
     myData = data;
   }
 

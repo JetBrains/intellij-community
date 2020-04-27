@@ -16,9 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 
 public class JsonRequiredPropsReferenceProvider extends PsiReferenceProvider {
-  @NotNull
   @Override
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     return new PsiReference[] {new JsonRequiredPropReference((JsonStringLiteral)element)};
   }
 

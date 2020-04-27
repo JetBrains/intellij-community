@@ -7,9 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Sergey.Malenkov
- */
 public abstract class ScrollPaneActions extends SwingActionDelegate {
   private ScrollPaneActions(String actionId) {
     super(actionId);

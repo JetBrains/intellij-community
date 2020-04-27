@@ -14,9 +14,8 @@ public class ExplicitArrayFillingInspectionMerger extends InspectionElementsMerg
     return "ExplicitArrayFilling";
   }
 
-  @NotNull
   @Override
-  public String[] getSourceToolNames() {
+  public String @NotNull [] getSourceToolNames() {
     return new String[]{"Java8ArraySetAll"};
   }
 

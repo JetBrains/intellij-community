@@ -25,9 +25,9 @@ import java.util.stream.Stream;
  * @author peter
  */
 public final class StandardMethodContract extends MethodContract {
-  private final @NotNull ValueConstraint[] myParameters;
+  private final ValueConstraint @NotNull [] myParameters;
 
-  public StandardMethodContract(@NotNull ValueConstraint[] parameters, @NotNull ContractReturnValue returnValue) {
+  public StandardMethodContract(ValueConstraint @NotNull [] parameters, @NotNull ContractReturnValue returnValue) {
     super(returnValue);
     myParameters = parameters;
   }
@@ -44,8 +44,7 @@ public final class StandardMethodContract extends MethodContract {
     return ContainerUtil.immutableList(myParameters);
   }
 
-  @NotNull
-  public StandardMethodContract withReturnValue(@NotNull ContractReturnValue returnValue) {
+  public @NotNull StandardMethodContract withReturnValue(@NotNull ContractReturnValue returnValue) {
     return returnValue.equals(getReturnValue()) ? this : new StandardMethodContract(myParameters, returnValue);
   }
 
@@ -143,8 +142,8 @@ public final class StandardMethodContract extends MethodContract {
    * @return list of equivalent non-intersecting contracts or null if the result is too big or the input list contains errors
    * (e.g. contracts with different parameter count)
    */
-  @Nullable("When result is too big or contracts are erroneous")
-  public static List<StandardMethodContract> toNonIntersectingStandardContracts(List<StandardMethodContract> contracts) {
+  public static @Nullable("When result is too big or contracts are erroneous") List<StandardMethodContract> 
+  toNonIntersectingStandardContracts(List<StandardMethodContract> contracts) {
     if (contracts.isEmpty()) return contracts;
     int paramCount = contracts.get(0).getParameterCount();
     List<StandardMethodContract> result = new ArrayList<>();
@@ -159,8 +158,7 @@ public final class StandardMethodContract extends MethodContract {
     return result;
   }
 
-  @NotNull
-  public static ValueConstraint[] createConstraintArray(int paramCount) {
+  public static ValueConstraint @NotNull [] createConstraintArray(int paramCount) {
     ValueConstraint[] args = new ValueConstraint[paramCount];
     Arrays.fill(args, ValueConstraint.ANY_VALUE);
     return args;
@@ -215,8 +213,7 @@ public final class StandardMethodContract extends MethodContract {
    * @throws RuntimeException in case of parse error
    * @see HardcodedContracts
    */
-  @NotNull
-  static StandardMethodContract fromText(@NotNull String clause) {
+  static @NotNull StandardMethodContract fromText(@NotNull String clause) {
     try {
       return fromText(clause, 0, clause);
     }
@@ -225,8 +222,7 @@ public final class StandardMethodContract extends MethodContract {
     }
   }
 
-  @NotNull
-  private static StandardMethodContract fromText(@NotNull String text, int clauseIndex, @NotNull String clause)
+  private static @NotNull StandardMethodContract fromText(@NotNull String text, int clauseIndex, @NotNull String clause)
     throws ParseException {
     String arrow = "->";
     int arrowIndex = clause.indexOf(arrow);
@@ -358,8 +354,7 @@ public final class StandardMethodContract extends MethodContract {
       myRange = range != null && range.isEmpty() ? null : range;
     }
 
-    @Nullable
-    public TextRange getRange() {
+    public @Nullable TextRange getRange() {
       return myRange;
     }
 

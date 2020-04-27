@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -13,9 +13,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Set;
 
-/**
- * @author egor
- */
 public class JavaDebuggerAttachUtil {
   public static boolean canAttach(BaseProcessHandler processHandler) {
     return JavaAttachDebuggerProvider.getProcessAttachInfo(processHandler) != null;

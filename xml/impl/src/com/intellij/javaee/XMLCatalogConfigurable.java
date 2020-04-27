@@ -19,7 +19,7 @@ public class XMLCatalogConfigurable implements Configurable {
   private JPanel myPanel;
 
   public XMLCatalogConfigurable() {
-    myPropertyFile.addBrowseFolderListener("XML Catalog Properties File", null, null,
+    myPropertyFile.addBrowseFolderListener(XmlBundle.message("xml.catalog.properties.file"), null, null,
                                            new FileChooserDescriptor(true, false, false, false, false, false));
   }
 

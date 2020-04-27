@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.cherrypick;
 
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,11 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsCherryPickAction extends DumbAwareAction {
-  private static final String NAME = "Cherry-Pick";
-  private static final String SEVERAL_VCS_DESCRIPTION = "Selected commits are tracked by different vcses";
-
   public VcsCherryPickAction() {
-    super(NAME, null, DvcsImplIcons.CherryPick);
+    super(DvcsBundle.messagePointer("cherry.pick.action.text"),
+          DvcsBundle.messagePointer("cherry.pick.action.description"),
+          DvcsImplIcons.CherryPick);
   }
 
   @Override
@@ -70,7 +70,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
     e.getPresentation().setEnabled(activeCherryPicker != null);
     e.getPresentation()
       .setText(activeCherryPicker == null ? concatActionNamesForAllAvailable(cherryPickers) : activeCherryPicker.getActionTitle());
-    e.getPresentation().setDescription(activeCherryPicker != null ? "" : SEVERAL_VCS_DESCRIPTION);
+    e.getPresentation().setDescription(activeCherryPicker != null ? "" : DvcsBundle.message("cherry.pick.action.description"));
   }
 
   @Nullable

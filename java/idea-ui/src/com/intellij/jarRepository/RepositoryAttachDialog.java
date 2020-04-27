@@ -2,13 +2,13 @@
 package com.intellij.jarRepository;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -94,7 +94,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
   public RepositoryAttachDialog(@NotNull Project project, final @Nullable String initialFilter, @NotNull Mode mode) {
     super(project, true);
     myMode = mode;
-    setTitle(mode == Mode.DOWNLOAD ? "Download Library from Maven Repository" : "Search Library in Maven Repositories");
+    setTitle(mode == Mode.DOWNLOAD ? JavaUiBundle.message("dialog.title.download.library.from.maven.repository")
+                                   : JavaUiBundle.message("dialog.title.search.library.in.maven.repositories"));
     myProject = project;
     myProgressIcon.suspend();
     myCaptionLabel.setText(
@@ -168,8 +169,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
-    myDirectoryField.addBrowseFolderListener(ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
-                                             ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
+    myDirectoryField.addBrowseFolderListener(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
+                                             JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              descriptor);
     updateInfoLabel();
     myDownloadOptionsPanel.setVisible(mode == Mode.DOWNLOAD);
@@ -340,18 +341,18 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   private void updateInfoLabel() {
-    myInfoLabel.setText("<html>Found: " + myCoordinates.size() + "<br>Showing: " + myCombobox.getModel().getSize() + "</html>");
+    myInfoLabel.setText(JavaUiBundle.message("info.text.found.0.br.showing.1", myCoordinates.size(), myCombobox.getModel().getSize()));
   }
 
   @Override
   protected ValidationInfo doValidate() {
     if (!isValidCoordinateSelected()) {
-      return new ValidationInfo("Please enter valid coordinate, discover it or select one from the list", myCombobox);
+      return new ValidationInfo(JavaUiBundle.message("error.message.please.enter.valid.coordinate.discover.it.or.select.one.from.the.list"), myCombobox);
     }
     else if (myDownloadToCheckBox.isSelected()) {
       final File dir = new File(myDirectoryField.getText());
       if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        return new ValidationInfo("Please enter valid library files path", myDirectoryField.getTextField());
+        return new ValidationInfo(JavaUiBundle.message("error.message.please.enter.valid.library.files.path"), myDirectoryField.getTextField());
       }
     }
     return super.doValidate();
@@ -405,7 +406,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   }
 
   private String getFullCoordinateText() {
-    return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText();
+    return ((JTextField)myCombobox.getEditor().getEditorComponent()).getText().trim();
   }
 
   @NotNull

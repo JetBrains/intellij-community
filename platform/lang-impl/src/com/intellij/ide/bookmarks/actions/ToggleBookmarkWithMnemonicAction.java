@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -20,14 +20,11 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author max
- */
 public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
   private boolean myPopupShown;
 
   public ToggleBookmarkWithMnemonicAction() {
-    getTemplatePresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
+    getTemplatePresentation().setText(IdeBundle.messagePointer("action.bookmark.toggle.mnemonic"));
   }
 
   @Override
@@ -41,11 +38,11 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
         e.getPresentation().setVisible(false);
       }
       else {
-        e.getPresentation().setText("Set Bookmark with Mnemonic");
+        e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.ToggleBookmarkWithMnemonicAction.text"));
       }
     }
     else {
-      e.getPresentation().setText(IdeBundle.message("action.bookmark.toggle.mnemonic"));
+      e.getPresentation().setText(IdeBundle.messagePointer("action.bookmark.toggle.mnemonic"));
     }
   }
 

@@ -50,12 +50,11 @@ public class MoveClassesOrPackagesUtil {
                       searchInStringsAndComments, searchInNonJavaFiles, newQName);
   }
 
-  @NotNull
-  public static UsageInfo[] findUsages(@NotNull PsiElement element,
-                                       @NotNull SearchScope searchScope,
-                                       boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles,
-                                       String newQName) {
+  public static UsageInfo @NotNull [] findUsages(@NotNull PsiElement element,
+                                                 @NotNull SearchScope searchScope,
+                                                 boolean searchInStringsAndComments,
+                                                 boolean searchInNonJavaFiles,
+                                                 String newQName) {
     ArrayList<UsageInfo> results = new ArrayList<>();
     Set<PsiReference> foundReferences = new HashSet<>();
 

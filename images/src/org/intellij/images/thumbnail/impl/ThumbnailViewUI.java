@@ -4,6 +4,7 @@ package org.intellij.images.thumbnail.impl;
 import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.CopyPasteSupport;
 import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
 import org.intellij.images.search.ImageTagManager;
@@ -158,13 +160,13 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         listModel = new DefaultListModel<>();
         updateTagsPreviewModel();
         JBList<String> tagsList = new JBList<>(listModel);
-        tagsList.setEmptyText("No tags defined");
+        tagsList.setEmptyText(ImagesBundle.message("list.empty.text.no.tags.defined"));
         ImageTagManager imageTagManager = ImageTagManager.getInstance(thumbnailView.getProject());
         return ToolbarDecorator.createDecorator(tagsList)
           .setAddAction(new AnActionButtonRunnable() {
               @Override
               public void run(AnActionButton button) {
-                  JBPopupFactory.getInstance().createActionGroupPopup("Add Tags",
+                  JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("popup.title.add.tags"),
                                                                       new AddTagGroup(),
                                                                       button.getDataContext(),
                                                                       JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
@@ -313,8 +315,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         return index != -1 && list.isSelectedIndex(index);
     }
 
-    @NotNull
-    public VirtualFile[] getSelection() {
+    public VirtualFile @NotNull [] getSelection() {
         if (list != null) {
             Object[] selectedValues = list.getSelectedValues();
             if (selectedValues != null) {
@@ -571,8 +572,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     }
 
 
-    @NotNull
-    private PsiElement[] getSelectedElements() {
+    private PsiElement @NotNull [] getSelectedElements() {
         VirtualFile[] selectedFiles = getSelectedFiles();
         Set<PsiElement> psiElements = new HashSet<>(selectedFiles.length);
         PsiManager psiManager = PsiManager.getInstance(thumbnailView.getProject());
@@ -586,8 +586,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
       return PsiUtilCore.toPsiElementArray(psiElements);
     }
 
-    @NotNull
-    private VirtualFile[] getSelectedFiles() {
+    private VirtualFile @NotNull [] getSelectedFiles() {
         if (list != null) {
             Object[] selectedValues = list.getSelectedValues();
             if (selectedValues != null) {
@@ -707,9 +706,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         setPopup(true);
       }
 
-      @NotNull
       @Override
-      public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         if (e == null) return EMPTY_ARRAY;
         Project project = e.getProject();
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
@@ -734,14 +732,14 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             }
           };
         }
-        actions[tagsNumber] = new AnAction("New Tag") {
+        actions[tagsNumber] = new AnAction(IdeBundle.messagePointer("action.Anonymous.text.new.tag")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
             if (view != null) {
               VirtualFile[] selection = view.getSelection();
               if (selection.length > 0) {
-                String tag = Messages.showInputDialog("", "New Tag Name", null);
+                String tag = Messages.showInputDialog("", IdeBundle.message("dialog.title.new.tag.name"), null);
                 if (tag != null) {
                   for (VirtualFile file : selection) {
                     tagManager.addTag(tag, file);

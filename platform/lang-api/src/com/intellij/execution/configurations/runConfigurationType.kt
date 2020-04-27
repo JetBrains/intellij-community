@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.util.ArrayUtil
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
 private val EMPTY_FACTORIES = arrayOf<ConfigurationFactory>()
@@ -23,14 +25,10 @@ enum class RunConfigurationSingletonPolicy {
 
 inline fun <reified T : ConfigurationType> runConfigurationType(): T = ConfigurationTypeUtil.findConfigurationType(T::class.java)
 
-abstract class ConfigurationTypeBase protected constructor(private val id: String,
-                                                           private val displayName: String,
-                                                           private val description: String? = null,
+abstract class ConfigurationTypeBase protected constructor(@NonNls private val id: String,
+                                                           @Nls private val displayName: String,
+                                                           @Nls private val description: String? = null,
                                                            private val icon: NotNullLazyValue<Icon>?) : ConfigurationType {
-  @Deprecated("")
-  constructor(id: String, displayName: String, description: String?, icon: Lazy<Icon>)
-    : this(id, displayName, description, NotNullLazyValue.createValue { icon.value })
-
   constructor(id: String, displayName: String, description: String?, icon: Icon?)
     : this(id, displayName, description, icon?.let { NotNullLazyValue.createConstantValue(it) })
 

@@ -6,7 +6,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -89,7 +89,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
 
   @Override
   public String getDisplayName() {
-    return DebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
+    return JavaDebuggerBundle.message("breakpoint.exception.breakpoint.display.name", getQualifiedName());
   }
 
   @Override
@@ -172,18 +172,18 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     try {
       String file = location.sourceName();
       int line = DebuggerUtilsEx.getLineNumber(location, false);
-      locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info", file, line);
+      locationInfo = JavaDebuggerBundle.message("exception.breakpoint.console.message.location.info", file, line);
     }
     catch (AbsentInformationException e) {
-      locationInfo = DebuggerBundle.message("exception.breakpoint.console.message.location.info.absent");
+      locationInfo = JavaDebuggerBundle.message("exception.breakpoint.console.message.location.info.absent");
     }
     if (threadName != null) {
-      return DebuggerBundle.message("exception.breakpoint.console.message.with.thread.info",
-                                    exceptionName, threadName, locationQName, locationInfo
+      return JavaDebuggerBundle.message("exception.breakpoint.console.message.with.thread.info",
+                                        exceptionName, threadName, locationQName, locationInfo
       );
     }
     else {
-      return DebuggerBundle.message("exception.breakpoint.console.message", exceptionName, locationQName, locationInfo);
+      return JavaDebuggerBundle.message("exception.breakpoint.console.message", exceptionName, locationQName, locationInfo);
     }
   }
 
@@ -281,6 +281,6 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   }
 
   protected static String getReadNoClassName() {
-    return DebuggerBundle.message("error.absent.exception.breakpoint.class.name");
+    return JavaDebuggerBundle.message("error.absent.exception.breakpoint.class.name");
   }
 }

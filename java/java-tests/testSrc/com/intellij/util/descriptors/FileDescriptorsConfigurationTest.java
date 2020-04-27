@@ -7,9 +7,6 @@ import org.jdom.Element;
 
 import java.io.IOException;
 
-/**
- * @author nik
- */
 public class FileDescriptorsConfigurationTest extends DescriptorsTestCase {
   public void testAddDeleteDescriptor() throws IOException {
     final ConfigFileInfoSet configuration = createConfiguration();

@@ -52,7 +52,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   private final AtomicInteger loadedClassCounter = new AtomicInteger();
 
   public PluginClassLoader(@NotNull List<URL> urls,
-                           @NotNull ClassLoader[] parents,
+                           ClassLoader @NotNull [] parents,
                            PluginId pluginId,
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
@@ -61,7 +61,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   public PluginClassLoader(@NotNull Builder builder,
-                           @NotNull ClassLoader[] parents,
+                           ClassLoader @NotNull [] parents,
                            PluginId pluginId,
                            @Nullable IdeaPluginDescriptor pluginDescriptor,
                            String version,
@@ -83,7 +83,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   public PluginClassLoader(@NotNull List<URL> urls,
-                           @NotNull ClassLoader[] parents,
+                           ClassLoader @NotNull [] parents,
                            @NotNull IdeaPluginDescriptorImpl descriptor) {
     this(build().urls(urls).allowLock().useCache(), parents, descriptor.getPluginId(), descriptor, descriptor.getVersion(), descriptor.getPluginPath());
   }
@@ -92,7 +92,7 @@ public final class PluginClassLoader extends UrlClassLoader {
    * @deprecated Use {@link #PluginClassLoader(List, ClassLoader[], IdeaPluginDescriptorImpl)}
    */
   @Deprecated
-  public PluginClassLoader(@NotNull List<URL> urls, @NotNull ClassLoader[] parents, PluginId pluginId, String version, File pluginRoot) {
+  public PluginClassLoader(@NotNull List<URL> urls, ClassLoader @NotNull [] parents, PluginId pluginId, String version, File pluginRoot) {
     this(urls, parents, pluginId, null, version, pluginRoot == null ? null : pluginRoot.toPath());
   }
 

@@ -255,7 +255,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static void compileFile(@NotNull File source, @NotNull File out, @NotNull String... options) {
+  public static void compileFile(@NotNull File source, @NotNull File out, String @NotNull ... options) {
     assertTrue("source does not exist: " + source.getPath(), source.isFile());
 
     List<String> args = new ArrayList<>();

@@ -20,9 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
 public abstract class RemoteFileManager {
   public static RemoteFileManager getInstance() {
     return ServiceManager.getService(RemoteFileManager.class);

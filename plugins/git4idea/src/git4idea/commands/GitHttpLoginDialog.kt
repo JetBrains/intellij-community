@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands
 
 import com.google.common.annotations.VisibleForTesting
@@ -19,6 +19,7 @@ import com.intellij.ui.layout.*
 import com.intellij.util.AuthData
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -46,15 +47,15 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     private set
 
   init {
-    title = "Log In to $url"
-    setOKButtonText("Log In")
+    title = GitBundle.message("login.dialog.label.login.to.url", url)
+    setOKButtonText(GitBundle.message("login.dialog.button.login"))
     init()
   }
 
   override fun createCenterPanel(): JComponent {
     if (!showActionForCredHelper) {
       dialogPanel = panel {
-        row("Enter credentials:") {}
+        row(GitBundle.message("login.dialog.prompt.enter.credentials")) {}
         buildCredentialsPanel()
       }
     }
@@ -62,13 +63,13 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
       dialogPanel = panel {
         buttonGroup(::useCredentialHelper) {
           row {
-            radioButton("Enter credentials", false)
+            radioButton(GitBundle.message("login.dialog.select.login.way.credentials"), false)
             row {
               buildCredentialsPanel()
             }
           }
           row {
-            radioButton("Use credentials helper", true).also {
+            radioButton(GitBundle.message("login.dialog.select.login.way.use.helper"), true).also {
               it.component.addActionListener {
                 isOKActionEnabled = true
               }
@@ -81,8 +82,8 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun RowBuilder.buildCredentialsPanel() {
-    row("Username:") { usernameField(growX) }
-    row("Password:") { passwordField(growX) }
+    row(GitBundle.message("login.dialog.username.label")) { usernameField(growX) }
+    row(GitBundle.message("login.dialog.password.label")) { passwordField(growX) }
     row { rememberCheckbox() }
   }
 
@@ -100,8 +101,14 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     if (useCredentialHelper) {
       return emptyList()
     }
-    return listOfNotNull(if (username.isBlank()) ValidationInfo("Username cannot be empty", usernameField) else null,
-                         if (passwordField.password.isEmpty()) ValidationInfo("Password cannot be empty", passwordField) else null)
+    return listOfNotNull(
+      if (username.isBlank())
+        ValidationInfo(GitBundle.message("login.dialog.error.username.cant.be.empty"), usernameField)
+      else null,
+      if (passwordField.password.isEmpty())
+        ValidationInfo(GitBundle.message("login.dialog.error.password.cant.be.empty"), passwordField)
+      else null
+    )
   }
 
   override fun createSouthAdditionalPanel(): Wrapper = Wrapper(additionalProvidersButton)
@@ -113,7 +120,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     if (providers.isEmpty()) return
 
     val actions: List<AbstractAction> = providers.map {
-      object : AbstractAction("Log In with ${it.key}...") {
+      object : AbstractAction(GitBundle.message("login.dialog.login.with.selected.provider", it.key)) {
         override fun actionPerformed(e: ActionEvent?) {
           val authData = it.value.getAuthData(this@GitHttpLoginDialog.rootPane)
           if (authData != null) {
@@ -157,6 +164,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
     }
 }
 
+@Suppress("HardCodedStringLiteral")
 class TestGitHttpLoginDialogAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     e.project?.let {

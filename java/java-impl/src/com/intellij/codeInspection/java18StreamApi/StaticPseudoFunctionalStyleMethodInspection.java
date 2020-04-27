@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -85,7 +86,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
         final PseudoLambdaReplaceTemplate.ValidationInfo validationInfo = suitableHandler.getTemplate().validate(methodCallExpression);
         if (validationInfo != null) {
           holder.registerProblem(methodCallExpression.getMethodExpression(),
-                                 "Pseudo functional style code",
+                                 JavaBundle.message("inspection.message.pseudo.functional.style.code"),
                                  new ReplacePseudoLambdaWithLambda(suitableHandler));
         }
       }
@@ -102,7 +103,7 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with Java Stream API pipeline";
+      return JavaBundle.message("quickfix.family.replace.with.java.stream.api.pipeline");
     }
 
     @Override

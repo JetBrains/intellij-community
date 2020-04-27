@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,10 +15,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
@@ -33,10 +31,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
+
+import static java.awt.event.InputEvent.ALT_DOWN_MASK;
+import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -48,7 +50,7 @@ public final class ActionUtil {
   private ActionUtil() {
   }
 
-  public static void showDumbModeWarning(@NotNull AnActionEvent... events) {
+  public static void showDumbModeWarning(AnActionEvent @NotNull ... events) {
     Project project = null;
     List<String> actionNames = new ArrayList<>();
     for (final AnActionEvent event : events) {
@@ -142,6 +144,11 @@ public final class ActionUtil {
    */
   public static boolean performDumbAwareUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
+    if (LightEdit.owns(e.getProject()) && !LightEdit.isActionCompatible(action)) {
+      presentation.setEnabledAndVisible(false);
+      return false;
+    }
+
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
     final boolean dumbMode = isDumbMode(e.getProject());
     if (wasEnabledBefore != null && !dumbMode) {
@@ -212,20 +219,10 @@ public final class ActionUtil {
                                          @NotNull Computable<T> computable) throws ProcessCanceledException {
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      if (useAlternativeResolve) {
-        dumbService.setAlternativeResolveEnabled(true);
-      }
-      try {
-        ThrowableComputable<T, RuntimeException> inReadAction = () -> ApplicationManager.getApplication().runReadAction(computable);
-        return ProgressManager.getInstance().computePrioritized(inReadAction);
-      }
-      finally {
-        if (useAlternativeResolve) {
-          dumbService.setAlternativeResolveEnabled(false);
-        }
-      }
-    }, progressTitle, true, project);
+    ThrowableComputable<T, RuntimeException> inReadAction = () -> ApplicationManager.getApplication().runReadAction(computable);
+    ThrowableComputable<T, RuntimeException> prioritizedRunnable = () -> ProgressManager.getInstance().computePrioritized(inReadAction);
+    ThrowableComputable<T, RuntimeException> process = useAlternativeResolve ? () -> dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) : prioritizedRunnable;
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project);
   }
 
   public static class ActionPauses {
@@ -386,7 +383,7 @@ public final class ActionUtil {
    *
    * @param actionId action id
    */
-  public static AnAction copyFrom(@NotNull AnAction action, @NotNull String actionId) {
+  public static AnAction copyFrom(@NotNull AnAction action, @NotNull @NonNls String actionId) {
     AnAction from = ActionManager.getInstance().getAction(actionId);
     if (from != null) {
       action.copyFrom(from);
@@ -461,6 +458,27 @@ public final class ActionUtil {
       }
       invokeAction(action, component, place, null, null);
     };
+  }
+
+  @Nullable
+  public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
+    int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
+    if (mnemonic != KeyEvent.VK_UNDEFINED) {
+      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
+      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
+      CustomShortcutSet shortcutSet;
+      if (SystemInfo.isMac) {
+        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
+        } else {
+          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
+        }
+      } else {
+        shortcutSet = new CustomShortcutSet(altShortcut);
+      }
+      return shortcutSet;
+    }
+    return null;
   }
 
   private static class ActionUpdateData {

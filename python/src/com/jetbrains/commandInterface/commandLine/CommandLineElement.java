@@ -52,9 +52,8 @@ public class CommandLineElement extends ASTWrapperPsiElement implements CommandL
     return null;
   }
 
-  @NotNull
   @Override
-  public final PsiReference[] getReferences() {
+  public final PsiReference @NotNull [] getReferences() {
     // We need it to enable reference injection
     return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }

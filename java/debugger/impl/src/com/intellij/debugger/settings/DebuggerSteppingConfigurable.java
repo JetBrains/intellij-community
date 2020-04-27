@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
-import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.ui.classFilter.ClassFilterEditor;
@@ -95,12 +95,12 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
   @NotNull
   public JComponent getComponent() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    myCbAlwaysSmartStep = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.always.smart.step.into"));
-    myCbSkipSyntheticMethods = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
-    myCbSkipConstructors = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
-    myCbSkipClassLoaders = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
-    myCbSkipSimpleGetters = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
-    myCbStepInfoFiltersEnabled = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
+    myCbAlwaysSmartStep = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.always.smart.step.into"));
+    myCbSkipSyntheticMethods = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.synthetic.methods"));
+    myCbSkipConstructors = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.constructors"));
+    myCbSkipClassLoaders = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.classLoaders"));
+    myCbSkipSimpleGetters = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.skip.simple.getters"));
+    myCbStepInfoFiltersEnabled = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.step.filters.list.header"));
     panel.add(myCbAlwaysSmartStep, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
     panel.add(myCbSkipSyntheticMethods, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.insetsTop(8), 0, 0));
     panel.add(myCbSkipConstructors, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, JBUI.emptyInsets(), 0, 0));
@@ -118,9 +118,9 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
       }
     });
 
-    myRbEvaluateFinallyAlways = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.always"));
-    myRbEvaluateFinallyNever = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.never"));
-    myRbEvaluateFinallyAsk = new JRadioButton(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.ask"));
+    myRbEvaluateFinallyAlways = new JRadioButton(JavaDebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.always"));
+    myRbEvaluateFinallyNever = new JRadioButton(JavaDebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.never"));
+    myRbEvaluateFinallyAsk = new JRadioButton(JavaDebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.ask"));
 
     int cbLeftOffset = 0;
     final Border border = myCbSkipSimpleGetters.getBorder();
@@ -144,10 +144,10 @@ class DebuggerSteppingConfigurable implements ConfigurableUi<DebuggerSettings> {
     box.add(myRbEvaluateFinallyAsk);
     final JPanel evalFinallyPanel = new JPanel(new BorderLayout());
     evalFinallyPanel.add(box, BorderLayout.CENTER);
-    evalFinallyPanel.add(new JLabel(DebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.on.pop")), BorderLayout.WEST);
+    evalFinallyPanel.add(new JLabel(JavaDebuggerBundle.message("label.debugger.general.configurable.evaluate.finally.on.pop")), BorderLayout.WEST);
     panel.add(evalFinallyPanel, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, NORTHWEST, NONE, new Insets(4, cbLeftOffset, 0, 0), 0, 0));
 
-    myCbResumeOnlyCurrentThread = new JCheckBox(DebuggerBundle.message("label.debugger.general.configurable.resume.only.current.thread"));
+    myCbResumeOnlyCurrentThread = new JCheckBox(JavaDebuggerBundle.message("label.debugger.general.configurable.resume.only.current.thread"));
     panel.add(myCbResumeOnlyCurrentThread, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 0.0, WEST, NONE, new Insets(0, 0, 0, 0),0, 0));
 
     return panel;

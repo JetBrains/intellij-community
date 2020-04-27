@@ -7,12 +7,6 @@
     </component>
   </project-components>
 
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PythonSdkConfigurator</implementation-class>
-    </component>
-  </application-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.jetbrains.python.PythonIdeLanguageCustomization"
@@ -36,7 +30,9 @@
 
     <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
 
-    <statusBarWidgetProvider implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetProvider"/>
+    <statusBarWidgetFactory id="pythonInterpreterWidget"
+                            implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
+                            order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
 
     <projectConfigurable groupId="build"
                          id="com.jetbrains.python.buildout.BuildoutModulesConfigurable"
@@ -44,6 +40,8 @@
                          key="configurable.BuildoutModulesConfigurable.display.name"
                          instance="com.jetbrains.python.buildout.BuildoutModulesConfigurable"/>
 
+    <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSdkConfigurator" id="sdk"
+                                  order="after PlatformProjectConfigurator"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.PythonSourceRootConfigurator" id="sourceRoot"
                                   order="after sdk"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.buildout.BuildoutFacetConfigurator" id="buildout"

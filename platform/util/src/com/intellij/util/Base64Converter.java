@@ -43,7 +43,7 @@ public class Base64Converter {
     return encode(s.getBytes(StandardCharsets.UTF_8));
   }
 
-  public static String encode(@NotNull byte[] octetString) {
+  public static String encode(byte @NotNull [] octetString) {
     int bits24;
     int bits6;
 
@@ -105,7 +105,7 @@ public class Base64Converter {
     return new String(decode(s.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
   }
 
-  public static byte[] decode(@NotNull byte[] bytes) {
+  public static byte[] decode(byte @NotNull [] bytes) {
     int paddingCount = 0;
     int realLength = 0;
 

@@ -32,8 +32,6 @@ import java.util.Set;
  * or Copy/Cut action in Swing component is invoked, and use native method calls to access system clipboard lock-free (?);</li>
  * <li>for X Window we temporary set short timeout and check for available formats (which should be fast if a clipboard owner is alive).</li>
  * </ul>
- *
- * @author nik
  */
 public final class ClipboardSynchronizer implements Disposable {
   private static final Logger LOG = Logger.getInstance(ClipboardSynchronizer.class);
@@ -66,7 +64,7 @@ public final class ClipboardSynchronizer implements Disposable {
     myClipboardHandler.dispose();
   }
 
-  public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+  public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
     return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), false);
   }
 
@@ -116,7 +114,7 @@ public final class ClipboardSynchronizer implements Disposable {
 
     public void dispose() { }
 
-    public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+    public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
       Clipboard clipboard = getClipboard();
       if (clipboard == null) return false;
       for (DataFlavor flavor : flavors) {
@@ -159,7 +157,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }
 
     @Override
-    public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+    public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
       if (myFullTransferable == null) return super.areDataFlavorsAvailable(flavors);
       Transferable contents = getContents();
       return contents != null && ClipboardSynchronizer.areDataFlavorsAvailable(contents, flavors);
@@ -231,7 +229,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }
 
     @Override
-    public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+    public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
       Transferable currentContent = myCurrentContent;
       if (currentContent != null) {
         return ClipboardSynchronizer.areDataFlavorsAvailable(currentContent, flavors);
@@ -333,7 +331,7 @@ public final class ClipboardSynchronizer implements Disposable {
     private volatile Transferable myContent = null;
 
     @Override
-    public boolean areDataFlavorsAvailable(@NotNull DataFlavor... flavors) {
+    public boolean areDataFlavorsAvailable(DataFlavor @NotNull ... flavors) {
       Transferable content = myContent;
       return content != null && ClipboardSynchronizer.areDataFlavorsAvailable(content, flavors);
     }

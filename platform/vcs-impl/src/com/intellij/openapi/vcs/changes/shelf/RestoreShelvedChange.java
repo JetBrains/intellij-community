@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class RestoreShelvedChange extends DumbAwareAction {
   public RestoreShelvedChange() {
-    super("Restore");
+    super(ActionsBundle.messagePointer("action.RestoreShelvedChange.text"));
   }
 
   @Override
@@ -31,9 +31,9 @@ public class RestoreShelvedChange extends DumbAwareAction {
       return;
     }
     Collection<ShelvedChangeList> deletedLists = notNullize(e.getData(ShelvedChangesViewManager.SHELVED_DELETED_CHANGELIST_KEY));
-    presentation.setText(VcsBundle.message("vcs.shelf.action.restore.text"));
+    presentation.setText(VcsBundle.messagePointer("vcs.shelf.action.restore.text"));
     presentation
-      .setDescription(VcsBundle.message("vcs.shelf.action.restore.description", StringUtil.pluralize("changelist", deletedLists.size())));
+      .setDescription(VcsBundle.messagePointer("vcs.shelf.action.restore.description", deletedLists.size()));
     presentation.setEnabled(!isEmpty(deletedLists));
   }
 

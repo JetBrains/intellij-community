@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -27,7 +13,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +26,7 @@ import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
@@ -76,7 +62,7 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
             final String name = psiClass.getQualifiedName();
             String replacement = CLASSES.get(name);
             if (replacement != null) {
-              descriptors.add(manager.createProblemDescriptor(ObjectUtils.assertNotNull(expression.getPsi()),
+              descriptors.add(manager.createProblemDescriptor(Objects.requireNonNull(expression.getPsi()),
                                                               "Please use '" + replacement + "' instead", true,
                                                               ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));
             }

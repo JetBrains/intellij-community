@@ -1,1 +1,0 @@
-deprecated: showEditorHighlighting.png -> /actions/edit.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Edit

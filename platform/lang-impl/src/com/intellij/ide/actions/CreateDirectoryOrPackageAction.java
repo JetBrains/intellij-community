@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -10,8 +10,8 @@ import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,9 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -46,6 +45,7 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
@@ -58,12 +58,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
+
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   private static final ExtensionPointName<CreateDirectoryCompletionContributorEP>
     EP = ExtensionPointName.create("com.intellij.createDirectoryCompletionContributor");
 
+  @TestOnly
+  public static final DataKey<String> TEST_DIRECTORY_NAME_KEY = DataKey.create("CreateDirectoryOrPackageAction.testName");
+
   public CreateDirectoryOrPackageAction() {
-    super(IdeBundle.message("action.create.new.directory.or.package"), IdeBundle.message("action.create.new.directory.or.package"), null);
+    super(IdeBundle.messagePointer("action.create.new.directory.or.package"),
+          IdeBundle.messagePointer("action.create.new.directory.or.package"), null);
   }
 
   @Override
@@ -97,6 +103,15 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
         view.selectElement(element);
       }
     };
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      @SuppressWarnings("TestOnlyProblems")
+      String testDirectoryName = event.getData(TEST_DIRECTORY_NAME_KEY);
+      if (testDirectoryName != null && validator.checkInput(testDirectoryName) && validator.canClose(testDirectoryName)) {
+        consumer.accept(Collections.singletonList(validator.getCreatedElement()));
+        return;
+      }
+    }
 
     if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
       createLightWeightPopup(title, initialText, directory, validator, consumer).showCenteredInCurrentWindow(project);
@@ -141,11 +156,11 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
 
     if (isPackage) {
-      presentation.setText(IdeBundle.message("action.package"));
+      presentation.setText(IdeBundle.messagePointer("action.package"));
       presentation.setIcon(PlatformIcons.PACKAGE_ICON);
     }
     else {
-      presentation.setText(IdeBundle.message("action.directory"));
+      presentation.setText(IdeBundle.messagePointer("action.directory"));
       presentation.setIcon(PlatformIcons.FOLDER_ICON);
     }
   }
@@ -269,7 +284,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     if (!toMarkAsRoots.isEmpty()) {
       Project project = toMarkAsRoots.get(0).first.getProject();
-      ProjectFileIndexImpl index = (ProjectFileIndexImpl)ProjectRootManager.getInstance(project).getFileIndex();
+      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
 
       WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(() -> {
         for (Pair<PsiFileSystemItem, JpsModuleSourceRootType<?>> each : toMarkAsRoots) {
@@ -322,7 +337,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
     public void reportToStatistics() {
       Class contributorClass = contributor.getClass();
-      String nameToReport = StatisticsUtilKt.getPluginType(contributorClass).isSafeToReport()
+      String nameToReport = getPluginInfo(contributorClass).isSafeToReport()
                             ? contributorClass.getSimpleName() : "third.party";
 
       FUCounterUsageLogger.getInstance().logEvent("create.directory.dialog",
@@ -418,36 +433,29 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
             setIcon(value == null ? null : value.icon);
           }
         };
-      myTemplatesList.setCellRenderer(new ListCellRenderer<CompletionItem>() {
-        @Override
-        public Component getListCellRendererComponent(JList<? extends CompletionItem> list,
-                                                      CompletionItem value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-          Component item = itemRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          JPanel wrapperPanel = new JPanel(new BorderLayout());
-          wrapperPanel.setBackground(UIUtil.getListBackground());
+      myTemplatesList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+        Component item = itemRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        JPanel wrapperPanel = new JPanel(new BorderLayout());
+        wrapperPanel.setBackground(UIUtil.getListBackground());
 
-          if (index == 0 || value.contributor != list.getModel().getElementAt(index - 1).contributor) {
-            SeparatorWithText separator = new SeparatorWithText() {
-              @Override
-              protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) {
-              }
-            };
+        if (index == 0 || value.contributor != list.getModel().getElementAt(index - 1).contributor) {
+          SeparatorWithText separator = new SeparatorWithText() {
+            @Override
+            protected void paintLinePart(Graphics g, int xMin, int xMax, int hGap, int y) {
+            }
+          };
 
-            separator.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
-            int vGap = UIUtil.DEFAULT_VGAP / 2;
-            separator.setBorder(BorderFactory.createEmptyBorder(vGap * (index == 0 ? 1 : 2), 0, vGap, 0));
+          separator.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+          int vGap = UIUtil.DEFAULT_VGAP / 2;
+          separator.setBorder(BorderFactory.createEmptyBorder(vGap * (index == 0 ? 1 : 2), 0, vGap, 0));
 
-            separator.setCaption(value.contributor.getDescription());
-            separator.setCaptionCentered(false);
+          separator.setCaption(value.contributor.getDescription());
+          separator.setCaptionCentered(false);
 
-            wrapperPanel.add(separator, BorderLayout.NORTH);
-          }
-          wrapperPanel.add(item, BorderLayout.CENTER);
-          return wrapperPanel;
+          wrapperPanel.add(separator, BorderLayout.NORTH);
         }
+        wrapperPanel.add(item, BorderLayout.CENTER);
+        return wrapperPanel;
       });
     }
   }

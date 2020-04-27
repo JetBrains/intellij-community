@@ -4,7 +4,10 @@ package com.intellij.internal.statistic.eventLog.whitelist;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException;
+import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,6 +19,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class WhitelistStorage extends BaseWhitelistStorage {
+  private static final Logger LOG = Logger.getInstance(WhitelistStorage.class);
+
   protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = ContainerUtil.newConcurrentMap();
   @NotNull
   private final Semaphore mySemaphore;
@@ -25,22 +30,26 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   private String myVersion;
   @NotNull
   private final EventLogWhitelistPersistence myWhitelistPersistence;
+  @NotNull
+  private final EventLogWhitelistLoader myWhitelistLoader;
 
   WhitelistStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
-    myVersion = updateValidators();
-    EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);
+    myWhitelistLoader = new EventLogServerWhitelistLoader(recorderId);
+    myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
   @TestOnly
-  protected WhitelistStorage(@NotNull String recorderId, @NotNull EventLogWhitelistPersistence eventLogWhitelistPersistence) {
+  protected WhitelistStorage(@NotNull String recorderId,
+                             @NotNull EventLogWhitelistPersistence persistence,
+                             @NotNull EventLogWhitelistLoader loader) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
-    myWhitelistPersistence = eventLogWhitelistPersistence;
-    myVersion = updateValidators();
-    EventLogSystemLogger.logWhitelistLoad(recorderId, myVersion);
+    myWhitelistPersistence = persistence;
+    myWhitelistLoader = loader;
+    myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
   @Nullable
@@ -50,41 +59,71 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   }
 
   @Nullable
-  private String updateValidators() {
+  private String loadValidatorsFromLocalCache(@NotNull String recorderId) {
     String whiteListContent = myWhitelistPersistence.getCachedWhitelist();
     if (whiteListContent != null) {
-      mySemaphore.down();
       try {
-        eventsValidators.clear();
-        isWhiteListInitialized.set(false);
-        FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
-        if (groups != null) {
-          Map<String, WhiteListGroupRules> result = createValidators(groups);
-
-          eventsValidators.putAll(result);
-
-          isWhiteListInitialized.set(true);
-        }
-        return groups == null ? null : groups.version;
+        String newVersion = updateValidators(whiteListContent);
+        EventLogSystemLogger.logWhitelistLoad(recorderId, newVersion);
+        return newVersion;
       }
-      finally {
-        mySemaphore.up();
+      catch (EventLogWhitelistParseException e) {
+        EventLogSystemLogger.logWhitelistErrorOnLoad(myRecorderId, e);
       }
     }
     return null;
   }
 
+  @Nullable
+  private String updateValidators(@NotNull String whiteListContent) throws EventLogWhitelistParseException {
+    mySemaphore.down();
+    try {
+      FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
+      Map<String, WhiteListGroupRules> result = createValidators(groups);
+      isWhiteListInitialized.set(false);
+      eventsValidators.clear();
+      eventsValidators.putAll(result);
+
+      isWhiteListInitialized.set(true);
+      return groups.version;
+    }
+    finally {
+      mySemaphore.up();
+    }
+  }
+
   @Override
   public void update() {
-    myWhitelistPersistence.updateWhiteListIfNeeded();
-    final String version = updateValidators();
-    if (!StringUtil.equals(version, myVersion)) {
-      myVersion = version;
-      EventLogSystemLogger.logWhitelistUpdated(myRecorderId, myVersion);
+    long lastModifiedLocally = myWhitelistPersistence.getLastModified();
+    long lastModifiedOnServer = myWhitelistLoader.getLastModifiedOnServer();
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(
+        "Loading whitelist, last modified cached=" + lastModifiedLocally +
+        ", last modified on the server=" + lastModifiedOnServer
+      );
+    }
+
+    try {
+      if (lastModifiedOnServer <= 0 || lastModifiedOnServer > lastModifiedLocally || isUnreachableWhitelist()) {
+        String whitelistFromServer = myWhitelistLoader.loadWhiteListFromServer();
+        String version = updateValidators(whitelistFromServer);
+        myWhitelistPersistence.cacheWhiteList(whitelistFromServer, lastModifiedOnServer);
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Update local whitelist, last modified cached=" + myWhitelistPersistence.getLastModified());
+        }
+
+        if (version != null && !StringUtil.equals(version, myVersion)) {
+          myVersion = version;
+          EventLogSystemLogger.logWhitelistUpdated(myRecorderId, myVersion);
+        }
+      }
+    }
+    catch (EventLogWhitelistLoadException | EventLogWhitelistParseException e) {
+      EventLogSystemLogger.logWhitelistErrorOnUpdate(myRecorderId, e);
     }
   }
 
   public void reload() {
-    updateValidators();
+    myVersion = loadValidatorsFromLocalCache(myRecorderId);
   }
 }

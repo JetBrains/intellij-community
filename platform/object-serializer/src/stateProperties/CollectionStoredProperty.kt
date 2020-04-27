@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization.stateProperties
 
 import com.intellij.openapi.components.BaseState
@@ -13,11 +13,11 @@ import com.intellij.util.SmartList
 /**
  * `AbstractCollectionBinding` modifies collection directly, so we cannot use `null` as a default value and have to return an empty list.
  */
-open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
+open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected val value: C, private val defaultValue: String?) : StoredPropertyBase<C>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.ARRAY
 
-  override fun isEqualToDefault() = value.isEmpty()
+  override fun isEqualToDefault() = if (defaultValue == null) value.isEmpty() else value.size == 1 && value.firstOrNull() == defaultValue
 
   override fun getValue(thisRef: BaseState) = value
 
@@ -37,7 +37,7 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
     return true
   }
 
-  override fun equals(other: Any?) = this === other || (other is CollectionStoredProperty<*, *> && value == other.value)
+  override fun equals(other: Any?) = this === other || (other is CollectionStoredProperty<*, *> && value == other.value && defaultValue == other.defaultValue)
 
   override fun hashCode() = value.hashCode()
 
@@ -52,6 +52,6 @@ open class CollectionStoredProperty<E : Any, C : MutableCollection<E>>(protected
   fun __getValue() = value
 }
 
-internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, SmartList<T>>(SmartList()) {
+internal class ListStoredProperty<T : Any> : CollectionStoredProperty<T, SmartList<T>>(SmartList(), null) {
   override fun getModificationCount() = value.modificationCount.toLong()
 }

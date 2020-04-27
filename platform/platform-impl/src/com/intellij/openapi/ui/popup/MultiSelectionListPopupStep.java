@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author nik
- */
 public abstract class MultiSelectionListPopupStep<T> extends BaseListPopupStep<T> {
   private int[] myDefaultOptionIndices = ArrayUtilRt.EMPTY_INT_ARRAY;
 

@@ -8,9 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class RedundantExplicitCloseInspectionTest extends LightQuickFixParameterizedTestCase {
-  @NotNull
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new RedundantExplicitCloseInspection()
     };

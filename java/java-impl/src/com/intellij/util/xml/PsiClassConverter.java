@@ -53,8 +53,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   }
 
   @Override
-  @NotNull
-  public PsiReference[] createReferences(GenericDomValue<PsiClass> genericDomValue, PsiElement element, ConvertContext context) {
+  public PsiReference @NotNull [] createReferences(GenericDomValue<PsiClass> genericDomValue, PsiElement element, ConvertContext context) {
 
     ExtendClass extendClass = genericDomValue.getAnnotation(ExtendClass.class);
     final JavaClassReferenceProvider provider = createClassReferenceProvider(genericDomValue, context, extendClass);

@@ -312,7 +312,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
-  private void doTestWithLocations(@Nullable String[][] resources, String ext) {
+  private void doTestWithLocations(String[] @Nullable [] resources, String ext) {
     doConfigureWithLocations(resources, ext);
     doDoTest(true,false);
   }
@@ -1108,6 +1108,14 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true, false);
 
     doTestWithUnboundNSQuickFix(BASE_PATH + testName + "5");
+  }
+
+  public void testDoctypeSystemConfigured() {
+    ExternalResourceManagerExImpl.registerResourceTemporarily("sample.dtd",
+                                                              getTestDataPath() + BASE_PATH + "sample.dtd",
+                                                              getTestRootDisposable());
+    configureByFiles(null, BASE_PATH + "sample.xml", BASE_PATH + "sample.dtd");
+    doDoTest(true, false);
   }
 
   public void testUnboundNsHighlighting6() throws Exception {

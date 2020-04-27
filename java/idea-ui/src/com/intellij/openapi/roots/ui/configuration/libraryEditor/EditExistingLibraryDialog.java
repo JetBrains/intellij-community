@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -29,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author nik
- */
 public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
   private final ExistingLibraryEditor myLibraryEditor;
   private final boolean myCommitChanges;
@@ -63,7 +61,7 @@ public class EditExistingLibraryDialog extends LibraryEditorDialogBase {
                                     boolean commitChanges,
                                     LibraryTablePresentation presentation, StructureConfigurableContext context) {
     super(parent, new LibraryRootsComponent(project, libraryEditor));
-    setTitle("Configure " + presentation.getDisplayName(false));
+    setTitle(JavaUiBundle.message("dialog.title.configure.library.0", presentation.getDisplayName(false)));
     myTableModifiableModel = tableModifiableModel;
     myLibraryEditor = libraryEditor;
     myCommitChanges = commitChanges;

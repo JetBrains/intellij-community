@@ -26,9 +26,6 @@ import org.jetbrains.jps.model.serialization.*;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * @author nik
- */
 public class JpsSerializationManagerImpl extends JpsSerializationManager {
   @NotNull
   @Override

@@ -4,6 +4,7 @@
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.typeMigration.ui.TypeMigrationDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,12 +49,12 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
     }
     CommonRefactoringUtil.showErrorHint(project, editor,
-                                        "The caret should be positioned on type of field, variable, method or method parameter to be refactored",
+                                        JavaRefactoringBundle.message("caret.position.warning.message"),
                                         REFACTORING_NAME, "refactoring.migrateType");
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
+  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     final PsiElement element = elements[0];
     invokeOnElement(project, element);
@@ -86,7 +86,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
   }
 
   private static void invoke(@NotNull Project project,
-                             @NotNull PsiElement[] roots,
+                             PsiElement @NotNull [] roots,
                              @Nullable Editor editor) {
     if (Util.canBeMigrated(roots)) {
       TypeMigrationDialog dialog = new TypeMigrationDialog.SingleElement(project, roots);
@@ -94,13 +94,12 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
       return;
     }
 
-    CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("only.fields.variables.of.methods.of.valid.type.can.be.considered"),
-                                   RefactoringBundle.message("unable.to.start.type.migration"), null);
+    CommonRefactoringUtil.showErrorHint(project, editor, JavaRefactoringBundle.message("only.fields.variables.of.methods.of.valid.type.can.be.considered"),
+                                   JavaRefactoringBundle.message("unable.to.start.type.migration"), null);
 
   }
 
-  @NotNull
-  private static PsiElement[] extractReferencedVariables(@NotNull PsiTypeElement typeElement) {
+  private static PsiElement @NotNull [] extractReferencedVariables(@NotNull PsiTypeElement typeElement) {
     final PsiElement parent = typeElement.getParent();
     if (parent instanceof PsiVariable) {
       if (parent instanceof PsiField) {

@@ -73,7 +73,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   }
 
   @NotNull
-  private static PsiFile getRootByClasses(@NotNull PsiFile file, @NotNull Class[] classes) {
+  private static PsiFile getRootByClasses(@NotNull PsiFile file, Class @NotNull [] classes) {
     final Project project = file.getProject();
     SoftFactoryMap<Class[], PsiFile> map = project.getUserData(PATTERN_INJECTION_CONTEXT);
     if (map == null) {

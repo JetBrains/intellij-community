@@ -6,6 +6,6 @@ public class Test {
         }
     }
 
-    private record Point(int x,int y) {
+    private record Point(int x, int y) {
     }
 }

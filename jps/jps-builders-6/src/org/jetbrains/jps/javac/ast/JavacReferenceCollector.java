@@ -18,7 +18,7 @@ package org.jetbrains.jps.javac.ast;
 import com.intellij.util.Consumer;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
 
 /**
  * Code here should not depend on any javac private API located in tools.jar if no JavacFileReferencesRegistrar-s will be run.
@@ -26,8 +26,7 @@ import javax.tools.*;
  */
 public class JavacReferenceCollector {
   public static void installOn(JavaCompiler.CompilationTask task,
-                               boolean divideImportRefs,
                                Consumer<? super JavacFileData> fileDataConsumer) {
-    JavacReferenceCollectorListener.installOn(task, divideImportRefs, fileDataConsumer);
+    JavacReferenceCollectorListener.installOn(task, fileDataConsumer);
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
-import com.intellij.ide.plugins.newui.OneLineProgressIndicator;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.SdkEditorAdditionalOptionsProvider;
@@ -100,7 +100,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public String getDisplayName() {
-    return ProjectBundle.message("sdk.configure.editor.title");
+    return JavaUiBundle.message("sdk.configure.editor.title");
   }
 
   @Override
@@ -436,9 +436,8 @@ public class SdkEditor implements Configurable, Place.Navigator {
       throw new UnsupportedOperationException(); // not supported for this editor
     }
 
-    @NotNull
     @Override
-    public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
+    public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) {
       final PathEditor editor = myPathEditors.get(rootType);
       if (editor == null) throw new IllegalStateException("no editor for root type " + rootType);
       return editor.getRoots();

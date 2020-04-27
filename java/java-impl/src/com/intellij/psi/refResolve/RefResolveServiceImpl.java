@@ -131,7 +131,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
   }
 
   @NotNull
-  private static List<VirtualFile> toVf(@NotNull int[] ids) {
+  private static List<VirtualFile> toVf(int @NotNull [] ids) {
     List<VirtualFile> res = new ArrayList<>();
     for (int id : ids) {
       VirtualFile file = PersistentFS.getInstance().findFileById(id);
@@ -143,7 +143,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
   }
 
   @NotNull
-  private static String toVfString(@NotNull int[] backIds) {
+  private static String toVfString(int @NotNull [] backIds) {
     List<VirtualFile> list = toVf(backIds);
     return toVfString(list);
   }
@@ -405,7 +405,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
         if (!resolveProcess.isDone()) return;
         log("Started to resolve " + files.size() + " files");
 
-        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, "Resolving files...", false) {
+        Task.Backgroundable backgroundable = new Task.Backgroundable(myProject, PsiBundle.message("resolving.files"), false) {
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             if (!ApplicationManagerEx.getApplicationEx().isDisposed()) {
@@ -445,7 +445,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
         if (!file.isDirectory() && toResolve(file, myProject)) {
           int fileId = getAbsId(file);
           int i = totalSize - toProcess.size();
-          indicator.setText(i + "/" + totalSize + ": Resolving " + file.getPresentableUrl());
+          indicator.setText(PsiBundle.message("0.1.resolving.2", i, totalSize, file.getPresentableUrl()));
           int[] forwardIds = processFile(file, fileId, indicator);
           if (forwardIds == null) {
             //queueUpdate(file);
@@ -764,8 +764,7 @@ public final class RefResolveServiceImpl extends RefResolveService implements Ru
   }
 
   @Override
-  @Nullable
-  public int[] getBackwardIds(@NotNull VirtualFileWithId file) {
+  public int @Nullable [] getBackwardIds(@NotNull VirtualFileWithId file) {
     if (!isUpToDate()) return null;
     int fileId = getAbsId((VirtualFile)file);
     return storage.get(fileId);

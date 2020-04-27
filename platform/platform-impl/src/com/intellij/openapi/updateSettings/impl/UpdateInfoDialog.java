@@ -96,7 +96,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = patchFile;
     if (project != null) {
-      myWhatsNewAction = new AbstractAction("What's new") {
+      myWhatsNewAction = new AbstractAction(IdeBundle.message("button.what.s.new")) {
         @Override
         public void actionPerformed(ActionEvent e) {
           String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
@@ -159,9 +159,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     return component;
   }
 
-  @NotNull
   @Override
-  protected Action[] createLeftSideActions() {
+  protected Action @NotNull [] createLeftSideActions() {
     return ContainerUtil.ar(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -174,9 +173,8 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     });
   }
 
-  @NotNull
   @Override
-  protected Action[] createActions() {
+  protected Action @NotNull [] createActions() {
     List<Action> actions = new ArrayList<>();
     actions.add(getCancelAction());
 

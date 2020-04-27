@@ -334,7 +334,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setFocusOwners(@NotNull final Component[] focusOwners) {
+  public ComponentPopupBuilder setFocusOwners(final Component @NotNull [] focusOwners) {
     myFocusOwners = focusOwners;
     return this;
   }

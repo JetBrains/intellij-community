@@ -1,9 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.target.value.TargetValue;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -13,7 +16,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -24,7 +26,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @see TargetedCommandLineBuilder
  */
-public class TargetedCommandLine {
+public final class TargetedCommandLine {
   @NotNull private final TargetValue<String> myExePath;
   @NotNull private final TargetValue<String> myWorkingDirectory;
   @NotNull private final TargetValue<String> myInputFilePath;
@@ -49,22 +51,23 @@ public class TargetedCommandLine {
   /**
    * {@link GeneralCommandLine#getPreparedCommandLine()}
    */
-  public List<String> prepareCommandLine(@NotNull TargetEnvironment target) throws com.intellij.execution.ExecutionException {
-    String command = resolvePromise(myExePath.getTargetValue(), "exe path");
-    if (command == null) {
-      throw new com.intellij.execution.ExecutionException("Resolved value for exe path is null");
+  public String getCommandPresentation(@NotNull TargetEnvironment target) throws ExecutionException {
+    String exePath = resolvePromise(myExePath.getTargetValue(), "exe path");
+    if (exePath == null) {
+      throw new ExecutionException("Resolved value for exe path is null");
     }
     List<String> parameters = new ArrayList<>();
     for (TargetValue<String> parameter : myParameters) {
       parameters.add(resolvePromise(parameter.getTargetValue(), "parameter"));
     }
-    return CommandLineUtil.toCommandLine(command, parameters, target.getRemotePlatform().getPlatform());
+    return StringUtil.join(CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters,
+                                                         target.getRemotePlatform().getPlatform()), " ");
   }
 
-  public List<String> collectCommandsSynchronously(@NotNull TargetEnvironment target) throws com.intellij.execution.ExecutionException {
+  public List<String> collectCommandsSynchronously() throws ExecutionException {
     String command = resolvePromise(myExePath.getTargetValue(), "exe path");
     if (command == null) {
-      throw new com.intellij.execution.ExecutionException("Resolved value for exe path is null");
+      throw new ExecutionException("Resolved value for exe path is null");
     }
 
     List<String> commandLine = new ArrayList<>(myParameters.size() + 1);
@@ -79,17 +82,17 @@ public class TargetedCommandLine {
   }
 
   @Nullable
-  public String getWorkingDirectory() throws com.intellij.execution.ExecutionException {
+  public String getWorkingDirectory() throws ExecutionException {
     return resolvePromise(myWorkingDirectory.getTargetValue(), "working directory");
   }
 
   @Nullable
-  public String getInputFilePath() throws com.intellij.execution.ExecutionException {
+  public String getInputFilePath() throws ExecutionException {
     return resolvePromise(myInputFilePath.getTargetValue(), "input file path");
   }
 
   @NotNull
-  public Map<String, String> getEnvironmentVariables() throws com.intellij.execution.ExecutionException {
+  public Map<String, String> getEnvironmentVariables() throws ExecutionException {
     Map<String, String> result = new LinkedHashMap<>();
     for (Map.Entry<String, TargetValue<String>> e : myEnvironment.entrySet()) {
       result.put(e.getKey(), resolvePromise(e.getValue().getTargetValue(), "environment variable " + e.getKey()));
@@ -104,12 +107,12 @@ public class TargetedCommandLine {
 
   @Nullable
   private static String resolvePromise(@NotNull Promise<String> promise, @NotNull String debugName)
-    throws com.intellij.execution.ExecutionException {
+    throws ExecutionException {
     try {
       return promise.blockingGet(0);
     }
-    catch (ExecutionException | TimeoutException e) {
-      throw new com.intellij.execution.ExecutionException("Couldn't resolve promise for " + debugName, e);
+    catch (java.util.concurrent.ExecutionException | TimeoutException e) {
+      throw new ExecutionException("Couldn't resolve promise for " + debugName, e);
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.execution.util;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
@@ -48,7 +49,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   private boolean myPasteEnabled = false;
 
   public EnvVariablesTable() {
-    getTableView().getEmptyText().setText("No variables");
+    getTableView().getEmptyText().setText(ExecutionBundle.message("empty.text.no.variables"));
     AnAction copyAction = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
     if (copyAction != null) {
       copyAction.registerCustomShortcutSet(copyAction.getShortcutSet(), getTableView()); // no need to add in popup menu
@@ -289,9 +290,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     }
   }
 
-  @NotNull
   @Override
-  protected AnActionButton[] createExtraActions() {
+  protected AnActionButton @NotNull [] createExtraActions() {
     AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

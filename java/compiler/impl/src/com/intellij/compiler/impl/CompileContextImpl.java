@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -92,9 +92,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myProject;
   }
 
-  @NotNull
   @Override
-  public CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category) {
+  public CompilerMessage @NotNull [] getMessages(@NotNull CompilerMessageCategory category) {
     return myMessages.getMessages(category).toArray(CompilerMessage.EMPTY_ARRAY);
   }
 
@@ -124,7 +123,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private void addToProblemsView(CompilerMessage msg) {
     myBuildSession.addMessage(msg);
     if (myShouldUpdateProblemsView && msg.getCategory() == CompilerMessageCategory.ERROR) {
-      ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, mySessionId);
+      ProblemsView.getInstance(myProject).addMessage(msg, mySessionId);
     }
   }
 

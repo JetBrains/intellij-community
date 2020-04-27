@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.UtilKt;
@@ -177,7 +177,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   protected void runStartupActivities() {
   }
 
-  private static void typeInAlienEditor(Editor alienEditor, char c) {
+  private static void typeInAlienEditor(@NotNull Editor alienEditor, char c) {
     EditorActionManager.getInstance();
     TypedAction action = TypedAction.getInstance();
     DataContext dataContext = ((EditorEx)alienEditor).getDataContext();
@@ -565,7 +565,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(tool.visited.toString(), visitedCount > 0);
     tool.visited.clear();
 
-    Document otherDocument = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherFile));
+    Document otherDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(otherFile));
     WriteCommandAction.runWriteCommandAction(getProject(), () -> otherDocument.setText("zzz"));
 
     infos = doHighlighting(HighlightSeverity.WARNING);
@@ -658,7 +658,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         break;
       }
     }
-    delete(ObjectUtils.assertNotNull(schemaEditor));
+    delete(Objects.requireNonNull(schemaEditor));
 
     errors = highlightErrors();
     assertFalse(errors.isEmpty());
@@ -902,7 +902,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     LineMarkerProviders.getInstance().addExplicitExtension(JavaLanguage.INSTANCE, provider, getTestRootDisposable());
     myDaemonCodeAnalyzer.restart();
     try {
-      TextRange range = ObjectUtils.assertNotNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));
+      TextRange range = Objects.requireNonNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));
       log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
       log.append("CollectHighlightsUtil.getElementsInRange: " + range + ": " + elements.size() +" elements : "+ elements+"\n");
@@ -1053,8 +1053,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @NotNull
-  private static TextRange[] getHighlightersTextRange(@NotNull MarkupModel markup) {
+  private static TextRange @NotNull [] getHighlightersTextRange(@NotNull MarkupModel markup) {
     final RangeHighlighter[] highlighters = markup.getAllHighlighters();
 
     final TextRange[] result = new TextRange[highlighters.length];
@@ -1064,8 +1063,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     return orderByHashCode(result); // markup.getAllHighlighters returns unordered array
   }
 
-  @NotNull
-  private static <T extends Segment> T[] orderByHashCode(@NotNull T[] highlighters) {
+  private static <T extends Segment> T @NotNull [] orderByHashCode(T @NotNull [] highlighters) {
     Arrays.sort(highlighters, (o1, o2) -> o2.hashCode() - o1.hashCode());
     return highlighters;
   }
@@ -1246,7 +1244,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, @NotNull VirtualFile... vFiles) throws IOException {
+  protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
     VirtualFile file = super.configureByFiles(rawProjectRoot, vFiles);
     EditorTracker.getInstance(myProject).setActiveEditors(Collections.singletonList(getEditor()));
     return file;
@@ -1288,7 +1286,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     List<HighlightInfo.IntentionActionDescriptor> actions =
       ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset());
     final HighlightInfo.IntentionActionDescriptor descriptor = assertOneElement(actions);
-    CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor(), "");
+    CodeInsightTestFixtureImpl.invokeIntention(descriptor.getAction(), getFile(), getEditor());
 
     highlightErrors();
     assertEmpty(ShowIntentionsPass.getAvailableFixes(editor, getFile(), -1, ((EditorEx)editor).getExpectedCaretOffset()));
@@ -1481,7 +1479,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       });
 
       FileEditorManager fe = FileEditorManager.getInstance(alienProject);
-      final Editor alienEditor = ObjectUtils.assertNotNull(fe.openTextEditor(alienDescriptor, false));
+      final Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
       ((EditorImpl)alienEditor).setCaretActive();
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
@@ -1879,7 +1877,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UtilKt.runInAllowSaveMode(() -> {
       StoreUtil.saveDocumentsAndProjectsAndApp(true);
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
-      PsiFile excluded = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
+      PsiFile excluded = Objects.requireNonNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
 
       List<HighlightInfo> errors = highlightErrors();
       assertEmpty(errors);
@@ -1888,7 +1886,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertNull(scope);
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(excluded));
+        Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(excluded));
         document.insertString(0, "<!-- dsfsd -->");
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       });
@@ -2073,7 +2071,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     PsiExpressionCodeFragment fragment = JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("+ <caret>\"a\"", null,
                                     PsiType.getJavaLangObject(getPsiManager(), GlobalSearchScope.allScope(getProject())), true);
     myFile = fragment;
-    Document document = ObjectUtils.assertNotNull(PsiDocumentManager.getInstance(getProject()).getDocument(fragment));
+    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(getProject()).getDocument(fragment));
     myEditor = EditorFactory.getInstance().createEditor(document, getProject(), StdFileTypes.JAVA, false);
 
     ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0), myEditor);
@@ -2117,7 +2115,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).tryGc();
+      GCWatcher.tracking(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document)).ensureCollected();
       assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
       @Language("JAVA")
@@ -2159,7 +2157,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public static void useAnnotatorsIn(@NotNull com.intellij.lang.Language language,
-                                     @NotNull MyRecordingAnnotator[] annotators,
+                                     MyRecordingAnnotator @NotNull [] annotators,
                                      @NotNull Runnable runnable) {
     MyRecordingAnnotator.clearAll();
     for (Annotator annotator : annotators) {
@@ -2390,7 +2388,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private static final AtomicInteger toSleepMs = new AtomicInteger(0);
   public abstract static class MyRecordingAnnotator implements Annotator {
-    protected static final Set<Class<?>> done = ContainerUtil.newConcurrentSet();
+    static final Set<Class<?>> done = ContainerUtil.newConcurrentSet();
     protected void iDidIt() {
       done.add(getClass());
     }
@@ -2408,7 +2406,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-      if (element instanceof PsiClass) { // must be after MyFastAnnotator annotated the comment
+      if (element instanceof PsiFile) { // must be after MyFastAnnotator annotated the comment
         // use this contrived form to be able to bail out immediately by modifying toSleepMs in the other thread
         while (toSleepMs.addAndGet(-100) > 0) {
           TimeoutUtil.sleep(100);
@@ -2440,15 +2438,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddAnnotationToHolderEntailsCreatingCorrespondingRangeHighlighterMoreOrLessImmediately() {
     if (!ensureEnoughParallelism()) return;
-    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
-    );
-    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
-    );
-    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
-    );
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyInfoAnnotator(), new MySleepyAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyInfoAnnotator(), new MyFastAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySleepyAnnotator(), new MyFastAnnotator(), new MyInfoAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
     // also check in the opposite order in case the order of annotators is important
-    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
-    );
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyFastAnnotator(), new MyInfoAnnotator(), new MySleepyAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
   }
 
   private void checkSwearingAnnotationIsVisibleImmediately() {
@@ -2526,8 +2520,59 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testAddAnnotationViaBuilderEntailsCreatingCorrespondingRangeHighlighterImmediately() {
     if (!ensureEnoughParallelism()) return;
-    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately
-    );
+    useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MyNewBuilderAnnotator(), }, this::checkSwearingAnnotationIsVisibleImmediately);
+  }
+
+  private static final AtomicBoolean annotated = new AtomicBoolean();
+  private static final AtomicBoolean inspected = new AtomicBoolean();
+  public static class MySlowAnnotator extends MyRecordingAnnotator {
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        annotated.set(true);
+        iDidIt();
+      }
+      assertFalse(inspected.get());
+    }
+  }
+  public void test_RunInspectionsAfterCompletionOfGeneralHighlightPass_SecretSettingDoesWork() {
+    if (!ensureEnoughParallelism()) return;
+    assertFalse("Some rogue plugin left the dangerous setting on", myDaemonCodeAnalyzer.isRunInspectionsAfterCompletionOfGeneralHighlightPass());
+    registerInspection(new LocalInspectionTool() {
+      @Override
+      public @NotNull String getID() {
+        return getTestName(false)+"MySlowInspectionTool";
+      }
+
+      @Override
+      public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+        inspected.set(true);
+        return null;
+      }
+
+      @Override
+      public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                     boolean isOnTheFly,
+                                                     @NotNull LocalInspectionToolSession session) {
+        return new PsiElementVisitor() {
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            assertTrue(annotated.get());
+          }
+        };
+      }
+    });
+    try {
+      myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(true);
+
+      useAnnotatorsIn(StdFileTypes.JAVA.getLanguage(), new MyRecordingAnnotator[]{new MySlowAnnotator(), }, () -> {
+        configureByText(StdFileTypes.JAVA, "class X{}");
+        doHighlighting();
+      });
+    }
+    finally {
+      myDaemonCodeAnalyzer.runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(false);
+    }
   }
 }
 

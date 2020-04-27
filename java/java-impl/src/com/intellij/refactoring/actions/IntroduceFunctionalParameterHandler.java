@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class IntroduceFunctionalParameterHandler extends IntroduceParameterHandler {
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (dataContext != null) {
       final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
