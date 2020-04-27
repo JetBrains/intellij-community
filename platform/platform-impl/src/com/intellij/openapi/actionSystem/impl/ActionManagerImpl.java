@@ -179,7 +179,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Nullable
-  private static <T> T instantiate(@NotNull String stubClassName, @NotNull IdeaPluginDescriptor pluginDescriptor, Class<T> expectedClass) {
+  private static <T> T instantiate(@NotNull String stubClassName, @NotNull PluginDescriptor pluginDescriptor, Class<T> expectedClass) {
     Object obj;
     try {
       if (expectedClass == ActionGroup.class) {

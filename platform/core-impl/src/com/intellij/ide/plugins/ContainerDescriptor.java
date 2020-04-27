@@ -63,7 +63,6 @@ public final class ContainerDescriptor {
     components = concatOrNull(components, another.components);
     services = concatOrNull(services, another.services);
     extensionPoints = concatOrNull(extensionPoints, another.extensionPoints);
-
     listeners = concatOrNull(listeners, another.listeners);
   }
 

@@ -520,14 +520,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return appContainerDescriptor;
   }
 
-  public @NotNull ContainerDescriptor getProjectContainerDescriptor() {
-    return projectContainerDescriptor;
-  }
-
-  public @NotNull ContainerDescriptor getModuleContainerDescriptor() {
-    return moduleContainerDescriptor;
-  }
-
   @ApiStatus.Internal
   public void registerExtensions(@NotNull ExtensionsAreaImpl area,
                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,

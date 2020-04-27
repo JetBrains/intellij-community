@@ -963,7 +963,7 @@ public final class PluginManagerCore {
     return descriptor;
   }
 
-  private static boolean collectPluginDirectoryContents(@NotNull Path file, List<Path> pluginJarFiles, List<Path> dirs) {
+  private static boolean collectPluginDirectoryContents(@NotNull Path file, @NotNull List<Path> pluginJarFiles, @NotNull List<Path> dirs) {
     try (DirectoryStream<Path> s = Files.newDirectoryStream(file.resolve("lib"))) {
       for (Path childFile : s) {
         if (Files.isDirectory(childFile)) {
@@ -1349,6 +1349,7 @@ public final class PluginManagerCore {
 
           IdeaPluginDescriptorImpl dependent = idMap.get(dependency.id);
           if (dependent != null && !dependent.isUseCoreClassLoader()) {
+            // for what?
             dependency.subDescriptor = null;
           }
         }
