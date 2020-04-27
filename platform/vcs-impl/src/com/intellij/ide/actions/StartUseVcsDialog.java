@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.openapi.util.SystemInfo.isMac;
+
 class StartUseVcsDialog extends DialogWrapper {
   private final Map<String, String> myVcses;
   private VcsCombo myVcsCombo;
@@ -51,7 +53,8 @@ class StartUseVcsDialog extends DialogWrapper {
     myVcsCombo = new VcsCombo(prepareComboData());
     mainPanel.add(myVcsCombo, gb);
 
-    JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text"));
+    String path = isMac? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
+    JLabel helpText = new JLabel(VcsBundle.message("dialog.enable.version.control.integration.hint.text") + path);
     helpText.setUI(new MultiLineLabelUI());
     helpText.setForeground(UIUtil.getInactiveTextColor());
 
