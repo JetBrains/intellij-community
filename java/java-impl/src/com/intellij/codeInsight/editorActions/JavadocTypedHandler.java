@@ -48,15 +48,15 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
   public Result charTyped(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (file instanceof PsiJavaFile &&
-        (insertClosingTagIfNecessary(c, project, editor, file) ||
-         adjustStartTagIndent(c, editor, file))) {
-      return Result.CONTINUE;
+    if (file instanceof PsiJavaFile) {
+      if (!insertClosingTagIfNecessary(c, project, editor, file)) {
+        adjustStartTagIndent(c, editor, file);
+      }
     }
     return Result.CONTINUE;
   }
 
-  private static boolean adjustStartTagIndent(char c, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static void adjustStartTagIndent(char c, @NotNull Editor editor, @NotNull PsiFile file) {
     if (c == '@') {
       final int offset = editor.getCaretModel().getOffset();
       PsiElement currElement = file.findElementAt(offset);
@@ -64,11 +64,9 @@ public class JavadocTypedHandler extends TypedHandlerDelegate {
         PsiElement prev = currElement.getPrevSibling();
         if (prev != null && prev.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
           editor.getDocument().replaceString(currElement.getTextRange().getStartOffset(), offset - 1, " ");
-          return true;
         }
       }
     }
-    return false;
   }
 
   /**

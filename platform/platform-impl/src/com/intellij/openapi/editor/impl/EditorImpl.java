@@ -2546,8 +2546,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
+            int newSelection = newCaretOffset;
             if (caretShift < 0) {
-              int newSelection = newCaretOffset;
               if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
                 newSelection = myCaretModel.getWordAtCaretStart();
               }
@@ -2558,10 +2558,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               if (newSelection < 0) newSelection = newCaretOffset;
               selectionModel.setSelection(mySavedSelectionEnd, newSelection);
-              getCaretModel().moveToOffset(newSelection);
             }
             else {
-              int newSelection = newCaretOffset;
               if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
                 newSelection = myCaretModel.getWordAtCaretEnd();
               }
@@ -2572,8 +2570,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
               }
               if (newSelection < 0) newSelection = newCaretOffset;
               selectionModel.setSelection(mySavedSelectionStart, newSelection);
-              getCaretModel().moveToOffset(newSelection);
             }
+            getCaretModel().moveToOffset(newSelection);
             cancelAutoResetForMouseSelectionState();
             return;
           }
