@@ -73,7 +73,9 @@ public class HighlightClassUtil {
       return null;
     }
 
-    final String message = getMustImplementMethodErrorMessage(aClass, implementsFixElement);
+    final String superClassName = HighlightUtil.formatClass(superClass, false);
+    final String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
+    final String message = getMustImplementMethodErrorMessage(aClass, implementsFixElement, superClassName, methodName);
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
@@ -101,22 +103,18 @@ public class HighlightClassUtil {
   /**
    * The method generates a error message for a class that has an unimplemented abstract method.
    *
-   * @param aClass the class to generate the error message for
-   * @param implementsFixElement either enum constant that is being analyzed or the same value as aClass
-   * @return the error message that matches
+   * @param aClass               the class to generate the error message for
+   * @param implementsFixElement either an enum constant that is being analyzed or the same value as aClass
+   * @param superClassName       the name of the superclass that contains the method that needs to be implemented
+   * @param methodName           the name of the method that is not implemented in the aClass class
+   * @return the error message
    */
   @NotNull
   private static String getMustImplementMethodErrorMessage(@NotNull final PsiClass aClass,
-                                                           @NotNull final PsiElement implementsFixElement) {
-    final PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
-    assert abstractMethod != null;
-
-    final PsiClass superClass = abstractMethod.getContainingClass();
-    assert superClass != null;
-
+                                                           @NotNull final PsiElement implementsFixElement,
+                                                           @NotNull final String superClassName,
+                                                           @NotNull final String methodName) {
     final String baseClassName = HighlightUtil.formatClass(aClass, false);
-    final String superClassName = HighlightUtil.formatClass(superClass, false);
-    final String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
 
     if (aClass instanceof PsiEnumConstantInitializer) {
       final PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
