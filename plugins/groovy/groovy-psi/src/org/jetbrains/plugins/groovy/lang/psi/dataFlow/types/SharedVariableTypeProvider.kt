@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
@@ -94,13 +95,13 @@ class SharedVariableTypeProvider(val scope: GrControlFlowOwner) {
       return emptySet()
     }
     val flow = scope.controlFlow
-    val foreignDescriptors: List<String> = flow
+    val foreignDescriptors: List<VariableDescriptor> = flow
       .mapNotNull { it?.element as? GrControlFlowOwner }
-      .flatMap { ControlFlowUtils.getForeignVariableIdentifiers(it) { true } }
+      .flatMap { ControlFlowUtils.getForeignVariableDescriptors(it, InvocationKind.UNKNOWN) { true } }
     val sharedVariables: Set<VariableDescriptor> = flow
       .asSequence()
       .filterIsInstance<ReadWriteVariableInstruction>()
-      .mapNotNull { instruction -> instruction.descriptor.takeIf { it.getName() in foreignDescriptors } }
+      .mapNotNull { instruction -> instruction.descriptor.takeIf { it in foreignDescriptors } }
       // fields have their own inference rules
       .filter { if (it is ResolvedVariableDescriptor) it.variable !is GrField else true }
       // do not bother to process variable if it was assigned only once

@@ -27,8 +27,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
-import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableIdentifiers;
-import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.UNKNOWN;
+import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableDescriptors;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -199,6 +198,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (!FunctionalExpressionFlowUtil.isNestedFlowProcessingAllowed()) {
       return;
     }
+    if (instruction.num() > lastInterestingInstruction) {
+      return;
+    }
     GrFunctionalExpression block = Objects.requireNonNull((GrFunctionalExpression)instruction.getElement());
     if (PsiUtil.isCompileStatic(block)) {
       return;
@@ -207,14 +209,11 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (blockFlowOwner == null) {
       return;
     }
-    Set<String> foreignIdentifiers = getForeignVariableIdentifiers(blockFlowOwner, ReadWriteVariableInstruction::isWrite);
-    if (interestingDescriptors.stream().map(VariableDescriptor::getName).noneMatch(foreignIdentifiers::contains)) {
+    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+    Set<VariableDescriptor> foreignIdentifiers = getForeignVariableDescriptors(blockFlowOwner, kind, ReadWriteVariableInstruction::isWrite);
+    if (interestingDescriptors.stream().noneMatch(foreignIdentifiers::contains)) {
       return;
     }
-    if (instruction.num() > lastInterestingInstruction) {
-      return;
-    }
-    InvocationKind kind = PsiUtil.isCompileStatic(block) ? UNKNOWN : FunctionalExpressionFlowUtil.getInvocationKind(block);
     switch (kind) {
       case EXACTLY_ONCE:
         handleClosureDFAResult(state, blockFlowOwner, state::putType);

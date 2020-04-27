@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
@@ -44,15 +45,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.AfterCallInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.IfEndInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.MaybeReturnInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
@@ -788,16 +788,22 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  public static @NotNull Set<String> getForeignVariableIdentifiers(@NotNull GrControlFlowOwner owner,
-                                                                   @NotNull Predicate<? super ReadWriteVariableInstruction> predicate) {
-    Set<String> instructions = new LinkedHashSet<>();
+  public static
+  @NotNull Set<@NotNull VariableDescriptor> getForeignVariableDescriptors(@NotNull GrControlFlowOwner owner,
+                                                                          @NotNull InvocationKind kind,
+                                                                          @NotNull Predicate<? super ReadWriteVariableInstruction> predicate) {
+    Set<VariableDescriptor> instructions = new LinkedHashSet<>();
     for (Instruction instruction : owner.getControlFlow()) {
       PsiElement element = instruction.getElement();
       if (instruction instanceof ReadWriteVariableInstruction && predicate.test((ReadWriteVariableInstruction)instruction)) {
-        instructions.add(((ReadWriteVariableInstruction)instruction).getDescriptor().getName());
+        VariableDescriptor immediateDescriptor = ((ReadWriteVariableInstruction)instruction).getDescriptor();
+        VariableDescriptor resolvedDescriptor = findSimilarInParent(immediateDescriptor, instruction, owner, kind);
+        if (resolvedDescriptor != null) {
+          instructions.add(resolvedDescriptor);
+        }
       }
       if (!(instruction instanceof ReadWriteVariableInstruction) && element instanceof GrControlFlowOwner) {
-        instructions.addAll(getForeignVariableIdentifiers((GrControlFlowOwner)element, predicate));
+        instructions.addAll(getForeignVariableDescriptors((GrControlFlowOwner)element, kind, predicate));
       }
     }
     GrParameter[] parameters = null;
@@ -808,9 +814,38 @@ public final class ControlFlowUtils {
       parameters = ((GrLambdaExpression)owner).getParameters();
     }
     if (parameters != null) {
-      instructions.removeAll(ContainerUtil.map(parameters, GrParameter::getName));
+      instructions.removeAll(ContainerUtil.map(parameters, ResolvedVariableDescriptor::new));
     }
     return Collections.unmodifiableSet(instructions);
+  }
+
+  private static @Nullable VariableDescriptor findSimilarInParent(@NotNull VariableDescriptor descriptor,
+                                                                  @NotNull Instruction instruction,
+                                                                  @NotNull GrControlFlowOwner owner,
+                                                                  @NotNull InvocationKind kind) {
+    if (descriptor instanceof ResolvedVariableDescriptor) {
+      GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
+      if (PsiTreeUtil.getParentOfType(variable, GrControlFlowOwner.class) == owner) {
+        return null;
+      }
+      else {
+        return descriptor;
+      }
+    }
+    if (descriptor instanceof VariableNameDescriptor && kind != InvocationKind.UNKNOWN) {
+      PsiElement element = instruction.getElement();
+      if (element instanceof GrReferenceExpression) {
+        PsiElement resolveResult = ((GrReferenceExpression)element).resolve();
+        if (resolveResult instanceof GrAccessorMethod) {
+          GrField targetField = ((GrAccessorMethod)resolveResult).getProperty();
+          PsiClass commonParent = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(targetField, owner), PsiClass.class);
+          if (Objects.equals(commonParent, targetField.getContainingClass())) {
+            return createDescriptor(targetField);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
