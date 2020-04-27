@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -154,9 +155,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
           if (connection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
-              InputStream inputStream = httpConnection.getInputStream();
-              GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
-              return OBJECT_MAPPER.readValue(gzipInputStream, new TypeReference<Map<String, List<String>>>() {});
+              return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<Map<String, List<String>>>() {});
             }
 
             else {
@@ -174,5 +173,14 @@ public class TemporaryCacheServerClient implements JpsServerClient {
       LOG.warn("Failed request to cache server", e);
     }
     return null;
+  }
+
+  private static InputStream getInputStream(HttpURLConnection httpConnection) throws IOException {
+    String contentEncoding = httpConnection.getContentEncoding();
+    InputStream inputStream = httpConnection.getInputStream();
+    if (contentEncoding != null && StringUtil.toLowerCase(contentEncoding).contains("gzip")) {
+      return new GZIPInputStream(inputStream);
+    }
+    return inputStream;
   }
 }
