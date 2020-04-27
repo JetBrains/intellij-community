@@ -497,7 +497,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
                                                    build.getComponents()[0],
                                                    build.getComponents()[1],
                                                    build.getComponents()[2]);
-      return apiBuildNumber.asString();
+      return apiBuildNumber;
     }
     return build;
   }
