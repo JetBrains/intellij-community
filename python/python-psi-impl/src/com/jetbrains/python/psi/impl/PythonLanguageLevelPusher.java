@@ -104,7 +104,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   @Override
   @Nullable
   public String getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
-    return LanguageLevel.toPythonVersion(getFileLanguageLevel(project, file));
+    return null;
   }
 
   @Nullable
