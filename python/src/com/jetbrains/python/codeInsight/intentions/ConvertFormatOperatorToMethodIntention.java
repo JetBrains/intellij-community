@@ -13,8 +13,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PyStringFormatParser;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.jetbrains.python.psi.PyUtil.guessLanguageLevel;
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
@@ -265,7 +264,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     final TypeEvalContext context = TypeEvalContext.userInitiated(file.getProject(), file);
     final PyType rhsType = context.getType(rhs);
     String prefix = "";
-    final LanguageLevel languageLevel = guessLanguageLevel(project);
+    final LanguageLevel languageLevel = LanguageLevel.forElement(element);
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(rhs);
     if (languageLevel.isPython2() && PyTypeChecker.match(builtinCache.getUnicodeType(languageLevel), rhsType, context) &&
         !PyTypeChecker.match(builtinCache.getBytesType(languageLevel), rhsType, context)) {

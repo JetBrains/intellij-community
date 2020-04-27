@@ -13,13 +13,11 @@ import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +31,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -45,7 +46,6 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -604,48 +604,7 @@ public class PyUtil {
         }
       }
     }
-    return guessLanguageLevelWithCaching(project);
-  }
-
-  @NotNull
-  public static LanguageLevel getLanguageLevelForModule(@NotNull Module module) {
-    return FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).getImmediateValue(module);
-  }
-
-  public static void invalidateLanguageLevelCache(@NotNull Project project) {
-    project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, null);
-  }
-
-  @NotNull
-  public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
-    LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL));
-    if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(project);
-      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, LanguageLevel.toPythonVersion(languageLevel));
-    }
-
-    return languageLevel;
-  }
-
-  @NotNull
-  public static LanguageLevel guessLanguageLevel(@NotNull Project project) {
-    final ModuleManager moduleManager = ModuleManager.getInstance(project);
-    if (moduleManager != null) {
-      LanguageLevel maxLevel = null;
-      for (Module projectModule : moduleManager.getModules()) {
-        final Sdk sdk = PythonSdkUtil.findPythonSdk(projectModule);
-        if (sdk != null) {
-          final LanguageLevel level = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-          if (maxLevel == null || maxLevel.isOlderThan(level)) {
-            maxLevel = level;
-          }
-        }
-      }
-      if (maxLevel != null) {
-        return maxLevel;
-      }
-    }
-    return LanguageLevel.getDefault();
+    return PythonLanguageLevelPusher.guessLanguageLevelWithCaching(project);
   }
 
   /**
@@ -1054,9 +1013,7 @@ public class PyUtil {
     if (directory.findFile(PyNames.INIT_DOT_PY) != null) {
       return true;
     }
-    final LanguageLevel level = anchor != null ?
-                                LanguageLevel.forElement(anchor) :
-                                getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
+    final LanguageLevel level = anchor != null ? LanguageLevel.forElement(anchor) : LanguageLevel.forElement(directory);
     if (!level.isPython2()) {
       return true;
     }
