@@ -16,9 +16,9 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.ImmutableList;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,6 +96,7 @@ public enum LanguageLevel {
   private static final LanguageLevel DEFAULT2 = PYTHON27;
   private static final LanguageLevel DEFAULT3 = PYTHON39;
 
+  @ApiStatus.Internal
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
   @NotNull
@@ -216,8 +217,6 @@ public enum LanguageLevel {
     final int version = level.getVersion();
     return version / 10 + "." + version % 10;
   }
-
-  public static final Key<String> KEY = new Key<>("python.language.level");
 
   @NotNull
   public static LanguageLevel forElement(@NotNull PsiElement element) {

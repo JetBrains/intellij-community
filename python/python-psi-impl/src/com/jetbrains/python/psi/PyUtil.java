@@ -582,7 +582,7 @@ public class PyUtil {
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
-      final LanguageLevel folderLevel = LanguageLevel.fromPythonVersion(folder.getUserData(LanguageLevel.KEY));
+      final LanguageLevel folderLevel = PythonLanguageLevelPusher.specifiedFileLanguageLevel(folder);
       if (folderLevel != null) {
         return folderLevel;
       }
@@ -594,7 +594,7 @@ public class PyUtil {
     else {
       // However this allows us to setup language level per file manually
       // in case when it is LightVirtualFile
-      final LanguageLevel level = LanguageLevel.fromPythonVersion(virtualFile.getUserData(LanguageLevel.KEY));
+      final LanguageLevel level = PythonLanguageLevelPusher.specifiedFileLanguageLevel(virtualFile);
       if (level != null) return level;
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {

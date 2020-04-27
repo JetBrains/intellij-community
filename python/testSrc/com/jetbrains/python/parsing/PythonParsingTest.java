@@ -12,6 +12,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.impl.PyPsiFacadeImpl;
 import com.jetbrains.python.psi.impl.PythonASTFactory;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -954,7 +955,7 @@ public class PythonParsingTest extends ParsingTestCase {
   @Override
   protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     final PsiFile file = super.createFile(name, text);
-    file.getVirtualFile().putUserData(LanguageLevel.KEY, LanguageLevel.toPythonVersion(myLanguageLevel));
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(file.getVirtualFile(), myLanguageLevel);
     return file;
   }
 

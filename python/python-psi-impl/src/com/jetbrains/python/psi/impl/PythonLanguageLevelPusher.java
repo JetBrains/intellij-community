@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
  * @author yole
  */
 public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
-  private static final Key<String> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
+  private static final Key<String> KEY = new Key<>("python.language.level");
   /* It so happens that no single language level is compatible with more than one other.
      So a map suffices for representation*/
   public static final Map<LanguageLevel, LanguageLevel> COMPATIBLE_LEVELS;
@@ -85,7 +85,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   @Override
   @NotNull
   public Key<String> getFileDataKey() {
-    return LanguageLevel.KEY;
+    return KEY;
   }
 
   @Override
@@ -306,17 +306,17 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
 
   @NotNull
   public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
-    LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(PYTHON_LANGUAGE_LEVEL));
+    LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(KEY));
     if (languageLevel == null) {
       languageLevel = guessLanguageLevel(project);
-      project.putUserData(PYTHON_LANGUAGE_LEVEL, LanguageLevel.toPythonVersion(languageLevel));
+      project.putUserData(KEY, LanguageLevel.toPythonVersion(languageLevel));
     }
 
     return languageLevel;
   }
 
   private static void resetProjectLanguageLevel(@NotNull Project project) {
-    project.putUserData(PYTHON_LANGUAGE_LEVEL, null);
+    project.putUserData(KEY, null);
   }
 
   @NotNull
@@ -397,6 +397,15 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   public static void setForcedLanguageLevel(@NotNull Project project, @Nullable LanguageLevel languageLevel) {
     LanguageLevel.FORCE_LANGUAGE_LEVEL = languageLevel;
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());
+  }
+
+  public static void specifyFileLanguageLevel(@NotNull VirtualFile file, @Nullable LanguageLevel languageLevel) {
+    file.putUserData(KEY, LanguageLevel.toPythonVersion(languageLevel));
+  }
+
+  @Nullable
+  public static LanguageLevel specifiedFileLanguageLevel(@NotNull VirtualFile file) {
+    return LanguageLevel.fromPythonVersion(file.getUserData(KEY));
   }
 
   public void flushLanguageLevelCache() {
