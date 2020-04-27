@@ -1151,4 +1151,18 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> !(d instanceof FrozenDocument) && d.getUserData(key) != null);
   }
 
+  public void testNonPhysicalPointersSurviveLikePhysical() {
+    String text = "class Foo { }";
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaLanguage.INSTANCE, text, false, false);
+    Document document = file.getViewProvider().getDocument();
+
+    PsiWhiteSpace whiteSpace = assertInstanceOf(file.findElementAt(text.indexOf('{') + 1), PsiWhiteSpace.class);
+    SmartPointerEx<PsiWhiteSpace> pointer = createPointer(whiteSpace);
+
+    whiteSpace.replace(PsiParserFacade.SERVICE.getInstance(myProject).createWhiteSpaceFromText("   "));
+    assertFalse(whiteSpace.isValid());
+    assertSame(file.findElementAt(text.indexOf('{') + 1), pointer.getElement());
+
+    assertEquals("class Foo {   }", document.getText());
+  }
 }
