@@ -12,6 +12,7 @@ import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
@@ -43,7 +44,12 @@ public class TestAll implements Test {
     Logger.setFactory(TestLoggerFactory.class);
   }
 
-  private static final int MAX_FAILURE_TEST_COUNT = 150;
+  private static final String MAX_FAILURE_TEST_COUNT_FLAG = "idea.max.failure.test.count";
+
+  private static final int MAX_FAILURE_TEST_COUNT = Integer.parseInt(ObjectUtils.chooseNotNull(
+    System.getProperty(MAX_FAILURE_TEST_COUNT_FLAG),
+    "150"
+  ));
 
   private static final Filter PERFORMANCE_ONLY = new Filter() {
     @Override
