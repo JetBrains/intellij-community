@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.parser;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
@@ -114,7 +115,7 @@ public class GeneratedParserUtilBase {
 
   public static boolean recursion_guard_(PsiBuilder builder, int level, String funcName) {
     if (level > MAX_RECURSION_LEVEL) {
-      builder.mark().error(LangBundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName));
+      builder.mark().error(AnalysisBundle.message("parsing.error.maximum.recursion.level.reached.in", MAX_RECURSION_LEVEL, funcName));
       return false;
     }
     return true;
@@ -123,7 +124,7 @@ public class GeneratedParserUtilBase {
   public static boolean empty_element_parsed_guard_(PsiBuilder builder, String funcName, int pos) {
     if (pos == current_position_(builder)) {
       // sometimes this is a correct situation, therefore no explicit marker
-      builder.error(LangBundle.message("parsing.error.empty.element.parsed.in.at.offset", funcName, builder.getCurrentOffset()));
+      builder.error(AnalysisBundle.message("parsing.error.empty.element.parsed.in.at.offset", funcName, builder.getCurrentOffset()));
       return false;
     }
     return true;
@@ -537,7 +538,7 @@ public class GeneratedParserUtilBase {
     if (state.hooks == null) return;
     PsiBuilder.Marker marker = elementType == null ? null : (PsiBuilder.Marker)builder.getLatestDoneMarker();
     if (elementType != null && marker == null) {
-      builder.mark().error(LangBundle.message("parsing.error.no.expected.done.marker.at.offset", builder.getCurrentOffset()));
+      builder.mark().error(AnalysisBundle.message("parsing.error.no.expected.done.marker.at.offset", builder.getCurrentOffset()));
     }
     while (state.hooks != null && state.hooks.level >= state.level) {
       if (state.hooks.level == state.level) {
@@ -780,12 +781,12 @@ public class GeneratedParserUtilBase {
 
     String actual = trim(builder.getTokenText());
     if (isEmpty(actual)) {
-      sb.append(empty ? LangBundle.message("parsing.error.unmatched.input") : " " + LangBundle.message("parsing.error.expected"));
+      sb.append(empty ? AnalysisBundle.message("parsing.error.unmatched.input") : " " + AnalysisBundle.message("parsing.error.expected"));
     }
     else {
-      if (!empty) sb.append(" ").append(LangBundle.message("parsing.error.expected.got")).append(" ");
+      if (!empty) sb.append(" ").append(AnalysisBundle.message("parsing.error.expected.got")).append(" ");
       sb.append("'").append(first(actual, MAX_ERROR_TOKEN_TEXT, true)).append("'");
-      if (empty) sb.append(" ").append(LangBundle.message("parsing.error.unexpected"));
+      if (empty) sb.append(" ").append(AnalysisBundle.message("parsing.error.unexpected"));
     }
     String message = sb.toString();
     if (advance) {
@@ -982,7 +983,7 @@ public class GeneratedParserUtilBase {
         if (s.length() == 0) continue;
         if (count++ > 0) {
           if (count > MAX_VARIANTS_TO_DISPLAY) {
-            sb.append(" ").append(LangBundle.message("parsing.error.and.ellipsis"));
+            sb.append(" ").append(AnalysisBundle.message("parsing.error.and.ellipsis"));
             break;
           }
           else {
@@ -995,7 +996,7 @@ public class GeneratedParserUtilBase {
       }
       if (count > 1 && count < MAX_VARIANTS_TO_DISPLAY) {
         int idx = sb.lastIndexOf(", ");
-        sb.replace(idx, idx + 1, " " + LangBundle.message("parsing.error.or"));
+        sb.replace(idx, idx + 1, " " + AnalysisBundle.message("parsing.error.or"));
       }
     }
 
