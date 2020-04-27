@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
+public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiField> {
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
@@ -119,7 +119,7 @@ public class PluginFieldNameConverter extends ResolvingConverter<PsiField> {
     return ep.getBeanClass().getValue();
   }
 
-  public static class ForTag extends PluginFieldNameConverter {
+  public static class ForTag extends ExtensionPointPropertyNameConverter {
 
     @Override
     protected Class<? extends Annotation> getAnnotationClass() {
