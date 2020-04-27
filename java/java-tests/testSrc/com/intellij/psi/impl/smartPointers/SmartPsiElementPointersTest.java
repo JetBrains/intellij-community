@@ -1165,4 +1165,13 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
     assertEquals("class Foo {   }", document.getText());
   }
+
+  public void testPointedBinaryFilesCanBeGcEd() throws Exception {
+    VirtualFile vFile = createFile("a.jar", "").getVirtualFile();
+    assertInstanceOf(getPsiManager().findFile(vFile), PsiBinaryFile.class);
+    SmartPointerEx<PsiFile> pointer = createPointer(getPsiManager().findFile(vFile));
+
+    GCWatcher.tracking(getPsiManager().findFile(vFile)).ensureCollected();
+    assertInstanceOf(pointer.getElement(), PsiBinaryFile.class);
+  }
 }

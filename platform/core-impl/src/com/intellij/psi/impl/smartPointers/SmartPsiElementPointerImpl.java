@@ -185,11 +185,11 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
-    if (viewProvider instanceof DummyHolderViewProvider || !hasReliableRange(element, containingFile)) {
+    if (viewProvider instanceof DummyHolderViewProvider) {
       return new HardElementInfo(element);
     }
 
-    if (viewProvider instanceof FreeThreadedFileViewProvider) {
+    if (viewProvider instanceof FreeThreadedFileViewProvider && hasReliableRange(element, containingFile)) {
       PsiLanguageInjectionHost hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       TextRange elementRange = element.getTextRange();
       if (hostContext != null && elementRange != null) {
@@ -200,6 +200,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     if (element instanceof PsiFile) {
       return new FileElementInfo((PsiFile)element);
+    }
+
+    if (!hasReliableRange(element, containingFile)) {
+      return new HardElementInfo(element);
     }
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(viewProvider.getVirtualFile());
