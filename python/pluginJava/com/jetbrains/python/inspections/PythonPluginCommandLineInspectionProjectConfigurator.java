@@ -62,24 +62,28 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
           logger.reportMessage(3, sdk.getHomePath());
         }
         final Sdk sdk = detectedSdks.get(0);
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          logger.reportMessage(1, "Settings up interpreter " + sdk.getName());
-          ProjectJdkTable.getInstance().addJdk(sdk);
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            logger.reportMessage(1, "Settings up interpreter " + sdk.getName());
+            ProjectJdkTable.getInstance().addJdk(sdk);
+          });
         });
         PythonSdkUpdater.update(sdk, null, null, null);
-      } else {
+      }
+      else {
         logger.reportMessage(1, "ERROR: Can't find Python interpreter");
       }
     }
-
   }
 
   @Override
-  public void configureProject(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull CommandLineInspectionProgressReporter logger) {
+  public void configureProject(@NotNull Project project,
+                               @NotNull AnalysisScope scope,
+                               @NotNull CommandLineInspectionProgressReporter logger) {
     List<Sdk> sdks = PythonSdkUtil.getAllSdks();
     if (!sdks.isEmpty()) {
       PythonFacetType facetType = PythonFacetType.getInstance();
-      for (VirtualFile f: scope.getFiles()) {
+      for (VirtualFile f : scope.getFiles()) {
         if (FileTypeRegistry.getInstance().isFileOfType(f, PythonFileType.INSTANCE)) {
 
           Module m = ModuleUtilCore.findModuleForFile(f, project);

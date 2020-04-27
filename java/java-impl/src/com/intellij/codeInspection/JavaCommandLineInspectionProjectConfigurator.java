@@ -59,7 +59,10 @@ public class JavaCommandLineInspectionProjectConfigurator implements CommandLine
       String name = javaSdk.suggestSdkName(null, path);
       logger.reportMessage(2, "Detected JDK with name " + name + " at " + path);
       Sdk jdk = javaSdk.createJdk(name, path, false);
-      ApplicationManager.getApplication().invokeAndWait(() ->  ProjectJdkTable.getInstance().addJdk(jdk));
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(
+          () -> ProjectJdkTable.getInstance().addJdk(jdk));
+      });
     }
   }
 }
