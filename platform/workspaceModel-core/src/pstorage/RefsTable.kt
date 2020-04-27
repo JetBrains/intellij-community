@@ -3,6 +3,7 @@ package com.intellij.workspace.api.pstorage
 
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
+import com.intellij.util.containers.HashSetInterner
 import com.intellij.workspace.api.TypedEntity
 import com.intellij.workspace.api.pstorage.containers.*
 import pstorage.containers.LinkedBidirectionalMap
@@ -11,7 +12,6 @@ import kotlin.reflect.KClass
 internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private constructor(
   val parentClass: KClass<T>,
   val childClass: KClass<SUBT>,
-  val isHard: Boolean, // TODO: 22.04.2020 To be removed
   val connectionType: ConnectionType,
   val isParentNullable: Boolean,
   val isChildNullable: Boolean
@@ -24,14 +24,19 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
   }
 
   companion object {
+    @Suppress("UNCHECKED_CAST")
     fun <T : TypedEntity, SUBT : TypedEntity> create(
       parentClass: KClass<T>,
       childClass: KClass<SUBT>,
-      isHard: Boolean,
       connectionType: ConnectionType,
       isParentNullable: Boolean,
       isChildNullable: Boolean
-    ): ConnectionId<T, SUBT> = ConnectionId(parentClass, childClass, isHard, connectionType, isParentNullable, isChildNullable)
+    ): ConnectionId<T, SUBT> {
+      val connectionId = ConnectionId(parentClass, childClass, connectionType, isParentNullable, isChildNullable)
+      return interner.intern(connectionId) as ConnectionId<T, SUBT>
+    }
+
+    private val interner = HashSetInterner<ConnectionId<*, *>>()
   }
 }
 
@@ -309,14 +314,14 @@ internal sealed class AbstractRefsTable {
       as ConnectionId<T, SUBT>?
   }
 
-  fun <SUBT : TypedEntity> getParentRefsOfChild(childId: PId<out SUBT>, hardReferencesOnly: Boolean): ParentConnectionsInfo<SUBT> {
+  fun <SUBT : TypedEntity> getParentRefsOfChild(childId: PId<out SUBT>): ParentConnectionsInfo<SUBT> {
     val childArrayId = childId.arrayId
     val childClass = childId.clazz.java
 
     val res = HashMap<ConnectionId<TypedEntity, SUBT>, PId<TypedEntity>>()
 
     val filteredOneToMany = oneToManyContainer
-      .filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.childClass.java == childClass }
       as Map<ConnectionId<TypedEntity, SUBT>, PositiveIntIntBiMap>
     for ((connectionId, bimap) in filteredOneToMany) {
       if (!bimap.containsKey(childArrayId)) continue
@@ -326,7 +331,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredOneToOne = oneToOneContainer
-      .filterKeys { it.childClass.java == childClass && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.childClass.java == childClass }
       as Map<ConnectionId<TypedEntity, SUBT>, IntIntUniqueBiMap>
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsKey(childArrayId)) continue
@@ -336,7 +341,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
-      .filterKeys { it.childClass.java.isAssignableFrom(childClass) && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.childClass.java.isAssignableFrom(childClass) }
       as Map<ConnectionId<TypedEntity, SUBT>, LinkedBidirectionalMap<PId<out SUBT>, PId<TypedEntity>>>
     for ((connectionId, bimap) in filteredOneToAbstractMany) {
       if (!bimap.containsKey(childId)) continue
@@ -346,7 +351,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredAbstractOneToOne = abstractOneToOneContainer
-      .filterKeys { it.childClass.java.isAssignableFrom(childClass) && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.childClass.java.isAssignableFrom(childClass) }
       as Map<ConnectionId<TypedEntity, SUBT>, BiMap<PId<out SUBT>, PId<TypedEntity>>>
     for ((connectionId, bimap) in filteredAbstractOneToOne) {
       if (!bimap.containsKey(childId)) continue
@@ -358,14 +363,14 @@ internal sealed class AbstractRefsTable {
     return res
   }
 
-  fun <T : TypedEntity> getChildrenRefsOfParentBy(parentId: PId<out T>, hardReferencesOnly: Boolean): ChildrenConnectionsInfo<T> {
+  fun <T : TypedEntity> getChildrenRefsOfParentBy(parentId: PId<out T>): ChildrenConnectionsInfo<T> {
     val parentArrayId = parentId.arrayId
     val parentClass = parentId.clazz.java
 
     val res = HashMap<ConnectionId<T, TypedEntity>, Set<PId<TypedEntity>>>()
 
     val filteredOneToMany = oneToManyContainer
-      .filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.parentClass.java == parentClass }
       as Map<ConnectionId<T, TypedEntity>, PositiveIntIntBiMap>
     for ((connectionId, bimap) in filteredOneToMany) {
       val keys = bimap.getKeys(parentArrayId)
@@ -377,7 +382,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredOneToOne = oneToOneContainer
-      .filterKeys { it.parentClass.java == parentClass && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.parentClass.java == parentClass }
       as Map<ConnectionId<T, TypedEntity>, IntIntUniqueBiMap>
     for ((connectionId, bimap) in filteredOneToOne) {
       if (!bimap.containsValue(parentArrayId)) continue
@@ -387,7 +392,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredOneToAbstractMany = oneToAbstractManyContainer
-      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) }
       as Map<ConnectionId<T, TypedEntity>, LinkedBidirectionalMap<PId<TypedEntity>, PId<out T>>>
     for ((connectionId, bimap) in filteredOneToAbstractMany) {
       val keys = bimap.getKeysByValue(parentId) ?: continue
@@ -398,7 +403,7 @@ internal sealed class AbstractRefsTable {
     }
 
     val filteredAbstractOneToOne = abstractOneToOneContainer
-      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) && (!hardReferencesOnly || it.isHard) }
+      .filterKeys { it.parentClass.java.isAssignableFrom(parentClass) }
       as Map<ConnectionId<T, TypedEntity>, BiMap<PId<TypedEntity>, PId<out T>>>
     for ((connectionId, bimap) in filteredAbstractOneToOne) {
       val key = bimap.inverse().get(parentId)

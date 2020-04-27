@@ -16,7 +16,7 @@ sealed class OneToAbstractOneChild<T : PTypedEntity, SUBT : PTypedEntity> : Read
 
   class HardRef<T : PTypedEntity, SUBT : PTypedEntity>(private val parentClass: KClass<T>) : OneToAbstractOneChild<T, SUBT>() {
     operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
-      connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
+      connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
       return this
     }
   }
@@ -35,7 +35,7 @@ internal sealed class MutableOneToAbstractOneChild<T : PTypedEntity, SUBT : PTyp
     private val parentClass: KClass<T>
   ) : MutableOneToAbstractOneChild<T, SUBT, MODSUBT>() {
     operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T> {
-      connectionId = ConnectionId.create(parentClass, childClass, true, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
+      connectionId = ConnectionId.create(parentClass, childClass, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false, false)
       return this
     }
   }

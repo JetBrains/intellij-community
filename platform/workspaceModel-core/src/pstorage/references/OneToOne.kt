@@ -17,7 +17,7 @@ class OneToOneParent private constructor() {
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, SUBT> {
-        connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, true, ONE_TO_ONE, isParentInChildNullable, false)
+        connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ONE, isParentInChildNullable, false)
         return this
       }
 
@@ -29,7 +29,7 @@ class OneToOneParent private constructor() {
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: T, property: KProperty<*>): ReadOnlyProperty<T, SUBT?> {
-        connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, true, ONE_TO_ONE, isParentInChildNullable, true)
+        connectionId = ConnectionId.create(thisRef.javaClass.kotlin, childClass, ONE_TO_ONE, isParentInChildNullable, true)
         return this
       }
 
@@ -47,7 +47,7 @@ sealed class OneToOneChild<SUBT : PTypedEntity, T : PTypedEntity> : ReadOnlyProp
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T> {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true, ONE_TO_ONE, false, isChildInParentNullable)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, ONE_TO_ONE, false, isChildInParentNullable)
         return this
       }
 
@@ -59,7 +59,7 @@ sealed class OneToOneChild<SUBT : PTypedEntity, T : PTypedEntity> : ReadOnlyProp
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: SUBT, property: KProperty<*>): ReadOnlyProperty<SUBT, T?> {
-        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, true, ONE_TO_ONE, true, isChildInParentNullable)
+        connectionId = ConnectionId.create(parentClass, thisRef.javaClass.kotlin, ONE_TO_ONE, true, isChildInParentNullable)
         return this
       }
 
@@ -82,7 +82,7 @@ class MutableOneToOneParent private constructor() {
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, SUBT> {
-        connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_ONE, isParentInChildNullable, false)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, false)
         return this
       }
 
@@ -107,7 +107,7 @@ class MutableOneToOneParent private constructor() {
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: MODT, property: KProperty<*>): ReadWriteProperty<MODT, SUBT?> {
-        connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_ONE, isParentInChildNullable, true)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, isParentInChildNullable, true)
         return this
       }
 
@@ -138,7 +138,7 @@ sealed class MutableOneToOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T> {
-        connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_ONE, false, isChildInParentNullable)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, false, isChildInParentNullable)
         return this
       }
 
@@ -162,7 +162,7 @@ sealed class MutableOneToOneChild<T : PTypedEntity, SUBT : PTypedEntity, MODSUBT
       internal lateinit var connectionId: ConnectionId<T, SUBT>
 
       operator fun provideDelegate(thisRef: MODSUBT, property: KProperty<*>): ReadWriteProperty<MODSUBT, T?> {
-        connectionId = ConnectionId.create(parentClass, childClass, true, ONE_TO_ONE, true, isChildInParentNullable)
+        connectionId = ConnectionId.create(parentClass, childClass, ONE_TO_ONE, true, isChildInParentNullable)
         return this
       }
 

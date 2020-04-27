@@ -121,8 +121,8 @@ internal class PEntityStorageBuilder(
 
     // Add the change to changelog
     val pid = pEntityData.createPid()
-    val parents = refs.getParentRefsOfChild(pid, false)
-    val children = refs.getChildrenRefsOfParentBy(pid, false)
+    val parents = refs.getParentRefsOfChild(pid)
+    val children = refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.AddEntity(pEntityData, unmodifiableEntityClass, children, parents)) }
 
     if (pEntityData is PSoftLinkable) {
@@ -232,8 +232,8 @@ internal class PEntityStorageBuilder(
 
     // Add an entry to changelog
     val pid = e.id as PId<T>
-    val parents = this.refs.getParentRefsOfChild(pid, false)
-    val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+    val parents = this.refs.getParentRefsOfChild(pid)
+    val children = this.refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
     val updatedEntity = copiedData.createEntity(this)
@@ -263,8 +263,8 @@ internal class PEntityStorageBuilder(
 
             if (updated) {
               val softLinkedPid = pEntityData.createPid()
-              val softLinkedParents = this.refs.getParentRefsOfChild(softLinkedPid, false)
-              val softLinkedChildren = this.refs.getChildrenRefsOfParentBy(softLinkedPid, false)
+              val softLinkedParents = this.refs.getParentRefsOfChild(softLinkedPid)
+              val softLinkedChildren = this.refs.getChildrenRefsOfParentBy(softLinkedPid)
               updateChangeLog { it.add(ChangeEntry.ReplaceEntity(pEntityData, softLinkedChildren, softLinkedParents)) }
             }
           }
@@ -288,8 +288,8 @@ internal class PEntityStorageBuilder(
     copiedData.entitySource = newSource
 
     val pid = e.id as PId<T>
-    val parents = this.refs.getParentRefsOfChild(pid, false)
-    val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+    val parents = this.refs.getParentRefsOfChild(pid)
+    val children = this.refs.getChildrenRefsOfParentBy(pid)
     updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, children, parents)) }
 
     entitySourceIndex.index(copiedData.createPid(), newSource)
@@ -327,7 +327,7 @@ internal class PEntityStorageBuilder(
    * Cleanup references and accumulate hard linked entities in [accumulator]
    */
   private fun accumulateEntitiesToRemove(id: PId<out TypedEntity>, accumulator: MutableSet<PId<out TypedEntity>>) {
-    val children = refs.getChildrenRefsOfParentBy(id, true)
+    val children = refs.getChildrenRefsOfParentBy(id)
     for ((connectionId, children) in children) {
       for (child in children) {
         if (child in accumulator) continue
@@ -337,7 +337,7 @@ internal class PEntityStorageBuilder(
       }
     }
 
-    val parents = refs.getParentRefsOfChild(id, true)
+    val parents = refs.getParentRefsOfChild(id)
     for ((connectionId, parent) in parents) {
       refs.removeParentToChildRef(connectionId, parent, id)
     }
@@ -443,7 +443,7 @@ internal class PEntityStorageBuilder(
     // 1.1) Cleanup references
     for (matchedEntityData in leftMatchedNodes.values()) {
       val entityId = matchedEntityData.createPid()
-      for ((connectionId, parentId) in this.refs.getParentRefsOfChild(entityId, false)) {
+      for ((connectionId, parentId) in this.refs.getParentRefsOfChild(entityId)) {
         val parentEntity = this.entityDataByIdOrDie(parentId)
         if (sourceFilter(parentEntity.entitySource)) {
           // Remove the connection between matched entities
@@ -454,7 +454,7 @@ internal class PEntityStorageBuilder(
         }
       }
 
-      for ((connectionId, childrenIds) in this.refs.getChildrenRefsOfParentBy(entityId, false)) {
+      for ((connectionId, childrenIds) in this.refs.getChildrenRefsOfParentBy(entityId)) {
         for (childId in childrenIds) {
           val childEntity = this.entityDataByIdOrDie(childId)
           if (sourceFilter(childEntity.entitySource)) {
@@ -480,8 +480,8 @@ internal class PEntityStorageBuilder(
             clonedEntity.id = leftNode.id
             this.entitiesByType.replaceById(clonedEntity as PEntityData<TypedEntity>, clonedEntity.createPid().clazz.java)
             val pid = clonedEntity.createPid()
-            val parents = this.refs.getParentRefsOfChild(pid, false)
-            val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+            val parents = this.refs.getParentRefsOfChild(pid)
+            val children = this.refs.getChildrenRefsOfParentBy(pid)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, children, parents)) }
           }
           leftMatchedNodes.remove(leftNode.identificator(this), leftNode)
@@ -490,8 +490,8 @@ internal class PEntityStorageBuilder(
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as PEntityData<TypedEntity>, clazz as Class<TypedEntity>)
           val pid = newEntity.createPid()
           replaceMap[pid] = matchedEntityData.createPid()
-          val parents = this.refs.getParentRefsOfChild(pid, false)
-          val children = this.refs.getChildrenRefsOfParentBy(pid, false)
+          val parents = this.refs.getParentRefsOfChild(pid)
+          val children = this.refs.getChildrenRefsOfParentBy(pid)
           updateChangeLog { it.add(ChangeEntry.AddEntity(newEntity, newEntity.createPid().clazz.java, children, parents)) }
         }
       }
@@ -510,7 +510,7 @@ internal class PEntityStorageBuilder(
       val unmatchedEntityData = replaceWith.entityDataById(unmatchedId)
       if (unmatchedEntityData == null) {
         // TODO: 14.04.2020 Don't forget about entities with persistence id
-        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId, false)) {
+        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
           val parent = this.entityDataById(parentId)
 
           if (parent == null) {
@@ -524,7 +524,7 @@ internal class PEntityStorageBuilder(
             }
           }
         }
-        for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId, false)) {
+        for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
           for (childId in childIds) {
             val child = this.entityDataById(childId)
             if (child == null) {
@@ -539,25 +539,25 @@ internal class PEntityStorageBuilder(
         }
       }
       else {
-        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId, false)) {
+        for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
           if (!sourceFilter(this.entityDataByIdOrDie(parentId).entitySource)) continue
           this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
         }
 
-        for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId, false)) {
+        for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(unmatchedId)) {
           if (!sourceFilter(this.entityDataByIdOrDie(parentId).entitySource)) continue
           val localParentId = replaceMap.inverse().get(parentId)!!
           this.refs.updateParentOfChild(connectionId, unmatchedId, localParentId)
         }
 
-        for ((connectionId, childrenId) in this.refs.getChildrenRefsOfParentBy(unmatchedId, false)) {
+        for ((connectionId, childrenId) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
           for (childId in childrenId) {
             if (!sourceFilter(this.entityDataByIdOrDie(childId).entitySource)) continue
             this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
           }
         }
 
-        for ((connectionId, childrenId) in replaceWith.refs.getChildrenRefsOfParentBy(unmatchedId, false)) {
+        for ((connectionId, childrenId) in replaceWith.refs.getChildrenRefsOfParentBy(unmatchedId)) {
           for (childId in childrenId) {
             if (!sourceFilter(this.entityDataByIdOrDie(childId).entitySource)) continue
             val localChildId = replaceMap.inverse()[childId]!!
@@ -570,7 +570,7 @@ internal class PEntityStorageBuilder(
     // 5) Restore references in matching ids
     for (rightMatchedNode in rightMatchedNodes.values()) {
       val nodeId = rightMatchedNode.createPid()
-      for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId, false)) {
+      for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId)) {
         if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
 
         val localChildId = replaceMap.inverse().get(nodeId)!!
