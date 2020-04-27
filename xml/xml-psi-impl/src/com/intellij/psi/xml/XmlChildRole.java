@@ -37,12 +37,14 @@ public interface XmlChildRole {
   RoleFinder ATTRIBUTE_VALUE_VALUE_FINDER = new DefaultRoleFinder(XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
 
   RoleFinder START_TAG_END_FINDER = new DefaultRoleFinder(() -> {
-    IElementType[] elementTypes = new IElementType[]{XmlTokenType.XML_TAG_END};
-    for (StartTagEndTokenProvider tokenProvider : StartTagEndTokenProvider.EP_NAME.getExtensionList()) {
-      elementTypes = ArrayUtil.mergeArrays(elementTypes, tokenProvider.getTypes());
-    }
-    return elementTypes;
-  }, value -> StartTagEndTokenProvider.EP_NAME.addChangeListener(() -> value.drop(), null));
+    return StartTagEndTokenProvider.EP_NAME.computeIfAbsent("the key", s -> {
+      IElementType[] elementTypes = new IElementType[]{XmlTokenType.XML_TAG_END};
+      for (StartTagEndTokenProvider tokenProvider : StartTagEndTokenProvider.EP_NAME.getExtensionList()) {
+        elementTypes = ArrayUtil.mergeArrays(elementTypes, tokenProvider.getTypes());
+      }
+      return elementTypes;
+    });
+  });
 
   RoleFinder START_TAG_START_FINDER = new DefaultRoleFinder(XmlTokenType.XML_START_TAG_START);
 
