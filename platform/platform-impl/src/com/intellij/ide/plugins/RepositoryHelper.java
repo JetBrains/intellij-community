@@ -133,8 +133,11 @@ public final class RepositoryHelper {
 
   /**
    * Reads cached plugin descriptors from a file. Returns {@code null} if cache file does not exist.
+   * @deprecated use `MarketplaceRequest.getMarketplaceCachedPlugins`
    */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
     File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     return file.length() > 0 ? process(loadPluginList(file), null, null) : null;
