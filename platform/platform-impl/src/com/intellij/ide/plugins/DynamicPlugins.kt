@@ -127,7 +127,7 @@ object DynamicPlugins {
       app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).checkUnloadPlugin(descriptor)
     }
     catch (e: CannotUnloadPluginException) {
-      return e.cause?.localizedMessage
+      return e.cause?.localizedMessage ?: "checkUnloadPlugin listener blocked plugin unload"
     }
 
     if (!Registry.`is`("ide.plugins.allow.unload.from.sources")) {
