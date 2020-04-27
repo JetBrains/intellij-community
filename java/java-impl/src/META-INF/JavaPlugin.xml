@@ -158,8 +158,6 @@
 
     <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableFilter"
                     interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.projectStructureConfigurableAdder"
-                    interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableContributor"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
