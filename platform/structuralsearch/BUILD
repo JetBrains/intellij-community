@@ -7,7 +7,6 @@ iml_module(
     iml_files = ["intellij.platform.structuralSearch.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
         "//tools/idea/images:intellij.platform.images",
@@ -15,16 +14,17 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
+        "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
@@ -49,6 +49,7 @@ iml_module(
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/platform/duplicates-analysis:intellij.platform.duplicates.analysis[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/.idea/libraries:StreamEx",
     ],
 )
 
@@ -58,13 +59,13 @@ iml_module(
     iml_files = ["intellij.platform.structuralSearch.tests.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
-        "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
-        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
+        "//tools/idea/plugins/groovy/jps-plugin:intellij.groovy.jps",
+        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
         "//tools/idea/plugins/junit:intellij.junit",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/testng:intellij.testng",
+        "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
         "//tools/idea/plugins/coverage:intellij.java.coverage",
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer",
         "//tools/idea/plugins/groovy/groovy-psi:intellij.groovy.psi",
@@ -89,7 +90,7 @@ iml_module(
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/193.4:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/201.8:jar",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl",
         "//tools/idea/.idea/libraries:precompiled_jshell-frontend",

@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.xml.analysis",
     srcs = ["src"],
     iml_files = ["intellij.xml.analysis.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [

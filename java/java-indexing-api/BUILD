@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.java.indexing",
     srcs = ["src"],
     iml_files = ["intellij.java.indexing.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

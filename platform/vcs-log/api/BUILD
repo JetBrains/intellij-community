@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.vcs.log",
     srcs = ["src"],
     iml_files = ["intellij.platform.vcs.log.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/vcs-log/graph-api:intellij.platform.vcs.log.graph"],
     # do not sort: must match IML order

@@ -14,7 +14,7 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
+        "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt",
         "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader",
     ],
@@ -23,7 +23,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
+        "//tools/idea/.idea/libraries:jetbrains-annotations",
         "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
         "//tools/idea/platform/util-class-loader:intellij.platform.util.classLoader[module]",
         "//tools/idea/.idea/libraries:jna",
@@ -45,19 +45,19 @@ iml_module(
     javacopts = ["-Xep:ModifyingCollectionWithItself:WARN"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/xml/dom-openapi:intellij.xml.dom",
+        "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
-        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
+        "//tools/idea/images:intellij.platform.images",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
@@ -116,7 +116,7 @@ iml_module(
     name = "intellij.platform.util.ui",
     srcs = ["ui/src"],
     iml_files = ["intellij.platform.util.ui.iml"],
-    javacopts = ["-Xep:ComplexBooleanConstant:WARN"],
+    resources = ["ui/resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

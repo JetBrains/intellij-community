@@ -5,7 +5,6 @@ iml_module(
     name = "intellij.java.decompiler.engine",
     srcs = ["src"],
     iml_files = ["intellij.java.decompiler.engine.iml"],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

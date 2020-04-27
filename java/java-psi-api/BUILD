@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.java.psi",
     srcs = ["src"],
     iml_files = ["intellij.java.psi.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/core-api:intellij.platform.core"],
     # do not sort: must match IML order

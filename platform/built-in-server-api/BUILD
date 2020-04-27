@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.builtInServer",
     srcs = ["src"],
     iml_files = ["intellij.platform.builtInServer.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [

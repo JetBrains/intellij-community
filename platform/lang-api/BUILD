@@ -5,7 +5,7 @@ iml_module(
     name = "intellij.platform.lang",
     srcs = ["src"],
     iml_files = ["intellij.platform.lang.iml"],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
+    resources = ["resources"],
     test_srcs = ["testSources"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

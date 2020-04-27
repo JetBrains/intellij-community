@@ -15,5 +15,7 @@ iml_module(
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/.idea/libraries:NanoXML",
         "//tools/idea/.idea/libraries:kotlin-stdlib-jdk8",
+        "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/.idea/libraries:StreamEx",
     ],
 )

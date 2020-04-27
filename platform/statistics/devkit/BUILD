@@ -7,7 +7,6 @@ iml_module(
     iml_files = ["intellij.platform.statistics.devkit.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/xml/dom-impl:intellij.xml.dom.impl",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
         "//tools/idea/images:intellij.platform.images",
@@ -17,18 +16,17 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
+        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
-        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
-        "//tools/idea/xml/impl:intellij.xml.impl",
-        "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
@@ -47,8 +45,10 @@ iml_module(
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/platform/execution-impl:intellij.platform.execution.impl[module]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
     ],
 )

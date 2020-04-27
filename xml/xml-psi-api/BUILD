@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.xml.psi",
     srcs = ["src"],
     iml_files = ["intellij.xml.psi.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

@@ -14,13 +14,11 @@ iml_module(
     exports = [
         "//tools/idea/platform/util:intellij.platform.util",
         "//tools/idea/platform/extensions:intellij.platform.extensions",
-        "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/platform/extensions:intellij.platform.extensions[module]",
-        "//tools/idea/platform/platform-resources-en:intellij.platform.resources.en[module]",
         "//tools/idea/.idea/libraries:automaton",
         "//tools/idea/.idea/libraries:JDOM",
     ],

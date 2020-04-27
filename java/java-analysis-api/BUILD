@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.java.analysis",
     srcs = ["src"],
     iml_files = ["intellij.java.analysis.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/uast/uast-common:intellij.platform.uast"],
     # do not sort: must match IML order

@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.debugger",
     srcs = ["src"],
     iml_files = ["intellij.platform.debugger.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/lang-api:intellij.platform.lang"],
     # do not sort: must match IML order

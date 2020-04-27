@@ -5,7 +5,9 @@ iml_module(
     name = "intellij.platform.statistics",
     srcs = ["src"],
     iml_files = ["intellij.platform.statistics.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
+    exports = ["//tools/idea/platform/statistics/uploader:intellij.platform.statistics.uploader"],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
@@ -22,6 +24,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/platform/statistics/uploader:intellij.platform.statistics.uploader[module]",
         "//tools/analytics-library/tracker:analytics-tracker[module]",
         "//tools/analytics-library/shared:analytics-shared[module]",
         "//tools/analytics-library/publisher:analytics-publisher[module]",

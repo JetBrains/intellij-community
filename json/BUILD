@@ -9,7 +9,6 @@ iml_module(
         "gen",
     ],
     iml_files = ["intellij.json.iml"],
-    javacopts = ["-XepAllErrorsAsWarnings"],
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -24,10 +23,10 @@ iml_module(
         "//tools/idea/platform/lvcs-impl:intellij.platform.lvcs.impl",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
@@ -48,5 +47,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/RegExpSupport:intellij.regexp[module]",
+        "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
     ],
 )

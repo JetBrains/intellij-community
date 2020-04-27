@@ -13,13 +13,13 @@ iml_module(
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
-        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
+        "//tools/idea/java/structuralsearch-java:intellij.java.structuralSearch",
         "//tools/idea/uast/uast-tests:intellij.platform.uast.tests",
-        "//tools/idea/java/typeMigration:intellij.java.typeMigration",
-        "//tools/idea/java/manifest:intellij.java.manifest",
+        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests",
         "//tools/idea:intellij.java.ui.tests",
         "//tools/idea/plugins/testng:intellij.testng",
+        "//tools/idea/java/manifest:intellij.java.manifest",
+        "//tools/idea/plugins/java-decompiler/plugin:intellij.java.decompiler",
         "//tools/idea/plugins/eclipse:intellij.eclipse",
         "//tools/idea/java/plugin:intellij.java.plugin",
     ],
@@ -39,7 +39,7 @@ iml_module(
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/193.4:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/201.8:jar",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/.idea/libraries:precompiled_jshell-frontend",
@@ -79,6 +79,7 @@ iml_module(
         "//tools/idea/plugins/ui-designer:intellij.java.guiForms.designer[module]",
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
         "//tools/idea/platform/platform-api:intellij.platform.ide[module]",
+        "//tools/idea/.idea/libraries:StreamEx",
     ],
 )
 

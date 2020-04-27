@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.java.structureView",
     srcs = ["src"],
     iml_files = ["intellij.java.structureView.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/structure-view-impl:intellij.platform.structureView.impl"],
     # do not sort: must match IML order

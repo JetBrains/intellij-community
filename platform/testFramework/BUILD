@@ -7,10 +7,7 @@ iml_module(
     bundle_data = ["//tools/idea:test-log.xml"],  # Used by TestLoggerFactory.
     iml_files = ["intellij.platform.testFramework.iml"],
     # do not sort: must match IML order
-    test_runtime_deps = [
-        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions",
-    ],
+    test_runtime_deps = ["//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -18,6 +15,7 @@ iml_module(
     exports = [
         "//tools/idea/platform/lang-api:intellij.platform.lang",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl",
+        "//tools/idea/platform/execution-impl:intellij.platform.execution.impl",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl",
         "//tools/idea/.idea/libraries:Log4J",
@@ -37,17 +35,16 @@ iml_module(
         "//tools/idea/.idea/libraries:delight-rhino-sandbox",
         "//tools/idea/.idea/libraries:rhino",
         "//tools/idea/.idea/libraries:netty-handler-proxy",
+        "//tools/idea/xml/dom-openapi:intellij.xml.dom",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/xml/xml-structure-view-impl:intellij.xml.structureView.impl",
-        "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",
+        "//tools/idea/spellchecker:intellij.spellchecker",
         "//tools/idea/platform/testRunner:intellij.platform.testRunner",
         "//tools/idea/platform/statistics/devkit:intellij.platform.statistics.devkit",
-        "//tools/idea/xml/impl:intellij.xml.impl",
-        "//tools/idea/spellchecker:intellij.spellchecker",
-        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
-        "//tools/idea/json:intellij.json",
         "//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl",
         "//tools/idea/platform/built-in-server:intellij.platform.builtInServer.impl",
+        "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
+        "//tools/idea/json:intellij.json",
         "//tools/idea/.idea/libraries:javassist",
         "//tools/idea/platform/diagnostic:intellij.platform.diagnostic",
         "//tools/idea/.idea/libraries:error-prone-annotations",
@@ -60,6 +57,7 @@ iml_module(
     deps = [
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/platform/execution-impl:intellij.platform.execution.impl[module]",
         "//tools/idea/.idea/libraries:JUnit4",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/.idea/libraries:Log4J",
@@ -75,5 +73,7 @@ iml_module(
         "//tools/idea/platform/service-container:intellij.platform.serviceContainer[module]",
         "//tools/idea/platform/workspaceModel-ide:intellij.platform.workspaceModel.ide[module]",
         "//tools/idea/platform/workspaceModel-core:intellij.platform.workspaceModel.core[module]",
+        "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea/.idea/libraries:kotlinx-coroutines-jdk8",
     ],
 )

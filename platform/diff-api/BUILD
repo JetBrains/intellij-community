@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.diff",
     srcs = ["src"],
     iml_files = ["intellij.platform.diff.iml"],
+    resources = ["resources"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/platform/platform-api:intellij.platform.ide"],
     # do not sort: must match IML order

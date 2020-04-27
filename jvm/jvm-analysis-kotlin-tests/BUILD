@@ -24,7 +24,7 @@ iml_module(
         "//tools/idea/.idea/libraries:error-prone-annotations",
         "//tools/idea/.idea/libraries:jaxb-runtime",
         "//tools/idea/java/ide-resources:intellij.java.ide.resources",
-        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/193.4:jar",
+        "//prebuilts/tools/common/m2/repository/com/jetbrains/intellij/documentation/tips-intellij-idea-community/201.8:jar",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl",
         "//tools/idea/.idea/libraries:precompiled_jshell-frontend",

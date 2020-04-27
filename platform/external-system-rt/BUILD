@@ -6,5 +6,9 @@ iml_module(
     srcs = ["src"],
     iml_files = ["intellij.platform.externalSystem.rt.iml"],
     visibility = ["//visibility:public"],
-    deps = ["//tools/idea/.idea/libraries:jetbrains-annotations-java5"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
+        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
+    ],
 )
