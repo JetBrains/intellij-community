@@ -27,7 +27,9 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class OptimizeImportsTest extends OptimizeImportsTestCase {
   static final String BASE_PATH = PathManagerEx.getTestDataPath() + "/psi/optimizeImports";
@@ -89,6 +91,25 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     assertFalse(PsiDocumentManager.getInstance(getProject()).isDocumentBlockedByPsi(myFixture.getEditor().getDocument()));
 
     myFixture.checkResult("class Foo {}");
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_14;
+  }
+
+  public void testNoStubPsiMismatchOnRecordInsideImportList() {
+    myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.configureByText("a.java", "import java.ut<caret>il.List;\n" +
+                                        "record foo.bar.Goo;\n" +
+                                        "import java.util.Collection;\n\n" +
+                                        "class Foo {}");
+    myFixture.launchAction(myFixture.findSingleIntention("Optimize imports"));
+
+    // whatever: main thing it didn't throw
+    myFixture.checkResult("record foo.bar.Goo;\n" +
+                          "import java.util.Collection;\n\n" +
+                          "class Foo {}");
   }
 
   public void testPerFileImportSettings() {
