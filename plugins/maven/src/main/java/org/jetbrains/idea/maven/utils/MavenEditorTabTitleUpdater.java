@@ -29,8 +29,6 @@ final class MavenEditorTabTitleUpdater implements ApplicationInitializedListener
     app.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        MavenProjectsNavigator.getInstance(project);
-
         MavenProjectsManager.getInstance(project).addProjectsTreeListener(new MavenProjectsTree.Listener() {
           @Override
           public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
