@@ -36,8 +36,8 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     this.consoleCommunication.addCommunicationListener(this)
   }
 
-  override fun processLine(text: String) {
-    executeMultiLine(text)
+  override fun processLine(line: String) {
+    executeMultiLine(line)
   }
 
   private fun executeMultiLine(text: String) {
@@ -51,7 +51,8 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   }
 
   override fun checkSingleLine(text: String): Boolean {
-    val pyFile: PyFile =PyElementGenerator.getInstance(project).createDummyFile(myConsoleView.virtualFile.getUserData(LanguageLevel.KEY), text) as PyFile
+    val languageLevel = LanguageLevel.fromPythonVersion(myConsoleView.virtualFile.getUserData(LanguageLevel.KEY))
+    val pyFile = PyElementGenerator.getInstance(project).createDummyFile(languageLevel, text) as PyFile
     return PsiTreeUtil.findChildOfAnyType(pyFile, PyStatementList::class.java) == null && pyFile.statements.size < 2
   }
 
@@ -62,7 +63,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
       executingPrompt()
     }
     if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
-      ++myIpythonInputPromptCount;
+      ++myIpythonInputPromptCount
     }
 
     consoleComm.execInterpreter(code) {}

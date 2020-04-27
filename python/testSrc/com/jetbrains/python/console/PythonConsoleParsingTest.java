@@ -112,7 +112,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     virtualFile.setOriginalFile(originalFile);
 
     originalFile.setCharset(StandardCharsets.UTF_8);
-    originalFile.putUserData(LanguageLevel.KEY, myLanguageLevel);
+    originalFile.putUserData(LanguageLevel.KEY, LanguageLevel.toPythonVersion(myLanguageLevel));
     PyConsoleUtil.markIPython(originalFile);
     return createFile(virtualFile);
   }

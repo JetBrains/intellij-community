@@ -88,7 +88,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
-    virtualFile.putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
+    virtualFile.putUserData(LanguageLevel.KEY, LanguageLevel.toPythonVersion(PythonSdkType.getLanguageLevelForSdk(sdk)));
     virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());

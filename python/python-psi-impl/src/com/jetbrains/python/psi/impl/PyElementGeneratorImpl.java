@@ -65,7 +65,7 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
     final String name = getDummyFileName();
     final LightVirtualFile virtualFile = new LightVirtualFile(name, PythonFileType.INSTANCE, contents);
-    virtualFile.putUserData(LanguageLevel.KEY, langLevel);
+    virtualFile.putUserData(LanguageLevel.KEY, LanguageLevel.toPythonVersion(langLevel));
     final PsiFile psiFile = ((PsiFileFactoryImpl)factory).trySetupPsiForFile(virtualFile, PythonLanguage.getInstance(), physical, true);
     assert psiFile != null;
     return psiFile;

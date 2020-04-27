@@ -51,8 +51,8 @@ import java.util.stream.Collectors;
 /**
  * @author yole
  */
-public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
-  public static final Key<LanguageLevel> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
+public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
+  public static final Key<String> PYTHON_LANGUAGE_LEVEL = Key.create("PYTHON_LANGUAGE_LEVEL");
   /* It so happens that no single language level is compatible with more than one other.
      So a map suffices for representation*/
   public static final Map<LanguageLevel, LanguageLevel> COMPATIBLE_LEVELS;
@@ -83,12 +83,12 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     myModuleSdks.putAll(moduleSdks);
     PyUtil.invalidateLanguageLevelCache(project);
     updateSdkLanguageLevels(project, distinctSdks);
-    project.putUserData(PYTHON_LANGUAGE_LEVEL, PyUtil.guessLanguageLevel(project));
+    project.putUserData(PYTHON_LANGUAGE_LEVEL, LanguageLevel.toPythonVersion(PyUtil.guessLanguageLevel(project)));
   }
 
   @Override
   @NotNull
-  public Key<LanguageLevel> getFileDataKey() {
+  public Key<String> getFileDataKey() {
     return LanguageLevel.KEY;
   }
 
@@ -99,14 +99,14 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
   @Override
   @NotNull
-  public LanguageLevel getDefaultValue() {
-    return LanguageLevel.getDefault();
+  public String getDefaultValue() {
+    return LanguageLevel.toPythonVersion(LanguageLevel.getDefault());
   }
 
   @Override
   @Nullable
-  public LanguageLevel getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
-    return getFileLanguageLevel(project, file);
+  public String getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
+    return LanguageLevel.toPythonVersion(getFileLanguageLevel(project, file));
   }
 
   @Nullable
@@ -152,13 +152,13 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
 
   @Override
   @NotNull
-  public LanguageLevel getImmediateValue(@NotNull Module module) {
+  public String getImmediateValue(@NotNull Module module) {
     if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
-      return LanguageLevel.FORCE_LANGUAGE_LEVEL;
+      return LanguageLevel.toPythonVersion(LanguageLevel.FORCE_LANGUAGE_LEVEL);
     }
 
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+    return LanguageLevel.toPythonVersion(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk));
   }
 
   @Override
@@ -178,7 +178,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   @Override
-  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
+  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull String value) throws IOException {
+    final LanguageLevel level = LanguageLevel.fromPythonVersion(value);
     final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
 
     LanguageLevel oldLanguageLevel = null;
@@ -335,7 +336,11 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
               return false;
             }
             if (file.isDirectory()) {
-              propertiesUpdater.findAndUpdateValue(file, PythonLanguageLevelPusher.this, myLanguageLevel);
+              propertiesUpdater.findAndUpdateValue(
+                file,
+                PythonLanguageLevelPusher.this,
+                LanguageLevel.toPythonVersion(myLanguageLevel)
+              );
             }
             if (myShouldSuppressSizeLimit) {
               SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);

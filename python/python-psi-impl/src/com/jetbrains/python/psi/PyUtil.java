@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -583,7 +582,7 @@ public class PyUtil {
     // Most of the cases should be handled by this one, PyLanguageLevelPusher pushes folders only
     final VirtualFile folder = virtualFile.getParent();
     if (folder != null) {
-      final LanguageLevel folderLevel = folder.getUserData(LanguageLevel.KEY);
+      final LanguageLevel folderLevel = LanguageLevel.fromPythonVersion(folder.getUserData(LanguageLevel.KEY));
       if (folderLevel != null) {
         return folderLevel;
       }
@@ -595,7 +594,7 @@ public class PyUtil {
     else {
       // However this allows us to setup language level per file manually
       // in case when it is LightVirtualFile
-      final LanguageLevel level = virtualFile.getUserData(LanguageLevel.KEY);
+      final LanguageLevel level = LanguageLevel.fromPythonVersion(virtualFile.getUserData(LanguageLevel.KEY));
       if (level != null) return level;
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -619,10 +618,10 @@ public class PyUtil {
 
   @NotNull
   public static LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project) {
-    LanguageLevel languageLevel = project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL);
+    LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(project.getUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL));
     if (languageLevel == null) {
       languageLevel = guessLanguageLevel(project);
-      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, languageLevel);
+      project.putUserData(PythonLanguageLevelPusher.PYTHON_LANGUAGE_LEVEL, LanguageLevel.toPythonVersion(languageLevel));
     }
 
     return languageLevel;
