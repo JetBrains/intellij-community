@@ -146,7 +146,7 @@
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint name="indexPatternSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
 
-    <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider"/>
+    <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider" dynamic="true"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger" dynamic="true"/>
     <extensionPoint name="codeUsageScopeOptimizer" interface="com.intellij.psi.search.ScopeOptimizer" dynamic="true"/>
 
