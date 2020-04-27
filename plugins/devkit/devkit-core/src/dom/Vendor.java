@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @Presentation(icon = "AllIcons.General.User")
 public interface Vendor extends GenericDomValue<String> {
 
+  @Override
   @NotNull
   @NoSpellchecking
   @Required

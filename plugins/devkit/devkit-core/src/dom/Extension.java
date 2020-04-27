@@ -23,12 +23,12 @@ public interface Extension extends DomElement {
   XmlTag getXmlTag();
 
   @NameValue
-  @Required(value = false)
+  @Required(false)
   @Attribute(ID_ATTRIBUTE)
   GenericAttributeValue<String> getId();
 
   @Referencing(value = ExtensionOrderConverter.class, soft = true)
-  @Required(value = false)
+  @Required(false)
   @Attribute(ORDER_ATTRIBUTE)
   GenericAttributeValue<String> getOrder();
 
@@ -36,6 +36,9 @@ public interface Extension extends DomElement {
   @Attribute(OS_ATTRIBUTE)
   GenericAttributeValue<IdeaPluginDescriptorImpl.OS> getOs();
 
+  /**
+   * @return extension declaration or {@code null} if unresolved
+   */
   @Nullable
   ExtensionPoint getExtensionPoint();
 
