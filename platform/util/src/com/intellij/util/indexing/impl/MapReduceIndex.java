@@ -34,7 +34,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -60,12 +59,12 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     @Override
     public void run() {
       try {
-        getReadLock().lock();
+        myLock.readLock().lock();
         try {
           myStorage.clearCaches();
         }
         finally {
-          getReadLock().unlock();
+          myLock.readLock().unlock();
         }
 
         flush();
@@ -125,8 +124,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @Override
   public void clear() {
+    myLock.writeLock().lock();
     try {
-      getWriteLock().lock();
       myModificationStamp.incrementAndGet();
       doClear();
     }
@@ -134,7 +133,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       LOG.error(e);
     }
     finally {
-      getWriteLock().unlock();
+      myLock.writeLock().unlock();
     }
   }
 
@@ -145,8 +144,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @Override
   public void flush() throws StorageException{
+    myLock.readLock().lock();
     try {
-      getReadLock().lock();
       doFlush();
     }
     catch (IOException e) {
@@ -162,7 +161,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       }
     }
     finally {
-      getReadLock().unlock();
+      myLock.readLock().unlock();
     }
   }
 
@@ -174,9 +173,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   @Override
   public void dispose() {
     myLowMemoryFlusher.stop();
-    final Lock lock = getWriteLock();
+    myLock.writeLock().lock();
     try {
-      lock.lock();
       doDispose();
     }
     catch (StorageException e) {
@@ -184,7 +182,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     finally {
       myDisposed = true;
-      lock.unlock();
+      myLock.writeLock().unlock();
     }
   }
 
@@ -202,22 +200,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
-  @NotNull
-  public final Lock getReadLock() {
-    return myLock.readLock();
-  }
-
-  @NotNull
-  public final Lock getWriteLock() {
-    return myLock.writeLock();
-  }
-
   @Override
   @NotNull
   public ValueContainer<Value> getData(@NotNull final Key key) throws StorageException {
-    final Lock lock = getReadLock();
+    myLock.readLock().lock();
     try {
-      lock.lock();
       if (myDisposed) {
         return new ValueContainerImpl<>();
       }
@@ -226,7 +213,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
     finally {
       DebugAssertions.DEBUG_INDEX_ID.set(null);
-      lock.unlock();
+      myLock.readLock().unlock();
     }
   }
 
@@ -328,7 +315,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   };
 
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
-    getWriteLock().lock();
+    myLock.writeLock().lock();
     try {
       IndexId<?, ?> oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
       try {
@@ -347,7 +334,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       }
     }
     finally {
-      getWriteLock().unlock();
+      myLock.writeLock().unlock();
     }
   }
 
