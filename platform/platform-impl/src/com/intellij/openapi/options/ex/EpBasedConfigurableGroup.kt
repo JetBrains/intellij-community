@@ -124,7 +124,7 @@ private fun collect(list: MutableList<ConfigurableWrapper>, configurables: Array
       if (ep.childrenEPName != null || ep.dynamic) {
         list.add(configurable)
       }
-      else if (configurable.providerClass != null) {
+      if (configurable.providerClass != null) {
         val providerClass = ep.findClassOrNull(configurable.providerClass)
         if (providerClass != null) {
           if (WithEpDependencies::class.java.isAssignableFrom(providerClass)) {
