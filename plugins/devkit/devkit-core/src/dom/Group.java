@@ -10,7 +10,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-@Presentation(typeName = "Group", provider = ActionOrGroupPresentationProvider.class)
+@Presentation(typeName = DevkitDomPresentationConstants.GROUP, provider = ActionOrGroupPresentationProvider.class)
 @Stubbed
 public interface Group extends Actions, ActionOrGroup {
 
