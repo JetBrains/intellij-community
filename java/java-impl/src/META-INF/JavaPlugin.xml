@@ -200,7 +200,7 @@
 
     <!-- RefMethod -->
     <extensionPoint qualifiedName="com.intellij.canBeEmpty"
-                    interface="com.intellij.openapi.util.Condition"/>
+                    interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider"
                     interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider" dynamic="true"/>
