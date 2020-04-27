@@ -58,11 +58,6 @@ public final class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value>
   }
 
   @Override
-  public boolean newDataIsEmpty() {
-    return myNewData.isEmpty();
-  }
-
-  @Override
   protected void updateForwardIndex() throws IOException {
     if (myForwardIndexUpdate != null) {
       myForwardIndexUpdate.run();

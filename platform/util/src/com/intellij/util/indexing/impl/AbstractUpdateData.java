@@ -15,8 +15,6 @@ public abstract class AbstractUpdateData<Key, Value> {
                                          @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
                                          @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException;
 
-  public abstract boolean newDataIsEmpty();
-
   public int getInputId() {
     return myInputId;
   }
