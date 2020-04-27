@@ -74,7 +74,7 @@
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
     <searchScopesProvider
         order="last"
-        implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileSearchScopeProvider"/>
+        implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
 
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
