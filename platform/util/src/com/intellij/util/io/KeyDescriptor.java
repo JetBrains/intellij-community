@@ -14,8 +14,11 @@ import java.io.IOException;
  * Key objects may exhibit non-trivial equality and hashCode behaviours,
  * where two by-byte different serialized sequences yields the
  * {{@link #isEqual(Object, Object)}} objects.
+ * <br/>
  * Extend the {@link DifferentSerializableBytesImplyNonEqualityPolicy}
- * in this interface to mark that behaviour explicitly
+ * in this interface to mark that by-byte in-equality of serialized objects
+ * also imply deserialized keys in-equality via {@link #isEqual}
+ *
  * @see PersistentMap
  * @see PersistentHashMap
  * @see DifferentSerializableBytesImplyNonEqualityPolicy
