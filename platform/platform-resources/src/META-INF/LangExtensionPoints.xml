@@ -275,6 +275,7 @@
     <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
 
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="findInProjectExtension" interface="com.intellij.find.impl.FindInProjectExtension" dynamic="true" />
 
     <extensionPoint name="psi.referenceProvider" beanClass="com.intellij.psi.PsiReferenceProviderBean">
       <with attribute="providerClass" implements="com.intellij.psi.PsiReferenceProvider"/>
@@ -292,6 +293,7 @@
 
     <extensionPoint name="highlightRangeExtension" interface="com.intellij.codeInsight.daemon.impl.HighlightRangeExtension" dynamic="true"/>
     <extensionPoint name="elementsToHighlightFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
+    <extensionPoint name="silentChangeVetoer" interface="com.intellij.codeInsight.daemon.impl.SilentChangeVetoer" dynamic="true" />
 
     <extensionPoint name="sdkType" interface="com.intellij.openapi.projectRoots.SdkType" dynamic="true"/>
     <extensionPoint name="sdkFinder" interface="com.intellij.openapi.roots.impl.SdkFinder" dynamic="true"/>

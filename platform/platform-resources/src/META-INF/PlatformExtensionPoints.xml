@@ -380,5 +380,6 @@
     <extensionPoint name="ui.optionEditorProvider" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.options.OptionEditorProvider"/>
     </extensionPoint>
+
   </extensionPoints>
 </idea-plugin>

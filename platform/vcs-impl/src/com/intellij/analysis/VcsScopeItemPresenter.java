@@ -1,14 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.analysis.dialog;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.analysis;
 
-import com.intellij.analysis.AnalysisScope;
+import com.intellij.analysis.dialog.ModelScopeItem;
+import com.intellij.analysis.dialog.ModelScopeItemPresenter;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -58,5 +64,17 @@ public class VcsScopeItemPresenter implements ModelScopeItemPresenter {
   @Override
   public boolean isApplicable(ModelScopeItem model) {
     return model instanceof VcsScopeItem;
+  }
+
+  @Override
+  public @Nullable ModelScopeItem tryCreate(@NotNull Project project,
+                                            @NotNull AnalysisScope scope,
+                                            @Nullable Module module,
+                                            @Nullable PsiElement context) {
+    if (ChangeListManager.getInstance(project).getAffectedFiles().isEmpty()) {
+      return null;
+    }
+
+    return new VcsScopeItem(project);
   }
 }

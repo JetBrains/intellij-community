@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -12,22 +13,57 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.function.Function;
+import java.util.*;
 
-final class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
+public final class VcsFacadeImpl extends VcsFacade {
+
+  @NotNull
+  public static VcsFacadeImpl getVcsInstance() {
+    return (VcsFacadeImpl)ServiceManager.getService(VcsFacade.class);
+  }
+
+  @Override
+  public boolean hasChanges(@NotNull PsiFile file) {
+    final Project project = file.getProject();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null) {
+      final Change change = ChangeListManager.getInstance(project).getChange(virtualFile);
+      return change != null;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean hasChanges(@NotNull VirtualFile file,
+                                       @NotNull Project project) {
+    final Collection<Change> changes = ChangeListManager.getInstance(project).getChangesIn(file);
+    for (Change change : changes) {
+      if (change.getType() == Change.Type.NEW || change.getType() == Change.Type.MODIFICATION) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
+    return VcsUtil.isFileUnderVcs(psiFile.getProject(), VcsUtil.getFilePath(psiFile.getVirtualFile()));
+  }
+
+  @Override
+  public @NotNull Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+    return VcsUtil.getVcsIgnoreFileNames(project);
+  }
+
   @Override
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
@@ -67,8 +103,35 @@ final class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
     return contentFromVcs != null ? calculateChangedRangesInfo(document, contentFromVcs) : null;
   }
 
-  @NotNull
   @Override
+  public @NotNull List<PsiFile> getChangedFilesFromDirs(@NotNull Project project,
+                                                                   @NotNull List<? extends PsiDirectory> dirs) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    Collection<Change> changes = new ArrayList<>();
+
+    for (PsiDirectory dir : dirs) {
+      changes.addAll(changeListManager.getChangesIn(dir.getVirtualFile()));
+    }
+
+    return getChangedFiles(project, changes);
+  }
+
+  @NotNull
+  private static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<? extends Change> changes) {
+    Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
+      private final PsiManager myPsiManager = PsiManager.getInstance(project);
+
+      @Override
+      public PsiFile fun(Change change) {
+        VirtualFile vFile = change.getVirtualFile();
+        return vFile != null ? myPsiManager.findFile(vFile) : null;
+      }
+    };
+
+    return ContainerUtil.mapNotNull(changes, changeToPsiFileMapper);
+  }
+
+  @NotNull
   public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
                                                            Change @NotNull [] changes,
                                                            @NotNull Function<? super VirtualFile, ? extends List<T>> elementsConvertor) {
@@ -83,7 +146,7 @@ final class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) continue;
 
-      List<T> apply = elementsConvertor.apply(file);
+      List<T> apply = elementsConvertor.fun(file);
       List<T> elements = apply == null ? null : ContainerUtil.skipNulls(apply);
       if (ContainerUtil.isEmpty(elements)) continue;
 

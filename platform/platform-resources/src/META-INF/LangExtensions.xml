@@ -122,6 +122,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.daemon.LineMarkerSettings"
                         serviceImplementation="com.intellij.codeInsight.daemon.impl.LineMarkerSettingsImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.codeInsight.actions.VcsFacade"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.actions.FormatChangedTextUtil"/>
 
     <applicationService serviceInterface="com.intellij.facet.FacetTypeRegistry"
@@ -485,7 +486,6 @@
     <applicationConfigurable groupId="tools" groupWeight="140" instance="com.intellij.tools.ToolConfigurable" id="preferences.externalTools" key="tools.settings.title"
                              bundle="messages.ToolsBundle"/>
     <stepsBeforeRunProvider implementation="com.intellij.tools.ToolBeforeRunTaskProvider"/>
-    <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
     <projectService serviceImplementation="com.intellij.tools.ToolsProjectConfig"/>
 
     <bidiRegionsSeparator language="" implementationClass="com.intellij.openapi.editor.bidi.PlainTextBidiRegionsSeparator"/>
@@ -516,10 +516,8 @@
     <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider" id="default" order="first"/>
     <customScopesProvider implementation="com.intellij.psi.search.scope.ProblemsScope$Provider" order="last"/>
     <customScopesProvider implementation="com.intellij.openapi.fileEditor.impl.OpenFilesScope$Provider" order="last"/>
-    <customScopesProvider implementation="com.intellij.packageDependencies.ChangeListsScopesProvider" order="last"/>
 
     <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$Favorites"/>
-    <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$ChangeLists"/>
     <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$CustomNamed" order="last"/>
 
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
@@ -653,7 +651,6 @@
 
     <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.ProjectScopeItemPresenter" id="project_scope" order="first"/>
     <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.ModuleScopeItemPresenter" id="module_scope" order="after project_scope"/>
-    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope"/>
     <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.OtherScopeItemPresenter" id="other_scope" order="after vcs_scope"/>
     <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.CustomScopeItemPresenter" id="custom_scope" order="after other_scope"/>
 
@@ -870,15 +867,13 @@
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
                 factoryClass="com.intellij.ide.todo.TodoToolWindowFactory" canCloseContents="true"/>
+    <projectService serviceImplementation="com.intellij.ide.todo.TodoViewChangesSupport" />
 
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.JarFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.HttpFileReferenceHelper"/>
     <psi.fileReferenceHelper implementation="com.intellij.psi.impl.source.resolve.reference.impl.providers.NullFileReferenceHelper" order="last"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.CommentsReferenceContributor"/>
-    <referenceProviderType key="commentsReferenceProvider"
-                           implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
-    <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.UrlReferenceContributor"/>
 
     <projectConfigurable groupId="editor"
                          groupWeight="140"

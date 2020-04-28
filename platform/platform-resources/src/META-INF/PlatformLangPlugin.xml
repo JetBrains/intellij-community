@@ -60,9 +60,6 @@
 
     <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
-
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
     <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
@@ -71,8 +68,6 @@
     <projectService serviceImplementation="com.intellij.usages.impl.rules.DirectoryGroupingRule"/>
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
-                    serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
@@ -93,8 +88,6 @@
     <projectConfigurable groupId="editor" groupWeight="160" bundle="messages.CodeInsightBundle" key="configurable.InspectionToolsConfigurable.display.name"
                          id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl" order="before preferences.intentionPowerPack"/>
     <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
-
-    <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
 
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
