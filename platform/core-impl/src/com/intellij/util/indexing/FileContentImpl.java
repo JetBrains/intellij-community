@@ -216,8 +216,8 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return myFileName;
   }
 
-  public byte @Nullable [] getHash(boolean fromDocument) {
-    return fromDocument ? myDocumentHash : myFileContentHash;
+  public byte @Nullable [] getHash() {
+    return myPhysicalContent ? myFileContentHash : myDocumentHash;
   }
 
   public void setHashes(byte @NotNull [] fileContentHash, byte @NotNull [] documentHash) {
