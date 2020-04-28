@@ -57,7 +57,8 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
       parent.addAfter(factory.createCommentFromText("// " + lines[i], parent), oldComment);
       if (commentColumn > 0) parent.addAfter(ws, oldComment);
     }
-    oldComment.replace(factory.createCommentFromText((textColumn >= 0 ? "// " : "//") + lines[first], parent));
+    String firstLine = (textColumn >= 0 ? "// " : "//") + (first >= lines.length ? "" : lines[first]);
+    oldComment.replace(factory.createCommentFromText(firstLine, parent));
   }
 
   private static int getTabSize(@NotNull PsiElement element) {
