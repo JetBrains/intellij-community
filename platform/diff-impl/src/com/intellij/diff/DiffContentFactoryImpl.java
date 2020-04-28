@@ -7,6 +7,7 @@ import com.intellij.diff.contents.*;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.vcs.DiffVcsFacade;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.application.ReadAction;
@@ -34,7 +35,6 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,7 +270,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull FileType fileType,
                                      @NotNull String fileName) throws IOException {
     if (isBinaryContent(content, fileType)) {
-      return createBinaryImpl(project, content, fileType, VcsUtil.getFilePath(fileName), null);
+      return createBinaryImpl(project, content, fileType, DiffVcsFacade.getInstance().getFilePath(fileName), null);
     }
 
     return createDocumentFromBytes(project, content, fileType, fileName);
@@ -282,7 +282,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      byte @NotNull [] content,
                                      @NotNull VirtualFile highlightFile) throws IOException {
     if (isBinaryContent(content, highlightFile.getFileType())) {
-      return createBinaryImpl(project, content, highlightFile.getFileType(), VcsUtil.getFilePath(highlightFile), highlightFile);
+      return createBinaryImpl(project, content, highlightFile.getFileType(), DiffVcsFacade.getInstance().getFilePath(highlightFile), highlightFile);
     }
 
     return createDocumentFromBytes(project, content, highlightFile);
@@ -336,7 +336,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                   byte @NotNull [] content,
                                   @NotNull FileType type,
                                   @NotNull String fileName) throws IOException {
-    return createBinaryImpl(project, content, type, VcsUtil.getFilePath(fileName), null);
+    return createBinaryImpl(project, content, type, DiffVcsFacade.getInstance().getFilePath(fileName), null);
   }
 
 
@@ -593,7 +593,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     public DocumentContentBuilder contextByHighlightFile(@Nullable VirtualFile file) {
       if (file != null) {
         context = new Context.ByHighlightFile(file);
-        originalFilePath = VcsUtil.getFilePath(file);
+        originalFilePath = DiffVcsFacade.getInstance().getFilePath(file);
         fileName = file.getName();
       }
       return this;
@@ -606,7 +606,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
         context = new Context.ByReferent(referent);
         VirtualFile file = referent.getHighlightFile();
         if (file != null) {
-          originalFilePath = VcsUtil.getFilePath(file);
+          originalFilePath = DiffVcsFacade.getInstance().getFilePath(file);
           fileName = file.getName();
         }
       }

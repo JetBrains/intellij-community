@@ -43,7 +43,6 @@ import com.intellij.vcs.log.util.BekUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcsUtil.UIVcsUtilKt;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -247,7 +246,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     leftCornerToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
     JPanel panel = new JPanel(new MigLayout("ins 0, fill", "[]0[left]0[left, fill]push[right]", "center"));
-    UIVcsUtilKt.installVisibilityReferent(panel, toolbar.getComponent());
+    GuiUtils.installVisibilityReferent(panel, toolbar.getComponent());
     panel.add(leftCornerToolbar.getComponent());
     panel.add(textFilter);
     panel.add(toolbar.getComponent());

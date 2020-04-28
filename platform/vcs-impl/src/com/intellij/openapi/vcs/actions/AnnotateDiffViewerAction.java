@@ -18,7 +18,6 @@ import com.intellij.diff.tools.util.base.DiffViewerBase;
 import com.intellij.diff.tools.util.base.DiffViewerListener;
 import com.intellij.diff.tools.util.side.OnesideTextDiffViewer;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
-import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.notification.Notification;
@@ -45,6 +44,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
+import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.BalloonLayoutData;
@@ -236,7 +236,7 @@ public class AnnotateDiffViewerAction {
       if (loader != null) return loader;
     }
 
-    Pair<FilePath, VcsRevisionNumber> info = content.getUserData(DiffUserDataKeysEx.REVISION_INFO);
+    Pair<FilePath, VcsRevisionNumber> info = content.getUserData(DiffVcsDataKeys.REVISION_INFO);
     if (info != null) {
       FilePath filePath = info.first;
       AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
