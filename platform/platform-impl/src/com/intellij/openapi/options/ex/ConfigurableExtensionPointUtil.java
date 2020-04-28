@@ -225,7 +225,7 @@ public final class ConfigurableExtensionPointUtil {
         int weight = getInt(bundle, id + ".settings.weight");
         String help = getString(bundle, id + ".settings.help.topic");
         String name = getName(bundle, id + ".settings.display.name");
-        String desc = getName(bundle, id + ".settings.description");
+        String desc = getString(bundle, id + ".settings.description");
         if (name != null && project != null) {
           if (!project.isDefault() && !name.contains("{")) {
             String named = getString(bundle, id + ".named.settings.display.name");
