@@ -261,7 +261,7 @@ public class TestAll implements Test {
   private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
     myRunTests++;
 
-    if (testResult.errorCount() + testResult.failureCount() > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT > 0) {
+    if (testResult.errorCount() + testResult.failureCount() > MAX_FAILURE_TEST_COUNT && MAX_FAILURE_TEST_COUNT >= 0) {
       addErrorMessage(testResult, "Too many errors. Executed: " + myRunTests + " of " + totalTests);
       testResult.stop();
       return;
