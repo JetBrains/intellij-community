@@ -315,12 +315,10 @@ public final class PluginInstaller {
           dependencies.add(ideaPluginDescriptor);
         }
       }
-      String part = IdeBundle.message("dialog.message.plugin.depends.disabled.plugins", dependencies.size()) + " ";
       String deps = StringUtil.join(dependencies, IdeaPluginDescriptor::getName, ", ");
-      String message = IdeBundle.message("dialog.message.plugin.depends.on.enable", pluginDescriptor.getName(), part, deps, part.trim());
-      if (Messages
-            .showOkCancelDialog(message, IdeBundle.message("dialog.title.install.plugin"), IdeBundle.message("button.install"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) ==
-          Messages.OK) {
+      String message = IdeBundle.message("dialog.message.plugin.depends.on.enable", pluginDescriptor.getName(), dependencies.size(), deps);
+      if (Messages.showOkCancelDialog(message, IdeBundle.message("dialog.title.install.plugin"), IdeBundle.message("button.install"),
+                                      CommonBundle.getCancelButtonText(), Messages.getWarningIcon()) == Messages.OK) {
         model.enableRows(dependencies.toArray(new IdeaPluginDescriptor[0]), Boolean.TRUE);
       }
     }

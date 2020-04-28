@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,8 +147,8 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     }
 
     if (!dependencies.isEmpty()) {
-      throw new ConfigurationException(IdeBundle.message("dialog.message.unable.to.apply.changes", dependencies.size(),
-                                                         StringUtil.join(dependencies, ", ")));
+      throw new ConfigurationException(XmlStringUtil.wrapInHtml(
+        IdeBundle.message("dialog.message.unable.to.apply.changes", dependencies.size(), StringUtil.join(dependencies, ", "))));
     }
 
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
@@ -888,7 +889,8 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       String listOfDeps = StringUtil.join(deps, plugin -> {
         return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + plugin.getName();
       }, "<br>");
-      String message = IdeBundle.message("dialog.message.following.plugin.depend.on", deps.size(), descriptor.getName(), listOfDeps);
+      String message = XmlStringUtil
+        .wrapInHtml(IdeBundle.message("dialog.message.following.plugin.depend.on", deps.size(), descriptor.getName(), listOfDeps));
       String title = IdeBundle.message("title.plugin.uninstall");
       if (Messages.showYesNoDialog(uiParent, message, title, Messages.getQuestionIcon()) != Messages.YES) {
         return;
