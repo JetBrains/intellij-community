@@ -133,7 +133,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   final override fun getMessageBus(): MessageBus {
-    if (containerState.get().ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal) {
+    if (containerState.get().compareTo(ContainerState.DISPOSE_IN_PROGRESS) >= 0) {
       throw AlreadyDisposedException("Already disposed: $this")
     }
     return messageBus ?: getOrCreateMessageBusUnderLock()
@@ -826,7 +826,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   override fun isDisposed(): Boolean {
-    return containerState.get().ordinal >= ContainerState.DISPOSE_IN_PROGRESS.ordinal
+    return containerState.get().compareTo(ContainerState.DISPOSE_IN_PROGRESS) >= 0
   }
 
   final override fun beforeTreeDispose() {

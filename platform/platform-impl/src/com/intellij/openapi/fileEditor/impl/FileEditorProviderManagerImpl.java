@@ -141,9 +141,8 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
 
     @Override
     public int compare(FileEditorProvider provider1, FileEditorProvider provider2) {
-      final int i1 = provider1.getPolicy().ordinal();
-      final int i2 = provider2.getPolicy().ordinal();
-      if (i1 != i2) return i1 - i2;
+      int c = provider1.getPolicy().compareTo(provider2.getPolicy());
+      if (c != 0) return c;
       final double value = getWeight(provider1) - getWeight(provider2);
       return value > 0 ? 1 : value < 0 ? -1 : 0;
     }

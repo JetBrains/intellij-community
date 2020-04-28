@@ -95,7 +95,7 @@ public enum AccessModifier {
   }
 
   public boolean isWeaker(@NotNull AccessModifier other) {
-    return ordinal() < other.ordinal();
+    return compareTo(other) < 0;
   }
 
   @Override

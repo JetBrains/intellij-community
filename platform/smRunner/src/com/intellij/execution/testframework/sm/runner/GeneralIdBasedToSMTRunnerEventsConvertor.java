@@ -484,7 +484,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         convertor.logProblem("Illegal state change [" + myState + " -> " + newState + "]: " + toString(), false);
       }
 
-      if (myState.ordinal() < newState.ordinal()) {
+      if (myState.compareTo(newState) < 0) {
         // for example State.FINISHED comes later than State.FAILED, do not update state in this case
         myState = newState;
       }
