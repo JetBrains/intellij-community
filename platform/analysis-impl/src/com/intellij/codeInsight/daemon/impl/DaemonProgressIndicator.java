@@ -108,7 +108,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void start() {
-    assert !isCanceled() : "canceled";
+    checkCanceled();
     assert !isRunning() : "running";
     super.start();
   }
