@@ -105,7 +105,9 @@ internal class LegacyBridgeFilePointerProviderImpl(project: Project) : LegacyBri
   @Synchronized
   fun disposeAndClearCaches() {
     filePointerDisposables.forEach { Disposer.dispose(it) }
+    filePointerDisposables.clear()
     fileContainerDisposables.forEach { Disposer.dispose(it) }
+    fileContainerDisposables.clear()
 
     fileContainerUrlsLock.withLock { fileContainerUrls.clear() }
     filePointers.clear()
