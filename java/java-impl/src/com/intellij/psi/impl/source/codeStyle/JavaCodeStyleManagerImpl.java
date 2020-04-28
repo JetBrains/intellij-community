@@ -371,8 +371,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         case "float":
           return "v";
         case "short": return "i";
-        case "java.lang.Object": return "o";
-        case "java.lang.String": return "s";
+        case CommonClassNames.JAVA_LANG_OBJECT: return "o";
+        case CommonClassNames.JAVA_LANG_STRING: return "s";
+        case CommonClassNames.JAVA_LANG_VOID: return "unused";
       }
     }
     return null;
