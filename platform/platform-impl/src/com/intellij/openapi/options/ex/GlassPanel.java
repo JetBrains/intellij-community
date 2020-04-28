@@ -21,6 +21,8 @@ public class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;
   private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);
+  private static final JBColor SPOTLIGHT_BORDER_COLOR = JBColor.namedColor("Settings.Spotlight.borderColor",
+                                                                                   ColorUtil.toAlpha(JBColor.ORANGE, 100));
 
 
   public GlassPanel(JComponent containingPanel) {
@@ -75,7 +77,7 @@ public class GlassPanel extends JComponent {
         g2.fill(mask);
 
         g2.setStroke(new BasicStroke(stroke));
-        g2.setColor(ColorUtil.toAlpha(JBColor.ORANGE, 100));
+        g2.setColor(SPOTLIGHT_BORDER_COLOR);
         g2.draw(mask);
       }
       finally {
