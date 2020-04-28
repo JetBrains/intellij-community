@@ -191,7 +191,9 @@
     <extensionPoint qualifiedName="Pythonid.customClassStubType"
                     interface="com.jetbrains.python.psi.impl.stubs.PyCustomClassStubType"/>
 
-    <extensionPoint qualifiedName="Pythonid.visitorFilter" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="Pythonid.visitorFilter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.jetbrains.python.psi.PythonVisitorFilter"/>
     </extensionPoint>
     <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker"
