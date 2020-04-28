@@ -913,11 +913,11 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
   }
 
   override fun <E : TypedEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E? {
-    return entitiesByType.all()
-      .filterValues { it.all().firstOrNull()?.createEntity(this) is TypedEntityWithPersistentId }
-      .asSequence()
-      .flatMap { it.value.all().map { it.createEntity(this) as TypedEntityWithPersistentId } }
-      .find { it.persistentId() == id } as E?
+    val pids = persistentIdIndex.getIdsByPersistentId(id) ?: return null
+    if (pids.isEmpty()) return null
+    if (pids.size > 1) error("Cannot resolve persistent id. The store contains more than one associated entities")
+    val pid = pids.single()
+    return entityDataById(pid)?.createEntity(this) as E?
   }
 
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out TypedEntity>, List<TypedEntity>>> {
