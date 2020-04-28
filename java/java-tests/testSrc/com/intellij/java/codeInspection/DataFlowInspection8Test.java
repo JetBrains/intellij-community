@@ -280,4 +280,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableNotNullAssignmentInReturn() { doTest(); }
   public void testTransformMethod() { doTest(); }
   public void testTernaryExpressionNumericType() { doTest(); }
+  public void testEclipseDefaultTypeUse() {
+    myFixture.addClass("package org.eclipse.jdt.annotation;public @interface NonNullByDefault {}");
+    doTest();
+  }
 }

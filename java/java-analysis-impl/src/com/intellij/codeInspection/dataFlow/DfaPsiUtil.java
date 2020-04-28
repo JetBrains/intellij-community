@@ -213,6 +213,12 @@ public class DfaPsiUtil {
         return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
       }
     }
+    if (eachType instanceof PsiClassType) {
+      PsiElement context = ((PsiClassType)eachType).getPsiContext();
+      if (context != null) {
+        return NullableNotNullManager.getInstance(context.getProject()).findDefaultTypeUseNullability(context);
+      }
+    }
     return null;
   }
 

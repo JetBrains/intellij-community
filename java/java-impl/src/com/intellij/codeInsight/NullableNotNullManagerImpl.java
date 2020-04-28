@@ -246,13 +246,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @Nullable
   NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
                                               PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                              PsiModifierListOwner owner, boolean superPackage) {
+                                              PsiElement context, boolean superPackage) {
     PsiModifierList modifierList = container.getModifierList();
     if (modifierList == null) return null;
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (container instanceof PsiPackage) {
         VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-        VirtualFile ownerFile = PsiUtilCore.getVirtualFile(owner);
+        VirtualFile ownerFile = PsiUtilCore.getVirtualFile(context);
         if (annotationFile != null && ownerFile != null && !annotationFile.equals(ownerFile)) {
           ProjectFileIndex index = ProjectRootManager.getInstance(container.getProject()).getFileIndex();
           VirtualFile annotationRoot = index.getClassRootForFile(annotationFile);

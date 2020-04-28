@@ -155,6 +155,11 @@ class TypeCorrector extends PsiTypeMapper {
     }
 
     @Override
+    public @Nullable PsiElement getPsiContext() {
+      return myDelegate.getPsiContext();
+    }
+
+    @Override
     public PsiType @NotNull [] getParameters() {
       return ContainerUtil.map2Array(myDelegate.getParameters(), PsiType.class, type -> {
         if (type == null) {
