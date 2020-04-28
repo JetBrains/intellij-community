@@ -25,6 +25,7 @@ import java.util.Objects;
 public class PropertiesInheritorsSearcher extends QueryExecutorBase<PsiElement, DefinitionsScopedSearch.SearchParameters> {
   private static final Logger LOG = Logger.getInstance(PropertiesInheritorsSearcher.class);
 
+  @SuppressWarnings("ReturnValueIgnored")  // apparently abuses anyMatch for control flow, to short-circuit stream processing and return early
   @Override
   public void processQuery(@NotNull DefinitionsScopedSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiElement> consumer) {
     final PsiElement element = queryParameters.getElement();
