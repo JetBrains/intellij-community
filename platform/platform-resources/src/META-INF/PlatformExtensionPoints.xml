@@ -99,7 +99,8 @@
     </extensionPoint>
 
     <extensionPoint name="projectOpenProcessor"
-                    interface="com.intellij.projectImport.ProjectOpenProcessor"/>
+                    interface="com.intellij.projectImport.ProjectOpenProcessor"
+                    dynamic="true"/>
     <extensionPoint name="projectSetProcessor"
                     interface="com.intellij.projectImport.ProjectSetProcessor"/>
 
