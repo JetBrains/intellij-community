@@ -9,6 +9,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.source.JavaLightStubBuilder;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiUtil;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.security.SecureRandom;
+import java.util.List;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_14;
 
@@ -673,6 +675,21 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        RECORD_HEADER:PsiRecordHeaderStub\n" +
            "        EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "        IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+  
+  public void testInterfaceKeywordInBody() {
+    String source = "class X {\n" +
+                    "  void test() {}interface\n" +
+                    "}";
+    PsiJavaFile file = (PsiJavaFile)createLightFile("test.java", source);
+    FileASTNode fileNode = file.getNode();
+    assertNotNull(fileNode);
+    assertFalse(fileNode.isParsed());
+    StubElement<?> element = myBuilder.buildStubTree(file);
+    List<StubElement> stubs = element.getChildrenStubs();
+    assertSize(2, stubs);
+    PsiClassStub<?> classStub = (PsiClassStub<?>)stubs.get(1);
+    assertFalse(classStub.isInterface());
   }
 
   public void testSOEProof() {
