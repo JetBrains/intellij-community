@@ -2,6 +2,7 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
@@ -53,7 +54,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
       </module>
     """.trimIndent())
 
-    val module = WriteAction.computeAndWait<Module, Exception> { ModuleManager.getInstance(project).loadModule(moduleFile.path) }
+    val module = runWriteActionAndWait { ModuleManager.getInstance(project).loadModule(moduleFile.path) }
     val orderEntries = ModuleRootManager.getInstance(module).orderEntries
     assertEquals(1, orderEntries.size)
     assertTrue(orderEntries[0] is ModuleSourceOrderEntry)

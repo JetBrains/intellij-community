@@ -4,6 +4,7 @@ import com.intellij.configurationStore.StoreUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.*
 import com.intellij.openapi.project.Project
@@ -333,9 +334,9 @@ class LegacyBridgeModulesTest {
     val moduleFile = File(project.basePath, "test.iml")
 
     val moduleManager = ModuleManager.getInstance(project)
-    val module = WriteAction.computeAndWait<Module, Exception> { moduleManager.newModule (moduleFile.path, ModuleTypeId.JAVA_MODULE) }
+    val module = runWriteActionAndWait { moduleManager.newModule (moduleFile.path, ModuleTypeId.JAVA_MODULE) }
 
-    WriteAction.computeAndWait<Unit, RuntimeException> { StoreUtil.saveDocumentsAndProjectSettings(project) }
+    runWriteActionAndWait { StoreUtil.saveDocumentsAndProjectSettings(project) }
 
     assertNull(JDomSerializationUtil.findComponent(JDOMUtil.load(moduleFile), "XXX"))
 
@@ -356,14 +357,14 @@ class LegacyBridgeModulesTest {
   fun `test module extensions`() {
     TestModuleExtension.commitCalled.set(0)
 
-    val module = WriteAction.computeAndWait<Module, RuntimeException> {
+    val module = runWriteActionAndWait {
       ModuleManager.getInstance(project).newModule(File(project.basePath, "test.iml").path, ModuleType.EMPTY.id)
     }
 
     val modifiableModel = ApplicationManager.getApplication().runReadAction<ModifiableRootModel> { ModuleRootManager.getInstance(module).modifiableModel }
     val moduleExtension = modifiableModel.getModuleExtension(TestModuleExtension::class.java)
     moduleExtension.languageLevel = LanguageLevel.JDK_1_5
-    WriteAction.computeAndWait<Unit, RuntimeException> { modifiableModel.commit() }
+    runWriteActionAndWait { modifiableModel.commit() }
 
     assertEquals(
       LanguageLevel.JDK_1_5,
