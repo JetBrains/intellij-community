@@ -106,6 +106,11 @@ Includes the following features:</p>
     <notificationWhitelist groupIds="Markdown headers group;Markdown"/>
   </extensions>
 
+  <applicationListeners>
+    <listener topic="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings$SettingsChangedListener"
+              class="org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention$SettingsListener"/>
+  </applicationListeners>
+
   <extensions defaultExtensionNs="org.intellij.markdown">
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider" />
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />
