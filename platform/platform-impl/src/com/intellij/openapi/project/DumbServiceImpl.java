@@ -130,7 +130,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
-    LOG.assertTrue(myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS, "actual state: " + myState.get() + ", project " + getProject());
+    LOG.assertTrue(myState.compareAndSet(State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS,
+                                         State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS),
+                   "actual state: " + myState.get() + ", project " + getProject());
 
     List<StartupActivity.RequiredForSmartMode> activities = StartupActivity
       .REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
@@ -359,9 +361,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (!addTaskToQueue(task)) return;
 
     State state = myState.get();
+    if (state == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS) {
+      return;
+    }
+
     if (state == State.SMART ||
         state == State.WAITING_FOR_FINISH ||
-        state == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS) {
+        state == State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS) {
       enterDumbMode(modality, trace);
       new TrackedEdtActivity(this::startBackgroundProcess).invokeLaterIfProjectNotDisposed();
     }
@@ -896,9 +902,15 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     WAITING_FOR_FINISH,
 
     /**
-     * Indicates that project has been just loaded and {@link StartupActivity.RequiredForSmartMode}-s were not executed to ensure project smart mode.
+     * Indicates that project has been just loaded and
+     * {@link StartupActivity.RequiredForSmartMode}-s were not submitted to execution to ensure project smart mode.
      */
-    WAITING_PROJECT_SMART_MODE_STARTUP_TASKS
+    WAITING_PROJECT_SMART_MODE_STARTUP_TASKS,
+
+    /**
+     * Indicates that project has been loaded and {@link StartupActivity.RequiredForSmartMode}-s were added to task queue.
+     */
+    RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS
   }
 
   private class TrackedEdtActivity implements Runnable {
