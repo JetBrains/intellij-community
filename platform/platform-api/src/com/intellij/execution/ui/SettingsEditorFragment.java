@@ -3,6 +3,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,6 +60,25 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
                                         (settings, c) -> component.reset(settings),
                                         (settings, c) -> component.apply(settings),
                                         s -> component.isVisible(s));
+  }
+
+  public static <Settings> SettingsEditorFragment<Settings, JButton> createTag(String id, String name, String group,
+                                                                               Predicate<Settings> getter, BiConsumer<Settings, Boolean> setter) {
+    Ref<SettingsEditorFragment<Settings, JButton>> ref = new Ref<>();
+    TagButton button = new TagButton(name, () -> ref.get().setVisible(false));
+    SettingsEditorFragment<Settings, JButton> fragment = new SettingsEditorFragment<Settings, JButton>(id, name, group, button,
+                                                                                                       (settings, label) -> label.setVisible(getter.test(settings)),
+                                                                                                       (settings, label) -> setter.accept(settings, label.isVisible()),
+                                                                                                       getter) {
+
+      @Override
+      public boolean isTag() {
+        return true;
+      }
+    };
+    Disposer.register(fragment, button);
+    ref.set(fragment);
+    return fragment;
   }
 
   public String getId() {

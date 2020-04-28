@@ -7,11 +7,11 @@ import com.intellij.execution.configurations.RunConfiguration;
 public class CommonTags {
 
   public static <S extends RunConfiguration> SettingsEditorFragment<S, ?> parallelRun() {
-    return new TagFragment<>("runParallel",
-                             ExecutionBundle.message("run.configuration.allow.running.parallel"),
-                             ExecutionBundle.message("group.operating.system"),
+    return SettingsEditorFragment.createTag("runParallel",
+                                            ExecutionBundle.message("run.configuration.allow.running.parallel"),
+                                            ExecutionBundle.message("group.operating.system"),
                              s -> s.isAllowRunningInParallel(),
-                             (s, aBoolean) -> s.setAllowRunningInParallel(aBoolean)
+                                            (s, aBoolean) -> s.setAllowRunningInParallel(aBoolean)
     );
   }
 }

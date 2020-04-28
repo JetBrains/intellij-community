@@ -55,9 +55,9 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
                                                (configuration, component) -> component.getComponent().setText(configuration.getVMParameters()),
                                                (configuration, component) -> configuration.setVMParameters(component.getComponent().getText()),
                                                configuration -> isNotEmpty(configuration.getVMParameters())));
-    fragments.add(new TagFragment<>("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
+    fragments.add(SettingsEditorFragment.createTag("formSnapshots", ExecutionBundle.message("show.swing.inspector.name"), group,
                                     configuration -> configuration.isSwingInspectorEnabled(),
-                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
+                                                   (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
     return fragments;
   }
 
