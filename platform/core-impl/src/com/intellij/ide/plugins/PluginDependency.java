@@ -22,4 +22,15 @@ public final class PluginDependency {
     this.configFile = configFile;
     this.isDisabledOrBroken = isDisabledOrBroken;
   }
+
+  @Override
+  public String toString() {
+    return "PluginDependency(" +
+           "id=" + id +
+           ", isOptional=" + isOptional +
+           ", configFile=" + configFile +
+           ", isDisabledOrBroken=" + isDisabledOrBroken +
+           ", subDescriptor=" + subDescriptor +
+           ')';
+  }
 }

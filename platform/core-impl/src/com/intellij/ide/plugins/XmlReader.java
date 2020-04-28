@@ -94,7 +94,7 @@ final class XmlReader {
     return descriptor;
   }
 
-  static void readListeners(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull Element list, @NotNull ContainerDescriptor containerDescriptor) {
+  static void readListeners(@NotNull Element list, @NotNull ContainerDescriptor containerDescriptor, @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
     List<Content> content = list.getContent();
     List<ListenerDescriptor> result = containerDescriptor.listeners;
     if (result == null) {
@@ -124,7 +124,7 @@ final class XmlReader {
       }
       else {
         result.add(new ListenerDescriptor(listenerClassName, topicClassName,
-                                          getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), descriptor));
+                                          getBoolean("activeInTestMode", child), getBoolean("activeInHeadlessMode", child), mainDescriptor));
       }
     }
   }

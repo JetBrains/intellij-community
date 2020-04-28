@@ -744,8 +744,14 @@ public final class PluginManagerCore {
       }
 
       IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
-      PluginId[] optionalDependentPluginIds = withOptional ? rootDescriptor.getOptionalDependentPluginIds() : PluginId.EMPTY_ARRAY;
-      int capacity = dependencies.size() - (withOptional ? 0 : optionalDependentPluginIds.length);
+      int capacity = dependencies.size();
+      if (!withOptional) {
+        for (PluginDependency dependency : dependencies) {
+          if (dependency.isOptional) {
+            capacity--;
+          }
+        }
+      }
       if (capacity == 0) {
         return implicitDep == null ? Collections.emptyList() : Collections.singletonList(implicitDep);
       }
@@ -763,10 +769,8 @@ public final class PluginManagerCore {
         }
       }
 
-      boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependencies.size();
-
       for (PluginDependency dependency : dependencies) {
-        if (excludeOptional && dependency.isOptional) {
+        if (!withOptional && dependency.isOptional) {
           continue;
         }
 

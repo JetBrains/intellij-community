@@ -25,7 +25,10 @@ public interface PluginDescriptor {
    * @deprecated Use {@link #getPluginPath()}
    */
   @Deprecated
-  File getPath();
+  default File getPath() {
+    Path path = getPluginPath();
+    return path == null ? null : path.toFile();
+  }
 
   Path getPluginPath();
 

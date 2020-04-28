@@ -111,11 +111,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   @Override
-  public File getPath() {
-    return path.toFile();
-  }
-
-  @Override
   public @NotNull Path getPluginPath() {
     return path;
   }
@@ -123,7 +118,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   boolean readExternal(@NotNull Element element,
                        @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
                        @NotNull DescriptorLoadingContext context,
-                       @NotNull IdeaPluginDescriptorImpl rootDescriptor) {
+                       @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -182,7 +177,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "extensionPoints":
-          XmlReader.readExtensionPoints(rootDescriptor, this, child);
+          XmlReader.readExtensionPoints(mainDescriptor, this, child);
           break;
 
         case "actions":
@@ -226,11 +221,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "applicationListeners":
-          XmlReader.readListeners(this, child, appContainerDescriptor);
+          XmlReader.readListeners(child, appContainerDescriptor, mainDescriptor);
           break;
 
         case "projectListeners":
-          XmlReader.readListeners(this, child, projectContainerDescriptor);
+          XmlReader.readListeners(child, projectContainerDescriptor, mainDescriptor);
           break;
 
         case "depends":
@@ -258,7 +253,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "resource-bundle":
           String value = StringUtil.nullize(child.getTextTrim());
           if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
-            context.parentContext.getLogger().warn("Resource bundle redefinition for plugin '" + rootDescriptor.getPluginId() + "'. " +
+            context.parentContext.getLogger().warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
                      "Old value: " + myResourceBundleBaseName + ", new value: " + value);
           }
           myResourceBundleBaseName = value;
@@ -293,7 +288,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     }
 
     if (pluginDependencies != null) {
-      XmlReader.readDependencies(rootDescriptor, this, context, pathResolver, pluginDependencies);
+      XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
     }
 
     return true;

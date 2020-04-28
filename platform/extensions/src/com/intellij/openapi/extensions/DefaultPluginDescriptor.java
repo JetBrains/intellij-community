@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
 
@@ -36,11 +35,6 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   @Override
   public ClassLoader getPluginClassLoader() {
     return myPluginClassLoader;
-  }
-
-  @Override
-  public File getPath() {
-    return null;
   }
 
   @Override

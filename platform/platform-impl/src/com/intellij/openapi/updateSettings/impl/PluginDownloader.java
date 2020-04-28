@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -49,7 +50,7 @@ public final class PluginDownloader {
   private String myPluginVersion;
   private IdeaPluginDescriptor myDescriptor;
   private File myFile;
-  private File myOldFile;
+  private Path myOldFile;
   private MarketplaceRequests myMarketplaceRequests = MarketplaceRequests.getInstance();
 
   private boolean myShownErrors;
@@ -78,14 +79,12 @@ public final class PluginDownloader {
   /**
    * @deprecated Use {@link #getId()}
    */
-  @NotNull
   @Deprecated
-  public String getPluginId() {
+  public @NotNull String getPluginId() {
     return myPluginId.getIdString();
   }
 
-  @NotNull
-  public PluginId getId() {
+  public @NotNull PluginId getId() {
     return myPluginId;
   }
 
@@ -93,13 +92,11 @@ public final class PluginDownloader {
     return myPluginVersion;
   }
 
-  @NotNull
-  public String getPluginName() {
+  public @NotNull String getPluginName() {
     return myPluginName != null ? myPluginName : myPluginId.getIdString();
   }
 
-  @Nullable
-  public String getProductCode() {
+  public @Nullable String getProductCode() {
     return myProductCode;
   }
 
@@ -115,13 +112,11 @@ public final class PluginDownloader {
     return myLicenseOptional;
   }
 
-  @Nullable
-  public BuildNumber getBuildNumber() {
+  public @Nullable BuildNumber getBuildNumber() {
     return myBuildNumber;
   }
 
-  @NotNull
-  public IdeaPluginDescriptor getDescriptor() {
+  public @NotNull IdeaPluginDescriptor getDescriptor() {
     return myDescriptor;
   }
 
@@ -137,8 +132,7 @@ public final class PluginDownloader {
     return prepareToInstallAndLoadDescriptor(indicator) != null;
   }
 
-  @Nullable
-  public IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator) throws IOException {
+  public @Nullable IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator) throws IOException {
     return prepareToInstallAndLoadDescriptor(indicator, true);
   }
 
@@ -162,7 +156,7 @@ public final class PluginDownloader {
         LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
         return null;
       }
-      myOldFile = descriptor.isBundled() ? null : descriptor.getPath();
+      myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
 
     // download plugin
@@ -259,8 +253,7 @@ public final class PluginDownloader {
     return true;
   }
 
-  @NotNull
-  private File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
+  private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
@@ -272,8 +265,7 @@ public final class PluginDownloader {
     return createDownloader(descriptor, null, null);
   }
 
-  @NotNull
-  public static PluginDownloader createDownloader(
+  public static @NotNull PluginDownloader createDownloader(
     @NotNull IdeaPluginDescriptor descriptor,
     @Nullable String host,
     @Nullable BuildNumber buildNumber
@@ -303,13 +295,11 @@ public final class PluginDownloader {
     return new PluginDownloader(descriptor, url, buildNumber);
   }
 
-  @NotNull
-  public static String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
+  public static @NotNull String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
     return buildNumber != null ? buildNumber.asString() : MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests();
   }
 
-  @NotNull
-  public static PluginNode createPluginNode(@Nullable String host, @NotNull PluginDownloader downloader) {
+  public static @NotNull PluginNode createPluginNode(@Nullable String host, @NotNull PluginDownloader downloader) {
     IdeaPluginDescriptor descriptor = downloader.getDescriptor();
     if (descriptor instanceof PluginNode) {
       return (PluginNode)descriptor;

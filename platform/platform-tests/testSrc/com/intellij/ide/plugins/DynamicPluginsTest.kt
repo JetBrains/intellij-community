@@ -312,7 +312,7 @@ class DynamicPluginsTest {
     receivedNotifications2.clear()
 
     val pluginTwoBuilder = PluginBuilder().randomId("optionalDependencyListener-two")
-    val plugin1Disposable = loadPluginWithOptionalDependency(
+    val pluginOneDisposable = loadPluginWithOptionalDependency(
       PluginBuilder().randomId("optionalDependencyListener-one").applicationListeners("""<listener class="${MyUISettingsListener::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""),
       PluginBuilder().applicationListeners("""<listener class="${MyUISettingsListener2::class.java.name}" topic="com.intellij.ide.ui.UISettingsListener"/>"""),
       pluginTwoBuilder
@@ -323,14 +323,14 @@ class DynamicPluginsTest {
       app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
       assertThat(receivedNotifications).hasSize(1)
 
-      val plugin2Disposable = loadPluginWithText(pluginTwoBuilder)
+      val pluginToDisposable = loadPluginWithText(pluginTwoBuilder)
       try {
         app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
         assertThat(receivedNotifications).hasSize(2)
         assertThat(receivedNotifications2).hasSize(1)
       }
       finally {
-        Disposer.dispose(plugin2Disposable)
+        Disposer.dispose(pluginToDisposable)
       }
 
       app.messageBus.syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(UISettings())
@@ -338,7 +338,7 @@ class DynamicPluginsTest {
       assertThat(receivedNotifications2).hasSize(1)
     }
     finally {
-      Disposer.dispose(plugin1Disposable)
+      Disposer.dispose(pluginOneDisposable)
     }
   }
 

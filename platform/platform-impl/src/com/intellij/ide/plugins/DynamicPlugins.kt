@@ -314,7 +314,7 @@ object DynamicPlugins {
       runInAutoSaveDisabledMode {
         val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
         saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
-        for (openProject in ProjectManager.getInstance().openProjects) {
+        for (openProject in ProjectUtil.getOpenProjects()) {
           saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
         }
       }

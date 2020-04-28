@@ -144,8 +144,8 @@ class PluginDescriptorTest {
   fun testDuplicateDependency() {
     val descriptor = loadDescriptorInTest("duplicateDependency")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.optionalDependentPluginIds).isEmpty()
-    assertThat(descriptor.dependentPluginIds).containsExactly(PluginId.getId("foo"))
+    assertThat(descriptor.pluginDependencies?.filter { it.isOptional }).isEmpty()
+    assertThat(descriptor.pluginDependencies?.map { it.id }).containsExactly(PluginId.getId("foo"))
   }
 
   @Test

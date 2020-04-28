@@ -35,6 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -103,7 +104,7 @@ public final class PluginInstaller {
   }
 
   private static void uninstallAfterRestart(IdeaPluginDescriptor pluginDescriptor) throws IOException {
-    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath()));
+    StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPluginPath().toFile()));
   }
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
@@ -112,7 +113,12 @@ public final class PluginInstaller {
       : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
 
     if (uninstalledWithoutRestart) {
-      FileUtil.delete(pluginDescriptor.getPath());
+      try {
+        FileUtil.delete(pluginDescriptor.getPluginPath());
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     else {
       try {
@@ -125,14 +131,25 @@ public final class PluginInstaller {
     return uninstalledWithoutRestart;
   }
 
+  /**
+   * @deprecated Use {@link #installAfterRestart(File, boolean, Path, IdeaPluginDescriptor)}
+   */
+  @Deprecated
   public static void installAfterRestart(@NotNull File sourceFile,
                                          boolean deleteSourceFile,
                                          @Nullable File existingPlugin,
                                          @NotNull IdeaPluginDescriptor descriptor) throws IOException {
+    
+  }
+
+  public static void installAfterRestart(@NotNull File sourceFile,
+                                         boolean deleteSourceFile,
+                                         @Nullable Path existingPlugin,
+                                         @NotNull IdeaPluginDescriptor descriptor) throws IOException {
     List<StartupActionScriptManager.ActionCommand> commands = new ArrayList<>();
 
     if (existingPlugin != null) {
-      commands.add(new StartupActionScriptManager.DeleteCommand(existingPlugin));
+      commands.add(new StartupActionScriptManager.DeleteCommand(existingPlugin.toFile()));
     }
 
     String pluginsPath = PathManager.getPluginsPath();
@@ -252,9 +269,9 @@ public final class PluginInstaller {
         return false;
       }
 
-      File oldFile = null;
+      Path oldFile = null;
       if (installedPlugin != null && !installedPlugin.isBundled()) {
-        oldFile = installedPlugin.getPath();
+        oldFile = installedPlugin.getPluginPath();
       }
 
       boolean installWithoutRestart = oldFile == null && DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);

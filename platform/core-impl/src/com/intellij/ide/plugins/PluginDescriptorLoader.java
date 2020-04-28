@@ -439,7 +439,7 @@ public class PluginDescriptorLoader {
    * Returns enabled plugins only.
    */
   @ApiStatus.Internal
-  public static @NotNull List<? extends IdeaPluginDescriptor> loadUncachedDescriptors() {
+  public static @NotNull List<IdeaPluginDescriptorImpl> loadUncachedDescriptors() {
     return loadDescriptors().result.getEnabledPlugins();
   }
 
