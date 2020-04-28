@@ -185,10 +185,6 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
-    if (viewProvider instanceof DummyHolderViewProvider) {
-      return new HardElementInfo(element);
-    }
-
     if (viewProvider instanceof FreeThreadedFileViewProvider && hasReliableRange(element, containingFile)) {
       PsiLanguageInjectionHost hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       TextRange elementRange = element.getTextRange();
@@ -198,15 +194,19 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       }
     }
 
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
     if (element instanceof PsiFile) {
-      return new FileElementInfo((PsiFile)element);
+      FileViewProvider restored = PsiManager.getInstance(project).findViewProvider(virtualFile);
+      return restored != null && restored.getPsi(LanguageUtil.getRootLanguage(element)) == element
+             ? new FileElementInfo((PsiFile)element)
+             : new HardElementInfo(element);
     }
 
     if (!hasReliableRange(element, containingFile)) {
       return new HardElementInfo(element);
     }
 
-    Document document = FileDocumentManager.getInstance().getCachedDocument(viewProvider.getVirtualFile());
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null &&
         ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
       LOG.error("Smart pointers must not be created during PSI changes");
@@ -240,10 +240,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   // check it's not some fake PSI that overrides getContainingFile/getTextRange/isPhysical/etc and confuses everyone
   private static boolean hasReliableRange(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
-    if (element instanceof ASTDelegatePsiElement || element instanceof ASTNode || element instanceof PsiFileImpl) {
-      return !isFakePsiInNormalFile(element, containingFile);
-    }
-    return false;
+    return (element instanceof ASTDelegatePsiElement || element instanceof ASTNode) && !isFakePsiInNormalFile(element, containingFile);
   }
 
   private static boolean isFakePsiInNormalFile(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
