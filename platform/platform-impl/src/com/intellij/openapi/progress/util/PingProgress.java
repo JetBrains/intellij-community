@@ -31,7 +31,7 @@ public interface PingProgress {
    */
   static void interactWithEdtProgress() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if ( indicator instanceof PingProgress && EDT.isCurrentThreadEdt()) {
+    if (indicator instanceof PingProgress && EDT.isCurrentThreadEdt()) {
       ((PingProgress)indicator).interact();
     }
   }
