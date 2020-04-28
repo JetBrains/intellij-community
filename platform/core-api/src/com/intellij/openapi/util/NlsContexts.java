@@ -137,6 +137,12 @@ public class NlsContexts {
   public @interface AttributeDescriptor {
   }
 
+  @NlsContext(prefix = "column.name")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface ColumnName {
+  }
+
   /**
    * Swing components
    */
