@@ -16,7 +16,6 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 
 class AndroidStudioBundledJreManager extends BundledJreManager {
@@ -30,11 +29,6 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   }
 
   @Override
-  String extractSecondBundledJreForLinux() {
-    return extractSecondBundledJre("linux")
-  }
-
-  @Override
   String extractJre(String osName) {
     return "$baseDirectoryForJdk/$osName"
   }
@@ -42,19 +36,5 @@ class AndroidStudioBundledJreManager extends BundledJreManager {
   @Override
   String extractJre(OsFamily os) {
     return extractJre(os.jbrArchiveSuffix)
-  }
-
-  @Override
-  String extractSecondBundledJreForWin(JvmArchitecture arch) {
-    return extractSecondBundledJre(arch == JvmArchitecture.x32 ? "win32" : "win64")
-  }
-
-  private String extractSecondBundledJre(String osName) {
-    return "$baseDirectoryForJdk/jdk11/$osName"
-  }
-
-  @Override
-  String secondJreSuffix() {
-    isBundledJreModular() ? "-jbr${buildContext.options.bundledJreVersion}" : ""
   }
 }
