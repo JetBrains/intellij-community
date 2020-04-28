@@ -85,12 +85,5 @@ public abstract class ProjectJdkTable {
   @NotNull
   public abstract Sdk createSdk(@NotNull String name, @NotNull SdkTypeId sdkType);
 
-  /**
-   * This method may automatically detect Sdk if none are configured.
-   */
-  public void preconfigure() {
-    
-  }
-
   public static final Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);
 }
