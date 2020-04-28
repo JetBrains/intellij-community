@@ -22,7 +22,7 @@ internal class PChildEntity(
   val childProperty: String,
   val dataClass: PDataClass?
 ) : PTypedEntity() {
-  val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
+  val parent: PParentEntity by ManyToOne.NotNull(PParentEntity::class)
 }
 
 internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
@@ -35,7 +35,7 @@ internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
 internal class PNoDataChildEntity(
   val childProperty: String
 ) : PTypedEntity() {
-  val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
+  val parent: PParentEntity by ManyToOne.NotNull(PParentEntity::class)
 }
 
 internal class PChildChildEntityData : PEntityData<PChildChildEntity>() {
@@ -45,8 +45,8 @@ internal class PChildChildEntityData : PEntityData<PChildChildEntity>() {
 }
 
 internal class PChildChildEntity : PTypedEntity() {
-  val parent1: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
-  val parent2: PChildEntity by ManyToOne.HardRef.NotNull(PChildEntity::class)
+  val parent1: PParentEntity by ManyToOne.NotNull(PParentEntity::class)
+  val parent2: PChildEntity by ManyToOne.NotNull(PChildEntity::class)
 }
 
 internal class PParentEntityData : PEntityData<PParentEntity>() {
@@ -60,11 +60,11 @@ internal class PParentEntity(
   val parentProperty: String
 ) : PTypedEntity() {
 
-  val children: Sequence<PChildEntity> by OneToMany.HardRef(PChildEntity::class, false)
+  val children: Sequence<PChildEntity> by OneToMany(PChildEntity::class, false)
 
-  val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany.HardRef(PNoDataChildEntity::class, false)
+  val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany(PNoDataChildEntity::class, false)
 
-  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany.HardRef(PChildWithOptionalParentEntity::class, true)
+  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany(PChildWithOptionalParentEntity::class, true)
 }
 
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
@@ -79,28 +79,28 @@ internal class PChildWithOptionalParentEntityData : PEntityData<PChildWithOption
 internal class PChildWithOptionalParentEntity(
   val childProperty: String
 ) : PTypedEntity() {
-  val optionalParent: PParentEntity? by ManyToOne.HardRef.Nullable(PParentEntity::class)
+  val optionalParent: PParentEntity? by ManyToOne.Nullable(PParentEntity::class)
 }
 
 private class ModifiablePChildWithOptionalParentEntity : PModifiableTypedEntity<PChildWithOptionalParentEntity>() {
-  var optionalParent: PParentEntity? by MutableManyToOne.HardRef.Nullable(PChildWithOptionalParentEntity::class, PParentEntity::class)
+  var optionalParent: PParentEntity? by MutableManyToOne.Nullable(PChildWithOptionalParentEntity::class, PParentEntity::class)
   var childProperty: String by EntityDataDelegation()
 }
 
 private class ModifiablePChildEntity : PModifiableTypedEntity<PChildEntity>() {
   var childProperty: String by EntityDataDelegation()
   var dataClass: PDataClass? by EntityDataDelegation()
-  var parent: PParentEntity by MutableManyToOne.HardRef.NotNull(PChildEntity::class, PParentEntity::class)
+  var parent: PParentEntity by MutableManyToOne.NotNull(PChildEntity::class, PParentEntity::class)
 }
 
 private class ModifiablePNoDataChildEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: PParentEntity by MutableManyToOne.HardRef.NotNull(PNoDataChildEntity::class, PParentEntity::class)
+  var parent: PParentEntity by MutableManyToOne.NotNull(PNoDataChildEntity::class, PParentEntity::class)
 }
 
 private class ModifiablePChildChildEntity : PModifiableTypedEntity<PChildChildEntity>() {
-  var parent1: PParentEntity by MutableManyToOne.HardRef.NotNull(PChildChildEntity::class, PParentEntity::class)
-  var parent2: PChildEntity by MutableManyToOne.HardRef.NotNull(PChildChildEntity::class, PChildEntity::class)
+  var parent1: PParentEntity by MutableManyToOne.NotNull(PChildChildEntity::class, PParentEntity::class)
+  var parent2: PChildEntity by MutableManyToOne.NotNull(PChildChildEntity::class, PChildEntity::class)
 }
 
 private class ModifiablePParentEntity : PModifiableTypedEntity<PParentEntity>() {

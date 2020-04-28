@@ -119,12 +119,12 @@ internal class FacetsOrderEntityData : PEntityData<FacetsOrderEntity>() {
 internal class FacetsOrderEntity(
   val orderOfFacets: List<String>
 ) : PTypedEntity() {
-  val module: ModuleEntity by OneToOneChild.HardRef.NotNull(ModuleEntity::class, true)
+  val module: ModuleEntity by OneToOneChild.NotNull(ModuleEntity::class, true)
 }
 
 internal class ModifiableFacetsOrderEntity : PModifiableTypedEntity<FacetsOrderEntity>() {
   var orderOfFacets: List<String> by EntityDataDelegation()
-  var module: ModuleEntity by MutableOneToOneChild.HardRef.NotNull(FacetsOrderEntity::class, ModuleEntity::class, true)
+  var module: ModuleEntity by MutableOneToOneChild.NotNull(FacetsOrderEntity::class, ModuleEntity::class, true)
 }
 
 private val ModuleEntity.facetsOrderEntity get() = referrers(FacetsOrderEntity::module).firstOrNull()
