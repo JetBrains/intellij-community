@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.util.io.Compressor
 import com.intellij.util.io.write
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
@@ -33,7 +35,7 @@ class PluginBuilder {
     return this
   }
 
-  fun depends(pluginId: String, configFile: String?): PluginBuilder {
+  fun depends(pluginId: String, configFile: String? = null): PluginBuilder {
     dependsTags.add(DependsTag(pluginId, configFile))
     return this
   }
@@ -87,5 +89,11 @@ class PluginBuilder {
   fun build(path: Path) {
     val pluginXmlPath = path.resolve("META-INF/plugin.xml")
     pluginXmlPath.write(text())
+  }
+
+  fun buildJar(path: Path) {
+    Compressor.Zip(Files.newOutputStream(path)).use {
+      it.addFile("META-INF/plugin.xml", text().toByteArray())
+    }
   }
 }

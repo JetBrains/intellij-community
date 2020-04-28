@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
@@ -137,13 +138,13 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   @Test fun `migrate plugins to empty directory`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    val oldPluginZip = Files.createFile(oldPluginsDir.resolve("my-plugin.zip"))
+    PluginBuilder().depends("com.intellij.modules.lang").buildJar(oldPluginsDir.resolve("my-plugin.jar"))
 
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, LOG)
-    assertThat(newPluginsDir).isDirectoryContaining { it.fileName == oldPluginZip.fileName }
+    assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin.jar" }
   }
 
   @Test fun `do not migrate plugins to existing directory`() {
