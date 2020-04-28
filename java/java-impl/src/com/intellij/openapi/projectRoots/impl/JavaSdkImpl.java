@@ -388,6 +388,9 @@ public final class JavaSdkImpl extends JavaSdk {
     }
 
     File jdkHomeFile = new File(home);
+    if (!jdkHomeFile.exists()) {
+      throw new IllegalStateException(jdkHomeFile.getAbsolutePath() + " doesn't exist");
+    }
     addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
     addDocs(jdkHomeFile, sdkModificator, null);
