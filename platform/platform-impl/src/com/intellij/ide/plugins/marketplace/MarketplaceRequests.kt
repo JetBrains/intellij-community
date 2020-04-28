@@ -249,6 +249,17 @@ open class MarketplaceRequests {
       }
   }
 
+  fun loadCompatiblePluginsByModules(module: String, buildNumber: BuildNumber? = null): List<PluginNode> {
+    val data = try {
+      getCompatibleUpdatesByModules(module, buildNumber)
+    }
+    catch (e: Exception) {
+      LOG.warn("Can not get compatible update from Marketplace", e)
+      emptyList()
+    }
+    return data.map { loadPluginDescriptor(it.pluginId, it) }
+  }
+
   fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
@@ -274,6 +285,29 @@ open class MarketplaceRequests {
   fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null, indicator: ProgressIndicator? = null): PluginNode? {
     val data = getLastCompatiblePluginUpdate(listOf(id), buildNumber).firstOrNull()
     return data?.let { loadPluginDescriptor(id, it, indicator) }
+  }
+
+  private fun getCompatibleUpdatesByModules(module: String, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> = try {
+    val data = objectMapper.writeValueAsString(
+      CompatibleUpdateForModuleRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), module)
+    )
+    val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
+    HttpRequests
+      .post(url, HttpRequests.JSON_CONTENT_TYPE)
+      .productNameAsUserAgent()
+      .throwStatusCodeException(false)
+      .connect {
+        it.write(data)
+        objectMapper
+          .readValue(
+            it.inputStream,
+            object : TypeReference<List<IdeCompatibleUpdate>>() {}
+          )
+      }
+  }
+  catch (e: Exception) {
+    LOG.error("Can not get compatible update by module from Marketplace", e)
+    emptyList()
   }
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})
@@ -360,6 +394,7 @@ open class MarketplaceRequests {
   }
 
   private data class CompatibleUpdateRequest(val build: String, val pluginXMLIds: List<String>)
+  private data class CompatibleUpdateForModuleRequest(val build: String, val module: String)
 
   private fun logWarnOrPrintIfDebug(message: String, throwable: Throwable) {
     if (LOG.isDebugEnabled) {
