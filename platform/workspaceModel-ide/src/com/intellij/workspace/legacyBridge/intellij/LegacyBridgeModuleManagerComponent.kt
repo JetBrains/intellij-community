@@ -416,14 +416,7 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
            ?: error("Module '$moduleName' was not found after loading: $filePath")
   }
 
-  override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? {
-    if (moduleName !in unloadedModules) return null
-
-    // TODO Optimize?
-    val moduleEntity = entityStore.current.entities(ModuleEntity::class.java).filter { it.name == moduleName }.firstOrNull()
-                       ?: return null
-    return getUnloadedModuleDescription(moduleEntity)
-  }
+  override fun getUnloadedModuleDescription(moduleName: String): UnloadedModuleDescription? = unloadedModules[moduleName]
 
   override fun getModules(): Array<Module> = idToModule.values.toTypedArray()
 
@@ -520,20 +513,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
     unloadedModules.forEach { this.unloadedModules.remove(it.name) }
 
     UnloadedModulesListStorage.getInstance(project).unloadedModuleNames = this.unloadedModules.keys.toList()
-  }
-
-  private fun getUnloadedModuleDescription(moduleEntity: ModuleEntity): UnloadedModuleDescriptionImpl {
-    val provider = LegacyBridgeFilePointerProvider.getInstance(project)
-
-    val modulePath = getModulePath(moduleEntity)
-    val dependencyModuleNames = moduleEntity.dependencies.filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>().map { it.module.name }
-    val contentRoots = moduleEntity.contentRoots.map { it.url }.map { provider.getAndCacheFilePointer(it) }.toList()
-
-    return UnloadedModuleDescriptionImpl(
-      modulePath = modulePath,
-      dependencyModuleNames = dependencyModuleNames,
-      contentRoots = contentRoots
-    )
   }
 
   internal fun getModuleFilePath(moduleEntity: ModuleEntity): String {
