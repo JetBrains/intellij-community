@@ -429,6 +429,13 @@ public class EditorComposite implements Disposable {
   }
 
   /**
+   * @return component which represents the component that is supposed to be focusable
+   */
+  public JComponent getFocusComponent() {
+    return myComponent.myFocusComponent.get();
+  }
+
+  /**
    * @return {@code true} if the composite contains at least one
    * modified myEditor
    */
@@ -462,6 +469,7 @@ public class EditorComposite implements Disposable {
 
     MyComponent(@NotNull JComponent realComponent, @NotNull Supplier<? extends JComponent> focusComponent) {
       super(new BorderLayout());
+      setFocusable(false);
       myFocusComponent = focusComponent;
       add(realComponent, BorderLayout.CENTER);
     }

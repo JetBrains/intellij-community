@@ -602,7 +602,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       if (myCurrentWindow != null) {
         EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
         if (selectedEditor != null) {
-          return IdeFocusTraversalPolicy.getPreferredFocusedComponent(selectedEditor.getComponent(), this);
+          return IdeFocusTraversalPolicy.getPreferredFocusedComponent(selectedEditor.getFocusComponent(), this);
         }
       }
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);
