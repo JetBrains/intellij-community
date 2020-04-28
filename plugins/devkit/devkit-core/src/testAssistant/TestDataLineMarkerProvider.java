@@ -51,14 +51,13 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     if (uElement instanceof UMethod) {
       return new Info(ActionManager.getInstance().getAction("TestData.Navigate"));
     }
-    else {
-      final PsiClass psiClass = UElementKt.getAsJavaPsiElement(uElement, PsiClass.class);
-      final String basePath = getTestDataBasePath(psiClass);
-      if (basePath != null) {
-        return new Info(new GotoTestDataAction(basePath, psiClass.getProject(), AllIcons.Nodes.Folder));
-      }
+    
+    final PsiClass psiClass = ((UClass)uElement).getJavaPsi();
+    final String testDataBasePath = getTestDataBasePath(psiClass);
+    if (testDataBasePath == null) {
+      return null;
     }
-    return null;
+    return new Info(new GotoTestDataAction(testDataBasePath, psiClass.getProject(), AllIcons.Nodes.Folder));
   }
 
   @Nullable
