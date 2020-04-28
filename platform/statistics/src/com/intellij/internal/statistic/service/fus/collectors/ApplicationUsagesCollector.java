@@ -2,17 +2,15 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
-import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * <p>Use it to create a collector which records IDE state.</p>
@@ -44,8 +42,11 @@ import java.util.stream.Collectors;
  * @see ProjectUsagesCollector
  * @see FUCounterUsageLogger
  */
+@ApiStatus.Internal
 public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector {
-  private static final ExtensionPointName<ApplicationUsagesCollector> EP_NAME =
+
+  @ApiStatus.Internal
+  public static final ExtensionPointName<ApplicationUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.applicationUsagesCollector");
 
   @NotNull
@@ -61,22 +62,6 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
    */
   @NotNull
   public Set<MetricEvent> getMetrics() {
-    return getUsages().stream().
-      filter(descriptor -> descriptor.getValue() > 0).
-      map(descriptor -> {
-      if (descriptor.getValue() == 1) {
-        return MetricEventFactoryKt.newMetric(descriptor.getKey(), descriptor.getData());
-      }
-      return MetricEventFactoryKt.newCounterMetric(descriptor.getKey(), descriptor.getValue(), descriptor.getData());
-    }).collect(Collectors.toSet());
-  }
-
-  /**
-   * @deprecated use {@link ApplicationUsagesCollector#getMetrics()}
-   */
-  @NotNull
-  @Deprecated
-  public Set<UsageDescriptor> getUsages() {
     return Collections.emptySet();
   }
 

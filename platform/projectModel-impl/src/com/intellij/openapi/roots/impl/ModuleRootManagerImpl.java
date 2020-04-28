@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -51,6 +53,17 @@ public class ModuleRootManagerImpl extends ModuleRootManagerEx implements Dispos
 
     myRootModel = new RootModelImpl(this, myProjectRootManager, myFilePointerManager);
     myOrderRootsCache = new OrderRootsCache(module);
+    ModuleExtension.EP_NAME.getPoint(module).addExtensionPointListener(new ExtensionPointListener<ModuleExtension>() {
+      @Override
+      public void extensionAdded(@NotNull ModuleExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myRootModel.addModuleExtension(extension);
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull ModuleExtension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        myRootModel.removeModuleExtension(extension);
+      }
+    }, false, null);
   }
 
   @Override

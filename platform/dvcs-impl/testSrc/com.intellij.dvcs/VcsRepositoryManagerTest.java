@@ -6,19 +6,18 @@ import com.intellij.dvcs.repo.VcsRepositoryCreator;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.vcs.test.VcsPlatformTest;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -29,8 +28,6 @@ import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.mkdir;
 
 public class VcsRepositoryManagerTest extends VcsPlatformTest {
-  private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
-  private VcsRepositoryManager myGlobalRepositoryManager;
   private MockAbstractVcs myVcs;
   private CountDownLatch CONTINUE_MODIFY;
   private CountDownLatch READY_TO_READ;
@@ -42,44 +39,27 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     cd(projectRoot);
 
     myVcs = new MockAbstractVcs(myProject);
-    myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
-    myProjectLevelVcsManager.registerVcs(myVcs);
+    ProjectLevelVcsManagerImpl projectLevelVcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
+    projectLevelVcsManager.registerVcs(myVcs);
     READY_TO_READ = new CountDownLatch(1);
     CONTINUE_MODIFY = new CountDownLatch(1);
 
     VcsRepositoryCreator mockCreator = createMockRepositoryCreator();
-    ExtensionPoint<VcsRepositoryCreator> point = getExtensionPoint();
-    point.registerExtension(mockCreator, getTestRootDisposable());
-
-    myGlobalRepositoryManager = new VcsRepositoryManager(myProject);
-  }
-
-  @NotNull
-  private ExtensionPoint<VcsRepositoryCreator> getExtensionPoint() {
-    return VcsRepositoryCreator.EXTENSION_POINT_NAME.getPoint(myProject);
-  }
-
-  @Override
-  protected void tearDown() {
-    new RunAll()
-      .append(() -> myProjectLevelVcsManager.unregisterVcs(myVcs))
-      .append(() -> Disposer.dispose(myGlobalRepositoryManager))
-      .append(() -> super.tearDown())
-      .run();
+    ExtensionTestUtil.maskExtensions(VcsRepositoryManager.EP_NAME, Collections.singletonList(mockCreator), getTestRootDisposable(), false);
   }
 
   public void testRepositoryInfoReadingWhileModifying() throws Exception {
-    final VirtualFile repositoryFile = createExternalRepository();
-    assertNotNull(myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile));
+    VirtualFile repositoryFile = createExternalRepository();
+    VcsRepositoryManager repositoryManager = VcsRepositoryManager.getInstance(myProject);
+    assertNotNull(repositoryManager.getRepositoryForRoot(repositoryFile));
 
-    FutureTask<Repository> readExistingRepo = new FutureTask<>(() -> myGlobalRepositoryManager.getRepositoryForRoot(repositoryFile));
+    FutureTask<Repository> readExistingRepo = new FutureTask<>(() -> repositoryManager.getRepositoryForRoot(repositoryFile));
 
     FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<>(() -> {
-      myProjectLevelVcsManager
-        .setDirectoryMappings(
-          VcsUtil.addMapping(myProjectLevelVcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
-      myGlobalRepositoryManager.waitForAsyncTaskCompletion();
-      return !myGlobalRepositoryManager.getRepositories().isEmpty();
+      ProjectLevelVcsManagerImpl projectLevelVcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(myProject);
+      projectLevelVcsManager.setDirectoryMappings(VcsUtil.addMapping(projectLevelVcsManager.getDirectoryMappings(), projectRoot.getPath(), myVcs.getName()));
+      repositoryManager.waitForAsyncTaskCompletion();
+      return !repositoryManager.getRepositories().isEmpty();
     });
     Future<?> modify = ApplicationManager.getApplication().executeOnPooledThread(modifyRepositoryMapping);
 
@@ -94,30 +74,26 @@ public class VcsRepositoryManagerTest extends VcsPlatformTest {
     modify.get();
   }
 
-  @NotNull
-  private VirtualFile createExternalRepository() {
+  private @NotNull VirtualFile createExternalRepository() {
     cd(projectRoot);
     String externalName = "external";
     mkdir(externalName);
     projectRoot.refresh(false, true);
     final VirtualFile repositoryFile = Objects.requireNonNull(this.projectRoot.findChild(externalName));
     MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
-    myGlobalRepositoryManager.addExternalRepository(repositoryFile, externalRepo);
+    VcsRepositoryManager.getInstance(myProject).addExternalRepository(repositoryFile, externalRepo);
     return repositoryFile;
   }
 
-  @NotNull
-  private VcsRepositoryCreator createMockRepositoryCreator() {
+  private @NotNull VcsRepositoryCreator createMockRepositoryCreator() {
     return new VcsRepositoryCreator() {
-      @NotNull
       @Override
-      public VcsKey getVcsKey() {
+      public @NotNull VcsKey getVcsKey() {
         return myVcs.getKeyInstanceMethod();
       }
 
-      @Nullable
       @Override
-      public Repository createRepositoryIfValid(@NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
+      public @Nullable Repository createRepositoryIfValid(@NotNull Project project, @NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
         READY_TO_READ.countDown();
         try {
           //wait until reading thread gets existing info

@@ -231,7 +231,10 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   }
 
   public void setLayerEnabled(int layer, boolean enabled) {
-    myDisabledLayers[layer] = !enabled;
+    if (myDisabledLayers[layer] == enabled) {
+      myDisabledLayers[layer] = !enabled;
+      clearCachedScaledValue();
+    }
   }
 
   @Override

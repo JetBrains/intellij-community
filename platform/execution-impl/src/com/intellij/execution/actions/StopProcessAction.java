@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.actions;
 
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -66,7 +67,7 @@ public class StopProcessAction extends DumbAwareAction implements AnAction.Trans
         if (killableProcess.canKillProcess()) {
           // 'force quite' action presentation
           icon = AllIcons.Debugger.KillProcess;
-          description = "Kill process";
+          description = ExecutionBundle.message("action.terminating.process.progress.kill.description");
         }
       }
     }

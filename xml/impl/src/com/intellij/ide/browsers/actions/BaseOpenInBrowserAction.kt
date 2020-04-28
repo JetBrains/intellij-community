@@ -2,7 +2,6 @@
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
 import com.intellij.openapi.actionSystem.ActionPlaces

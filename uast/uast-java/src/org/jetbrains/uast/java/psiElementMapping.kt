@@ -45,8 +45,9 @@ private val conversionMapping = UElementToPsiElementMapping(
   USimpleNameReferenceExpression::class.java to ClassSet(PsiIdentifier::class.java,
                                                          PsiReferenceExpression::class.java,
                                                          PsiJavaCodeReferenceElement::class.java,
-                                                         PsiDocToken::class.java),
-  UIdentifier::class.java to ClassSet(PsiIdentifier::class.java),
+                                                         PsiDocToken::class.java,
+                                                         PsiJavaModuleReferenceElement::class.java),
+  UIdentifier::class.java to ClassSet(PsiIdentifier::class.java, PsiKeyword::class.java),
   UNamedExpression::class.java to ClassSet(PsiNameValuePair::class.java),
   UCallExpression::class.java to ClassSet(
     PsiArrayInitializerMemberValue::class.java,

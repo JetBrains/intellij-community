@@ -6,14 +6,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.*
+import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities
 import com.intellij.vcsUtil.VcsImplUtil
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowComponentFactory
 import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates
+import java.util.*
 import javax.swing.JPanel
 
 class GHPRToolWindowTabsContentManager(private val project: Project, private val contentManager: ContentManager) {
+
+  private val tabDisposalEventDispatcher = EventDispatcher.create(TabDisposalListener::class.java)
 
   val currentTabs: Set<GitRemoteUrlCoordinates>
     get() = contentManager.contents.mapNotNull { it.remoteUrl }.toSet()
@@ -29,17 +33,15 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
       val content = event.content
       if (content.getUserData(INIT_DONE_KEY) != null) return
 
-      content.component = GHPRAccountsComponent(GithubAuthenticationManager.getInstance(), project,
-                                                content.remoteUrl ?: return,
-                                                content.disposer ?: return)
+      content.component = GHPRToolWindowComponentFactory(project, content.remoteUrl ?: return, content.disposer ?: return).createComponent()
       IJSwingUtilities.updateComponentTreeUI(content.component)
       content.putUserData(INIT_DONE_KEY, Any())
     }
   }
 
   @CalledInAwt
-  internal fun addTab(remoteUrl: GitRemoteUrlCoordinates, onDispose: Disposable) {
-    val content = createContent(remoteUrl, onDispose)
+  internal fun addTab(remoteUrl: GitRemoteUrlCoordinates) {
+    val content = createContent(remoteUrl)
     contentManager.addContent(content)
     updateTabNames()
   }
@@ -56,10 +58,12 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
     contentManager.setSelectedContent(content, true)
   }
 
-  private fun createContent(remoteUrl: GitRemoteUrlCoordinates, onDispose: Disposable): Content {
+  private fun createContent(remoteUrl: GitRemoteUrlCoordinates): Content {
     val disposable = Disposer.newDisposable()
-    Disposer.register(disposable, Disposable { updateTabNames() })
-    Disposer.register(disposable, onDispose)
+    Disposer.register(disposable, Disposable {
+      updateTabNames()
+      tabDisposalEventDispatcher.multicaster.tabDisposed(remoteUrl)
+    })
 
     val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(null), remoteUrl.remote.name, false)
     content.isCloseable = true
@@ -86,11 +90,19 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
     }
   }
 
+  fun addTabDisposalEventListener(listener: TabDisposalListener) = tabDisposalEventDispatcher.addListener(listener)
+
+  fun removeTabDisposalEventListener(listener: TabDisposalListener) = tabDisposalEventDispatcher.removeListener(listener)
+
   private var Content.remoteUrl
     get() = getUserData(REMOTE_URL)
     set(value) {
       putUserData(REMOTE_URL, value)
     }
+
+  interface TabDisposalListener : EventListener {
+    fun tabDisposed(remoteUrl: GitRemoteUrlCoordinates)
+  }
 
   companion object {
     private val INIT_DONE_KEY = Key<Any>("GHPR_CONTENT_INIT_DONE")

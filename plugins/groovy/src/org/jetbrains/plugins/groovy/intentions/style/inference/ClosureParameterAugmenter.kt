@@ -28,7 +28,7 @@ class ClosureParameterAugmenter : TypeAugmenter() {
       return null
     }
     val (index, closure) = variable.getIndexAndClosure() ?: return null
-    val call = closure.parentOfType<GrCall>()?.takeIf { it.closureArguments.contains(closure) } ?: return null
+    val call = closure.parentOfType<GrCall>()?.takeIf { (it.expressionArguments + it.closureArguments).contains(closure) } ?: return null
     val method = (call.resolveMethod() as? GrMethod)?.takeIf { it.parameters.any(GrParameter::eligibleForExtendedInference) }
                  ?: return null
     val signatures = computeSignatures(call, closure, method) ?: return null

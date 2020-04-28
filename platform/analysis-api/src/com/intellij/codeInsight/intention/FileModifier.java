@@ -15,11 +15,20 @@
  */
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * An interface that {@link IntentionAction} and {@link com.intellij.codeInspection.LocalQuickFix} share.
@@ -43,4 +52,43 @@ public interface FileModifier extends WriteActionAware {
   default PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return startInWriteAction() ? currentFile : null;
   }
+
+  /**
+   * Returns the equivalent file modifier that could be applied to the 
+   * non-physical copy of the file used to preview the modification.
+   * May return itself if the action doesn't depend on the file.
+   *
+   * @param target target non-physical file 
+   * @return the action that could be applied to the non-physical copy of the file.
+   * Returns null if operation is not supported.
+   */
+  default @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    if (!startInWriteAction()) return null;
+    for (Field field : ReflectionUtil.collectFields(((Object)this).getClass())) {
+      if (Modifier.isStatic(field.getModifiers())) continue;
+      Class<?> type = field.getType();
+      if (field.getAnnotation(SafeFieldForPreview.class) != null) continue;
+      while (type.isArray()) type = type.getComponentType();
+      if (type.isPrimitive() || type.isEnum() || type.equals(String.class) ||
+          type.equals(Class.class) || type.equals(Integer.class) || type.equals(Boolean.class) ||
+          // Back-link to the parent inspection looks safe, as inspection should not depend on the file 
+          (field.isSynthetic() && field.getName().equals("this$0") && 
+           LocalInspectionTool.class.isAssignableFrom(type))) {
+        continue;
+      }
+      return null;
+    }
+    // No PSI-specific state: it's safe to apply this action to a file copy
+    return this;
+  }
+
+  /**
+   * Use this annotation to mark fields in implementors that are known to contain no file-related state.
+   * It's mainly useful for the fields in abstract classes: marking unknown abstract class field as 
+   * safe for preview will enable default {@link #getFileModifierForPreview(PsiFile)} behavior for all
+   * subclasses (unless subclass declares its own suspicious field).
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.FIELD)
+  @interface SafeFieldForPreview {}
 }

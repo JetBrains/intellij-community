@@ -5,8 +5,6 @@ import com.intellij.diagnostic.DialogAppender;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.CharSequenceReader;
 import org.apache.log4j.*;
 import org.apache.log4j.varia.LevelRangeFilter;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -18,33 +16,18 @@ import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Element;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class LoggerFactory implements Logger.Factory {
+public final class LoggerFactory implements Logger.Factory {
   private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
   private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
   private static final String LOG_DIR_MACRO = "$LOG_DIR$";
 
-  LoggerFactory() {
-    try {
-      init();
-    }
-    catch (Exception e) {
-      //noinspection CallToPrintStackTrace
-      e.printStackTrace();
-    }
-  }
-
-  @NotNull
-  @Override
-  public Logger getLoggerInstance(@NotNull String name) {
-    return new IdeaLogger(org.apache.log4j.Logger.getLogger(name));
-  }
-
-  private static void init() throws Exception {
+  LoggerFactory() throws Exception {
     System.setProperty("log4j.defaultInitOverride", "true");
 
     String configPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
@@ -62,14 +45,19 @@ public class LoggerFactory implements Logger.Factory {
     configureProgrammatically();
   }
 
-  private static void configureFromXmlFile(Path xmlFile) throws Exception {
+  @Override
+  public @NotNull Logger getLoggerInstance(@NotNull String name) {
+    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
+  }
+
+  private static void configureFromXmlFile(@NotNull Path xmlFile) throws Exception {
     String text = new String(Files.readAllBytes(xmlFile), StandardCharsets.UTF_8);
-    text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
-    text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-    text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(PathManager.getLogPath(), "\\", "\\\\"));
+    text = text.replace(SYSTEM_MACRO, PathManager.getSystemPath().replace("\\", "\\\\"));
+    text = text.replace(APPLICATION_MACRO, PathManager.getHomePath().replace("\\", "\\\\"));
+    text = text.replace(LOG_DIR_MACRO, PathManager.getLogPath().replace("\\", "\\\\"));
 
     // JDOM is used instead of XML DOM because of IDEA-173468 (`DOMConfigurator` really wants `Document`)
-    @SuppressWarnings("deprecation") Document document = JDOMUtil.loadDocument(new CharSequenceReader(text));
+    @SuppressWarnings("deprecation") Document document = JDOMUtil.loadDocument(new StringReader(text));
     Element element = new DOMOutputter(new JAXPDOMAdapter() {
       @Override
       public org.w3c.dom.Document createDocument() throws JDOMException {

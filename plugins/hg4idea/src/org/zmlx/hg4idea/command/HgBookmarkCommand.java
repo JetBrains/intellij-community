@@ -29,7 +29,7 @@ public class HgBookmarkCommand {
   public static void createBookmarkAsynchronously(@NotNull List<? extends HgRepository> repositories, @NotNull String name, boolean isActive) {
     final Project project = Objects.requireNonNull(ContainerUtil.getFirstItem(repositories)).getProject();
     if (StringUtil.isEmptyOrSpaces(name)) {
-      VcsNotifier.getInstance(project).notifyError("Hg Error", "Bookmark name is empty");
+      VcsNotifier.getInstance(project).notifyError(HgBundle.message("hg4idea.hg.error"), HgBundle.message("hg4idea.bookmark.name.empty"));
       return;
     }
     new Task.Backgroundable(project, HgBundle.message("hg4idea.progress.bookmark", name)) {
@@ -56,8 +56,8 @@ public class HgBookmarkCommand {
     getRepositoryManager(project).updateRepository(repositoryRoot);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, "Hg Error",
-                     String.format("Hg bookmark command failed for repository %s with name %s ", repositoryRoot.getName(), name));
+        .notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                     HgBundle.message("hg4idea.bookmark.cmd.failed", repositoryRoot.getName(), name));
     }
   }
 }

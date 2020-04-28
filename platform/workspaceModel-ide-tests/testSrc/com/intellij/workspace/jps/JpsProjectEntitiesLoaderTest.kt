@@ -2,12 +2,14 @@ package com.intellij.workspace.jps
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File
@@ -23,6 +25,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   fun `test load project in ipr format`() {
     val projectFile = sampleFileBasedProjectFile
     val storage = loadProject(projectFile)
+    storage.checkConsistency()
     checkSampleProjectConfiguration(storage, projectFile.parentFile)
   }
 
@@ -51,14 +54,14 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
       </module>
     """.trimIndent())
 
-    val module = WriteAction.computeAndWait<Module, Exception> { ModuleManager.getInstance(project).loadModule(moduleFile.path) }
+    val module = runWriteActionAndWait { ModuleManager.getInstance(project).loadModule(moduleFile.path) }
     val orderEntries = ModuleRootManager.getInstance(module).orderEntries
     assertEquals(1, orderEntries.size)
     assertTrue(orderEntries[0] is ModuleSourceOrderEntry)
   }
 
   private fun checkSampleProjectConfiguration(storage: TypedEntityStorage, projectDir: File) {
-    val projectUrl = projectDir.toVirtualFileUrl()
+    val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManagerImpl.getInstance(project))
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
 
@@ -140,19 +143,20 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals("dir", artifacts[0].name)
     assertTrue(artifacts[0].includeInProjectBuild)
     assertEquals(File(projectDir, "out/artifacts/dir").absolutePath, JpsPathUtil.urlToOsPath(artifacts[0].outputUrl.url))
-    assertEquals(2, artifacts[0].rootElement.children.size)
-    val innerJar = artifacts[0].rootElement.children[0] as ArchivePackagingElementEntity
+    val children = artifacts[0].rootElement.children.sortedBy { it::class.qualifiedName }.toList()
+    assertEquals(2, children.size)
+    val innerJar = children[0] as ArchivePackagingElementEntity
     assertEquals("x.jar", innerJar.fileName)
     assertEquals(utilModule, (innerJar.children.single() as ModuleOutputPackagingElementEntity).module.resolve(storage))
-    val innerDir = artifacts[0].rootElement.children[1] as DirectoryPackagingElementEntity
+    val innerDir = children[1] as DirectoryPackagingElementEntity
     assertEquals("lib", innerDir.directoryName)
-    val innerChildren = innerDir.children
+    val innerChildren = innerDir.children.toList()
     assertEquals(5, innerChildren.size)
-    assertEquals(log4jModuleLibrary, (innerChildren[0] as LibraryFilesPackagingElementEntity).library.resolve(storage))
-    assertEquals(junitProjectLibrary, (innerChildren[1] as LibraryFilesPackagingElementEntity).library.resolve(storage))
-    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath((innerChildren[2] as FileCopyPackagingElementEntity).file.url))
-    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath((innerChildren[3] as DirectoryCopyPackagingElementEntity).directory.url))
-    (innerChildren[4] as ExtractedDirectoryPackagingElementEntity).let {
+    assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library.resolve(storage) == log4jModuleLibrary })
+    assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library.resolve(storage) == junitProjectLibrary })
+    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().file.url))
+    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().directory.url))
+    innerChildren.filterIsInstance<ExtractedDirectoryPackagingElementEntity>().single().let {
       assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.archive.url))
       assertEquals("/junit/", it.pathInArchive)
     }
@@ -161,9 +165,9 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(File(projectDir, "out/artifacts/jar").absolutePath, JpsPathUtil.urlToOsPath(artifacts[1].outputUrl.url))
     val archiveRoot = artifacts[1].rootElement as ArchivePackagingElementEntity
     assertEquals("jar.jar", archiveRoot.fileName)
-    val archiveChildren = archiveRoot.children
+    val archiveChildren = archiveRoot.children.toList()
     assertEquals(3, archiveChildren.size)
-    assertEquals(artifacts[0], (archiveChildren[2] as ArtifactOutputPackagingElementEntity).artifact.resolve(storage))
+    assertEquals(artifacts[0], archiveChildren.filterIsInstance<ArtifactOutputPackagingElementEntity>().single().artifact.resolve(storage))
   }
 
   @Test
@@ -173,9 +177,9 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val artifacts = storage.entities(ArtifactEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(6, artifacts.size)
     assertEquals("javaeeSampleProject:war exploded", artifacts[5].name)
-    val artifactChildren = artifacts[5].rootElement.children
+    val artifactChildren = artifacts[5].rootElement.children.toList().sortedBy { it::class.qualifiedName }
     assertEquals(2, artifactChildren.size)
-    val customElement = artifactChildren[0] as CustomPackagingElementEntity
+    val customElement = artifactChildren.filterIsInstance<CustomPackagingElementEntity>().single()
     assertEquals("javaee-facet-resources", customElement.typeId)
     assertEquals("<element id=\"javaee-facet-resources\" facet=\"javaeeSampleProject/web/Web\" />", customElement.propertiesXmlTag)
   }
@@ -223,7 +227,8 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   private fun loadProject(projectFile: File): TypedEntityStorage {
     val storageBuilder = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder)
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     return storageBuilder.toStorage()
   }
 }

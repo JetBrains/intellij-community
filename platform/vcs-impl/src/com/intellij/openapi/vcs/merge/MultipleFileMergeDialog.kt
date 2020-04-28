@@ -44,6 +44,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.containers.Convertor
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -147,6 +148,7 @@ open class MultipleFileMergeDialog(
           table = it
           it.setTreeCellRenderer(virtualFileRenderer)
           it.rowHeight = virtualFileRenderer.preferredSize.height
+          it.preferredScrollableViewportSize = JBUI.size(600, 300)
         }).constraints(growX, growY, pushX, pushY)
 
         cell(isVerticalFlow = true) {
@@ -173,7 +175,7 @@ open class MultipleFileMergeDialog(
 
       if (project != null) {
         row {
-          checkBox("Group files by directory", groupByDirectory) { _, component ->
+          checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"), groupByDirectory) { _, component ->
             toggleGroupByDirectory(component.isSelected)
           }
         }
@@ -425,7 +427,7 @@ open class MultipleFileMergeDialog(
           request = requestFactory.createMergeRequest(project, file, byteContents, title, contentTitles, callback)
         }
 
-        MergeUtil.putRevisionInfos(request, mergeData)
+        MergeUtils.putRevisionInfos(request, mergeData)
       }
       catch (e: InvalidDiffRequestException) {
         if (e.cause is FileTooBigException) {

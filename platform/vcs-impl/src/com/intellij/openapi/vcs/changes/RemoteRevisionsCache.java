@@ -8,8 +8,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
-import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.messages.MessageBusConnection;
@@ -51,8 +49,7 @@ public class RemoteRevisionsCache implements VcsListener {
 
     myChangeDecorator = new RemoteStatusChangeNodeDecorator(this);
 
-    ProjectLevelVcsManagerImpl vcsManager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
-    myVcsManager = vcsManager;
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myKinds = new HashMap<>();
 
     final VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
@@ -76,12 +73,11 @@ public class RemoteRevisionsCache implements VcsListener {
     updateRoots();
 
     if ((!myProject.isDefault()) && vcsConfiguration.isChangedOnServerEnabled()) {
-      vcsManager.addInitializationRequest(VcsInitObject.REMOTE_REVISIONS_CACHE,
-                                          () -> {
-                                            // do not start if there're no vcses
-                                            if (!myVcsManager.hasActiveVcss() || !vcsConfiguration.isChangedOnServerEnabled()) return;
-                                            myControlledCycle.startIfNotStarted();
-                                          });
+      myVcsManager.runAfterInitialization(() -> {
+        // do not start if there're no vcses
+        if (!myVcsManager.hasActiveVcss() || !vcsConfiguration.isChangedOnServerEnabled()) return;
+        myControlledCycle.startIfNotStarted();
+      });
     }
   }
 

@@ -30,7 +30,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.MapIndexStorage;
-import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import gnu.trove.TIntHashSet;
@@ -39,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.nio.file.FileSystems;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 /**
@@ -65,17 +64,6 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
     myBuildKeyHashToVirtualFileMapping = false;
   }
 
-  public VfsAwareMapIndexStorage(@NotNull File storageFile,
-                                 @NotNull KeyDescriptor<Key> keyDescriptor,
-                                 @NotNull DataExternalizer<Value> valueExternalizer,
-                                 final int cacheSize,
-                                 boolean keyIsUniqueForIndexedFile,
-                                 boolean buildKeyHashToVirtualFileMapping) throws IOException {
-    super(storageFile.toPath(), keyDescriptor, valueExternalizer, cacheSize, keyIsUniqueForIndexedFile, false, false, null);
-    myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
-    initMapAndCache();
-  }
-
   public VfsAwareMapIndexStorage(@NotNull Path storageFile,
                                  @NotNull KeyDescriptor<Key> keyDescriptor,
                                  @NotNull DataExternalizer<Value> valueExternalizer,
@@ -91,7 +79,8 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
   protected void initMapAndCache() throws IOException {
     super.initMapAndCache();
     if (myBuildKeyHashToVirtualFileMapping) {
-      assert getProjectFile().getFileSystem() == FileSystems.getDefault();
+      FileSystem projectFileFS = getProjectFile().getFileSystem();
+      assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
       myKeyHashToVirtualFileMapping =
         new AppendableStorageBackedByResizableMappedFile(getProjectFile(), 4096, null, PagedFileStorage.MB, true);
     }

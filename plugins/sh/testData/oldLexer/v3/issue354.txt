@@ -1,4 +1,6 @@
 $ ('$')
 { ('{')
-parameter_expansion_body ('var##abc')
+word ('var')
+param_separator ('##')
+word ('abc')
 } ('}')

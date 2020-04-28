@@ -1,204 +1,151 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.ModifiableTypedEntity
-import com.intellij.workspace.api.TypedEntity
+import com.intellij.workspace.api.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
+import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 
-internal interface PTypedEntity<E : TypedEntity> : TypedEntity {
-  val id: PId<E>
+abstract class PTypedEntity : ReferableTypedEntity, Any() {
+  override lateinit var entitySource: EntitySource
+    internal set
 
-  fun asStr(): String = "${javaClass.simpleName}-:-$id"
+  internal lateinit var id: PId<TypedEntity>
+
+  internal lateinit var snapshot: AbstractPEntityStorage
+
+  override fun hasEqualProperties(e: TypedEntity): Boolean {
+    if (this.javaClass != e.javaClass) return false
+
+    this::class.memberProperties.forEach {
+      if (it.name == PTypedEntity::id.name) return@forEach
+      if (it.getter.call(this) != it.getter.call(e)) return false
+    }
+    return true
+  }
+
+  override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> {
+    val connectionId = snapshot.refs.findConnectionId(this::class.java, entityClass) as ConnectionId<PTypedEntity, R>?
+    if (connectionId == null) return emptySequence()
+    return when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id as PId<PTypedEntity>)
+      ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild(connectionId, id as PId<PTypedEntity>)?.let { sequenceOf(it) } ?: emptySequence()
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id as PId<PTypedEntity>)
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id as PId<PTypedEntity>)
+    }
+  }
+
+  override fun toString(): String = "$id"
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PTypedEntity
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int = id.hashCode()
 }
 
-internal interface PModifiableTypedEntity<T : PTypedEntity<T>> : PTypedEntity<T>, ModifiableTypedEntity<T>
+abstract class PModifiableTypedEntity<T : PTypedEntity> : PTypedEntity(), ModifiableTypedEntity<T> {
+
+  internal lateinit var original: PEntityData<T>
+  internal lateinit var diff: PEntityStorageBuilder
+
+  internal val modifiable = ThreadLocal.withInitial { false }
+
+  internal inline fun allowModifications(action: () -> Unit) {
+    modifiable.set(true)
+    try {
+      action()
+    }
+    finally {
+      modifiable.remove()
+    }
+  }
+
+  internal fun getEntityClass(): KClass<T> = ClassConversion.modifiableEntityToEntity(this::class)
+}
 
 internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>) {
   init {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
 
-  override fun toString(): String = arrayId.toString()
+  override fun toString(): String = clazz.simpleName + "-:-"+ arrayId.toString()
 }
 
-internal interface PEntityData<E : TypedEntity> {
-  var entitySource: EntitySource
-  var id: Int
-  fun createEntity(snapshot: PEntityStorage): E
-  fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E>
-  fun clone(): PEntityData<E>
+interface PSoftLinkable {
+  fun getLinks(): List<PersistentEntityId<*>>
+  fun updateLink(oldLink: PersistentEntityId<*>,
+                 newLink: PersistentEntityId<*>,
+                 affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean
 }
 
-internal class PFolderEntityData : PEntityData<PFolderEntity> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
-  lateinit var data: String
+abstract class PEntityData<E : TypedEntity>: Cloneable {
+  lateinit var entitySource: EntitySource
+  var id: Int = -1
 
-  override fun createEntity(snapshot: PEntityStorage) = PFolderEntity(entitySource, id, data, snapshot)
+  internal fun createPid(): PId<E> = PId(id, ClassConversion.entityDataToEntity(this::class))
 
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder) = PFolderModifiableEntity(this, diff)
+  abstract fun createEntity(snapshot: TypedEntityStorage): E
 
-  override fun clone() = PFolderEntityData().also {
-    it.id = this.id
-    it.entitySource = this.entitySource
-    it.data = this.data
+  fun addMetaData(res: E, snapshot: TypedEntityStorage) {
+    (res as PTypedEntity).entitySource = entitySource
+    (res as PTypedEntity).id = createPid() as PId<TypedEntity>
+    (res as PTypedEntity).snapshot = snapshot as AbstractPEntityStorage
+  }
+
+  internal fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<E> {
+    val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
+    val res = returnClass.java.newInstance()
+    res as PModifiableTypedEntity
+    res.original = this
+    res.diff = diff
+    res.id = createPid() as PId<TypedEntity>
+    res.entitySource = this.entitySource
+    return res
+  }
+
+  public override fun clone(): PEntityData<E> = super.clone() as PEntityData<E>
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    return this::class.memberProperties
+      .filter { it.name != PEntityData<*>::id.name }
+      .map { it.getter }
+      .all { it.call(this) == it.call(other) }
+  }
+
+  override fun hashCode(): Int {
+    return this::class.memberProperties
+      .filter { it.name != PEntityData<*>::id.name }
+      .map { it.getter.call(this).hashCode() }
+      .fold(31) { acc, i -> acc * 17 + i }
   }
 }
 
-internal class PSoftSubFolderEntityData : PEntityData<PSoftSubFolder> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
-
-  override fun createEntity(snapshot: PEntityStorage) = PSoftSubFolder(entitySource, id, snapshot)
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder): ModifiableTypedEntity<PSoftSubFolder> {
-    return PSoftSubFolderModifiableEntity(this, diff)
-  }
-
-  override fun clone() = PSoftSubFolderEntityData().also {
-    it.id = this.id
-    it.entitySource = this.entitySource
-  }
-}
-
-internal class PSubFolderEntityData : PEntityData<PSubFolderEntity> {
-  override var id: Int = -1
-  override lateinit var entitySource: EntitySource
-  lateinit var data: String
-
-  override fun createEntity(snapshot: PEntityStorage) = PSubFolderEntity(entitySource, id, data, snapshot)
-
-  override fun wrapAsModifiable(diff: PEntityStorageBuilder): PSubFolderModifiableEntity {
-    return PSubFolderModifiableEntity(this, diff)
-  }
-
-  override fun clone() = PSubFolderEntityData().also {
-    it.id = id
-    it.entitySource = entitySource
-    it.data = data
-  }
-}
-
-internal class PFolderEntity(
-  override val entitySource: EntitySource,
-  arrayId: Int,
-  val data: String,
-  val snapshot: PEntityStorage
-) : PTypedEntity<PFolderEntity> {
-
-  override val id: PId<PFolderEntity> = PId(arrayId, this.javaClass.kotlin)
-
-  val children: Sequence<PSubFolderEntity> by OneToMany.HardRef(snapshot, PSubFolderEntity::class)
-  val softChildren: Sequence<PSoftSubFolder> by OneToMany.SoftRef(snapshot, PSoftSubFolder::class)
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
-
-  override fun toString(): String = asStr()
-}
-
-internal class PSoftSubFolder(
-  override val entitySource: EntitySource,
-  arrayId: Int,
-  val snapshot: PEntityStorage
-) : PTypedEntity<PSoftSubFolder> {
-
-  override val id: PId<PSoftSubFolder> = PId(arrayId, this.javaClass.kotlin)
-
-  val parent: PFolderEntity? by ManyToOne.SoftRef(snapshot, PFolderEntity::class)
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  override fun toString(): String = asStr()
-}
-
-internal class PSubFolderEntity(
-  override val entitySource: EntitySource,
-  arrayId: Int,
-  val data: String,
-  val snapshot: PEntityStorage
-) : PTypedEntity<PSubFolderEntity> {
-
-  override val id: PId<PSubFolderEntity> = PId(arrayId, this.javaClass.kotlin)
-
-  val parent: PFolderEntity? by ManyToOne.HardRef(snapshot, PFolderEntity::class)
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
-
-  override fun toString(): String = asStr()
-}
-
-@PEntityDataClass(PFolderEntityData::class)
-@PEntityClass(PFolderEntity::class)
-internal class PFolderModifiableEntity(val original: PFolderEntityData,
-                              val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PFolderEntity> {
-  override fun hasEqualProperties(e: TypedEntity): Boolean = TODO("Not yet implemented")
-
-  override var entitySource: EntitySource = original.entitySource
-
-  var data: String by Another(original)
-
-  var children: Sequence<PSubFolderEntity> by MutableOneToMany.HardRef(diff, PFolderEntity::class, PSubFolderEntity::class)
-  var softChildren: Sequence<PSoftSubFolder> by MutableOneToMany.SoftRef(diff, PFolderEntity::class, PSoftSubFolder::class)
-
-  override val id: PId<PFolderEntity> = PId(original.id, PFolderEntity::class)
-}
-
-@PEntityDataClass(PSubFolderEntityData::class)
-@PEntityClass(PSubFolderEntity::class)
-internal class PSubFolderModifiableEntity(val original: PSubFolderEntityData,
-                                 val diff: PEntityStorageBuilder) : PModifiableTypedEntity<PSubFolderEntity> {
-  override val id: PId<PSubFolderEntity> = PId(original.id, PSubFolderEntity::class)
-
-  var data: String by Another(original)
-
-  var parent: PFolderEntity? by MutableManyToOne.HardRef(diff, PSubFolderEntity::class, PFolderEntity::class)
-
-  override val entitySource: EntitySource = original.entitySource
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
-}
-
-internal class Another<A, B>(val original: Any) : ReadWriteProperty<A, B> {
+class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
-    return ((original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(original) as B
+    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
   }
 
   override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
-    ((original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(original, value)
+    if (!thisRef.modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+    }
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
   }
 }
 
-@PEntityDataClass(PSoftSubFolderEntityData::class)
-@PEntityClass(PSoftSubFolder::class)
-internal class PSoftSubFolderModifiableEntity(
-  val original: PSoftSubFolderEntityData,
-  val diff: PEntityStorageBuilder
-) : PModifiableTypedEntity<PSoftSubFolder> {
-
-  var parent: PFolderEntity? by MutableManyToOne.SoftRef(diff, PSoftSubFolder::class, PFolderEntity::class)
-
-  override val id: PId<PSoftSubFolder> = PId(original.id, PSoftSubFolder::class)
-
-  override val entitySource: EntitySource = original.entitySource
-
-  override fun hasEqualProperties(e: TypedEntity): Boolean {
-    TODO("Not yet implemented")
-  }
-}
-
-internal object MySource : EntitySource
-
-internal annotation class PEntityDataClass(val clazz: KClass<out PEntityData<*>>)
-internal annotation class PEntityClass(val clazz: KClass<out PTypedEntity<*>>)

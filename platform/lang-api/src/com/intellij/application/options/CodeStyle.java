@@ -16,6 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.function.Consumer;
+
 /**
  * Utility class for miscellaneous code style settings retrieving methods.
  */
@@ -218,6 +220,7 @@ public class CodeStyle {
    *   <b>Note</b>
    * The method is supposed to be used in test's {@code setUp()} method. In production code use
    * {@link #doWithTemporarySettings(Project, CodeStyleSettings, Runnable)}.
+   * or {@link #doWithTemporarySettings(Project, CodeStyleSettings, Consumer)}
    *
    * @param project The project or {@code null} for default settings.
    * @param settings The settings to use temporarily with the project.
@@ -269,6 +272,35 @@ public class CodeStyle {
     try {
       settingsManager.setTemporarySettings(tempSettings);
       runnable.run();
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        settingsManager.setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        settingsManager.dropTemporarySettings();
+      }
+    }
+  }
+
+  /**
+   * Invoke the specified consumer with a copy of the given <b>baseSettings</b> and restore the old settings even if the
+   * consumer fails with an exception. It is safe to make any changes to the copy of settings passed to consumer, these
+   * changes will not affect any currently set code style.
+   *
+   * @param project              The current project.
+   * @param baseSettings         The base settings to be cloned and used in consumer.
+   * @param tempSettingsConsumer The consumer to execute with the base settings copy.
+   */
+  public static void doWithTemporarySettings(@NotNull Project project,
+                                             @NotNull CodeStyleSettings baseSettings,
+                                             @NotNull Consumer<CodeStyleSettings> tempSettingsConsumer) {
+    final CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings tempSettingsBefore = settingsManager.getTemporarySettings();
+    try {
+      CodeStyleSettings tempSettings = settingsManager.createTemporarySettings();
+      tempSettings.copyFrom(baseSettings);
+      tempSettingsConsumer.accept(tempSettings);
     }
     finally {
       if (tempSettingsBefore != null) {
@@ -347,4 +379,23 @@ public class CodeStyle {
   }
 
 
+  /**
+   * Create an instance of {@code CodeStyleSettings} with settings copied from {@code baseSettings}
+   * for testing purposes.
+   * @param baseSettings Base settings to be used for created {@code CodeStyleSettings} instance.
+   * @return Test code style settings.
+   */
+  @TestOnly
+  public static CodeStyleSettings createTestSettings(@Nullable CodeStyleSettings baseSettings) {
+    return CodeStyleSettingsManager.createTestSettings(baseSettings);
+  }
+
+  /**
+   * Create a clean instance of {@code CodeStyleSettings} for testing purposes.
+   * @return Test code style settings.
+   */
+  @TestOnly
+  public static CodeStyleSettings createTestSettings() {
+    return CodeStyleSettingsManager.createTestSettings(null);
+  }
 }

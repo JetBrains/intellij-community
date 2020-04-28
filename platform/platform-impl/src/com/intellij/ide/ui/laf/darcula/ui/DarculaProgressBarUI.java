@@ -37,6 +37,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
 
   private static final int CYCLE_TIME_SIMPLIFIED = 1000;
   private static final int REPAINT_INTERVAL_SIMPLIFIED = 500;
+  private static final int ourCycleTime = isSimplified() ? CYCLE_TIME_SIMPLIFIED : CYCLE_TIME_DEFAULT;
+  private static final int ourRepaintInterval = isSimplified() ? REPAINT_INTERVAL_SIMPLIFIED : REPAINT_INTERVAL_DEFAULT;
 
   private static final int DEFAULT_WIDTH = 4;
 
@@ -48,8 +50,14 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
   @Override
   protected void installDefaults() {
     super.installDefaults();
-    UIManager.put("ProgressBar.repaintInterval", isSimplified() ? REPAINT_INTERVAL_SIMPLIFIED : REPAINT_INTERVAL_DEFAULT);
-    UIManager.put("ProgressBar.cycleTime", isSimplified() ? CYCLE_TIME_SIMPLIFIED : CYCLE_TIME_DEFAULT);
+    UIManager.put("ProgressBar.repaintInterval", ourRepaintInterval);
+    UIManager.put("ProgressBar.cycleTime", ourCycleTime);
+  }
+
+  public void updateIndeterminateAnimationIndex(long startMillis) {
+    int numFrames = ourCycleTime / ourRepaintInterval;
+    long timePassed = System.currentTimeMillis() - startMillis;
+    setAnimationIndex((int) ((timePassed / ourRepaintInterval) % numFrames));
   }
 
   @Override

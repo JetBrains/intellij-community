@@ -115,8 +115,8 @@ CasePattern              = {CaseFirst} ({LineContinuation}? {CaseAfter})*
 Filedescriptor           = "&" {IntegerLiteral} | "&-"  //todo:: check the usage ('<&' | '>&') (num | '-') in parser
 AssigOp                  = "=" | "+="
 
-ParamExpansion           = [^{}\\] | {EscapedChar}
-ParamExpansionBody       = {ParamExpansion}+
+ParamExpansionName       = ([a-zA-Z0-9_] | {EscapedChar})*
+ParamExpansionSeparator  = "#""#"? | "!" | ":" | ":"?"=" | ":"?"+" | ":"?"-" | ":"?"?" | "@" | ","","? | "^""^"? | "*"
 
 HeredocMarker            = [^\r\n|&\\;()[] \t\"'] | {EscapedChar}
 HeredocMarkerInQuotes    = {HeredocMarker}+ | '{HeredocMarker}+' | \"{HeredocMarker}+\"
@@ -152,6 +152,7 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 %state HERE_DOC_BODY
 
 %state PARAMETER_EXPANSION
+%state PARAMETER_EXPANSION_EXPR
 %state PARENTHESES_COMMAND_SUBSTITUTION
 %state BACKQUOTE_COMMAND_SUBSTITUTION
 %%
@@ -258,10 +259,38 @@ EvalContent              = [^\r\n$\"`'() ;] | {EscapedChar}
 }
 
 <PARAMETER_EXPANSION> {
-  "${"                                { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
-  "{"                                 {             return LEFT_CURLY; }
-  "}"                                 { popState(); return RIGHT_CURLY; }
-  {ParamExpansionBody} / "${"|"}"     {             return PARAMETER_EXPANSION_BODY; }
+  "$(("                              { isArithmeticExpansion = true; yypushback(2); return DOLLAR; }
+  "(("                               { if (isArithmeticExpansion) { pushState(ARITHMETIC_EXPRESSION);
+                                          pushParentheses(DOUBLE_PARENTHESES); isArithmeticExpansion = false; return LEFT_DOUBLE_PAREN; }
+                                      else return WORD; }
+  "$("                               { pushState(PARENTHESES_COMMAND_SUBSTITUTION); yypushback(1); return DOLLAR; }
+  "${"                               { pushState(PARAMETER_EXPANSION); yypushback(1); return DOLLAR;}
+  "$["                               { pushState(OLD_ARITHMETIC_EXPRESSION); return ARITH_SQUARE_LEFT; }
+  "[["                               { pushState(CONDITIONAL_EXPRESSION); return LEFT_DOUBLE_BRACKET; }
+  "["                                { pushState(CONDITIONAL_EXPRESSION); return LEFT_SQUARE; }
+  "{"                                {             return LEFT_CURLY; }
+  "}"                                { popState(); return RIGHT_CURLY; }
+  "`"                                { pushState(BACKQUOTE_COMMAND_SUBSTITUTION); isBackquoteOpen = true; return OPEN_BACKQUOTE; }
+
+  {Variable}                         { return VAR; }
+  {Quote}                            { pushState(STRING_EXPRESSION); return OPEN_QUOTE; }
+  {RawString}                        |
+  {UnclosedRawString}                { return RAW_STRING; }
+  {ParamExpansionSeparator}          { return PARAM_SEPARATOR; }
+  "%""%"? | "/""/"?                  { pushState(PARAMETER_EXPANSION_EXPR); return PARAM_SEPARATOR; }
+  {IntegerLiteral}                   { return INT; }
+  {HexIntegerLiteral}                { return HEX; }
+  {OctalIntegerLiteral}              { return OCTAL; }
+  {ParamExpansionName}               { return WORD; }
+  {WhiteSpace}+                      |
+  {LineContinuation}+                { return WHITESPACE; }
+  {LineTerminator}                   { return LINEFEED; }
+  [^]                                { return WORD; }
+}
+
+<PARAMETER_EXPANSION_EXPR> {
+  [^}/$`\"]*                               { popState(); return WORD; }
+  [^]                                  { popState(); yypushback(yylength()); }
 }
 
 <CASE_CONDITION> {

@@ -273,7 +273,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     if (isStressTest()) {
       // all possible inspections
-      List<InspectionToolWrapper> all = InspectionToolRegistrar.getInstance().createTools();
+      List<InspectionToolWrapper<?, ?>> all = InspectionToolRegistrar.getInstance().createTools();
       List<LocalInspectionTool> locals = new ArrayList<>();
       all.stream().filter(tool -> tool instanceof LocalInspectionToolWrapper).forEach(tool -> {
         LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
@@ -1589,7 +1589,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         if (errorDescription.equals(description)) {
           errorRemoved[0] = true;
 
-          List<TextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(document);
+          List<ProgressableTextEditorHighlightingPass> passes = myDaemonCodeAnalyzer.getPassesToShowProgressFor(document);
           GeneralHighlightingPass ghp = null;
           for (TextEditorHighlightingPass pass : passes) {
             if (pass instanceof GeneralHighlightingPass && pass.getId() == Pass.UPDATE_ALL) {
@@ -2582,7 +2582,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       iDidIt();
     }
-  };
+  }
   public void testTypingMustRescheduleDaemonBackByReparseDelayMillis() {
     EmptyAnnotator emptyAnnotator = new EmptyAnnotator();
     executeWithReparseDelay(2000, () ->
@@ -2611,7 +2611,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long typingElapsed = typing - start;
         long highlightElapsed = end - typing;
         assertTrue("; typed in " + typingElapsed + "ms; highlighted in " + highlightElapsed + "ms",
-                   typingElapsed > 1000 && highlightElapsed > 2000);
+                   typingElapsed > 1000 && highlightElapsed >= 2000);
       })
     );
   }

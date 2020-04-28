@@ -17,8 +17,8 @@ public class DelayCommand extends AbstractCommand {
     final String s = getText().substring(PREFIX.length()).trim();
 
     try {
-      final Integer delay = Integer.valueOf(s);
-      context.getRobot().delay(delay.intValue());
+      final int delay = Integer.parseInt(s);
+      context.getRobot().delay(delay);
     }
     catch (NumberFormatException e) {
       dumpError(context, "Invalid delay value: " + s);

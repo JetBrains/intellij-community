@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
+import com.intellij.execution.ui.FragmentedSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -32,9 +33,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * @author dyoma
- */
 public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
   private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
@@ -191,6 +189,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     super(settings.createFactory());
 
     myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
+    myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
     Disposer.register(this, myConfigurationEditor);
     myConfiguration = settings.getConfiguration();
   }
@@ -207,6 +206,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       applyTo(settings);
     }
     return settings;
+  }
+
+  public boolean isFragmented() {
+    return myConfigurationEditor instanceof FragmentedSettingsEditor;
   }
 
   private static final class RunnersEditorComponent {

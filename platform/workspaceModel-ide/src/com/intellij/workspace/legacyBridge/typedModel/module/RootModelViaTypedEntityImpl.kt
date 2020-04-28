@@ -1,9 +1,9 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.typedModel.module
 
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.rd.attachChild
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModuleExtension
 import com.intellij.openapi.roots.OrderEntry
@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeCompilerModuleExtension
@@ -20,6 +21,8 @@ import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProvi
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
+import org.jdom.Element
+import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.collections.HashMap
@@ -66,28 +69,7 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
         .sortedByDescending { it.url.url.length }
         .find { it.url.isEqualOrParentOf(sourceRoot.url) }
 
-      val contentEntry = existingContentEntry ?: object : ContentRootEntity {
-        override val url: VirtualFileUrl
-          get() = sourceRoot.url
-
-        override val excludedUrls: List<VirtualFileUrl>
-          get() = emptyList()
-
-        override val excludedPatterns: List<String>
-          get() = emptyList()
-
-        override val module: ModuleEntity
-          get() = moduleEntity
-
-        override val entitySource: EntitySource
-          get() = moduleEntity.entitySource
-
-        override fun hasEqualProperties(e: TypedEntity): Boolean = throw UnsupportedOperationException()
-
-        override fun <R : TypedEntity> referrers(
-          entityClass: Class<R>, propertyName: String
-        ): Sequence<R> = throw UnsupportedOperationException()
-      }.also { contentEntries.add(it) }
+      val contentEntry = existingContentEntry ?: FakeContentRootEntity(sourceRoot.url, moduleEntity).also { contentEntries.add(it) }
 
       contentEntry.url
     }
@@ -165,20 +147,12 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
       for (extension in ModuleExtension.EP_NAME.getExtensions(module)) {
-        val readOnlyExtension = extension.getModifiableModel(false).also { parentDisposable.attachChild(it) }
-
-        if (rootManagerElement != null) {
-          if (readOnlyExtension is PersistentStateComponent<*>) {
-            deserializeAndLoadState(readOnlyExtension, rootManagerElement)
-          }
-          else {
-            @Suppress("DEPRECATION")
-            readOnlyExtension.readExternal(rootManagerElement)
-          }
-        }
+        val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {
-          val modifiableExtension = readOnlyExtension.getModifiableModel(true).also { parentDisposable.attachChild(it) }
+          val modifiableExtension = readOnlyExtension.getModifiableModel(true).also {
+            Disposer.register(parentDisposable, it)
+          }
           result.add(modifiableExtension)
         } else {
           result.add(readOnlyExtension)
@@ -186,6 +160,25 @@ internal class RootModelViaTypedEntityImpl(internal val moduleEntityId: Persiste
       }
 
       return result
+    }
+
+    internal fun loadExtension(extension: ModuleExtension,
+                               parentDisposable: Disposable,
+                               rootManagerElement: @NotNull Element?): @NotNull ModuleExtension {
+      val readOnlyExtension = extension.getModifiableModel(false).also {
+        Disposer.register(parentDisposable, it)
+      }
+
+      if (rootManagerElement != null) {
+        if (readOnlyExtension is PersistentStateComponent<*>) {
+          deserializeAndLoadState(readOnlyExtension, rootManagerElement)
+        }
+        else {
+          @Suppress("DEPRECATION")
+          readOnlyExtension.readExternal(rootManagerElement)
+        }
+      }
+      return readOnlyExtension
     }
   }
 }

@@ -39,7 +39,7 @@ public class MoveChangesDialog extends DialogWrapper {
   public MoveChangesDialog(final Project project, Collection<? extends Change> selected, final Set<ChangeList> changeLists, VirtualFile current) {
     super(project, true);
     mySelected = selected;
-    setTitle("Move Changes to Active Changelist");
+    setTitle(VcsBundle.message("dialog.title.move.changes.to.active.changelist"));
     myTreeList = new ChangesTree(project, true, false) {
       @Override
       public void rebuildTree() {

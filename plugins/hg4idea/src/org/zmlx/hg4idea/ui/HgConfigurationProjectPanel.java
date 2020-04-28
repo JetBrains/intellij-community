@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -33,7 +34,7 @@ import org.zmlx.hg4idea.util.HgVersion;
 import javax.swing.*;
 import java.util.Objects;
 
-public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConfigurable.HgSettingsHolder> {
+public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConfigurable.HgSettingsHolder>, Disposable {
   private final BorderLayoutPanel myMainPanel;
   private final VcsExecutablePathSelector myExecutablePathSelector;
   private final JBCheckBox myCheckIncomingOutgoingCbx;
@@ -48,7 +49,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-    myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this::testExecutable);
+    myExecutablePathSelector = new VcsExecutablePathSelector("Mercurial", this, this::testExecutable);
     panel.add(myExecutablePathSelector.getMainPanel());
 
     myCheckIncomingOutgoingCbx = new JBCheckBox(HgBundle.message("hg4idea.configuration.check.incoming.outgoing"));
@@ -74,8 +75,12 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
     myMainPanel.addToTop(panel);
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void testExecutable(@NotNull String executable) {
-    new Task.Modal(myProject, "Identifying Mercurial Version", true) {
+    new Task.Modal(myProject, HgBundle.message("hg4idea.configuration.identifying.version"), true) {
       HgVersion version;
 
       @Override
@@ -90,7 +95,7 @@ public class HgConfigurationProjectPanel implements ConfigurableUi<HgProjectConf
 
       @Override
       public void onSuccess() {
-        Messages.showInfoMessage(myMainPanel, String.format("Mercurial version is %s", version.toString()),
+        Messages.showInfoMessage(myMainPanel, HgBundle.message("hg4idea.configuration.version", version.toString()),
                                  HgBundle.message("hg4idea.run.success.title"));
       }
 

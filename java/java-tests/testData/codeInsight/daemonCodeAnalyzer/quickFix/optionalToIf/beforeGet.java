@@ -8,4 +8,9 @@ class Test {
     return Optional.ofNullable<caret>(in).filter(s -> s.length() > 2).get();
   }
 
+  void ofNullableGetFinalVar(String in) {
+    final String out = Optional<caret>.ofNullable(in).get();
+    Runnable r = () -> java.lang.System.out.println(out);
+  }
+
 }

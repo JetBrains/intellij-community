@@ -57,7 +57,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
   public void testSettingsCloneNotReferencingOriginal() throws IllegalAccessException {
     CodeStyleSettings originalRoot = CodeStyle.getSettings(getProject());
     JavaCodeStyleSettings original = originalRoot.getCustomSettings(JavaCodeStyleSettings.class);
-    CodeStyleSettings clonedRoot = originalRoot.clone();
+    CodeStyleSettings clonedRoot = CodeStyle.createTestSettings(originalRoot);
     JavaCodeStyleSettings copy = clonedRoot.getCustomSettings(JavaCodeStyleSettings.class);
     assertSame(clonedRoot, copy.getContainer());
     for (Field field : copy.getClass().getDeclaredFields()) {

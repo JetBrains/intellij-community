@@ -12,4 +12,4 @@ foo -> UMethod (name = foo) from PsiIdentifier:foo
     FileReader -> USimpleNameReferenceExpression (identifier = FileReader) from PsiIdentifier:FileReader
     path -> USimpleNameReferenceExpression (identifier = path) from PsiIdentifier:path
         br -> USimpleNameReferenceExpression (identifier = br) from PsiIdentifier:br
-        readLine -> UQualifiedReferenceExpression from PsiIdentifier:readLine
+        readLine -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from PsiIdentifier:readLine

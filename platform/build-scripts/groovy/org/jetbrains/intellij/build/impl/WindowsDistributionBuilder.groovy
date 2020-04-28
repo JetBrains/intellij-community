@@ -143,6 +143,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
       String vmOptions = "$buildContext.additionalJvmArguments -Dide.native.launcher=true -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.shortProductName
+      String classPath = buildContext.bootClassPathJarNames.join(";")
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
@@ -150,18 +151,18 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       File icoFilesDirectory = new File(buildContext.paths.temp, "win-launcher-ico")
       File appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
       new File(launcherPropertiesPath).text = """
-IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
-IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
-IDS_APP_TITLE=$productName Launcher
-IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${buildContext.applicationInfo.shortCompanyName}\\\\${buildContext.systemSelector}
-IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
-IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
-IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
-IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
-IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
-IDS_ERROR_LAUNCHING_APP=Error launching $productName
-IDS_VM_OPTIONS=$vmOptions
-""".trim()
+        IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
+        IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
+        IDS_APP_TITLE=$productName Launcher
+        IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${buildContext.applicationInfo.shortCompanyName}\\\\${buildContext.systemSelector}
+        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}_%p.log
+        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
+        IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
+        IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
+        IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
+        IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
+        IDS_VM_OPTIONS=${vmOptions}
+        IDS_CLASSPATH_LIBS=${classPath}""".stripIndent().trim()
 
       def communityHome = "$buildContext.paths.communityHome"
       String inputPath = "$communityHome/bin/WinLauncher/WinLauncher${arch.fileSuffix}.exe"

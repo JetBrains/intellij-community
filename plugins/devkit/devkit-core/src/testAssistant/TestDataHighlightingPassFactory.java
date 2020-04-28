@@ -6,13 +6,13 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +39,9 @@ final class TestDataHighlightingPassFactory implements TextEditorHighlightingPas
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile != null) {
       Project project = file.getProject();
-      if (isSupported(virtualFile, project)) {
-        return new TestDataHighlightingPass(project, PsiDocumentManager.getInstance(project).getDocument(file));
+      Document document = file.getViewProvider().getDocument();
+      if (isSupported(virtualFile, project) && document != null) {
+        return new TestDataHighlightingPass(project, document);
       }
     }
     return null;

@@ -1,17 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.reflect;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.PluginAware;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.stubs.StubIndex;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,19 +21,20 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  * @see DomExtender
  */
-public class DomExtenderEP extends AbstractExtensionPointBean {
-
+public final class DomExtenderEP implements PluginAware {
   @ApiStatus.Internal
-  public static final ExtensionPointName<DomExtenderEP> EP_NAME = ExtensionPointName.create("com.intellij.dom.extender");
+  public static final ExtensionPointName<DomExtenderEP> EP_NAME = new ExtensionPointName<>("com.intellij.dom.extender");
 
   private static final Logger LOG = Logger.getInstance(DomExtenderEP.class);
 
-  static {
-    Application app = ApplicationManager.getApplication();
-    EP_NAME.addExtensionPointListener(() -> {
-        Throwable trace = new Throwable();
-        app.invokeLater(() -> StubIndex.getInstance().forceRebuild(trace), app.getDisposed());
-    }, app);
+  private PluginDescriptor pluginDescriptor;
+
+  private DomExtenderEP() {
+  }
+
+  public DomExtenderEP(@NotNull String domClassName, @NotNull PluginDescriptor pluginDescriptor) {
+    this.domClassName = domClassName;
+    this.pluginDescriptor = pluginDescriptor;
   }
 
   @RequiredElement
@@ -45,15 +46,18 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
   public String extenderClassName;
 
   private volatile Class<?> myDomClass;
-  private volatile DomExtender myExtender;
+  private volatile DomExtender<?> myExtender;
 
   @Nullable
-  public DomExtensionsRegistrarImpl extend(@NotNull final Project project,
-                                           @NotNull final DomInvocationHandler handler,
+  public DomExtensionsRegistrarImpl extend(@NotNull Project project,
+                                           @NotNull DomInvocationHandler handler,
                                            @Nullable DomExtensionsRegistrarImpl registrar) {
     if (myDomClass == null) {
-      myDomClass = findClassNoExceptions(domClassName);
-      if (myDomClass == null) {
+      try {
+        myDomClass = Class.forName(domClassName, true, pluginDescriptor.getPluginClassLoader());
+      }
+      catch (Throwable e) {
+        LOG.error(new PluginException(e, pluginDescriptor.getPluginId()));
         return registrar;
       }
     }
@@ -62,13 +66,12 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       return registrar;
     }
 
-
     if (myExtender == null) {
       try {
-        myExtender = instantiateClass(extenderClassName, project.getPicoContainer());
+        myExtender = project.instantiateExtensionWithPicoContainerOnlyIfNeeded(extenderClassName, pluginDescriptor);
       }
       catch (Throwable e) {
-        LOG.error(new PluginException(e, getPluginId()));
+        LOG.error(e);
         return registrar;
       }
     }
@@ -81,8 +84,13 @@ public class DomExtenderEP extends AbstractExtensionPointBean {
       registrar = new DomExtensionsRegistrarImpl();
     }
     //noinspection unchecked
-    myExtender.registerExtensions(handler.getProxy(), registrar);
-
+    ((DomExtender<DomElement>)myExtender).registerExtensions(handler.getProxy(), registrar);
     return registrar;
+  }
+
+  @Override
+  @Transient
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+    this.pluginDescriptor = pluginDescriptor;
   }
 }

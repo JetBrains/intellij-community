@@ -296,8 +296,6 @@ class CommunityLibraryLicenses {
                        version: "no version number available (with patches by JetBrains)", license: "Sun Public License",
                        url: "https://versioncontrol.netbeans.org/javacvs/library/",
                        licenseUrl: "https://netbeans.org/about/legal/license.html"),
-    new LibraryLicense(name: "Javassist", libraryName: "javassist", license: "Apache 2.0",
-                       url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "javawriter", attachedTo: "intellij.android.core", license: "Apache 2.0", url: "https://github.com/square/javawriter"),
     new LibraryLicense(name: "javax inject", libraryName: "javax-inject", license: "Apache 2.0",
                        licenseUrl: "http://apache.org/licenses/LICENSE-2.0", url: "http://code.google.com/p/atinject/"),
@@ -590,9 +588,11 @@ class CommunityLibraryLicenses {
                        url: "http://ws.apache.org/xmlrpc/xmlrpc2/", licenseUrl: "http://ws.apache.org/xmlrpc/xmlrpc2/license.html"),
     new LibraryLicense(name: "XStream", libraryName: "XStream", license: "BSD License",
                        url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
-
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
+    new LibraryLicense(name: "JCEF", libraryName: "jcef", license: "Permissive",
+                       licenseUrl: "https://bitbucket.org/chromiumembedded/java-cef/src/master/LICENSE.txt",
+                       url: "https://bitbucket.org/chromiumembedded/java-cef"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-ranking-java"),

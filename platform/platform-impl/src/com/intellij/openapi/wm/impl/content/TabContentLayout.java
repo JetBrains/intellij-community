@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
@@ -368,21 +369,21 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
   }
 
   @Override
-  public String getCloseActionName() {
+  public @NlsActions.ActionText String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NlsActions.ActionText String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
   @Override
-  public String getPreviousContentActionName() {
+  public @NlsActions.ActionText String getPreviousContentActionName() {
     return UIBundle.message("tabbed.pane.select.previous.tab");
   }
 
   @Override
-  public String getNextContentActionName() {
+  public @NlsActions.ActionText String getNextContentActionName() {
     return UIBundle.message("tabbed.pane.select.next.tab");
   }
 }

@@ -30,7 +30,11 @@ public class ToolWindowEP implements PluginAware {
   @Attribute
   public String anchor;
 
+  /**
+   * @deprecated Use {@link #secondary}
+   */
   @Attribute
+  @Deprecated
   public boolean side;
 
   /**
@@ -74,8 +78,7 @@ public class ToolWindowEP implements PluginAware {
   private volatile ToolWindowFactory myFactory;
 
   @Transient
-  @NotNull
-  public final PluginDescriptor getPluginDescriptor() {
+  public final @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }
 

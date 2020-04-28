@@ -29,7 +29,7 @@
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>
 
-    <runLineMarkerContributor language="JAVA" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+    <runLineMarkerContributor language="UAST" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
@@ -56,6 +56,8 @@
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.InternalDomExtender$ForGroup"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.IdeaPlugin"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.IdeaPluginImpl"/>
+    <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Dependency"
+                        implementationClass="org.jetbrains.idea.devkit.dom.impl.DependencyImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.Extension"
                         implementationClass="org.jetbrains.idea.devkit.dom.impl.ExtensionImpl"/>
     <dom.implementation interfaceClass="org.jetbrains.idea.devkit.dom.ExtensionPoint"
@@ -72,7 +74,7 @@
     <useScopeEnlarger implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorUseScopeEnlarger"/>
     <searchScopesProvider
         order="last"
-        implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileSearchScopeProvider"/>
+        implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
 
     <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.inspections.RegistryImplicitPropertyUsageProvider"/>
 
@@ -99,10 +101,6 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDynamicPluginInspection"/>
-    <localInspection language="XML" displayName="Plugin.xml i18n verification" applyToDialects="false"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
-                     enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"/>
 
     <localInspection language="JVM" shortName="ComponentNotRegistered"
                      groupPath="Plugin DevKit"
@@ -189,7 +187,7 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UnsafeReturnStatementVisitorInspection"/>
-    <localInspection language="UAST" shortName="StatefulEp" displayName="Stateful extension"
+    <localInspection language="JVM" shortName="StatefulEp" displayName="Stateful extension"
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
@@ -261,7 +259,12 @@
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.LaterInvocator"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.RunResult.run("/>
     <stacktrace.fold substring="at com.intellij.openapi.command.impl.CoreCommandProcessor.executeCommand("/>
+    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId.withClientId"/>
+    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion.withClientId"/>
+    <stacktrace.fold substring="at com.intellij.codeWithMe.ClientId$Companion$withClientId$1"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtilKt"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil$Companion$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
@@ -272,6 +275,8 @@
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.HeavyPlatformTestCase"/>
+    <!--suppress DeprecatedClassUsageInspection -->
+    <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.EditorActionTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.ExpectedHighlightingData"/>
 
@@ -347,7 +352,8 @@
 
   <extensionPoints >
     <extensionPoint name="lang.goodCodeRedVisitor"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.internal.GoodCodeRedVisitor"/>
     </extensionPoint>
   </extensionPoints>

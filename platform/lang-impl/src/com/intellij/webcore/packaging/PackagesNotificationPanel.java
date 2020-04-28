@@ -1,6 +1,8 @@
 package com.intellij.webcore.packaging;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
@@ -40,26 +42,28 @@ public class PackagesNotificationPanel {
     });
   }
 
-  public static void showError(@NotNull String title, @NotNull PackageManagementService.ErrorDescription description) {
+  public static void showError(@NotNull @NlsContexts.DialogTitle String title,
+                               @NotNull PackageManagementService.ErrorDescription description) {
     final PackagingErrorDialog dialog = new PackagingErrorDialog(title, description);
     dialog.show();
   }
 
   public void showResult(String packageName, @Nullable PackageManagementService.ErrorDescription errorDescription) {
     if (errorDescription == null) {
-      String message = "Package installed successfully";
+      String message = IdeBundle.message("package.installed.successfully");
       if (packageName != null) {
-        message = "Package '" + packageName + "' installed successfully";
+        message = IdeBundle.message("package.0.installed.successfully", packageName);
       }
       showSuccess(message);
     }
     else {
-      String title = "Failed to install packages";
+      String title = IdeBundle.message("failed.to.install.packages.dialog.title");
       if (packageName != null) {
-        title = "Failed to install package '" + packageName + "'";
+        title = IdeBundle.message("failed.to.install.package.dialog.title", packageName);
       }
-      String firstLine = "Error occurred when installing package '" + packageName + "'. ";
-      showError(firstLine + "<a href=\"xxx\">Details...</a>", title, errorDescription);
+      String firstLine = IdeBundle.message("install.package.failure", packageName);
+      showError(firstLine + "<a href=\"xxx\">" + IdeBundle.message("install.packages.failure.details") + "</a>", title,
+                errorDescription);
     }
   }
 
@@ -88,7 +92,9 @@ public class PackagesNotificationPanel {
     myErrorDescription = null;
   }
 
-  public void showError(String text, final String detailsTitle, final PackageManagementService.ErrorDescription errorDescription) {
+  public void showError(String text,
+                        @Nullable @NlsContexts.DialogTitle String detailsTitle,
+                        PackageManagementService.ErrorDescription errorDescription) {
     showContent(text, MessageType.ERROR.getPopupBackground());
     myErrorTitle = detailsTitle;
     myErrorDescription = errorDescription;

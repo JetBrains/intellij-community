@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -241,10 +240,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                           @NotNull PsiMethod overridden,
                                           boolean insertOverride) {
     if (insertOverride && canInsertOverride(overridden, targetClass)) {
-      final String overrideAnnotationName = Override.class.getName();
-      if (!AnnotationUtil.isAnnotated(method, overrideAnnotationName, 0)) {
-        AddAnnotationPsiFix.addPhysicalAnnotation(overrideAnnotationName, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
-      }
+      AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(Override.class.getName(), PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
     }
     OverrideImplementsAnnotationsHandler.repeatAnnotationsFromSource(overridden, targetClass, method);
   }
@@ -593,10 +589,12 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     }
     finally {
       PsiFile psiFile = psiClass.getContainingFile();
-      Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), true);
-      if (editor != null && !results.isEmpty()) {
-        results.get(0).positionCaret(editor, true);
-        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (psiFile.isPhysical()) {
+        Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), true);
+        if (editor != null && !results.isEmpty()) {
+          results.get(0).positionCaret(editor, true);
+          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        }
       }
     }
   }

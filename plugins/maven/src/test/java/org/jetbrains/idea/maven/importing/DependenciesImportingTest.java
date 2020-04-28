@@ -23,8 +23,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -1047,7 +1050,10 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
   }
 
   public void testDependencyWithEnvironmentENVProperty() {
-    if(MavenUtil.newModelEnabled(myProject)){
+    if (ignore()) {
+      return;
+    }
+    if (MavenUtil.newModelEnabled(myProject)) {
       throw new IllegalStateException("This test brokes all subsequent!");
     }
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
@@ -2522,5 +2528,44 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/");
+  }
+
+  public void testRemoveInvalidOrderEntry() {
+    RegistryValue value = Registry.get("maven.always.remove.bad.entries");
+    try {
+      value.setValue(true);
+      createProjectPom("<groupId>test</groupId>" +
+                       "<artifactId>project</artifactId>" +
+                       "<packaging>pom</packaging>" +
+                       "<version>1</version>" +
+                       "<dependencies>" +
+                       "  <dependency>" +
+                       "    <groupId>junit</groupId>" +
+                       "    <artifactId>junit</artifactId>" +
+                       "    <version>4.0</version>" +
+                       "  </dependency>" +
+                       "</dependencies>");
+      importProject();
+
+      WriteAction.runAndWait(() -> {
+        ModifiableRootModel modifiableModel = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+        modifiableModel.addInvalidLibrary("SomeLibrary", LibraryTablesRegistrar.PROJECT_LEVEL);
+        modifiableModel
+          .addInvalidLibrary("Maven: AnotherLibrary", LibraryTablesRegistrar.PROJECT_LEVEL);
+        modifiableModel.commit();
+      });
+
+      importProject();
+
+      OrderEntry[] entries = ModuleRootManager.getInstance(getModule("project")).getOrderEntries();
+      List<String> strings = ContainerUtil.map(entries, Object::toString);
+
+      assertContain(strings, "project -> SomeLibrary", "project -> Maven: junit:junit:4.0");
+      assertDoesntContain(strings, "project -> Maven: AnotherLibrary");
+
+    }
+    finally {
+      value.resetToDefault();
+    }
   }
 }

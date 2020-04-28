@@ -38,10 +38,17 @@ import java.util.List;
 // w/o making mocks for all of them. perhaps later we will decouple those things
 public class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
-    public Document[] DOCUMENTS;
+    private final Document @NotNull [] DOCUMENTS;
+
+    public MyFileEditor(Document @NotNull ... DOCUMENTS) {
+      this.DOCUMENTS = DOCUMENTS;
+    }
+    public MyFileEditor() {
+      this(Document.EMPTY_ARRAY);
+    }
 
     @Override
-    public Document[] getDocuments() {
+    public Document @NotNull [] getDocuments() {
       return DOCUMENTS;
     }
 
@@ -289,7 +296,7 @@ public class Mock {
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                           boolean focusEditor,
                                                                           boolean searchForSplitter) {
-      return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
+      return Pair.create(FileEditor.EMPTY_ARRAY, new FileEditorProvider[0]);
     }
 
     @Override
@@ -327,7 +334,7 @@ public class Mock {
 
     @Override
     public FileEditor @NotNull [] getSelectedEditors() {
-      return new FileEditor[0];
+      return FileEditor.EMPTY_ARRAY;
     }
 
     @Override
@@ -337,17 +344,17 @@ public class Mock {
 
     @Override
     public FileEditor @NotNull [] getEditors(@NotNull VirtualFile file) {
-      return new FileEditor[0];
+      return FileEditor.EMPTY_ARRAY;
     }
 
     @Override
     public FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file) {
-      return new FileEditor[0];
+      return FileEditor.EMPTY_ARRAY;
     }
 
     @Override
     public FileEditor @NotNull [] getAllEditors() {
-      return new FileEditor[0];
+      return FileEditor.EMPTY_ARRAY;
     }
 
     @Override

@@ -45,7 +45,7 @@ public enum LoadingState {
     }
 
     LoadingState currentState = StartUpMeasurer.currentState.get();
-    if (currentState.ordinal() >= ordinal() || isKnownViolator()) {
+    if (currentState.compareTo(this) >= 0 || isKnownViolator()) {
       return;
     }
 
@@ -100,6 +100,6 @@ public enum LoadingState {
   }
 
   public boolean isOccurred() {
-    return StartUpMeasurer.currentState.get().ordinal() >= ordinal();
+    return StartUpMeasurer.currentState.get().compareTo(this) >= 0;
   }
 }

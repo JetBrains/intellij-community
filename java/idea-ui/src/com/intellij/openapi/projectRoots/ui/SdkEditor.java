@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.plugins.newui.TwoLineProgressIndicator;
 import com.intellij.openapi.Disposable;
@@ -373,7 +372,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     final SdkType sdkType = (SdkType)sdk.getSdkType();
     List<AdditionalDataConfigurable> configurables = myAdditionalDataConfigurables.get(sdkType);
     if (configurables == null) {
-      configurables = Lists.newArrayList();
+      configurables = new ArrayList<>();
       myAdditionalDataConfigurables.put(sdkType, configurables);
 
 

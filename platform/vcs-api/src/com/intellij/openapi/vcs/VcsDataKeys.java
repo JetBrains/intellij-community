@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
@@ -13,6 +12,7 @@ import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ListSelection;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;

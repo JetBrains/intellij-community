@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -29,9 +30,13 @@ public class VcsExecutablePathSelector {
   private String myAutoDetectedPath;
 
   public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
+    this(vcsName, null, executableTester);
+  }
+
+  public VcsExecutablePathSelector(@NotNull String vcsName, @Nullable Disposable disposable, @NotNull Consumer<String> executableTester) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
-    myPathSelector = new TextFieldWithBrowseButton();
+    myPathSelector = new TextFieldWithBrowseButton(null, disposable);
     myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
                                            null,
                                            null,

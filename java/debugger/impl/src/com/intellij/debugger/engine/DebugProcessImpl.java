@@ -70,6 +70,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.jetbrains.jdi.ClassLoaderReferenceImpl;
 import com.jetbrains.jdi.MethodImpl;
 import com.jetbrains.jdi.VirtualMachineManagerImpl;
 import com.sun.jdi.*;
@@ -135,7 +136,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
-    NodeRenderer.EP_NAME.addExtensionPointListener(this::reloadRenderers, myDisposable);
+    NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
@@ -560,6 +561,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
+    }
+    if (Registry.is("debugger.jb.jdi") || SystemInfo.isJavaVersionAtLeast(13)) {
+      setConnectorArgument("localAddress", "*");
     }
     setConnectorArgument("timeout", "0"); // wait forever
     try {
@@ -1441,6 +1445,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     // for this refType and the refType is not visible to the loader.
     // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
     // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
+    if (fromLoader instanceof ClassLoaderReferenceImpl) {
+      return ((ClassLoaderReferenceImpl)fromLoader).isVisible(refType);
+    }
     return fromLoader.visibleClasses().contains(refType);
   }
 
@@ -1493,6 +1500,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
       if (classReference instanceof ClassObjectReference) {
         refType = ((ClassObjectReference)classReference).reflectedType();
+        if (classLoader instanceof ClassLoaderReferenceImpl) {
+          ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
+        }
       }
     }
     return refType;

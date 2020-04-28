@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
@@ -357,7 +358,8 @@ public final class ConversionServiceImpl extends ConversionService {
     }
     catch (CannotConvertException e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()), "Cannot Convert Module");
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
+                               VcsBundle.message("dialog.title.cannot.convert.module"));
       return ConversionResultImpl.ERROR_OCCURRED;
     }
     catch (IOException e) {

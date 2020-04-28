@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -627,7 +628,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
-    myFileTypeManager.toLog = true;
+    FileTypeManagerImpl.toLog = true;
 
     try {
       log("T: ------ akjdhfksdjgf");
@@ -643,8 +644,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       log("T: ------ reload");
       myFileTypeManager.drainReDetectQueue();
-      myFileTypeManager.clearCaches();
-      file.putUserData(FileTypeManagerImpl.DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
       getPsiManager().dropPsiCaches();
 
       ensureRedetected(file, detectorCalled);
@@ -652,7 +651,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       log("T: ------");
     }
     finally {
-      myFileTypeManager.toLog = false;
+      FileTypeManagerImpl.toLog = false;
     }
   }
 
@@ -816,12 +815,16 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testIsFileTypeRunsDetector() throws IOException {
     final AtomicInteger detectorCalls = new AtomicInteger();
+    VirtualFile vFile = createTempFile("foo.bbb", null, "#!archive!!!", CharsetToolkit.UTF8_CHARSET);
+
     FileTypeRegistry.FileTypeDetector detector = new FileTypeRegistry.FileTypeDetector() {
       @Nullable
       @Override
       public FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
-        detectorCalls.incrementAndGet();
-        if (firstCharsIfText.toString().startsWith("#!archive")) {
+        if (file.equals(vFile)) {
+          detectorCalls.incrementAndGet();
+        }
+        if (firstCharsIfText != null && firstCharsIfText.toString().startsWith("#!archive")) {
           return ArchiveFileType.INSTANCE;
         }
         return null;
@@ -834,7 +837,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
 
-    VirtualFile vFile = createTempFile("foo.bbb", null, "#!archive!!!", CharsetToolkit.UTF8_CHARSET);
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertTrue(myFileTypeManager.isFileOfType(vFile, ArchiveFileType.INSTANCE));
     assertEquals(1, detectorCalls.get());
@@ -897,50 +899,26 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     FileUtil.writeToFile(file, new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 'a', 'b'});
     assertEquals(UnknownFileType.INSTANCE, getVirtualFile(file).getFileType());
   }
+
+  public void testRegisterUnregisterExtension() {
+    FileTypeBean bean = new FileTypeBean();
+    bean.name = MyTestFileType.NAME;
+    bean.implementationClass = MyTestFileType.class.getName();
+    bean.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
+    Disposable disposable = Disposer.newDisposable();
+    Disposer.register(getTestRootDisposable(), disposable);
+    ApplicationManager.getApplication().runWriteAction(
+      () -> FileTypeManagerImpl.EP_NAME.getPoint(null).registerExtension(bean, disposable)
+    );
+
+    assertNotNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+    ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(disposable));
+    assertNull(FileTypeManager.getInstance().findFileTypeByName(MyTestFileType.NAME));
+  }
   
   @NotNull
   private static FileType createTestFileType() {
-    return new FileType() {
-      @NotNull
-      @Override
-      public String getName() {
-        return "Foo files";
-      }
-
-      @NotNull
-      @Override
-      public String getDescription() {
-        return "";
-      }
-
-      @NotNull
-      @Override
-      public String getDefaultExtension() {
-        return "fromPlugin";
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon() {
-        return null;
-      }
-
-      @Override
-      public boolean isBinary() {
-        return false;
-      }
-
-      @Override
-      public boolean isReadOnly() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-        return null;
-      }
-    };
+    return new MyTestFileType();
   }
 
   @NotNull
@@ -1000,6 +978,50 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     }
     finally {
       myFileTypeManager.getExtensionMap().removeHashBangPattern("gogogo", StdFileTypes.PROPERTIES);
+    }
+  }
+
+  private static class MyTestFileType implements FileType {
+    public static final String NAME = "Foo files";
+
+    @NotNull
+    @Override
+    public String getName() {
+      return NAME;
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String getDefaultExtension() {
+      return "fromPlugin";
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return null;
+    }
+
+    @Override
+    public boolean isBinary() {
+      return false;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
+      return null;
     }
   }
 }

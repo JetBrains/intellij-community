@@ -38,16 +38,16 @@ public class ProcessBuilder {
 
   private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
 
-  private final List myParameters = new ArrayList();
+  private final List<String> myParameters = new ArrayList<String>();
   private File myWorkingDir = null;
 
   public void add(final String parameter) {
     myParameters.add(parameter);
   }
 
-  public void add(final List parameters) {
-    for (int i = 0; i < parameters.size(); i++) {
-      add((String)parameters.get(i));
+  public void add(final List<String> parameters) {
+    for (String parameter : parameters) {
+      add(parameter);
     }
   }
 
@@ -71,19 +71,19 @@ public class ProcessBuilder {
       throw new IllegalArgumentException("Executable name not specified");
     }
 
-    String command = myParameters.get(0).toString();
+    String command = myParameters.get(0);
     boolean winShell = isWindows && isWinShell(command);
 
     String[] commandLine = new String[myParameters.size()];
     commandLine[0] = command;
 
     for (int i = 1; i < myParameters.size(); i++) {
-      String parameter = myParameters.get(i).toString();
+      String parameter = myParameters.get(i);
 
       if (isWindows) {
         int pos = parameter.indexOf('\"');
         if (pos >= 0) {
-          StringBuffer buffer = new StringBuffer(parameter);
+          StringBuilder buffer = new StringBuilder(parameter);
           do {
             buffer.insert(pos, '\\');
             pos += 2;

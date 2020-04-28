@@ -10,6 +10,8 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -115,6 +117,42 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
   private static final int DEFAULT_HASH_CODE = 4; // chosen by fair dice roll. guaranteed to be random. see https://xkcd.com/221/ for details.
 
   DefaultProject() {
+  }
+
+  @Override
+  public <T> @NotNull T instantiateExtensionWithPicoContainerOnlyIfNeeded(@Nullable String name,
+                                                                          @Nullable PluginDescriptor pluginDescriptor) {
+    return getDelegate().instantiateExtensionWithPicoContainerOnlyIfNeeded(name, pluginDescriptor);
+  }
+
+  @Override
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @Nullable PluginId pluginId) {
+    return getDelegate().instantiateClass(aClass, pluginId);
+  }
+
+  @Override
+  public <T> T instantiateClassWithConstructorInjection(@NotNull Class<T> aClass, @NotNull Object key, @NotNull PluginId pluginId) {
+    return getDelegate().instantiateClassWithConstructorInjection(aClass, key, pluginId);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
+    return getDelegate().createError(message, pluginId);
+  }
+
+  @Override
+  public void logError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    getDelegate().logError(error, pluginId);
+  }
+
+  @Override
+  public @NotNull RuntimeException createError(@NotNull Throwable error, @NotNull PluginId pluginId) {
+    return getDelegate().createError(error, pluginId);
+  }
+
+  @Override
+  public boolean hasComponent(@NotNull Class<?> interfaceClass) {
+    return getDelegate().hasComponent(interfaceClass);
   }
 
   // make default project facade equal to any other default project facade

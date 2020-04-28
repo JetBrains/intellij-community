@@ -17,6 +17,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +44,17 @@ public class EventLogStatisticsService implements StatisticsService {
     myDeviceConfiguration = device;
     myRecorderConfiguration = config;
     mySettingsService = new EventLogUploadSettingsService(config.getRecorderId(), application);
+    mySendListener = listener;
+  }
+
+  @TestOnly
+  public EventLogStatisticsService(@NotNull DeviceConfiguration device,
+                                   @NotNull EventLogRecorderConfig config,
+                                   @Nullable EventLogSendListener listener,
+                                   @Nullable EventLogUploadSettingsService settingsService) {
+    myDeviceConfiguration = device;
+    myRecorderConfiguration = config;
+    mySettingsService = settingsService;
     mySendListener = listener;
   }
 
@@ -99,7 +111,7 @@ public class EventLogStatisticsService implements StatisticsService {
           if (logger.isTraceEnabled()) {
             logger.trace(file.getName() + "-> " + error);
           }
-          decorator.onFailed(recordRequest);
+          decorator.onFailed(recordRequest, null);
           toRemove.add(file);
           continue;
         }
@@ -107,19 +119,20 @@ public class EventLogStatisticsService implements StatisticsService {
         try {
           HttpResponse response = execute(info.getUserAgent(), serviceUrl, recordRequest);
           int code = response.getStatusLine().getStatusCode();
+          String content = getResponseMessage(response);
           if (code == HttpStatus.SC_OK) {
-            decorator.onSucceed(recordRequest);
+            decorator.onSucceed(recordRequest, content);
             toRemove.add(file);
           }
           else {
-            decorator.onFailed(recordRequest);
+            decorator.onFailed(recordRequest, content);
             if (code == HttpURLConnection.HTTP_BAD_REQUEST) {
               toRemove.add(file);
             }
           }
 
           if (logger.isTraceEnabled()) {
-            logger.trace(file.getName() + " -> " + getResponseMessage(response));
+            logger.trace(file.getName() + " -> " + content);
           }
         }
         catch (Exception e) {
@@ -238,12 +251,12 @@ public class EventLogStatisticsService implements StatisticsService {
     }
 
     @Override
-    public void onSucceed(@NotNull LogEventRecordRequest request) {
+    public void onSucceed(@NotNull LogEventRecordRequest request, @NotNull String content) {
       mySucceed++;
     }
 
     @Override
-    public void onFailed(@Nullable LogEventRecordRequest request) {
+    public void onFailed(@Nullable LogEventRecordRequest request, @Nullable String content) {
       myFailed++;
     }
 

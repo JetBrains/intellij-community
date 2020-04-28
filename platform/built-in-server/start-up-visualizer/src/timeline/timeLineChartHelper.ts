@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4core from "@amcharts/amcharts4/core"
-import {Item} from "@/state/data"
+import {ItemV0} from "@/state/data"
 
-export interface TimeLineItem extends Item {
+export interface TimeLineItem extends ItemV0 {
   // helper property, not required to visualize chart (used only to compute rowIndex for non-parallel activities)
   level: number
   rowIndex: number
@@ -12,7 +12,7 @@ export interface TimeLineItem extends Item {
   color: am4core.Color
 }
 
-export function transformToTimeLineItems(items: Array<Item>): Array<TimeLineItem> {
+export function transformToTimeLineItems(items: Array<ItemV0>): Array<TimeLineItem> {
   const result = new Array<TimeLineItem>(items.length)
   let lastAllocatedColorIndex = 0
   for (let i = 0; i < items.length; i++) {

@@ -54,3 +54,9 @@ def test_builtin_class_attribute():
 def test_fakes_from_typeshed():
     function = 10
     module = 10
+
+
+# PY-40233
+def test_private_name():
+    from typing import TypeVar
+    _T = TypeVar('_T')

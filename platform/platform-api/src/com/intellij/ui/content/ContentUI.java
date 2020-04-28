@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.content;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,19 +22,19 @@ public interface ContentUI {
 
   boolean canChangeSelectionTo(@NotNull Content content, boolean implicit);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   @NotNull
   String getCloseActionName();
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   @NotNull
   String getCloseAllButThisActionName();
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   @NotNull
   String getPreviousContentActionName();
 
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @ActionText
   @NotNull
   String getNextContentActionName();
 }

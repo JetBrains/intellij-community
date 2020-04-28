@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting.engine
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.Block
 import com.intellij.formatting.FormatterEx
 import com.intellij.formatting.engine.testModel.TestFormattingModel
@@ -59,7 +60,7 @@ go     boo
 
 class TestData(val rootBlock: Block, val textToFormat: String, val markerPosition: Int?)
 
-fun doReformatTest(before: String, expectedText: String, settings: CodeStyleSettings = CodeStyleSettings()) {
+fun doReformatTest(before: String, expectedText: String, settings: CodeStyleSettings = CodeStyle.createTestSettings()) {
   val data = extractFormattingTestData(before)
 
   val rightMargin = data.markerPosition

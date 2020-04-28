@@ -59,10 +59,10 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     private final JComponent myComponent = new JPanel();
     private final Document[] myDocuments;
 
-    private IncorrectFileEditor(Document... documents) {myDocuments = documents;}
+    private IncorrectFileEditor(Document @NotNull ... documents) {myDocuments = documents;}
 
     @Override
-    public Document[] getDocuments() {
+    public Document @NotNull [] getDocuments() {
       return myDocuments;
     }
 

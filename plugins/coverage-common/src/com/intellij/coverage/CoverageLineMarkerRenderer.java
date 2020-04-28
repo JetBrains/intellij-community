@@ -45,6 +45,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineCoverage;
@@ -103,7 +104,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   }
   
   @Override
-  public void paint(Editor editor, Graphics g, Rectangle r) {
+  public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
     final TextAttributes color = editor.getColorsScheme().getAttributes(myKey);
     Color bgColor = color.getBackgroundColor();
     if (bgColor == null) {
@@ -433,7 +434,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final GeneralColorsPage colorsPage = new GeneralColorsPage();
-      String fullDisplayName = "Editor | " + ApplicationBundle.message("title.colors.and.fonts") + " | " + colorsPage.getDisplayName();
+      String fullDisplayName = CoverageBundle
+        .message("configurable.name.editor.colors.page", ApplicationBundle.message("title.colors.and.fonts"), colorsPage.getDisplayName());
       final ColorAndFontOptions colorAndFontOptions = new ColorAndFontOptions(){
         @Override
         protected List<ColorAndFontPanelFactory> createPanelFactories() {
@@ -445,6 +447,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
               return NewColorAndFontPanel.create(preview, colorsPage.getDisplayName(), options, null, colorsPage);
             }
 
+            @NlsContexts.ConfigurableName
             @NotNull
             @Override
             public String getPanelDisplayName() {

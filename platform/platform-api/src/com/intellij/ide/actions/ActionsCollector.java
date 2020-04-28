@@ -21,12 +21,6 @@ public abstract class ActionsCollector {
   }
 
   /**
-   * @deprecated use {@link #record(Project, AnAction, AnActionEvent)} instead
-   */
-  @Deprecated
-  public void record(@Nullable AnAction action, @Nullable AnActionEvent event) {}
-
-  /**
    * Records explicitly whitelisted actions
    */
   public void record(@Nullable String actionId, @NotNull Class context) {
@@ -37,14 +31,6 @@ public abstract class ActionsCollector {
    * Records explicitly whitelisted actions with input event
    */
   public abstract void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context);
-
-  /**
-   * @deprecated use {@link #record(Project, AnAction, AnActionEvent, Language)} instead
-   */
-  @Deprecated
-  public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    record(project, action, event, null);
-  }
 
   /**
    * Records action id for global actions or action class name for actions generated on runtime.

@@ -238,11 +238,21 @@ public final class ThreadTracker {
     if (!ForkJoinWorkerThread.class.isAssignableFrom(thread.getClass())) {
       return false;
     }
-    //noinspection UnnecessaryLocalVariable
     boolean insideAwaitWork = ContainerUtil.exists(stackTrace,
           element -> element.getMethodName().equals("awaitWork")
                      && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
-    return insideAwaitWork;
+    if (insideAwaitWork) return true;
+    //java.lang.AssertionError: Thread leaked: Thread[ForkJoinPool.commonPool-worker-13,4,main] (alive) WAITING
+    //--- its stacktrace:
+    // at java.base@11.0.6/jdk.internal.misc.Unsafe.park(Native Method)
+    // at java.base@11.0.6/java.util.concurrent.locks.LockSupport.park(LockSupport.java:194)
+    // at java.base@11.0.6/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1628)
+    // at java.base@11.0.6/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:177)
+    boolean isWaitingWorkInJdk11 = stackTrace.length > 2
+          && stackTrace[0].getClassName().equals("sun.misc.Unsafe") && stackTrace[0].getMethodName().equals("park")
+          && stackTrace[1].getClassName().equals("java.util.concurrent.locks.LockSupport") && stackTrace[1].getMethodName().equals("park")
+          && stackTrace[2].getClassName().equals("java.util.concurrent.ForkJoinPool") && stackTrace[2].getMethodName().equals("runWorker");
+    return isWaitingWorkInJdk11;
   }
 
   // in newer JDKs strange long hangups observed in Unsafe.unpark:

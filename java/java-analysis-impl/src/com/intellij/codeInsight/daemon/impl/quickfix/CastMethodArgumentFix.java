@@ -18,10 +18,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class CastMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
   private final String myText;
@@ -72,8 +75,15 @@ public class CastMethodArgumentFix extends MethodArgumentFix implements HighPrio
         return true;
       }
 
-      return parameterType instanceof PsiEllipsisType && areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
+      return parameterType instanceof PsiEllipsisType &&
+             areTypesConvertible(exprType, ((PsiEllipsisType)parameterType).getComponentType(), context);
     }
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new CastMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+                                     myArgumentFixerActionFactory);
   }
 
   public static final ArgumentFixerActionFactory REGISTRAR = new MyFixerActionFactory();

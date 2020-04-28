@@ -47,14 +47,12 @@ public final class URLUtil {
    * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
    * mapped into memory.
    */
-  @NotNull
-  public static InputStream openStream(@NotNull URL url) throws IOException {
+  public static @NotNull InputStream openStream(@NotNull URL url) throws IOException {
     String protocol = url.getProtocol();
     return protocol.equals(JAR_PROTOCOL) ? openJarStream(url) : url.openStream();
   }
 
-  @NotNull
-  public static InputStream openResourceStream(@NotNull URL url) throws IOException {
+  public static @NotNull InputStream openResourceStream(@NotNull URL url) throws IOException {
     try {
       return openStream(url);
     }
@@ -78,8 +76,7 @@ public final class URLUtil {
     }
   }
 
-  @NotNull
-  private static InputStream openJarStream(@NotNull URL url) throws IOException {
+  private static @NotNull InputStream openJarStream(@NotNull URL url) throws IOException {
     Pair<String, String> paths = splitJarUrl(url.getFile());
     if (paths == null) {
       throw new MalformedURLException(url.getFile());
@@ -104,8 +101,7 @@ public final class URLUtil {
   /**
    * Checks whether local resource specified by {@code url} exists. Returns {@link ThreeState#UNSURE} if {@code url} point to a remote resource.
    */
-  @NotNull
-  public static ThreeState resourceExists(@NotNull URL url) {
+  public static @NotNull ThreeState resourceExists(@NotNull URL url) {
     if (url.getProtocol().equals(FILE_PROTOCOL)) {
       return ThreeState.fromBoolean(urlToFile(url).exists());
     }
@@ -137,8 +133,7 @@ public final class URLUtil {
    * <p/>
    * Please note that the first part is platform-dependent - see UrlUtilTest.testJarUrlSplitter() for examples.
    */
-  @Nullable
-  public static Pair<String, String> splitJarUrl(@NotNull String url) {
+  public static @Nullable Pair<String, String> splitJarUrl(@NotNull String url) {
     int pivot = url.indexOf(JAR_SEPARATOR);
     if (pivot < 0) return null;
 
@@ -164,11 +159,10 @@ public final class URLUtil {
       }
     }
 
-    return Pair.create(jarPath, resourcePath);
+    return new Pair<>(jarPath, resourcePath);
   }
 
-  @NotNull
-  public static File urlToFile(@NotNull URL url) {
+  public static @NotNull File urlToFile(@NotNull URL url) {
     try {
       return new File(url.toURI().getSchemeSpecificPart());
     }
@@ -177,13 +171,11 @@ public final class URLUtil {
     }
   }
 
-  @NotNull
-  public static String unescapePercentSequences(@NotNull String s) {
+  public static @NotNull String unescapePercentSequences(@NotNull String s) {
     return unescapePercentSequences(s, 0, s.length()).toString();
   }
 
-  @NotNull
-  public static CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
+  public static @NotNull CharSequence unescapePercentSequences(@NotNull CharSequence s, int from, int end) {
     int i = StringUtil.indexOf(s, '%', from, end);
     if (i == -1) {
       return s.subSequence(from, end);
@@ -267,8 +259,7 @@ public final class URLUtil {
     return null;
   }
 
-  @NotNull
-  public static String decode(@NotNull String string) {
+  public static @NotNull String decode(@NotNull String string) {
     try {
       return URLDecoder.decode(string, StandardCharsets.UTF_8.name());
     }
@@ -279,8 +270,7 @@ public final class URLUtil {
   }
 
 
-  @NotNull
-  public static String parseHostFromSshUrl(@NotNull String sshUrl) {
+  public static @NotNull String parseHostFromSshUrl(@NotNull String sshUrl) {
     // [ssh://]git@github.com:user/project.git
     String host = sshUrl;
     int at = host.lastIndexOf('@');
@@ -307,19 +297,16 @@ public final class URLUtil {
     return host;
   }
 
-  @NotNull
-  public static URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
+  public static @NotNull URL getJarEntryURL(@NotNull File file, @NotNull String pathInJar) throws MalformedURLException {
     return getJarEntryURL(file.toURI(), pathInJar);
   }
 
-  @NotNull
-  public static URL getJarEntryURL(@NotNull URI file, @NotNull String pathInJar) throws MalformedURLException {
+  public static @NotNull URL getJarEntryURL(@NotNull URI file, @NotNull String pathInJar) throws MalformedURLException {
     String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
     return new URL(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
   }
 
-  @NotNull
-  public static URI getJarEntryUri(@NotNull URI file, @NotNull String pathInJar) throws URISyntaxException {
+  public static @NotNull URI getJarEntryUri(@NotNull URI file, @NotNull String pathInJar) throws URISyntaxException {
     String fileURL = StringUtil.replace(file.toASCIIString(), "!", "%21");
     return new URI(JAR_PROTOCOL + ':' + fileURL + JAR_SEPARATOR + StringUtil.trimLeading(pathInJar, '/'));
   }
@@ -331,8 +318,7 @@ public final class URLUtil {
    * @param s  a component of a URI
    * @return a new string representing the provided string encoded as a URI component
    */
-  @NotNull
-  public static String encodeURIComponent(@NotNull String s) {
+  public static @NotNull String encodeURIComponent(@NotNull String s) {
     try {
       return URLEncoder.encode(s, StandardCharsets.UTF_8.name())
         .replace("+", "%20")
@@ -351,8 +337,7 @@ public final class URLUtil {
    * Finds the first range in text containing URL. This is similar to using {@link #URL_PATTERN} matcher, but also finds URLs containing
    * matched set of parentheses.
    */
-  @Nullable
-  public static TextRange findUrl(@NotNull CharSequence text, int startOffset, int endOffset) {
+  public static @Nullable TextRange findUrl(@NotNull CharSequence text, int startOffset, int endOffset) {
     Matcher m = URL_WITH_PARENS_PATTERN.matcher(text);
     m.region(startOffset, endOffset);
     if (!m.find()) return null;

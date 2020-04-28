@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ConfigImportHelper.isConfigImported
 import com.intellij.openapi.application.ConfigImportHelper.isFirstSession
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -20,8 +20,8 @@ import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsType
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitObject
+import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
 import java.util.*
@@ -45,15 +45,18 @@ internal class NonModalCommitCustomization : ApplicationInitializedListener {
   }
 }
 
-class CommitWorkflowManager(private val project: Project) : ProjectComponent {
-
-  override fun projectOpened() {
-    ProjectLevelVcsManagerImpl.getInstanceImpl(project).addInitializationRequest(VcsInitObject.AFTER_COMMON) {
+class CommitWorkflowManager(private val project: Project) {
+  class MyStartupActivity : VcsStartupActivity {
+    override fun runActivity(project: Project) {
       runInEdt {
-        subscribeToChanges()
-        updateWorkflow()
+        if (project.isDisposed) return@runInEdt
+        val manager = getInstance(project)
+        manager.subscribeToChanges()
+        manager.updateWorkflow()
       }
     }
+
+    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
   }
 
   private fun updateWorkflow() {
@@ -94,7 +97,7 @@ class CommitWorkflowManager(private val project: Project) : ProjectComponent {
     val SETTINGS: Topic<SettingsListener> = Topic.create("Commit Workflow Settings", SettingsListener::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): CommitWorkflowManager = project.getComponent(CommitWorkflowManager::class.java)
+    fun getInstance(project: Project): CommitWorkflowManager = project.service()
 
     @JvmStatic
     fun setCommitFromLocalChanges(value: Boolean) {

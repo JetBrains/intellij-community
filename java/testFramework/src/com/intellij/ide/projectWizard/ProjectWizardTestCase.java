@@ -17,15 +17,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -50,14 +49,12 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   @Nullable
   private Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
-  private LanguageLevel myOldLevel;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    myOldLevel = LanguageLevelProjectExtension.getInstance(defaultProject).getLanguageLevel();
     myOldDefaultProjectSdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
     for (final Sdk jdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -80,10 +77,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         myCreatedProject = null;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        LanguageLevelProjectExtension extension =
-          LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
-        extension.setDefault(null);
-        extension.setLanguageLevel(myOldLevel);
+        LanguageLevelProjectExtensionImpl extension =
+          LanguageLevelProjectExtensionImpl.getInstanceImpl(ProjectManager.getInstance().getDefaultProject());
+        extension.resetDefaults();
         ProjectRootManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
         JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       });

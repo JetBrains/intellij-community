@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.extensions.ExtensionPointChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -26,7 +25,7 @@ import kotlin.properties.Delegates.observable
 
 private fun Collection<Change>.toPartialAwareSet() = THashSet(this, ChangeListChange.HASHING_STRATEGY)
 
-class ChangesViewCommitWorkflowHandler(
+internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
@@ -76,8 +75,8 @@ class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
 
     ProjectManager.TOPIC.subscribe(this, this)
-    CheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
-    VcsCheckinHandlerFactory.EP_NAME.addExtensionPointListener(ExtensionPointChangeListener { vcsesChanged() }, this)
+    CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
+    VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
   }
@@ -105,6 +104,15 @@ class ChangesViewCommitWorkflowHandler(
   private fun isDefaultCommitEnabled() =
     workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading &&
     (amendCommitHandler.isAmendWithoutChangesAllowed() || !isCommitEmpty())
+
+  private fun commitHandlersChanged() {
+    if (workflow.isExecuting) return
+
+    saveCommitOptions(false)
+    disposeCommitOptions()
+
+    initCommitHandlers()
+  }
 
   override fun vcsesChanged() {
     initCommitHandlers()

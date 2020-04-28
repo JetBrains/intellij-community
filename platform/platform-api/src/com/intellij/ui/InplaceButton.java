@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Pass;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.*;
@@ -38,7 +39,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
 
   private boolean myHoveringEnabled;
 
-  public InplaceButton(String tooltip, Icon icon, ActionListener listener) {
+  public InplaceButton(@Tooltip String tooltip, Icon icon, ActionListener listener) {
     this(new IconButton(tooltip, icon, icon), listener, (Consumer<? super MouseEvent>)null, TimedDeadzone.DEFAULT);
   }
 

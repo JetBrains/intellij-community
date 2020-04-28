@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.EditorFactory
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
 class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataContext,
                                                       dataProvider: GHPRDataProvider,
@@ -17,11 +17,6 @@ class GHPRFixedActionDataContext internal constructor(dataContext: GHPRDataConte
 
   override val gitRepositoryCoordinates = dataContext.gitRepositoryCoordinates
   override val repositoryCoordinates = dataContext.repositoryCoordinates
-
-  override val securityService = dataContext.securityService
-  override val stateService = dataContext.stateService
-  override val reviewService = dataContext.reviewService
-  override val commentService = dataContext.commentService
 
   override val requestExecutor = dataContext.requestExecutor
 

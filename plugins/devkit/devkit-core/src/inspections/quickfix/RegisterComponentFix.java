@@ -2,7 +2,6 @@
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -12,8 +11,8 @@ import org.jetbrains.idea.devkit.util.ComponentType;
 public class RegisterComponentFix extends AbstractRegisterFix {
   private final ComponentType myType;
 
-  public RegisterComponentFix(ComponentType type, @NotNull SmartPsiElementPointer<PsiClass> pointer) {
-    super(pointer);
+  public RegisterComponentFix(ComponentType type, @NotNull PsiClass psiClass) {
+    super(psiClass);
     myType = type;
   }
 

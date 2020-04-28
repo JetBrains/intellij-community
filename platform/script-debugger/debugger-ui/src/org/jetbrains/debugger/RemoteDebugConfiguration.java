@@ -24,6 +24,7 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipEmptySerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.xdebugger.XDebuggerBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +149,8 @@ public abstract class RemoteDebugConfiguration extends LocatableConfigurationBas
     @NotNull
     @Override
     protected JComponent createEditor() {
-      return FormBuilder.createFormBuilder().addLabeledComponent("&Host:", hostField).addLabeledComponent("&Port:", portField).getPanel();
+      return FormBuilder.createFormBuilder().addLabeledComponent(XDebuggerBundle.message("label.host"), hostField)
+        .addLabeledComponent(XDebuggerBundle.message("label.port"), portField).getPanel();
     }
   }
 }

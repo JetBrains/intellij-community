@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.DeferredIconImpl;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
-import java.util.Map;
 
 public class LanguageListCompletionContributor extends CompletionContributor {
 
@@ -54,11 +54,9 @@ public class LanguageListCompletionContributor extends CompletionContributor {
       }
     }
 
-    for (Map.Entry<String, Language> entry : LanguageGuesser.INSTANCE.getLangToLanguageMap().entrySet()) {
-      final Language language = entry.getValue();
-
+    for (Language language : Language.getRegisteredLanguages()) {
       final LookupElementBuilder lookupElementBuilder =
-        LookupElementBuilder.create(entry.getKey())
+        LookupElementBuilder.create(StringUtil.toLowerCase(language.getID()))
           .withIcon(createLanguageIcon(language))
           .withTypeText(language.getDisplayName(), true)
           .withInsertHandler(new MyInsertHandler(parameters));

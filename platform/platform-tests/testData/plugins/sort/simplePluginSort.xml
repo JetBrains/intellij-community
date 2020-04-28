@@ -63,7 +63,7 @@
   </idea-plugin>
   <idea-plugin url="file://incompatible1.xml">
     <id>incompatible1</id>
-    <idea-version since-build="2001.0"/>
+    <idea-version since-build="9999.0"/>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
   <idea-plugin url="file://incompatible2.xml">

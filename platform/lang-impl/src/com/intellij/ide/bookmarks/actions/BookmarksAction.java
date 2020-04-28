@@ -5,22 +5,21 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarksListener;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.ComponentUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -114,7 +113,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       popup.showInBestPositionFor(e.getDataContext());
     }
 
-    list.getEmptyText().setText("No Bookmarks");
+    list.getEmptyText().setText(LangBundle.message("status.text.no.bookmarks"));
     list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
     project.getMessageBus().connect(popup).subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
@@ -244,24 +243,19 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
       BookmarkManager bookmarkManager = BookmarkManager.getInstance(myProject);
       Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
-      if (editor != null) {
-        if (ComponentUtil.getParentOfType((Class<? extends EditorsSplitters>)EditorsSplitters.class, editor.getComponent()) != null) {
-          Integer gutterLineAtCursor = EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR.getData(myDataContext);
-          Document document = editor.getDocument();
-          myLine = gutterLineAtCursor != null ? gutterLineAtCursor : editor.getCaretModel().getLogicalPosition().line;
-          myFile = FileDocumentManager.getInstance().getFile(document);
-          myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
+      if (editor == null) {
+        editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(myDataContext);
+      }
+      if (editor != null && !editor.isOneLineMode()) {
+        Document document = editor.getDocument();
+        myFile = FileDocumentManager.getInstance().getFile(document);
+        if (myFile instanceof LightVirtualFile) {
+          myFile = null;
+          return this;
         }
-        else {
-          myFile = CommonDataKeys.VIRTUAL_FILE.getData(myDataContext);
-          if (myFile != null) {
-            Document document = editor.getDocument();
-            if (Comparing.equal(myFile, FileDocumentManager.getInstance().getFile(document))) {
-              myLine = editor.getCaretModel().getLogicalPosition().line;
-              myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
-            }
-          }
-        }
+        Integer gutterLineAtCursor = EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR.getData(myDataContext);
+        myLine = gutterLineAtCursor != null ? gutterLineAtCursor : editor.getCaretModel().getLogicalPosition().line;
+        myBookmarkAtPlace = bookmarkManager.findEditorBookmark(document, myLine);
       }
 
       if (myFile == null) {

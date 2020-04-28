@@ -65,7 +65,7 @@ public interface CoverageSuite extends JDOMExternalizable {
   default void deleteCachedCoverageData() {
     final String fileName = getCoverageDataFileName();
     if (!FileUtil.isAncestor(PathManager.getSystemPath(), fileName, false)) {
-      String message = "Would you like to delete file \'" + fileName + "\' " + "on disk?";
+      String message = CoverageBundle.message("dialog.message.would.you.like.to.delete.file.on.disk", fileName);
       if (Messages.showYesNoDialog(getProject(), message, CoverageBundle.message("delete.file"), Messages.getWarningIcon()) != Messages.YES) {
         return;
       }

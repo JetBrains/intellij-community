@@ -244,13 +244,11 @@ public class ControlFlowWrapper {
   public List<PsiVariable> getInputVariables(final PsiElement codeFragment, PsiElement[] elements, PsiVariable[] outputVariables) {
     final List<PsiVariable> inputVariables = ControlFlowUtil.getInputVariables(myControlFlow, myFlowStart, myFlowEnd);
     List<PsiVariable> myInputVariables;
+    List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
     if (skipVariablesFromExitStatements(outputVariables)) {
-      List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
       removeParametersUsedInExitsOnly(codeFragment, inputVariableList);
-      myInputVariables = inputVariableList;
     }
     else {
-      List<PsiVariable> inputVariableList = new ArrayList<>(inputVariables);
       for (Iterator<PsiVariable> iterator = inputVariableList.iterator(); iterator.hasNext(); ) {
         PsiVariable variable = iterator.next();
         for (PsiElement element : elements) {
@@ -260,8 +258,8 @@ public class ControlFlowWrapper {
           }
         }
       }
-      myInputVariables = inputVariableList;
     }
+    myInputVariables = inputVariableList;
     //varargs variables go last, otherwise order is induced by original ordering
     myInputVariables.sort((v1, v2) -> {
       if (v1.getType() instanceof PsiEllipsisType) {

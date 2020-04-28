@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
@@ -16,7 +16,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 
-public class DecodeDefaultsUtil {
+public final class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
   private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
 
@@ -60,8 +60,7 @@ public class DecodeDefaultsUtil {
     return head.endsWith(tail) ? head : head + tail;
   }
 
-  @Nullable
-  public static InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
+  public static @Nullable InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
     try {
       final URL defaults = getDefaults(requestor, componentResourcePath);
       return defaults == null ? null : URLUtil.openStream(defaults);

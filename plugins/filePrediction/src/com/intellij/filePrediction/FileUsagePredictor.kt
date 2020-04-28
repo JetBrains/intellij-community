@@ -4,8 +4,10 @@ package com.intellij.filePrediction
 import com.intellij.filePrediction.ExternalReferencesResult.Companion.FAILED_COMPUTATION
 import com.intellij.filePrediction.history.FilePredictionHistory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
@@ -19,11 +21,17 @@ internal object FileUsagePredictor {
   private const val MAX_CANDIDATE: Int = 10
 
   fun onFileOpened(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
+    if (ProjectManagerImpl.isLight(project)) {
+      return
+    }
+
     NonUrgentExecutor.getInstance().execute {
-      if (Math.random() < CALCULATE_OPEN_FILE_PROBABILITY) {
-        logFileFeatures(project, newFile, prevFile)
-      }
-      FilePredictionHistory.getInstance(project).onFileOpened(newFile.url)
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, Runnable {
+        if (Math.random() < CALCULATE_OPEN_FILE_PROBABILITY) {
+          logFileFeatures(project, newFile, prevFile)
+        }
+        FilePredictionHistory.getInstance(project).onFileOpened(newFile.url)
+      })
     }
   }
 

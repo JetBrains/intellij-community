@@ -8,16 +8,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
 data class SignatureInferenceOptions(val searchScope: SearchScope,
+                                     val restrictScopeToLocal: Boolean,
                                      val signatureInferenceContext: SignatureInferenceContext,
-                                     val calls: Lazy<List<PsiReference>>) {
-
-  override fun equals(other: Any?): Boolean = other is SignatureInferenceOptions &&
-                                              this.searchScope == other.searchScope &&
-                                              this.signatureInferenceContext == other.signatureInferenceContext
-
-  override fun hashCode(): Int = searchScope.hashCode() * 31 + signatureInferenceContext.hashCode()
-}
-
+                                     val calls: Lazy<List<PsiReference>>)
 
 open class SignatureInferenceContext(val ignored: List<GrMethod>) {
 
@@ -60,9 +53,4 @@ class ClosureIgnoringInferenceContext(private val manager: PsiManager, ignored: 
   override fun ignoreMethod(method: GrMethod): SignatureInferenceContext {
     return ClosureIgnoringInferenceContext(manager, listOf(method, *ignored.toTypedArray()))
   }
-
-  override fun equals(other: Any?): Boolean =
-    other is ClosureIgnoringInferenceContext && this.manager == other.manager && this.ignored == other.ignored
-
-  override fun hashCode(): Int = manager.hashCode() * 31 + ignored.hashCode()
 }

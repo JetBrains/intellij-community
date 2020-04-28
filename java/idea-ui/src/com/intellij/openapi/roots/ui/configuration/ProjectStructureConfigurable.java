@@ -206,22 +206,9 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
       addArtifactsConfig();
     }
 
-    ProjectStructureConfigurableContributor[] adders = ProjectStructureConfigurableContributor.EP_NAME.getExtensions();
-    for (ProjectStructureConfigurableContributor adder : adders) {
-      for (Configurable configurable : adder.getExtraProjectConfigurables(myProject, myContext)) {
-        addConfigurable(configurable, true);
-      }
-    }
-
     mySidePanel.addSeparator(JavaUiBundle.message("project.structure.platform.title"));
     addJdkListConfig();
     addGlobalLibrariesConfig();
-
-    for (ProjectStructureConfigurableContributor adder : adders) {
-      for (Configurable configurable : adder.getExtraPlatformConfigurables(myProject, myContext)) {
-        addConfigurable(configurable, true);
-      }
-    }
 
     mySidePanel.addSeparator("--");
     addErrorPane();

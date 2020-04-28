@@ -17,7 +17,6 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   private final Icon myIcon;
 
   protected OptionsMessageDialog(Project project,
-                                 @NlsUI.Label String message,
+                                 @NlsContexts.Label String message,
                                  @NlsContexts.DialogTitle String title,
                                  final Icon icon) {
     super(project);

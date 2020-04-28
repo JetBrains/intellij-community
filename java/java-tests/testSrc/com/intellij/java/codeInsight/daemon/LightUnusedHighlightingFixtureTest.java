@@ -32,7 +32,11 @@ public class LightUnusedHighlightingFixtureTest extends LightJavaCodeInsightFixt
 
       @Override
       public boolean isImplicitWrite(@NotNull PsiElement element) {
-        return element instanceof PsiField && "implicitWrite".equals(((PsiNamedElement)element).getName());
+        return element instanceof PsiField && (
+          "implicitWritePublic".equals(((PsiNamedElement)element).getName()) ||
+          "implicitWriteProtected".equals(((PsiNamedElement)element).getName()) ||
+          "implicitWritePackagePrivate".equals(((PsiNamedElement)element).getName())
+        );
       }
     }, getTestRootDisposable());
   }

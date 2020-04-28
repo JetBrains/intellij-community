@@ -20,11 +20,11 @@ import java.util.jar.Manifest;
  */
 public class CommandLineWrapper {
   private static class AppData {
-    private final List properties;
-    private final Class mainClass;
+    private final List<String> properties;
+    private final Class<?> mainClass;
     private final String[] args;
 
-    private AppData(List properties, Class mainClass, String[] args) {
+    private AppData(List<String> properties, Class<?> mainClass, String[] args) {
       this.properties = properties;
       this.mainClass = mainClass;
       this.args = args;
@@ -45,9 +45,8 @@ public class CommandLineWrapper {
     File file = new File(args[0]);
     AppData appData = args[0].endsWith(".jar") ? loadMainClassFromClasspathJar(file, args) : loadMainClassWithCustomLoader(file, args);
 
-    List properties = appData.properties;
-    for (int i = 0; i < properties.size(); i++) {
-      String property = (String)properties.get(i);
+    List<String> properties = appData.properties;
+    for (String property : properties) {
       if (property.startsWith("-D")) {
         int p = property.indexOf('=');
         if (p > 0) {
@@ -59,13 +58,13 @@ public class CommandLineWrapper {
       }
     }
 
-    Method main = appData.mainClass.getMethod("main", new Class[]{String[].class});
+    Method main = appData.mainClass.getMethod("main", String[].class);
     main.setAccessible(true);  // need to launch package-private classes
     main.invoke(null, new Object[]{appData.args});
   }
 
   private static AppData loadMainClassFromClasspathJar(File jarFile, String[] args) throws Exception {
-    List properties = Collections.EMPTY_LIST;
+    List<String> properties = Collections.emptyList();
     String[] mainArgs;
 
     JarInputStream inputStream = new JarInputStream(new FileInputStream(jarFile));
@@ -83,8 +82,8 @@ public class CommandLineWrapper {
         System.arraycopy(args, 2, mainArgs, 0, mainArgs.length);
       }
       else {
-        List list = splitBySpaces(programParameters);
-        mainArgs = (String[])list.toArray(new String[0]);
+        List<String> list = splitBySpaces(programParameters);
+        mainArgs = list.toArray(new String[0]);
       }
     }
     finally {
@@ -98,11 +97,11 @@ public class CommandLineWrapper {
   /**
    * The implementation is copied from com.intellij.util.execution.ParametersListUtil#parse and adapted to old Java versions.
    */
-  private static List splitBySpaces(String parameterString) {
+  private static List<String> splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
 
-    List params = new ArrayList();
-    StringBuffer token = new StringBuffer(128);
+    List<String> params = new ArrayList<String>();
+    StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
     boolean nonEmpty = false;
@@ -149,11 +148,11 @@ public class CommandLineWrapper {
    * args: "classpath file" [ @vm_params "VM options file" ] [ @app_params "args file" ] "main class" [ args ... ]
    */
   private static AppData loadMainClassWithCustomLoader(File classpathFile, String[] args) throws Exception {
-    List classpathUrls = new ArrayList();
-    StringBuffer classpathString = new StringBuffer();
-    List pathElements = readLinesAndDeleteFile(classpathFile);
-    for (int i = 0; i < pathElements.size(); i++) {
-      String pathElement = (String)pathElements.get(i);
+    List<URL> classpathUrls = new ArrayList<URL>();
+    StringBuilder classpathString = new StringBuilder();
+    List<String> pathElements = readLinesAndDeleteFile(classpathFile);
+    for (Object element : pathElements) {
+      String pathElement = (String)element;
       classpathUrls.add(toUrl(new File(pathElement)));
       if (classpathString.length() > 0) classpathString.append(File.pathSeparator);
       classpathString.append(pathElement);
@@ -162,7 +161,7 @@ public class CommandLineWrapper {
 
     int startArgsIdx = 2;
 
-    List properties = Collections.EMPTY_LIST;
+    List<String> properties = Collections.emptyList();
     if (args.length > startArgsIdx && "@vm_params".equals(args[startArgsIdx - 1])) {
       properties = readLinesAndDeleteFile(new File(args[startArgsIdx]));
       startArgsIdx += 2;
@@ -170,8 +169,8 @@ public class CommandLineWrapper {
 
     String[] mainArgs;
     if (args.length > startArgsIdx && "@app_params".equals(args[startArgsIdx - 1])) {
-      List lines = readLinesAndDeleteFile(new File(args[startArgsIdx]));
-      mainArgs = (String[])lines.toArray(new String[0]);
+      List<String> lines = readLinesAndDeleteFile(new File(args[startArgsIdx]));
+      mainArgs = lines.toArray(new String[0]);
       startArgsIdx += 2;
     }
     else {
@@ -180,7 +179,7 @@ public class CommandLineWrapper {
     }
 
     String mainClassName = args[startArgsIdx - 1];
-    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[0]), null);
+    ClassLoader loader = new URLClassLoader(classpathUrls.toArray(new URL[0]), null);
     String systemLoaderName = System.getProperty("java.system.class.loader");
     if (systemLoaderName != null) {
       try {
@@ -188,17 +187,17 @@ public class CommandLineWrapper {
       }
       catch (Exception ignored) { }
     }
-    Class mainClass = loader.loadClass(mainClassName);
+    Class<?> mainClass = loader.loadClass(mainClassName);
     Thread.currentThread().setContextClassLoader(loader);
 
     return new AppData(properties, mainClass, mainArgs);
   }
 
   /** @noinspection ResultOfMethodCallIgnored */
-  private static List readLinesAndDeleteFile(File file) throws IOException {
+  private static List<String> readLinesAndDeleteFile(File file) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {
-      List lines = new ArrayList();
+      List<String> lines = new ArrayList<String>();
       String line;
       while ((line = reader.readLine()) != null) lines.add(line);
       return lines;
@@ -209,7 +208,7 @@ public class CommandLineWrapper {
     }
   }
 
-  /** @noinspection Since15, deprecation */
+  /** @noinspection deprecation */
   private static URL toUrl(File classpathElement) throws MalformedURLException {
     URL url;
     try {

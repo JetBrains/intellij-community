@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.codeInsight.controlflow;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InstructionBuilder {
@@ -31,7 +31,7 @@ public class InstructionBuilder {
   @NotNull
   public static List<Instruction> buildInstructions(@NotNull ControlFlowBuilder builder,
                                                     @NotNull List<? extends PyTypeAssertionEvaluator.Assertion> assertions) {
-    final List<Instruction> result = Lists.newArrayList();
+    final List<Instruction> result = new ArrayList<>();
     for (PyTypeAssertionEvaluator.Assertion def : assertions) {
       final PyReferenceExpression e = def.getElement();
       final QualifiedName qname = e.asQualifiedName();

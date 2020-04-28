@@ -16,10 +16,7 @@
 package com.intellij.dupLocator.index;
 
 import com.intellij.codeInspection.*;
-import com.intellij.dupLocator.DuplicatesProfile;
-import com.intellij.dupLocator.DuplocateVisitor;
-import com.intellij.dupLocator.DuplocatorState;
-import com.intellij.dupLocator.LightDuplicateProfile;
+import com.intellij.dupLocator.*;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.LighterAST;
@@ -98,7 +95,7 @@ public class DuplicatesInspectionBase extends LocalInspectionTool {
       if (path == null) {
         path = file.getPath();
       }
-      String message = "Found duplicated code in " + path;
+      String message = DupLocatorBundle.message("inspection.message.found.duplicated.code.in", path);
 
       PsiElement targetElement = processor.reportedPsi.get(offset);
       TextRange rangeInElement = entry.getValue();

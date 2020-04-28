@@ -552,7 +552,7 @@ public class HighlightUtil {
           errorResult =
             HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
           if (method != null && valueType != null && method.getBody() != null) {
-            QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createDeleteReturnFix(method, statement, returnValue));
+            QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createDeleteReturnFix(method, statement));
             QuickFixAction.registerQuickFixAction(errorResult, getFixFactory().createMethodReturnFix(method, valueType, true));
           }
         }
@@ -1728,22 +1728,6 @@ public class HighlightUtil {
         }
       }
     }
-
-    if (expr instanceof PsiThisExpression) {
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-      if (psiMethod == null || psiMethod.getContainingClass() != aClass && !isInsideDefaultMethod(psiMethod, aClass)) {
-        if (aClass.isInterface()) {
-          return thisNotFoundInInterfaceInfo(expr);
-        }
-
-        if (aClass instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)aClass).getArgumentList(), expr, true)) {
-          final PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
-          if (parentClass != null && parentClass.isInterface()) {
-            return thisNotFoundInInterfaceInfo(expr);
-          }
-        }
-      }
-    }
     return null;
   }
 
@@ -1760,17 +1744,6 @@ public class HighlightUtil {
       }
     }
     return null;
-  }
-
-  private static boolean isInsideDefaultMethod(@NotNull PsiMethod method, @NotNull PsiClass aClass) {
-    while (method != null && method.getContainingClass() != aClass) {
-      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, true);
-    }
-    return method != null && method.hasModifierProperty(PsiModifier.DEFAULT);
-  }
-
-  private static HighlightInfo thisNotFoundInInterfaceInfo(@NotNull PsiExpression expr) {
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip("Cannot find symbol variable this").create();
   }
 
   private static boolean resolvesToImmediateSuperInterface(@NotNull PsiExpression expr,

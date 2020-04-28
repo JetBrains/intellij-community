@@ -9,15 +9,15 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 
-class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
+open class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
   : GHSimpleLoadingModel<T>(), Disposable {
 
-  override var loading: Boolean = false
+  final override var loading: Boolean = false
 
-  override var result: T? = null
-  override var resultAvailable: Boolean = false
+  final override var result: T? = null
+  final override var resultAvailable: Boolean = false
     private set
-  override var error: Throwable? = null
+  final override var error: Throwable? = null
 
   //to cancel old callbacks
   private var updateFuture by observable<CompletableFuture<Unit>?>(null) { _, oldValue, _ ->

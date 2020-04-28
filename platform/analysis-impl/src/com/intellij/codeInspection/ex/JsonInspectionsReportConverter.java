@@ -60,6 +60,7 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
   @NonNls private static final String LANGUAGE = "language";
   @NonNls private static final String LINES_COUNT = "lines_count";
   @NonNls private static final String MODIFICATION_TIMESTAMP = "modification_timestamp";
+  @NonNls private static final String DUPLICATED_CODE_AGGREGATE = "DuplicatedCode" + InspectionsResultUtil.AGGREGATE;
 
   @Override
   public String getFormatName() {
@@ -99,6 +100,9 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
         else if (PROJECT_FINGERPRINT.equals(fileNameWithoutExt)) {
           convertProjectFingerprint(jsonWriter, doc);
         }
+        else if (DUPLICATED_CODE_AGGREGATE.equals(fileNameWithoutExt)) {
+          convertDuplicatedCode(jsonWriter, doc);
+        }
         else {
           convertProblems(jsonWriter, doc);
         }
@@ -107,6 +111,36 @@ public class JsonInspectionsReportConverter implements InspectionsReportConverte
         throw new ConversionException("Cannot convert file: " + inspectionDataFile.getPath() + " error: " + e.getMessage());
       }
     }
+  }
+
+  private static void convertDuplicatedCode(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {
+    jsonWriter.beginObject();
+    jsonWriter.name(PROBLEMS);
+    jsonWriter.beginArray();
+    for (Element duplicates : problems.getRootElement().getChildren("duplicate")) {
+      jsonWriter.beginArray();
+      for (Element fragment : duplicates.getChildren("fragment")) {
+        convertDuplicateFragment(jsonWriter, fragment);
+      }
+      jsonWriter.endArray();
+    }
+    jsonWriter.endArray();
+    jsonWriter.endObject();
+  }
+
+  private static void convertDuplicateFragment(@NotNull JsonWriter jsonWriter, Element fragment) throws IOException {
+    jsonWriter.beginObject();
+    jsonWriter.name(FILE).value(fragment.getAttributeValue(FILE));
+    String line = fragment.getAttributeValue(LINE);
+    String start = fragment.getAttributeValue("start");
+    String end = fragment.getAttributeValue("end");
+    assert line != null;
+    assert start != null;
+    assert end != null;
+    jsonWriter.name(LINE).value(Integer.parseInt(line));
+    jsonWriter.name("start").value(Integer.parseInt(start));
+    jsonWriter.name("end").value(Integer.parseInt(end));
+    jsonWriter.endObject();
   }
 
   private static void convertProjectFingerprint(@NotNull JsonWriter jsonWriter, @NotNull Document problems) throws IOException {

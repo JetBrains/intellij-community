@@ -45,8 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.util.NlsUI.Text;
-import static com.intellij.openapi.util.NlsUI.Tooltip;
+import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import static com.intellij.openapi.util.NlsContexts.Tooltip;
 
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
@@ -403,8 +403,8 @@ public class HighlightInfo implements Segment {
     @NotNull Builder inspectionToolId(@NotNull String inspectionTool);
 
     // only one allowed
-    @NotNull Builder description(@Text @NotNull String description);
-    @NotNull Builder descriptionAndTooltip(@Text @NotNull String description);
+    @NotNull Builder description(@DetailedDescription @NotNull String description);
+    @NotNull Builder descriptionAndTooltip(@DetailedDescription @NotNull String description);
 
     // only one allowed
     @NotNull Builder textAttributes(@NotNull TextAttributes attributes);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -27,15 +27,14 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
   private final ExtensionPointName<KeyedFactoryEPBean> myEpName;
   private final PicoContainer myPicoContainer;
 
-  public KeyedExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final ExtensionPointName<KeyedFactoryEPBean> epName,
+  public KeyedExtensionFactory(final @NotNull Class<T> interfaceClass, @NonNls final @NotNull ExtensionPointName<KeyedFactoryEPBean> epName,
                                @NotNull PicoContainer picoContainer) {
     myInterfaceClass = interfaceClass;
     myEpName = epName;
     myPicoContainer = picoContainer;
   }
 
-  @NotNull
-  public T get() {
+  public @NotNull T get() {
     InvocationHandler handler = new InvocationHandler() {
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) {
@@ -58,8 +57,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return findByKey(getKey(key), myEpName, myPicoContainer);
   }
 
-  @Nullable
-  public static <T> T findByKey(@NotNull String key, @NotNull ExtensionPointName<KeyedFactoryEPBean> point, @NotNull PicoContainer picoContainer) {
+  public static @Nullable <T> T findByKey(@NotNull String key, @NotNull ExtensionPointName<KeyedFactoryEPBean> point, @NotNull PicoContainer picoContainer) {
     for (KeyedFactoryEPBean epBean : point.getExtensionList()) {
       if (!key.equals(epBean.key) || epBean.implementationClass == null) {
         continue;
@@ -78,8 +76,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return null;
   }
 
-  @NotNull
-  public Set<String> getAllKeys() {
+  public @NotNull Set<String> getAllKeys() {
     List<KeyedFactoryEPBean> list = myEpName.getExtensionList();
     Set<String> set = new THashSet<>();
     for (KeyedFactoryEPBean epBean : list) {
@@ -126,7 +123,6 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
     return (T)result;
   }
 
-  @NotNull
-  public abstract String getKey(@NotNull KeyT key);
+  public abstract @NotNull String getKey(@NotNull KeyT key);
 }
 

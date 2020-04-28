@@ -6,11 +6,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
-import com.jetbrains.python.inspections.PyMandatoryEncodingInspection;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -19,21 +19,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 @ApiStatus.Experimental
 public class PythonUiService {
 
-  public void showBalloonInfo(Project project, String message) {}
+  public void showBalloonInfo(Project project, @PopupContent String message) {}
 
-  public void showBalloonError(Project project, String message) {}
+  public void showBalloonError(Project project, @PopupContent String message) {}
 
   public Editor openTextEditor(@NotNull Project project, VirtualFile virtualFile) {
     return null;
   }
 
-  public boolean showYesDialog(Project project, String title, String message) {
+  public boolean showYesDialog(Project project, @DialogTitle String title, @DialogMessage String message) {
     return false;
   }
 
@@ -42,7 +41,11 @@ public class PythonUiService {
     return null;
   }
 
-  public void runRenameProcessor(Project project, PsiElement element, String newName, boolean searchInComments, boolean searchTextOccurrences) {}
+  public void runRenameProcessor(Project project,
+                                 PsiElement element,
+                                 String newName,
+                                 boolean searchInComments,
+                                 boolean searchTextOccurrences) {}
 
   public LocalQuickFix createPyChangeSignatureQuickFixForMismatchingMethods(PyFunction function, PyFunction method) {
     return null;
@@ -57,7 +60,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createSingleCheckboxOptionsPanel(String label, InspectionProfileEntry inspection, String property) {
+  public JComponent createSingleCheckboxOptionsPanel(@Label String label, InspectionProfileEntry inspection, String property) {
     return null;
   }
 
@@ -66,15 +69,15 @@ public class PythonUiService {
 
   @NotNull
   public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                            String defaultEncoding,
-                                                            String[] possibleFormats,
-                                                            int formatIndex,
-                                                            Consumer<String> encodingChanged,
-                                                            Consumer<Integer> formatIndexChanged) {
+                                                String defaultEncoding,
+                                                String[] possibleFormats,
+                                                int formatIndex,
+                                                Consumer<String> encodingChanged,
+                                                Consumer<Integer> formatIndexChanged) {
     return null;
   }
 
-  public JCheckBox createInspectionCheckBox(String message, InspectionProfileEntry inspection, String property) {
+  public JCheckBox createInspectionCheckBox(@Checkbox String message, InspectionProfileEntry inspection, String property) {
     return null;
   }
 
@@ -90,6 +93,10 @@ public class PythonUiService {
     return null;
   }
 
+  public JComponent onePixelSplitter(boolean b, JComponent first, JComponent second) {
+    return null;
+  }
+
   public static PythonUiService getInstance() {
     return ServiceManager.getService(PythonUiService.class);
   }
@@ -100,10 +107,13 @@ public class PythonUiService {
   }
 
   @Nullable
-  public JComponent createComboBoxWithLabel(@NotNull String label,
+  public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
                                             String[] items,
                                             final String selectedItem,
                                             Consumer<Object> selectedItemChanged) {
     return null;
+  }
+
+  public void showPopup(Project project, List<String> items, @PopupTitle String title, Consumer<String> callback) {
   }
 }

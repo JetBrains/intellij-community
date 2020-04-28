@@ -6,9 +6,9 @@ import org.junit.Test
 class ReplaceBySourceTest {
   @Test
   fun `add entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
-    val replacement = TypedEntityStorageBuilder.create()
+    val replacement = TypedEntityStorageBuilder.createProxy()
     replacement.addSampleEntity("hello1", SampleEntitySource("1"))
     builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
     builder.checkConsistency()
@@ -17,10 +17,10 @@ class ReplaceBySourceTest {
 
   @Test
   fun `add parent and child entities`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     builder.addParentEntity("parent2", SampleEntitySource("2"))
     val original = builder.toStorage()
-    val replacement = TypedEntityStorageBuilder.create()
+    val replacement = TypedEntityStorageBuilder.createProxy()
     val parent = replacement.addParentEntity("parent", SampleEntitySource("1"))
     replacement.addChildWithOptionalParentEntity(parentEntity = parent, childProperty = "child", source = SampleEntitySource("1"))
     builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
@@ -35,9 +35,9 @@ class ReplaceBySourceTest {
 
   @Test
   fun `modify entity with optional reference`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     builder.addChildWithOptionalParentEntity(null, "hello", SampleEntitySource("1"))
-    val replacement = TypedEntityStorageBuilder.create()
+    val replacement = TypedEntityStorageBuilder.createProxy()
     replacement.addChildWithOptionalParentEntity(null, "hello2", SampleEntitySource("1"))
     builder.replaceBySource({it == SampleEntitySource("1")}, replacement)
     builder.checkConsistency()
@@ -46,22 +46,22 @@ class ReplaceBySourceTest {
 
   @Test
   fun `remove entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val source1 = SampleEntitySource("1")
     builder.addSampleEntity("hello1", source1)
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
-    builder.replaceBySource({it == source1}, TypedEntityStorageBuilder.create())
+    builder.replaceBySource({it == source1}, TypedEntityStorageBuilder.createProxy())
     builder.checkConsistency()
     assertEquals("hello2", builder.singleSampleEntity().stringProperty)
   }
 
   @Test
   fun `modify entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val source1 = SampleEntitySource("1")
     builder.addSampleEntity("hello1", source1)
     builder.addSampleEntity("hello2", SampleEntitySource("2"))
-    val replacement = TypedEntityStorageBuilder.create()
+    val replacement = TypedEntityStorageBuilder.createProxy()
     replacement.addSampleEntity("updated", source1)
     builder.replaceBySource({it == source1}, replacement)
     builder.checkConsistency()
@@ -70,13 +70,13 @@ class ReplaceBySourceTest {
 
   @Test
   fun `multiple sources`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val sourceB = SampleEntitySource("b")
     builder.addSampleEntity("a", sourceA1)
     builder.addSampleEntity("b", sourceB)
-    val replacement = TypedEntityStorageBuilder.create()
+    val replacement = TypedEntityStorageBuilder.createProxy()
     replacement.addSampleEntity("new", sourceA2)
     builder.replaceBySource({ it is SampleEntitySource && it.name.startsWith("a") }, replacement)
     builder.checkConsistency()
@@ -85,11 +85,11 @@ class ReplaceBySourceTest {
 
   @Test
   fun `work with different entity sources`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val sourceA1 = SampleEntitySource("a1")
     val sourceA2 = SampleEntitySource("a2")
     val parentEntity = builder.addParentEntity(source = sourceA1)
-    val replacement = TypedEntityStorageBuilder.from(builder)
+    val replacement = TypedEntityStorageBuilder.fromProxy(builder)
     replacement.addNoDataChildEntity(parentEntity = parentEntity, source = sourceA2)
     builder.replaceBySource({ it == sourceA2}, replacement)
     builder.checkConsistency()

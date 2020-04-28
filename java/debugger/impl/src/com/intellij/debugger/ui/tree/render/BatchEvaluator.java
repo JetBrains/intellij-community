@@ -13,12 +13,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
-import com.intellij.util.io.Bits;
 import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -86,12 +88,13 @@ public class BatchEvaluator {
     final EvaluationContext evaluationContext = command.getEvaluationContext();
     final SuspendContext suspendContext = evaluationContext.getSuspendContext();
 
-    if(!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext)) {
+    if (!Registry.is("debugger.batch.evaluation.force") &&
+        (!Registry.is("debugger.batch.evaluation") || !hasBatchEvaluator(evaluationContext))) {
       myDebugProcess.getManagerThread().invokeCommand(command);
     }
     else {
       List<ToStringCommand> toStringCommands = myBuffer.get(suspendContext);
-      if(toStringCommands == null) {
+      if (toStringCommands == null) {
         final List<ToStringCommand> commands = new ArrayList<>();
         toStringCommands = commands;
         myBuffer.put(suspendContext, commands);
@@ -135,6 +138,9 @@ public class BatchEvaluator {
 
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
+      if (!hasBatchEvaluator(evaluationContext)) {
+        return false;
+      }
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
       List<Value> values = StreamEx.of(requests).map(ToStringCommand::getValue).toList();
 
@@ -156,32 +162,30 @@ public class BatchEvaluator {
       );
       if (value != null) {
         byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
-        try {
-          int pos = 0;
-          Iterator<ToStringCommand> iterator = requests.iterator();
-          while (pos < bytes.length) {
-            int length = Bits.getInt(bytes, pos);
-            boolean error = length < 0;
-            length = Math.abs(length);
-            String message = new String(bytes, pos + 4, length, StandardCharsets.ISO_8859_1);
-            if (!iterator.hasNext()) {
+        try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
+          int count = 0;
+          while (dis.available() > 0) {
+            boolean error = dis.readBoolean();
+            String message = dis.readUTF();
+            if (count >= requests.size()) {
+              LOG.error("Invalid number of results: required " + requests.size() + ", reply = " + Arrays.toString(bytes));
               return false;
             }
-            ToStringCommand command = iterator.next();
+            ToStringCommand command = requests.get(count++);
             if (error) {
               command.evaluationError(JavaDebuggerBundle.message("evaluation.error.method.exception", message));
             }
             else {
               command.evaluationResult(message);
             }
-            pos += length + 4;
           }
         }
-        catch (StringIndexOutOfBoundsException e) {
-          LOG.error("Invalid batch toString response", e, Arrays.toString(bytes));
+        catch (IOException e) {
+          LOG.error("Failed to read batch response", e, "reply was " + Arrays.toString(bytes));
+          return false;
         }
+        return true;
       }
-      return true;
     }
     catch (ClassNotLoadedException | ObjectCollectedException | EvaluateException | InvalidTypeException e) {
       LOG.debug(e);

@@ -5,8 +5,14 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import java.util.function.Supplier
 
-class GHPRReloadListAction : RefreshAction("Refresh List", null, AllIcons.Actions.Refresh) {
+class GHPRReloadListAction
+  : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.list.action"),
+                  Supplier<String?> { null },
+                  AllIcons.Actions.Refresh) {
+
   override fun update(e: AnActionEvent) {
     val context = e.getData(GHPRActionKeys.DATA_CONTEXT)
     e.presentation.isEnabled = context != null
@@ -15,7 +21,7 @@ class GHPRReloadListAction : RefreshAction("Refresh List", null, AllIcons.Action
   override fun actionPerformed(e: AnActionEvent) {
     e.getRequiredData(GHPRActionKeys.DATA_CONTEXT).apply {
       listLoader.reset()
-      metadataService.resetData()
+      repositoryDataService.resetData()
     }
   }
 }

@@ -127,7 +127,7 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
 
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
     val excludedFolder = projectRoot.findChild("excluded")!!
-    ModuleRootModificationUtil.updateExcludedFolders(rootModule, rootModule.rootManager.contentRoots.first(),
+    ModuleRootModificationUtil.updateExcludedFolders(rootModule, projectRoot,
                                                      emptyList(), listOf(excludedFolder.url))
 
     expect(roots[0])
@@ -138,7 +138,7 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
 
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
     val excludedFolder = projectRoot.findChild("excluded")!!
-    ModuleRootModificationUtil.updateExcludedFolders(rootModule, rootModule.rootManager.contentRoots.first(),
+    ModuleRootModificationUtil.updateExcludedFolders(rootModule, projectRoot,
                                                      emptyList(), listOf(excludedFolder.url))
 
     expect(roots)

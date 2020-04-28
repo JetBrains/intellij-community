@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +22,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.Optional;
 
-public class MarkdownSettingsConfigurable implements SearchableConfigurable {
+public final class MarkdownSettingsConfigurable implements SearchableConfigurable {
   static final String PLANT_UML_DIRECTORY = "plantUML";
   static final String PLANTUML_JAR_URL = Registry.stringValue("markdown.plantuml.download.link");
   static final String PLANTUML_JAR = "plantuml.jar";
@@ -34,8 +35,8 @@ public class MarkdownSettingsConfigurable implements SearchableConfigurable {
   @NotNull
   private final MarkdownApplicationSettings myMarkdownApplicationSettings;
 
-  public MarkdownSettingsConfigurable(@NotNull MarkdownApplicationSettings markdownApplicationSettings) {
-    myMarkdownApplicationSettings = markdownApplicationSettings;
+  public MarkdownSettingsConfigurable() {
+    myMarkdownApplicationSettings = MarkdownApplicationSettings.getInstance();
   }
 
   @NotNull
@@ -154,9 +155,8 @@ public class MarkdownSettingsConfigurable implements SearchableConfigurable {
     }
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "Settings.Markdown";
   }
 }

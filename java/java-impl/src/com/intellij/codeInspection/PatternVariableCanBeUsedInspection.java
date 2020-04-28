@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -13,6 +14,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -85,6 +87,13 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       CommentTracker ct = new CommentTracker();
       ct.replace(instanceOf, ct.text(instanceOf.getOperand()) + " instanceof " + typeElement.getText() + " " + variable.getName());
       ct.deleteAndRestoreComments(variable);
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
+      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(myName, PsiTreeUtil
+        .findSameElementInCopy(instanceOf, target));
     }
   }
 }

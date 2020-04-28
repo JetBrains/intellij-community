@@ -24,6 +24,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -260,7 +261,7 @@ private fun reportPluginError() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     Notification(NotificationGroup.createIdWithTitle("Plugin Error", title),
-                 title, pluginError, NotificationType.ERROR) { notification, event ->
+                 title, StringUtil.escapeXmlEntities(pluginError), NotificationType.ERROR) { notification, event ->
       notification.expire()
 
       val description = event.description

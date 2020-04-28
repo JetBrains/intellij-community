@@ -15,9 +15,25 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.util.ui.EDT;
+
 /**
  * An interface that can be implemented by the ProgressIndicator to be called from CheckCanceledHook interface. 
  */
 public interface PingProgress {
   void interact();
+
+  /**
+   * When on UI thread under a PingProgress, invoke its {@link #interact()}. This might, for example, repaint the progress
+   * to give the user feedback that the IDE is working on a long-running operation and not frozen.
+   */
+  static void interactWithEdtProgress() {
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (indicator instanceof PingProgress && EDT.isCurrentThreadEdt()) {
+      ((PingProgress)indicator).interact();
+    }
+  }
+
 }

@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -118,7 +119,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
 
   protected void checkName(@NotNull String name) throws ConfigurationException {
     if (name.isEmpty()) {
-      throw new ConfigurationException("Name cannot be empty");
+      throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"));
     }
   }
 

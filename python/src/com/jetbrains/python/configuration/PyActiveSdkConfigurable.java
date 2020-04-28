@@ -163,7 +163,9 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     c.gridx = 0;
     c.gridy = 0;
-    result.add(new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter")), c);
+    JLabel label = new JLabel(PyBundle.message("active.sdk.dialog.project.interpreter"));
+    label.setLabelFor(sdkComboBox);
+    result.add(label, c);
 
     c.gridx = 1;
     c.gridy = 0;

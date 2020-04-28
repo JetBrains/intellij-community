@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
 import com.intellij.psi.impl.file.PsiLargeBinaryFileImpl;
@@ -54,10 +55,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private static final Logger LOG = Logger.getInstance(AbstractFileViewProvider.class);
   public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
   private static final Key<Set<AbstractFileViewProvider>> KNOWN_COPIES = Key.create("KNOWN_COPIES");
-  @NotNull
-  private final PsiManagerEx myManager;
-  @NotNull
-  private final VirtualFile myVirtualFile;
+
+  private final @NotNull PsiManagerEx myManager;
+  private final @NotNull VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
   private volatile Content myContent;
@@ -385,7 +385,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   @NonNls
   @Override
   public String toString() {
-    return getClass().getName() + "{vFile=" + myVirtualFile + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
+    return getClass().getName() + "{vFile=" + myVirtualFile
+           + (myVirtualFile instanceof VirtualFileWithId ? ", vFileId=" + ((VirtualFileWithId)myVirtualFile).getId() : "")
+           + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
   }
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);

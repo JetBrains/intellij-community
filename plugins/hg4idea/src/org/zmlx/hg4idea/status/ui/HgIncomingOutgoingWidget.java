@@ -115,7 +115,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget implements Statu
       HgChangesetStatus status = statusUpdater.getStatus(myIsIncoming);
       boolean changesAvailable = status.getNumChanges() > 0;
       myCurrentIcon = changesAvailable ? myEnabledIcon : myDisabledIcon;
-      myTooltip = changesAvailable ? "\n" + status.getToolTip() : "No changes available";
+      myTooltip = changesAvailable ? "\n" + status.getToolTip() : HgBundle.message("no.changes.available");
       if (myStatusBar != null) myStatusBar.updateWidget(ID());
     });
   }

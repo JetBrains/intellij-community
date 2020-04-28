@@ -116,10 +116,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     }
     else if (element instanceof PsiMember) {
       PsiMember member = (PsiMember)element;
-      if (!isPhysical()) {
-        // don't qualify reference: the isReferenceTo() check fails anyway, whether we have a static import for this member or not
-        return this;
-      }
       final PsiClass psiClass = member.getContainingClass();
       if (psiClass == null) throw new IncorrectOperationException();
 

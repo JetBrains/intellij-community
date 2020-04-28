@@ -2,14 +2,27 @@
 
 package com.intellij.workspace.api
 
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.workspace.api.pstorage.PEntityStorage
+import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
 import gnu.trove.THashSet
-import gnu.trove.TObjectHashingStrategy
 import org.jetbrains.annotations.TestOnly
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
 @TestOnly
 fun TypedEntityStorage.checkConsistency() {
+
+  if (this is PEntityStorage) {
+    this.assertConsistency()
+    return
+  }
+
+  if (this is PEntityStorageBuilder) {
+    this.assertConsistency()
+    return
+  }
+
   val storage = this as ProxyBasedEntityStorage
   storage.entitiesByType.forEach { (clazz, entities) ->
     entities.forEach {
@@ -26,14 +39,14 @@ fun TypedEntityStorage.checkConsistency() {
     assertEquals("Incorrect id key $id for entity with id ${entity.id}", id, entity.id)
   }
 
-  val allEntitiesByType = storage.entitiesByType.flatMapTo(THashSet(TObjectHashingStrategy.IDENTITY)) { it.value }
-  val allEntitiesBySource = storage.entitiesBySource.flatMapTo(THashSet(TObjectHashingStrategy.IDENTITY)) { it.value }
+  val allEntitiesByType: THashSet<EntityData> = storage.entitiesByType.flatMapTo(THashSet(ContainerUtil.identityStrategy())) { it.value }
+  val allEntitiesBySource: THashSet<EntityData> = storage.entitiesBySource.flatMapTo(THashSet(ContainerUtil.identityStrategy())) { it.value }
   assertEquals(emptySet<TypedEntity>(), allEntitiesBySource - allEntitiesByType)
   assertEquals(emptySet<TypedEntity>(), allEntitiesByType - allEntitiesBySource)
 
-  val allEntitiesByPersistentId = storage.entitiesByPersistentIdHash.flatMapTo(THashSet(TObjectHashingStrategy.IDENTITY)) { it.value }
+  val allEntitiesByPersistentId: THashSet<EntityData> = storage.entitiesByPersistentIdHash.flatMapTo(THashSet(ContainerUtil.identityStrategy())) { it.value }
   val expectedEntitiesByPersistentId = allEntitiesByType.filterTo(
-    THashSet(TObjectHashingStrategy.IDENTITY)) {
+    THashSet(ContainerUtil.identityStrategy())) {
     TypedEntityWithPersistentId::class.java.isAssignableFrom((it as EntityData).unmodifiableEntityType)
   }
   assertEquals(expectedEntitiesByPersistentId, allEntitiesByPersistentId)
@@ -43,7 +56,7 @@ fun TypedEntityStorage.checkConsistency() {
     }
   }
 
-  val allEntitiesById = storage.entityById.values.toCollection(THashSet(TObjectHashingStrategy.IDENTITY))
+  val allEntitiesById: THashSet<EntityData> = storage.entityById.values.toCollection(THashSet(ContainerUtil.identityStrategy()))
   assertEquals(emptySet<TypedEntity>(), allEntitiesBySource - allEntitiesById)
   assertEquals(emptySet<TypedEntity>(), allEntitiesById - allEntitiesBySource)
 

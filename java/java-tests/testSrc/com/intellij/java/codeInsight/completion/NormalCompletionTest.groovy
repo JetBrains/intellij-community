@@ -121,7 +121,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert "(Object anObject)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
-    assert !presentation.tailGrayed
+    assert !presentation.tailFragments.any { it.grayed }
     assert presentation.itemTextBold
   }
 
@@ -148,7 +148,7 @@ class NormalCompletionTest extends NormalCompletionTestCase {
     assert "(String e)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
-    assert !presentation.tailGrayed
+    assert !presentation.tailFragments.any { it.grayed }
     assert presentation.itemTextBold
   }
 

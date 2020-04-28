@@ -62,11 +62,19 @@ public class IntentionPolicy {
 
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template);
-           actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
            actionText.startsWith("Convert to project line separators"); // changes VFS, not document
   }
 
   protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return false;
+  }
+
+  /**
+   * @param action action to check (already allowed by {@link #mayInvokeIntention(IntentionAction)})
+   * @return true if it should be checked that given action can generate a preview.
+   * By default preview is not checked for any action, provide custom policy to check it.
+   */
+  protected boolean shouldCheckPreview(@NotNull IntentionAction action) {
     return false;
   }
 

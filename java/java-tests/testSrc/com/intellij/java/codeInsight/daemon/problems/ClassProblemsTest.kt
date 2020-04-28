@@ -5,7 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-internal class ClassProblemsTest: ProjectProblemsViewTest() {
+internal class ClassProblemsTest : ProjectProblemsViewTest() {
 
   fun testRename() = doClassTest { psiClass, factory ->
     psiClass.nameIdentifier?.replace(factory.createIdentifier("Bar"))

@@ -9,8 +9,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +16,8 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
+import com.intellij.openapi.vcs.impl.VcsStartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,33 +51,22 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
-
-    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (project == myProject) {
-          VcsDirtyScopeManagerImpl.this.projectOpened();
-        }
-      }
-    });
   }
 
   private static ProjectLevelVcsManager getVcsManager(@NotNull Project project) {
     return ProjectLevelVcsManager.getInstance(project);
   }
 
-  private void projectOpened() {
-    ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).addInitializationRequest(VcsInitObject.DIRTY_SCOPE_MANAGER, () -> {
-      ReadAction.run(() -> {
-        boolean ready = !myProject.isDisposed() && myProject.isOpen();
-        synchronized (LOCK) {
-          myReady = ready;
-        }
-        if (ready) {
-          VcsDirtyScopeVfsListener.install(myProject);
-          markEverythingDirty();
-        }
-      });
+  private void startListenForChanges() {
+    ReadAction.run(() -> {
+      boolean ready = !myProject.isDisposed() && myProject.isOpen();
+      synchronized (LOCK) {
+        myReady = ready;
+      }
+      if (ready) {
+        VcsDirtyScopeVfsListener.install(myProject);
+        markEverythingDirty();
+      }
     });
   }
 
@@ -93,13 +80,17 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       LOG.debug("everything dirty: " + findFirstInterestingCallerClass());
     }
 
+    boolean wasReady;
     synchronized (LOCK) {
-      if (myReady) {
+      wasReady = myReady;
+      if (wasReady) {
         myDirtBuilder.setEverythingDirty(true);
       }
     }
 
-    ChangeListManager.getInstance(myProject).scheduleUpdate();
+    if (wasReady) {
+      ChangeListManager.getInstance(myProject).scheduleUpdate();
+    }
   }
 
   @Override
@@ -291,5 +282,17 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
   public static TObjectHashingStrategy<FilePath> getDirtyScopeHashingStrategy(@NotNull AbstractVcs vcs) {
     return vcs.needsCaseSensitiveDirtyScope() ? ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
                                               : ContainerUtil.canonicalStrategy();
+  }
+
+  static final class MyStartupActivity implements VcsStartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ((VcsDirtyScopeManagerImpl)getInstance(project)).startListenForChanges();
+    }
+
+    @Override
+    public int getOrder() {
+      return VcsInitObject.DIRTY_SCOPE_MANAGER.getOrder();
+    }
   }
 }

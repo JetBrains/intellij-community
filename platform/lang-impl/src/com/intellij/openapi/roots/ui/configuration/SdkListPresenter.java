@@ -208,7 +208,8 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
       SdkReferenceItem item = (SdkReferenceItem)value;
 
       SdkAppearanceService.getInstance()
-        .forSdk(item.getSdkType(), item.getName(), null, item.isValid(), false, selected);
+        .forSdk(item.getSdkType(), item.getName(), null, item.isValid(), false, selected)
+        .customize(this);
 
       String version = item.getVersionString();
       if (version == null) version = item.getSdkType().getPresentableName();
@@ -224,11 +225,16 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
 
   @NotNull
   public static String presentDetectedSdkPath(@NotNull String home) {
+    return presentDetectedSdkPath(home, 50, 30);
+  }
+
+  @NotNull
+  public static String presentDetectedSdkPath(@NotNull String home, int maxLength, int suffixLength) {
     //for macOS, let's try removing Bundle internals
     home = StringUtil.trimEnd(home, "/Contents/Home"); //NON-NLS
     home = StringUtil.trimEnd(home, "/Contents/MacOS");  //NON-NLS
     home = FileUtil.getLocationRelativeToUserHome(home);
-    home = StringUtil.shortenTextWithEllipsis(home, 50, 30);
+    home = StringUtil.shortenTextWithEllipsis(home, maxLength, suffixLength);
     return home;
   }
 }

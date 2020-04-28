@@ -6,12 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
 
@@ -359,14 +365,24 @@ public abstract class NullableNotNullManager {
     return findNullityAnnotationWithDefault(owner, checkBases, false) != null;
   }
 
-  @Nullable
-  NullabilityAnnotationInfo findNullityDefaultInHierarchy(@NotNull PsiModifierListOwner owner) {
-    PsiAnnotation.TargetType[] placeTargetTypes = AnnotationTargetUtil.getTargetsForLocation(owner.getModifierList());
+  /**
+   * @param context place in PSI tree
+   * @return default nullability for type-use elements at given place 
+   */
+  public @Nullable NullabilityAnnotationInfo findDefaultTypeUseNullability(PsiElement context) {
+    return findNullabilityDefault(context, PsiAnnotation.TargetType.TYPE_USE);
+  }
 
-    PsiElement element = owner.getParent();
+  @Nullable NullabilityAnnotationInfo findNullityDefaultInHierarchy(@NotNull PsiModifierListOwner owner) {
+    return findNullabilityDefault(owner, AnnotationTargetUtil.getTargetsForLocation(owner.getModifierList()));
+  }
+
+  private @Nullable NullabilityAnnotationInfo findNullabilityDefault(@NotNull PsiElement place,
+                                                                     @NotNull PsiAnnotation.TargetType @NotNull ... placeTargetTypes) {
+    PsiElement element = place.getParent();
     while (element != null) {
       if (element instanceof PsiModifierListOwner) {
-        NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes, owner, false);
+        NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes, place, false);
         if (result != null) {
           return result;
         }
@@ -375,7 +391,7 @@ public abstract class NullableNotNullManager {
       if (element instanceof PsiClassOwner) {
         String packageName = ((PsiClassOwner)element).getPackageName();
         return findNullityDefaultOnPackage(placeTargetTypes, JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName),
-                                           owner);
+                                           place);
       }
 
       element = element.getContext();
@@ -385,10 +401,10 @@ public abstract class NullableNotNullManager {
 
   private @Nullable NullabilityAnnotationInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
                                                                           @Nullable PsiPackage psiPackage,
-                                                                          PsiModifierListOwner owner) {
+                                                                          PsiElement context) {
     boolean superPackage = false;
     while (psiPackage != null) {
-      NullabilityAnnotationInfo onPkg = getNullityDefault(psiPackage, placeTargetTypes, owner, superPackage);
+      NullabilityAnnotationInfo onPkg = getNullityDefault(psiPackage, placeTargetTypes, context, superPackage);
       if (onPkg != null) return onPkg;
       superPackage = true;
       psiPackage = psiPackage.getParentPackage();
@@ -398,7 +414,7 @@ public abstract class NullableNotNullManager {
 
   abstract @Nullable NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
                                                                  PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                                 PsiModifierListOwner owner, boolean superPackage);
+                                                                 PsiElement context, boolean superPackage);
 
   public abstract @NotNull List<String> getNullables();
 

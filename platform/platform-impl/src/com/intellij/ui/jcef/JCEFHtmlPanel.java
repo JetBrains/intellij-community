@@ -21,9 +21,7 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   private final String myUrl;
 
   static {
-    Disposer.register(ApplicationManager.getApplication(), () -> {
-      ourCefClient.getCefClient().dispose();
-    });
+    Disposer.register(ApplicationManager.getApplication(), ourCefClient);
   }
 
   public JCEFHtmlPanel(@Nullable String url) {

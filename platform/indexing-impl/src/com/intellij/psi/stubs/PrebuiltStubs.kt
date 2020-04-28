@@ -62,7 +62,7 @@ open class HashCodeExternalizers : DataExternalizer<HashCode> {
 
 private val IDE_SERIALIZATION_MANAGER = SerializationManagerEx.getInstanceEx()
 
-class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, IDE_SERIALIZATION_MANAGER, StubForwardIndexExternalizer.createFileLocalExternalizer(IDE_SERIALIZATION_MANAGER))
+class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, IDE_SERIALIZATION_MANAGER, StubForwardIndexExternalizer.createFileLocalExternalizer())
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubTree>(), PrebuiltStubsProvider {
 
@@ -115,8 +115,8 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
       val stubTree = get(fileContent)
       if (stubTree != null) {
         val newSerializationManager = IDE_SERIALIZATION_MANAGER
-        val newForwardIndexSerializer = StubForwardIndexExternalizer.getIdeUsedExternalizer(newSerializationManager)
-        val indexedStubsSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(mySerializationManager!!)
+        val newForwardIndexSerializer = StubForwardIndexExternalizer.getIdeUsedExternalizer()
+        val indexedStubsSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
         return stubTree.reSerialize(mySerializationManager!!, newSerializationManager, indexedStubsSerializer, newForwardIndexSerializer)
       }
     }

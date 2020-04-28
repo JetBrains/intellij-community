@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
@@ -17,15 +18,24 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   private val dropEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
 
   private var progressIndicator = NonReusableEmptyProgressIndicator()
+  private var computationId: UUID? = null
 
   private var overriddenFuture: CompletableFuture<T>? = null
 
   override fun compute(): CompletableFuture<T> {
-    if (overriddenFuture != null) return overriddenFuture!!
+    val future = if (overriddenFuture != null) overriddenFuture!!
+    else {
+      progressIndicator = NonReusableEmptyProgressIndicator()
+      val indicator = progressIndicator
+      compute(indicator)
+    }
 
-    progressIndicator = NonReusableEmptyProgressIndicator()
-    val indicator = progressIndicator
-    return compute(indicator)
+    // avoid dropping the same value twice
+    val currentComputationId = UUID.randomUUID()
+    computationId = currentComputationId
+    return future.cancellationOnEdt {
+      if(computationId == currentComputationId) drop()
+    }
   }
 
   abstract fun compute(indicator: ProgressIndicator): CompletableFuture<T>
@@ -33,6 +43,7 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   fun overrideProcess(future: CompletableFuture<T>) {
     overriddenFuture = future
     super.drop()
+    computationId = null
     progressIndicator.cancel()
     dropEventDispatcher.multicaster.eventOccurred()
   }
@@ -49,12 +60,16 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
   override fun drop() {
     overriddenFuture = null
     super.drop()
+    computationId = null
     progressIndicator.cancel()
     dropEventDispatcher.multicaster.eventOccurred()
   }
 
   fun addDropEventListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(dropEventDispatcher, disposable, listener)
+
+  fun addDropEventListener(listener: () -> Unit) =
+    SimpleEventListener.addListener(dropEventDispatcher, listener)
 
   companion object {
     fun <T> create(progressManager: ProgressManager, computer: (ProgressIndicator) -> T) =
@@ -64,7 +79,7 @@ abstract class LazyCancellableBackgroundProcessValue<T> private constructor()
 
     fun <T> create(computer: (ProgressIndicator) -> CompletableFuture<T>) =
       object : LazyCancellableBackgroundProcessValue<T>() {
-        override fun compute(indicator: ProgressIndicator) = computer(indicator)
+        override fun compute(indicator: ProgressIndicator): CompletableFuture<T> = computer(indicator)
       }
   }
 }

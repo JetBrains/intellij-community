@@ -3,6 +3,7 @@ package org.jetbrains.uast.evaluation
 
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.JavaPsiFacade
@@ -307,6 +308,11 @@ class TreeBasedEvaluator(
             return this storeResultFor node
           }
         }
+      }
+
+      if(infos.isEmpty()){
+        logger<TreeBasedEvaluator>().error("empty infos on $node of class ${node.javaClass}", Attachment("nodetext", node.sourcePsi?.text ?: ""))
+        return UUndeterminedValue to data storeResultFor node
       }
 
       val lastInfo = infos.last()

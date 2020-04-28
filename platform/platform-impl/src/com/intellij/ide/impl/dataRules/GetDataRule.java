@@ -3,7 +3,7 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Must be registered with {@code key} value matching {@code DataKey#getName()}.
  */
 public interface GetDataRule {
-  ExtensionPointName<KeyedLazyInstanceEP<GetDataRule>> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
+  ExtensionPointName<KeyedLazyInstance<GetDataRule>> EP_NAME = ExtensionPointName.create("com.intellij.getDataRule");
 
   @Nullable
   Object getData(@NotNull DataProvider dataProvider);

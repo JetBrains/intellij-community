@@ -2,11 +2,14 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.BaseExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.project.Project;
@@ -18,6 +21,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,6 +29,8 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
 public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configurable, JComponent> {
   private static final Logger LOG = Logger.getInstance(ConfigurableCardPanel.class);
@@ -50,16 +56,16 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   protected JComponent create(Configurable configurable) {
     if (configurable == null) return null;
 
-    return ReadAction.compute(() -> {
-      JComponent component = createConfigurableComponent(configurable);
-      if (configurable instanceof ConfigurableWrapper && component != null) {
-        addEPChangesListener((ConfigurableWrapper)configurable);
-      }
-      return component;
-    });
+    JComponent component = createConfigurableComponent(configurable);
+    if (component == null) return null;
+
+    if (configurable instanceof ConfigurableWrapper) {
+      ReadAction.run(() -> addEPChangesListener((ConfigurableWrapper)configurable));
+    }
+    return new Wrapper(configurable, component);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings("rawtypes")
   protected void addEPChangesListener(@NotNull ConfigurableWrapper wrapper) {
     //for the dynamic configurations we have to update the whole tree
     if (wrapper.getExtensionPoint().dynamic) return;
@@ -68,7 +74,7 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     if (configurable != null && !myListeners.containsKey(wrapper)) {
       Disposable disposable = Disposer.newDisposable();
       Collection<BaseExtensionPointName<?>> dependencies = configurable.getDependencies();
-      ExtensionPointChangeListener listener = () -> {
+      Runnable listener = () -> {
         ApplicationManager.getApplication().invokeLater(() -> {
           //dispose resources -> reset nested component
           wrapper.disposeUIResources();
@@ -78,12 +84,12 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
 
       for (BaseExtensionPointName dependency : dependencies) {
         if (dependency instanceof ExtensionPointName) {
-          Extensions.getRootArea().getExtensionPoint(dependency.getName()).addExtensionPointListener(listener, false, disposable);
+          ((ExtensionPointName)dependency).addChangeListener(listener, disposable);
         }
         else if (dependency instanceof ProjectExtensionPointName) {
           Project project = wrapper.getProject();
           assert project != null;
-          ((ProjectExtensionPointName)dependency).getPoint(project).addExtensionPointListener(listener, false, disposable);
+          ((ProjectExtensionPointName)dependency).addChangeListener(project, listener, disposable);
         }
       }
 
@@ -140,15 +146,15 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
   }
 
   @Override
-  protected void dispose(Configurable configurable) {
+  protected void dispose(Configurable configurable, JComponent component) {
     if (configurable != null) {
       long time = System.currentTimeMillis();
       try {
         configurable.disposeUIResources();
         Disposable disposer = myListeners.remove(configurable);
-        if (disposer != null) {
-          Disposer.dispose(disposer);
-        }
+        if (disposer != null) Disposer.dispose(disposer);
+        if (component instanceof Disposable) Disposer.dispose((Disposable)component);
+        autoDispose(configurable, component);
       }
       catch (Exception unexpected) {
         LOG.error("cannot dispose configurable", unexpected);
@@ -157,6 +163,21 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
         warn(configurable, "dispose", time);
       }
     }
+  }
+
+  private static void autoDispose(Configurable configurable, Component component) {
+    UIUtil.uiTraverser(component)
+      .traverse()
+      .filter(Disposable.class)
+      .filter(disposable -> !Disposer.isDisposed(disposable))
+      .forEach(disposable -> {
+        LOG.warn(getString("auto-dispose", configurable));
+        Disposer.dispose(disposable);
+        if (LOG.isDebugEnabled()) {
+          UIUtil.uiParents((Component)disposable, false)
+            .forEach(parent -> LOG.debug("  in ", parent.getClass()));
+        }
+      });
   }
 
   public static void reset(Configurable configurable) {
@@ -174,24 +195,52 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
     }
   }
 
+  private static @NotNull String getString(@NotNull String prefix, @NotNull Configurable configurable) {
+    String name = configurable.getDisplayName();
+    String id = ConfigurableVisitor.getId(configurable);
+    return prefix + " '" + name + "' id=" + id;
+  }
+
   static void warn(Configurable configurable, String action, long time) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       time = System.currentTimeMillis() - time;
       int threshold = Registry.intValue("ide.settings.configurable.loading.threshold", 0);
-      if (0 < threshold && threshold < time) {
-        String name = configurable.getDisplayName();
-        String id = ConfigurableVisitor.getId(configurable);
-        LOG.warn(time + " ms to " + action + " '" + name + "' id=" + id);
-      }
+      if (0 < threshold && threshold < time) LOG.warn(time + " ms to " + getString(action, configurable));
     }
   }
 
   @Override
   public void dispose() {
     super.dispose();
-    for (Disposable value : myListeners.values()) {
-      Disposer.dispose(value);
-    }
+    myListeners.values().forEach(Disposer::dispose);
     myListeners.clear();
+  }
+
+  /**
+   * This is a wrapper for a component created by a configurable.
+   * It allows to use a dedicated UI disposable instead of a dialog disposable.
+   */
+  private static final class Wrapper extends JPanel implements Disposable, DataProvider {
+    private final Configurable myConfigurable;
+
+    private Wrapper(@NotNull Configurable configurable, @NotNull JComponent component) {
+      super(new BorderLayout());
+      myConfigurable = configurable;
+      add(BorderLayout.CENTER, component);
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+    @Override
+    public Object getData(@NotNull String dataId) {
+      return UI_DISPOSABLE.is(dataId) ? this : null;
+    }
+
+    @Override
+    public String toString() {
+      return getString("configurable wrapper", myConfigurable);
+    }
   }
 }

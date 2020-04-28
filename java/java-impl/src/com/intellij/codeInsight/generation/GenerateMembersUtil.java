@@ -605,11 +605,17 @@ public class GenerateMembersUtil {
 
   public static void copyAnnotations(@NotNull PsiModifierList source, @NotNull PsiModifierList target, String... skipAnnotations) {
     for (PsiAnnotation annotation : source.getAnnotations()) {
-      String qualifiedName = annotation.getQualifiedName();
+      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
+      if (ref == null) continue;
+      PsiClass oldClass = ObjectUtils.tryCast(ref.resolve(), PsiClass.class);
+      if (oldClass == null) continue;
+      String qualifiedName = oldClass.getQualifiedName();
       if (qualifiedName == null || ArrayUtil.contains(qualifiedName, skipAnnotations) || target.hasAnnotation(qualifiedName)) {
         continue;
       }
-      AddAnnotationPsiFix.addPhysicalAnnotation(qualifiedName, annotation.getParameterList().getAttributes(), target);
+      PsiClass newClass = JavaPsiFacade.getInstance(target.getProject()).findClass(qualifiedName, target.getResolveScope());
+      if (newClass == null || !oldClass.getManager().areElementsEquivalent(oldClass, newClass)) continue;
+      AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(qualifiedName, annotation.getParameterList().getAttributes(), target);
     }
   }
 
@@ -693,7 +699,7 @@ public class GenerateMembersUtil {
     catch (GenerateCodeException e) {
       if (ignoreInvalidTemplate) {
         LOG.info(e);
-        methodText = calculateTemplateText.fun(templatesManager.getDefaultTemplates()[0].getTemplate());
+        methodText = calculateTemplateText.fun(templatesManager.getDefaultTemplates().get(0).getTemplate());
       }
       else {
         throw e;

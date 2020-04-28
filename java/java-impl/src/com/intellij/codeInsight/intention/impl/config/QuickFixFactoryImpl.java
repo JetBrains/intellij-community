@@ -155,12 +155,6 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass) {
-    return new MakeClassInterfaceFix(aClass, true);
-  }
-
-  @NotNull
-  @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass, final boolean makeInterface) {
     return new MakeClassInterfaceFix(aClass, makeInterface);
   }
@@ -273,10 +267,8 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
-                                               @NotNull PsiReturnStatement returnStatement,
-                                               @NotNull PsiExpression returnValue) {
-    return new DeleteReturnFix(method, returnStatement, returnValue);
+  public IntentionAction createDeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement) {
+    return new DeleteReturnFix(method, returnStatement);
   }
 
   @NotNull
@@ -616,34 +608,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    return new IntentionAction() {
-      @NotNull
-      @Override
-      public String getText() {
-        return QuickFixBundle.message("optimize.imports.fix");
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return QuickFixBundle.message("optimize.imports.fix");
-      }
-
-      @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        return (!onTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
-      }
-
-      @Override
-      public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-        invokeOnTheFlyImportOptimizer(file);
-      }
-
-      @Override
-      public boolean startInWriteAction() {
-        return true;
-      }
-    };
+    return new OptimizeImportsAction(onTheFly);
   }
 
   @Override
@@ -918,5 +883,38 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddEmptyRecordHeaderFix(PsiClass psiClass) {
     return new AddEmptyRecordHeaderFix(psiClass);
+  }
+
+  private static class OptimizeImportsAction implements IntentionAction {
+    private final boolean myOnTheFly;
+
+    public OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
+
+    @NotNull
+    @Override
+    public String getText() {
+      return QuickFixBundle.message("optimize.imports.fix");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return QuickFixBundle.message("optimize.imports.fix");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return (!myOnTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
+    }
+
+    @Override
+    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      invokeOnTheFlyImportOptimizer(file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
   }
 }

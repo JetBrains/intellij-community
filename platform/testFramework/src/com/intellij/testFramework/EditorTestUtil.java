@@ -450,8 +450,14 @@ public final class EditorTestUtil {
     return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EmptyInlayRenderer(widthInPixels));
   }
 
-  public static Inlay addBlockInlay(@NotNull Editor editor, int offset, boolean showAbove, int widthInPixels) {
-    return editor.getInlayModel().addBlockElement(offset, false, showAbove, 0, new EmptyInlayRenderer(widthInPixels));
+  public static Inlay addBlockInlay(@NotNull Editor editor,
+                                    int offset,
+                                    boolean relatesToPrecedingText,
+                                    boolean showAbove,
+                                    int widthInPixels,
+                                    Integer heightInPixels) {
+    return editor.getInlayModel().addBlockElement(offset, relatesToPrecedingText, showAbove, 0,
+                                                  new EmptyInlayRenderer(widthInPixels, heightInPixels));
   }
 
   public static Inlay addAfterLineEndInlay(@NotNull Editor editor, int offset, int widthInPixels) {
@@ -571,11 +577,24 @@ public final class EditorTestUtil {
 
   private static class EmptyInlayRenderer implements EditorCustomElementRenderer {
     private final int width;
+    private final Integer height;
 
-    private EmptyInlayRenderer(int width) {this.width = width;}
+    private EmptyInlayRenderer(int width) {
+      this(width, null);
+    }
+
+    private EmptyInlayRenderer(int width, Integer height) {
+      this.width = width;
+      this.height = height;
+    }
 
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) { return width;}
+
+    @Override
+    public int calcHeightInPixels(@NotNull Inlay inlay) {
+      return height == null ? EditorCustomElementRenderer.super.calcHeightInPixels(inlay) : height;
+    }
 
     @Override
     public void paint(@NotNull Inlay inlay,

@@ -298,4 +298,6 @@ public void testConvertToObjectStream() {
   public void testNestedCollectorsCounting() { doTest(false); }
 
   public void testFilterInaccessibleConstructors() { doAntiTest(); }
+
+  public void testCastInToArrayCallWithUnresolvedType() { doAntiTest(); }
 }

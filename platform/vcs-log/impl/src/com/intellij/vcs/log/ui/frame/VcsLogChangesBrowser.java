@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
@@ -44,7 +45,6 @@ import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcsUtil.UIVcsUtilKt;
 import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -104,7 +104,7 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
 
     JComponent toolbarComponent = getToolbar().getComponent();
     myToolbarWrapper = new Wrapper(toolbarComponent);
-    UIVcsUtilKt.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
+    GuiUtils.installVisibilityReferent(myToolbarWrapper, toolbarComponent);
 
     init();
 

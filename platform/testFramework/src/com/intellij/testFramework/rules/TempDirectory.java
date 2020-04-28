@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -24,9 +25,8 @@ public class TempDirectory extends TemporaryFolder {
   private String myName;
   private File myRoot;
 
-  @NotNull
   @Override
-  public Statement apply(@NotNull Statement base, @NotNull Description description) {
+  public @NotNull Statement apply(@NotNull Statement base, @NotNull Description description) {
     myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.getMethodName(), false), true);
     return super.apply(base, description);
   }
@@ -37,14 +37,20 @@ public class TempDirectory extends TemporaryFolder {
   @Override
   protected void after() {
     if (myRoot != null) {
-      FileUtil.delete(myRoot);
+      Path path = myRoot.toPath();
       myRoot = null;
       myName = null;
+      try {
+        FileUtil.delete(path);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
   }
 
   @Override
-  public File getRoot() {
+  public @NotNull File getRoot() {
     if (myRoot == null) {
       if (myName == null) {
         throw new IllegalStateException("apply() was not called");
@@ -62,20 +68,28 @@ public class TempDirectory extends TemporaryFolder {
 
   /** Allows subdirectories in a directory name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
   @Override
-  public File newFolder(String directoryName) throws IOException {
+  public @NotNull File newFolder(@NotNull String directoryName) throws IOException {
     Path dir = Paths.get(getRoot().getPath(), directoryName);
-    if (dir.toFile().exists()) throw new IOException("Already exists: " + dir);
-    Files.createDirectories(dir);
+    if (Files.exists(dir)) throw new IOException("Already exists: " + dir);
+    makeDirectories(dir);
     return dir.toFile();
   }
 
   /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
   @Override
-  public File newFile(String fileName) throws IOException {
+  public @NotNull File newFile(@NotNull String fileName) throws IOException {
+    return newFile(fileName, null);
+  }
+
+  /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
+  public @NotNull File newFile(@NotNull String fileName, byte @Nullable [] content) throws IOException {
     Path file = Paths.get(getRoot().getPath(), fileName);
-    if (file.toFile().exists()) throw new IOException("Already exists: " + file);
+    if (Files.exists(file)) throw new IOException("Already exists: " + file);
     makeDirectories(file.getParent());
     Files.createFile(file);
+    if (content != null) {
+      Files.write(file, content);
+    }
     return file.toFile();
   }
 

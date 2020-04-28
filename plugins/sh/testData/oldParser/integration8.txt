@@ -12,7 +12,7 @@ SHELL_SCRIPT
           PsiElement($)('$')
           SHELL_PARAMETER_EXPANSION
             PsiElement({)('{')
-            PsiElement(parameter_expansion_body)('DEVICE_PREFIX')
+            PsiElement(word)('DEVICE_PREFIX')
             PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -20,7 +20,8 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('#a')
+        PsiElement(param_separator)('#')
+        PsiElement(word)('a')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -29,6 +30,6 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiErrorElement:parameter_expansion_body expected
+        PsiErrorElement:<parameter expansion> expected
           <empty list>
   PsiComment(Comment)('#a} #this is an invalid syntax in bash')

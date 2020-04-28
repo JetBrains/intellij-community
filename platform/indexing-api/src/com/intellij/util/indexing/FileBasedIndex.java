@@ -30,7 +30,7 @@ import java.util.Set;
  * @author dmitrylomov
  */
 public abstract class FileBasedIndex {
-  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
+  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator);
 
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
@@ -121,7 +121,7 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
-  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable);
+  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
@@ -220,7 +220,7 @@ public abstract class FileBasedIndex {
    * @see DefaultFileTypeSpecificInputFilter
    */
   public interface FileTypeSpecificInputFilter extends InputFilter {
-    void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
+    void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
   }
 
   /** @deprecated inline true */
@@ -235,4 +235,10 @@ public abstract class FileBasedIndex {
     return !ourDisableIndexAccessDuringDumbMode;
   }
   private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
+
+  @ApiStatus.Internal
+  public static final boolean USE_IN_MEMORY_INDEX = SystemProperties.is("idea.use.in.memory.file.based.index");
+
+  @ApiStatus.Internal
+  public static final boolean IGNORE_PLAIN_TEXT_FILES = SystemProperties.is("idea.ignore.plain.text.indexing");
 }

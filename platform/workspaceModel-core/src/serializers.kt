@@ -29,7 +29,8 @@ interface EntityTypesResolver {
 }
 
 // TODO Investigate com.esotericsoftware.kryo.ReferenceResolver for all interning
-class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver): EntityStorageSerializer {
+class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver,
+                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   override val serializerDataFormatVersion: String = "v1"
@@ -47,7 +48,7 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
       }
 
       override fun read(kryo: Kryo, input: Input, type: Class<VirtualFileUrl>): VirtualFileUrl =
-        VirtualFileUrlManager.fromUrl(input.readString())
+        virtualFileManager.fromUrl(input.readString())
     })
 
     kryo.register(TypeInfo::class.java)
@@ -62,6 +63,8 @@ class KryoEntityStorageSerializer(private val typeResolver: EntityTypesResolver)
     // TODO Reuse OCSerializer.registerUtilitySerializers ?
     // TODO Scan OCSerializer for useful kryo settings and tricks
     kryo.register(java.util.ArrayList::class.java).instantiator = ObjectInstantiator { java.util.ArrayList<Any>() }
+    kryo.register(HashMap::class.java).instantiator = ObjectInstantiator { HashMap<Any, Any>() }
+    kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     kryo.register(Arrays.asList("a").javaClass).instantiator = ObjectInstantiator { java.util.ArrayList<Any>() }

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +52,12 @@ public class Notification {
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final String id;
+
+  /**
+   * Unique ID for usage statistics.
+   */
+  @Nullable
+  public final String displayId;
 
   private final String myGroupId;
   private Icon myIcon;
@@ -103,6 +108,7 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
+    this.displayId = null;
     id = calculateId(this);
   }
 
@@ -110,7 +116,7 @@ public class Notification {
                       @NotNull @NotificationTitle String title,
                       @NotNull @NotificationContent String content,
                       @NotNull NotificationType type) {
-    this(groupId, title, content, type, null);
+    this(groupId, null, title, content, type, null);
   }
 
   /**
@@ -125,6 +131,15 @@ public class Notification {
                       @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
+    this(groupId, null, title, content, type, listener);
+  }
+
+  public Notification(@NotNull @NonNls String groupId,
+                      @Nullable @NonNls String displayId,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
+                      @NotNull NotificationType type,
+                      @Nullable NotificationListener listener) {
     myGroupId = groupId;
     myTitle = title;
     myContent = content;
@@ -132,6 +147,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
+    this.displayId = displayId;
     id = calculateId(this);
   }
 
@@ -259,7 +275,7 @@ public class Notification {
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
   @NotNull
-  public Notification setDropDownText(@NotNull @NlsUI.LinkLabel String dropDownText) {
+  public Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }

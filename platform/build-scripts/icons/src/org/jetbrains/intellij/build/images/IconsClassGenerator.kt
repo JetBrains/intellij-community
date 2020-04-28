@@ -196,7 +196,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
   }
 
   private fun images(module: JpsModule, className: String) : List<ImagePaths> {
-    val imageCollector = ImageCollector(projectHome.toPath(), iconsOnly = true, className = className)
+    val imageCollector = ImageCollector(projectHome.toPath(), iconsOnly = true)
     val images = imageCollector.collect(module, includePhantom = true)
     imageCollector.printUsedIconRobots()
     return images

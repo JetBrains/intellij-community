@@ -10,8 +10,6 @@ internal class ScopedMember(val member: Member, val scope: SearchScope) {
 
   internal fun hasChanged(other: ScopedMember) = member.hasChanged(other.member)
 
-  internal fun asPrivate() = ScopedMember(member.asPrivate(), scope)
-
   override fun equals(other: Any?) = other is ScopedMember && member == other.member
 
   override fun hashCode(): Int = member.hashCode()
@@ -35,13 +33,6 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
   }
 
   protected abstract fun copy(modifiers: MutableSet<String>): Member
-
-  internal fun asPrivate(): Member {
-    val modifiers = this.modifiers.toMutableSet()
-    modifiers.removeIf { it == PsiModifier.PUBLIC || it == PsiModifier.PROTECTED || it == PsiModifier.ABSTRACT }
-    modifiers.add(PsiModifier.PRIVATE)
-    return copy(modifiers)
-  }
 
   companion object {
     internal fun create(psiMember: PsiMember) = when (psiMember) {
@@ -98,7 +89,7 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
 
   internal data class Method(override val name: String,
                              override val modifiers: Set<String>,
-                             val returnType: String,
+                             val returnType: String?,
                              val paramTypes: List<String>) : Member(name, modifiers) {
 
     override fun hasChanged(other: Member): Boolean {
@@ -110,7 +101,8 @@ internal sealed class Member(open val name: String, open val modifiers: Set<Stri
 
     companion object {
       internal fun create(psiMethod: PsiMethod): Method? {
-        val returnType = psiMethod.returnType?.canonicalText ?: return null
+        val returnType = psiMethod.returnType?.canonicalText
+        if (returnType == null && !psiMethod.isConstructor) return null
         val name = psiMethod.name
         val modifiers = extractModifiers(psiMethod.modifierList)
         val paramTypes = psiMethod.parameterList.parameters.map { it.type.canonicalText }

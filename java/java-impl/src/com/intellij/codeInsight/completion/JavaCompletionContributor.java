@@ -583,7 +583,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {
-    return StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix());
+    return InternalCompletionSettings.getInstance().mayStartClassNameCompletion(result);
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,

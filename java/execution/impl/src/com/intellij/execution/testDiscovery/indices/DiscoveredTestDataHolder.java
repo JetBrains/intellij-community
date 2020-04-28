@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -163,7 +162,7 @@ public final class DiscoveredTestDataHolder {
   public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testClassName, testMethodName, frameworkId));
     if (testId != 0) {
-      myDiscoveredTestsIndex.update(testId, null).compute();
+      myDiscoveredTestsIndex.update(testId, null);
       myTestModuleIndex.removeTest(testId);
     }
   }
@@ -203,8 +202,8 @@ public final class DiscoveredTestDataHolder {
     }
 
     UsedSources usedSources = new UsedSources(result, usedVirtualFileIds);
-    myDiscoveredTestsIndex.update(testNameId, usedSources).compute();
-    myTestFilesIndex.update(testNameId, usedSources).compute();
+    myDiscoveredTestsIndex.update(testNameId, usedSources);
+    myTestFilesIndex.update(testNameId, usedSources);
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
   }
 

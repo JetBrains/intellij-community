@@ -79,7 +79,7 @@ public class EditorHyperlinkSupport {
             return;
           }
 
-          Runnable runnable = getLinkNavigationRunnable(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
+          Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
             runnable.run();
           }
@@ -91,7 +91,7 @@ public class EditorHyperlinkSupport {
       @Override
       public void mouseMoved(@NotNull EditorMouseEvent e) {
         if (e.getArea() != EditorMouseEventArea.EDITING_AREA) return;
-        final HyperlinkInfo info = getHyperlinkInfoByPoint(e.getMouseEvent().getPoint());
+        final HyperlinkInfo info = getHyperlinkInfoByEvent(e);
         myEditor.setCustomCursor(EditorHyperlinkSupport.class, info == null ? null : Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       }
     }
@@ -178,8 +178,7 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
-  @Nullable
-  private HyperlinkInfo getHyperlinkAt(final int offset) {
+  public @Nullable HyperlinkInfo getHyperlinkAt(final int offset) {
     RangeHighlighter range = findLinkRangeAt(offset);
     return range == null ? null : getHyperlinkInfo(range);
   }
@@ -275,6 +274,11 @@ public class EditorHyperlinkSupport {
     return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
   }
 
+    @Nullable
+  public HyperlinkInfo getHyperlinkInfoByEvent(@NotNull EditorMouseEvent event) {
+    return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
+  }
+
   @Deprecated
   public void highlightHyperlinks(@NotNull Filter customFilter, final Filter predefinedMessageFilter, final int line1, final int endLine) {
     highlightHyperlinks((line, entireLength) -> {
@@ -297,7 +301,10 @@ public class EditorHyperlinkSupport {
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
-      if (resultItem.getHyperlinkInfo() != null) {
+      if (resultItem instanceof InlayProvider) {
+        myEditor.getInlayModel().addInlineElement(end, ((InlayProvider)resultItem).createInlayRenderer(myEditor));
+      }
+      else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
                         resultItem.getHighlighterLayer());
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -111,7 +111,7 @@ public class ProblemDescriptorUtil {
   public static String unescapeTags(@NotNull String message) {
     message = StringUtil.replace(message, "<code>", "'");
     message = StringUtil.replace(message, "</code>", "'");
-    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) : 
+    message = message.contains(XML_CODE_MARKER.first) ? unescapeXmlCode(message) :
               !XmlStringUtil.isWrappedInHtml(message) ? StringUtil.unescapeXmlEntities(message) : message;
     return message;
   }
@@ -193,7 +193,7 @@ public class ProblemDescriptorUtil {
     }
 
     List<ProblemDescriptor> problems = new ArrayList<>(annotations.size());
-    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
+    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = new IdentityHashMap<>();
     for (Annotation annotation : annotations) {
       HighlightSeverity severity = annotation.getSeverity();
       int startOffset = annotation.getStartOffset();

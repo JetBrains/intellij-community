@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -33,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -89,14 +89,14 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final Project project = holder.getManager().getProject();
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final List<Configuration> configurations;
-    final InspectionProfileImpl profile;
-    for (Configuration configuration : myConfigurations) {
-      configuration.initialize();
-    }
-    profile = (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
-    configurations = ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
+    final InspectionProfileImpl profile =
+      (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+    final List<Configuration> configurations =
+      ContainerUtil.filter(myConfigurations, x -> profile.isToolEnabled(HighlightDisplayKey.find(x.getUuid().toString())));
     if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    for (Configuration configuration : configurations) {
+      register(configuration);
+    }
 
     final Map<Configuration, Matcher> compiledOptions =
       SSBasedInspectionCompiledPatternsCache.getCompiledOptions(configurations, project);
@@ -105,8 +105,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
       final PsiElement element = matchResult.getMatch();
       if (holder.getFile() != element.getContainingFile()) return false;
-      final String name = ObjectUtils.notNull(configuration.getProblemDescriptor(), configuration.getName());
       final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
+      final Configuration mainConfiguration = getMainConfiguration(configuration);
+      final String name = ObjectUtils.notNull(mainConfiguration.getProblemDescriptor(), mainConfiguration.getName());
       final ProblemDescriptor descriptor =
         holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
       holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
@@ -140,9 +141,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
                 if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
                   final String message = e.getMessage().replace(ScriptSupport.UUID, "");
                   UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
-                                               .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
-                                               .setImportant(true)
-                                               .notify(element.getProject());
+                    .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
+                    .setImportant(true)
+                    .notify(element.getProject());
                 }
               }
               matchedNodes.reset();
@@ -153,11 +154,36 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     };
   }
 
+  public static void register(Configuration configuration) {
+    final String shortName = configuration.getUuid().toString();
+    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+    if (key != null) {
+      if (!isMetaDataChanged(configuration, key)) return;
+      HighlightDisplayKey.unregister(shortName);
+    }
+    final String suppressId = configuration.getSuppressId();
+    final String name = configuration.getName();
+    if (suppressId == null) {
+      HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME);
+    }
+    else {
+      HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
+    }
+  }
+
+  private static boolean isMetaDataChanged(Configuration configuration, HighlightDisplayKey key) {
+    if (StringUtil.isEmpty(configuration.getSuppressId())) {
+      if (!SHORT_NAME.equals(key.getID())) return true;
+    }
+    else if (!configuration.getSuppressId().equals(key.getID())) return true;
+    return !configuration.getName().equals(HighlightDisplayKey.getDisplayNameByKey(key));
+  }
+
   @Override
   public List<LocalInspectionToolWrapper> getChildren() {
     return getConfigurations().stream()
       .filter(configuration -> configuration.getOrder() == 0)
-      .map(configuration -> new StructuralSearchInspectionToolWrapper(configuration))
+      .map(configuration -> new StructuralSearchInspectionToolWrapper(getConfigurationsWithUuid(configuration.getUuid())))
       .collect(Collectors.toList());
   }
 
@@ -191,30 +217,46 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     };
   }
 
+  private Configuration getMainConfiguration(Configuration configuration) {
+    if (configuration.getOrder() == 0) {
+      return configuration;
+    }
+    final UUID uuid = configuration.getUuid();
+    return myConfigurations.stream().filter(c -> c.getOrder() == 0 && uuid.equals(c.getUuid())).findFirst().orElse(configuration);
+  }
+
   public List<Configuration> getConfigurations() {
     return Collections.unmodifiableList(myConfigurations);
   }
 
   public List<Configuration> getConfigurationsWithUuid(@NotNull UUID uuid) {
-    return ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
+    final List<Configuration> configurations = ContainerUtil.filter(myConfigurations, c -> uuid.equals(c.getUuid()));
+    configurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    return configurations;
   }
 
-  public void addConfiguration(@NotNull Configuration configuration) {
-    myConfigurations.add(configuration);
-  }
-
-  public void removeConfiguration(@NotNull Configuration configuration) {
-    for (int i = 0, size = myConfigurations.size(); i < size; i++) {
-      final Configuration c = myConfigurations.get(i);
-      if (c.equals(configuration)) {
-        myConfigurations.remove(i);
-        return;
-      }
+  public boolean addConfiguration(@NotNull Configuration configuration) {
+    if (myConfigurations.contains(configuration)) {
+      return false;
     }
+    myConfigurations.add(configuration);
+    return true;
   }
 
-  public void removeConfigurationWithUuid(@NotNull UUID uuid) {
-    myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+  public boolean addConfigurations(@NotNull Collection<? extends Configuration> configurations) {
+    boolean changed = false;
+    for (Configuration configuration : configurations) {
+      changed |= addConfiguration(configuration);
+    }
+    return changed;
+  }
+
+  public boolean removeConfiguration(@NotNull Configuration configuration) {
+    return myConfigurations.remove(configuration);
+  }
+
+  public boolean removeConfigurationsWithUuid(@NotNull UUID uuid) {
+    return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
   }
 
   private static class InspectionResultSink extends DefaultMatchResultSink {

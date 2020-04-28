@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInspection.deprecation
 
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
 import com.intellij.psi.util.PsiFormatUtilBase
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ObjectUtils
 import com.siyeh.InspectionGadgetsBundle
 import org.jetbrains.annotations.Nls
@@ -65,6 +67,13 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     val newMethodCall = elementFactory.createExpressionFromText(qualifierText + replacementMethod.name + expr.argumentList.text, expr)
     val replaced = expr.replace(newMethodCall) as PsiMethodCallExpression
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced.methodExpression)
+  }
+
+  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
+    val method = myReplacementMethodPointer.element
+    val expr = startElement as PsiMethodCallExpression?
+    if (method == null || expr == null) return null
+    return ReplaceMethodCallFix(PsiTreeUtil.findSameElementInCopy(expr, target), method)
   }
 }
 

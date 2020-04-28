@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -49,11 +50,11 @@ public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription im
   public static void suggestRestart(@Nullable JComponent parentComponent) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
 
-    String title = "Restart Required";
-    String message = ApplicationNamesInfo.getInstance().getFullProductName() + " must be restarted for the changes to take effect";
-    String action = app.isRestartCapable() ? "Restart" : "Shutdown";
-    String okText = action + " Now";
-    String cancelText = action + " Later";
+    String title = IdeBundle.message("dialog.title.restart.required");
+    String message = IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                                       ApplicationNamesInfo.getInstance().getFullProductName());
+    String okText = IdeBundle.message("button.now", app.isRestartCapable() ? 0 : 1);
+    String cancelText = IdeBundle.message("button.later", app.isRestartCapable() ? 0 : 1);
 
     int result;
     if (parentComponent != null) {

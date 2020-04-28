@@ -113,7 +113,7 @@ public final class LoadingOrder {
     }
   }
 
-  public static void sort(@NotNull final List<? extends Orderable> orderable) {
+  public static void sort(final @NotNull List<? extends Orderable> orderable) {
     if (orderable.size() < 2) return;
 
     // our graph is pretty sparse so do benefit from the fact
@@ -135,17 +135,15 @@ public final class LoadingOrder {
     if (cachedMap.isEmpty()) return;
 
     InboundSemiGraph<Orderable> graph = new InboundSemiGraph<Orderable>() {
-      @NotNull
       @Override
-      public Collection<Orderable> getNodes() {
+      public @NotNull Collection<Orderable> getNodes() {
         List<Orderable> list = new ArrayList<>(orderable);
         Collections.reverse(list);
         return list;
       }
 
-      @NotNull
       @Override
-      public Iterator<Orderable> getIn(Orderable n) {
+      public @NotNull Iterator<Orderable> getIn(Orderable n) {
         LoadingOrder order = cachedMap.getOrDefault(n, ANY);
 
         Set<Orderable> predecessors = new LinkedHashSet<>();
@@ -193,8 +191,7 @@ public final class LoadingOrder {
     orderable.sort(builder.comparator());
   }
 
-  @NotNull
-  public static LoadingOrder readOrder(@Nullable String orderAttr) {
+  public static @NotNull LoadingOrder readOrder(@Nullable String orderAttr) {
     if (orderAttr == null) {
       return ANY;
     }

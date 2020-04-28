@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.FlowLayout
@@ -51,7 +52,7 @@ object GHPRStatusChecksComponent {
             else -> EmptyIcon.ICON_16
           }
           text = when (checksState) {
-            GHPRMergeabilityState.ChecksState.BLOCKING_BEHIND -> "Pull request branch is out of sync with the base branch"
+            GHPRMergeabilityState.ChecksState.BLOCKING_BEHIND -> GithubBundle.message("pull.request.branch.out.of.sync")
             GHPRMergeabilityState.ChecksState.BLOCKING_FAILING,
             GHPRMergeabilityState.ChecksState.FAILING,
             GHPRMergeabilityState.ChecksState.PENDING,
@@ -76,30 +77,31 @@ object GHPRStatusChecksComponent {
   private fun getChecksResultsText(failedChecks: Int, pendingChecks: Int, successfulChecks: Int): String {
     val results = mutableListOf<String>()
     failedChecks.takeIf { it > 0 }?.let {
-      "$it failing"
+      GithubBundle.message("pull.request.checks.failing", it)
     }?.also {
       results.add(it)
     }
 
     pendingChecks.takeIf { it > 0 }?.let {
-      "$it pending"
+      GithubBundle.message("pull.request.checks.pending", it)
     }?.also {
       results.add(it)
     }
 
     successfulChecks.takeIf { it > 0 }?.let {
-      "$it successful"
+      GithubBundle.message("pull.request.checks.successful", it)
     }?.also {
       results.add(it)
     }
 
-    val checksText = if (failedChecks + pendingChecks + successfulChecks == 1) " check" else " checks"
+    val checksText = if (failedChecks + pendingChecks + successfulChecks == 1) GithubBundle.message("pull.request.check")
+    else GithubBundle.message("pull.request.checks")
 
-    return StringUtil.join(results, ", ") + checksText
+    return StringUtil.join(results, ", ") + " " + checksText
   }
 
   private fun createLink(url: String) =
-    HyperlinkLabel("Open in browser").apply {
+    HyperlinkLabel(GithubBundle.message("open.in.browser.link")).apply {
       setHyperlinkTarget(url)
     }
 }

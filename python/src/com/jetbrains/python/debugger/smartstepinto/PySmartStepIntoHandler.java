@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.smartstepinto;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -84,7 +84,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     PsiElement expression = findSmartStepIntoBaseExpression(document, line);
     if (expression == null) return Collections.emptyList();
 
-    List<PySmartStepIntoVariant> result = Lists.newArrayList();
+    List<PySmartStepIntoVariant> result = new ArrayList<>();
 
     // We are going to filter the variants that PyCharm cannot resolve to be sure we don't suggest stepping into a native function.
     expression.accept(new PySmartStepIntoVariantVisitor(result, variantsFromPython, context));

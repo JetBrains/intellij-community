@@ -8,8 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.toVirtualFileUrl
 import com.intellij.workspace.virtualFile
-import com.intellij.workspace.virtualFileUrl
 import java.util.*
 
 class LegacyBridgeCompilerModuleExtension(
@@ -19,7 +20,7 @@ class LegacyBridgeCompilerModuleExtension(
 ) : CompilerModuleExtension() {
 
   private var changed = false
-
+  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(module.project)
   private val javaSettingsValue: CachedValue<JavaModuleSettingsEntity?> = CachedValue {
     it.resolve(module.moduleEntityId)?.javaSettings
   }
@@ -37,7 +38,7 @@ class LegacyBridgeCompilerModuleExtension(
 
     if (isCompilerOutputPathInherited) {
       val projectOutputUrl = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl ?: return null
-      return VirtualFileUrlManager.fromUrl(projectOutputUrl + "/" + PRODUCTION + "/" + getSanitizedModuleName())
+      return virtualFileManager.fromUrl(projectOutputUrl + "/" + PRODUCTION + "/" + getSanitizedModuleName())
     }
 
     return javaSettings?.compilerOutput
@@ -48,7 +49,7 @@ class LegacyBridgeCompilerModuleExtension(
 
     if (isCompilerOutputPathInherited) {
       val projectOutputUrl = CompilerProjectExtension.getInstance(module.project)?.compilerOutputUrl ?: return null
-      return VirtualFileUrlManager.fromUrl(projectOutputUrl + "/" + TEST + "/" + getSanitizedModuleName())
+      return virtualFileManager.fromUrl(projectOutputUrl + "/" + TEST + "/" + getSanitizedModuleName())
     }
 
     return javaSettings?.compilerOutputForTests
@@ -98,22 +99,22 @@ class LegacyBridgeCompilerModuleExtension(
 
   override fun setCompilerOutputPath(file: VirtualFile?) {
     if (compilerOutputPath == file) return
-    updateJavaSettings { compilerOutput = file?.virtualFileUrl }
+    updateJavaSettings { compilerOutput = file?.toVirtualFileUrl(virtualFileManager) }
   }
 
   override fun setCompilerOutputPath(url: String?) {
     if (compilerOutputUrl == url) return
-    updateJavaSettings { compilerOutput = url?.let { VirtualFileUrlManager.fromUrl(it) } }
+    updateJavaSettings { compilerOutput = url?.let { virtualFileManager.fromUrl(it) } }
   }
 
   override fun setCompilerOutputPathForTests(file: VirtualFile?) {
     if (compilerOutputPathForTests == file) return
-    updateJavaSettings { compilerOutputForTests = file?.virtualFileUrl }
+    updateJavaSettings { compilerOutputForTests = file?.toVirtualFileUrl(virtualFileManager) }
   }
 
   override fun setCompilerOutputPathForTests(url: String?) {
     if (compilerOutputUrlForTests == url) return
-    updateJavaSettings { compilerOutputForTests = url?.let { VirtualFileUrlManager.fromUrl(it) } }
+    updateJavaSettings { compilerOutputForTests = url?.let { virtualFileManager.fromUrl(it) } }
   }
 
   override fun inheritCompilerOutputPath(inherit: Boolean) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
 import com.intellij.tasks.ChangeListInfo;
 import com.intellij.tasks.LocalTask;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.actions.TaskAutoCompletionListProvider;
 import com.intellij.ui.EditorTextField;
@@ -39,9 +40,8 @@ public final class TaskChangelistSupport implements EditChangelistSupport {
 
   @Override
   public Consumer<LocalChangeList> addControls(JPanel bottomPanel, final LocalChangeList initial) {
-    final JCheckBox checkBox = new JCheckBox("Track context");
-    checkBox.setMnemonic('t');
-    checkBox.setToolTipText("Reload context (e.g. open editors) when changelist is set active");
+    final JCheckBox checkBox = new JCheckBox(TaskBundle.message("switch.changelist.track.context.checkbox"));
+    checkBox.setToolTipText(TaskBundle.message("switch.changelist.track.context.checkbox.tooltip"));
     checkBox.setSelected(initial == null ?
                          myTaskManager.getState().trackContextForNewChangelist :
                          myTaskManager.getAssociatedTask(initial) != null);

@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.execution;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -34,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public interface ExternalSystemExecutionConsoleManager<
-  ExternalSystemRunConfiguration extends RunConfiguration,
   ExternalSystemExecutionConsole extends ExecutionConsole,
   ExternalSystemProcessHandler extends ProcessHandler> {
   ExtensionPointName<ExternalSystemExecutionConsoleManager> EP_NAME
@@ -42,19 +38,6 @@ public interface ExternalSystemExecutionConsoleManager<
 
   @NotNull
   ProjectSystemId getExternalSystemId();
-
-  /**
-   * @deprecated use {@link ExternalSystemExecutionConsoleManager#attachExecutionConsole(Project, ExternalSystemTask, ExecutionEnvironment, ProcessHandler)}
-   */
-  @Deprecated
-  @Nullable
-  default ExternalSystemExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
-                                                                @NotNull Project project,
-                                                                @NotNull ExternalSystemRunConfiguration configuration,
-                                                                @NotNull Executor executor,
-                                                                @NotNull ExecutionEnvironment env,
-                                                                @NotNull ExternalSystemProcessHandler processHandler)
-    throws ExecutionException {return null;}
 
   @Nullable
   default ExternalSystemExecutionConsole attachExecutionConsole(@NotNull Project project,

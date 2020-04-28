@@ -9,13 +9,13 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -132,7 +132,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
     implements LowPriorityAction, IntentionAction, ShortcutProvider {
 
     @Override
-    public @NlsUI.ListItem @NotNull String getFamilyName() {
+    public @IntentionFamilyName @NotNull String getFamilyName() {
       return ReformatCommitMessageAction.NAME;
     }
 

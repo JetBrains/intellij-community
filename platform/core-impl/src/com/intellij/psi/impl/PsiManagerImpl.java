@@ -346,66 +346,73 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
         }
       }
       for (PsiTreeChangeListener listener : myTreeChangeListeners) {
-        try {
-          switch (event.getCode()) {
-            case BEFORE_CHILD_ADDITION:
-              listener.beforeChildAddition(event);
-              break;
-
-            case BEFORE_CHILD_REMOVAL:
-              listener.beforeChildRemoval(event);
-              break;
-
-            case BEFORE_CHILD_REPLACEMENT:
-              listener.beforeChildReplacement(event);
-              break;
-
-            case BEFORE_CHILD_MOVEMENT:
-              listener.beforeChildMovement(event);
-              break;
-
-            case BEFORE_CHILDREN_CHANGE:
-              listener.beforeChildrenChange(event);
-              break;
-
-            case BEFORE_PROPERTY_CHANGE:
-              listener.beforePropertyChange(event);
-              break;
-
-            case CHILD_ADDED:
-              listener.childAdded(event);
-              break;
-
-            case CHILD_REMOVED:
-              listener.childRemoved(event);
-              break;
-
-            case CHILD_REPLACED:
-              listener.childReplaced(event);
-              break;
-
-            case CHILD_MOVED:
-              listener.childMoved(event);
-              break;
-
-            case CHILDREN_CHANGED:
-              listener.childrenChanged(event);
-              break;
-
-            case PROPERTY_CHANGED:
-              listener.propertyChanged(event);
-              break;
-          }
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+        notifyPsiTreeChangeListener(event, listener);
+      }
+      for (PsiTreeChangeListener listener : PsiTreeChangeListener.EP.getExtensions(myProject)) {
+        notifyPsiTreeChangeListener(event, listener);
       }
     }
     finally {
       if (isRealTreeChange) {
         myTreeChangeEventIsFiring = false;
       }
+    }
+  }
+
+  private static void notifyPsiTreeChangeListener(@NotNull PsiTreeChangeEventImpl event, PsiTreeChangeListener listener) {
+    try {
+      switch (event.getCode()) {
+        case BEFORE_CHILD_ADDITION:
+          listener.beforeChildAddition(event);
+          break;
+
+        case BEFORE_CHILD_REMOVAL:
+          listener.beforeChildRemoval(event);
+          break;
+
+        case BEFORE_CHILD_REPLACEMENT:
+          listener.beforeChildReplacement(event);
+          break;
+
+        case BEFORE_CHILD_MOVEMENT:
+          listener.beforeChildMovement(event);
+          break;
+
+        case BEFORE_CHILDREN_CHANGE:
+          listener.beforeChildrenChange(event);
+          break;
+
+        case BEFORE_PROPERTY_CHANGE:
+          listener.beforePropertyChange(event);
+          break;
+
+        case CHILD_ADDED:
+          listener.childAdded(event);
+          break;
+
+        case CHILD_REMOVED:
+          listener.childRemoved(event);
+          break;
+
+        case CHILD_REPLACED:
+          listener.childReplaced(event);
+          break;
+
+        case CHILD_MOVED:
+          listener.childMoved(event);
+          break;
+
+        case CHILDREN_CHANGED:
+          listener.childrenChanged(event);
+          break;
+
+        case PROPERTY_CHANGED:
+          listener.propertyChanged(event);
+          break;
+      }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
   }
 

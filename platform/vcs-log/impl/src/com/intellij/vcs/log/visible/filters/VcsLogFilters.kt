@@ -253,7 +253,7 @@ private fun VcsLogFilter.withPrefix(): String {
   return ""
 }
 
-private fun createFilterSet() = OpenTHashSet<VcsLogFilter>(FilterByKeyHashingStrategy())
+private fun createFilterSet() = OpenTHashSet(FilterByKeyHashingStrategy())
 
 private fun <T> OpenTHashSet<T>.replace(element: T): Boolean {
   val isModified = remove(element)

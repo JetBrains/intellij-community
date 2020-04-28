@@ -20,7 +20,6 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public String PATCH_STORAGE_LOCATION = null;
   public boolean SHOW_WHITESPACES_IN_LST = true;
   public boolean SHOW_LST_GUTTER_MARKERS = true;
-  public boolean SHOW_LST_WORD_DIFFERENCES = true;
   public boolean DETECT_PATCH_ON_THE_FLY = false;
   public boolean ENABLE_PARTIAL_CHANGELISTS = true;
   public boolean MANAGE_IGNORE_FILES = false;

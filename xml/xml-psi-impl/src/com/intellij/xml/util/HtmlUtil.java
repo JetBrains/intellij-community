@@ -273,7 +273,7 @@ public class HtmlUtil {
     return false;
   }
 
-  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(XmlElement context) {
+  public static XmlAttributeDescriptor[] getCustomAttributeDescriptors(PsiElement context) {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
@@ -469,6 +469,18 @@ public class HtmlUtil {
     return "meta.rnc".equals(name) || "web-forms.rnc".equals(name)
            || "embed.rnc".equals(name) || "tables.rnc".equals(name)
            || "media.rnc".equals(name);
+  }
+
+  public static boolean tagHasHtml5Schema(@NotNull XmlTag context) {
+    XmlElementDescriptor descriptor = context.getDescriptor();
+    if (descriptor != null) {
+      XmlNSDescriptor nsDescriptor = descriptor.getNSDescriptor();
+      XmlFile descriptorFile = nsDescriptor != null ? nsDescriptor.getDescriptorFile() : null;
+      String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
+      return Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
+             Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
+    }
+    return false;
   }
 
   private static class TerminateException extends RuntimeException {

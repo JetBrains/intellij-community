@@ -127,7 +127,9 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     toolbarActions.add(new SortThreadsAction());
     toolbarActions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EXPORT_TO_TEXT_FILE));
     toolbarActions.add(new MergeStacktracesAction());
-    add(ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false).getComponent(), BorderLayout.WEST);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ThreadDump", toolbarActions, false);
+    toolbar.setTargetComponent(consoleView.getComponent());
+    add(toolbar.getComponent(), BorderLayout.WEST);
 
     JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myFilterPanel, BorderLayout.NORTH);
@@ -296,12 +298,11 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
   private class SortThreadsAction extends DumbAwareAction {
     private final Comparator<ThreadState> BY_TYPE = (o1, o2) -> {
-      final int s1 = getThreadStateCode(o1).ordinal();
-      final int s2 = getThreadStateCode(o2).ordinal();
-      if (s1 == s2) {
+      int c = getThreadStateCode(o1).compareTo(getThreadStateCode(o2));
+      if (c == 0) {
         return o1.getName().compareToIgnoreCase(o2.getName());
       } else {
-        return s1 < s2 ? - 1 :  1;
+        return c;
       }
     };
 

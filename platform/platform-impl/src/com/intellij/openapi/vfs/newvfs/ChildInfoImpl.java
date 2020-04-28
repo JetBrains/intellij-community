@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public class ChildInfoImpl implements ChildInfo {
-  public static final int UNKNOWN_ID_YET = -1;
+  public static final int UNKNOWN_ID_YET = -238;
 
   private final int id;
   private final int nameId;
@@ -36,7 +36,7 @@ public class ChildInfoImpl implements ChildInfo {
     this.id = id;
     this.children = children;
     this.symLinkTarget = symLinkTarget;
-    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
+    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0 && nameId != UNKNOWN_ID_YET) throw new IllegalArgumentException("invalid arguments id: "+id+"; nameId: "+nameId);
     if (attributes == null) {
       fileAttributesType = -1;
       flags = -1;
@@ -84,7 +84,7 @@ public class ChildInfoImpl implements ChildInfo {
 
   @Override
   public String toString() {
-    return nameId + " id: " + id + " (" + getFileAttributes() + ")" +
+    return (nameId > 0 ? getName() : "?")+"; nameId: "+nameId + "; id: " + id + " (" + getFileAttributes() + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }

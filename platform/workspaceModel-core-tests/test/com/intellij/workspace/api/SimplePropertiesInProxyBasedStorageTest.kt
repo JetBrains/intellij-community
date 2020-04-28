@@ -1,6 +1,7 @@
 package com.intellij.workspace.api
 
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 
 internal interface SampleEntity : TypedEntity {
@@ -25,7 +26,8 @@ internal fun TypedEntityStorageBuilder.addSampleEntity(stringProperty: String,
                                                        source: EntitySource = SampleEntitySource("test"),
                                                        booleanProperty: Boolean = false,
                                                        stringListProperty: MutableList<String> = ArrayList(),
-                                                       fileProperty: VirtualFileUrl = VirtualFileUrlManager.fromUrl("file:///tmp")): SampleEntity {
+                                                       virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager(),
+                                                       fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp")): SampleEntity {
   return addEntity<ModifiableSampleEntity, SampleEntity>(source) {
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
@@ -39,9 +41,15 @@ internal fun TypedEntityStorage.singleSampleEntity() = entities(SampleEntity::cl
 internal data class SampleEntitySource(val name: String) : EntitySource
 
 class SimplePropertiesInProxyBasedStorageTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManager()
+  }
+
   @Test
   fun `add entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val source = SampleEntitySource("test")
     val entity = builder.addSampleEntity("hello", source, true, mutableListOf("one", "two"))
     builder.checkConsistency()
@@ -54,7 +62,7 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `remove entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val entity = builder.addSampleEntity("hello")
     builder.removeEntity(entity)
     builder.checkConsistency()
@@ -63,13 +71,13 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `modify entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val original = builder.addSampleEntity("hello")
     val modified = builder.modifyEntity(ModifiableSampleEntity::class.java, original) {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
-      fileProperty = VirtualFileUrlManager.fromUrl("file:///xxx")
+      fileProperty = virtualFileManager.fromUrl("file:///xxx")
     }
     builder.checkConsistency()
     assertEquals("hello", original.stringProperty)
@@ -82,7 +90,7 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `edit self modifiable entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val entity = builder.addEntity(SelfModifiableSampleEntity::class.java, SampleEntitySource("test")) {
       intProperty = 42
     }
@@ -100,14 +108,14 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `builder from storage`() {
-    val storage = TypedEntityStorageBuilder.create().apply {
+    val storage = TypedEntityStorageBuilder.createProxy().apply {
       addSampleEntity("hello")
     }.toStorage()
     storage.checkConsistency()
 
     assertEquals("hello", storage.singleSampleEntity().stringProperty)
 
-    val builder = TypedEntityStorageBuilder.from(storage)
+    val builder = TypedEntityStorageBuilder.fromProxy(storage)
     builder.checkConsistency()
 
     assertEquals("hello", builder.singleSampleEntity().stringProperty)
@@ -122,7 +130,7 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `snapshot from builder`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     builder.addSampleEntity("hello")
 
     val snapshot = builder.toStorage()
@@ -142,7 +150,7 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test(expected = IllegalStateException::class)
   fun `modifications are allowed inside special methods only`() {
-    val entity = TypedEntityStorageBuilder.create().addEntity(SelfModifiableSampleEntity::class.java, SampleEntitySource("test")) {
+    val entity = TypedEntityStorageBuilder.createProxy().addEntity(SelfModifiableSampleEntity::class.java, SampleEntitySource("test")) {
       intProperty = 10
     }
     entity.intProperty = 30
@@ -150,10 +158,10 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `different entities with same properties`() {
-    val builder = TypedEntityStorageBuilder.create()
-    val foo1 = builder.addSampleEntity("foo1")
-    val foo2 = builder.addSampleEntity("foo1")
-    val bar = builder.addSampleEntity("bar")
+    val builder = TypedEntityStorageBuilder.createProxy()
+    val foo1 = builder.addSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    val foo2 = builder.addSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    val bar = builder.addSampleEntity("bar", virtualFileManager = virtualFileManager)
     builder.checkConsistency()
     assertFalse(foo1 == foo2)
     assertTrue(foo1.hasEqualProperties(foo1))
@@ -174,7 +182,7 @@ class SimplePropertiesInProxyBasedStorageTest {
 
   @Test
   fun `change source`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val source1 = SampleEntitySource("1")
     val source2 = SampleEntitySource("2")
     val foo = builder.addSampleEntity("foo", source1)

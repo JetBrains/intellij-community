@@ -9,7 +9,7 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
     </clientProperties>
-    <border type="none" title="Select repository"/>
+    <border type="none" title-resource-bundle="messages/HgBundle" title-key="select.repo"/>
     <children>
       <component id="c32b5" class="javax.swing.JComboBox" binding="repositorySelector">
         <constraints>

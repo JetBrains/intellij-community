@@ -17,14 +17,14 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewProcessMode
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRSimpleOnesideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRTwosideDiffViewerReviewThreadsHandler
 import org.jetbrains.plugins.github.pullrequest.comment.viewer.GHPRUnifiedDiffViewerReviewThreadsHandler
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRCreateDiffCommentParametersHelper
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.successAsync
+import java.util.function.Function
 import kotlin.properties.Delegates.observable
 
 class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataProvider,
@@ -127,9 +127,9 @@ class GHPRDiffReviewSupportImpl(private val reviewDataProvider: GHPRReviewDataPr
   }
 
   private fun doLoadReviewThreads(model: GHCompletableFutureLoadingModel<List<GHPRDiffReviewThreadMapping>>) {
-    model.future = reviewDataProvider.loadReviewThreads().successAsync(ProcessIOExecutorService.INSTANCE) {
+    model.future = reviewDataProvider.loadReviewThreads().thenApplyAsync(Function {
       it.mapNotNull(reviewThreadMapper)
-    }
+    }, ProcessIOExecutorService.INSTANCE)
   }
 
   private fun updateReviewThreads() {

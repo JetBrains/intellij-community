@@ -1,17 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts;
 
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import git4idea.merge.GitDefaultMergeDialogCustomizer;
 import git4idea.repo.GitConflictsHolder;
 import git4idea.repo.GitRepository;
@@ -19,34 +19,29 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class GitConflictsToolWindowManager {
+import java.util.concurrent.atomic.AtomicBoolean;
+
+@Service
+public final class GitConflictsToolWindowManager implements Disposable {
   public static final String TAB_NAME = "Conflicts";
 
   @NotNull private final Project myProject;
 
-  private final MergingUpdateQueue myQueue;
-
+  private final AtomicBoolean myRefreshScheduled = new AtomicBoolean();
   @Nullable private Content myContent;
 
   public GitConflictsToolWindowManager(@NotNull Project project) {
     myProject = project;
-    myQueue = new MergingUpdateQueue("GitConflictsToolWindowManager", 300, true, null, myProject);
   }
 
-  private void init() {
-    myProject.getMessageBus().connect().subscribe(GitConflictsHolder.CONFLICTS_CHANGE, new GitConflictsHolder.ConflictsListener() {
-      @Override
-      public void conflictsChanged(@NotNull GitRepository repository) {
-        myQueue.queue(Update.create("update", () -> updateToolWindow()));
-      }
-    });
-
-    ApplicationManager.getApplication().invokeLater(() -> updateToolWindow());
+  private void scheduleUpdate() {
+    if (myRefreshScheduled.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().invokeLater(() -> updateToolWindow());
+    }
   }
 
   private void updateToolWindow() {
-    if (!Registry.is("git.merge.conflicts.toolwindow")) return;
-
+    myRefreshScheduled.set(false);
     boolean hasConflicts = ContainerUtil.exists(GitRepositoryManager.getInstance(myProject).getRepositories(),
                                                 repo -> !repo.getConflictsHolder().getConflicts().isEmpty());
     if (hasConflicts && myContent == null) {
@@ -66,10 +61,38 @@ public class GitConflictsToolWindowManager {
     }
   }
 
-  public static class Starter implements StartupActivity.DumbAware {
+  @Override
+  public void dispose() {
+    if (myContent != null) {
+      ChangesViewContentManager.getInstance(myProject).removeContent(myContent);
+      myContent = null;
+    }
+  }
+
+  public static class MyConflictsListener implements GitConflictsHolder.ConflictsListener {
     @Override
-    public void runActivity(@NotNull Project project) {
-      new GitConflictsToolWindowManager(project).init();
+    public void conflictsChanged(@NotNull GitRepository repository) {
+      if (!Registry.is("git.merge.conflicts.toolwindow")) return;
+
+      Project project = repository.getProject();
+      GitConflictsToolWindowManager service = project.getService(GitConflictsToolWindowManager.class);
+      service.scheduleUpdate();
+    }
+  }
+
+  public static class MyRepositoryListener implements VcsRepositoryMappingListener {
+    private final Project myProject;
+
+    public MyRepositoryListener(@NotNull Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void mappingChanged() {
+      if (!Registry.is("git.merge.conflicts.toolwindow")) return;
+
+      GitConflictsToolWindowManager service = myProject.getService(GitConflictsToolWindowManager.class);
+      service.scheduleUpdate();
     }
   }
 }

@@ -40,7 +40,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -507,7 +506,8 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     if (StringUtil.equals(BUNDLED_MAVEN_2, mavenHome) && ApplicationManager.getApplication().isUnitTestMode()) {
       return resolveEmbeddedMaven2HomeForTests().getMavenHome();
     }
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
+    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
+        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
       return resolveEmbeddedMavenHome().getMavenHome();
     }
     final File home = new File(mavenHome);

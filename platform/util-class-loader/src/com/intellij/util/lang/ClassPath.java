@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,11 +37,10 @@ public final class ClassPath {
   final boolean myPreloadJarContents;
   final boolean myCanHavePersistentIndex;
   final boolean myLazyClassloadingCaches;
-  @Nullable private final CachePoolImpl myCachePool;
-  @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
+  private final @Nullable CachePoolImpl myCachePool;
+  private final @Nullable UrlClassLoader.CachingCondition myCachingCondition;
   final boolean myLogErrorOnMissingJar;
-  @Nullable
-  private final LinkedHashSet<String> myJarAccessLog;
+  private final @Nullable LinkedHashSet<String> myJarAccessLog;
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -68,10 +68,9 @@ public final class ClassPath {
     push(urls);
   }
 
-  /**
-   * @deprecated Adding additional urls to classpath at runtime could lead to hard-to-debug errors
-   */
+  /** @deprecated adding URLs to classpath at runtime could lead to hard-to-debug errors */
   @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   void addURL(URL url) {
     push(Collections.singletonList(url));
   }
@@ -190,6 +189,7 @@ public final class ClassPath {
     }
   }
 
+  @ReviseWhenPortedToJDK("7")  // use URL -> URI -> Path conversion
   private void initLoaders(@NotNull URL url, int index) throws IOException {
     String path;
 
@@ -221,7 +221,7 @@ public final class ClassPath {
     }
     if (file.isFile()) {
       boolean isSigned = myURLsWithProtectionDomain.contains(url);
-      JarLoader loader = isSigned ? new SecureJarLoader(url, index, this) : new JarLoader(url, index, this);
+      JarLoader loader = isSigned ? new SecureJarLoader(url, file, index, this) : new JarLoader(url, file, index, this);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath(loader);
         if (referencedJars != null) {

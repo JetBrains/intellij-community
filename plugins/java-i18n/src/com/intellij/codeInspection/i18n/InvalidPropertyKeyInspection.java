@@ -122,7 +122,7 @@ public class InvalidPropertyKeyInspection extends AbstractBaseJavaLocalInspectio
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
           return;
         }
-        final PsiExpression initializer = field.getInitializer();
+        final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(field.getInitializer());
         String key = computeStringValue(initializer);
         visitPropertyKeyAnnotationParameter(expression, key,
                                             field.getContainingFile() == expression.getContainingFile() ? initializer : expression);

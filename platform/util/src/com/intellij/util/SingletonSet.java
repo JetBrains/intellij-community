@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SingletonIterator;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -115,8 +116,7 @@ public class SingletonSet<E> implements Set<E> {
 
   @NotNull
   protected TObjectHashingStrategy<E> getStrategy() {
-    //noinspection unchecked
-    return TObjectHashingStrategy.CANONICAL;
+    return ContainerUtil.canonicalStrategy();
   }
 
   @NotNull

@@ -4,6 +4,7 @@ package com.intellij.openapi.extensions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,15 +17,14 @@ import java.util.stream.Stream;
 /**
  * @see com.intellij.testFramework.PlatformTestUtil#maskExtensions
  */
-public interface ExtensionPoint<T> {
-  @NotNull
-  String getName();
-
+public interface ExtensionPoint<@NotNull T> {
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, Disposable)}.
    */
   @Deprecated
-  void registerExtension(@NotNull T extension);
+  default void registerExtension(@NotNull T extension) {
+    registerExtension(extension, LoadingOrder.ANY);
+  }
 
   /**
    * @deprecated Use {@link com.intellij.testFramework.PlatformTestUtil#maskExtensions} or {@link #registerExtension(Object, LoadingOrder, Disposable)}.
@@ -53,14 +53,13 @@ public interface ExtensionPoint<T> {
   @NotNull
   Stream<T> extensions();
 
-  boolean hasAnyExtensions();
+  int size();
 
   /**
    * @deprecated Use another solution, because this method instantiates all extensions.
    */
-  @Nullable
   @Deprecated
-  default T getExtension() {
+  default @Nullable T getExtension() {
     // method is deprecated and not used, ignore not efficient implementation
     return ContainerUtil.getFirstItem(getExtensionList());
   }
@@ -104,16 +103,6 @@ public interface ExtensionPoint<T> {
   boolean unregisterExtensions(@NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter, boolean stopAfterFirstMatch);
 
   /**
-   * Unregisters extensions for which the specified predicate returns false and collects the callables for listener invocation into the given list
-   * so that listeners can be called later.
-   */
-  boolean unregisterExtensions(
-    @NotNull BiPredicate<? super String, ? super ExtensionComponentAdapter> extensionClassFilter,
-    boolean stopAfterFirstMatch,
-    List<Runnable> listenerCallbacks
-  );
-
-  /**
    * @deprecated use {@link #addExtensionPointListener(ExtensionPointListener, boolean, Disposable)}
    */
   @Deprecated
@@ -121,11 +110,19 @@ public interface ExtensionPoint<T> {
 
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
+  /**
+   * @deprecated Use {@link ExtensionPointName#addChangeListener(Runnable, Disposable)}
+   */
+  @Deprecated
   void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
-  void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
+  /**
+   * Consider using {@link ExtensionPointName#addChangeListener}
+   */
+  void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);
 
-  void reset();
+  @ApiStatus.Internal
+  void removeExtensionPointListener(@NotNull ExtensionPointListener<T> extensionPointListener);
 
   @NotNull
   String getClassName();

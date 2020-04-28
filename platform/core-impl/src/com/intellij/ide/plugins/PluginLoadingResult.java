@@ -5,8 +5,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,23 +12,25 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 final class PluginLoadingResult {
   final Map<PluginId, Set<String>> brokenPluginVersions;
-  final @NotNull BuildNumber productBuildNumber;
+  final @NotNull Supplier<BuildNumber> productBuildNumber;
 
-  final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = ContainerUtil.newConcurrentMap();
+  final Map<PluginId, IdeaPluginDescriptorImpl> incompletePlugins = new ConcurrentHashMap<>();
 
   final List<IdeaPluginDescriptorImpl> pluginsWithoutId = new ArrayList<>();
   private final Map<PluginId, IdeaPluginDescriptorImpl> plugins = new HashMap<>();
 
   // only read is concurrent, write from the only thread
-  final Map<PluginId, IdeaPluginDescriptorImpl> idMap = ContainerUtil.newConcurrentMap();
+  final Map<PluginId, IdeaPluginDescriptorImpl> idMap = new ConcurrentHashMap<>();
 
   @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
-  private final Map<PluginId, PluginError> errors = ContainerUtil.newConcurrentMap();
+  private final Map<PluginId, PluginError> errors = new ConcurrentHashMap<>();
 
   private final Set<PluginId> shadowedBundledIds = new HashSet<>();
 
@@ -43,11 +43,11 @@ final class PluginLoadingResult {
     return enabledPlugins;
   }
 
-  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber) {
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull Supplier<BuildNumber> productBuildNumber) {
     this(brokenPluginVersions, productBuildNumber, !PlatformUtils.isIntelliJ());
   }
 
-  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull BuildNumber productBuildNumber, boolean checkModuleDependencies) {
+  PluginLoadingResult(@NotNull Map<PluginId, Set<String>> brokenPluginVersions, @NotNull Supplier<BuildNumber> productBuildNumber, boolean checkModuleDependencies) {
     this.brokenPluginVersions = brokenPluginVersions;
     this.productBuildNumber = productBuildNumber;
 
@@ -82,9 +82,12 @@ final class PluginLoadingResult {
     return result;
   }
 
-  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin) {
+  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable PluginError error) {
     if (!idMap.containsKey(plugin.getPluginId())) {
       incompletePlugins.put(plugin.getPluginId(), plugin);
+    }
+    if (error != null) {
+      errors.put(plugin.getPluginId(), error);
     }
   }
 
@@ -114,11 +117,11 @@ final class PluginLoadingResult {
   }
 
   @SuppressWarnings("UnusedReturnValue")
-  boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull DescriptorListLoadingContext context, boolean overrideUseIfCompatible) {
+  boolean add(@NotNull IdeaPluginDescriptorImpl descriptor, boolean overrideUseIfCompatible) {
     PluginId pluginId = descriptor.getPluginId();
     if (pluginId == null) {
       pluginsWithoutId.add(descriptor);
-      context.getLogger().warn("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
+      PluginManagerCore.getLogger().warn("No id is provided by \"" + descriptor.getPluginPath().getFileName().toString() + "\"");
       return true;
     }
 
@@ -127,12 +130,6 @@ final class PluginLoadingResult {
     }
 
     if (!descriptor.isBundled()) {
-      Set<String> set = brokenPluginVersions.get(pluginId);
-      if (set != null && set.contains(descriptor.getVersion())) {
-        errors.put(pluginId, new PluginError(descriptor, "was marked as broken", "marked as broken"));
-        return true;
-      }
-
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
         String message = "defines no module dependencies (supported only in IntelliJ IDEA)";
         errors.put(pluginId, new PluginError(descriptor, message, "supported only in IntelliJ IDEA"));
@@ -160,7 +157,7 @@ final class PluginLoadingResult {
 
     if (isCompatible(descriptor) &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.getVersion(), prevDescriptor.getVersion()) > 0)) {
-      context.getLogger().info(descriptor.getPluginPath() + " overrides " + prevDescriptor.getPluginPath());
+      PluginManagerCore.getLogger().info(descriptor.getPluginPath() + " overrides " + prevDescriptor.getPluginPath());
       idMap.put(pluginId, descriptor);
       return true;
     }
@@ -171,14 +168,17 @@ final class PluginLoadingResult {
   }
 
   private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return PluginManagerCore.isIncompatible(productBuildNumber, descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
+    return PluginManagerCore.getIncompatibleMessage(productBuildNumber.get(), descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
   }
 
   @SuppressWarnings("DuplicatedCode")
   private void checkAndAdd(@NotNull IdeaPluginDescriptorImpl descriptor, @NotNull PluginId id) {
-    if (duplicateModuleMap != null && duplicateModuleMap.containsKey(id)) {
-      ContainerUtilRt.putValue(id, descriptor, duplicateModuleMap);
-      return;
+    if (duplicateModuleMap != null) {
+      List<IdeaPluginDescriptorImpl> duplicates = duplicateModuleMap.get(id);
+      if (duplicates != null) {
+        duplicates.add(descriptor);
+        return;
+      }
     }
 
     IdeaPluginDescriptorImpl existingDescriptor = idMap.put(id, descriptor);

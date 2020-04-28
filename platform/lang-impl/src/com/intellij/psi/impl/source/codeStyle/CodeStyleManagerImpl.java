@@ -8,7 +8,6 @@ import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -30,6 +29,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -163,6 +163,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
   public void reformatTextWithContext(@NotNull PsiFile file,
                                       @NotNull ChangedRangesInfo info) throws IncorrectOperationException
   {
+    ensureDocumentCommitted(file);
     FormatTextRanges formatRanges = new FormatTextRanges(info, ChangedRangesUtil.processChangedRanges(file, info));
     formatRanges.setExtendToContext(true);
     reformatText(file, formatRanges, null);
@@ -183,8 +184,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     if (ranges.isEmpty()) {
       return;
     }
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    ensureDocumentCommitted(file);
 
     CheckUtil.checkWritable(file);
     if (!SourceTreeToPsiMap.hasTreeElement(file)) {
@@ -219,6 +219,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     if (caretKeeper != null) {
       caretKeeper.restoreCaretPosition();
+    }
+  }
+
+  private void ensureDocumentCommitted(@NotNull PsiFile file) {
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
+    Document document = documentManager.getDocument(file);
+    if (document != null) {
+      documentManager.commitDocument(document);
     }
   }
 
@@ -505,7 +513,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
    * </ol>
    * </pre>
    * <p/>
-   * This method inserts that dummy comment (fallback to identifier {@code xxx}, see {@link CodeStyleManagerImpl#createDummy(PsiFile)})
+   * This method inserts that dummy comment (fallback to identifier {@code xxx}, see {@link CodeStyleManagerImpl#createDummy(Project, Language)})
    * if necessary.
    * <p/>
 
@@ -541,18 +549,20 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       }
     }
 
+    Project project = file.getProject();
+    PsiElement injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset);
+    Language language = injectedElement != null ? injectedElement.getLanguage() : PsiUtilCore.getLanguageAtOffset(file, offset);
+
     setSequentialProcessingAllowed(false);
-    String dummy = createDummy(file);
+    String dummy = createDummy(project, language);
     document.insertString(offset, dummy);
     return new TextRange(offset, offset + dummy.length());
   }
 
-  @NotNull
-  private static String createDummy(@NotNull PsiFile file) {
-    Language language = file.getLanguage();
+  private static @NotNull String createDummy(@NotNull Project project, @NotNull Language language) {
     PsiComment comment = null;
     try {
-      comment = PsiParserFacade.SERVICE.getInstance(file.getProject()).createLineOrBlockCommentFromText(language, "");
+      comment = PsiParserFacade.SERVICE.getInstance(project).createLineOrBlockCommentFromText(language, "");
     }
     catch (Throwable ignored) {
     }

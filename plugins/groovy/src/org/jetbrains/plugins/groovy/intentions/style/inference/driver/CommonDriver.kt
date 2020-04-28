@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -171,6 +172,16 @@ class CommonDriver private constructor(private val targetParameters: Set<GrParam
           }
           constraintCollector.add(TypeConstraint(properType, typeParameter.type(), method))
         }
+      }
+
+      override fun visitForInClause(forInClause: GrForInClause) {
+        val rightType: PsiType = forInClause.iteratedExpression?.type ?: return
+        if (rightType.isTypeParameter()) {
+          val factory = GroovyPsiElementFactory.getInstance(forInClause.project)
+          val iterable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_ITERABLE)
+          constraintCollector.add(TypeConstraint(iterable, rightType, forInClause))
+        }
+        super.visitForInClause(forInClause)
       }
     })
     return Pair(constraintCollector, candidateSamParameters.keys.intersect(definitelySamParameters))

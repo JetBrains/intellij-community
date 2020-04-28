@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -18,12 +18,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Root of handlers for pattern node matching. Handles simplest type of the match.
+ * Root of handlers for pattern node matching. Matching handlers know how to match a specific pattern node
+ * to a node in the source code.
  */
 public abstract class MatchingHandler {
   protected NodeFilter filter;
   private PsiElement pinnedElement;
 
+  /**
+   * Node filters determine which kind of PsiElements can match the pattern element.
+   * Filters are applied to MatchingHandlers in the CompilingVisitor.
+   * @param filter
+   */
   public void setFilter(NodeFilter filter) {
     this.filter = filter;
   }

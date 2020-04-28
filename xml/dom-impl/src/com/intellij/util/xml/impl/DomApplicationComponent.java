@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,11 +54,12 @@ public final class DomApplicationComponent {
     addChangeListener(DomFileMetaData.EP_NAME, this::extensionsChanged);
   }
 
-  private static <T> void addChangeListener(ExtensionPointName<T> ep, ExtensionPointChangeListener onChange) {
+  private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable onChange) {
     Application app = ApplicationManager.getApplication();
-    if (Disposer.isDisposing(app)) return;
-
-    ep.addExtensionPointListener(onChange, app);
+    if (Disposer.isDisposing(app)) {
+      return;
+    }
+    ep.addChangeListener(onChange, app);
   }
 
   private void registerDescriptions() {
@@ -79,6 +79,8 @@ public final class DomApplicationComponent {
 
     myCachedImplementationClasses.clearCache();
     myTypeChooserManager.clearCache();
+
+    myInvocationCaches.clear();
 
     registerDescriptions();
   }

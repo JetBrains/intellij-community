@@ -17,7 +17,7 @@ import java.util.List;
 public abstract class TaskManager {
 
   public static TaskManager getManager(@NotNull Project project) {
-    return project.getComponent(TaskManager.class);
+    return project.getService(TaskManager.class);
   }
 
   public enum VcsOperation {

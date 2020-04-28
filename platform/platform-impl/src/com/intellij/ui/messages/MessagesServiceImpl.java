@@ -191,14 +191,14 @@ public class MessagesServiceImpl implements MessagesService {
   }
 
   @Override
-  public Pair<String, Boolean> showInputDialogWithCheckBox(String message,
-                                                           String title,
-                                                           String checkboxText,
-                                                           boolean checked,
-                                                           boolean checkboxEnabled,
-                                                           Icon icon,
-                                                           String initialValue,
-                                                           InputValidator validator) {
+  public @NotNull Pair<@Nullable String, Boolean> showInputDialogWithCheckBox(String message,
+                                                                              String title,
+                                                                              String checkboxText,
+                                                                              boolean checked,
+                                                                              boolean checkboxEnabled,
+                                                                              Icon icon,
+                                                                              String initialValue,
+                                                                              InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return new Pair<>(getTestInputImplementation().show(message), checked);
     }

@@ -277,7 +277,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     finally {
       super.tearDown();
-      clearFields(this);
     }
   }
 

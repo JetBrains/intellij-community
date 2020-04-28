@@ -65,7 +65,6 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class HgVcs extends AbstractVcs {
-
   public static final Topic<HgUpdater> REMOTE_TOPIC = new Topic<>("hg4idea.remote", HgUpdater.class);
   public static final Topic<HgUpdater> STATUS_TOPIC = new Topic<>("hg4idea.status", HgUpdater.class);
   public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
@@ -87,8 +86,6 @@ public class HgVcs extends AbstractVcs {
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
   private final HgCommittedChangesProvider committedChangesProvider;
-  @NotNull private final HgGlobalSettings globalSettings;
-  @NotNull private final HgProjectSettings projectSettings;
   private final ProjectLevelVcsManager myVcsManager;
 
   private HgVFSListener myVFSListener;
@@ -103,14 +100,10 @@ public class HgVcs extends AbstractVcs {
   private HgRemoteStatusUpdater myHgRemoteStatusUpdater;
   @NotNull private HgVersion myVersion = HgVersion.NULL;  // version of Hg which this plugin uses.
 
-  public HgVcs(@NotNull Project project,
-               @NotNull HgGlobalSettings globalSettings,
-               @NotNull HgProjectSettings projectSettings,
-               ProjectLevelVcsManager vcsManager) {
+  public HgVcs(@NotNull Project project) {
     super(project, VCS_NAME);
-    this.globalSettings = globalSettings;
-    this.projectSettings = projectSettings;
-    myVcsManager = vcsManager;
+
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     changeProvider = new HgChangeProvider(project, getKeyInstanceMethod());
     rollbackEnvironment = new HgRollbackEnvironment(project);
     diffProvider = new HgDiffProvider(project);
@@ -139,12 +132,12 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   public Configurable getConfigurable() {
-    return new HgProjectConfigurable(myProject, globalSettings, projectSettings);
+    return new HgProjectConfigurable(myProject);
   }
 
   @NotNull
   public HgProjectSettings getProjectSettings() {
-    return projectSettings;
+    return HgProjectSettings.getInstance(myProject);
   }
 
   @Override
@@ -286,11 +279,6 @@ public class HgVcs extends AbstractVcs {
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
   }
 
-  @NotNull
-  public HgGlobalSettings getGlobalSettings() {
-    return globalSettings;
-  }
-
   public void showMessageInConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
     if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
       message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
@@ -376,17 +364,14 @@ public class HgVcs extends AbstractVcs {
       //if version is not supported, but have valid hg executable
       if (!myVersion.isSupported()) {
         LOG.info("Unsupported Hg version: " + myVersion);
-        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Hg is not supported: %s.<br/> " +
-                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
-                                       myVersion, HgVersion.MIN);
-        vcsNotifier.notifyError("Unsupported Hg version", message, linkAdapter);
+        String message = HgBundle.message("hg4idea.version.update", SETTINGS_LINK, myVersion, HgVersion.MIN, UPDATE_LINK);
+        vcsNotifier.notifyError(HgBundle.message("hg4idea.version.unsupported"), message, linkAdapter);
       }
       else if (myVersion.hasUnsupportedExtensions()) {
         String unsupportedExtensionsAsString = myVersion.getUnsupportedExtensions().toString();
         LOG.warn("Unsupported Hg extensions: " + unsupportedExtensionsAsString);
-        String message = String.format("Some hg extensions %s are not found or not supported by your hg version and will be ignored.\n" +
-                                       "Please, update your hgrc or Mercurial.ini file", unsupportedExtensionsAsString);
-        vcsNotifier.notifyWarning("Unsupported Hg version", message);
+        String message = HgBundle.message("hg4idea.version.unsupported.ext", unsupportedExtensionsAsString);
+        vcsNotifier.notifyWarning(HgBundle.message("hg4idea.version.unsupported"), message);
       }
     }
     catch (Exception e) {
@@ -396,10 +381,7 @@ public class HgVcs extends AbstractVcs {
         final String reason = (e.getCause() != null ? e.getCause() : e).getMessage();
         String message = HgBundle.message("hg4idea.unable.to.run.hg", executable);
         vcsNotifier.notifyError(message,
-                                reason +
-                                "<br/> Please check your hg executable path in <a href='" +
-                                SETTINGS_LINK +
-                                "'> settings </a>",
+                                HgBundle.message("hg4idea.exec.not.found", reason, SETTINGS_LINK),
                                 linkAdapter
         );
       }

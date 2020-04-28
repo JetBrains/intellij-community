@@ -39,4 +39,7 @@ data class OpenProjectTask(@JvmField val forceOpenInNewFrame: Boolean = false,
 
   @JvmField
   var isRefreshVfsNeeded = true
+
+  @JvmField
+  var runConversionsBeforeOpen = true
 }

@@ -24,7 +24,7 @@
         </constraints>
         <properties>
           <enabled value="false"/>
-          <text value="&amp;Overwrite locally modified files (no backup)"/>
+          <text resource-bundle="messages/HgBundle" key="overwrite.locally.modified"/>
         </properties>
         <clientProperties>
           <html.disable class="java.lang.Boolean" value="false"/>
@@ -47,7 +47,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="&amp;Branch"/>
+              <text resource-bundle="messages/HgBundle" key="branch"/>
             </properties>
           </component>
           <component id="a1344" class="javax.swing.JComboBox" binding="branchSelector">
@@ -66,7 +66,7 @@
             </constraints>
             <properties>
               <selected value="false"/>
-              <text value="&amp;Revision"/>
+              <text resource-bundle="messages/HgBundle" key="revision"/>
             </properties>
           </component>
           <component id="9306a" class="javax.swing.JTextField" binding="revisionTxt">
@@ -85,7 +85,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Tag"/>
+              <text resource-bundle="messages/HgBundle" key="action.hg4idea.tag.button"/>
             </properties>
           </component>
           <component id="b950" class="javax.swing.JComboBox" binding="tagSelector">
@@ -101,7 +101,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Book&amp;mark"/>
+              <text resource-bundle="messages/HgBundle" key="bookmark"/>
             </properties>
           </component>
           <component id="7b814" class="javax.swing.JComboBox" binding="bookmarkSelector">

@@ -3,9 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -15,7 +13,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
 
 /**
  * A utility to prevent endless recursion and ensure the caching returns stable results if such endless recursion is prevented.
@@ -96,7 +93,7 @@ public class RecursionManager {
         }
 
         if (memoize) {
-          MemoizedValue memoized = stack.getMemoizedValue(realKey);
+          MemoizedValue memoized = stack.intermediateCache.get(realKey);
           if (memoized != null) {
             for (MyKey noCacheUntil : memoized.dependencies) {
               stack.prohibitResultCaching(noCacheUntil);
@@ -109,15 +106,14 @@ public class RecursionManager {
         realKey = new MyKey(id, key, false);
 
         final int sizeBefore = stack.progressMap.size();
-        stack.beforeComputation(realKey);
+        StackFrame frame = stack.beforeComputation(realKey);
         final int sizeAfter = stack.progressMap.size();
-        Set<MyKey> preventionsBefore = memoize ? new THashSet<>(stack.preventions.keySet()) : Collections.emptySet();
 
         try {
           T result = computation.compute();
 
-          if (memoize) {
-            stack.maybeMemoize(realKey, result, preventionsBefore);
+          if (memoize && frame.preventionsInside != null) {
+            stack.memoize(realKey, result, frame.preventionsInside);
           }
 
           return result;
@@ -139,8 +135,7 @@ public class RecursionManager {
       @Override
       public List<Key> currentStack() {
         ArrayList<Key> result = new ArrayList<>();
-        LinkedHashMap<MyKey, Integer> map = ourStack.get().progressMap;
-        for (MyKey pair : map.keySet()) {
+        for (MyKey pair : ourStack.get().progressMap.keySet()) {
           if (pair.guardId.equals(id)) {
             //noinspection unchecked
             result.add((Key)pair.userObject);
@@ -233,9 +228,10 @@ public class RecursionManager {
   private static class CalculationStack {
     private int reentrancyCount;
     private int depth;
-    private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<>();
+    private int firstLoopStart = Integer.MAX_VALUE; // outermost recursion-prevented frame depth; memoized values are dropped on its change.
+    private final LinkedHashMap<MyKey, StackFrame> progressMap = new LinkedHashMap<>();
     private final Map<MyKey, Throwable> preventions = ContainerUtil.newIdentityTroveMap();
-    private final Map<MyKey, List<SoftReference<MemoizedValue>>> intermediateCache = ContainerUtil.createSoftMap();
+    private final Map<MyKey, MemoizedValue> intermediateCache = ContainerUtil.createSoftKeySoftValueMap();
     private int enters;
     private int exits;
 
@@ -247,21 +243,7 @@ public class RecursionManager {
       return false;
     }
 
-    @Nullable
-    MemoizedValue getMemoizedValue(MyKey realKey) {
-      List<SoftReference<MemoizedValue>> refs = intermediateCache.get(realKey);
-      if (refs != null) {
-        for (SoftReference<MemoizedValue> ref : refs) {
-          MemoizedValue value = SoftReference.dereference(ref);
-          if (value != null && value.isActual(this)) {
-            return value;
-          }
-        }
-      }
-      return null;
-    }
-
-    final void beforeComputation(MyKey realKey) {
+    StackFrame beforeComputation(MyKey realKey) {
       enters++;
 
       if (progressMap.isEmpty()) {
@@ -271,7 +253,9 @@ public class RecursionManager {
       checkDepth("1");
 
       int sizeBefore = progressMap.size();
-      progressMap.put(realKey, reentrancyCount);
+      StackFrame frame = new StackFrame();
+      frame.reentrancyStamp = reentrancyCount;
+      progressMap.put(realKey, frame);
       depth++;
 
       checkDepth("2");
@@ -280,14 +264,11 @@ public class RecursionManager {
       if (sizeAfter != sizeBefore + 1) {
         LOG.error("Key doesn't lead to the map size increase: " + sizeBefore + " " + sizeAfter + " " + realKey.userObject);
       }
+      return frame;
     }
 
-    void maybeMemoize(MyKey realKey, @Nullable Object result, Set<MyKey> preventionsBefore) {
-      if (preventions.size() > preventionsBefore.size()) {
-        List<MyKey> added = ContainerUtil.findAll(preventions.keySet(), key -> key != realKey && !preventionsBefore.contains(key));
-        intermediateCache.computeIfAbsent(realKey, __ -> new SmartList<>())
-          .add(new SoftReference<>(new MemoizedValue(result, added.toArray(new MyKey[0]))));
-      }
+    void memoize(MyKey key, @Nullable Object result, @NotNull Set<MyKey> preventionsInside) {
+      intermediateCache.put(key, new MemoizedValue(result, preventionsInside.toArray(new MyKey[0])));
     }
 
     final void afterComputation(MyKey realKey, int sizeBefore, int sizeAfter) {
@@ -300,13 +281,14 @@ public class RecursionManager {
         LOG.error("Inconsistent depth after computation; depth=" + depth + "; map=" + progressMap);
       }
 
-      Integer value = progressMap.remove(realKey);
+      StackFrame value = progressMap.remove(realKey);
       depth--;
       if (!preventions.isEmpty()) {
         preventions.remove(realKey);
       }
 
-      if (depth == 0) {
+      if (depth <= firstLoopStart) {
+        firstLoopStart = Integer.MAX_VALUE;
         intermediateCache.clear();
       }
 
@@ -314,13 +296,13 @@ public class RecursionManager {
         LOG.error("Map size doesn't decrease: " + progressMap.size() + " " + sizeBefore + " " + realKey.userObject);
       }
 
-      reentrancyCount = value;
+      reentrancyCount = value.reentrancyStamp;
     }
 
     private void prohibitResultCaching(MyKey realKey) {
       reentrancyCount++;
 
-      List<Map.Entry<MyKey, Integer>> stack = new ArrayList<>(progressMap.entrySet());
+      List<Map.Entry<MyKey, StackFrame>> stack = new ArrayList<>(progressMap.entrySet());
       int loopStart = ContainerUtil.indexOf(stack, entry -> entry.getKey().equals(realKey));
       if (loopStart >= 0) {
         MyKey loopStartKey = stack.get(loopStart).getKey();
@@ -328,11 +310,15 @@ public class RecursionManager {
           preventions.put(loopStartKey, ourAssertOnMissedCache.get() ? new StackOverflowPreventedException(null) : null);
         }
         for (int i = loopStart + 1; i < stack.size(); i++) {
-          stack.get(i).setValue(reentrancyCount);
+          stack.get(i).getValue().addPrevention(reentrancyCount, loopStartKey);
         }
         if (LOG.isDebugEnabled() && loopStart < stack.size() - 1) {
           LOG.debug("Recursion prevented for " + realKey +
                     ", caching disabled for " + ContainerUtil.map(stack.subList(loopStart, stack.size()), Map.Entry::getKey));
+        }
+        if (firstLoopStart > loopStart) {
+          firstLoopStart = loopStart;
+          intermediateCache.clear();
         }
       }
     }
@@ -375,9 +361,6 @@ public class RecursionManager {
     "com.intellij.lang.ecmascript6.psi.impl.ES6ImportSpecifierImpl.multiResolve(",
     "com.intellij.lang.javascript.psi.types.JSTypeBaseImpl.substitute(",
 
-    // IDEA-228815
-    "org.jetbrains.plugins.groovy.intentions.style.inference.InferenceProcessKt.runInferenceProcess(",
-
     // IDEA-228814
     "com.intellij.psi.infos.MethodCandidateInfo.getPertinentApplicabilityLevel(",
     "com.intellij.psi.ThreadLocalTypes.performWithTypes(",
@@ -403,9 +386,18 @@ public class RecursionManager {
       this.value = value;
       this.dependencies = dependencies;
     }
+  }
 
-    boolean isActual(CalculationStack stack) {
-      return Stream.of(dependencies).allMatch(stack.progressMap::containsKey);
+  private static class StackFrame {
+    int reentrancyStamp;
+    @Nullable Set<MyKey> preventionsInside;
+
+    void addPrevention(int stamp, MyKey prevented) {
+      reentrancyStamp = stamp;
+      if (preventionsInside == null) {
+        preventionsInside = new THashSet<>();
+      }
+      preventionsInside.add(prevented);
     }
   }
 

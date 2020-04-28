@@ -1,17 +1,20 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.facet
 
+import com.google.common.collect.HashBiMap
 import com.intellij.facet.Facet
 import com.intellij.facet.ModifiableFacetModel
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.JpsImportedEntitySource
 import com.intellij.workspace.ide.WorkspaceModel
-import com.intellij.workspace.ide.toEntitySource
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModule
 
 internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage: TypedEntityStorage,
@@ -33,7 +36,16 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
 
   override fun addFacet(facet: Facet<*>, externalSource: ProjectModelExternalSource?) {
     val moduleEntity = getModuleEntity()
-    val source = externalSource?.toEntitySource() ?: moduleEntity.entitySource
+    val moduleSource = moduleEntity.entitySource
+    val source = when {
+      moduleSource is JpsFileEntitySource && externalSource != null ->
+        JpsImportedEntitySource(moduleSource, externalSource.id, legacyBridgeModule.project.isExternalStorageEnabled)
+      moduleSource is JpsImportedEntitySource && externalSource != null && moduleSource.externalSystemId != externalSource.id ->
+        JpsImportedEntitySource(moduleSource.internalFile, externalSource.id, legacyBridgeModule.project.isExternalStorageEnabled)
+      moduleSource is JpsImportedEntitySource && externalSource == null ->
+        moduleSource.internalFile
+      else -> moduleSource
+    }
     val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
     val underlyingEntity = facet.underlyingFacet?.let { entityToFacet.inverse()[it]!! }
     val entity = diff.addFacetEntity(facet.name, facet.type.stringId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
@@ -77,16 +89,23 @@ internal class ModifiableFacetModelViaWorkspaceModel(private val initialStorage:
   }
 
   override fun commit() {
-    facetManager.model.populateFrom(entityToFacet)
     val moduleDiff = legacyBridgeModule.diff
     if (moduleDiff != null) {
-      moduleDiff.addDiff(diff)
+      val res = moduleDiff.addDiff(diff)
+      populateModel(res)
     }
     else {
       WorkspaceModel.getInstance(legacyBridgeModule.project).updateProjectModel {
-        it.addDiff(diff)
+        val res = it.addDiff(diff)
+        populateModel(res)
       }
     }
+  }
+
+  private fun populateModel(replaceMap: Map<TypedEntity, TypedEntity>) {
+    val mapInNewStore: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
+    entityToFacet.forEach { (key, value) -> mapInNewStore[replaceMap.getOrDefault(key, key) as FacetEntity] = value }
+    facetManager.model.populateFrom(mapInNewStore)
   }
 
   override fun isModified(): Boolean {

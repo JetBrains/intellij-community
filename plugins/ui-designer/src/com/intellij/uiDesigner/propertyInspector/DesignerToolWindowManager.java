@@ -41,7 +41,7 @@ public class DesignerToolWindowManager extends AbstractToolWindowManager impleme
   }
 
   public static DesignerToolWindowManager getInstance(@NotNull Project project) {
-    return project.getComponent(DesignerToolWindowManager.class);
+    return project.getService(DesignerToolWindowManager.class);
   }
 
   @Nullable

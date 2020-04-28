@@ -26,6 +26,16 @@
     </extensionPoint>
   </extensionPoints>
 
+  <resource-bundle>messages.StatsCollectorBundle</resource-bundle>
+
+  <actions>
+    <action id="DumpMLCompletionFeatures"
+            class="com.intellij.completion.actions.MLCompletionFeaturesUtil$CopyFeaturesToClipboard">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 0"/>
+      <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
+    </action>
+  </actions>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.stats.completion.CompletionTrackerInitializer"/>
     <applicationService serviceImplementation="com.intellij.completion.settings.CompletionMLRankingSettings"/>
@@ -63,6 +73,8 @@
 
     <projectService serviceImplementation="com.intellij.stats.personalization.impl.ProjectUserFactorStorage"/>
 
+    <projectService serviceImplementation="com.intellij.completion.ngram.NGramModelRunnerManager"/>
+
     <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackKotlinMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackScalaMLRankingProvider"/>
 <!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.PythonMLRankingProvider"/>-->
@@ -93,6 +105,12 @@
 
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ngram.NGramFeatureProvider"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
-
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.completion.ml.common.RecentPlacesFeatures$StoreRecentPlacesListener"
+              topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener" />
+  </projectListeners>
 </idea-plugin>

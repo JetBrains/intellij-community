@@ -15,36 +15,22 @@
  */
 package git4idea.annotate;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
-import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import org.jetbrains.annotations.NotNull;
 
 public class GitRepositoryForAnnotationsListener {
-  private final Project myProject;
-  private final GitRepositoryChangeListener myListener;
-  private final ProjectLevelVcsManager myVcsManager;
-  private final GitVcs myVcs;
-
-  public GitRepositoryForAnnotationsListener(Project project) {
-    myProject = project;
-    myListener = createListener();
-    myVcs = GitVcs.getInstance(myProject);
-    myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
-    project.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, myListener);
-  }
-
-  private GitRepositoryChangeListener createListener() {
-    return new GitRepositoryChangeListener() {
+  public static void registerListener(@NotNull Project project, @NotNull Disposable disposable) {
+    project.getMessageBus().connect(disposable).subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
       @Override
       public void repositoryChanged(@NotNull GitRepository repository) {
-        final VcsAnnotationRefresher refresher = BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
+        final VcsAnnotationRefresher refresher = BackgroundTaskUtil.syncPublisher(project, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED);
         refresher.dirtyUnder(repository.getRoot());
       }
-    };
+    });
   }
 }

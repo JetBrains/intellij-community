@@ -4,6 +4,7 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.*;
@@ -32,10 +33,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-/**
- * @author Eugene Belyaev
- */
-public class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Insets TITLE_INSETS = JBUI.insetsTop(8);
 
   private RecognizedFileTypes myRecognizedFileType;
@@ -43,14 +41,9 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
   private HashBangPanel myHashBangs;
   private FileTypePanel myFileTypePanel;
   private Set<FileType> myTempFileTypes;
-  private final FileTypeManagerImpl myManager;
   private FileTypeAssocTable<FileType> myTempPatternsTable;
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
-
-  public FileTypeConfigurable(FileTypeManager fileTypeManager) {
-    myManager = (FileTypeManagerImpl)fileTypeManager;
-  }
 
   @Override
   public String getDisplayName() {
@@ -89,18 +82,20 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     }
     myOriginalToEditedMap.clear();
 
+    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
-        myManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
+      if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+        fileTypeManager.setIgnoredFilesList(myFileTypePanel.myIgnoreFilesField.getText());
       }
-      myManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
+      fileTypeManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
     });
   }
 
   @Override
   public void reset() {
-    myTempPatternsTable = myManager.getExtensionMap().copy();
+    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+    myTempPatternsTable = fileTypeManager.getExtensionMap().copy();
     myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
 
     myTempFileTypes = getRegisteredFilesTypes();
@@ -109,13 +104,16 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     updateFileTypeList();
     updateExtensionList();
 
-    myFileTypePanel.myIgnoreFilesField.setText(myManager.getIgnoredFilesList());
+    myFileTypePanel.myIgnoreFilesField.setText(fileTypeManager.getIgnoredFilesList());
   }
 
   @Override
   public boolean isModified() {
-    if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
-    return !myTempPatternsTable.equals(myManager.getExtensionMap()) ||
+    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+    if (!fileTypeManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) {
+      return true;
+    }
+    return !myTempPatternsTable.equals(fileTypeManager.getExtensionMap()) ||
            !myTempFileTypes.equals(getRegisteredFilesTypes()) ||
            !myOriginalToEditedMap.isEmpty() ||
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
@@ -181,7 +179,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
 
     myTempFileTypes.remove(fileType);
     if (fileType instanceof UserFileType) {
-      myOriginalToEditedMap.remove((UserFileType)fileType);
+      myOriginalToEditedMap.remove(fileType);
     }
     myTempPatternsTable.removeAllAssociations(fileType);
 
@@ -536,7 +534,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setAddAction(__ -> editHashBang(null))
-        .setAddActionName("Add HashBang Pattern")
+        .setAddActionName(LangBundle.message("action.HashBangPanel.add.hashbang.pattern.text"))
         .setEditAction(__ -> editHashBang())
         .setRemoveAction(__ -> removeHashBang())
         .disableUpDownActions();

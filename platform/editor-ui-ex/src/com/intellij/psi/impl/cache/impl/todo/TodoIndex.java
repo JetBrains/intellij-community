@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
 import com.intellij.util.indexing.*;
@@ -24,7 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -117,22 +116,8 @@ public final class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Int
 
   @Override
   public int getVersion() {
-    int version = 11;
-
-    if (!InvertedIndex.ARE_COMPOSITE_INDEXERS_ENABLED) {
-      Map<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>> extensions = TodoIndexers.INSTANCE.getAllRegisteredExtensions();
-      List<FileType> types = new ArrayList<>(extensions.keySet());
-      types.sort((o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
-
-      for (FileType fileType : types) {
-        DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = extensions.get(fileType);
-
-        int versionFromIndexer = indexer instanceof VersionedTodoIndexer ? (((VersionedTodoIndexer)indexer).getVersion()) : 0xFF;
-        version = version * 31 + (versionFromIndexer ^ indexer.getClass().getName().hashCode());
-      }
-    }
-
-    return version;
+    // composite indexer
+    return 11;
   }
 
   @Override

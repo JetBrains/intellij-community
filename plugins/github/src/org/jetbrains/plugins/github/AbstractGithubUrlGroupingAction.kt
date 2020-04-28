@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.actionSystem.*
@@ -10,14 +10,15 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubUrlUtil
+import java.util.function.Supplier
 import javax.swing.Icon
 
 /**
  * Visible and enabled if there's at least one possible github remote url ([GithubGitHelper]).
  * If there's only one url - it will be used for action, otherwise child actions will be created for each url.
  */
-abstract class AbstractGithubUrlGroupingAction(text: String?, description: String?, icon: Icon?)
-  : ActionGroup(text, description, icon), DumbAware {
+abstract class AbstractGithubUrlGroupingAction(dynamicText: Supplier<String?>, dynamicDescription: Supplier<String?>, icon: Icon?)
+  : ActionGroup(dynamicText, dynamicDescription, icon), DumbAware {
 
   final override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)

@@ -230,7 +230,7 @@ class LegacyBridgeProjectLibraryTest {
     assertTrue(iprFile.readText().contains(antLibraryName))
 
     val module = ModuleManager.getInstance(project).modifiableModel.let {
-      val module = it.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = it.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       it.commit()
       module
     }
@@ -270,7 +270,7 @@ class LegacyBridgeProjectLibraryTest {
     val library = createProjectLibrary(antLibraryName, withRoots = false)
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       moduleModel.commit()
       module
     }

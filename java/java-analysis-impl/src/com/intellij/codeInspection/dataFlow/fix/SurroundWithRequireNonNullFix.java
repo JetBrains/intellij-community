@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInspection.dataFlow.fix;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SurroundWithRequireNonNullFix implements LocalQuickFix {
   private final String myText;
@@ -58,5 +58,12 @@ public class SurroundWithRequireNonNullFix implements LocalQuickFix {
     PsiExpression replacement = JavaPsiFacade.getElementFactory(project)
       .createExpressionFromText("java.util.Objects.requireNonNull(" + qualifier.getText() + ")", qualifier);
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(qualifier.replace(replacement));
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    PsiExpression expression = myQualifierPointer.getElement();
+    if (expression == null) return null;
+    return new SurroundWithRequireNonNullFix(PsiTreeUtil.findSameElementInCopy(expression, target));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -78,7 +78,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   protected IdeMenuBar() {
-    if (WindowManagerImpl.isFloatingMenuBarSupported()) {
+    if (FrameInfoHelper.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
       myActivationWatcher = TimerUtil.createNamedTimer("IdeMenuBar", 100, new MyActionListener());
       myClockPanel = new ClockPanel();
@@ -94,6 +94,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myClockPanel = null;
       myButton = null;
     }
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   @NotNull

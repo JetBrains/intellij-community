@@ -305,7 +305,7 @@ public class ServersTreeStructure {
       if (task != null) {
         RunnerAndConfigurationSettings settings = task.getExecutionEnvironment().getRunnerAndConfigurationSettings();
         if (settings != null) {
-          RunDialog.editConfiguration(myProject, settings, "Edit Deployment Configuration");
+          RunDialog.editConfiguration(myProject, settings, CloudBundle.message("dialog.title.edit.deployment.configuration"));
         }
       }
     }

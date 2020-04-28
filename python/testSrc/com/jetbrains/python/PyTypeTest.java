@@ -3877,6 +3877,33 @@ public class PyTypeTest extends PyTestCase {
            "expr = example.__doc__");
   }
 
+  // PY-38786
+  public void testParticularTypeAgainstTypeVarBoundedWithBuiltinType() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("Type[MyClass]",
+                   "from typing import TypeVar, Type\n" +
+                   "\n" +
+                   "T = TypeVar(\"T\", bound=type)\n" +
+                   "\n" +
+                   "def foo(t: T) -> T:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "class MyClass:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "expr = foo(MyClass)")
+    );
+  }
+
+  // PY-38786
+  public void testDunderSubclasses() {
+    doTest("List[Type[Base]]",
+           "class Base(object):\n" +
+           "    pass\n" +
+           "expr = Base.__subclasses__()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

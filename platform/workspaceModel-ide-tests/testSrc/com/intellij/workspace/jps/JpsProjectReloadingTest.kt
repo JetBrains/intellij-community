@@ -5,12 +5,23 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.ModuleEntity
 import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.VirtualFileUrlManager
 import com.intellij.workspace.api.projectLibraries
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.Before
 import org.junit.Test
 import java.io.File
 
 class JpsProjectReloadingTest : HeavyPlatformTestCase() {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+
+  @Before
+  override fun setUp() {
+    super.setUp()
+    virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
+  }
+
   @Test
   fun `test modify iml`() {
     checkProjectAfterReload("common/modifyIml", "common/modifyIml") { (storage, projectDirUrl) ->
@@ -79,7 +90,9 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  private fun checkProjectAfterReload(directoryNameForDirectoryBased: String, directoryNameForFileBased: String, checkAction: (ReloadedProjectData) -> Unit) {
+  private fun checkProjectAfterReload(directoryNameForDirectoryBased: String,
+                                      directoryNameForFileBased: String,
+                                      checkAction: (ReloadedProjectData) -> Unit) {
     val dirBasedData = reload(sampleDirBasedProjectFile, directoryNameForDirectoryBased)
     checkAction(dirBasedData)
     val fileBasedData = reload(sampleFileBasedProjectFile, directoryNameForFileBased)
@@ -88,12 +101,12 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
 
   private fun reload(originalProjectFile: File,
                      updateAction: (LoadedProjectData) -> JpsConfigurationFilesChange): ReloadedProjectData {
-    val projectData = copyAndLoadProject(originalProjectFile)
+    val projectData = copyAndLoadProject(originalProjectFile, virtualFileManager)
     val change = updateAction(projectData)
-    val (changedEntities, builder) = projectData.serializationData.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.projectDirUrl))
+    val (changedEntities, builder) = projectData.serializers.reloadFromChangedFiles(change, CachingJpsFileContentReader(projectData.projectDirUrl))
     val originalBuilder = TypedEntityStorageBuilder.from(projectData.storage)
     originalBuilder.replaceBySource({it in changedEntities}, builder)
-    projectData.serializationData.checkConsistency(projectData.projectDirUrl, originalBuilder)
+    projectData.serializers.checkConsistency(projectData.projectDirUrl, originalBuilder, virtualFileManager)
     return ReloadedProjectData(originalBuilder, projectData.projectDirUrl)
   }
 

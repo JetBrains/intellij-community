@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -141,7 +142,14 @@ public abstract class JavaTestFramework implements TestFramework {
     return null;
   }
 
-  public abstract char getMnemonic();
+  /**
+   * @deprecated Mnemonics are not required anymore; frameworks are loaded in the combobox now
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
+  public char getMnemonic() {
+    return 0;
+  }
 
   public PsiMethod createSetUpPatternMethod(JVMElementFactory factory) {
     final FileTemplate template = FileTemplateManager.getDefaultInstance().getCodeTemplate(getSetUpMethodFileTemplateDescriptor().getFileName());

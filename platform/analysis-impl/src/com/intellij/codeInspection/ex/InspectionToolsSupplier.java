@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.openapi.Disposable;
@@ -9,42 +9,39 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class InspectionToolsSupplier implements Disposable {
-  protected final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
+  protected final DisposableWrapperList<Listener> listeners = new DisposableWrapperList<>();
 
-  @NotNull
-  public abstract List<InspectionToolWrapper> createTools();
+  public abstract @NotNull List<InspectionToolWrapper<?, ?>> createTools();
 
   public void addListener(@NotNull Listener listener, @Nullable Disposable parentDisposable) {
-    if (parentDisposable != null) {
-      myListeners.add(listener, parentDisposable);
+    if (parentDisposable == null) {
+      listeners.add(listener);
     }
     else {
-      myListeners.add(listener);
+      listeners.add(listener, parentDisposable);
     }
   }
 
   @Override
   public void dispose() {
-    myListeners.clear();
+    listeners.clear();
   }
 
   public interface Listener {
-    void toolAdded(@NotNull InspectionToolWrapper inspectionTool);
+    void toolAdded(@NotNull InspectionToolWrapper<?, ?> inspectionTool);
 
-    void toolRemoved(@NotNull InspectionToolWrapper inspectionTool);
+    void toolRemoved(@NotNull InspectionToolWrapper<?, ?> inspectionTool);
   }
 
-  public static class Simple extends InspectionToolsSupplier {
-    @NotNull
-    private final List<InspectionToolWrapper> myTools;
+  public static final class Simple extends InspectionToolsSupplier {
+    private final @NotNull List<InspectionToolWrapper<?, ?>> myTools;
 
-    public Simple(@NotNull List<InspectionToolWrapper> tools) {
+    public Simple(@NotNull List<InspectionToolWrapper<?, ?>> tools) {
       myTools = tools;
     }
 
-    @NotNull
     @Override
-    public List<InspectionToolWrapper> createTools() {
+    public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
       return myTools;
     }
   }

@@ -24,8 +24,12 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
 
   override fun runForWholeFile() = true
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-    UastVisitorAdapter(MissingDeprecatedAnnotationOnSFRVisitor(holder), true)
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (!AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME, holder.file)) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    return UastVisitorAdapter(MissingDeprecatedAnnotationOnSFRVisitor(holder), true)
+  }
 
   private class MissingDeprecatedAnnotationOnSFRVisitor(private val problemsHolder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
     override fun visitClass(node: UClass): Boolean {

@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -157,9 +158,15 @@ public class PsiPolyExpressionUtil {
       type = expr.getType();
     }
     else if (expr instanceof PsiMethodCallExpression) {
-      final PsiMethod method = ((PsiMethodCallExpression)expr).resolveMethod();
+      final JavaResolveResult result = ((PsiMethodCallExpression)expr).getMethodExpression().advancedResolve(false);
+      final PsiMethod method = (PsiMethod)result.getElement();
       if (method != null) {
         type = method.getReturnType();
+        if (result instanceof MethodCandidateInfo) {
+          // Spec: Note that, for a generic method, this is the type before instantiating the method's type arguments.
+          PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutorFromQualifier();
+          type = substitutor.substitute(type);
+        }
       }
     }
 
@@ -204,18 +211,8 @@ public class PsiPolyExpressionUtil {
       return ConditionalKind.NULL;
     }
 
-    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (TypeConversionUtil.isNumericType(type)) return ConditionalKind.NUMERIC;
     if (TypeConversionUtil.isBooleanType(type)) return ConditionalKind.BOOLEAN;
-
-    if (psiClass instanceof PsiTypeParameter) {
-      for (PsiClassType classType : psiClass.getExtendsListTypes()) {
-        final ConditionalKind kind = isBooleanOrNumericType(classType);
-        if (kind != null) {
-          return kind;
-        }
-      }
-    }
     return null;
   }
 }

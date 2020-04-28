@@ -27,4 +27,8 @@
   <projectListeners>
     <listener class="com.intellij.filePrediction.FilePredictionEditorManagerListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
+  <applicationListeners>
+    <listener class="com.intellij.filePrediction.history.FilePredictionProjectListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
 </idea-plugin>

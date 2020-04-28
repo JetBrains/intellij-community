@@ -5,6 +5,7 @@ package org.jetbrains.plugins.github.extensions
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
@@ -27,7 +28,7 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
         GithubAccountAuthData(account, username, token)
       }
       catch (e: Exception) {
-        LOG.info("Cannot load username for $account", e)
+        if (e !is ProcessCanceledException) LOG.info("Cannot load username for $account", e)
         null
       }
     }
@@ -62,7 +63,7 @@ class GithubHttpAuthDataProvider : GitHttpAuthDataProvider {
                                                     it).login == login
         }
         catch (e: Exception) {
-          LOG.info("Cannot load username for $it", e)
+          if (e !is ProcessCanceledException) LOG.info("Cannot load username for $it", e)
           false
         }
       }

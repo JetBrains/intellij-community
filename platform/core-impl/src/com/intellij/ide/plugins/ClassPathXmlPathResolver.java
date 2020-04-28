@@ -6,6 +6,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,10 +17,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResolver<String> {
+@ApiStatus.Internal
+public final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResolver<String> {
   private final ClassLoader classLoader;
 
-  ClassPathXmlPathResolver(@NotNull ClassLoader classLoader) {
+  @ApiStatus.Internal
+  public ClassPathXmlPathResolver(@NotNull ClassLoader classLoader) {
     this.classLoader = classLoader;
   }
 

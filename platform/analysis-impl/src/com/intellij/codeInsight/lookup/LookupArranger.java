@@ -30,13 +30,6 @@ public abstract class LookupArranger implements WeighingContext {
     updateCache(item);
   }
 
-  public void clear() {
-    myItems.clear();
-    myMatchingItems.clear();
-    myExactPrefixItems.clear();
-    myInexactPrefixItems.clear();
-  }
-
   private void updateCache(LookupElement item) {
     if (!prefixMatches(item)) {
       return;

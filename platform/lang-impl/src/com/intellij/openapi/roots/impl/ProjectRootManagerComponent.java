@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointChangeListener;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -18,10 +17,7 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.WatchedRootsProvider;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -68,13 +64,11 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private final ExecutorService myExecutor = ApplicationManager.getApplication().isUnitTestMode()
                                              ? ConcurrencyUtil.newSameThreadExecutorService()
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
-  @NotNull
-  private Future<?> myCollectWatchRootsFuture = CompletableFuture.completedFuture(null); // accessed in EDT only
+  private @NotNull Future<?> myCollectWatchRootsFuture = CompletableFuture.completedFuture(null); // accessed in EDT only
 
   private boolean myPointerChangesDetected;
   private int myInsideRefresh;
-  @NotNull
-  private Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
+  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
   public ProjectRootManagerComponent(@NotNull Project project) {
@@ -119,16 +113,13 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
         myFileTypesChanged.levelDown();
       }
     });
-    AdditionalLibraryRootsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointChangeListener() {
-      @Override
-      public void extensionListChanged() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          WriteAction.run(() -> {
-            makeRootsChange(EmptyRunnable.getInstance(), false, true);
-          });
-        });
-      }
-    }, project);
+    Runnable rootsExtensionPointListener = () -> ApplicationManager.getApplication().invokeLater(() -> {
+      WriteAction.run(() -> {
+        makeRootsChange(EmptyRunnable.getInstance(), false, true);
+      });
+    });
+    AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, project);
+    OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, project);
   }
 
   @Override
@@ -215,8 +206,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     addRootsToWatch();
   }
 
-  @NotNull
-  private Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
+  private @NotNull Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
@@ -413,9 +403,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
   };
 
-  @NotNull
   @Override
-  public VirtualFilePointerListener getRootsValidityChangedListener() {
+  public @NotNull VirtualFilePointerListener getRootsValidityChangedListener() {
     return myRootsChangedListener;
   }
 }

@@ -5,7 +5,7 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.pico.DefaultPicoContainer;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,57 +18,47 @@ import java.util.Map;
 @ApiStatus.Internal
 public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
   public BeanExtensionPoint(@NotNull String name,
-                     @NotNull String className,
-                     @NotNull PluginDescriptor pluginDescriptor,
-                     boolean dynamic) {
+                            @NotNull String className,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            boolean dynamic) {
     super(name, className, pluginDescriptor, dynamic);
   }
 
-  @NotNull
   @Override
-  public ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
+  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
     BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
     result.setComponentManager(manager);
     return result;
   }
 
   @Override
-  @NotNull
-  protected ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
-                                                                                      @NotNull PluginDescriptor pluginDescriptor,
-                                                                                      @NotNull ComponentManager componentManager) {
-    // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
+  protected @NotNull ExtensionComponentAdapter createAdapterAndRegisterInPicoContainerIfNeeded(@NotNull Element extensionElement,
+                                                                                               @NotNull PluginDescriptor pluginDescriptor,
+                                                                                               @NotNull ComponentManager componentManager) {
     String orderId = extensionElement.getAttributeValue("id");
     LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
     Element effectiveElement = !JDOMUtil.isEmpty(extensionElement) ? extensionElement : null;
-    if (componentManager.getPicoContainer().getParent() == null) {
+    // project level extensions requires Project as constructor argument, so, for now constructor injection disabled only for app level
+    if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
       return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
     }
     return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement);
   }
 
   @Override
-  public void unregisterExtensions(@NotNull ComponentManager componentManager,
-                                   @NotNull PluginDescriptor pluginDescriptor,
-                                   @NotNull List<Element> elements,
-                                   List<Runnable> listenerCallbacks) {
+  void unregisterExtensions(@NotNull ComponentManager componentManager,
+                            @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull List<Element> elements,
+                            @NotNull List<Runnable> listenerCallbacks) {
     Map<String, String> defaultAttributes = new HashMap<>();
-    ClassLoader classLoader = myDescriptor.getPluginClassLoader();
-    if (classLoader == null) {
-      classLoader = getClass().getClassLoader();
-    }
     try {
-      Class<?> aClass = Class.forName(getClassName(), true, classLoader);
-      Object defaultInstance;
-      if (componentManager.getPicoContainer().getParent() == null) {
-        defaultInstance = ReflectionUtil.newInstance(aClass);
-      }
-      else {
-        defaultInstance = componentManager.instantiateClassWithConstructorInjection(aClass, aClass, pluginDescriptor.getPluginId());
-      }
+      Object defaultInstance = componentManager.instantiateExtensionWithPicoContainerOnlyIfNeeded(getClassName(), pluginDescriptor);
       defaultAttributes.putAll(XmlExtensionAdapter.getSerializedDataMap(XmlSerializer.serialize(defaultInstance)));
     }
-    catch (ClassNotFoundException ignored) {
+    catch (Exception e) {
+      if (!(e.getCause() instanceof ClassNotFoundException)) {
+        throw e;
+      }
     }
 
     unregisterExtensions((x, adapter) -> {
@@ -76,7 +66,8 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
         return true;
       }
       XmlExtensionAdapter xmlExtensionAdapter = (XmlExtensionAdapter)adapter;
-      return xmlExtensionAdapter.getPluginDescriptor() != pluginDescriptor || !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
+      return xmlExtensionAdapter.getPluginDescriptor() != pluginDescriptor ||
+             !xmlExtensionAdapter.isLoadedFromAnyElement(elements, defaultAttributes);
     }, false, listenerCallbacks);
   }
 }

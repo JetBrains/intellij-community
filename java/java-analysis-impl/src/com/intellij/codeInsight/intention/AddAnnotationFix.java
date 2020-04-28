@@ -48,5 +48,4 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     applyFix();
   }
-
 }

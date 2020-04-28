@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.FileIntPropertyPusher;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -14,18 +15,14 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 /**
  * @author Gregory.Shrago
  */
-public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
+public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLevel> {
 
   public static void pushLanguageLevel(@NotNull final Project project) {
     PushedFilePropertiesUpdater instance = PushedFilePropertiesUpdater.getInstance(project);
@@ -76,18 +73,24 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
   private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 3, true);
 
   @Override
-  public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
-    try (DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir)) {
-      if (iStream != null) {
-        final int oldLevelOrdinal = DataInputOutputUtil.readINT(iStream);
-        if (oldLevelOrdinal == level.ordinal()) return;
-      }
-    }
+  public @NotNull FileAttribute getAttribute() {
+    return PERSISTENCE;
+  }
 
-    try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
-      DataInputOutputUtil.writeINT(oStream, level.ordinal());
-    }
+  @Override
+  public int toInt(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.ordinal();
+  }
 
+  @Override
+  public @NotNull LanguageLevel fromInt(int val) {
+    return LanguageLevel.values()[val];
+  }
+
+  @Override
+  public void propertyChanged(@NotNull Project project,
+                              @NotNull VirtualFile fileOrDir,
+                              @NotNull LanguageLevel actualProperty) {
     // Todo: GwtLanguageLevelPusher changes java language level for single files without firing filePropertiesChanged
     // so code below doesn't work.
     // Uncomment it and remove older code once the problem is fixed
@@ -102,10 +105,6 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
 
   private static boolean isJavaLike(FileType type) {
     return type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JavaLanguage.INSTANCE);
-  }
-
-  @Override
-  public void afterRootsChanged(@NotNull Project project) {
   }
 
   @Nullable

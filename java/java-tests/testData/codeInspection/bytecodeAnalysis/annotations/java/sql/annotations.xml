@@ -98,6 +98,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.sql.Date void setTime(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.sql.DriverInfo DriverInfo(java.sql.Driver)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -253,6 +258,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.sql.Time void setTime(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.sql.Time void setYear(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -301,6 +311,16 @@
     </item>
     <item name='java.sql.Timestamp java.sql.Timestamp valueOf(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.sql.Timestamp void setNanos(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.sql.Timestamp void setTime(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='java.sql.Types Types()'>
         <annotation name='org.jetbrains.annotations.Contract'>

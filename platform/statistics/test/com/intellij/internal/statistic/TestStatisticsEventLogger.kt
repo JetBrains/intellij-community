@@ -3,6 +3,7 @@ package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.*
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 class TestStatisticsEventLogger(private val session: String = "testSession",
                                 private val build: String = "999.999",
@@ -10,9 +11,7 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
                                 private val recorderVersion: String = "1") : StatisticsEventLogger {
   val logged = ArrayList<LogEvent>()
 
-  override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = log(group, eventId, Collections.emptyMap(), isState)
-
-  override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
 
     val event = newLogEvent(session, build, bucket, eventTime, group.id, group.version.toString(), recorderVersion, eventId, isState)
@@ -20,6 +19,7 @@ class TestStatisticsEventLogger(private val session: String = "testSession",
       event.event.addData(datum.key, datum.value)
     }
     logged.add(event)
+    return CompletableFuture.completedFuture(null)
   }
 
   override fun getActiveLogFile(): EventLogFile? = null

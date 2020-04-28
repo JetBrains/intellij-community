@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
@@ -65,7 +66,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     EditSourceOnDoubleClickHandler.install(myView, closer);
     myChangeListManager = ChangeListManager.getInstance(project);
     createPanel();
-    setOKButtonText("Close");
+    setOKButtonText(CommonBundle.getCancelButtonText());
 
     init();
     initData(initDataFiles);

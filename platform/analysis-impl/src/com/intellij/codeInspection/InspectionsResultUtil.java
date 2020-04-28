@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-public class InspectionsResultUtil {
+public final class InspectionsResultUtil {
   @NonNls public static final String DESCRIPTIONS = ".descriptions";
   @NonNls public static final String XML_EXTENSION = ".xml";
   static final Logger LOG = Logger.getInstance(InspectionsResultUtil.class);
@@ -31,14 +31,13 @@ public class InspectionsResultUtil {
   @NonNls public static final String PROFILE = "profile";
   @NonNls public static final String INSPECTIONS_NODE = "inspections";
   private static final String ROOT = "root";
-  private static final String AGGREGATE = "_aggregate";
+  public static final String AGGREGATE = "_aggregate";
 
   public static void describeInspections(@NonNls Path outputPath, @Nullable String name, @NotNull InspectionProfile profile) throws IOException {
-    final InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
-    final Map<String, Set<InspectionToolWrapper>> map = new HashMap<>();
-    for (InspectionToolWrapper toolWrapper : toolWrappers) {
-      final String groupName = toolWrapper.getGroupDisplayName();
-      Set<InspectionToolWrapper> groupInspections = map.computeIfAbsent(groupName, __ -> new HashSet<>());
+    Map<String, Set<InspectionToolWrapper<?, ?>>> map = new HashMap<>();
+    for (InspectionToolWrapper<?, ?> toolWrapper : profile.getInspectionTools(null)) {
+      String groupName = toolWrapper.getGroupDisplayName();
+      Set<InspectionToolWrapper<?, ?>> groupInspections = map.computeIfAbsent(groupName, __ -> new HashSet<>());
       groupInspections.add(toolWrapper);
     }
 
@@ -49,12 +48,11 @@ public class InspectionsResultUtil {
         xmlWriter.addAttribute(PROFILE, name);
       }
       List<String> inspectionsWithoutDescriptions = new ArrayList<>(1);
-      for (Map.Entry<String, Set<InspectionToolWrapper>> entry : map.entrySet()) {
+      for (Map.Entry<String, Set<InspectionToolWrapper<?, ?>>> entry : map.entrySet()) {
         xmlWriter.startNode("group");
         String groupName = entry.getKey();
         xmlWriter.addAttribute("name", groupName);
-        final Set<InspectionToolWrapper> entries = entry.getValue();
-        for (InspectionToolWrapper toolWrapper : entries) {
+        for (InspectionToolWrapper<?, ?> toolWrapper : entry.getValue()) {
           xmlWriter.startNode("inspection");
           final String shortName = toolWrapper.getShortName();
           xmlWriter.addAttribute("shortName", shortName);
@@ -80,18 +78,15 @@ public class InspectionsResultUtil {
     }
   }
 
-  @NotNull
-  public static Path getInspectionResultPath(@NotNull Path outputDir, String name) {
+  public static @NotNull Path getInspectionResultPath(@NotNull Path outputDir, String name) {
     return outputDir.resolve(name + XML_EXTENSION);
   }
 
-  @NotNull
-  public static Path getInspectionResultFile(@NotNull Path outputDirectory, @NotNull String name) {
+  public static @NotNull Path getInspectionResultFile(@NotNull Path outputDirectory, @NotNull String name) {
     return outputDirectory.resolve(name + XML_EXTENSION);
   }
 
-  @NotNull
-  public static BufferedWriter getWriter(@NotNull Path outputDirectory, @NotNull String name) throws IOException {
+  public static @NotNull BufferedWriter getWriter(@NotNull Path outputDirectory, @NotNull String name) throws IOException {
     Path file = getInspectionResultFile(outputDirectory, name);
     Files.createDirectories(outputDirectory);
     return Files.newBufferedWriter(file);
@@ -177,8 +172,7 @@ public class InspectionsResultUtil {
       }
     }
 
-    @NotNull
-    private static Writer openFile(@NotNull Path outputDirectory, @NotNull String name) throws IOException {
+    private static @NotNull Writer openFile(@NotNull Path outputDirectory, @NotNull String name) throws IOException {
       return getWriter(outputDirectory, name);
     }
 

@@ -6,7 +6,7 @@ import {GroupedMetricResponse} from "@/aggregatedStats/model"
 
 // todo https://www.amcharts.com/demos/variance-indicators/
 export class ClusteredChartManager implements StatChartManager {
-  private readonly chart: am4charts.XYChart
+  readonly chart: am4charts.XYChart
   private currentChartTitle: string | null = null
 
   constructor(container: HTMLElement) {

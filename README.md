@@ -26,7 +26,7 @@ run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Thes
 * `getPlugins.sh` for Linux or macOS.
 * `getPlugins.bat` for Windows.
 
-_**Note:**_ Always `git checkout` the `intellij-community`, `android`, and `android/tools-base` Git repositories to the same branches/tags. 
+_**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
 Version 2018.2 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop

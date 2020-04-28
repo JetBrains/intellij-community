@@ -5,13 +5,13 @@ import com.intellij.ide.FrameStateListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.SystemProperties
 
 /**
  * @author yole
@@ -20,7 +20,7 @@ private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugin
 
 class DynamicPluginVfsListener : AsyncFileListener {
   init {
-    if (System.getProperty(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) != null) {
+    if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
       val pluginsPath = PathManager.getPluginsPath()
       LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)
       val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(pluginsPath)
@@ -32,7 +32,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    if (System.getProperty(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) == null) return null
+    if (SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return null
 
     val pluginsToReload = hashSetOf<IdeaPluginDescriptorImpl>()
     for (event in events) {
@@ -57,7 +57,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
               continue
             }
             reloaded.add(pluginDescriptor.name)
-            DynamicPlugins.loadPlugin(pluginDescriptor, false)
+            DynamicPlugins.loadPlugin(pluginDescriptor)
           }
           if (reloaded.isNotEmpty()) {
             DynamicPlugins.notify("${reloaded.joinToString()} reloaded successfully", NotificationType.INFORMATION)
@@ -68,16 +68,18 @@ class DynamicPluginVfsListener : AsyncFileListener {
   }
 
   private fun findPluginByPath(path: String): IdeaPluginDescriptorImpl? {
-    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) return null
+    if (!FileUtil.isAncestor(PathManager.getPluginsPath(), path, false)) {
+      return null
+    }
     return PluginManager.getPlugins().firstOrNull {
-      FileUtil.isAncestor(it.path.absolutePath, path, false)
+      FileUtil.isAncestor(it.pluginPath.toAbsolutePath().toString(), path, false)
     } as IdeaPluginDescriptorImpl?
   }
 }
 
 class DynamicPluginsFrameStateListener : FrameStateListener {
   override fun onFrameActivated() {
-    if (System.getProperty(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) == null) return
+    if (!SystemProperties.`is`(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return
 
     val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())
     pluginsRoot?.refresh(true, true)

@@ -29,7 +29,7 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.uast.UastVisitorAdapter;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.IncorrectOperationException;
@@ -375,18 +375,16 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       return myGlobal.getGroupDisplayName();
     }
 
-
     @Override
     @NotNull
     public String getShortName() {
       return myGlobal.getShortName();
     }
 
-
     @NotNull
     @Override
     public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-      return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
+      return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
         private final UnusedDeclarationInspectionBase
           myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
 
@@ -463,7 +461,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           }
           return true;
         }
-      }, true);
+      }, new Class[]{UMethod.class});
     }
 
     private Object getArgValue(UExpression arg, PsiMethod method) {

@@ -44,5 +44,6 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.NamedScopeManager"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.completion.InternalCompletionSettings"/>
   </extensions>
 </idea-plugin>

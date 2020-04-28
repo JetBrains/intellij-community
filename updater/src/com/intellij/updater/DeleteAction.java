@@ -51,7 +51,7 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected void doBackup(File toFile, File backupFile) throws IOException {
-    Utils.copy(toFile, backupFile);
+    Utils.copy(toFile, backupFile, false);
   }
 
   @Override
@@ -77,9 +77,8 @@ public class DeleteAction extends PatchAction {
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
-    if (!toFile.exists() || Files.isDirectory(toFile.toPath(), LinkOption.NOFOLLOW_LINKS) || isModified(toFile)) {
-      Utils.delete(toFile); // make sure there is no directory remained on this path (may remain from previous 'create' actions
-      Utils.copy(backupFile, toFile);
+    if (!Files.exists(toFile.toPath()) || Files.isDirectory(toFile.toPath(), LinkOption.NOFOLLOW_LINKS) || isModified(toFile)) {
+      Utils.copy(backupFile, toFile, true);
     }
   }
 }

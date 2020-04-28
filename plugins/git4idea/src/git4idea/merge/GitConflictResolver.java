@@ -174,7 +174,8 @@ public class GitConflictResolver {
    */
   protected void notifyUnresolvedRemain() {
     notifyWarning(myParams.myErrorNotificationTitle,
-                  "Unresolved conflicts remaining in the project." + myParams.myErrorNotificationAdditionalDescription);
+                  GitBundle.message("merge.unresolved.conflicts.remaining.notification.body") +
+                  myParams.myErrorNotificationAdditionalDescription);
   }
 
   /**
@@ -182,7 +183,8 @@ public class GitConflictResolver {
    * notification.
    */
   private void notifyUnresolvedRemainAfterNotification() {
-    notifyWarning("Unresolved Conflicts Remaining", myParams.myErrorNotificationAdditionalDescription);
+    notifyWarning(GitBundle.message("merge.unresolved.conflicts.remaining.notification.title"),
+                  myParams.myErrorNotificationAdditionalDescription);
   }
 
   protected void notifyWarning(@NotNull String title, @NotNull String content) {
@@ -234,7 +236,7 @@ public class GitConflictResolver {
 
   private void notifyException(@NotNull VcsException e) {
     LOG.info("mergeFiles ", e);
-    final String description = "Couldn't check the working tree for unmerged files because of an error.";
+    final String description = GitBundle.getString("conflict.resolver.unmerged.files.check.error.notification.description.text");
     VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
                                                    description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
                                                    e.getLocalizedMessage());

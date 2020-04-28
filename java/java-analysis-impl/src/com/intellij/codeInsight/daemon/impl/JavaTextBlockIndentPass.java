@@ -206,10 +206,10 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       }
 
       private static int getIndent(@NotNull PsiLiteralExpression literal) {
-        int indent = PsiLiteralUtil.getTextBlockIndent(literal);
-        if (indent <= 0) return indent;
         String[] lines = PsiLiteralUtil.getTextBlockLines(literal);
         if (lines == null) return -1;
+        int indent = PsiLiteralUtil.getTextBlockIndent(lines);
+        if (indent <= 0) return indent;
         IndentType indentType = findIndentType(lines, indent);
         if (indentType == null) return -1;
         if (indentType == IndentType.TABS) {

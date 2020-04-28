@@ -6,7 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
@@ -39,7 +39,7 @@ public interface MessagesService {
   int showMoreInfoMessageDialog(Project project,
                                 @DialogMessage String message,
                                 @DialogTitle String title,
-                                @NlsUI.Text String moreInfo,
+                                @DetailedDescription String moreInfo,
                                 String[] options,
                                 int defaultOptionIndex,
                                 int focusedOptionIndex,
@@ -48,18 +48,18 @@ public interface MessagesService {
   int showTwoStepConfirmationDialog(@DialogMessage String message,
                                     @DialogTitle String title,
                                     String[] options,
-                                    @NlsUI.Checkbox String checkboxText,
+                                    @NlsContexts.Checkbox String checkboxText,
                                     boolean checked,
                                     int defaultOptionIndex,
                                     int focusedOptionIndex,
                                     Icon icon,
                                     PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc);
 
-  String showPasswordDialog(Project project,
-                            @DialogMessage String message,
-                            @DialogTitle String title,
-                            Icon icon,
-                            InputValidator validator);
+  @Nullable String showPasswordDialog(@Nullable Project project,
+                                      @DialogMessage String message,
+                                      @DialogTitle String title,
+                                      Icon icon,
+                                      InputValidator validator);
 
   char @Nullable [] showPasswordDialog(@NotNull Component parentComponent,
                                        @DialogMessage String message,
@@ -67,37 +67,37 @@ public interface MessagesService {
                                        Icon icon,
                                        @Nullable InputValidator validator);
 
-  String showInputDialog(@Nullable Project project,
-                         @Nullable Component parentComponent,
-                         @DialogMessage String message,
-                         @DialogTitle String title,
-                         @Nullable Icon icon,
-                         @Nullable @InputDialogInitialValue String initialValue,
-                         @Nullable InputValidator validator,
-                         @Nullable TextRange selection,
-                         @Nullable @NlsUI.Text String comment);
+  @Nullable String showInputDialog(@Nullable Project project,
+                                   @Nullable Component parentComponent,
+                                   @DialogMessage String message,
+                                   @DialogTitle String title,
+                                   @Nullable Icon icon,
+                                   @Nullable String initialValue,
+                                   @Nullable InputValidator validator,
+                                   @Nullable TextRange selection,
+                                   @Nullable @DetailedDescription String comment);
 
-  String showMultilineInputDialog(Project project,
-                                  @DialogMessage String message,
-                                  @DialogTitle String title,
-                                  @InputDialogInitialValue String initialValue,
-                                  Icon icon,
-                                  @Nullable InputValidator validator);
+  @Nullable String showMultilineInputDialog(Project project,
+                                            @DialogMessage String message,
+                                            @DialogTitle String title,
+                                            String initialValue,
+                                            Icon icon,
+                                            @Nullable InputValidator validator);
 
-  Pair<String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
-                                                    @DialogTitle String title,
-                                                    @NlsUI.Checkbox String checkboxText,
-                                                    boolean checked,
-                                                    boolean checkboxEnabled,
-                                                    Icon icon,
-                                                    @InputDialogInitialValue String initialValue,
-                                                    InputValidator validator);
+  @NotNull Pair<@Nullable String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
+                                                                       @DialogTitle String title,
+                                                                       @NlsContexts.Checkbox String checkboxText,
+                                                                       boolean checked,
+                                                                       boolean checkboxEnabled,
+                                                                       Icon icon,
+                                                                       String initialValue,
+                                                                       InputValidator validator);
 
   String showEditableChooseDialog(@DialogMessage String message,
                                   @DialogTitle String title,
                                   Icon icon,
                                   String[] values,
-                                  @InputDialogInitialValue String initialValue,
+                                  String initialValue,
                                   InputValidator validator);
 
   int showChooseDialog(@Nullable Project project,
@@ -105,7 +105,7 @@ public interface MessagesService {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        String[] values,
-                       @InputDialogInitialValue String initialValue,
+                       String initialValue,
                        @Nullable Icon icon);
 
   void showTextAreaDialog(JTextField textField,

@@ -132,18 +132,11 @@
     <projectService serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
-  </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager</implementation-class>
-      <headless-implementation-class/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.ide.palette.impl.PaletteToolWindowManager</implementation-class>
-      <headless-implementation-class/>
-    </component>
-  </project-components>
+    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager" headlessImplementation=""/>
+
+    <projectService serviceImplementation="com.intellij.ide.palette.impl.PaletteToolWindowManager" headlessImplementation=""/>
+  </extensions>
 
   <actions>
     <group id="GuiDesigner.MainToolbarActions">

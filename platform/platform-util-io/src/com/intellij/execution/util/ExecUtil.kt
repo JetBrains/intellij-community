@@ -137,7 +137,7 @@ object ExecUtil {
     val sudoCommandLine = when {
       SystemInfo.isWinVistaOrNewer -> {
         val launcherExe = PathManager.findBinFileWithException("launcher.exe")
-        GeneralCommandLine(listOf(launcherExe.path, commandLine.exePath) + commandLine.parametersList.parameters)
+        GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
       }
       SystemInfo.isWindows -> {
         throw UnsupportedOperationException("Executing as Administrator is only available in Windows Vista or newer")

@@ -5,9 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -40,15 +38,6 @@ class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   Point getPosition() {
     VisualPosition pos = getVisualPosition();
     return myEditor.visualPositionToXY(pos);
-  }
-
-  @Nullable
-  @Override
-  public Rectangle getBounds() {
-    int targetOffset = DocumentUtil.getLineEndOffset(getOffset(), myEditor.getDocument());
-    if (myEditor.getFoldingModel().isOffsetCollapsed(targetOffset)) return null;
-    Point pos = getPosition();
-    return new Rectangle(pos.x, pos.y, getWidthInPixels(), getHeightInPixels());
   }
 
   @NotNull

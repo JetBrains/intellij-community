@@ -5,11 +5,12 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.NlsCapitalizationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.NlsInfo;
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlElement;
@@ -162,7 +163,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     if (attributeType != String.class) return;
 
     final PsiElement declaration = childrenDescription.getDeclaration(extension.getManager().getProject());
-    if (declaration instanceof PsiField) {
+    if (declaration instanceof PsiModifierListOwner) {
       final Nls.Capitalization capitalization = NlsInfo.getCapitalization((PsiModifierListOwner)declaration);
       if (capitalization == Nls.Capitalization.NotSpecified) return;
 
@@ -226,12 +227,12 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
       }
 
       @Override
-      public @NlsUI.ListItem @NotNull String getName() {
+      public @IntentionName @NotNull String getName() {
         return "Properly capitalize '" + escapedValue + '\'';
       }
 
       @Override
-      public @NlsUI.ListItem @NotNull String getFamilyName() {
+      public @IntentionFamilyName @NotNull String getFamilyName() {
         return "Properly capitalize";
       }
 

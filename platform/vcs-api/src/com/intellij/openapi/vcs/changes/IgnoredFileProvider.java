@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -24,6 +24,6 @@ public interface IgnoredFileProvider {
   Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project);
 
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NonNls
   String getIgnoredGroupDescription();
 }

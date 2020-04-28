@@ -23,7 +23,7 @@ public class Waiter extends Task.Modal {
     super(project, VcsBundle.message("change.list.manager.wait.lists.synchronization", title), cancellable);
     myRunnable = runnable;
     mySemaphore.down();
-    setCancelText("Skip");
+    setCancelText(VcsBundle.message("button.skip"));
   }
 
   @Override

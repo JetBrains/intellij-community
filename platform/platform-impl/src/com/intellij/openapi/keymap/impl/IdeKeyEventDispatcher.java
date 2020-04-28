@@ -48,6 +48,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.KeyboardLayoutUtil;
 import com.intellij.util.ui.MacUIUtil;
@@ -77,8 +78,6 @@ import java.util.*;
  * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher implements Disposable {
-  @NonNls
-  private static final String GET_CACHED_STROKE_METHOD_NAME = "getCachedStroke";
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
   private static final boolean JAVA11_ON_WINDOWS = SystemInfo.isWindows && SystemInfo.isJavaVersionAtLeast(11, 0, 0);
 
@@ -305,6 +304,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return true;
   }
 
+  private static class ReflectionHolder {
+    static final Method getCachedStroke = Objects.requireNonNull(
+      ReflectionUtil.getDeclaredMethod(AWTKeyStroke.class, "getCachedStroke", char.class, int.class, int.class, boolean.class));
+  }
+
   /**
    * This is hack. AWT doesn't allow to create KeyStroke with specified key code and key char
    * simultaneously. Therefore we are using reflection.
@@ -314,21 +318,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
                  ~InputEvent.BUTTON2_DOWN_MASK&~InputEvent.BUTTON2_MASK&
                  ~InputEvent.BUTTON3_DOWN_MASK&~InputEvent.BUTTON3_MASK;
     try {
-      Method[] methods=AWTKeyStroke.class.getDeclaredMethods();
-      Method getCachedStrokeMethod=null;
-      for (Method method : methods) {
-        if (GET_CACHED_STROKE_METHOD_NAME.equals(method.getName())) {
-          getCachedStrokeMethod = method;
-          getCachedStrokeMethod.setAccessible(true);
-          break;
-        }
-      }
-      if(getCachedStrokeMethod==null){
-        throw new IllegalStateException("not found method with name getCachedStrokeMethod");
-      }
-      Object[] getCachedStrokeMethodArgs=
-        {originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(), modifier, originalKeyStroke.isOnKeyRelease()};
-      return (KeyStroke)getCachedStrokeMethod.invoke(originalKeyStroke, getCachedStrokeMethodArgs);
+      return (KeyStroke)ReflectionHolder.getCachedStroke.invoke(originalKeyStroke,
+                                                                originalKeyStroke.getKeyChar(), originalKeyStroke.getKeyCode(),
+                                                                modifier, originalKeyStroke.isOnKeyRelease());
     }
     catch(Exception exc){
       throw new IllegalStateException(exc.getMessage());
@@ -415,8 +407,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
-    boolean isModalContext = myContext.isModalContext();
-    DataContext dataContext = myContext.getDataContext();
     KeyEvent e = myContext.getInputEvent();
 
     if (JAVA11_ON_WINDOWS && KeyEvent.KEY_PRESSED == e.getID() && removeAltGraph(e) && e.isControlDown()) {
@@ -720,20 +710,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
     }
     if (actionNames.isEmpty()) {
-      return getUnavailableMessage(IdeBundle.message("this.action"), false);
+      return getUnavailableMessage(IdeBundle.message("dumb.balloon.this.action"), false);
     }
     else if (actionNames.size() == 1) {
       return getUnavailableMessage("'" + actionNames.get(0) + "'", false);
     }
     else {
-      return getUnavailableMessage(IdeBundle.message("none.of.the.following.actions"), true) +
+      return getUnavailableMessage(IdeBundle.message("dumb.balloon.none.of.the.following.actions"), true) +
              ": " + StringUtil.join(actionNames, ", ");
     }
   }
 
   public static @NotNull @Nls String getUnavailableMessage(@NotNull @Nls String action, boolean plural) {
-    return plural ? IdeBundle.message("0.are.not.available.while.indexing", action) :
-           IdeBundle.message("0.is.not.available.while.indexing", action);
+    return plural ? IdeBundle.message("dumb.balloon.0.are.not.available.while.indexing", action) :
+           IdeBundle.message("dumb.balloon.0.is.not.available.while.indexing", action);
   }
 
   private static DumbModeWarningListener dumbModeWarningListener  = null;
@@ -946,7 +936,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     private static ListPopupStep buildStep(@NotNull final List<? extends Pair<AnAction, KeyStroke>> actions, final DataContext ctx) {
-      return new BaseListPopupStep<Pair<AnAction, KeyStroke>>("Choose an action", ContainerUtil.findAll(actions, pair -> {
+      return new BaseListPopupStep<Pair<AnAction, KeyStroke>>(IdeBundle.message("popup.title.choose.action"), ContainerUtil.findAll(actions, pair -> {
         final AnAction action = pair.getFirst();
         final Presentation presentation = action.getTemplatePresentation().clone();
         AnActionEvent event = new AnActionEvent(null, ctx,

@@ -2,7 +2,10 @@ import sys
 import imp
 import os
 import fnmatch
-
+import sys
+sys.stderr.write("Warning: You are using test runners in legacy mode\n. "
+                 "That means you have 'python.tests.enableUniversalTests=false' in registry.\n"
+                 "This mode will be dropped in 2021. Consider removing this entry from registry and migrating to new test runners")
 roots = sys.path[:]
 
 helpers_dir = os.getenv("PYCHARM_HELPERS_DIR", sys.path[0])

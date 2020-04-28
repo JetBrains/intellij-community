@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StateSplitterEx
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.module.impl.AutomaticModuleUnloader
@@ -15,6 +16,7 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.module.impl.UnloadedModuleDescriptionImpl
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
@@ -27,10 +29,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
-import com.intellij.workspace.api.EntityChange
-import com.intellij.workspace.api.EntitySource
-import com.intellij.workspace.api.EntityStoreChanged
-import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.*
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent
 import org.jdom.Element
@@ -42,8 +41,9 @@ import kotlin.collections.LinkedHashSet
 
 internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
   private lateinit var fileContentReader: StorageJpsConfigurationReader
-  private val serializationData = AtomicReference<JpsEntitiesSerializationData?>()
+  private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
 
   init {
@@ -51,7 +51,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       project.messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
           if (project === this@JpsProjectModelSynchronizer.project) {
-            loadInitialProject(project.storagePlace!!)
+            loadInitialProject(project.configLocation!!)
           }
         }
       })
@@ -61,7 +61,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   internal fun needToReloadProjectEntities(): Boolean {
     if (!enabled) return false
     if (StoreReloadManager.getInstance().isReloadBlocked()) return false
-    if (serializationData.get() == null) return false
+    if (serializers.get() == null) return false
 
     synchronized(incomingChanges) {
       return incomingChanges.isNotEmpty()
@@ -72,10 +72,10 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     if (!enabled) return
 
     if (StoreReloadManager.getInstance().isReloadBlocked()) return
-    val data = serializationData.get() ?: return
+    val serializers = serializers.get() ?: return
     val changes = getAndResetIncomingChanges() ?: return
 
-    val (changedEntities, builder) = data.reloadFromChangedFiles(changes, fileContentReader)
+    val (changedEntities, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader)
     if (changedEntities.isEmpty() && builder.isEmpty()) return
 
     ApplicationManager.getApplication().invokeAndWait(Runnable {
@@ -121,22 +121,24 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     })
   }
 
-  internal fun loadInitialProject(storagePlace: JpsProjectStoragePlace) {
+  internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
-    val baseDirUrl = storagePlace.baseDirectoryUrl
+    val baseDirUrl = configLocation.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
-    val serializationData = JpsProjectEntitiesLoader.createProjectSerializers(storagePlace, fileContentReader, false, true)
-    this.serializationData.set(serializationData)
+    val externalStoragePath = project.getExternalConfigurationDir()
+    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false, virtualFileManager)
+    this.serializers.set(serializers)
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
 
-    val modulePaths = serializationData.fileSerializersByUrl.values().filterIsInstance<ModuleImlFileEntitiesSerializer>().map { it.modulePath }
-    loadStateOfUnloadedModules(modulePaths)
+    loadStateOfUnloadedModules(serializers.getAllModulePaths())
 
-    serializationData.loadAll(fileContentReader, builder)
-    WriteAction.runAndWait<RuntimeException> {
-      WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-        updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
+    if (!WorkspaceModelInitialTestContent.hasInitialContent) {
+      serializers.loadAll(fileContentReader, builder)
+      WriteAction.runAndWait<RuntimeException> {
+        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+          updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
+        }
       }
     }
     activity.end()
@@ -163,7 +165,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
   internal fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
     if (!enabled) return
 
-    val data = serializationData.get() ?: return
+    val data = serializers.get() ?: return
     val storage = WorkspaceModel.getInstance(project).entityStore.current
     val affectedSources = synchronized(sourcesToSave) {
       val copy = HashSet(sourcesToSave)
@@ -229,7 +231,7 @@ private class StorageJpsConfigurationReader(private val project: Project,
       return CachingJpsFileContentReader(baseDirUrl).loadComponent(fileUrl, componentName)
     }
     else {
-      val storage = getProjectStateStorage(filePath, project.stateStore)
+      val storage = getProjectStateStorage(filePath, project.stateStore, project) ?: return null
       val stateMap = storage.getStorageData()
       return if (storage is DirectoryBasedStorageBase) {
         val elementContent = stateMap.getElement(PathUtil.getFileName(filePath))
@@ -247,7 +249,15 @@ private class StorageJpsConfigurationReader(private val project: Project,
   }
 }
 
-internal fun getProjectStateStorage(filePath: String, store: IProjectStore): StateStorageBase<StateMap> {
+internal fun getProjectStateStorage(filePath: String,
+                                    store: IProjectStore,
+                                    project: Project): StateStorageBase<StateMap>? {
+  val storageSpec = getStorageSpec(filePath, project) ?: return null
+  @Suppress("UNCHECKED_CAST")
+  return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
+}
+
+private fun getStorageSpec(filePath: String, project: Project): Storage? {
   val collapsedPath: String
   val splitterClass: Class<out StateSplitterEx>
   if (FileUtil.extensionEquals(filePath, "ipr")) {
@@ -257,20 +267,32 @@ internal fun getProjectStateStorage(filePath: String, store: IProjectStore): Sta
   else {
     val fileName = PathUtil.getFileName(filePath)
     val parentPath = PathUtil.getParentPath(filePath)
-    if (PathUtil.getFileName(parentPath) == Project.DIRECTORY_STORE_FOLDER) {
+    val parentFileName = PathUtil.getFileName(parentPath)
+    if (parentFileName == Project.DIRECTORY_STORE_FOLDER) {
       collapsedPath = fileName
       splitterClass = StateSplitterEx::class.java
     }
     else {
       val grandParentPath = PathUtil.getParentPath(parentPath)
-      if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) error("$filePath is not under .idea directory")
-      collapsedPath = PathUtil.getFileName(parentPath)
+      collapsedPath = parentFileName
       splitterClass = FakeDirectoryBasedStateSplitter::class.java
+      if (PathUtil.getFileName(grandParentPath) != Project.DIRECTORY_STORE_FOLDER) {
+        val providerFactory = StreamProviderFactory.EP_NAME.getExtensionList(project).firstOrNull() ?: return null
+        if (parentFileName == "project") {
+          if (fileName == "libraries.xml" || fileName == "artifacts.xml") {
+            val inProjectStorage = FileStorageAnnotation(FileUtil.getNameWithoutExtension(fileName), false, splitterClass)
+            val componentName = if (fileName == "libraries.xml") "libraryTable" else "ArtifactManager"
+            return providerFactory.getOrCreateStorageSpec(fileName, StateAnnotation(componentName, inProjectStorage))
+          }
+          if (fileName == "modules.xml") {
+            return providerFactory.getOrCreateStorageSpec(fileName)
+          }
+        }
+        error("$filePath is not under .idea directory and not under external system cache")
+      }
     }
   }
-  val storageSpec = FileStorageAnnotation(collapsedPath, false, splitterClass)
-  @Suppress("UNCHECKED_CAST")
-  return store.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
+  return FileStorageAnnotation(collapsedPath, false, splitterClass)
 }
 
 /**

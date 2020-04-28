@@ -24,12 +24,6 @@ public class NlsContexts {
   public @interface DialogMessage {
   }
 
-  @NlsContext(prefix = "input.dialog.initial.value")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target(ElementType.TYPE_USE)
-  public @interface InputDialogInitialValue {
-  }
-
   /**
    * Popups
    */
@@ -43,6 +37,12 @@ public class NlsContexts {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface PopupContent {
+  }
+
+  @NlsContext(prefix = "popup.advertisement")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface PopupAdvertisement {
   }
 
   /**
@@ -81,24 +81,146 @@ public class NlsContexts {
   @NlsContext(prefix = "configurable.name")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public @interface Configurable {
+  public @interface ConfigurableName {
   }
 
-  @NlsContext(prefix = "validation.info")
+  @NlsContext(prefix = "parsing.error")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ValidationInfo {
+  public @interface ParsingError {
   }
 
-  @NlsContext(prefix = "configuration.error.message")
+  @NlsContext(prefix = "status.bar.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ConfigurationErrorMessage {
+  public @interface StatusBarText {
   }
 
-  @NlsContext(prefix = "configuration.error.title")
+  /**
+   * Use it for annotating OS provided notification title, such as "project built" or "tests running finished".
+   * See also #SystemNotificationText.
+   */
+  @NlsContext(prefix = "system.notification.title")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface SystemNotificationTitle {
+  }
+
+  /**
+   * Use it for annotating OS provided notification content.
+   * See also #SystemNotificationTitle.
+   */
+  @NlsContext(prefix = "system.notification.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public @interface ConfigurationErrorTitle {
+  public @interface SystemNotificationText {
+  }
+
+  @NlsContext(prefix = "command.name")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface Command {
+  }
+
+  @NlsContext(prefix = "tab.title")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface TabTitle {
+  }
+
+  /**
+   * Annotate by {@code #AttributeDescriptor} text attribute keys, see {@link com.intellij.openapi.options.colors.AttributesDescriptor}
+   */
+  @NlsContext(prefix = "attribute.descriptor")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface AttributeDescriptor {
+  }
+
+  @NlsContext(prefix = "column.name")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface ColumnName {
+  }
+
+  /**
+   * Swing components
+   */
+  @NlsContext(prefix = "label")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Label {
+  }
+
+  @NlsContext(prefix = "link.label")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface LinkLabel {
+  }
+
+  @NlsContext(prefix = "checkbox")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Checkbox {
+  }
+
+  @NlsContext(prefix = "radio")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface RadioButton {
+  }
+
+  @NlsContext(prefix = "border.title")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface BorderTitle {
+  }
+
+  @NlsContext(prefix = "tooltip")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface Tooltip {
+  }
+
+  @NlsContext(prefix = "separator")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface Separator {
+  }
+
+  @NlsContext(prefix = "button")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface Button {
+  }
+
+  @NlsContext(prefix = "text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface DetailedDescription {
+  }
+
+  @NlsContext(prefix = "list.item")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ListItem {
+  }
+
+  @NlsContext(prefix = "progress.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ProgressText {
+  }
+
+  @NlsContext(prefix = "progress.details")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ProgressDetails {
+  }
+
+  @NlsContext(prefix = "progress.title")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface ProgressTitle {
   }
 }

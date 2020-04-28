@@ -14,7 +14,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
@@ -151,7 +150,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsUI.Label String description,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor) {
@@ -163,7 +162,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    */
   @Deprecated
   public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsUI.Label String description,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,
                                       TextComponentAccessor<? super Comp> accessor, boolean autoRemoveOnHide) {
@@ -222,7 +221,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
   public static class BrowseFolderActionListener<T extends JComponent> extends BrowseFolderRunnable <T> implements ActionListener {
     public BrowseFolderActionListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsUI.Label String description,
+                                      @Nullable @NlsContexts.Label String description,
                                       @Nullable ComponentWithBrowseButton<T> textField,
                                       @Nullable Project project,
                                       FileChooserDescriptor fileChooserDescriptor,

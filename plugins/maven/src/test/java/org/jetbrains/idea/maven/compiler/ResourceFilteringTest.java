@@ -892,8 +892,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testEscapingFiltering() throws Exception {
-    if (!true) return;
-
     createProjectSubFile("filters/filter.properties", "xxx=value");
     createProjectSubFile("resources/file.properties",
                          "value1=\\${xxx}\n" +
@@ -1006,7 +1004,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testDoNotFilterButCopyBigFiles() throws IOException {
-    assertEquals(FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"), FileTypes.UNKNOWN);
+    assertEquals(FileTypes.UNKNOWN, FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"));
 
     WriteAction.runAndWait(() -> createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]));
 
@@ -1054,7 +1052,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testResourcesOrdering2() throws Exception {
-    if (!true) return;
 
     createProjectSubFile("resources/file.properties", "value=${project.version}\n");
 
@@ -1082,7 +1079,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testResourcesOrdering3() throws Exception {
-    if (!true) return;
 
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");
@@ -1136,7 +1132,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testOverwriteParameter1() throws Exception {
-    if (!true) return;
 
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");
@@ -1172,7 +1167,6 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
   }
 
   public void testOverwriteParameter2() throws Exception {
-    if (!true) return;
 
     createProjectSubFile("resources1/a.txt", "1");
     createProjectSubFile("resources2/a.txt", "2");

@@ -103,7 +103,7 @@ public final class ProgramRunnerUtil {
           boolean isDefaultConfigurationChosen = "default".equals(event.getDescription());
           SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(
             isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
-            "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
+            ExecutionBundle.message("dialog.title.edit.configuration", isDefaultConfigurationChosen ? 1 : 0));
           if (dialog.showAndGet() && isDefaultConfigurationChosen) {
             configuration.setShortenCommandLine(((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine());
           }

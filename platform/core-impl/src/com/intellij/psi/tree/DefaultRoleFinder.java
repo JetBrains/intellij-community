@@ -19,18 +19,25 @@ package com.intellij.psi.tree;
 import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultRoleFinder implements RoleFinder{
-  protected IElementType[] myElementTypes;
+import java.util.function.Supplier;
 
-  public DefaultRoleFinder(IElementType... elementType) {
-    myElementTypes = elementType;
+public class DefaultRoleFinder implements RoleFinder{
+
+  private final Supplier<? extends IElementType[]> myComputable;
+
+  public DefaultRoleFinder(IElementType... elementTypes) {
+    myComputable = () -> elementTypes;
+  }
+
+  public DefaultRoleFinder(Supplier<? extends IElementType[]> computable) {
+    myComputable = computable;
   }
 
   @Override
   public ASTNode findChild(@NotNull ASTNode parent) {
     ASTNode current = parent.getFirstChildNode();
     while(current != null){
-      for (final IElementType elementType : myElementTypes) {
+      for (IElementType elementType : myComputable.get()) {
         if (current.getElementType() == elementType) return current;
       }
       current = current.getTreeNext();

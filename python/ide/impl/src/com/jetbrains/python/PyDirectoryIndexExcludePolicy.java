@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +44,7 @@ public class PyDirectoryIndexExcludePolicy implements DirectoryIndexExcludePolic
   @Override
   public Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
     return sdk -> {
-      List<VirtualFile> result = Lists.newLinkedList();
+      List<VirtualFile> result = new LinkedList<>();
 
       if (sdk != null) {
         Set<VirtualFile> roots = ContainerUtil.set(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));

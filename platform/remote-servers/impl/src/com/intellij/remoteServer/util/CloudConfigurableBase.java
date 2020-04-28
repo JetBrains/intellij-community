@@ -4,13 +4,13 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
-import java.util.Objects;
-import javax.swing.JComponent;
-import javax.swing.JPasswordField;
-import javax.swing.JTextField;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.Objects;
 
 /**
  * @author michael.golubev
@@ -60,11 +60,11 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
   protected void applyCoreTo(SC configuration, boolean forComparison) throws ConfigurationException {
     String email = getEmailTextField().getText();
     if (StringUtil.isEmpty(email)) {
-      throw new RuntimeConfigurationError("Email required");
+      throw new RuntimeConfigurationError(CloudBundle.message("dialog.message.email.required"));
     }
     String password = new String(getPasswordField().getPassword());
     if (StringUtil.isEmpty(password)) {
-      throw new RuntimeConfigurationError("Password required");
+      throw new RuntimeConfigurationError(CloudBundle.message("dialog.message.password.required"));
     }
 
     configuration.setEmail(email);

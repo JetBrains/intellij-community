@@ -52,7 +52,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
   private ChangeListManagerImpl myChangeListManager;
   private TaskManagerImpl myTaskManager;
-  private String TEST_FILE = "Test.txt";;
+  private static final String TEST_FILE = "Test.txt";
 
   public void testInitialState() {
     assertEquals(1, myTaskManager.getLocalTasks().size());

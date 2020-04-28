@@ -15,14 +15,12 @@
  */
 package com.intellij.java.codeInsight;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -68,7 +66,6 @@ public abstract class GenerateEqualsTestCase extends LightJavaCodeInsightTestCas
                                   Function<PsiField[], PsiField[]> nonNull,
                                   boolean insertOverride, 
                                   boolean useAccessors) {
-    CodeStyleSettings settings = CodeStyle.getSettings(getProject()).clone();
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
     JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = insertOverride;
     PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());

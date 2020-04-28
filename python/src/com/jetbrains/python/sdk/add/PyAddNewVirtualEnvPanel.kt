@@ -48,17 +48,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override val panelName: String get() = PyBundle.message("python.add.sdk.panel.name.new.environment")
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val baseSdkField = PySdkPathChoosingComboBox().apply {
-    val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
-    val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
-    selectedSdk = when {
-      detectedPreferredSdk != null -> detectedPreferredSdk
-      preferredSdkPath != null -> PyDetectedSdk(preferredSdkPath).apply {
-        childComponent.insertItemAt(this, 0)
-      }
-      else -> items.getOrNull(0)
-    }
-  }
+  private val baseSdkField = PySdkPathChoosingComboBox()
   private val pathField = TextFieldWithBrowseButton().apply {
     text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
     addBrowseFolderListener(PyBundle.message("python.sdk.select.location.for.virtualenv.title"), null, project,
@@ -76,9 +66,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .addComponent(makeSharedField)
       .panel
     add(formPanel, BorderLayout.NORTH)
-    addInterpretersAsync(baseSdkField) {
-      findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall()
-    }
+    addBaseInterpretersAsync(baseSdkField, existingSdks, module, context)
   }
 
   override fun validateAll(): List<ValidationInfo> =

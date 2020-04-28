@@ -41,8 +41,8 @@ import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProv
 class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
-  private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  private static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
+  public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
 
   static final DataProvider<Map<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<Map<Project, ExternalProject>>() {
     @NotNull
@@ -124,7 +124,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
     final List<File> artifacts = new ArrayList<File>()
-    for (Jar jar : project.getTasks().withType(Jar.class)) {
+    project.getTasks().withType(Jar.class, { Jar jar ->
       try {
         if (is51OrBetter) {
           def archiveFile = jar.getArchiveFile()
@@ -140,7 +140,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         // TODO add reporting for such issues
         project.getLogger().error("warning: [task $jar.path] $e.message")
       }
-    }
+    })
     externalProject.setArtifacts(artifacts)
 
     def configurationsByName = project.getConfigurations().getAsMap()

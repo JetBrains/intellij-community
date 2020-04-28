@@ -1,10 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api
 
+import com.intellij.workspace.api.pstorage.PEntityStorage
+import com.intellij.workspace.api.pstorage.PEntityStorageBuilder
+import com.intellij.workspace.api.pstorage.PSerializer
+import junit.framework.Assert.*
 import org.jetbrains.annotations.TestOnly
 import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import kotlin.reflect.KType
+import kotlin.reflect.full.memberProperties
 
 class TestEntityTypesResolver: EntityTypesResolver {
   private val pluginPrefix = "PLUGIN___"
@@ -16,7 +22,78 @@ class TestEntityTypesResolver: EntityTypesResolver {
   }
 }
 
-fun verifySerializationRoundTrip(storage: TypedEntityStorage): ByteArray {
+fun verifyPSerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
+  storage as PEntityStorage
+
+  fun assertStorageEquals(expected: PEntityStorage, actual: PEntityStorage) {
+    assertEquals(
+      actual.entitiesByType.all().keys.sortedBy { it.canonicalName },
+      expected.entitiesByType.all().keys.sortedBy { it.canonicalName }
+    )
+
+    for ((clazz, expectedEntityFamily) in expected.entitiesByType.all()) {
+      val actualEntityFamily = actual.entitiesByType.all().getValue(clazz)
+
+      val expectedEntities = expectedEntityFamily.entities
+      val actualEntities = actualEntityFamily.entities
+      assertEquals(expectedEntities.size, actualEntities.size)
+
+      fun KType.isList(): Boolean = this.toString().startsWith("kotlin.collections.List")
+      for (i in expectedEntities.indices) {
+        val expectedEntity = expectedEntities[i]
+        val actualEntity = actualEntities[i]
+        if (expectedEntity == null) {
+          assertNull(actualEntity)
+          continue
+        }
+
+        for (it in expectedEntity::class.memberProperties) {
+          val expectedField = it.getter.call(expectedEntity)
+          if (expectedField == null) {
+            assertNull(it.getter.call(actualEntity))
+            continue
+          }
+
+
+          val retType = expectedField::class
+          val objectInstance = retType.objectInstance
+          if (objectInstance != null) continue
+
+          var enableCheck = true
+          (expectedField as? List<Any>)?.forEach {
+            val objInstance = it::class.objectInstance
+            if (objInstance != null) {
+              enableCheck = false
+              return@forEach
+            }
+          }
+          if (!enableCheck) continue
+
+          if (expectedField is LibraryId) {
+            assertEquals(expectedField.name, (it.getter.call(actualEntity) as LibraryId).name)
+            continue
+          }
+
+          assertTrue(expectedField == it.getter.call(actualEntity))
+        }
+      }
+    }
+  }
+
+  val serializer = PSerializer(virtualFileManager)
+
+  val stream = ByteArrayOutputStream()
+  serializer.serializeCache(stream, storage)
+
+  val byteArray = stream.toByteArray()
+  val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as PEntityStorageBuilder).toStorage()
+
+  assertStorageEquals(storage, deserialized)
+
+  return byteArray
+}
+
+fun verifySerializationRoundTrip(storage: TypedEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
   storage as ProxyBasedEntityStorage
 
   fun assertEntityDataEquals(expected: EntityData, actual: EntityData) {
@@ -63,8 +140,7 @@ fun verifySerializationRoundTrip(storage: TypedEntityStorage): ByteArray {
     }
   }
 
-  val serializer = KryoEntityStorageSerializer(
-    TestEntityTypesResolver())
+  val serializer = KryoEntityStorageSerializer(TestEntityTypesResolver(), virtualFileManager)
 
   val stream = ByteArrayOutputStream()
   serializer.serializeCache(stream, storage)

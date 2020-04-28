@@ -15,25 +15,21 @@ import com.intellij.workspace.ide.WorkspaceModelChangeListener
 internal class FacetEntityChangeListener(private val project: Project) : WorkspaceModelChangeListener {
   override fun beforeChanged(event: EntityStoreChanged) {
     val changes = event.getChanges(FacetEntity::class.java)
-    for (change in changes) {
+    loop@ for (change in changes) {
       when (change) {
         is EntityChange.Added -> {
-          val manager = getFacetManager(change.entity.module)
-          manager?.publisher?.beforeFacetAdded(manager.model.getOrCreateFacet(change.entity))
+          val manager = getFacetManager(change.entity.module) ?: continue@loop
+          manager.publisher.beforeFacetAdded(manager.model.getOrCreateFacet(change.entity))
         }
         is EntityChange.Removed -> {
-          val manager = getFacetManager(change.entity.module)
-          if (manager != null) {
-            val facet = manager.model.getFacet(change.entity)
-            if (facet != null) {
-              manager.publisher.beforeFacetRemoved(facet)
-            }
-          }
+          val manager = getFacetManager(change.entity.module) ?: continue@loop
+          val facet = manager.model.getFacet(change.entity) ?: continue@loop
+          manager.publisher.beforeFacetRemoved(facet)
         }
         is EntityChange.Replaced -> {
-          val manager = getFacetManager(change.newEntity.module)
-          if (manager != null && change.newEntity.name != change.oldEntity.name) {
-              manager.publisher.beforeFacetRenamed(manager.model.getOrCreateFacet(change.newEntity))
+          val manager = getFacetManager(change.newEntity.module) ?: continue@loop
+          if (change.newEntity.name != change.oldEntity.name) {
+            manager.publisher.beforeFacetRenamed(manager.model.getOrCreateFacet(change.newEntity))
           }
         }
       }
@@ -51,41 +47,31 @@ internal class FacetEntityChangeListener(private val project: Project) : Workspa
 
   override fun changed(event: EntityStoreChanged) {
     val changes = event.getChanges(FacetEntity::class.java)
-    for (change in changes) {
+    loop@ for (change in changes) {
       when (change) {
         is EntityChange.Added -> {
-          val manager = getFacetManager(change.entity.module)
-          if (manager != null) {
-            val facet = manager.model.getOrCreateFacet(change.entity)
-            manager.model.updateEntity(change.entity, change.entity)
-            FacetManagerBase.setFacetName(facet, change.entity.name)
-            facet.initFacet()
-            manager.model.facetsChanged()
-            manager.publisher.facetAdded(facet)
-          }
+          val manager = getFacetManager(change.entity.module) ?: continue@loop
+          val facet = manager.model.getOrCreateFacet(change.entity)
+          manager.model.updateEntity(change.entity, change.entity)
+          FacetManagerBase.setFacetName(facet, change.entity.name)
+          facet.initFacet()
+          manager.model.facetsChanged()
+          manager.publisher.facetAdded(facet)
         }
         is EntityChange.Removed -> {
-          val manager = getFacetManager(change.entity.module)
-          if (manager != null) {
-            val facet = manager.model.removeEntity(change.entity)
-            if (facet != null) {
-              Disposer.dispose(facet)
-              manager.model.facetsChanged()
-              manager.publisher.facetRemoved(facet)
-            }
-          }
+          val manager = getFacetManager(change.entity.module) ?: continue@loop
+          val facet = manager.model.removeEntity(change.entity) ?: continue@loop
+          Disposer.dispose(facet)
+          manager.model.facetsChanged()
+          manager.publisher.facetRemoved(facet)
         }
         is EntityChange.Replaced -> {
-          val manager = getFacetManager(change.newEntity.module)
-          if (manager != null) {
-            val facet = manager.model.updateEntity(change.oldEntity, change.newEntity)
-            if (facet != null) {
-              FacetManagerBase.setFacetName(facet, change.newEntity.name)
-              manager.model.facetsChanged()
-              if (change.oldEntity.name != change.newEntity.name) {
-                manager.publisher.facetRenamed(facet, change.oldEntity.name)
-              }
-            }
+          val manager = getFacetManager(change.newEntity.module) ?: continue@loop
+          val facet = manager.model.updateEntity(change.oldEntity, change.newEntity) ?: continue@loop
+          FacetManagerBase.setFacetName(facet, change.newEntity.name)
+          manager.model.facetsChanged()
+          if (change.oldEntity.name != change.newEntity.name) {
+            manager.publisher.facetRenamed(facet, change.oldEntity.name)
           }
         }
       }

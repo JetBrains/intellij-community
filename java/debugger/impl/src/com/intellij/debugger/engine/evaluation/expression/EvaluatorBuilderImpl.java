@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -240,6 +240,11 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     }
 
     @Override
+    public void visitYieldStatement(PsiYieldStatement statement) {
+      myResult = new SwitchEvaluator.YieldEvaluator(accept(statement.getExpression()));
+    }
+
+    @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       throw new EvaluateRuntimeException(new UnsupportedExpressionException("Synchronized is not yet supported"));
     }
@@ -388,19 +393,27 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
     }
 
-    @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    private void visitSwitchBlock(PsiSwitchBlock statement) {
       PsiCodeBlock body = statement.getBody();
       if (body != null) {
         Evaluator expressionEvaluator = accept(statement.getExpression());
         if (expressionEvaluator != null) {
-          myResult = new SwitchStatementEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
+          myResult = new SwitchEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
         }
       }
     }
 
     @Override
-    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      visitSwitchBlock(statement);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      visitSwitchBlock(expression);
+    }
+
+    private void visitSwitchLabelStatementBase(PsiSwitchLabelStatementBase statement) {
       List<Evaluator> evaluators = new SmartList<>();
       PsiExpressionList caseValues = statement.getCaseValues();
       if (caseValues != null) {
@@ -411,7 +424,23 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           }
         }
       }
-      myResult = new SwitchStatementEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+      if (statement instanceof PsiSwitchLabeledRuleStatement) {
+        myResult = new SwitchEvaluator.SwitchCaseRuleEvaluator(evaluators, statement.isDefaultCase(),
+                                                               accept(((PsiSwitchLabeledRuleStatement)statement).getBody()));
+      }
+      else {
+        myResult = new SwitchEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
+      }
+    }
+
+    @Override
+    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+      visitSwitchLabelStatementBase(statement);
+    }
+
+    @Override
+    public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      visitSwitchLabelStatementBase(statement);
     }
 
     @Override
@@ -739,19 +768,21 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult = new IdentityEvaluator(labeledValue);
           return;
         }
+        final PsiVariable psiVar = (PsiVariable)element;
+        String localName = psiVar.getName();
         //synthetic variable
         final PsiFile containingFile = element.getContainingFile();
-        if(containingFile instanceof PsiCodeFragment && myCurrentFragmentEvaluator != null && myVisitedFragments.contains(containingFile)) {
+        if (myCurrentFragmentEvaluator != null &&
+            ((containingFile instanceof PsiCodeFragment && myVisitedFragments.contains(containingFile)) ||
+             myCurrentFragmentEvaluator.hasValue(localName))) {
           // psiVariable may live in PsiCodeFragment not only in debugger editors, for example Fabrique has such variables.
           // So treat it as synthetic var only when this code fragment is located in DebuggerEditor,
           // that's why we need to check that containing code fragment is the one we visited
           JVMName jvmName = JVMNameUtil.getJVMQualifiedName(CompilingEvaluatorTypesUtil.getVariableType((PsiVariable)element));
-          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, ((PsiVariable)element).getName(), jvmName);
+          myResult = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, localName, jvmName);
           return;
         }
         // local variable
-        final PsiVariable psiVar = (PsiVariable)element;
-        final String localName = psiVar.getName();
         PsiClass variableClass = getContainingClass(psiVar);
         final PsiClass positionClass = getPositionClass();
         if (Objects.equals(positionClass, variableClass)) {
@@ -935,7 +966,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       expression.getOperand().accept(this);
 //    ClassObjectEvaluator typeEvaluator = new ClassObjectEvaluator(type.getCanonicalText());
       Evaluator operandEvaluator = myResult;
-      myResult = new InstanceofEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)));
+
+      Evaluator patternVariable = null;
+      PsiPattern pattern = expression.getPattern();
+      if (pattern instanceof PsiTypeTestPattern) {
+        PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
+        if (variable != null) {
+          String variableName = variable.getName();
+          myCurrentFragmentEvaluator.setInitialValue(variableName, null);
+          patternVariable = new SyntheticVariableEvaluator(myCurrentFragmentEvaluator, variableName, null);
+        }
+      }
+
+      myResult = new InstanceofEvaluator(operandEvaluator, new TypeEvaluator(JVMNameUtil.getJVMQualifiedName(type)), patternVariable);
     }
 
     @Override
@@ -1525,6 +1568,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     protected ExpressionEvaluator buildElement(final PsiElement element) throws EvaluateException {
       LOG.assertTrue(element.isValid());
 
+      setNewCodeFragmentEvaluator(); // in case element is not a code fragment
       myContextPsiClass = PsiTreeUtil.getContextOfType(element, PsiClass.class, false);
       try {
         element.accept(this);

@@ -17,7 +17,7 @@ import java.util.Collection;
 public abstract class VcsDirtyScopeManager {
   @NotNull
   public static VcsDirtyScopeManager getInstance(@NotNull Project project) {
-    return project.getComponent(VcsDirtyScopeManager.class);
+    return project.getService(VcsDirtyScopeManager.class);
   }
 
   /**

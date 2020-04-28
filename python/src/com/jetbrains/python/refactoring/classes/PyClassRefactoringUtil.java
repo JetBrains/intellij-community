@@ -54,8 +54,6 @@ public final class PyClassRefactoringUtil {
                                                                             @NotNull final PyStatementList superClassStatement,
                                                                             @Nullable final PyClass dequalifyIfDeclaredInClass) {
     final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
-    declarations.sort(PyDependenciesComparator.INSTANCE);
-
 
     for (final PyAssignmentStatement pyAssignmentStatement : assignmentStatements) {
       final PyElement value = pyAssignmentStatement.getAssignedValue();

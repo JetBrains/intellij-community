@@ -2,6 +2,7 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
@@ -14,6 +15,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -44,7 +46,7 @@ public abstract class LRUPopupBuilder<T> {
 
   private final String myTitle;
   private final PropertiesComponent myPropertiesComponent;
-  private final Map<T, Pair<String, Icon>> myPresentations = ContainerUtil.newIdentityHashMap();
+  private final Map<T, Pair<String, Icon>> myPresentations = new IdentityHashMap<>();
 
   private T mySelection;
   private Consumer<? super T> myOnChosen;
@@ -61,7 +63,7 @@ public abstract class LRUPopupBuilder<T> {
     Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
     return forFileLanguages(project, title, null, t -> {
       try {
-        WriteCommandAction.writeCommandAction(project).withName("Change Language").run(
+        WriteCommandAction.writeCommandAction(project).withName(LangBundle.message("command.name.change.language")).run(
           () -> changeLanguageWithUndo(project, t, filesCopy, mappings));
       }
       catch (UnexpectedUndoException e) {
@@ -83,7 +85,7 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
-                                           @NotNull String title,
+                                           @NotNull @PopupTitle String title,
                                            @Nullable Language selection,
                                            @NotNull Consumer<? super Language> onChosen) {
     return languagePopupBuilder(project, title).
@@ -94,7 +96,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project, @NotNull String title) {
+  public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project, @NotNull @PopupTitle String title) {
     return new LRUPopupBuilder<Language>(project, title) {
       @Override
       public String getDisplayName(Language language) {

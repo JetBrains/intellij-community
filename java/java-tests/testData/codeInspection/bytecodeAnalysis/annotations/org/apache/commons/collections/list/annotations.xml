@@ -205,6 +205,21 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.list.AbstractLinkedList.Node void setNextNode(org.apache.commons.collections.list.AbstractLinkedList.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.AbstractLinkedList.Node void setPreviousNode(org.apache.commons.collections.list.AbstractLinkedList.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.AbstractLinkedList.Node void setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.list.AbstractListDecorator AbstractListDecorator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -290,8 +305,18 @@
     <item name='org.apache.commons.collections.list.CursorableLinkedList.Cursor void nodeChanged(org.apache.commons.collections.list.AbstractLinkedList.Node) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.list.CursorableLinkedList.Cursor void nodeInserted(org.apache.commons.collections.list.AbstractLinkedList.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList.Cursor void nodeInserted(org.apache.commons.collections.list.AbstractLinkedList.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.list.CursorableLinkedList.Cursor void nodeRemoved(org.apache.commons.collections.list.AbstractLinkedList.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList.SubCursor SubCursor(org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -720,6 +745,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.list.TreeList void clear()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode AVLNode(int, java.lang.Object, org.apache.commons.collections.list.TreeList.AVLNode, org.apache.commons.collections.list.TreeList.AVLNode)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -744,6 +774,11 @@
     <item name='org.apache.commons.collections.list.TreeList.AVLNode int heightRightMinusLeft()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.TreeList.AVLNode int setOffset(org.apache.commons.collections.list.TreeList.AVLNode, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode int setOffset(org.apache.commons.collections.list.TreeList.AVLNode, int) 0'>
@@ -786,6 +821,26 @@
     </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode org.apache.commons.collections.list.TreeList.AVLNode removeSelf()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.collections.list.TreeList.AVLNode void recalcHeight()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.TreeList.AVLNode void setLeft(org.apache.commons.collections.list.TreeList.AVLNode, org.apache.commons.collections.list.TreeList.AVLNode)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.TreeList.AVLNode void setRight(org.apache.commons.collections.list.TreeList.AVLNode, org.apache.commons.collections.list.TreeList.AVLNode)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.TreeList.AVLNode void setValue(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode void toArray(java.lang.Object[], int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

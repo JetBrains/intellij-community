@@ -56,9 +56,7 @@ public class ContextFilter extends FilterAction {
         TextFieldWithAutoCompletion.create(myTable.getProject(), Collections.emptyList(), false, "");
       private final String shortcut =
         KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(
-        "<p>Preconfigured search patterns can be autocompleted with " +
-        shortcut + ".<p>The provided pattern is used to constrain the target template context");
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("tooltip.preconfigured.search.patterns", shortcut));
 
       @Override
       protected void layoutComponents() {

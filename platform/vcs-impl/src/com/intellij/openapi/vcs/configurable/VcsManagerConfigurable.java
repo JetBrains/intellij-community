@@ -27,7 +27,7 @@ import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurab
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.map2Set;
 
-public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
+public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
   implements Configurable.NoScroll, Configurable.WithEpDependencies {
   @NotNull private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
@@ -125,7 +125,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
     result.add(new FileStatusColorsConfigurable());
 
-    Set<String> projectConfigurableIds = map2Set(Configurable.PROJECT_CONFIGURABLE.getExtensionList(myProject), ep -> ep.id);
+    Set<String> projectConfigurableIds = map2Set(Configurable.PROJECT_CONFIGURABLE.getExtensions(myProject), ep -> ep.id);
     for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
       if (!projectConfigurableIds.contains(getVcsConfigurableId(descriptor.getDisplayName()))) {
         result.add(wrapConfigurable(new VcsConfigurableEP(myProject, descriptor)));

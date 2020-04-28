@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRegexpAwareRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupContextData;
@@ -33,17 +32,7 @@ public class WhiteListSimpleRuleFactory {
   private static final String START = "{";
   private static final String END = "}";
 
-  private static final FUSRule UNPARSED_EXPRESSION = new FUSRule() {
-    @Override
-    public @NotNull ValidationResultType validate(@NotNull String s, @NotNull EventContext c) {
-      return ValidationResultType.INCORRECT_RULE;
-    }
-
-    @Override
-    public boolean isValidRule() {
-      return false;
-    }
-  };
+  private static final FUSRule UNPARSED_EXPRESSION = (s,c) -> ValidationResultType.INCORRECT_RULE;
 
   @NotNull
   public static FUSRule createRule(@NotNull String rule) {

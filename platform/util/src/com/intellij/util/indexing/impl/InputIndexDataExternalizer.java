@@ -17,33 +17,27 @@ package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-public class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
-  private final KeyDescriptor<K> myKeyDescriptor;
+public final class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
+  private final DataExternalizer<Collection<K>> myKeyCollectionExternalizer;
   private final IndexId<K, ?> myIndexId;
 
   public InputIndexDataExternalizer(KeyDescriptor<K> keyDescriptor, IndexId<K, ?> indexId) {
-    myKeyDescriptor = keyDescriptor;
+    myKeyCollectionExternalizer = new CollectionDataExternalizer<>(keyDescriptor);
     myIndexId = indexId;
   }
 
   @Override
   public void save(@NotNull DataOutput out, @NotNull Collection<K> value) throws IOException {
     try {
-      DataInputOutputUtil.writeINT(out, value.size());
-      for (K key : value) {
-        myKeyDescriptor.save(out, key);
-      }
+      myKeyCollectionExternalizer.save(out, value);
     }
     catch (IllegalArgumentException e) {
       throw new IOException("Error saving data for index " + myIndexId, e);
@@ -54,12 +48,7 @@ public class InputIndexDataExternalizer<K> implements DataExternalizer<Collectio
   @Override
   public Collection<K> read(@NotNull DataInput in) throws IOException {
     try {
-      final int size = DataInputOutputUtil.readINT(in);
-      final List<K> list = new ArrayList<>(size);
-      for (int idx = 0; idx < size; idx++) {
-        list.add(myKeyDescriptor.read(in));
-      }
-      return list;
+      return myKeyCollectionExternalizer.read(in);
     }
     catch (IllegalArgumentException e) {
       throw new IOException("Error reading data for index " + myIndexId, e);

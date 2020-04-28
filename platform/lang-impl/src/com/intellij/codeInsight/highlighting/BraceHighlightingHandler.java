@@ -13,10 +13,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
@@ -38,7 +39,6 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.IntIntFunction;
@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -111,7 +112,8 @@ public class BraceHighlightingHandler {
 
   private static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
-    return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() && editor.getComponent().isShowing();
+    return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
+           EditorActivityManager.getInstance().isVisible(editor);
   }
 
   @NotNull
@@ -307,9 +309,8 @@ public class BraceHighlightingHandler {
     }
 
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject); // null in default project
-    if (fileEditorManager == null || !myEditor.equals(fileEditorManager.getSelectedTextEditor())) {
-      return;
-    }
+    if (fileEditorManager == null) return;
+    if (Arrays.stream(fileEditorManager.getSelectedTextEditorWithRemotes()).noneMatch(e -> e.equals(myEditor))) return;
 
     if (lBrace != null && rBrace !=null) {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
@@ -434,7 +435,6 @@ public class BraceHighlightingHandler {
     int endOffset = document.getLineEndOffset(endLine);
 
     LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
-    if (renderer == null) return;
 
     RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighterAndChangeAttributes(startOffset, endOffset, 0, null, HighlighterTargetArea.LINES_IN_RANGE, false,
@@ -451,35 +451,8 @@ public class BraceHighlightingHandler {
     editor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
   }
 
-  @Nullable
-  public static LineMarkerRenderer createLineMarkerRenderer(boolean matched) {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributes attributes =
-      matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
-        : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
-
-    Color color = attributes.getBackgroundColor();
-    if (color == null) return null;
-
-    color = ColorUtil.isDark(scheme.getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
-    return new MyLineMarkerRenderer(color);
-  }
-
-  private static class MyLineMarkerRenderer implements LineMarkerRenderer {
-    private static final int DEEPNESS = 0;
-    private static final int THICKNESS = 1;
-    private final Color myColor;
-
-    private MyLineMarkerRenderer(@NotNull Color color) {
-      myColor = color;
-    }
-
-    @Override
-    public void paint(Editor editor, Graphics g, Rectangle r) {
-      g.setColor(myColor);
-      g.fillRect(r.x, r.y, THICKNESS, r.height);
-      g.fillRect(r.x + THICKNESS, r.y, DEEPNESS, THICKNESS);
-      g.fillRect(r.x + THICKNESS, r.y + r.height - THICKNESS, DEEPNESS, THICKNESS);
-    }
+  public static @NotNull LineMarkerRenderer createLineMarkerRenderer(boolean matched) {
+    final TextAttributesKey key = matched ? CodeInsightColors.MATCHED_BRACE_ATTRIBUTES : CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES;
+    return new DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT);
   }
 }

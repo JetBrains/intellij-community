@@ -58,7 +58,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.psi.search.GlobalSearchScope.getScopeRestrictedByFileTypes;
 import static com.intellij.psi.search.GlobalSearchScope.notScope;
@@ -86,38 +85,36 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     myProject = project;
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myFileTypes = Stream.of(LanguageCompilerRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
+    myFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
     myDirtyScopeHolder = new DirtyScopeHolder(this, FileDocumentManager.getInstance(), PsiDocumentManager.getInstance(project), compilationAffectedModulesSubscription);
   }
 
-   @Override
+  @Override
   public void projectOpened() {
     if (CompilerReferenceService.isEnabled()) {
       myDirtyScopeHolder.installVFSListener(myProject);
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          boolean isUpToDate;
-          File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
+        boolean isUpToDate;
+        File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
 
-          boolean validIndexExists = buildDir != null
-                                     && CompilerReferenceIndex.exists(buildDir)
-                                     && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
+        boolean validIndexExists = buildDir != null
+                                   && CompilerReferenceIndex.exists(buildDir)
+                                   && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
 
-          if (validIndexExists) {
-            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
-            isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+        if (validIndexExists) {
+          CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+          isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+        } else {
+          isUpToDate = false;
+        }
+        executeOnBuildThread(() -> {
+          if (isUpToDate) {
+            openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
           } else {
-            isUpToDate = false;
+            markAsOutdated(validIndexExists);
           }
-          executeOnBuildThread(() -> {
-            if (isUpToDate) {
-              openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
-            } else {
-              markAsOutdated(validIndexExists);
-            }
-          });
         });
       }
 

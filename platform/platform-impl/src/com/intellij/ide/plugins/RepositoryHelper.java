@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -17,6 +18,7 @@ import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static com.intellij.ide.plugins.PluginsMetaLoader.parsePluginList;
+import static com.intellij.ide.plugins.marketplace.MarketplaceRequests.parsePluginList;
 import static java.util.Collections.singletonMap;
 
 /**
@@ -75,17 +77,26 @@ public final class RepositoryHelper {
 
   /**
    * Loads list of plugins, compatible with a current build, from a main plugin repository.
+   * @deprecated Use `loadPlugins` only for custom repositories. Use {@link MarketplaceRequests} for getting descriptors.
    */
   @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
     return loadPlugins(null, indicator);
   }
 
+  /**
+   * Use method only for getting plugins from custom repositories
+   */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl, @Nullable ProgressIndicator indicator) throws IOException {
     return loadPlugins(repositoryUrl, null, indicator);
   }
 
+  /**
+   * Use method only for getting plugins from custom repositories
+   */
   @NotNull
   public static List<IdeaPluginDescriptor> loadPlugins(@Nullable String repositoryUrl,
                                                        @Nullable BuildNumber build,
@@ -103,14 +114,14 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(singletonMap("build", build != null ? build.asString() : PluginRepositoryRequests.getBuildForPluginRepositoryRequests()));
+      url = url.addParameters(singletonMap("build", build != null ? build.asString() : MarketplaceRequests.getBuildForPluginRepositoryRequests()));
     }
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
-    List<PluginNode> descriptors = PluginsMetaLoader.readOrUpdateFile(
+    List<PluginNode> descriptors = MarketplaceRequests.readOrUpdateFile(
       pluginListFile,
       url.toExternalForm(),
       indicator,
@@ -122,8 +133,11 @@ public final class RepositoryHelper {
 
   /**
    * Reads cached plugin descriptors from a file. Returns {@code null} if cache file does not exist.
+   * @deprecated use `MarketplaceRequest.getMarketplaceCachedPlugins`
    */
   @Nullable
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static List<IdeaPluginDescriptor> loadCachedPlugins() throws IOException {
     File file = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
     return file.length() > 0 ? process(loadPluginList(file), null, null) : null;

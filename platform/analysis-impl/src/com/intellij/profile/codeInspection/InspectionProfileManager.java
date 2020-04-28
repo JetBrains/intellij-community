@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -18,18 +18,15 @@ public interface InspectionProfileManager {
   @NotNull
   Collection<InspectionProfileImpl> getProfiles();
 
-  @Nullable
-  default NamedScopesHolder getScopesManager() {
+  default @Nullable NamedScopesHolder getScopesManager() {
     return null;
   }
 
-  @NotNull
-  static InspectionProfileManager getInstance() {
+  static @NotNull InspectionProfileManager getInstance() {
     return ServiceManager.getService(InspectionProfileManager.class);
   }
 
-  @NotNull
-  static InspectionProfileManager getInstance(@NotNull Project project) {
+  static @NotNull InspectionProfileManager getInstance(@NotNull Project project) {
     return InspectionProjectProfileManager.getInstance(project);
   }
 
@@ -41,8 +38,7 @@ public interface InspectionProfileManager {
   @Contract("_,true -> !null")
   InspectionProfileImpl getProfile(@NotNull String name, boolean returnRootProfileIfNamedIsAbsent);
 
-  @NotNull
-  default InspectionProfileImpl getProfile(@NotNull String name) {
+  default @NotNull InspectionProfileImpl getProfile(@NotNull String name) {
     return getProfile(name, true);
   }
 
@@ -52,9 +48,8 @@ public interface InspectionProfileManager {
   /**
    * @deprecated use {@link #getSeverityRegistrar()}
    */
-  @NotNull
   @Deprecated
-  default SeverityRegistrar getOwnSeverityRegistrar() {
+  default @NotNull SeverityRegistrar getOwnSeverityRegistrar() {
     return getSeverityRegistrar();
   }
 }

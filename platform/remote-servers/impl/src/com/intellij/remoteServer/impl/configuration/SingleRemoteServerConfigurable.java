@@ -4,6 +4,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
@@ -82,7 +83,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
 
       @Override
       protected void run() {
-        setConnectionStatus(false, false, "Connecting...");
+        setConnectionStatus(false, false, CloudBundle.message("cloud.status.connecting"));
 
         myConnectionTester = new ConnectionTester();
         myConnectionTester.testConnection();
@@ -208,7 +209,8 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
       UIUtil.invokeLaterIfNeeded(() -> {
         if (myConnectionTester == this) {
           setConnectionStatus(!connected, connected,
-                              connected ? "Connection successful" : "Cannot connect: " + connectionStatus);
+                              connected ? CloudBundle.message("cloud.status.connection.successful")
+                                        : CloudBundle.message("cloud.status.cannot.connect", connectionStatus));
         }
       });
     }

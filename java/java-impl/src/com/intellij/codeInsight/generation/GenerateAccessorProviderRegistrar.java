@@ -6,7 +6,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -17,19 +16,7 @@ public class GenerateAccessorProviderRegistrar {
 
   public final static ExtensionPointName<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> EP_NAME = ExtensionPointName.create("com.intellij.generateAccessorProvider");
 
-  private static final List<NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>> ourProviders = new ArrayList<>();
-
-  static {
-    ourProviders.addAll(EP_NAME.getExtensionList());
-  }
-
-  /** @deprecated use extension point {@link #EP_NAME} */
-  @Deprecated
-  synchronized static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
-    ourProviders.add(function);
-  }
-
   protected synchronized static List<EncapsulatableClassMember> getEncapsulatableClassMembers(final PsiClass psiClass) {
-    return ContainerUtil.concat(ourProviders, s -> s.fun(psiClass));
+    return ContainerUtil.concat(EP_NAME.getExtensionList(), s -> s.fun(psiClass));
   }
 }

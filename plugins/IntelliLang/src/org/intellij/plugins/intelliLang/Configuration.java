@@ -80,8 +80,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     App() {
       myDefaultInjections = loadDefaultInjections();
       myAdvancedConfiguration = new AdvancedConfiguration();
-      LanguageInjectionSupport.CONFIG_EP_NAME.addExtensionPointListener(this::reloadInjections, null);
-      LanguageInjectionSupport.EP_NAME.addExtensionPointListener(this::reloadInjections, null);
+      LanguageInjectionSupport.CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
+      LanguageInjectionSupport.EP_NAME.addChangeListener(this::reloadInjections, null);
     }
 
     private void reloadInjections() {

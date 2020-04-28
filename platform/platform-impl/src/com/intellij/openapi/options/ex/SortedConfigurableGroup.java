@@ -17,14 +17,16 @@ public final class SortedConfigurableGroup
 
   private final String myId;
   private final String myDisplayName;
+  private final String myDescription;
   private final String myHelpTopic;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
   List<Configurable> myList = new ArrayList<>();
 
-  SortedConfigurableGroup(String id, String displayName, String helpTopic, int weight) {
+  SortedConfigurableGroup(String id, String displayName, String description, String helpTopic, int weight) {
     myId = id;
     myDisplayName = displayName;
+    myDescription = description;
     myHelpTopic = helpTopic;
     myWeight = weight;
   }
@@ -59,5 +61,9 @@ public final class SortedConfigurableGroup
   @Override
   public String getDisplayName() {
     return myDisplayName;
+  }
+
+  public String getDescription() {
+    return myDescription;
   }
 }

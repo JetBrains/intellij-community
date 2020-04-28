@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.PsiFile;
@@ -38,7 +39,7 @@ public class DetectIndentAndTypeTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
+    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(CodeStyle.createTestSettings());
     mySettings = CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings();
     mySettings.AUTODETECT_INDENTS = true;
     DetectableIndentOptionsProvider optionsProvider = DetectableIndentOptionsProvider.getInstance();

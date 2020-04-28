@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import org.cef.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Locale;
 public class KeyboardSettingsExternalizable implements PersistentStateComponent<KeyboardSettingsExternalizable.OptionSet> {
 
   private static final String [] supportedNonEnglishLanguages = {"de", "fr", "it", "uk"};
+  public static final String VMOption = "com.sun.awt.use.national.layouts";
 
   public static boolean isSupportedKeyboardLayout(@NotNull Component component) {
     String keyboardLayoutLanguage = getLanguageForComponent(component);
@@ -29,7 +31,8 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
         return true;
       }
     }
-    return false;
+    // linux have poor support of locales so lets show this option every on linux system
+    return OS.isLinux();
   }
 
   @Nullable

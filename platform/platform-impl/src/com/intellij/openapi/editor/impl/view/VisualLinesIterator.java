@@ -87,6 +87,18 @@ public class VisualLinesIterator {
            myNextLocation.offset;
   }
 
+  public int getDisplayedLogicalLine() {
+    checkEnd();
+    int foldIndex = myLocation.foldRegion;
+    if (foldIndex < myFoldRegions.length) {
+      FoldRegion foldRegion = myFoldRegions[foldIndex];
+      if (foldRegion.getPlaceholderText().isEmpty() && foldRegion.getStartOffset() == myLocation.offset) {
+        return myDocument.getLineNumber(foldRegion.getEndOffset());
+      }
+    }
+    return myLocation.logicalLine - 1;
+  }
+
   public int getStartLogicalLine() {
     checkEnd();
     return myLocation.logicalLine - 1;
@@ -160,7 +172,7 @@ public class VisualLinesIterator {
     List<Inlay> inlays = myEditor.getInlayModel()
       .getBlockElementsInRange(myLocation.offset, myNextLocation.atEnd() ? myDocument.getTextLength() : myNextLocation.offset - 1);
     for (Inlay inlay : inlays) {
-      int inlayOffset = inlay.getOffset();
+      int inlayOffset = inlay.getOffset() - (inlay.isRelatedToPrecedingText() ? 0 : 1);
       int foldIndex = myLocation.foldRegion;
       while (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getEndOffset() <= inlayOffset) foldIndex++;
       if (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getStartOffset() <= inlayOffset) continue;

@@ -3,39 +3,38 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
 
-internal open class EntitiesBarrel internal constructor(
-  entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
-) : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
-
-  constructor() : this(emptyMap())
-
-  protected open val entitiesByType: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>> = HashMap(entities)
-
-  @Suppress("UNCHECKED_CAST")
-  open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entitiesByType[clazz] as EntityFamily<T>?
-
-  fun all() = entitiesByType
-
-  override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
-    return entitiesByType.iterator()
+internal open class ImmutableEntitiesBarrel internal constructor(
+  override val entities: Map<Class<out TypedEntity>, ImmutableEntityFamily<out TypedEntity>>
+) : EntitiesBarrel() {
+  fun assertConsistency() {
+    entities.forEach { (clazz, family) ->
+      family.assertConsistency { entityData ->
+        val immutableClass = ClassConversion.entityDataToEntity(entityData::class)
+        assert(clazz.kotlin ==  immutableClass) {
+          """EntityFamily contains entity data of wrong type:
+            | - EntityFamily class:   $clazz
+            | - entityData class:     $immutableClass
+          """.trimMargin()
+        }
+      }
+    }
   }
 
-  fun copy(): EntitiesBarrel = EntitiesBarrel(this.entitiesByType)
-
-  fun join(other: EntitiesBarrel): EntitiesBarrel = EntitiesBarrel(entitiesByType + other.entitiesByType)
+  companion object {
+    val EMPTY = ImmutableEntitiesBarrel(emptyMap())
+  }
 }
 
-internal class MutableEntitiesBarrel : EntitiesBarrel() {
-  override val entitiesByType: MutableMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>> = mutableMapOf()
+internal class MutableEntitiesBarrel(
+  override var entities: MutableMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
+) : EntitiesBarrel() {
 
-  override operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entitiesByType[clazz] as EntityFamily<T>?
+  fun clear() = entities.clear()
 
-  fun clear() = entitiesByType.clear()
-
-  fun isEmpty() = entitiesByType.isEmpty()
+  fun isEmpty() = entities.isEmpty()
 
   operator fun <T : TypedEntity> set(clazz: Class<T>, newFamily: MutableEntityFamily<T>) {
-    entitiesByType[clazz] = newFamily
+    entities[clazz] = newFamily
   }
 
   fun remove(id: Int, clazz: Class<out TypedEntity>) {
@@ -50,43 +49,62 @@ internal class MutableEntitiesBarrel : EntitiesBarrel() {
     getMutableEntityFamily(clazz).add(newEntity)
   }
 
+  fun <T : TypedEntity> cloneAndAdd(newEntity: PEntityData<T>, clazz: Class<T>): PEntityData<T> {
+    val cloned = newEntity.clone()
+    getMutableEntityFamily(clazz).add(cloned)
+    return cloned
+  }
+
   fun <T : TypedEntity> replaceById(newEntity: PEntityData<T>, clazz: Class<T>) {
     val family = getMutableEntityFamily(clazz)
-    if (!family.exists(newEntity.id)) error("Nothing to replace")  // TODO: 25.03.2020 Or just call "add"?
+    if (!family.exists(newEntity.id)) error("Nothing to replace")
     family.replaceById(newEntity)
   }
 
-  fun toImmutable(): EntitiesBarrel {
-    entitiesByType.forEach { (_, family) ->
-      if (family is MutableEntityFamily<*>) family.freeze()
+  fun toImmutable(): ImmutableEntitiesBarrel {
+    entities
+    val friezedEntities = entities.mapValues { (_, family) ->
+      when (family) {
+        is MutableEntityFamily<*> -> family.toImmutable()
+        is ImmutableEntityFamily<*> -> family
+      }
     }
-    return EntitiesBarrel(HashMap(entitiesByType))
+    return ImmutableEntitiesBarrel(friezedEntities)
   }
 
   private fun <T : TypedEntity> getMutableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
-    val entityFamily = entitiesByType[unmodifiableEntityClass] as EntityFamily<T>?
+    val entityFamily = entities[unmodifiableEntityClass] as EntityFamily<T>?
     if (entityFamily == null) {
       val newMutable = MutableEntityFamily.createEmptyMutable<T>()
-      entitiesByType[unmodifiableEntityClass] = newMutable
+      entities[unmodifiableEntityClass] = newMutable
       return newMutable
     }
     else {
-      if (entityFamily !is MutableEntityFamily<T> || !entityFamily.familyCopiedToModify) {
-        val newMutable = entityFamily.copyToMutable()
-        entitiesByType[unmodifiableEntityClass] = newMutable
-        return newMutable
-      }
-      else {
-        return entityFamily
+      return when (entityFamily) {
+        is MutableEntityFamily<T> -> entityFamily
+        is ImmutableEntityFamily<T> -> {
+          val newMutable = entityFamily.toMutable()
+          entities[unmodifiableEntityClass] = newMutable
+          newMutable
+        }
       }
     }
   }
 
   companion object {
-    fun from(original: EntitiesBarrel): MutableEntitiesBarrel {
-      val res = MutableEntitiesBarrel()
-      res.entitiesByType.putAll(original.all())
-      return res
-    }
+    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(HashMap(original.all()))
   }
+}
+
+internal sealed class EntitiesBarrel : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
+
+  protected abstract val entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
+
+  @Suppress("UNCHECKED_CAST")
+  open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entities[clazz] as EntityFamily<T>?
+
+  @Deprecated("This class is iterable")
+  internal fun all() = entities
+
+  override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> = entities.iterator()
 }

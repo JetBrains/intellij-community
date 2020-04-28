@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.forward;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -10,12 +9,10 @@ import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
 public class PersistentMapBasedForwardIndex implements ForwardIndex {
-  private static final Logger LOG = Logger.getInstance(PersistentMapBasedForwardIndex.class);
   @NotNull
   private volatile PersistentHashMap<Integer, ByteArraySequence> myPersistentMap;
   @NotNull

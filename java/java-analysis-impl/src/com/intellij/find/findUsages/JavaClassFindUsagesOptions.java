@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -69,7 +69,7 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> strings) {
+  protected void addUsageTypes(@NotNull Set<? super String> strings) {
     if (isUsages || isMethodsUsages || isFieldsUsages) {
       strings.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
@@ -84,12 +84,12 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
     }
   }
 
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
     if (getClass() != o.getClass()) return false;
 
-    final JavaClassFindUsagesOptions that = (JavaClassFindUsagesOptions)o;
+    JavaClassFindUsagesOptions that = (JavaClassFindUsagesOptions)o;
 
     if (isCheckDeepInheritance != that.isCheckDeepInheritance) return false;
     if (isDerivedClasses != that.isDerivedClasses) return false;

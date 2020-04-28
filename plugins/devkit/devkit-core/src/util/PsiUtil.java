@@ -227,11 +227,6 @@ public class PsiUtil {
     });
   }
 
-  @NotNull
-  public static <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E e) {
-    return SmartPointerManager.getInstance(e.getProject()).createSmartPsiElementPointer(e);
-  }
-
   public static boolean isPluginXmlPsiElement(@NotNull PsiElement element) {
     return isPluginProject(element.getProject()) && DescriptorUtil.isPluginXml(element.getContainingFile());
   }

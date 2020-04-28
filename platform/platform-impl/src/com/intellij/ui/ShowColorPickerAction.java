@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -20,7 +21,7 @@ public class ShowColorPickerAction extends DumbAwareAction {
     Window root = parent();
     if (root != null) {
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
-      ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
+      ColorPicker.ColorPickerDialog picker = new ColorPicker.ColorPickerDialog(root, IdeBundle.message("dialog.title.color.picker"), null, true, listeners, true);
       picker.setModal(false);
       picker.show();
     }

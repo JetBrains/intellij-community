@@ -12,7 +12,9 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -53,7 +55,9 @@ class B implements AnnotationBuilder {
     this.message = message;
     myCurrentElement = currentElement;
     holder.annotationBuilderCreated(this);
-    myDebugCreationPlace = ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal() ?
+
+    Application app = ApplicationManager.getApplication();
+    myDebugCreationPlace = app.isUnitTestMode() && !ApplicationInfoImpl.isInStressTest() || app.isInternal() ?
                            ThrowableInterner.intern(new Throwable()) : null;
   }
 

@@ -3,15 +3,18 @@ package com.intellij.platform
 
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.ActivityCategory
+import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.createModalTask
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -45,9 +48,7 @@ internal open class ProjectFrameAllocator {
   open fun projectLoaded(project: Project) {}
 
   open fun projectNotLoaded(error: CannotConvertException?) {
-    if (error != null) {
-      ProjectManagerImpl.showCannotConvertMessage(error, null)
-    }
+    error?.let { throw error }
   }
 
   open fun projectOpened(project: Project) {}
@@ -67,20 +68,32 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", options.projectName ?: projectFile.fileName)
     ApplicationManager.getApplication().invokeAndWait {
       val frame = createFrameIfNeeded()
-      val progressTask = createModalTask(progressTitle) {
-        if (frameHelper == null) {
-          ApplicationManager.getApplication().invokeLater {
-            if (cancelled) {
-              return@invokeLater
-            }
+      val progressTask = object : Task.Modal(null, progressTitle, true) {
+        override fun run(indicator: ProgressIndicator) {
+          if (frameHelper == null) {
+            ApplicationManager.getApplication().invokeLater {
+              if (cancelled) {
+                return@invokeLater
+              }
 
-            runActivity("project frame initialization") {
-              initNewFrame(frame)
+              runActivity("project frame initialization") {
+                initNewFrame(frame)
+              }
             }
           }
+
+          task()
         }
 
-        task()
+        override fun onThrowable(error: Throwable) {
+          if (error is StartupAbortedException || error is PluginException) {
+            StartupAbortedException.logAndExit(error)
+          }
+          else {
+            logger<ProjectFrameAllocator>().error(error)
+            projectNotLoaded(error as? CannotConvertException)
+          }
+        }
       }
       completed = (ProgressManager.getInstance() as CoreProgressManager).runProcessWithProgressSynchronously(progressTask, frame.rootPane)
     }
@@ -127,7 +140,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     var frameInfo = options.frame
     if (frameInfo?.bounds == null) {
       isFrameBoundsCorrect = false
-      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfo
+      frameInfo = (WindowManager.getInstance() as WindowManagerImpl).defaultFrameInfoHelper.info
     }
     else {
       isFrameBoundsCorrect = true

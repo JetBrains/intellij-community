@@ -15,7 +15,9 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.action.HgCompareWithBranchAction;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
@@ -45,15 +47,16 @@ public class HgBranchWorker {
       ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
     }
     catch (VcsException e) {
-      VcsNotifier.getInstance(myProject).notifyError("Can't Compare with Branch", e.getMessage());
+      VcsNotifier.getInstance(myProject).notifyError(HgBundle.message("hg4idea.branch.compare.error"), e.getMessage());
     }
   }
 
   private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull CommitCompareInfo compareInfo,
                                     @NotNull HgRepository selectedRepository) {
     if (compareInfo.isEmpty()) {
-      Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
-                                                        currentBranch, branchName), "No Changes Detected");
+      Messages.showInfoMessage(myProject, XmlStringUtil
+                                 .wrapInHtml(HgBundle.message("hg4idea.branch.compare.no.changes.msg", currentBranch, branchName)),
+                               HgBundle.message("hg4idea.branch.compare.no.changes"));
     }
     else {
       new CompareBranchesDialog(new HgCompareBranchesHelper(myProject), branchName, currentBranch, compareInfo, selectedRepository, false).show();

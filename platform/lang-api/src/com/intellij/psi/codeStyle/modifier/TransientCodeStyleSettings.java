@@ -9,9 +9,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,12 +24,13 @@ import java.util.List;
  * @see CodeStyleSettingsModifier
  */
 public final class TransientCodeStyleSettings extends CodeStyleSettings {
-  private final PsiFile myPsiFile;
+  private final WeakReference<PsiFile> myPsiFileRef;
   private CodeStyleSettingsModifier myModifier;
   private final List<Object> myDependencies = new ArrayList<>();
 
   public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
-    myPsiFile = psiFile;
+    super(true, false);
+    myPsiFileRef = new WeakReference<>(psiFile);
     copyFrom(settings);
     myDependencies.add(settings.getModificationTracker());
   }
@@ -41,9 +44,13 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     return myModifier;
   }
 
-  @NotNull
+  /**
+   * @return A file for which the settings were initially computed or {@code null} if the file is no longer valid
+   * (doesn't exist) and has been garbage collected.
+   */
+  @Nullable
   public PsiFile getPsiFile() {
-    return myPsiFile;
+    return myPsiFileRef.get();
   }
 
   @NotNull
@@ -59,12 +66,13 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     return OTHER_INDENT_OPTIONS;
   }
 
-  public void applyIndentOptionsFromProviders() {
+  @ApiStatus.Internal
+  public void applyIndentOptionsFromProviders(@NotNull PsiFile file) {
     for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensionList()) {
       if (provider.useOnFullReformat()) {
-        IndentOptions indentOptions = provider.getIndentOptions(this, myPsiFile);
+        IndentOptions indentOptions = provider.getIndentOptions(this, file);
         if (indentOptions != null) {
-          IndentOptions targetOptions = getIndentOptions(myPsiFile.getFileType());
+          IndentOptions targetOptions = getIndentOptions(file.getFileType());
           if (targetOptions != indentOptions) {
             targetOptions.copyFrom(indentOptions);
           }

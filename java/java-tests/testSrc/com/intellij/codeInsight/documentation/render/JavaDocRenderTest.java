@@ -37,11 +37,25 @@ public class JavaDocRenderTest extends AbstractEditorTest {
               "  /** doc */\n" +
               "  int a;\n" +
               "}\n", true);
-    verifyFoldingState("[FoldRegion +(10:23), placeholder='']");
+    verifyFoldingState("[FoldRegion +(11:24), placeholder='']");
     executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE);
     checkResultByText("class C {\n" +
-                      "<caret>  /** doc */\n" +
-                      "  int a;\n" +
+                      "  /** doc */\n" +
+                      "<caret>  int a;\n" +
+                      "}\n");
+  }
+
+  public void testTypingAtLineStart() {
+    configure("class C {\n" +
+              "/** doc */\n" +
+              "int a;<caret>\n" +
+              "}\n", true);
+    verifyFoldingState("[FoldRegion +(10:21), placeholder='']");
+    executeAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+    type(' ');
+    checkResultByText("class C {\n" +
+                      "/** doc */\n" +
+                      " <caret>int a;\n" +
                       "}\n");
   }
 
@@ -53,22 +67,68 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyFoldingState("[]");
     verifyItem(12, 22, null);
     toggleItem();
-    verifyFoldingState("[FoldRegion +(9:22), placeholder='']");
+    verifyFoldingState("[FoldRegion +(10:23), placeholder='']");
     verifyItem(12, 22, "doc");
     toggleItem();
     verifyFoldingState("[]");
     verifyItem(12, 22, null);
     runWriteCommand(() -> getEditor().getDocument().setText(getEditor().getDocument().getText().replace("doc", "another")));
     toggleItem();
-    verifyFoldingState("[FoldRegion +(9:26), placeholder='']");
+    verifyFoldingState("[FoldRegion +(10:27), placeholder='']");
     verifyItem(12, 26, "another");
+  }
+
+  public void testMultipleAuthors() {
+    configure("package some;\n" +
+              "\n" +
+              "/**\n" +
+              " * @author foo\n" +
+              " * @author bar\n" +
+              " */\n" +
+              "class C {}", true);
+    verifyItem(15, 52,"<table class='sections'><p><tr><td valign='top' class='section'><p>Author:</td>" +
+                      "<td valign='top'><p>foo, bar</td></table>");
+  }
+
+  public void testDocumentStart() {
+    configure("/**\n" +
+              " * comment\n" +
+              " */\n" +
+              "class C {}", true);
+    verifyFoldingState("[FoldRegion +(0:19), placeholder='']");
+  }
+
+  public void testPackageInfo() {
+    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+    configureFromFileText("package-info.java",
+                          "/**\n" +
+                          " * whatever\n" +
+                          " */\n" +
+                          "package some;");
+    updateRenderedItems(true);
+    verifyItem(0, 19, "whatever");
+  }
+
+  public void testModuleInfo() {
+    EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(true);
+    configureFromFileText("module-info.java",
+                          "/**\n" +
+                          " * whatever\n" +
+                          " */\n" +
+                          "module some {}");
+    updateRenderedItems(true);
+    verifyItem(0, 19, "whatever");
   }
 
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
+    updateRenderedItems(enableRendering);
+  }
+
+  private void updateRenderedItems(boolean collapseNewRegions) {
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor().getDocument(), getFile());
-    DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, enableRendering);
+    DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
   }
 
   private void toggleItem() {

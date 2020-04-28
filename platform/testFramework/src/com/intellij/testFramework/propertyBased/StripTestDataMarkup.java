@@ -23,10 +23,13 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 /**
  * @author peter
  */
 public class StripTestDataMarkup extends ActionOnFile {
+  private static final String[] MARKUP = {"<caret>", "<ref>", "<selection>", "</selection>"};
 
   public StripTestDataMarkup(@NotNull PsiFile file) {
     super(file);
@@ -43,15 +46,19 @@ public class StripTestDataMarkup extends ActionOnFile {
       catch (AssertionError ignore) {
         // can fail on unpaired markups
       }
-      removeMarkup(document, "<caret>");
-      removeMarkup(document, "<ref>");
-      removeMarkup(document, "<selection>");
-      removeMarkup(document, "</selection>");
+      for (String s : MARKUP) {
+        removeMarkup(document, s);
+      }
     });
     PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
   }
 
   private static void removeMarkup(Document document, String marker) {
     document.setText(StringUtil.replace(document.getText(), marker, ""));
+  }
+
+  @Override
+  public String toString() {
+    return "Strip markup: " + Arrays.toString(MARKUP);
   }
 }

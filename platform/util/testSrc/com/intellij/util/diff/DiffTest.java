@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.diff;
 
 import com.intellij.util.ArrayUtilRt;
 import junit.framework.TestCase;
 
-/**
- * @author dyoma
- */
 public class DiffTest extends TestCase {
   private static final Object[] DATA_123 = {"1", "2", "3"};
   private static final Object[] DATA_AB = {"a", "b"};

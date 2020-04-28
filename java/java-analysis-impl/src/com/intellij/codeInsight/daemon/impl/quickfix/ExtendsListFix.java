@@ -95,8 +95,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       && (classToExtendFrom.isInterface()
           || !myClass.isInterface()
               && myClass.getExtendsList() != null
-              && myClass.getExtendsList().getReferencedTypes().length == 0 == myToAdd)
-        ;
+              && (myClass.getExtendsList().getReferencedTypes().length == 0) == myToAdd);
 
   }
 

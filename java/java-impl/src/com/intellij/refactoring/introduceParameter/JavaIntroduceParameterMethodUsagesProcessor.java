@@ -17,7 +17,6 @@ package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,11 +49,10 @@ import org.jetbrains.annotations.Nullable;
 public class JavaIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
   private static final Logger LOG =
     Logger.getInstance(JavaIntroduceParameterMethodUsagesProcessor.class);
-  private static final JavaLanguage myLanguage = Language.findInstance(JavaLanguage.class);
 
   private static boolean isJavaUsage(UsageInfo usage) {
     PsiElement e = usage.getElement();
-    return e != null && e.getLanguage().is(myLanguage);
+    return e != null && e.getLanguage().is(JavaLanguage.INSTANCE);
   }
 
   @Override

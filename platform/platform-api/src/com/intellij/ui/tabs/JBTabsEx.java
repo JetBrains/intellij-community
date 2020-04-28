@@ -33,5 +33,5 @@ public interface JBTabsEx extends JBTabs {
 
   boolean isEmptyVisible();
 
-  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo);
+  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo);
 }

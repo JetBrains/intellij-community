@@ -1,6 +1,5 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
-import com.intellij.configurationStore.serialize
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
@@ -12,11 +11,11 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
 
@@ -27,6 +26,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(originalLibrary.project)
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
   private var reloadKind = false
 
@@ -64,13 +64,11 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
       error("Library named $name already exists")
     }
 
-    val oldPersistentId = entity.persistentId()
     entityId = entity.persistentId().copy(name = name)
     diff.modifyEntity(ModifiableLibraryEntity::class.java, entity) {
       this.name = name
     }
 
-    updateModuleDependency(oldPersistentId)
     if (assertChangesApplied && currentLibrary.name != name) {
       error("setName: expected library name ${name}, but got ${currentLibrary.name}. Original name: ${originalLibrarySnapshot.name}")
     }
@@ -82,7 +80,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     modelIsCommittedOrDisposed = true
 
     if (reloadKind) {
-      originalLibrary.entityStore.clearCachedValue(originalLibrary.snapshotValue, originalLibrary.entityId)
+      originalLibrary.cleanCachedValue()
     }
     if (isChanged) {
       committer(this, diff)
@@ -109,29 +107,6 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     }
   }
 
-  private fun updateModuleDependency(oldLibraryId: LibraryId) {
-    entityStoreOnDiff.current.entities(ModuleEntity::class.java).forEach { moduleEntity ->
-      var containsOldDependency = false
-      val newDependencies = moduleEntity.dependencies.map {
-        when(it) {
-          is ModuleDependencyItem.Exportable.LibraryDependency -> {
-            if (it.library == oldLibraryId) {
-              containsOldDependency = true
-              it.copy(library = entityId)
-            } else it
-          }
-          else -> it
-        }
-      }
-
-      if (containsOldDependency) {
-        diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
-          dependencies = newDependencies
-        }
-      }
-    }
-  }
-
   override fun isChanged(): Boolean {
     if (!originalLibrarySnapshot.libraryEntity.hasEqualProperties(currentLibrary.libraryEntity)) return true
     val p1 = originalLibrarySnapshot.libraryEntity.getCustomProperties()
@@ -146,7 +121,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
     assertModelIsLive()
 
     val rootTypeId = LibraryRootTypeId(rootType.name())
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
@@ -167,7 +142,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun moveRootUp(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
       val index = roots.withIndex().firstOrNull { it.value.url == virtualFileUrl } ?: return@update
@@ -183,7 +158,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun moveRootDown(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
       val index = roots.withIndex().firstOrNull { it.value.url == virtualFileUrl } ?: return@update
@@ -200,7 +175,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     update {
       if (!excludedRoots.contains(virtualFileUrl)) {
@@ -216,7 +191,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun addRoot(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     val root = LibraryRoot(
       url = virtualFileUrl,
@@ -285,7 +260,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) return false
 
@@ -304,7 +279,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   override fun removeExcludedRoot(url: String): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     if (!currentLibrary.excludedRootUrls.contains(virtualFileUrl.url)) return false
 

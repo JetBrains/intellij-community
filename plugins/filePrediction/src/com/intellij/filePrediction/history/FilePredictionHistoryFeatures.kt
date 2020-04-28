@@ -7,7 +7,7 @@ import com.intellij.filePrediction.FilePredictionFeatureProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-class FilePredictionHistoryFeatures: FilePredictionFeatureProvider {
+internal class FilePredictionHistoryFeatures: FilePredictionFeatureProvider {
   override fun getName(): String = "history"
 
   override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {

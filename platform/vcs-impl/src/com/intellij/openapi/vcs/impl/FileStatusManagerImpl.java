@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -83,16 +83,16 @@ public final class FileStatusManagerImpl extends FileStatusManager implements Di
         fileStatusesChanged();
       }
     });
-    projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> fileStatusesChanged());
+    projectBus.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this::fileStatusesChanged);
 
     if (!project.isDefault()) {
       StartupManager startManager = StartupManager.getInstance(project);
       if (!startManager.postStartupActivityPassed()) {
-        startManager.registerPostStartupDumbAwareActivity(() -> fileStatusesChanged());
+        startManager.registerPostStartupDumbAwareActivity(this::fileStatusesChanged);
       }
     }
 
-    FileStatusProvider.EP_NAME.addExtensionPointListener(myProject, () -> fileStatusesChanged(), project);
+    FileStatusProvider.EP_NAME.addChangeListener(myProject, this::fileStatusesChanged, project);
   }
 
   static final class FileStatusManagerDocumentListener implements FileDocumentManagerListener, DocumentListener {

@@ -10,13 +10,13 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,7 @@ import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
-  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, ProjectComponent {
+  implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable {
   private static final int IMPORT_DELAY = 1000;
   private static final String NON_MANAGED_POM_NOTIFICATION_GROUP_ID = "Maven: non-managed pom.xml";
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
@@ -125,7 +126,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private static final int SAVE_DELAY = 1000;
 
   public static MavenProjectsManager getInstance(@NotNull Project project) {
-    return project.getComponent(MavenProjectsManager.class);
+    return project.getService(MavenProjectsManager.class);
   }
 
   public MavenProjectsManager(@NotNull Project project) {
@@ -137,6 +138,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     mySaveQueue = new MavenMergingUpdateQueue("Maven save queue", SAVE_DELAY, !isUnitTestMode(), this);
     myProgressListener = ServiceManager.getService(myProject, SyncViewManager.class);
     MavenRehighlighter.install(project, this);
+    Disposer.register(project, this::projectClosed);
   }
 
   @Override
@@ -285,6 +287,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForSettingsChanges();
       listenForProjectsTreeChanges();
       registerSyncConsoleListener();
+      updateTabTitles();
 
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
         if (!isUnitTestMode()) {
@@ -297,6 +300,28 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     finally {
       initLock.unlock();
     }
+  }
+
+  private void updateTabTitles() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return;
+    }
+
+    addProjectsTreeListener(new MavenProjectsTree.Listener() {
+      @Override
+      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+        updateTabName(MavenUtil.collectFirsts(updated), myProject);
+      }
+    });
+  }
+
+  private static void updateTabName(@NotNull List<MavenProject> projects, @NotNull Project project) {
+    MavenUtil.invokeLater(project, () -> {
+      for (MavenProject each : projects) {
+        FileEditorManagerEx.getInstanceEx(project).updateFilePresentation(each.getFile());
+      }
+    });
   }
 
   public synchronized MavenSyncConsole getSyncConsole() {
@@ -380,7 +405,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     myWatcher = new MavenProjectsManagerWatcher(myProject, this, myProjectsTree, getGeneralSettings(), myReadingProcessor);
 
-    myImportingQueue = new MavenMergingUpdateQueue(getComponentName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
+    myImportingQueue = new MavenMergingUpdateQueue(getClass().getName() + ": Importing queue", IMPORT_DELAY, !isUnitTestMode(), myProject);
 
     myImportingQueue.makeUserAware(myProject);
     myImportingQueue.makeDumbAware(myProject);
@@ -524,8 +549,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myWatcher.enableAutoImportInTests();
   }
 
-  @Override
-  public void projectClosed() {
+  private void projectClosed() {
     initLock.lock();
     try {
       if (!isInitialized.getAndSet(false)) return;

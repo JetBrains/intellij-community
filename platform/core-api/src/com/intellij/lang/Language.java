@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -12,9 +12,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -28,9 +32,9 @@ import java.util.concurrent.ConcurrentMap;
  * The language coming from file type can be changed by {@link com.intellij.psi.LanguageSubstitutor}.
  */
 public abstract class Language extends UserDataHolderBase {
-  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = ContainerUtil.newConcurrentMap();
-  private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = ContainerUtil.newConcurrentMap();
-  private static final Map<String, Language> ourRegisteredIDs = ContainerUtil.newConcurrentMap();
+  private static final Map<Class<? extends Language>, Language> ourRegisteredLanguages = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<String, List<Language>> ourRegisteredMimeTypes = new ConcurrentHashMap<>();
+  private static final Map<String, Language> ourRegisteredIDs = new ConcurrentHashMap<>();
 
   private final Language myBaseLanguage;
   private final String myID;
@@ -43,9 +47,8 @@ public abstract class Language extends UserDataHolderBase {
       return "Language: ANY";
     }
 
-    @Nullable
     @Override
-    public LanguageFileType getAssociatedFileType() {
+    public @Nullable LanguageFileType getAssociatedFileType() {
       return null;
     }
   };
@@ -101,8 +104,7 @@ public abstract class Language extends UserDataHolderBase {
   /**
    * @return collection of all languages registered so far.
    */
-  @NotNull
-  public static Collection<Language> getRegisteredLanguages() {
+  public static @NotNull Collection<Language> getRegisteredLanguages() {
     final Collection<Language> languages = ourRegisteredLanguages.values();
     return Collections.unmodifiableCollection(new ArrayList<>(languages));
   }
@@ -149,8 +151,7 @@ public abstract class Language extends UserDataHolderBase {
    * @param mimeType of the particular language.
    * @return collection of all languages for the given {@code mimeType}.
    */
-  @NotNull
-  public static Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
+  public static @NotNull Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
     List<Language> result = mimeType == null ? null : ourRegisteredMimeTypes.get(mimeType);
     return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
   }
@@ -175,19 +176,16 @@ public abstract class Language extends UserDataHolderBase {
    *
    * @return the name of the language.
    */
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return myID;
   }
 
-  @Nullable
-  public LanguageFileType getAssociatedFileType() {
+  public @Nullable LanguageFileType getAssociatedFileType() {
     return FileTypeRegistry.getInstance().findFileTypeByLanguage(this);
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public LanguageFileType findMyFileType(FileType[] types) {
+  public @Nullable LanguageFileType findMyFileType(FileType[] types) {
     for (final FileType fileType : types) {
       if (fileType instanceof LanguageFileType) {
         final LanguageFileType languageFileType = (LanguageFileType)fileType;
@@ -208,13 +206,11 @@ public abstract class Language extends UserDataHolderBase {
   }
 
 
-  @Nullable
-  public Language getBaseLanguage() {
+  public @Nullable Language getBaseLanguage() {
     return myBaseLanguage;
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getID();
   }
 
@@ -247,13 +243,11 @@ public abstract class Language extends UserDataHolderBase {
     return false;
   }
 
-  @NotNull
-  public List<Language> getDialects() {
+  public @NotNull List<Language> getDialects() {
     return myDialects;
   }
 
-  @Nullable
-  public static Language findLanguageByID(String id) {
+  public static @Nullable Language findLanguageByID(String id) {
     return id == null ? null : ourRegisteredIDs.get(id);
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
 import com.intellij.formatting.fileSet.PatternDescriptor;
 import com.intellij.lang.xml.XMLLanguage;
@@ -36,7 +37,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
     langCodeStyle.addContent(indentOptionsElement);
     rootElement.addContent(langCodeStyle);
 
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     settings.readExternal(rootElement);
     CommonCodeStyleSettings langSettings = settings.getCommonSettings(XMLLanguage.INSTANCE);
     assert langSettings != null;
@@ -96,7 +97,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   }
 
   public void testSaveOtherOptionsChanged() throws Exception {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     settings.OTHER_INDENT_OPTIONS.INDENT_SIZE = 2;
     Element root = createOption("config", "root");
     settings.writeExternal(root);
@@ -113,7 +114,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   }
 
   public void testSaveSoftMargins() throws Exception {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     settings.setDefaultRightMargin(110);
     settings.setDefaultSoftMargins(Arrays.asList(60, 80, 140));
     Element root = createOption("config", "root");
@@ -128,7 +129,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   }
 
   public void testReadSoftMargins() throws Exception {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     String source =
       "<option name=\"config\" value=\"root\">\n" +
       "  <option name=\"RIGHT_MARGIN\" value=\"110\" />\n" +
@@ -145,7 +146,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   }
 
   public void testSaveExcludedFiles() throws Exception {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     settings.getExcludedFiles().addDescriptor(new PatternDescriptor("*.java"));
     settings.getExcludedFiles().addDescriptor(new PatternDescriptor("/lib/**/*.min.js"));
     Element root = createOption("config", "root");
@@ -164,7 +165,7 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
   }
 
   public void testReadExcludedFiles() throws Exception {
-    CodeStyleSettings settings = new CodeStyleSettings();
+    CodeStyleSettings settings = CodeStyle.createTestSettings();
     String source =
       "<option name=\"config\" value=\"root\">\n" +
       "  <option name=\"DO_NOT_FORMAT\">\n" +

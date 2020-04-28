@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
+  @SafeFieldForPreview
   private final PsiType myType;
   private final String myName;
 

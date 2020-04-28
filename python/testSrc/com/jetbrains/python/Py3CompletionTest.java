@@ -400,6 +400,10 @@ public class Py3CompletionTest extends PyTestCase {
     assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
 
+  // PY-33254, PY-12339, PY-40834
+  public void testTypedParameterStringPath() {
+    doMultiFileTest();
+  }
 
   @Override
   protected String getTestDataPath() {

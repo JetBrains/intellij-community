@@ -4,10 +4,13 @@ package org.jetbrains.plugins.github.pullrequest.comment.action
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 
 class GHPRDiffReviewThreadsReloadAction
-  : RefreshAction("Refresh Review Data", "Refresh GitHub pull request review information", AllIcons.Actions.Refresh) {
+  : RefreshAction({ GithubBundle.message("pull.request.review.refresh.data.task") },
+                  { GithubBundle.message("pull.request.review.refresh.data.task.description") },
+                  AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {
     val reviewSupport = e.getData(GHPRDiffReviewSupport.DATA_KEY)

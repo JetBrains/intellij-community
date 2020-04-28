@@ -149,7 +149,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   @Override
   public void initializeProperties() {
     FilePropertyPusher.EP_NAME.forEachExtensionSafe(pusher -> {
-      pusher.initExtra(myProject, myProject.getMessageBus());
+      pusher.initExtra(myProject);
     });
   }
 
@@ -198,7 +198,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
         DumbService.getInstance(myProject).cancelTask(task);
       }
     });
-    FilePropertyPusher.EP_NAME.addExtensionPointListener(() -> {
+    FilePropertyPusher.EP_NAME.addChangeListener(() -> {
       DumbService.getInstance(myProject).cancelTask(task);
       queueFullUpdate();
     }, task);

@@ -91,7 +91,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
 
     val sw = StopWatch.start("loading details in [" + root.name + "]")
 
-    val handlerListener = GitLogOutputSplitter<R>(handler, parser, converter)
+    val handlerListener = GitLogOutputSplitter(handler, parser, converter)
     Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
     handlerListener.reportErrors()
 

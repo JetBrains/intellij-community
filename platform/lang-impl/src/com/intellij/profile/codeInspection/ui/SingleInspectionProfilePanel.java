@@ -84,9 +84,8 @@ public class SingleInspectionProfilePanel extends JPanel {
   @NonNls private static final String EMPTY_HTML = "<html><body></body></html>";
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
-  public static final String SETTINGS = "settings://";
 
-  private final Map<HighlightDisplayKey, ToolDescriptors> myInitialToolDescriptors = new THashMap<>();
+  private final Map<String, ToolDescriptors> myInitialToolDescriptors = new THashMap<>();
   private final InspectionConfigTreeNode myRoot = new InspectionConfigTreeNode.Group(InspectionsBundle.message("inspection.root.node.title"));
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
@@ -134,11 +133,16 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
       return true;
     });
-    getProfile().resetToBase(myProjectProfileManager.getProject());
+    getProfile().resetToBase(getProject());
     loadDescriptorsConfigs(true);
     postProcessModification();
     updateModificationMarker();
     myRoot.dropCache();
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProjectProfileManager.getProject();
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
@@ -299,7 +303,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     userActivityWatcher.register(myOptionsPanel);
     updateSelectedProfileState();
     reset();
-    myProjectProfileManager.getProject().getMessageBus().connect(myDisposable).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
+    getProject().getMessageBus().connect(myDisposable).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
       public void profileChanged(@Nullable InspectionProfile profile) {
         if (myProfile == profile) {
@@ -371,13 +375,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (isDisposed()) return;
 
     myInitialToolDescriptors.clear();
-    final Project project = myProjectProfileManager.getProject();
-    for (final ScopeToolState state : myProfile.getDefaultStates(myProjectProfileManager.getProject())) {
+    final Project project = getProject();
+    for (final ScopeToolState state : myProfile.getDefaultStates(getProject())) {
       if (!accept(state.getTool())) {
         continue;
       }
       ToolDescriptors descriptors = ToolDescriptors.fromScopeToolState(state, myProfile, project);
-      myInitialToolDescriptors.put(descriptors.getDefaultDescriptor().getKey(), descriptors);
+      myInitialToolDescriptors.put(descriptors.getDefaultDescriptor().getShortName(), descriptors);
     }
     myInitialScopesOrder = myProfile.getScopesOrder();
   }
@@ -445,7 +449,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
     DefaultActionGroup actions = new DefaultActionGroup();
 
-    actions.add(new InspectionFilterAction(myProfile, myInspectionsFilter, myProjectProfileManager.getProject(), myProfileFilter));
+    actions.add(new InspectionFilterAction(myProfile, myInspectionsFilter, getProject(), myProfileFilter));
     actions.addSeparator();
 
     actions.add(actionManager.createExpandAllAction(myTreeExpander, myTreeTable));
@@ -456,12 +460,12 @@ public class SingleInspectionProfilePanel extends JPanel {
       AllIcons.Actions.Unselectall) {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(!isDisposed() && myProfile.isExecutable(myProjectProfileManager.getProject()));
+        e.getPresentation().setEnabled(!isDisposed() && myProfile.isExecutable(getProject()));
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myProfile.resetToEmpty(myProjectProfileManager.getProject());
+        myProfile.resetToEmpty(getProject());
         loadDescriptorsConfigs(false);
         postProcessModification();
       }
@@ -526,7 +530,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         return myProfileFilter != null ? myProfileFilter.getFilter() : null;
       }
     };
-    myTreeTable = InspectionsConfigTreeTable.create(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, myProjectProfileManager.getProject()) {
+    myTreeTable = InspectionsConfigTreeTable.create(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, getProject()) {
       @Override
       protected void onChanged(@NotNull final InspectionConfigTreeNode node) {
         InspectionConfigTreeNode.updateUpHierarchy(node);
@@ -656,7 +660,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
-    final Project project = myProjectProfileManager.getProject();
+    final Project project = getProject();
     return nodes
       .stream()
       .noneMatch(node -> {
@@ -674,16 +678,16 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (filter != null && !filter.isEmpty()) {
       keySetList.addAll(SearchUtil.findKeys(filter, quoted));
     }
-    Project project = myProjectProfileManager.getProject();
+    Project project = getProject();
     final boolean emptyFilter = myInspectionsFilter.isEmptyFilter();
     for (ToolDescriptors toolDescriptors : myInitialToolDescriptors.values()) {
       final Descriptor descriptor = toolDescriptors.getDefaultDescriptor();
       if (filter != null && !filter.isEmpty() && !isDescriptorAccepted(descriptor, filter, forceInclude, keySetList, quoted)) {
         continue;
       }
-      final InspectionConfigTreeNode node = new InspectionConfigTreeNode.Tool(() -> myInitialToolDescriptors.get(toolDescriptors.getDefaultDescriptor().getKey()));
-      if (!emptyFilter && !myInspectionsFilter.matches(
-        myProfile.getTools(toolDescriptors.getDefaultDescriptor().getKey().toString(), project), node)) {
+      final String shortName = toolDescriptors.getDefaultDescriptor().getShortName();
+      final InspectionConfigTreeNode node = new InspectionConfigTreeNode.Tool(() -> myInitialToolDescriptors.get(shortName));
+      if (!emptyFilter && !myInspectionsFilter.matches(myProfile.getTools(shortName, project), node)) {
         continue;
       }
       getGroupNode(myRoot, toolDescriptors.getDefaultDescriptor().getGroup()).add(node);
@@ -720,7 +724,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     Collection<InspectionConfigTreeNode.Tool> nodes = myTreeTable.getSelectedToolNodes();
     if (!nodes.isEmpty()) {
-      final Project project = myProjectProfileManager.getProject();
+      final Project project = getProject();
       final InspectionConfigTreeNode.Tool singleNode = myTreeTable.getStrictlySelectedToolNode();
       final ScopeToolState toolState = singleNode != null ?
                                        myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(), project) : null;
@@ -919,7 +923,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private boolean isThoughOneNodeEnabled(Collection<InspectionConfigTreeNode.Tool> nodes) {
-    final Project project = myProjectProfileManager.getProject();
+    final Project project = getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
       final String toolId = node.getKey().toString();
       if (myProfile.getTools(toolId, project).isEnabled()) {
@@ -1017,7 +1021,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myBrowser = new JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML);
     myBrowser.setEditable(false);
     myBrowser.setBorder(JBUI.Borders.empty(5));
-    myBrowser.addHyperlinkListener(createSettingsHyperlinkListener(myProjectProfileManager.getProject()));
+    myBrowser.addHyperlinkListener(createSettingsHyperlinkListener(getProject()));
 
     initToolStates();
     fillTreeData(myProfileFilter != null ? myProfileFilter.getFilter() : null, true);
@@ -1124,7 +1128,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private boolean descriptorsAreChanged() {
     return ContainerUtil.exists(myInitialToolDescriptors.values(),
-                  toolDescriptors -> areToolDescriptorsChanged(myProjectProfileManager.getProject(), myProfile, toolDescriptors));
+                  toolDescriptors -> areToolDescriptorsChanged(getProject(), myProfile, toolDescriptors));
   }
 
   public static boolean areToolDescriptorsChanged(@NotNull Project project,
@@ -1181,10 +1185,9 @@ public class SingleInspectionProfilePanel extends JPanel {
     repaintTableData();
   }
 
-  private void updateErrorLevel(final InspectionConfigTreeNode.Tool child,
-                                @NotNull HighlightDisplayLevel level) {
+  private void updateErrorLevel(final InspectionConfigTreeNode.Tool child, @NotNull HighlightDisplayLevel level) {
     final HighlightDisplayKey key = child.getKey();
-    myProfile.setErrorLevel(key, level, null, myProjectProfileManager.getProject());
+    myProfile.setErrorLevel(key, level, null, getProject());
     child.dropCache();
   }
 
@@ -1243,7 +1246,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         ScopeToolState state = getSelectedState();
         if (state != null) {
           state.resetConfigPanel();
-          Project project = myProjectProfileManager.getProject();
+          Project project = getProject();
           myProfile.resetToBase(state.getTool().getTool().getShortName(), state.getScope(project), project);
           updateOptionsAndDescriptionPanel();
         }
@@ -1258,7 +1261,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (node != null) {
         ScopeToolState state = getSelectedState();
         if (state == null) return;
-        Project project = myProjectProfileManager.getProject();
+        Project project = getProject();
         boolean canReset = !myProfile.isProperSetting(state.getTool().getTool().getShortName(), state.getScope(project), project);
 
         myResetLink.setVisible(canReset);

@@ -20,7 +20,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiMethodStub;
-import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,9 +65,20 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
 
     myCachedDefaultValue = null;
 
-    final ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_DEFAULT_VALUE);
-    if (node == null) return null;
-    return (PsiAnnotationMemberValue)node.getPsi();
+    boolean expectedDefault = false;
+    TreeElement childNode = getNode().getFirstChildNode();
+    while (childNode != null) {
+      final IElementType type = childNode.getElementType();
+      if (type == JavaTokenType.DEFAULT_KEYWORD) {
+        expectedDefault = true;
+      }
+      else if (expectedDefault && ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(type)) {
+        return (PsiAnnotationMemberValue)childNode.getPsi();
+      }
+
+      childNode = childNode.getTreeNext();
+    }
+    return null;
   }
 
   @Override

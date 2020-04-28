@@ -20,23 +20,23 @@ import org.jetbrains.idea.maven.server.MavenServerSettings;
 
 public class MavenExecutionOptions {
   public enum LoggingLevel {
-    DEBUG("Debug", MavenServerConsole.LEVEL_DEBUG),
-    INFO("Info", MavenServerConsole.LEVEL_INFO),
-    WARN("Warn", MavenServerConsole.LEVEL_WARN),
-    ERROR("Error", MavenServerConsole.LEVEL_ERROR),
-    FATAL("Fatal", MavenServerConsole.LEVEL_FATAL),
-    DISABLED("Disabled", MavenServerConsole.LEVEL_DISABLED);
+    DEBUG("maven.log.level.debug", MavenServerConsole.LEVEL_DEBUG),
+    INFO("maven.log.level.info", MavenServerConsole.LEVEL_INFO),
+    WARN("maven.log.level.warn", MavenServerConsole.LEVEL_WARN),
+    ERROR("maven.log.level.error", MavenServerConsole.LEVEL_ERROR),
+    FATAL("maven.log.level.fatal", MavenServerConsole.LEVEL_FATAL),
+    DISABLED("maven.log.level.disabled", MavenServerConsole.LEVEL_DISABLED);
 
-    private final String myDisplayString;
+    private final String myMessageKey;
     private final int myLevel;
 
-    LoggingLevel(String displayString, int level) {
-      myDisplayString = displayString;
+    LoggingLevel(String messageKey, int level) {
+      myMessageKey = messageKey;
       myLevel = level;
     }
 
     public String getDisplayString() {
-      return myDisplayString;
+      return RunnerBundle.message(myMessageKey);
     }
 
     public int getLevel() {
@@ -45,18 +45,18 @@ public class MavenExecutionOptions {
   }
 
   public enum FailureMode {
-    NOT_SET("Default", ""), FAST("Fail Fast", "--fail-fast"), AT_END("Fail At End", "--fail-at-end"), NEVER("Never Fail", "--fail-never");
+    NOT_SET("maven.failure.mode.default", ""), FAST("maven.failure.mode.failfast", "--fail-fast"), AT_END("maven.failure.mode.failend", "--fail-at-end"), NEVER("maven.failure.mode.never", "--fail-never");
 
-    private final String myDisplayString;
+    private final String myMessageKey;
     private final String myCommandLineOption;
 
-    FailureMode(String displayString, String commandLineOption) {
-      myDisplayString = displayString;
+    FailureMode(String messageKey, String commandLineOption) {
+      myMessageKey = messageKey;
       myCommandLineOption = commandLineOption;
     }
 
     public String getDisplayString() {
-      return myDisplayString;
+      return RunnerBundle.message(myMessageKey);
     }
 
     public String getCommandLineOption() {
@@ -65,20 +65,20 @@ public class MavenExecutionOptions {
   }
 
   public enum ChecksumPolicy {
-    NOT_SET("No Global Policy", ""),
-    FAIL("Fail", "--strict-checksums"),
-    WARN("Warn", "--lax-checksums");
+    NOT_SET("maven.checksum.nopolicy", ""),
+    FAIL("maven.checksum.fail", "--strict-checksums"),
+    WARN("maven.checksum.warn", "--lax-checksums");
 
-    private final String myDisplayString;
+    private final String myMessageKey;
     private final String myCommandLineOption;
 
-    ChecksumPolicy(String displayString, String commandLineOption) {
-      myDisplayString = displayString;
+    ChecksumPolicy(String messageKey, String commandLineOption) {
+      myMessageKey = messageKey;
       myCommandLineOption = commandLineOption;
     }
 
     public String getDisplayString() {
-      return myDisplayString;
+      return RunnerBundle.message(myMessageKey);
     }
 
     public String getCommandLineOption() {
@@ -87,22 +87,22 @@ public class MavenExecutionOptions {
   }
 
   public enum PluginUpdatePolicy {
-    UPDATE("Check For Updates", "--check-plugin-updates", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
-    DO_NOT_UPDATE("Do Not Update", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE),
-    DEFAULT("Default", "", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
+    UPDATE("maven.plugin.update", "--check-plugin-updates", MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE),
+    DO_NOT_UPDATE("maven.plugin.noupdate", "--no-plugin-updates", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE),
+    DEFAULT("maven.plugin.default", "", MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
 
-    private final String myDisplayString;
+    private final String myMessageKey;
     private final String myCommandLineOption;
     private final MavenServerSettings.UpdatePolicy myServerPolicy;
 
-    PluginUpdatePolicy(String displayString, String commandLineOption, MavenServerSettings.UpdatePolicy policy) {
-      myDisplayString = displayString;
+    PluginUpdatePolicy(String messageKey, String commandLineOption, MavenServerSettings.UpdatePolicy policy) {
+      myMessageKey = messageKey;
       myCommandLineOption = commandLineOption;
       myServerPolicy = policy;
     }
 
     public String getDisplayString() {
-      return myDisplayString;
+      return RunnerBundle.message(myMessageKey);
     }
 
     public String getCommandLineOption() {

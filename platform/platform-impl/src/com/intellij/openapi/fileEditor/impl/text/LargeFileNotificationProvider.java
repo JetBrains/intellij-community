@@ -41,7 +41,7 @@ public final class LargeFileNotificationProvider extends EditorNotifications.Pro
       editor.putUserData(HIDDEN_KEY, "true");
       update(file, project);
     });
-    panel.createActionLabel("Don't show again", () -> {
+    panel.createActionLabel(IdeBundle.message("label.dont.show"), () -> {
       PropertiesComponent.getInstance().setValue(DISABLE_KEY, "true");
       update(file, project);
     });

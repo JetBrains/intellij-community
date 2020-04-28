@@ -267,8 +267,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     if (myHasHiddenUnversioned) {
       myViewer.getEmptyText()
-        .setText("Unversioned files available. ")
-        .appendText("Show", SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
+        .setText(VcsBundle.message("status.text.unversioned.files.available"))
+        .appendText(VcsBundle.message("plugins.configurable.show"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
     }
     else {
       myViewer.getEmptyText()

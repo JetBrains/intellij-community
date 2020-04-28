@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.pico.DefaultPicoContainer;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Attribute;
@@ -13,11 +14,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
-  @Nullable
-  private Element myExtensionElement;
+  private @Nullable Element myExtensionElement;
 
   private volatile Object extensionInstance;
   private boolean initializing;
@@ -37,9 +40,8 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return extensionInstance != null;
   }
 
-  @NotNull
   @Override
-  public <T> T createInstance(@NotNull ComponentManager componentManager) {
+  public @NotNull <T> T createInstance(@NotNull ComponentManager componentManager) {
     @SuppressWarnings("unchecked")
     T instance = (T)extensionInstance;
     if (instance != null) {
@@ -81,24 +83,19 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     return instance;
   }
 
-  boolean isLoadedFromAnyElement(List<Element> candidateElements, Map<String, String> defaultAttributes) {
+  boolean isLoadedFromAnyElement(@NotNull List<Element> candidateElements, @NotNull Map<String, String> defaultAttributes) {
     SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
     if (myExtensionElement == null && extensionInstance == null) {
       // dummy extension with no data; unload based on PluginDescriptor check in calling method
       return true;
     }
+
     Element serializedElement = myExtensionElement != null ? myExtensionElement : XmlSerializer.serialize(extensionInstance, filter);
     Map<String, String> serializedData = getSerializedDataMap(serializedElement);
 
     for (Element candidateElement : candidateElements) {
       Map<String, String> candidateData = getSerializedDataMap(candidateElement);
-      for (Iterator<Map.Entry<String, String>> iterator = candidateData.entrySet().iterator(); iterator.hasNext(); ) {
-        Map.Entry<String, String> entry = iterator.next();
-        if (Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue())) {
-          iterator.remove();
-        }
-      }
-
+      candidateData.entrySet().removeIf(entry -> Objects.equals(defaultAttributes.get(entry.getKey()), entry.getValue()));
       if (serializedData.equals(candidateData)) {
         return true;
       }
@@ -128,11 +125,10 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement);
     }
 
-    @NotNull
     @Override
-    protected <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
+    protected @NotNull <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull ComponentManager componentManager) {
       // enable simple instantiateClass for project/module containers in 2020.0 (once Kotlin will be fixed - it is one of the important plugin)
-      if (componentManager.getPicoContainer().getParent() == null) {
+      if (((DefaultPicoContainer)componentManager.getPicoContainer()).getParent() == null) {
         try {
           return super.instantiateClass(aClass, componentManager);
         }
@@ -162,7 +158,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
     private static boolean isKnownBadPlugin(@NotNull PluginDescriptor pluginDescriptor) {
       String id = pluginDescriptor.getPluginId().getIdString();
       //noinspection SpellCheckingInspection
-      return id.equals("org.jetbrains.kotlin") || id.equals("Lombook Plugin");
+      return id.equals("Lombook Plugin");
     }
   }
 }

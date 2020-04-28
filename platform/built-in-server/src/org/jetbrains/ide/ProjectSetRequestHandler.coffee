@@ -21,12 +21,8 @@
         "url": "git@git.labs.intellij.net:idea/community"
       },
       {
-        "url": "git://git.jetbrains.org/idea/android.git",
+        "url": "git@git.labs.intellij.net:idea/android",
         "targetDir": "android"
-      },
-      {
-        "url": "git://git.jetbrains.org/idea/adt-tools-base.git",
-        "targetDir": "android/tools-base"
       }
     ]
   },

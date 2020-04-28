@@ -199,7 +199,8 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public CodeStyleScheme exportProjectScheme(@NotNull String name) {
     CodeStyleScheme newScheme = createNewScheme(name, myProjectScheme);
-    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getCloneSettings(myProjectScheme).clone());
+    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(
+      CodeStyleSettingsManager.getInstance().cloneSettings(getCloneSettings(myProjectScheme)));
     addScheme(newScheme, false);
 
     return newScheme;
@@ -373,6 +374,10 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public static class ModelSettings extends CodeStyleSettings {
     private volatile boolean myLocked;
+
+    public ModelSettings() {
+      super(true, true);
+    }
 
     public static ModelSettings createFrom(@NotNull CodeStyleSettings settings) {
       ModelSettings modelSettings = new ModelSettings();

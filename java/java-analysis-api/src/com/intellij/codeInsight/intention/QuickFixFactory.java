@@ -105,9 +105,6 @@ public abstract class QuickFixFactory {
                                                                                            boolean fixWholeHierarchy);
 
   @NotNull
-  public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass);
-
-  @NotNull
   public abstract LocalQuickFixAndIntentionActionOnPsiElement createMakeClassInterfaceFix(@NotNull PsiClass aClass,
                                                                                           final boolean makeInterface);
 
@@ -181,12 +178,9 @@ public abstract class QuickFixFactory {
    *
    * @param method method with return statement
    * @param returnStatement statement to remove
-   * @param returnValue statement value
    */
   @NotNull
-  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiMethod method,
-                                                        @NotNull PsiReturnStatement returnStatement,
-                                                        @NotNull PsiExpression returnValue);
+  public abstract IntentionAction createDeleteReturnFix(@NotNull PsiMethod method, @NotNull PsiReturnStatement returnStatement);
 
   @NotNull
   public abstract IntentionAction createDeleteCatchFix(@NotNull PsiParameter parameter);

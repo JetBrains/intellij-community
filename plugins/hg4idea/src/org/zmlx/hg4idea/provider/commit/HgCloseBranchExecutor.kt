@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutorBase
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.commitWithoutChangesRoots
 import org.jetbrains.annotations.Nls
+import org.zmlx.hg4idea.HgBundle
 import org.zmlx.hg4idea.repo.HgRepository
 
 class HgCloseBranchExecutor : CommitExecutorBase() {
@@ -15,7 +16,7 @@ class HgCloseBranchExecutor : CommitExecutorBase() {
   override fun areChangesRequired(): Boolean = false
 
   @Nls
-  override fun getActionText(): String = "Commit And Close"
+  override fun getActionText(): String = HgBundle.message("action.hg4idea.CommitAndClose")
 
   override fun createCommitSession(commitContext: CommitContext): CommitSession {
     commitContext.isCloseBranch = true

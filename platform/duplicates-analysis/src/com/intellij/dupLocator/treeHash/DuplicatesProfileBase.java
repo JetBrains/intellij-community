@@ -30,19 +30,4 @@ public abstract class DuplicatesProfileBase extends DuplicatesProfile {
     return DuplocatorUtil.registerAndGetState(language);
   }
 
-  @Override
-  public boolean isMyDuplicate(@NotNull DupInfo info, int index) {
-    PsiFragment[] fragments = info.getFragmentOccurences(index);
-    if (fragments.length > 0) {
-      PsiElement[] elements = fragments[0].getElements();
-      if (elements.length > 0) {
-        final PsiElement first = elements[0];
-        if (first != null) {
-          Language language = first.getLanguage();
-          return isMyLanguage(language);
-        }
-      }
-    }
-    return false;
-  }
 }

@@ -3,7 +3,7 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
-public class MergingCharSequence implements CharSequence {
+public final class MergingCharSequence implements CharSequence {
   private final CharSequence s1;
   private final CharSequence s2;
 
@@ -32,8 +32,7 @@ public class MergingCharSequence implements CharSequence {
   }
 
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return s1 + s2.toString();
   }
 }

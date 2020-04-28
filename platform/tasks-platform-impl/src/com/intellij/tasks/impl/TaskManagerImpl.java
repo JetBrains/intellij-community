@@ -4,12 +4,7 @@ package com.intellij.tasks.impl;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ReportValue;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -18,6 +13,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -26,22 +22,11 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListAdapter;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.serialization.SerializationException;
-import com.intellij.tasks.BranchInfo;
-import com.intellij.tasks.ChangeListInfo;
-import com.intellij.tasks.LocalTask;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskListener;
-import com.intellij.tasks.TaskManager;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskRepositoryType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.EventDispatcher;
@@ -55,32 +40,21 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import javax.swing.Timer;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Dmitry Avdeev
@@ -156,14 +130,25 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
     };
 
-      project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-        @Override
-        public void projectOpened(@NotNull Project project) {
-          if (myProject == project) {
-            TaskManagerImpl.this.projectOpened();
-          }
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        if (myProject == project) {
+          TaskManagerImpl.this.projectOpened();
         }
+      }
+    });
+
+    // remove repositories pertaining to non-existent types
+    TaskRepositoryType.addEPListChangeListener(this, () -> {
+      List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
+      List<TaskRepository> repositories = myRepositories;
+      boolean removed = repositories.removeIf(repository -> {
+        return !ContainerUtil.exists(possibleRepositoryClasses, clazz -> clazz.isAssignableFrom(repository.getClass()));
       });
+
+      if (removed) setRepositories(repositories);
+    });
   }
 
   @TestOnly
@@ -205,6 +190,17 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         server.type = type.getName();
         server.url = repository.getUrl();
         servers.add(server);
+      }
+    }
+
+    clearNonExistentRepositoriesFromTasks();
+  }
+
+  private void clearNonExistentRepositoriesFromTasks() {
+    for (LocalTask task : myTasks.values()) {
+      TaskRepository repository = task.getRepository();
+      if (repository != null && !myRepositories.contains(repository) && task instanceof LocalTaskImpl) {
+        ((LocalTaskImpl)task).setRepository(null);
       }
     }
   }
@@ -524,7 +520,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     addTask(task);
     if (task.isIssue()) {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
-        () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
+        () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, TaskBundle
+          .message("progress.title.updating", task.getPresentableId())) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             updateIssue(task.getId());
@@ -551,7 +548,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     TestConnectionTask task = new TestConnectionTask("Test connection") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setText("Connecting to " + repository.getUrl() + "...");
+        indicator.setText(TaskBundle.message("progress.text.connecting.to", repository.getUrl()));
         indicator.setFraction(0);
         indicator.setIndeterminate(true);
         try {
@@ -598,7 +595,8 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     Exception e = task.myException;
     if (e == null) {
       myBadRepositories.remove(repository);
-      Messages.showMessageDialog(myProject, "Connection is successful", "Connection", Messages.getInformationIcon());
+      Messages.showMessageDialog(myProject, TaskBundle.message("dialog.message.connection.successful"),
+                                 TaskBundle.message("dialog.title.connection"), Messages.getInformationIcon());
     }
     else if (!(e instanceof ProcessCanceledException)) {
       String message = e.getMessage();
@@ -609,7 +607,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         LOG.error(e);
         message = "Unknown error";
       }
-      Messages.showErrorDialog(myProject, StringUtil.capitalize(message), "Error");
+      Messages.showErrorDialog(myProject, StringUtil.capitalize(message), TaskBundle.message("dialog.title.error"));
     }
     return e == null;
   }
@@ -727,6 +725,10 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> WorkingContextManager.getInstance(myProject).pack(200, 50));
     }
+
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      startRefreshTimer();
+    }
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -735,20 +737,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public void initializeComponent() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      myCacheRefreshTimer = TimerUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          if (myConfig.updateEnabled && !myUpdating) {
-            LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
-            updateIssues(null);
-          }
-        }
-      });
-      myCacheRefreshTimer.setInitialDelay(0);
-      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> myCacheRefreshTimer.start());
-    }
-
     // make sure that the default task is exist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     if (defaultTask == null) {
@@ -777,6 +765,20 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     myActiveTask = activeTask;
     doActivate(myActiveTask, false);
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
+  }
+
+  void startRefreshTimer() {
+    myCacheRefreshTimer = TimerUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        if (myConfig.updateEnabled && !myUpdating) {
+          LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
+          updateIssues(null);
+        }
+      }
+    });
+    myCacheRefreshTimer.setInitialDelay(0);
+    myCacheRefreshTimer.start();
   }
 
   @NotNull
@@ -1064,6 +1066,13 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       if (myConnection != null) {
         myConnection.cancel();
       }
+    }
+  }
+
+  private static class Activity implements StartupActivity.DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ((TaskManagerImpl)TaskManager.getManager(project)).projectOpened();
     }
   }
 }

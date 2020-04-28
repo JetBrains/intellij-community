@@ -350,9 +350,7 @@ public final class LoadTextUtil {
     CharSequence currentText = getTextByBinaryPresentation(file.contentsToByteArray(), file, true, false);
     String newText = StringUtil.convertLineSeparators(currentText.toString(), newSeparator);
     file.setDetectedLineSeparator(newSeparator);
-    if (!newText.contentEquals(currentText)) {
-      write(project, file, requestor, newText, -1);
-    }
+    write(project, file, requestor, newText, -1);
   }
 
   /**

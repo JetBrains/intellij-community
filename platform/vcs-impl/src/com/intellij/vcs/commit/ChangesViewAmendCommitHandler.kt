@@ -19,9 +19,7 @@ private var CommitContext.amendAuthorData: AmendAuthorData? by commitProperty(AM
 
 private class AmendAuthorData(val beforeAmendAuthor: VcsUser?, val amendAuthor: VcsUser)
 
-class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewCommitWorkflowHandler) :
-  AmendCommitHandlerImpl(workflowHandler) {
-
+internal class ChangesViewAmendCommitHandler(private val workflowHandler: ChangesViewCommitWorkflowHandler) : AmendCommitHandlerImpl(workflowHandler) {
   private var amendRoot by observable<VcsRoot?>(null) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
     updateAmendCommitState()

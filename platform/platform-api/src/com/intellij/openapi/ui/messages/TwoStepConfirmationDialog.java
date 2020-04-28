@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.messages;
 
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.util.PairFunction;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,7 @@ public class TwoStepConfirmationDialog extends MessageDialog {
   public TwoStepConfirmationDialog(@NlsContexts.DialogMessage String message,
                                    @NlsContexts.DialogTitle String title,
                                    String @NotNull [] options,
-                                   @NlsUI.Checkbox String checkboxText,
+                                   @NlsContexts.Checkbox String checkboxText,
                                    boolean checked,
                                    final int defaultOptionIndexed,
                                    final int focusedOptionIndex,

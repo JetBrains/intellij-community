@@ -3,14 +3,13 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.util.containers.nullize
 import org.jetbrains.plugins.github.api.data.*
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeStateStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState.ChecksState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 
-class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
+class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val prHtmlUrl: String,
                                    private val mergeabilityData: GHPullRequestMergeabilityData) {
 
   private var canOverrideAsAdmin = false
@@ -109,7 +108,7 @@ class GHPRMergeabilityStateBuilder(private val details: GHPullRequest,
         requiredApprovingReviewsCount
       else 0
 
-    return GHPRMergeabilityState(details.id, details.number, details.headRefOid, details.url,
+    return GHPRMergeabilityState(headRefOid, prHtmlUrl,
                                  hasConflicts,
                                  failedChecks, pendingChecks, successfulChecks,
                                  checksState,

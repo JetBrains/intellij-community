@@ -8,4 +8,4 @@ def foo(Map args, x) {
     x.bar(args)
 }
 
-"".bar([arg: "value", (a+2):''])
+"".bar([arg: "value", (a + 2): ''])

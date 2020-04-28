@@ -6,10 +6,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class PsiMethodUtil {
-  private static final List<JavaMainMethodProvider> myProviders = JavaMainMethodProvider.EP_NAME.getExtensionList();
 
   public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
     if (psiClass instanceof PsiAnonymousClass) return false;
@@ -22,7 +19,7 @@ public class PsiMethodUtil {
 
   @Nullable
   public static PsiMethod findMainMethod(final PsiClass aClass) {
-    for (JavaMainMethodProvider provider : myProviders) {
+    for (JavaMainMethodProvider provider : JavaMainMethodProvider.EP_NAME.getExtensionList()) {
       if (provider.isApplicable(aClass)) {
         return provider.findMainInClass(aClass);
       }
@@ -53,7 +50,7 @@ public class PsiMethodUtil {
   }
 
   public static boolean hasMainMethod(final PsiClass psiClass) {
-    for (JavaMainMethodProvider provider : myProviders) {
+    for (JavaMainMethodProvider provider : JavaMainMethodProvider.EP_NAME.getExtensionList()) {
       if (provider.isApplicable(psiClass)) {
         return provider.hasMainMethod(psiClass);
       }

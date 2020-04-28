@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -27,7 +29,9 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packaging.artifacts.*;
+import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 import com.intellij.packaging.impl.artifacts.PackagingElementPath;
@@ -39,10 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
   private ArtifactsStructureConfigurableContextImpl myPackagingEditorContext;
@@ -50,6 +51,16 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
 
   public ArtifactsStructureConfigurable(@NotNull Project project) {
     super(project, new ArtifactStructureConfigurableState());
+    PackagingElementType.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<PackagingElementType>() {
+      @Override
+      public void extensionRemoved(@NotNull PackagingElementType extension, @NotNull PluginDescriptor pluginDescriptor) {
+        if (extension instanceof ComplexPackagingElementType && myDefaultSettings.getTypesToShowContent().contains(extension)) {
+          List<ComplexPackagingElementType<?>> updated = new ArrayList<>(myDefaultSettings.getTypesToShowContent());
+          updated.remove(extension);
+          myDefaultSettings.setTypesToShowContent(updated);
+        }
+      }
+    }, false, this);
   }
 
   @Override

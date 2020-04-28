@@ -41,6 +41,125 @@ internal class LegacyBridgeLibraryImpl(
   parent: Disposable
 ) : LegacyBridgeLibrary, RootProvider, TraceableDisposable(true) {
 
+  init {
+    Disposer.register(parent, this)
+  }
+
+  override fun getModule(): Module? = (libraryTable as? LegacyBridgeModuleLibraryTable)?.module
+
+  val filePointerProvider = LegacyBridgeFilePointerProviderImpl(project).also { Disposer.register(this, it) }
+
+  var entityStore: TypedEntityStore = initialEntityStore
+    internal set(value) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed()
+      field = value
+    }
+
+  var entityId: LibraryId = initialId
+    internal set(value) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed()
+      field = value
+    }
+
+  private var disposed = false
+
+  // null to update project model via ProjectModelUpdater
+  var modifiableModelFactory: ((LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LegacyBridgeLibraryModifiableModelImpl)? = null
+
+  internal fun cleanCachedValue() {
+    entityStore.clearCachedValue(librarySnapshotCached, entityId)
+  }
+
+  private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
+
+  private val librarySnapshotCached: CachedValueWithParameter<LibraryId, LibraryViaTypedEntity> = CachedValueWithParameter { storage, id: LibraryId ->
+    LibraryViaTypedEntity(
+      libraryImpl = this,
+      libraryEntity = storage.resolve(id) ?: FakeLibraryEntity(id.name),
+      storage = storage,
+      libraryTable = libraryTable,
+      filePointerProvider = filePointerProvider,
+      modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot, diff ->
+        LegacyBridgeLibraryModifiableModelImpl(
+          originalLibrary = this,
+          originalLibrarySnapshot = librarySnapshot,
+          diff = diff,
+          committer = { _, diffBuilder ->
+            WorkspaceModel.getInstance(project).updateProjectModel {
+              it.addDiff(diffBuilder)
+            }
+          })
+      }
+    )
+  }
+
+  private val librarySnapshot: LibraryViaTypedEntity
+    get() {
+      checkDisposed()
+      return entityStore.cachedValue(librarySnapshotCached, entityId)
+    }
+
+  internal fun updatePropertyEntities(diff: TypedEntityStorageDiffBuilder, propertiesXmlTag: String) {
+    // TODO: 23.04.2020 Maybe just resolve every time? Resolving is a constant time
+    val nonFakeLibraryEntity = if (librarySnapshot.libraryEntity !is FakeLibraryEntity) librarySnapshot.libraryEntity else return
+    nonFakeLibraryEntity.getCustomProperties()?.let { property ->
+      diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
+        this.propertiesXmlTag = propertiesXmlTag
+      }
+    }
+  }
+
+  override val libraryId: LibraryId
+    get() = entityId
+  override fun getTable(): LibraryTable? = if (libraryTable is LegacyBridgeModuleLibraryTable) null else libraryTable
+  override fun getRootProvider(): RootProvider = this
+
+  override fun getModifiableModel(): LibraryEx.ModifiableModelEx = librarySnapshot.modifiableModel
+  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = librarySnapshot.getModifiableModel(builder)
+  override fun getSource(): Library? = null
+  override fun getExternalSource(): ProjectModelExternalSource? = librarySnapshot.externalSource
+  override fun getInvalidRootUrls(type: OrderRootType): List<String> = librarySnapshot.getInvalidRootUrls(type)
+  override fun getKind(): PersistentLibraryKind<*>? = librarySnapshot.kind
+  override fun getName(): String? = getLegacyLibraryName(entityId)
+  override fun getUrls(rootType: OrderRootType): Array<String> = librarySnapshot.getUrls(rootType)
+  override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = librarySnapshot.getFiles(rootType)
+  override fun getProperties(): LibraryProperties<*>? = librarySnapshot.properties
+  override fun getExcludedRoots(): Array<VirtualFile> = librarySnapshot.excludedRoots
+  override fun getExcludedRootUrls(): Array<String> = librarySnapshot.excludedRootUrls
+  override fun isJarDirectory(url: String): Boolean = librarySnapshot.isJarDirectory(url)
+  override fun isJarDirectory(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isJarDirectory(url, rootType)
+  override fun isValid(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isValid(url, rootType)
+
+  override fun readExternal(element: Element?) = throw NotImplementedError()
+  override fun writeExternal(element: Element) = librarySnapshot.writeExternal(element)
+
+  override fun addRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.addListener(listener)
+  override fun addRootSetChangedListener(listener: RootSetChangedListener, parentDisposable: Disposable) {
+    dispatcher.addListener(listener, parentDisposable)
+  }
+  override fun removeRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.removeListener(listener)
+
+  override fun isDisposed(): Boolean = disposed
+  override fun dispose() {
+    checkDisposed()
+
+    disposed = true
+    kill(null)
+  }
+
+  private fun checkDisposed() {
+    if (isDisposed) {
+      throwDisposalError("library $entityId already disposed: $stackTrace")
+    }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    val otherLib = other as? LegacyBridgeLibraryImpl ?: return false
+    return librarySnapshot.libraryEntity == otherLib.librarySnapshot.libraryEntity
+  }
+
+  override fun hashCode(): Int = librarySnapshot.libraryEntity.hashCode()
+
   companion object {
     private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
     private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
@@ -83,133 +202,29 @@ internal class LegacyBridgeLibraryImpl(
     }
   }
 
-  override fun getModule(): Module? = (libraryTable as? LegacyBridgeModuleLibraryTable)?.module
-
-  init {
-    Disposer.register(parent, this)
-  }
-
-  val filePointerProvider = LegacyBridgeFilePointerProviderImpl().also { Disposer.register(this, it) }
-
-  var entityStore: TypedEntityStore = initialEntityStore
-    internal set(value) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
-      field = value
-    }
-
-  var entityId: LibraryId = initialId
-    internal set(value) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
-      field = value
-    }
-
-  private var disposed = false
-
-  // null to update project model via ProjectModelUpdater
-  var modifiableModelFactory: ((LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LegacyBridgeLibraryModifiableModelImpl)? = null
-
-  private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
-
-  private val libraryEntityValue = CachedValueWithParameter { storage, id: LibraryId ->
-    storage.resolve(id)
-  }
-
-  internal val libraryEntity
-    get() = entityStore.cachedValue(libraryEntityValue, entityId)
-
-  internal val snapshotValue = CachedValueWithParameter { storage, id: LibraryId ->
-    LibraryViaTypedEntity(
-      libraryImpl = this,
-      libraryEntity = storage.resolve(id) ?: object : LibraryEntity {
-        override val entitySource: EntitySource
-          get() = throw NotImplementedError()
-
-        override fun hasEqualProperties(e: TypedEntity): Boolean {
-          return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
-        }
-
-        override val tableId: LibraryTableId
-          get() = throw NotImplementedError()
-        override val name: String
-          get() = id.name
-        override val roots: List<LibraryRoot>
-          get() = emptyList()
-        override val excludedRoots: List<VirtualFileUrl>
-          get() = emptyList()
-
-        override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String) = emptySequence<R>()
-      },
-      storage = storage,
-      libraryTable = libraryTable,
-      filePointerProvider = filePointerProvider,
-      modifiableModelFactory = modifiableModelFactory ?: { librarySnapshot, diff ->
-        LegacyBridgeLibraryModifiableModelImpl(
-          originalLibrary = this,
-          originalLibrarySnapshot = librarySnapshot,
-          diff = diff,
-          committer = { _, diffBuilder ->
-            WorkspaceModel.getInstance(project).updateProjectModel {
-              it.addDiff(diffBuilder)
-            }
-          })
+  class FakeLibraryEntity(name: String) : LibraryEntity(LibraryTableId.ProjectLibraryTableId, name, emptyList(), emptyList()) {
+    override var entitySource: EntitySource
+      get() = throw NotImplementedError()
+      set(value) {
+        throw NotImplementedError()
       }
-    )
-  }
 
-  private val snapshot: LibraryViaTypedEntity
-    get() {
-      checkDisposed()
-      return entityStore.cachedValue(snapshotValue, entityId)
+    override fun <R : TypedEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
+    override val tableId: LibraryTableId
+      get() = throw NotImplementedError()
+
+    override fun hasEqualProperties(e: TypedEntity): Boolean {
+      return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
     }
 
-  override val libraryId: LibraryId
-    get() = entityId
-  override fun getTable(): LibraryTable? = if (libraryTable is LegacyBridgeModuleLibraryTable) null else libraryTable
-  override fun getRootProvider(): RootProvider = this
+    override fun toString(): String = "FakeLibraryEntity($name)"
 
-  override fun getModifiableModel(): LibraryEx.ModifiableModelEx = snapshot.modifiableModel
-  override fun getModifiableModel(builder: TypedEntityStorageBuilder): LibraryEx.ModifiableModelEx = snapshot.getModifiableModel(builder)
-  override fun getSource(): Library? = null
-  override fun getExternalSource(): ProjectModelExternalSource? = snapshot.externalSource
-  override fun getInvalidRootUrls(type: OrderRootType): List<String> = snapshot.getInvalidRootUrls(type)
-  override fun getKind(): PersistentLibraryKind<*>? = snapshot.kind
-  override fun getName(): String? = getLegacyLibraryName(entityId)
-  override fun getUrls(rootType: OrderRootType): Array<String> = snapshot.getUrls(rootType)
-  override fun getFiles(rootType: OrderRootType): Array<VirtualFile> = snapshot.getFiles(rootType)
-  override fun getProperties(): LibraryProperties<*>? = snapshot.properties
-  override fun getExcludedRoots(): Array<VirtualFile> = snapshot.excludedRoots
-  override fun getExcludedRootUrls(): Array<String> = snapshot.excludedRootUrls
-  override fun isJarDirectory(url: String): Boolean = snapshot.isJarDirectory(url)
-  override fun isJarDirectory(url: String, rootType: OrderRootType): Boolean = snapshot.isJarDirectory(url, rootType)
-  override fun isValid(url: String, rootType: OrderRootType): Boolean = snapshot.isValid(url, rootType)
+    override fun equals(other: Any?): Boolean {
+      if (other !is FakeLibraryEntity) return false
 
-  override fun readExternal(element: Element?) = throw NotImplementedError()
-  override fun writeExternal(element: Element) = snapshot.writeExternal(element)
-
-  override fun addRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.addListener(listener)
-  override fun addRootSetChangedListener(listener: RootSetChangedListener, parentDisposable: Disposable) {
-    dispatcher.addListener(listener, parentDisposable)
-  }
-  override fun removeRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.removeListener(listener)
-
-  override fun isDisposed(): Boolean = disposed
-  override fun dispose() {
-    checkDisposed()
-
-    disposed = true
-    kill(null)
-  }
-
-  private fun checkDisposed() {
-    if (isDisposed) {
-      throwDisposalError("library $entityId already disposed: $stackTrace")
+      return this.name == other.name
     }
-  }
 
-  override fun equals(other: Any?): Boolean {
-    val otherLib = other as? LegacyBridgeLibraryImpl ?: return false
-    return libraryEntity == otherLib.libraryEntity
+    override fun hashCode(): Int = name.hashCode()
   }
-
-  override fun hashCode(): Int = libraryEntity.hashCode()
 }

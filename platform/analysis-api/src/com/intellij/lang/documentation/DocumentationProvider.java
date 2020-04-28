@@ -105,20 +105,28 @@ public interface DocumentationProvider {
   }
 
   /**
-   * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
-   * Documentation comment PSI elements should implement {@link PsiDocCommentBase} for this functionality to work.
-   * Value returned by {@link PsiDocCommentBase#getOwner()} will be passed as {@code element} parameter to this method.
-   *
-   * @see #collectDocComments(PsiFile, Consumer)
+   * @deprecated Override {@link #generateRenderedDoc(PsiDocCommentBase)} instead
    */
-  @ApiStatus.Experimental
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
 
   /**
+   * This is used to display rendered documentation in editor, in place of corresponding documentation comment's text.
+   *
+   * @see #collectDocComments(PsiFile, Consumer)
+   */
+  @ApiStatus.Experimental
+  default @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    PsiElement target = comment.getOwner();
+    return generateRenderedDoc(target == null ? comment : target);
+  }
+
+  /**
    * This defines documentation comments in file, which can be rendered in place. HTML content to be displayed will be obtained using
-   * {@link #generateRenderedDoc(PsiElement)} method.
+   * {@link #generateRenderedDoc(PsiDocCommentBase)} method.
    */
   @ApiStatus.Experimental
   default void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {}

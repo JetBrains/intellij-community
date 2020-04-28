@@ -31,7 +31,9 @@ class MustAlreadyBeRemovedApiInspection : LocalInspectionTool() {
   var currentVersion: String = ""
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-    if (currentVersion.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR
+    if (currentVersion.isEmpty() || !AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME, holder.file)) {
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
     return UastVisitorAdapter(MustAlreadyBeRemovedApiVisitor(holder, currentVersion), true)
   }
 

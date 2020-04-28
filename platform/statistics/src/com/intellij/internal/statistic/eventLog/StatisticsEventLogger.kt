@@ -6,14 +6,28 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.StatisticsEventLogger")
 private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
 
 interface StatisticsEventLogger {
-  fun log(group: EventLogGroup, eventId: String, isState: Boolean)
-  fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean)
+  @Deprecated("Use StatisticsEventLogger.logAsync()", ReplaceWith("logAsync(group, eventId, isState)"))
+  fun log(group: EventLogGroup, eventId: String, isState: Boolean) {
+    logAsync(group, eventId, isState)
+  }
+
+  @Deprecated("Use StatisticsEventLogger.logAsync", ReplaceWith("logAsync(group, eventId, data, isState)"))
+  fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) {
+    logAsync(group, eventId, data, isState)
+  }
+
+  fun logAsync(group: EventLogGroup, eventId: String, isState: Boolean): CompletableFuture<Void> =
+    logAsync(group, eventId, Collections.emptyMap(), isState)
+
+  fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void>
   fun getActiveLogFile(): EventLogFile?
   fun getLogFilesProvider(): EventLogFilesProvider
   fun cleanup()
@@ -60,12 +74,12 @@ internal class EmptyStatisticsEventLoggerProvider(recorderId: String): Statistic
 }
 
 internal class EmptyStatisticsEventLogger : StatisticsEventLogger {
-  override fun log(group: EventLogGroup, eventId: String, isState: Boolean) = Unit
-  override fun log(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean) = Unit
   override fun getActiveLogFile(): EventLogFile? = null
   override fun getLogFilesProvider(): EventLogFilesProvider = EmptyEventLogFilesProvider
   override fun cleanup() = Unit
   override fun rollOver() = Unit
+  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> =
+    CompletableFuture.completedFuture(null)
 }
 
 object EmptyEventLogFilesProvider: EventLogFilesProvider {
@@ -85,13 +99,6 @@ fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
   LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
   return EmptyStatisticsEventLoggerProvider(recorderId)
 }
-
-/**
- * Best practices:
- * - Prefer a bigger group with many (related) event types to many small groups of 1-2 events each.
- * - Prefer shorter group names; avoid common prefixes (such as "statistics.").
- */
-class EventLogGroup(val id: String, val version: Int)
 
 @Deprecated("Use EventLogGroup instead")
 class FeatureUsageGroup(val id: String, val version: Int)

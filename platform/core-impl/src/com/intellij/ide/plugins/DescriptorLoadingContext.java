@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -37,17 +37,14 @@ final class DescriptorLoadingContext implements AutoCloseable {
     return id != PluginManagerCore.CORE_ID && parentContext.disabledPlugins.contains(id);
   }
 
-  boolean isPluginIncomplete(@NotNull PluginId id) {
-    return id != PluginManagerCore.CORE_ID && parentContext.result.incompletePlugins.containsKey(id);
-  }
-
-  boolean isBroken(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    if (descriptor.getVersion() == null || descriptor.isBundled() || descriptor.isImplementationDetail()) {
+  boolean isBroken(@NotNull PluginId id) {
+    Set<String> set = parentContext.result.brokenPluginVersions.get(id);
+    if (set == null) {
       return false;
     }
 
-    Set<String> set = parentContext.result.brokenPluginVersions.get(descriptor.getPluginId());
-    return set != null && set.contains(descriptor.getVersion());
+    IdeaPluginDescriptorImpl descriptor = parentContext.result.idMap.get(id);
+    return descriptor != null && set.contains(descriptor.getVersion());
   }
 
   @NotNull

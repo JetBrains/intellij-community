@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templateSet group="Java">
-  <template name="fori" value="for($INDEX$ = 0; $INDEX$ &lt; $LIMIT$; $INDEX$++) {&#10;  $END$&#10;}" description="Create iteration loop" toReformat="true" toShortenFQNames="true">
+  <template name="fori" value="for(int $INDEX$ = 0; $INDEX$ &lt; $LIMIT$; $INDEX$++) {&#10;  $END$&#10;}" description="Create iteration loop" toReformat="true" toShortenFQNames="true">
     <variable name="INDEX" expression="suggestIndexName()" defaultValue="" alwaysStopAt="true" />
     <variable name="LIMIT" expression="" defaultValue="" alwaysStopAt="true" />
     <context>

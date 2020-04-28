@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.buildout.config.inspection;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -17,6 +16,7 @@ import com.jetbrains.python.buildout.config.ref.BuildoutPartReference;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
@@ -40,7 +40,7 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
 
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    List<ProblemDescriptor> problems = Lists.newArrayList();
+    List<ProblemDescriptor> problems = new ArrayList<>();
     if (file.getFileType().equals(BuildoutCfgFileType.INSTANCE)) {
       Visitor visitor = new Visitor();
       file.accept(visitor);
@@ -56,7 +56,7 @@ public class BuildoutUnresolvedPartInspection extends LocalInspectionTool {
   }
 
   private static class Visitor extends PsiRecursiveElementVisitor {
-    private final List<BuildoutPartReference> unresolvedParts = Lists.newArrayList();
+    private final List<BuildoutPartReference> unresolvedParts = new ArrayList<>();
 
     @Override
     public void visitElement(@NotNull PsiElement element) {

@@ -133,7 +133,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     }
     presentation.setItemText(name);
 
-    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
     presentation.setStrikeout(JavaElementLookupRenderer.isToStrikeout(this));
 
     if (myTailText != null) {

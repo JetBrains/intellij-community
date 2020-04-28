@@ -21,7 +21,7 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testIgnoreInClass() {
-    highlightTest("[ <warning descr=\"Duplicate character ' ' inside character class\"> </warning><warning descr=\"Duplicate character ' ' inside character class\"> </warning>]");
+    highlightTest("[   ]");
   }
 
   public void testIgnoreInClass2() {

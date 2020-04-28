@@ -63,6 +63,13 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
   }
 
+  static boolean skipPreview(@NotNull IntentionAction action) {
+    String familyName = action.getFamilyName();
+    return familyName.matches("(?i)Create \\w+ from usage") ||
+           familyName.equals("Create Constructor") ||
+           // Does not change file content
+           familyName.equals("Rename File");
+  }
 }
 
 class JavaCommentingStrategy extends JavaIntentionPolicy {
@@ -128,6 +135,10 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
 }
 
 class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
+  @Override
+  protected boolean shouldCheckPreview(@NotNull IntentionAction action) {
+    return !skipPreview(action);
+  }
 
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {
@@ -227,5 +238,11 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       return true;
     }
     return false;
+  }
+}
+class JavaPreviewIntentionPolicy extends JavaIntentionPolicy {
+  @Override
+  protected boolean shouldCheckPreview(@NotNull IntentionAction action) {
+    return !skipPreview(action);
   }
 }

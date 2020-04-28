@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -272,7 +273,7 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
 
     ProgressIndicator globalIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator progressIndicator = myProject.isDefault() || globalIndicator == null ? new EmptyProgressIndicator() : globalIndicator;
-    progressIndicator.setText("Loading modules...");
+    progressIndicator.setText(ProjectModelBundle.message("progress.text.loading.modules"));
     progressIndicator.setText2("");
 
     List<ModuleLoadingErrorDescription> errors = Collections.synchronizedList(new ArrayList<>());

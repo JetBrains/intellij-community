@@ -40,7 +40,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   companion object {
     internal val LOG = logger<StartUpMeasurer>()
 
-    internal const val VERSION = "19"
+    internal const val VERSION = "21"
 
     internal fun sortItems(items: MutableList<ActivityImpl>) {
       items.sortWith(Comparator { o1, o2 ->
@@ -63,6 +63,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
       val items = mutableListOf<ActivityImpl>()
       val instantEvents = mutableListOf<ActivityImpl>()
       val activities = THashMap<String, MutableList<ActivityImpl>>()
+      val serviceActivities = THashMap<String, MutableList<ActivityImpl>>()
       val services = mutableListOf<ActivityImpl>()
 
       val threadNameManager = ThreadNameManager()
@@ -92,6 +93,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
                    category == ActivityCategory.MODULE_SERVICE ||
                    category == ActivityCategory.SERVICE_WAITING) {
             services.add(item)
+            serviceActivities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
           }
           else {
             activities.getOrPut(category.jsonName) { mutableListOf() }.add(item)
@@ -114,7 +116,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
         StartUpMeasurer.doAddPluginCost(pluginId, item.category?.name ?: "unknown", item.end - item.start, pluginCostMap)
       }
 
-      w.write(startTime, items, services, instantEvents, end, projectName)
+      w.write(startTime, items, serviceActivities, instantEvents, end, projectName)
 
       val currentReport = w.toByteBuffer()
 

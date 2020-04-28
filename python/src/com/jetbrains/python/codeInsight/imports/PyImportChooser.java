@@ -23,8 +23,7 @@ public class PyImportChooser implements ImportChooser {
   @Override
   public Promise<ImportCandidateHolder> selectImport(List<? extends ImportCandidateHolder> sources,
                                                      String name,
-                                                     boolean useQualifiedImport,
-                                                     PsiElement target) {
+                                                     boolean useQualifiedImport) {
 
     AsyncPromise<ImportCandidateHolder> result = new AsyncPromise<>();
 

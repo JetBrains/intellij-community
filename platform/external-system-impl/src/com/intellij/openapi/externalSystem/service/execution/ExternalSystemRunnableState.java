@@ -137,7 +137,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                                    mySettings.getTaskNames(), mySettings.getExecutionName(), ": ", "");
 
     final ExternalSystemProcessHandler processHandler = new ExternalSystemProcessHandler(task, executionName);
-    final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
+    final ExternalSystemExecutionConsoleManager<ExecutionConsole, ProcessHandler>
       consoleManager = getConsoleManagerFor(task);
 
     final ExecutionConsole consoleView =
@@ -189,7 +189,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
                 .withRestartActions(restartActions)
                 .withExecutionEnvironment(myEnv);
               progressListener.onEvent(id,
-                                       new StartBuildEventImpl(buildDescriptor, "running...")
+                                       new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.status.running"))
                                          .withBuildViewSettingsProvider(viewSettingsProvider));
             }
           }
@@ -211,14 +211,15 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
             DataProvider dataProvider = BuildConsoleUtils.getDataProvider(id, progressListener);
             FailureResult failureResult =
               ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject, dataProvider);
-            eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(), "failed", failureResult));
+            eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                 BuildBundle.message("build.status.failed"), failureResult));
             processHandler.notifyProcessTerminated(1);
           }
 
           @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(
-              id, null, System.currentTimeMillis(), "successful", new SuccessResultImpl()));
+              id, null, System.currentTimeMillis(), BuildBundle.message("build.event.message.successful"), new SuccessResultImpl()));
           }
 
           @Override
@@ -250,7 +251,8 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
         task.execute(ArrayUtil.prepend(taskListener, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
         Throwable taskError = task.getError();
         if (taskError != null && !(taskError instanceof Exception)) {
-          FinishBuildEventImpl failureEvent = new FinishBuildEventImpl(task.getId(), null, System.currentTimeMillis(), "failed",
+          FinishBuildEventImpl failureEvent = new FinishBuildEventImpl(task.getId(), null, System.currentTimeMillis(),
+                                                                       BuildBundle.message("build.status.failed"),
                                                                        new FailureResultImpl(taskError));
           eventDispatcher.onEvent(task.getId(), failureEvent);
         }
@@ -279,8 +281,9 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
   @Nullable
   private String getJvmParametersSetup() throws ExecutionException {
     final SimpleJavaParameters extensionsJP = new SimpleJavaParameters();
-    ExternalSystemRunConfiguration.EP_NAME.forEachExtensionSafe(
-      extension -> extension.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor()));
+    for (ExternalSystemRunConfigurationExtension extension : ExternalSystemRunConfiguration.EP_NAME.getExtensionList()) {
+      extension.updateVMParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings(), myEnv.getExecutor());
+    }
     String jvmParametersSetup = "";
     if (myDebugPort <= 0) {
       final ParametersList allVMParameters = new ParametersList();

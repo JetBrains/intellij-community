@@ -10,7 +10,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -234,6 +233,14 @@ public class JarRepositoryManager {
                                                                @Nullable String copyTo) {
     Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
     return submitBackgroundJob(newOrderRootResolveJob(desc, artifactKinds, effectiveRepos, copyTo));
+  }
+
+  public static @NotNull Promise<Collection<Artifact>> loadArtifactForDependenciesAsync(@NotNull Project project,
+                                                                                        @NotNull JpsMavenRepositoryLibraryDescriptor desc,
+                                                                                        @NotNull final Set<ArtifactKind> artifactKinds,
+                                                                                        @Nullable List<RemoteRepositoryDescription> repos) {
+    Collection<RemoteRepositoryDescription> effectiveRepos = addDefaultsIfEmpty(project, repos);
+    return submitBackgroundJob(new LibraryResolveJob(desc, artifactKinds, effectiveRepos));
   }
 
   @Nullable
@@ -505,10 +512,10 @@ public class JarRepositoryManager {
                                                                                      @NotNull Collection<RemoteRepositoryDescription> repositories,
                                                                                      @Nullable String copyTo) {
     return new LibraryResolveJob(desc, kinds, repositories).andThen(
-      resolved -> resolved.isEmpty() ? Collections.<OrderRoot>emptyList() : WriteAction.computeAndWait(() -> createRoots(resolved, copyTo)));
+      resolved -> resolved.isEmpty() ? Collections.emptyList() : copyAndRefreshFiles(resolved, copyTo));
   }
 
-  private static List<OrderRoot> createRoots(@NotNull Collection<? extends Artifact> artifacts, @Nullable String copyTo) {
+  static List<OrderRoot> copyAndRefreshFiles(@NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {

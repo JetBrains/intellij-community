@@ -32,10 +32,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileConstants;
 import com.intellij.openapi.vcs.changes.ignore.lang.Syntax;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -47,12 +47,12 @@ public class PatternCache implements Disposable {
   /**
    * Cache map that holds processed regex statements to the glob rules.
    */
-  private final ConcurrentMap<String, String> GLOBS_CACHE = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, String> GLOBS_CACHE = new ConcurrentHashMap<>();
 
   /**
    * Cache map that holds compiled regex.
    */
-  private final ConcurrentMap<String, Pattern> PATTERNS_CACHE = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, Pattern> PATTERNS_CACHE = new ConcurrentHashMap<>();
 
   public PatternCache(@NotNull Project project) {
     Disposer.register(project, this);
@@ -65,8 +65,7 @@ public class PatternCache implements Disposable {
    * @param syntax rule syntax
    * @return regex {@link Pattern}
    */
-  @Nullable
-  public Pattern createPattern(@NotNull String rule, @NotNull Syntax syntax) {
+  public @Nullable Pattern createPattern(@NotNull String rule, @NotNull Syntax syntax) {
     return createPattern(rule, syntax, false);
   }
 
@@ -76,8 +75,7 @@ public class PatternCache implements Disposable {
    * @param entry {@link IgnoreEntry}
    * @return regex {@link Pattern}
    */
-  @Nullable
-  public Pattern createPattern(@NotNull IgnoreEntry entry) {
+  public @Nullable Pattern createPattern(@NotNull IgnoreEntry entry) {
     return createPattern(entry, false);
   }
 
@@ -88,8 +86,7 @@ public class PatternCache implements Disposable {
    * @param acceptChildren Matches directory children
    * @return regex {@link Pattern}
    */
-  @Nullable
-  public Pattern createPattern(@NotNull IgnoreEntry entry, boolean acceptChildren) {
+  public @Nullable Pattern createPattern(@NotNull IgnoreEntry entry, boolean acceptChildren) {
     return createPattern(entry.getValue(), entry.getSyntax(), acceptChildren);
   }
 
@@ -101,8 +98,7 @@ public class PatternCache implements Disposable {
    * @param acceptChildren Matches directory children
    * @return regex {@link Pattern}
    */
-  @Nullable
-  public Pattern createPattern(@NotNull String rule, @NotNull Syntax syntax, boolean acceptChildren) {
+  public @Nullable Pattern createPattern(@NotNull String rule, @NotNull Syntax syntax, boolean acceptChildren) {
     String regex = getRegex(rule, syntax, acceptChildren);
     return getOrCreatePattern(regex);
   }
@@ -115,8 +111,7 @@ public class PatternCache implements Disposable {
    * @param acceptChildren Matches directory children
    * @return regex string
    */
-  @NotNull
-  public String getRegex(@NotNull String rule, @NotNull Syntax syntax, boolean acceptChildren) {
+  public @NotNull String getRegex(@NotNull String rule, @NotNull Syntax syntax, boolean acceptChildren) {
     return syntax.equals(Syntax.GLOB) ? createRegex(rule, acceptChildren) : rule;
   }
 
@@ -126,8 +121,7 @@ public class PatternCache implements Disposable {
    * @param regex regex to convert
    * @return {@link Pattern} instance or null if invalid
    */
-  @Nullable
-  public Pattern getOrCreatePattern(@NotNull String regex) {
+  public @Nullable Pattern getOrCreatePattern(@NotNull String regex) {
     try {
       if (!PATTERNS_CACHE.containsKey(regex)) {
         PATTERNS_CACHE.put(regex, Pattern.compile(regex));
@@ -139,8 +133,7 @@ public class PatternCache implements Disposable {
     }
   }
 
-  @Nullable
-  public Pattern getPattern(@NotNull String regex) {
+  public @Nullable Pattern getPattern(@NotNull String regex) {
     return PATTERNS_CACHE.get(regex);
   }
 
@@ -151,8 +144,7 @@ public class PatternCache implements Disposable {
    * @param acceptChildren Matches directory children
    * @return regex {@link String}
    */
-  @NotNull
-  private String createRegex(@NotNull String glob, boolean acceptChildren) {
+  private @NotNull String createRegex(@NotNull String glob, boolean acceptChildren) {
     glob = glob.trim();
     String cached = GLOBS_CACHE.get(glob);
     if (cached != null) {

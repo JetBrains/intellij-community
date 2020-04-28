@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
@@ -30,6 +31,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 public class TemporaryCacheServerClient implements JpsServerClient {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.client.TemporaryCacheServerClient");
@@ -39,7 +41,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
   private final String stringThree;
 
   private TemporaryCacheServerClient() {
-    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly90ZW1wb3JhcnktY2FjaGUubGFicy5pbnRlbGxpai5uZXQvY2FjaGUv");
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly90ZW1wb3JhcnktZmlsZXMtY2FjaGUubGFicy5qYi5nZy9jYWNoZS8=");
     stringThree = new String(decodedBytes, CharsetToolkit.UTF8_CHARSET);
   }
 
@@ -153,8 +155,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
           if (connection instanceof HttpURLConnection) {
             HttpURLConnection httpConnection = (HttpURLConnection)connection;
             if (httpConnection.getResponseCode() == 200) {
-              InputStream inputStream = httpConnection.getInputStream();
-              return OBJECT_MAPPER.readValue(inputStream, new TypeReference<Map<String, List<String>>>() {});
+              return OBJECT_MAPPER.readValue(getInputStream(httpConnection), new TypeReference<Map<String, List<String>>>() {});
             }
 
             else {
@@ -172,5 +173,14 @@ public class TemporaryCacheServerClient implements JpsServerClient {
       LOG.warn("Failed request to cache server", e);
     }
     return null;
+  }
+
+  private static InputStream getInputStream(HttpURLConnection httpConnection) throws IOException {
+    String contentEncoding = httpConnection.getContentEncoding();
+    InputStream inputStream = httpConnection.getInputStream();
+    if (contentEncoding != null && StringUtil.toLowerCase(contentEncoding).contains("gzip")) {
+      return new GZIPInputStream(inputStream);
+    }
+    return inputStream;
   }
 }

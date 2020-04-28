@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.text.VersionComparatorUtil
 import com.sun.management.OperatingSystemMXBean
 import com.sun.tools.attach.VirtualMachine
@@ -109,7 +110,7 @@ object CDSManager {
 
   fun installCDS(canStillWork: () -> Boolean, onResult: (CDSTaskResult) -> Unit) {
     CDSFUSCollector.logCDSBuildingStarted()
-    val startTime = System.currentTimeMillis()
+    val startTime = System.nanoTime()
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(
       null,
@@ -146,7 +147,7 @@ object CDSManager {
           CDSTaskResult.Failed(message)
         }
 
-        val installTime = System.currentTimeMillis() - startTime
+        val installTime = TimeoutUtil.getDurationMillis(startTime)
         CDSFUSCollector.logCDSBuildingCompleted(installTime, result)
         onResult(result)
       }

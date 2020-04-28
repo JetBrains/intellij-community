@@ -48,8 +48,12 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
    * Tells whether this element is associated with preceding or following text. This relation defines certain aspects of inlay's behaviour
    * with respect to changes in editor, e.g. when text is inserted at inlay's position, inlay will end up before the inserted text if the
    * returned value is {@code false} and after the text, if the returned value is {@code true}.
-   * Also, when {@link Caret#moveToOffset(int)} or similar offset-based method is invoked, and an inlay exists at the given offset,
+   * <p>
+   * Also, when {@link Caret#moveToOffset(int)} or similar offset-based method is invoked, and an inline inlay exists at the given offset,
    * caret will be positioned to the left of inlay if returned value is {@code true}, and vice versa.
+   * <p>
+   * For block elements this value impacts their visibility on the boundary offsets of collapsed fold region. If the value is {@code true},
+   * the inlay will be visible at the trailing boundary, and if the value is {@code false} - on the leading boundary.
    * <p>
    * The value is determined at element's creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)
    * or {@link InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)}}.

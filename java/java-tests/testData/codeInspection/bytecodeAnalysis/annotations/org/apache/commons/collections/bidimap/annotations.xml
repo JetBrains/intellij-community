@@ -402,9 +402,24 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.util.Set keySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.OrderedBidiMap inverseOrderedBidiMap()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getGrandParent(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int)'>
@@ -532,6 +547,11 @@
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void doRedBlackInsert(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void grow()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void insertValue(org.apache.commons.collections.bidimap.TreeBidiMap.Node) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -541,6 +561,11 @@
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void makeRed(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void modify()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void putAll(java.util.Map) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -549,6 +574,11 @@
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap void rotateRight(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap void shrink()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.EntryView EntryView(org.apache.commons.collections.bidimap.TreeBidiMap, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -606,9 +636,19 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.util.Collection values()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.util.Set entrySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse java.util.Set keySet()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.bidimap.TreeBidiMap.Inverse org.apache.commons.collections.BidiMap inverseBidiMap()'>

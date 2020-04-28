@@ -67,9 +67,9 @@ class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction
         ApplicationManager.getApplication().executeOnPooledThread {
           if (WindowsDefenderChecker.getInstance().runExcludePathsCommand(e.project, paths)) {
             UIUtil.invokeLaterIfNeeded {
-              Notifications.Bus.notify(
+              Notifications.Bus.notifyAndHide(
                 Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")),
-                             "", DiagnosticBundle.message("virus.scanning.fix.success.notification"), NotificationType.INFORMATION))
+                             "", DiagnosticBundle.message("virus.scanning.fix.success.notification"), NotificationType.INFORMATION), e.project)
             }
           }
         }

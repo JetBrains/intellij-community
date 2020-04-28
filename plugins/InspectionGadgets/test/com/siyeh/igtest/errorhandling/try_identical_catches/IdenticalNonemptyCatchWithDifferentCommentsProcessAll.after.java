@@ -6,7 +6,8 @@ class C {
       /*same comment*/
       // comment 1
       e.printStackTrace();
-    } // comment 2
+    } //line comment
+    // comment 2
     // comment 3
 
   }

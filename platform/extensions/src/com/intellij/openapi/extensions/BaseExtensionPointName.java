@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -14,8 +14,7 @@ public abstract class BaseExtensionPointName<T> {
     myName = name;
   }
 
-  @NotNull
-  public final String getName() {
+  public final @NotNull String getName() {
     return myName;
   }
 
@@ -24,8 +23,7 @@ public abstract class BaseExtensionPointName<T> {
     return myName;
   }
 
-  @NotNull
-  protected final ExtensionPointImpl<T> getPointImpl(@Nullable AreaInstance areaInstance) {
+  protected final @NotNull ExtensionPointImpl<T> getPointImpl(@Nullable AreaInstance areaInstance) {
     ExtensionsAreaImpl area = (ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea());
     return area.getExtensionPoint(getName());
   }

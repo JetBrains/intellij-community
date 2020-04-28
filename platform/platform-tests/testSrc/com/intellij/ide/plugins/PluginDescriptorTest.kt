@@ -27,20 +27,23 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorListLoadingContext {
-  val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), buildNumber))
+  val context = DescriptorListLoadingContext(0, emptySet(), PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   context.usePluginClassLoader = true
 
   // constant order in tests
-  var paths: List<Path>? = null
-  Files.newDirectoryStream(dir).use { dirStream -> paths = dirStream.sorted() }
+  lateinit var paths: List<Path>
+  Files.newDirectoryStream(dir).use { dirStream ->
+    paths = dirStream.sorted()
+  }
   context.use {
-    for (file in paths!!) {
+    for (file in paths) {
       val descriptor = PluginManagerCore.loadDescriptor(file, false, context) ?: continue
-      context.result.add(descriptor, context, false)
+      context.result.add(descriptor, false)
     }
   }
   context.result.finishLoading()
@@ -68,16 +71,16 @@ class PluginDescriptorTest {
   fun testOptionalDescriptors() {
     val descriptor = loadDescriptorInTest("family")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.optionalConfigs.size).isEqualTo(1)
+    assertThat(descriptor.pluginDependencies!!.size).isEqualTo(1)
   }
 
   @Test
   fun testMultipleOptionalDescriptors() {
     val descriptor = loadDescriptorInTest("multipleOptionalDescriptors")
     assertThat(descriptor).isNotNull()
-    val ids = descriptor.optionalConfigs.keys
-    assertThat(ids).hasSize(2)
-    assertThat(ids.map { it.idString }).containsExactly("dep2", "dep1")
+    val pluginDependencies = descriptor.pluginDependencies!!
+    assertThat(pluginDependencies).hasSize(2)
+    assertThat(pluginDependencies.map { it.id.idString }).containsExactly("dep2", "dep1")
   }
 
   @Test
@@ -96,7 +99,7 @@ class PluginDescriptorTest {
   @Test
   fun testCyclicOptionalDeps() {
     assertThatThrownBy { loadDescriptorInTest("cyclicOptionalDeps") }
-      .hasMessage("Plugin someId optional descriptors form a cycle: a.xml, b.xml")
+      .hasMessageEndingWith(" optional descriptors form a cycle: a.xml, b.xml")
   }
 
   @Test

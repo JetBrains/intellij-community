@@ -14,10 +14,14 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.handleOnEdt
+import org.jetbrains.plugins.github.util.errorOnEdt
+import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTextArea
@@ -26,10 +30,11 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
                                                   project: Project?,
                                                   parent: Component? = null,
                                                   isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
-                                                  title: String = "Log In to GitHub",
-                                                  private val message: String? = null)
+                                                  @Nls(capitalization = Nls.Capitalization.Title) title: String =
+                                                    GithubBundle.message("login.to.github"),
+                                                  @Nls(capitalization = Nls.Capitalization.Sentence) private val message: String? = null)
   : DialogWrapper(project, parent, false, IdeModalityType.PROJECT) {
-  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique, project).apply {
+  private var githubLoginPanel = GithubLoginPanel(executorFactory, isAccountUnique).apply {
     putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
   }
 
@@ -38,7 +43,7 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
 
   init {
     this.title = title
-    setOKButtonText("Log In")
+    setOKButtonText(GitBundle.message("login.dialog.button.login"))
     init()
   }
 
@@ -73,16 +78,18 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
   fun getToken(): String = token
 
   override fun doOKAction() {
-    val emptyProgressIndicator = EmptyProgressIndicator(ModalityState.stateForComponent(githubLoginPanel))
+    val modalityState = ModalityState.stateForComponent(githubLoginPanel)
+    val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
-    githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator).handleOnEdt { loginToken, throwable ->
-      if (throwable != null && !GithubAsyncUtil.isCancellation(throwable)) startTrackingValidation()
-      else {
-        login = loginToken.first
-        token = loginToken.second
+    githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator)
+      .successOnEdt(modalityState) { (login, token) ->
+        this.login = login
+        this.token = token
         close(OK_EXIT_CODE, true)
       }
-    }
+      .errorOnEdt(modalityState) {
+        if (!GithubAsyncUtil.isCancellation(it)) startTrackingValidation()
+      }
   }
 
   override fun createNorthPanel(): JComponent? {
@@ -100,7 +107,7 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
   }
 
   override fun createSouthAdditionalPanel() = JBUI.Panels.simplePanel()
-    .addToCenter(LinkLabel.create("Sign up for GitHub", Runnable { BrowserUtil.browse("https://github.com") }))
+    .addToCenter(LinkLabel.create(GithubBundle.message("login.sign.up"), Runnable { BrowserUtil.browse("https://github.com") }))
     .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
 
   override fun createCenterPanel(): Wrapper = githubLoginPanel

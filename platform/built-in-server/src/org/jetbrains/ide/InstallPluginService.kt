@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
-import com.intellij.ide.plugins.PluginRepositoryRequests
-import com.intellij.ide.plugins.PluginsMetaLoader
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -52,16 +51,13 @@ internal class InstallPluginService : RestService() {
     }
   }
 
-  private fun checkCompatibility(request: FullHttpRequest,
-                                 context: ChannelHandlerContext,
-                                 pluginId: String): Nothing? {
+  private fun checkCompatibility(
+    request: FullHttpRequest,
+    context: ChannelHandlerContext,
+    pluginId: String
+  ): Nothing? {
     //check if there is an update for this IDE with this ID.
-    val buildNumber = PluginRepositoryRequests.getBuildForPluginRepositoryRequests()
-    LOG.debug("Checking for `LastCompatiblePluginUpdate`: id=$pluginId, buildNumber=$buildNumber")
-    val lastCompatiblePluginUpdate = PluginsMetaLoader.getLastCompatiblePluginUpdate(listOf(pluginId), BuildNumber.fromString(buildNumber))
-    LOG.debug("`LastCompatiblePluginUpdate` results: $lastCompatiblePluginUpdate")
-    val compatibleUpdateExists = lastCompatiblePluginUpdate.isNotEmpty()
-
+    val compatibleUpdateExists = MarketplaceRequests.getLastCompatiblePluginUpdate(pluginId) != null
     val out = BufferExposingByteArrayOutputStream()
 
     val writer = createJsonWriter(out)
@@ -77,10 +73,10 @@ internal class InstallPluginService : RestService() {
   private fun installPlugin(request: FullHttpRequest,
                             context: ChannelHandlerContext,
                             pluginId: String): Nothing? {
-    if (isAvailable) {
-      isAvailable = false
-      val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
-      PluginId.findId(pluginId)?.let {
+    PluginId.findId(pluginId)?.let {
+      if (isAvailable) {
+        isAvailable = false
+        val effectiveProject = getLastFocusedOrOpenedProject() ?: ProjectManager.getInstance().defaultProject
         ApplicationManager.getApplication().invokeLater(Runnable {
           AppIcon.getInstance().requestAttention(effectiveProject, true)
           PluginsAdvertiser.installAndEnable(setOf(it)) { }

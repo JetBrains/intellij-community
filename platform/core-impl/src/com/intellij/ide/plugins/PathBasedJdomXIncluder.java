@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -158,7 +158,7 @@ final class PathBasedJdomXIncluder<T> {
     catch (IOException e) {
       Element fallbackElement = referrerElement.getChild("fallback", referrerElement.getNamespace());
       if (fallbackElement != null) {
-        // TODO[yole] return contents of fallback element (we don't have fallback elements with content ATM)
+        // todo return contents of fallback element (we don't have fallback elements with content ATM)
         return Collections.emptyList();
       }
       else if (context.parentContext.ignoreMissingInclude) {

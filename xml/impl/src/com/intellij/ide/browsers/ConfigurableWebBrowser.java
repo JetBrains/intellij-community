@@ -6,12 +6,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import javax.swing.Icon;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 final class ConfigurableWebBrowser extends WebBrowser {
   private final UUID id;
@@ -80,7 +81,7 @@ final class ConfigurableWebBrowser extends WebBrowser {
       }
     }
     else if (family == BrowserFamily.FIREFOX) {
-      if (checkNameAndPath("dev") || checkNameAndPath("Dev")) {
+      if (checkNameAndPath("Dev")) {
         return AllIcons.Xml.Browsers.FirefoxDeveloper;
       }
     }

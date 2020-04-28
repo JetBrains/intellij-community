@@ -15,19 +15,10 @@ import org.assertj.core.api.Assertions.assertThat
 
 class LanguageSubstitutorLoadUnloadTest : LightJavaCodeInsightFixtureTestCase() {
   fun testBefore() {
-    if (!SystemProperties.getBooleanProperty("LanguageSubstitutorLoadUnloadTest", false)) {
-      return
-    }
-
     myFixture.configureByText("dummy.txt", "package hello;")
   }
 
   fun testLoadUnload() {
-    if (SystemProperties.getBooleanProperty("skip.LanguageSubstitutorLoadUnloadTest", true)) {
-      println("Skip LanguageSubstitutorLoadUnloadTest (set VM property skip.LanguageSubstitutorLoadUnloadTest to false to not ignore)")
-      return
-    }
-
     val beforeLoading = myFixture.configureByText("dummy.txt", "package hello;")
     assertThat(beforeLoading.language).isInstanceOf(PlainTextLanguage::class.java)
 

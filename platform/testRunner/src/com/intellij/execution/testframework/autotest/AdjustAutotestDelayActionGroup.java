@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.autotest;
 
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -32,7 +33,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   private final DataContext myDataContext;
 
   public AdjustAutotestDelayActionGroup(@NotNull JComponent parent) {
-    super("Set AutoTest Delay", true);
+    super(TestRunnerBundle.message("action.AdjustAutotestDelayActionGroup.set.autotest.delay.text"), true);
     myDataContext = DataManager.getInstance().getDataContext(parent);
   }
 
@@ -64,7 +65,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
     private final int myDelay;
 
     SetAutoTestDelayAction(int delay) {
-      super(delay + "s");
+      super(TestRunnerBundle.message("action.seconds.text", delay));
       myDelay = delay * 1000;
     }
 

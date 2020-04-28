@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
 import com.intellij.application.options.PathMacrosImpl;
@@ -55,8 +55,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private final Map<String, Map<String, String>> myResources = new THashMap<>();
   private final Set<String> myResourceLocations = new THashSet<>();
 
-  private final Set<String> myIgnoredResources = new TreeSet<>();
-  private final Set<String> myStandardIgnoredResources = new TreeSet<>();
+  private final Set<String> myIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
+  private final Set<String> myStandardIgnoredResources = Collections.synchronizedSet(new TreeSet<>());
 
   private final ClearableLazyValue<Map<String, Map<String, Resource>>> myStandardResources = ClearableLazyValue.create(() -> computeStdResources());
 
@@ -112,7 +112,8 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   private static final String DEFAULT_VERSION = "";
 
   public ExternalResourceManagerExImpl() {
-    StandardResourceProvider.EP_NAME.addExtensionPointListener(this::dropCache, null);
+    StandardResourceProvider.EP_NAME.addChangeListener(this::dropCache, null);
+    StandardResourceEP.EP_NAME.addChangeListener(this::dropCache, null);
   }
 
   private void dropCache() {

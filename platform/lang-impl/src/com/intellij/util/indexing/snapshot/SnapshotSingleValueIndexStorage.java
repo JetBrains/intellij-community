@@ -6,13 +6,16 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * {@link VfsAwareIndexStorage} implementation for {@link SingleEntryFileBasedIndexExtension} indexes.
@@ -25,6 +28,24 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
 
   // input -> hash (client instance dependent)
   private volatile IntForwardIndex myForwardIndex;
+
+  private final Lock myCacheLock = new ReentrantLock();
+  private final SLRUCache<Key, ValueContainer<Value>> myCache;
+
+  public SnapshotSingleValueIndexStorage(int cacheSize) {
+    myCache = new SLRUCache<Key, ValueContainer<Value>>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
+      @NotNull
+      @Override
+      public ValueContainer<Value> createValue(Key key) {
+        try {
+          return doRead(key);
+        }
+        catch (StorageException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    };
+  }
 
   private volatile boolean myInitialized;
 
@@ -39,13 +60,25 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   @Override
   public ValueContainer<Value> read(Key key) throws StorageException {
     assert myInitialized;
+    myCacheLock.lock();
+    try {
+      return myCache.get(key);
+    } finally {
+      myCacheLock.unlock();
+    }
+  }
+
+  @NotNull
+  private ValueContainer<Value> doRead(Key key) throws StorageException {
     int inputId = inputKey(key);
     try {
       int hashId = myForwardIndex.getInt(inputId);
-      if (hashId == 0) return empty();
+      if (hashId == 0) return new ValueContainerImpl<>();
       // we have mapped hash, so we have a record
       Value item = ContainerUtil.getFirstItem(mySnapshotInputMappings.readData(hashId).values());
-      return new OneRecordValueContainer<>(inputId, item);
+      ValueContainerImpl<Value> container = new ValueContainerImpl<>();
+      container.addValue(inputId, item);
+      return container;
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -74,16 +107,27 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   }
 
   @Override
-  public void clear() {}
+  public void clear() {
+    clearCaches();
+  }
 
   @Override
-  public void clearCaches() {}
+  public void clearCaches() {
+    myCacheLock.lock();
+    try {
+      myCache.clear();
+    } finally {
+      myCacheLock.unlock();
+    }
+  }
 
   @Override
   public void close() throws StorageException {}
 
   @Override
-  public void flush() throws IOException {}
+  public void flush() throws IOException {
+    clearCaches();
+  }
 
   private void checkKeyInputIdConsistency(Key key, int inputId) {
     if (!Comparing.equal(key, inputId)) {

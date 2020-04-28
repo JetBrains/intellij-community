@@ -46,7 +46,7 @@ private fun TypedEntityStorageBuilder.addNamedEntity(name: String, next: SampleE
 class EntityWithPersistentIdInProxyBasedStorageTest {
   @Test
   fun `add remove entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val foo = builder.addNamedEntity("foo", SampleEntityId("bar"))
     builder.checkConsistency()
     assertNull(foo.next.resolve(builder))
@@ -60,7 +60,7 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
 
   @Test
   fun `change target entity name`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val foo = builder.addNamedEntity("foo", SampleEntityId("bar"))
     val bar = builder.addNamedEntity("bar", SampleEntityId("baz"))
     builder.checkConsistency()
@@ -74,7 +74,7 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
 
   @Test
   fun `change name in reference`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val foo = builder.addNamedEntity("foo", SampleEntityId("bar"))
     val bar = builder.addNamedEntity("bar", SampleEntityId("baz"))
     val baz = builder.addNamedEntity("baz", SampleEntityId("foo"))
@@ -89,7 +89,7 @@ class EntityWithPersistentIdInProxyBasedStorageTest {
 
   @Test
   fun `remove child entity with parent entity`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val parent = builder.addNamedEntity("parent", SampleEntityId("no"))
     builder.addEntity(ModifiableChildEntityWithPersistentId::class.java, SampleEntitySource("foo")) {
       this.childName = "child"

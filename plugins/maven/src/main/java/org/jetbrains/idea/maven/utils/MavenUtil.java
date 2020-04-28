@@ -36,6 +36,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
@@ -117,13 +118,12 @@ public class MavenUtil {
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
 
 
-
-
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
     Pair.create(Pattern.compile("maven-\\d+\\.\\d+\\.\\d+-uber\\.jar"), "org/apache/maven/project/" + MavenConstants.SUPER_POM_XML),
     Pair.create(Pattern.compile("maven-model-builder-\\d+\\.\\d+\\.\\d+\\.jar"), "org/apache/maven/model/" + MavenConstants.SUPER_POM_XML)
   };
+  public static final String MAVEN_NEW_PROJECT_MODEL_KEY = "maven.new.project.model";
 
   private static volatile Map<String, String> ourPropertiesFromMvnOpts;
 
@@ -747,6 +747,33 @@ public class MavenUtil {
     }
   }
 
+  @Nullable
+  public static VirtualFile getRepositoryFile(@NotNull Project project,
+                                              @NotNull MavenId id,
+                                              @NotNull String extension,
+                                              @Nullable String classifier) {
+    if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
+      return null;
+    }
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository(), extension, classifier);
+    return LocalFileSystem.getInstance().findFileByIoFile(file);
+  }
+
+  private static File makeLocalRepositoryFile(MavenId id,
+                                              File localRepository,
+                                              @NotNull String extension,
+                                              @Nullable String classifier) {
+    String relPath = id.getGroupId().replace(".", "/");
+
+    relPath += "/" + id.getArtifactId();
+    relPath += "/" + id.getVersion();
+    relPath += "/" + id.getArtifactId() + "-" + id.getVersion();
+    relPath = classifier == null ? relPath + "." + extension : relPath + "-" + classifier + "." + extension;
+
+    return new File(localRepository, relPath);
+  }
+
   @NotNull
   public static File doResolveLocalRepository(@Nullable File userSettingsFile, @Nullable File globalSettingsFile) {
     if (userSettingsFile != null) {
@@ -968,7 +995,9 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project);
+    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project) &&
+           (Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
+            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
   }
 
   public interface MavenTaskHandler {
@@ -1243,7 +1272,7 @@ public class MavenUtil {
 
   public static Path toPath(@Nullable MavenProject mavenProject, String path) {
     if (!FileUtil.isAbsolute(path)) {
-      if(mavenProject == null) {
+      if (mavenProject == null) {
         throw new IllegalArgumentException("Project should be not-nul for non-absolute paths");
       }
       path = new File(mavenProject.getDirectory(), path).getPath();

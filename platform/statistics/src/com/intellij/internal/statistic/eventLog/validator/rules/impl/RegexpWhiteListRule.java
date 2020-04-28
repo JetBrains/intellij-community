@@ -63,8 +63,4 @@ public class RegexpWhiteListRule extends PerformanceCareRule implements FUSRegex
     return StringUtil.replace(text, ESCAPE_FROM, ESCAPE_TO);
   }
 
-  @Override
-  public boolean isValidRule() {
-    return myRegexp != null;
-  }
 }

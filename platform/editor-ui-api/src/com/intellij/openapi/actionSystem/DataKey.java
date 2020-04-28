@@ -1,13 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.util.ValueKey;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see LangDataKeys
  */
 public class DataKey<T> implements ValueKey<T> {
-  private static final ConcurrentMap<String, DataKey> ourDataKeyIndex = ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<String, DataKey> ourDataKeyIndex = new ConcurrentHashMap<>();
 
   private final String myName;
 
@@ -32,15 +32,13 @@ public class DataKey<T> implements ValueKey<T> {
     myName = name;
   }
 
-  @NotNull
-  public static <T> DataKey<T> create(@NotNull @NonNls String name) {
+  public static @NotNull <T> DataKey<T> create(@NotNull @NonNls String name) {
     //noinspection unchecked
     return ourDataKeyIndex.computeIfAbsent(name, DataKey::new);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -54,14 +52,12 @@ public class DataKey<T> implements ValueKey<T> {
     return myName.equals(dataId);
   }
 
-  @Nullable
-  public T getData(@NotNull DataContext dataContext) {
+  public @Nullable T getData(@NotNull DataContext dataContext) {
     //noinspection unchecked
     return (T)dataContext.getData(myName);
   }
 
-  @Nullable
-  public T getData(@NotNull DataProvider dataProvider) {
+  public @Nullable T getData(@NotNull DataProvider dataProvider) {
     //noinspection unchecked
     return (T)dataProvider.getData(myName);
   }

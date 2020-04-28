@@ -7,9 +7,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.patterns.ElementPattern;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +19,7 @@ import java.util.function.Supplier;
  * @author yole
  */
 @ApiStatus.Internal
-public interface CompletionProcessEx extends CompletionProcess {
+public interface CompletionProcessEx extends CompletionProcessBase {
   @NotNull
   Project getProject();
 
@@ -43,9 +42,8 @@ public interface CompletionProcessEx extends CompletionProcess {
 
   void itemSelected(LookupElement item, char aChar);
 
-  void addWatchedPrefix(int startOffset, ElementPattern<String> restartCondition);
 
-  void addAdvertisement(@NotNull @Nls String message, @Nullable Icon icon);
+  void addAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String message, @Nullable Icon icon);
 
   CompletionParameters getParameters();
 

@@ -4,13 +4,13 @@ package com.intellij.openapi.wm.impl.status.widget;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.wm.*;
 import org.jetbrains.annotations.NotNull;
@@ -24,14 +24,13 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
   private final Map<StatusBarWidgetFactory, StatusBarWidget> myWidgetFactories = new LinkedHashMap<>();
   private final Map<String, StatusBarWidgetFactory> myWidgetIdsMap = new HashMap<>();
-  
+
   private final Project myProject;
 
   public StatusBarWidgetsManager(@NotNull Project project) {
     myProject = project;
-    Disposer.register(myProject, this);
 
-    StatusBarWidgetFactory.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetFactory>() {
+    StatusBarWidgetFactory.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetFactory>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
         addWidgetFactory(factory);
@@ -43,7 +42,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       }
     }, true, this);
 
-    StatusBarWidgetProvider.EP_NAME.getPoint(null).addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
+    //noinspection deprecation
+    StatusBarWidgetProvider.EP_NAME.getPoint().addExtensionPointListener(new ExtensionPointListener<StatusBarWidgetProvider>() {
       @Override
       public void extensionAdded(@NotNull StatusBarWidgetProvider provider, @NotNull PluginDescriptor pluginDescriptor) {
         addWidgetFactory(new StatusBarWidgetProviderToFactoryAdapter(myProject, provider));
@@ -56,16 +56,10 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     }, true, this);
   }
 
-  public void updateAllWidgets() {
-    for (StatusBarWidgetFactory factory : myWidgetFactories.keySet()) {
-      updateWidget(factory);
-    }
-  }
-
   public void updateWidget(@NotNull Class<? extends StatusBarWidgetFactory> factoryExtension) {
     StatusBarWidgetFactory factory = StatusBarWidgetFactory.EP_NAME.findExtension(factoryExtension);
-    if (factory == null) {
-      LOG.error("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
+    if (factory == null || !myWidgetFactories.containsKey(factory)) {
+      LOG.info("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: " + factoryExtension.getName());
       return;
     }
     updateWidget(factory);
@@ -87,11 +81,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
 
   @Override
   public void dispose() {
-    myWidgetFactories.forEach((factory, createdWidget) -> {
-      if (createdWidget != null) {
-        factory.disposeWidget(createdWidget);
-      }
-    });
+    myWidgetFactories.forEach((factory, createdWidget) -> disableWidget(factory));
     myWidgetFactories.clear();
   }
 
@@ -127,7 +117,6 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     myWidgetFactories.put(factory, widget);
     myWidgetIdsMap.put(widget.ID(), factory);
     statusBar.addWidget(widget, getAnchor(factory), this);
-    Disposer.register(this, () -> disableWidget(factory));
   }
 
   @NotNull
@@ -179,6 +168,7 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       return;
     }
     myWidgetFactories.put(factory, null);
+    ApplicationManager.getApplication().invokeLater(() -> updateWidget(factory));
     incModificationCount();
   }
 

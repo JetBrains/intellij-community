@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.inspection;
 
-import com.intellij.analysis.problemsView.AnalysisProblem;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.*;
@@ -10,10 +10,8 @@ import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Control "Problems View" tool window
@@ -38,15 +34,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
 public class InspectionProblemsView implements PersistentStateComponent<InspectionProblemsViewSettings> {
-
   private static final NotificationGroup NOTIFICATION_GROUP =
     NotificationGroup.toolWindowGroup(getToolWindowId(), getToolWindowId(), false);
 
   private final Project myProject;
   private final InspectionProblemsPresentationHelper myPresentationHelper;
-
-  private final Object myLock = new Object(); // use this lock to access myScheduledFilePathToErrors and myAlarm
-  private final Alarm myAlarm;
 
   @NotNull
   private Icon myCurrentIcon = AllIcons.Toolwindows.NoEvents;
@@ -54,13 +46,10 @@ public class InspectionProblemsView implements PersistentStateComponent<Inspecti
 
   private Notification myNotification;
   private boolean myDisabledForSession;
-  private final Queue<AnalysisProblem> myProblems = new ConcurrentLinkedQueue<>();
-  //private final Runnable myUpdateRunnable = ()->update();
 
   public InspectionProblemsView(@NotNull Project project) {
     myProject = project;
     myPresentationHelper = new InspectionProblemsPresentationHelper();
-    myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
@@ -108,6 +97,10 @@ public class InspectionProblemsView implements PersistentStateComponent<Inspecti
   private void updateCurrentFile() {
     FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor();
     VirtualFile file = editor == null ? null : editor.getFile();
+    if (file == null && editor instanceof TextEditor) {
+      Document document = ((TextEditor)editor).getEditor().getDocument();
+      file = FileDocumentManager.getInstance().getFile(document);
+    }
     setCurrentFile(file);
   }
 
@@ -155,7 +148,7 @@ public class InspectionProblemsView implements PersistentStateComponent<Inspecti
     return ServiceManager.getService(project, InspectionProblemsView.class);
   }
 
-  public VirtualFile getCurrentFile() {
+  private VirtualFile getCurrentFile() {
     return myPresentationHelper.getCurrentFile();
   }
 
@@ -258,21 +251,22 @@ public class InspectionProblemsView implements PersistentStateComponent<Inspecti
     }
   }
 
-  public void clearAll() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    synchronized (myLock) {
-      myAlarm.cancelAllRequests();
-    }
-
-    InspectionProblemsViewPanel panel = getProblemsViewPanel();
-    if (panel != null) {
-      panel.clearAll();
-    }
-  }
-
   @NotNull
   private static String getToolWindowId() {
     return "Problems View";
+  }
+
+  public static void selectProblemIfVisible(@NotNull Project project, @NotNull HighlightInfo highlightInfo) {
+    // take care to not instantiate InspectionProblemsView/panel if the toolwindow is not visible because otherwise toolwindow spring into view unexpectedly
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(getToolWindowId());
+    if (toolWindow != null && toolWindow.isVisible()) {
+      InspectionProblemsView view = getInstance(project);
+      InspectionProblemsViewPanel panel = view.getProblemsViewPanel();
+      if (panel != null) {
+        VirtualFile file = view.getCurrentFile();
+        HighlightingProblem problem = new HighlightingProblem(project, file, highlightInfo);
+        panel.selectProblem(problem);
+      }
+    }
   }
 }

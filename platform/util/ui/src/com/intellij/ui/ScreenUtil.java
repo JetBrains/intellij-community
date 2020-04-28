@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.Patches;
@@ -75,7 +75,7 @@ public final class ScreenUtil {
    *
    * @return the smallest rectangle that encloses a visible area of every screen
    */
-  public static Rectangle getAllScreensRectangle() {
+  public static @NotNull Rectangle getAllScreensRectangle() {
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     if (devices.length == 0) {
       return new Rectangle();

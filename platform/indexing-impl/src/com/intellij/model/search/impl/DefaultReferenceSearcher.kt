@@ -14,8 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 
-class DefaultReferenceSearcher : PsiSymbolReferenceSearcher {
-
+internal class DefaultReferenceSearcher : PsiSymbolReferenceSearcher {
   override fun collectSearchRequests(parameters: PsiSymbolReferenceSearchParameters): Collection<Query<out PsiSymbolReference>> {
     val project: Project = parameters.project
     val inputScope: SearchScope = parameters.searchScope
@@ -46,7 +45,7 @@ class DefaultReferenceSearcher : PsiSymbolReferenceSearcher {
     }
 
     val mapper = ExternalReferenceMapper(targetPointer)
-    for (providerBean: PsiSymbolReferenceProviderBean in ReferenceProviders.getInstance().byTargetClass(target.javaClass)) {
+    for (providerBean: PsiSymbolReferenceProviderBean in ReferenceProviders.byTargetClass(target.javaClass)) {
       val requests = providerBean.instance.getSearchRequests(project, target)
       for (request: SearchRequest in requests) {
         val language: Language = providerBean.getHostLanguage()

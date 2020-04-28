@@ -20,9 +20,9 @@ typedef struct {
 #define ROOT_COUNT ('Z'-'A'+1)
 static WatchDrive watchDrive[ROOT_COUNT];
 
-typedef struct __WatchRoot {
+typedef struct WatchRoot {
     char *path;
-    struct __WatchRoot *next;
+    struct WatchRoot *next;
 } WatchRoot;
 
 static WatchRoot *firstWatchRoot = NULL;
@@ -42,7 +42,7 @@ static UINT32 _calls_ = 0, _max_events_ = 0;
 #define FILE_SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 
 typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWORD);
-static GetFinalPathNameByHandlePtr __GetFinalPathNameByHandle = NULL;
+static GetFinalPathNameByHandlePtr pGetFinalPathNameByHandle = NULL;
 
 typedef struct {
     char *text;
@@ -95,10 +95,10 @@ static bool IsPathWatchable(const char *pathToWatch) {
     while ((pSlash = wcsrchr(path, L'\\')) != NULL) {
         DWORD attributes = GetFileAttributesW(path);
         if (attributes != INVALID_FILE_ATTRIBUTES && IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
-            if (__GetFinalPathNameByHandle != NULL) {
+            if (pGetFinalPathNameByHandle != NULL) {
                 HANDLE h = CreateFileW(path, 0, FILE_SHARE_ALL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-                if (h != NULL) {
-                    DWORD result = __GetFinalPathNameByHandle(h, buffer, bufferSize, 0);
+                if (h != INVALID_HANDLE_VALUE) {
+                    DWORD result = pGetFinalPathNameByHandle(h, buffer, bufferSize, 0);
                     CloseHandle(h);
                     if (result > 0 && result < bufferSize && wcsncmp(buffer, L"\\\\?\\UNC\\", 8) == 0) {
                         watchable = false;
@@ -107,8 +107,8 @@ static bool IsPathWatchable(const char *pathToWatch) {
                 }
             }
 
-            path[pathLen] = L'\\';
-            path[pathLen + 1] = L'\0';
+            path[pathLen - 1] = L'\\';
+            path[pathLen] = L'\0';
             if (GetVolumeNameForVolumeMountPointW(path, buffer, bufferSize) != 0) {
                 watchable = false;
                 break;
@@ -177,7 +177,7 @@ static void PrintChangeInfo(const char *rootPath, FILE_NOTIFY_INFORMATION *info)
     }
 
     char utfBuffer[4 * MAX_PATH + 1];
-    int wcsLen = info->FileNameLength / sizeof(wchar_t);
+    int wcsLen = (int)(info->FileNameLength / sizeof(wchar_t));
     int converted = WideCharToMultiByte(CP_UTF8, 0, info->FileName, wcsLen, utfBuffer, sizeof(utfBuffer), NULL, NULL);
     utfBuffer[converted] = '\0';
 
@@ -360,7 +360,7 @@ static void FreeWatchRootsList() {
 
 int main(int argc, char *argv[]) {
     SetErrorMode(SEM_FAILCRITICALERRORS);
-    __GetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
+    pGetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
     InitializeCriticalSection(&csOutput);
 
     for (int i = 0; i < ROOT_COUNT; i++) {

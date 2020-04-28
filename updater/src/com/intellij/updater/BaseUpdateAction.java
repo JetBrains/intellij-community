@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
@@ -6,6 +6,7 @@ import ie.wombat.jbdiff.JBDiff;
 import ie.wombat.jbdiff.JBPatch;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.Objects;
 import java.util.zip.ZipOutputStream;
 
@@ -49,6 +50,11 @@ public abstract class BaseUpdateAction extends PatchAction {
     mySource = in.readUTF();
     myIsMove = in.readBoolean();
     myInPlace = !myIsMove && mySource.equals(getPath());
+  }
+
+  @Override
+  protected String getReportPath() {
+    return mySource;
   }
 
   @Override
@@ -102,28 +108,32 @@ public abstract class BaseUpdateAction extends PatchAction {
   @Override
   public void backup(File toDir, File backupDir) throws IOException {
     if (myInPlace) {
-      Utils.copy(getFile(toDir), getFile(backupDir));
+      Utils.copy(getFile(toDir), getFile(backupDir), false);
     }
     else {
       File moveBackup = getSource(backupDir);
       if (!moveBackup.exists()) {
-        Utils.copy(getSource(toDir), moveBackup);
+        Utils.copy(getSource(toDir), moveBackup, false);
       }
     }
   }
 
   protected void replaceUpdated(File from, File dest) throws IOException {
-    // on macOS, code signing caches seem to be associated with specific file ids, so we need to remove the original file
-    Utils.delete(dest);
-    Utils.copy(from, dest);
+    if (Utils.IS_MAC) {
+      // on macOS, code signing caches seem to be associated with specific file IDs, so we need to remove the original file
+      Utils.delete(dest);
+      Utils.copy(from, dest, false);
+    }
+    else {
+      Utils.copy(from, dest, true);
+    }
   }
 
   @Override
   protected void doRevert(File toFile, File backupFile) throws IOException {
     if (myInPlace) {
-      if (!toFile.exists() || isModified(toFile)) {
-        Utils.delete(toFile);
-        Utils.copy(backupFile, toFile);
+      if (!Files.exists(toFile.toPath()) || isModified(toFile)) {
+        Utils.copy(backupFile, toFile, true);
       }
     }
     else {

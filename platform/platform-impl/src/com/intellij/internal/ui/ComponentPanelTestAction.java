@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -866,11 +866,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         final String myText;
         final ImmutableList<Item> myChildren;
 
-        Item(@NotNull Icon icon, @NotNull @NlsUI.ListItem String text) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text) {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull @NlsUI.ListItem String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
           this.myChildren = ImmutableList.copyOf(myChildren);

@@ -8,24 +8,18 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.DomUtil;
-import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.With;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-
-import java.util.List;
 
 public class ExtensionPointDocumentationProvider implements DocumentationProvider {
 
@@ -63,25 +57,50 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     sb.append("<b>").append(extensionPoint.getEffectiveQualifiedName()).append("</b>");
     sb.append("<br>").append(DomUtil.getFile(extensionPoint).getName());
 
-    if (DomUtil.hasXml(extensionPoint.getBeanClass())) {
-      generateClassDoc(sb, extensionPoint.getBeanClass().getValue());
-    }
+    final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+    if (beanClass != null) {
+      generateClassDoc(sb, beanClass);
 
-    List<With> withElements = extensionPoint.getWithElements();
-    if (!withElements.isEmpty()) {
-      sb.append(DocumentationMarkup.SECTIONS_START);
-      for (With withElement : withElements) {
+      StringBuilder bindingText = new StringBuilder();
 
-        String name = StringUtil.notNullize(DomUtil.hasXml(withElement.getAttribute())
-                                            ? withElement.getAttribute().getStringValue()
-                                            : "<" + withElement.getTag().getStringValue() + ">");
+      new ExtensionPointBinding(beanClass).visit(new ExtensionPointBinding.BindingVisitor() {
+        @Override
+        public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required) {
+          appendFieldBindingText(field, attributeName, required);
+        }
 
-        StringBuilder classLinkSb = new StringBuilder();
-        generateClassLink(classLinkSb, withElement.getImplements().getValue());
+        @Override
+        public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required) {
+          visitAttribute(field, "&lt;" + tagName + ">", required);
+        }
 
-        appendSection(sb, XmlUtil.escape(name), classLinkSb.toString());
+        @Override
+        public void visitXCollection(@NotNull PsiField field,
+                                     @Nullable String tagName,
+                                     @NotNull PsiAnnotation collectionAnnotation,
+                                     boolean required) {
+          visitAttribute(field, "&lt;" + tagName + ">...", required);
+        }
+
+        private void appendFieldBindingText(@NotNull PsiField field, @NotNull String displayName, boolean required) {
+          StringBuilder hyperLink = new StringBuilder();
+          DocumentationManagerUtil.createHyperlink(hyperLink, field,
+                                                   JavaDocUtil.getReferenceText(field.getProject(), field), displayName, false);
+
+
+          final String typeText = field.getType().getPresentableText();
+          final String initializer = field.getInitializer() != null ? " = " + field.getInitializer().getText() : "";
+
+          appendSection(bindingText, hyperLink.toString(), typeText + (required ? " (required)" : "") + initializer);
+        }
+      });
+
+      if (bindingText.length() > 0) {
+        sb.append(DocumentationMarkup.SECTIONS_START);
+        sb.append(bindingText);
+        sb.append("<br/>");
+        sb.append(DocumentationMarkup.SECTIONS_END);
       }
-      sb.append(DocumentationMarkup.SECTIONS_END);
     }
 
     sb.append(DocumentationMarkup.DEFINITION_END);
@@ -120,7 +139,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
   }
 
   private static void appendSection(StringBuilder sb, String sectionName, String sectionContent) {
-    sb.append(DocumentationMarkup.SECTION_HEADER_START).append(sectionName).append(":")
+    sb.append(DocumentationMarkup.SECTION_HEADER_START).append(sectionName)
       .append(DocumentationMarkup.SECTION_SEPARATOR);
     sb.append(sectionContent);
     sb.append(DocumentationMarkup.SECTION_END);

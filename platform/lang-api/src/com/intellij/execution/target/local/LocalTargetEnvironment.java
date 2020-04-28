@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target.local;
 
 import com.intellij.execution.CantRunException;
@@ -13,18 +13,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class LocalTargetEnvironment implements TargetEnvironment {
-  @NotNull
-  private final TargetEnvironmentRequest myRequest;
+public class LocalTargetEnvironment extends TargetEnvironment {
 
   public LocalTargetEnvironment(@NotNull TargetEnvironmentRequest request) {
-    myRequest = request;
-  }
-
-  @NotNull
-  @Override
-  public TargetEnvironmentRequest getRequest() {
-    return myRequest;
+    super(request);
   }
 
   @NotNull
@@ -43,8 +35,8 @@ public class LocalTargetEnvironment implements TargetEnvironment {
   public GeneralCommandLine createGeneralCommandLine(@NotNull TargetedCommandLine commandLine) throws CantRunException {
     try {
       GeneralCommandLine generalCommandLine = new GeneralCommandLine(commandLine.collectCommandsSynchronously());
-      if (myRequest instanceof LocalTargetEnvironmentRequest) {
-        generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)myRequest).getParentEnvironmentType());
+      if (getRequest() instanceof LocalTargetEnvironmentRequest) {
+        generalCommandLine.withParentEnvironmentType(((LocalTargetEnvironmentRequest)getRequest()).getParentEnvironmentType());
       }
       String inputFilePath = commandLine.getInputFilePath();
       if (inputFilePath != null) {
@@ -61,6 +53,11 @@ public class LocalTargetEnvironment implements TargetEnvironment {
     catch (ExecutionException e) {
       throw new CantRunException(e.getMessage(), e);
     }
+  }
+
+  @Override
+  public void shutdown() {
+    //
   }
 }
 

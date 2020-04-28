@@ -461,7 +461,9 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final PsiType disjunction = PsiDisjunctionType.createDisjunction(filteredTypes, tryStatement.getManager());
       final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(disjunction);
 
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(collapseIntoTypeElement.replace(newTypeElement));
+      final CommentTracker tracker = new CommentTracker();
+
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(tracker.replace(collapseIntoTypeElement, newTypeElement));
 
       int insertBeforeIndex = duplicatesIndices[sectionIndex].myCanInsertBefore;
       if (collapseIntoIndex < insertBeforeIndex) {
@@ -473,7 +475,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         }
       }
 
-      final CommentTracker tracker = new CommentTracker();
       PsiTreeUtil.processElements(duplicateSection.myCatchSection, element -> {
         if (element instanceof PsiComment) {
           final String text = getCommentText((PsiComment)element);

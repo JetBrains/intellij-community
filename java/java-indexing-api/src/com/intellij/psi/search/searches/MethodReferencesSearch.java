@@ -31,7 +31,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       myScope = scope;
       myStrictSignatureSearch = strictSignatureSearch;
       isSharedOptimizer = optimizer != null;
-      myOptimizer = optimizer != null ? optimizer : new SearchRequestCollector(new SearchSession());
+      myOptimizer = optimizer != null ? optimizer : new SearchRequestCollector(new SearchSession(method));
       myProject = PsiUtilCore.getProjectInReadAction(method);
     }
 

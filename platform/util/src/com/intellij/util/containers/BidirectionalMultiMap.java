@@ -19,7 +19,9 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.HashMap;import java.util.HashSet;import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class BidirectionalMultiMap<K, V> {
@@ -27,7 +29,7 @@ public class BidirectionalMultiMap<K, V> {
   private final Map<V, Set<K>> myValue2Keys;
 
   public BidirectionalMultiMap() {
-    this(new java.util.HashMap<>(), new HashMap<>());
+    this(new HashMap<>(), new HashMap<>());
   }
 
   public BidirectionalMultiMap(final Map<K, Set<V>> key2Values, final Map<V, Set<K>> value2Keys) {

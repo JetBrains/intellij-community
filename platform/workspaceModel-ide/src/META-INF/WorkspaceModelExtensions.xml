@@ -3,12 +3,15 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="ide.new.project.model" defaultValue="false" restartRequired="true"
                  description="Enable new entities-based project model (workspace model)"/>
+    <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
+                 description="Enable cache for the workspace model"/>
 
     <registryKey key="ide.workspace.model.jps.enabled" defaultValue="true" restartRequired="false"
                  description="Enable .iml reading/writing including settings (temporary key)"/>
 
     <cachesInvalidator implementation="com.intellij.workspace.ide.WorkspaceModelCachesInvalidator"/>
 
+    <projectService serviceImplementation="com.intellij.workspace.ide.VirtualFileUrlManagerImpl" />
     <projectServiceContainerCustomizer implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeProjectLifecycleListener"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModuleManagerComponent$MyProjectServiceContainerInitializedListener"/>
 

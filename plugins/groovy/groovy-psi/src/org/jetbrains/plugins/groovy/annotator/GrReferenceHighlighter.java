@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
   private final GroovyFileBase myFile;
   private List<HighlightInfo> myInfos = null;
 
-  public GrReferenceHighlighter(@Nullable Document document, @NotNull GroovyFileBase file) {
+  public GrReferenceHighlighter(@NotNull GroovyFileBase file, @NotNull Document document) {
     super(file.getProject(), document);
     myFile = file;
   }
@@ -37,7 +36,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    if (myInfos == null || myDocument == null) return;
+    if (myInfos == null) return;
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), myInfos, getColorsScheme(), getId());
   }
 }

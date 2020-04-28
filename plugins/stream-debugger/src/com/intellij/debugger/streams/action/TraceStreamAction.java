@@ -13,7 +13,6 @@ import com.intellij.debugger.streams.ui.ChooserOption;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -33,9 +32,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -44,9 +41,8 @@ import java.util.stream.Stream;
 public final class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
+  private static final ChainResolver CHAIN_RESOLVER = new ChainResolver();
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
-  private final Set<String> mySupportedLanguages = ContainerUtil.map2Set(LibrarySupportProvider.EP_NAME.getExtensionList(), provider -> provider.getLanguageId());
-  private int myLastVisitedPsiElementHash;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -58,18 +54,19 @@ public final class TraceStreamAction extends AnAction {
       presentation.setEnabled(false);
     }
     else {
-      final String languageId = element.getLanguage().getID();
-      if (mySupportedLanguages.contains(languageId)) {
-        presentation.setVisible(true);
-        final boolean chainExists = isChainExists(element);
-        presentation.setEnabled(chainExists);
-        final int elementHash = System.identityHashCode(element);
-        if (chainExists && myLastVisitedPsiElementHash != elementHash) {
-          myLastVisitedPsiElementHash = elementHash;
-        }
-      }
-      else {
-        presentation.setEnabledAndVisible(false);
+      ChainResolver.ChainStatus chainStatus = CHAIN_RESOLVER.tryFindChain(element);
+      switch (chainStatus) {
+        case LANGUAGE_NOT_SUPPORTED:
+          presentation.setEnabledAndVisible(false);
+          break;
+        case FOUND:
+          presentation.setEnabledAndVisible(true);
+          break;
+        case COMPUTING:
+        case NOT_FOUND:
+          presentation.setVisible(true);
+          presentation.setEnabled(false);
+          break;
       }
     }
   }
@@ -86,19 +83,7 @@ public final class TraceStreamAction extends AnAction {
       return;
     }
 
-    String elementLanguageId = element.getLanguage().getID();
-    List<StreamChainWithLibrary> chains = new ArrayList<>();
-    LibrarySupportProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      if (provider.getLanguageId().equals(elementLanguageId)) {
-        StreamChainBuilder chainBuilder = provider.getChainBuilder();
-        if (chainBuilder.isChainExists(element)) {
-          for (StreamChain x : chainBuilder.build(element)) {
-            chains.add(new StreamChainWithLibrary(x, provider));
-          }
-        }
-      }
-    });
-
+    List<ChainResolver.StreamChainWithLibrary> chains = CHAIN_RESOLVER.getChains(element);
     if (chains.isEmpty()) {
       LOG.warn("stream chain is not built");
       return;
@@ -118,16 +103,6 @@ public final class TraceStreamAction extends AnAction {
                                                 provider -> runTrace(provider.chain, provider.provider, session));
         });
     }
-  }
-
-  private static boolean isChainExists(@NotNull PsiElement element) {
-    for (LibrarySupportProvider provider : LibrarySupportProvider.EP_NAME.getExtensionList()) {
-      if (element.getLanguage().getID().equals(provider.getLanguageId()) && provider.getChainBuilder().isChainExists(element)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private static void runTrace(@NotNull StreamChain chain, @NotNull LibrarySupportProvider provider, @NotNull XDebugSession session) {
@@ -175,21 +150,11 @@ public final class TraceStreamAction extends AnAction {
     }
   }
 
-  private static final class StreamChainWithLibrary {
-    final StreamChain chain;
-    final LibrarySupportProvider provider;
-
-    StreamChainWithLibrary(@NotNull StreamChain chain, @NotNull LibrarySupportProvider provider) {
-      this.chain = chain;
-      this.provider = provider;
-    }
-  }
-
   private static final class StreamChainOption implements ChooserOption {
     final StreamChain chain;
     final LibrarySupportProvider provider;
 
-    StreamChainOption(@NotNull StreamChainWithLibrary chain) {
+    StreamChainOption(@NotNull ChainResolver.StreamChainWithLibrary chain) {
       this.chain = chain.chain;
       this.provider = chain.provider;
     }

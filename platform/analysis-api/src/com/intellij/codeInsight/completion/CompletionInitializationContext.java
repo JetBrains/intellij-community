@@ -53,7 +53,7 @@ public class CompletionInitializationContext {
     myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, calcSelectionEnd(caret)));
   }
 
-  private static int calcSelectionEnd(Caret caret) {
+  public static int calcSelectionEnd(Caret caret) {
     return caret.hasSelection() ? caret.getSelectionEnd() : caret.getOffset();
   }
 
@@ -61,7 +61,7 @@ public class CompletionInitializationContext {
     return caret.hasSelection() ? caret.getSelectionStart() : caret.getOffset();
   }
 
-  static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
+  public static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
     final CharSequence text = editor.getDocument().getCharsSequence();
     int idEnd = startFrom;
     while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {

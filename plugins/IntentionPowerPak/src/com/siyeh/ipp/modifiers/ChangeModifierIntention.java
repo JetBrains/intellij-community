@@ -54,6 +54,7 @@ import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.IntentionPowerPackBundle;
@@ -365,7 +366,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
     WriteCommandAction.writeCommandAction(project, file)
       .withName(IntentionPowerPackBundle.message("change.modifier.intention.name"))
       .run(() -> {
-        modifierList.setModifierProperty(modifier.toPsiModifier(), true);
+        VisibilityUtil.setVisibility(modifierList, modifier.toPsiModifier());
         if (modifier != AccessModifier.PACKAGE_LOCAL) {
           final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
           final PsiElement sibling = modifierList.getNextSibling();

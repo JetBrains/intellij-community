@@ -108,7 +108,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
-    ChangesViewModifier.KEY.addExtensionPointListener(project, () -> refreshImmediately(), this);
+    ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -623,7 +623,8 @@ public class ChangesViewManager implements ChangesViewEx,
       actions.add(Separator.getInstance());
       actions.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-      DefaultActionGroup viewOptionsGroup = DefaultActionGroup.createPopupGroup(() -> "View Options");
+      DefaultActionGroup viewOptionsGroup =
+        DefaultActionGroup.createPopupGroup(() -> VcsBundle.message("action.ChangesViewToolWindowPanel.text"));
       viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
       viewOptionsGroup.add(new ToggleShowIgnoredAction());
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
@@ -698,14 +699,15 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myChangesViewManager.myState.myShowIgnored) {
           treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
         }
-        for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
-          extension.modifyTreeModelBuilder(treeModelBuilder);
-        }
-        DefaultTreeModel newModel = treeModelBuilder.build();
 
         invokeLaterIfNeeded(() -> {
           if (myDisposed) return;
           indicator.checkCanceled();
+
+          for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
+            extension.modifyTreeModelBuilder(treeModelBuilder);
+          }
+          DefaultTreeModel newModel = treeModelBuilder.build();
 
           myModelUpdateInProgress = true;
           try {

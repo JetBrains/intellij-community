@@ -73,11 +73,27 @@ public class HighlightClassUtil {
       return null;
     }
 
-    String baseClassName = HighlightUtil.formatClass(aClass, false);
-    String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
-    String messageKey = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant ?
-                 "class.must.implement.method" : "class.must.be.abstract";
-    String message = JavaErrorBundle.message(messageKey, baseClassName, methodName, HighlightUtil.formatClass(superClass, false));
+    final String messageKey;
+    final String referenceName;
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      messageKey = "enum.constant.must.implement.method";
+
+      final PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
+      referenceName = enumConstant.getEnumConstant().getName();
+    }
+    else if (aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant) {
+      messageKey = "class.must.implement.method";
+      referenceName = HighlightUtil.formatClass(aClass, false);
+    }
+    else {
+      messageKey = "class.must.be.abstract";
+      referenceName = HighlightUtil.formatClass(aClass, false);
+    }
+
+    final String message = JavaErrorBundle.message(messageKey,
+                                                   referenceName,
+                                                   JavaHighlightUtil.formatMethod(abstractMethod),
+                                                   HighlightUtil.formatClass(superClass, false));
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
@@ -92,6 +108,7 @@ public class HighlightClassUtil {
     }
     if (!(aClass instanceof PsiAnonymousClass) &&
         !aClass.isEnum()
+        && aClass.getModifierList() != null
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
       QuickFixAction.registerQuickFixAction(
         errorResult,
@@ -758,7 +775,21 @@ public class HighlightClassUtil {
             String description = JavaErrorBundle.message("private.symbol",
                                                          HighlightUtil.formatClass(base),
                                                          HighlightUtil.formatClass(baseClass));
-            infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description).create();
+            final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(extendRef)
+              .descriptionAndTooltip(description)
+              .create();
+
+            QuickFixAction.registerQuickFixAction(
+              info,
+              QUICK_FIX_FACTORY.createModifierListFix(base, PsiModifier.PUBLIC, true, false)
+            );
+            QuickFixAction.registerQuickFixAction(
+              info,
+              QUICK_FIX_FACTORY.createModifierListFix(base, PsiModifier.PROTECTED, true, false)
+            );
+
+            infos[0] = info;
             return;
           }
 

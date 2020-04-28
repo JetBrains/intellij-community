@@ -6,14 +6,12 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
-import com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actions.CaretStopBoundary
 import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed
@@ -26,17 +24,15 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundCompositeConfigurable
-import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.SimpleListCellRenderer
@@ -48,7 +44,6 @@ private val codeInsightSettings get() = CodeInsightSettings.getInstance()
 private val editorSettings get() = EditorSettingsExternalizable.getInstance()
 private val uiSettings get() = UISettings.instance
 private val richCopySettings get() = RichCopySettings.getInstance()
-private val vcsSettings get() = VcsApplicationSettings.getInstance()
 private val codeAnalyzerSettings get() = DaemonCodeAnalyzerSettings.getInstance()
 
 private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, true)
@@ -77,30 +72,29 @@ private val cdShowSoftWrapsOnlyOnCaretLine                             get() = C
 private val cdEnsureBlankLineBeforeCheckBox                            get() = CheckboxDescriptor(message("editor.options.line.feed"), PropertyBinding(editorSettings::isEnsureNewLineAtEOF, editorSettings::setEnsureNewLineAtEOF))
 private val cdShowQuickDocOnMouseMove                                  get() = CheckboxDescriptor(message("editor.options.quick.doc.on.mouse.hover"), PropertyBinding(editorSettings::isShowQuickDocOnMouseOverElement, editorSettings::setShowQuickDocOnMouseOverElement))
 private val cdKeepTrailingSpacesOnCaretLine                            get() = CheckboxDescriptor(message("editor.settings.delete.trailing.spaces.on.caret.line"), PropertyBinding({ !editorSettings.isKeepTrailingSpacesOnCaretLine }, { editorSettings.isKeepTrailingSpacesOnCaretLine = !it }))
-private val cdShowLSTInGutterCheckBox                                  get() = CheckboxDescriptor(message("editor.options.highlight.modified.line"), vcsSettings::SHOW_LST_GUTTER_MARKERS)
-private val cdShowWhitespacesInLSTGutterCheckBox                       get() = CheckboxDescriptor(message("editor.options.whitespace.line.color"), vcsSettings::SHOW_WHITESPACES_IN_LST)
 
 // @formatter:on
 
-internal val optionDescriptors: List<OptionDescription> = listOf(
-  myCbHonorCamelHumpsWhenSelectingByClicking,
-  enableWheelFontChange,
-  enableDnD,
-  virtualSpace,
-  caretInsideTabs,
-  virtualPageAtBottom,
-  highlightBraces,
-  highlightScope,
-  highlightIdentifierUnderCaret,
-  showNotificationAfterReformatCodeCheckBox,
-  myShowNotificationAfterOptimizeImportsCheckBox,
-  renameLocalVariablesInplace,
-  preselectCheckBox,
-  showInlineDialogForCheckBox
-).map(CheckboxDescriptor::asOptionDescriptor)
+internal val optionDescriptors: List<OptionDescription>
+  get() = listOf(
+    myCbHonorCamelHumpsWhenSelectingByClicking,
+    enableWheelFontChange,
+    enableDnD,
+    virtualSpace,
+    caretInsideTabs,
+    virtualPageAtBottom,
+    highlightBraces,
+    highlightScope,
+    highlightIdentifierUnderCaret,
+    showNotificationAfterReformatCodeCheckBox,
+    myShowNotificationAfterOptimizeImportsCheckBox,
+    renameLocalVariablesInplace,
+    preselectCheckBox,
+    showInlineDialogForCheckBox
+  ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 
-class EditorOptionsPanel : BoundConfigurable(message("title.editor"), ID) {
+class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(message("title.editor"), ID), WithEpDependencies {
   companion object {
     const val ID = "preferences.editor"
 
@@ -128,6 +122,9 @@ class EditorOptionsPanel : BoundConfigurable(message("title.editor"), ID) {
       }
     }
   }
+
+  override fun createConfigurables() = ConfigurableWrapper.createConfigurables(GeneralEditorOptionsProviderEP.EP_NAME)
+  override fun getDependencies() = setOf(GeneralEditorOptionsProviderEP.EP_NAME)
 
   override fun createPanel(): DialogPanel {
     return panel {
@@ -268,20 +265,8 @@ class EditorOptionsPanel : BoundConfigurable(message("title.editor"), ID) {
         }
         row { checkBox(cdEnsureBlankLineBeforeCheckBox) }
       }
-      titledRow(message("editor.options.gutter.group")) {
-        row {
-          fun fireLSTSettingsChanged() {
-            ApplicationManager.getApplication().messageBus.syncPublisher(LineStatusTrackerSettingListener.TOPIC).settingsUpdated()
-          }
-
-          val showLstGutter = checkBox(cdShowLSTInGutterCheckBox)
-            .onApply(::fireLSTSettingsChanged)
-          row {
-            checkBox(cdShowWhitespacesInLSTGutterCheckBox)
-              .enableIf(showLstGutter.selected)
-              .onApply(::fireLSTSettingsChanged)
-          }
-        }
+      for (configurable in configurables) {
+        appendDslConfigurableRow(configurable)
       }
     }
   }
@@ -375,11 +360,7 @@ class EditorCodeEditingConfigurable : BoundCompositeConfigurable<ErrorOptionsPro
         }
       }
       titledRow(message("group.quick.documentation")) {
-        row {
-          checkBox(cdShowQuickDocOnMouseMove).apply {
-            onApply { service<QuickDocOnMouseOverManager>().setEnabled(component.isSelected) }
-          }
-        }
+        row { checkBox(cdShowQuickDocOnMouseMove) }
       }
       titledRow(message("group.editor.tooltips")) {
         row {

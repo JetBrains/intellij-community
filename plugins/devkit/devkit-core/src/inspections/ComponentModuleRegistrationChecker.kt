@@ -6,6 +6,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -43,10 +44,6 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
     if (shouldCheckExtensionPointClassAttribute(effectiveEpClass) &&
         checkProperXmlFileForClass(extensionPoint, effectiveEpClass)) {
       return
-    }
-
-    for (withElement in extensionPoint.withElements) {
-      if (checkProperXmlFileForClass(extensionPoint, withElement.implements.value)) return
     }
 
     val shortName = extensionPoint.effectiveQualifiedName.substringAfterLast('.')
@@ -150,7 +147,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
       }
     }
     val fix = if (modulePluginXmlFile != null) MoveRegistrationQuickFix(pluginXmlModule, modulePluginXmlFile.name) else null
-    annotationHolder.createProblem(element, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+    annotationHolder.createProblem(element, ProblemHighlightType.WARNING,
                                    "Element should be registered in '${definingModule.name}' module where its class '${psiClass.qualifiedName}' is defined", null,
                                    fix)
     return true

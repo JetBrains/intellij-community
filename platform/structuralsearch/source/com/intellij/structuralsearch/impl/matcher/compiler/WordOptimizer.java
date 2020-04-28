@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
@@ -12,6 +12,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * The WordOptimizer is used for extracting words to check in the index. Basically it is just an optimization for faster search,
+ * because files without the extracted words don’t need to be scanned. That means you can create Structural Search for a language
+ * without a WordOptimizer and it will still be correct, just slower.
+ *
  * @author Bas Leijdekkers
  */
 public interface WordOptimizer {
