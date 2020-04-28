@@ -895,8 +895,8 @@ public class PyCallExpressionHelper {
                                                                      @NotNull TypeEvalContext context,
                                                                      boolean inherited) {
     final List<PsiElement> result = new ArrayList<>();
-    result.addAll(resolveMetaclassDunderCall(cls, location, context));
     result.addAll(preferInitOverNew(cls.multiFindInitOrNew(inherited, context)));
+    result.addAll(resolveMetaclassDunderCall(cls, location, context));
     return result;
   }
 
