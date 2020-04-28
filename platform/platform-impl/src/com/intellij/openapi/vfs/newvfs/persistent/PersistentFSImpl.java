@@ -10,7 +10,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.*;
@@ -989,7 +989,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     List<VFileEvent> validated = new ArrayList<>(cappedInitialSize);
     BulkFileListener publisher = getPublisher();
     while (startIndex != events.size()) {
-      updateEdtProgress();
+      PingProgress.interactWithEdtProgress();
 
       applyEvents.clear();
       files.clear();
@@ -998,22 +998,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       startIndex = groupAndValidate(events, startIndex, applyEvents, validated, files, middleDirs);
 
       if (!validated.isEmpty()) {
-        updateEdtProgress();
+        PingProgress.interactWithEdtProgress();
         // do defensive copy to cope with ill-written listeners that save passed list for later processing
         List<VFileEvent> toSend = ContainerUtil.immutableList(validated.toArray(new VFileEvent[0]));
         publisher.before(toSend);
 
-        updateEdtProgress();
+        PingProgress.interactWithEdtProgress();
         applyEvents.forEach(Runnable::run);
 
-        updateEdtProgress();
+        PingProgress.interactWithEdtProgress();
         publisher.after(toSend);
       }
     }
-  }
-
-  private static void updateEdtProgress() {
-    ProgressManager.checkCanceled();
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -94,7 +95,7 @@ public final class AsyncEventSupport {
 
   private static void beforeVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
-      updateEdtProgress();
+      PingProgress.interactWithEdtProgress();
       try {
         applier.beforeVfsChange();
       }
@@ -106,7 +107,7 @@ public final class AsyncEventSupport {
 
   private static void afterVfsChange(List<? extends AsyncFileListener.ChangeApplier> appliers) {
     for (AsyncFileListener.ChangeApplier applier : appliers) {
-      updateEdtProgress();
+      PingProgress.interactWithEdtProgress();
       try {
         applier.afterVfsChange();
       }
@@ -114,10 +115,6 @@ public final class AsyncEventSupport {
         LOG.error(e);
       }
     }
-  }
-
-  private static void updateEdtProgress() {
-    ProgressManager.checkCanceled();
   }
 
   static void processEvents(List<? extends VFileEvent> events, @Nullable List<? extends AsyncFileListener.ChangeApplier> appliers) {
