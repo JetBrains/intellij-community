@@ -486,7 +486,15 @@ public abstract class NlsInfo {
       String packageName = ((PsiClassOwner)containingFile).getPackageName();
       PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
       if (aPackage != null) {
-        return fromAnnotationOwner(aPackage.getAnnotationList());
+        NlsInfo info = fromAnnotationOwner(aPackage.getAnnotationList());
+        if (info != Unspecified.UNKNOWN) {
+          return info;
+        }
+
+        PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, ANNOTATION_NAMES, false);
+        if (annotation != null) {
+          return fromAnnotation(annotation);
+        }
       }
     }
     return Unspecified.UNKNOWN;
