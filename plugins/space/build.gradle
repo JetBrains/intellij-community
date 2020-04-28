@@ -36,8 +36,6 @@ dependencies {
     compile "io.ktor:ktor-server-core:$ktor_version"
     compile "io.ktor:ktor-server-jetty:$ktor_version"
 
-    compile "org.jetbrains.kotlin:kotlin-main-kts:$kotlin_version" // dep for pipelines-config-dsl-dependencies-resolve
-
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-compiler-bootstrap')
     compile project(':plugins:pipelines:pipelines-config:pipelines-config-utils')
 
