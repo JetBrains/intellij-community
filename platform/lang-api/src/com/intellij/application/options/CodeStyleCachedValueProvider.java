@@ -162,7 +162,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         CodeStyleSettings currSettings = mySettingsManager.getCurrentSettings();
         if (currSettings != mySettingsManager.getTemporarySettings()) {
           TransientCodeStyleSettings modifiableSettings = new TransientCodeStyleSettings(file, currSettings);
-          modifiableSettings.applyIndentOptionsFromProviders();
+          modifiableSettings.applyIndentOptionsFromProviders(file);
           for (CodeStyleSettingsModifier modifier : CodeStyleSettingsModifier.EP_NAME.getExtensionList()) {
             if (modifier.modifySettings(modifiableSettings, file)) {
               LOG.debug("Modifier: " + modifier.getClass().getName());
