@@ -15,8 +15,8 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.ui.WrapLayout
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.EDT_EXECUTOR
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
+import org.jetbrains.plugins.github.util.getEDTExecutor
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.FlowLayout
 import java.awt.event.ActionListener
@@ -121,7 +121,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
           isBusy = true
           adjust(EmptyProgressIndicator(), delta)
         }
-      }, EDT_EXECUTOR)
+      }, getEDTExecutor())
       ?.handleOnEdt { _, error ->
         adjustmentError = error
         isBusy = false
