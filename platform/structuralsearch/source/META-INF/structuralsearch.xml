@@ -15,6 +15,7 @@
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.StructuralSearchPlugin"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ExistingTemplatesComponent"/>
     <projectService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager"/>
+    <projectService serviceImplementation="com.intellij.structuralsearch.inspection.SSBasedInspectionCompiledPatternsCache"/>
     <applicationService serviceImplementation="com.intellij.structuralsearch.plugin.ui.ConfigurationManager$ConfigurationManagerState"/>
 
     <typedHandler implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler"/>
