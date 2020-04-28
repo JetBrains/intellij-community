@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -16,7 +15,8 @@ import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import org.jetbrains.plugins.github.util.completionOnEdt
+import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.submitIOTask
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
@@ -100,17 +100,13 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
     val server = getServer()
     val executor = currentUi.createExecutor()
 
-    return service<ProgressManager>()
-      .submitIOTask(progressIndicator) {
-        currentUi.acquireLoginAndToken(server, executor, it)
-      }.whenComplete { _, throwable ->
-        runInEdt {
-          setBusy(false)
-          if (throwable != null && !GithubAsyncUtil.isCancellation(throwable)) {
-            tokenAcquisitionError = currentUi.handleAcquireError(throwable)
-          }
-        }
-      }
+    return service<ProgressManager>().submitIOTask(progressIndicator) {
+      currentUi.acquireLoginAndToken(server, executor, it)
+    }.completionOnEdt(progressIndicator.modalityState) {
+      setBusy(false)
+    }.errorOnEdt(progressIndicator.modalityState) {
+      tokenAcquisitionError = currentUi.handleAcquireError(it)
+    }
   }
 
   fun getServer(): GithubServerPath = GithubServerPath.from(

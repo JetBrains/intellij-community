@@ -403,27 +403,24 @@ internal class GHCloneDialogExtensionComponent(
       }
 
       setLoginListener(ActionListener {
-        acquireLoginAndToken(EmptyProgressIndicator(ModalityState.stateForComponent(this)))
-          .handleOnEdt { loginToken, throwable ->
-            errorPanel.removeAll()
-            if (throwable != null) {
-              for (validationInfo in doValidateAll()) {
-                val component = SimpleColoredComponent()
-                component.append(validationInfo.message, SimpleTextAttributes.ERROR_ATTRIBUTES)
-                errorPanel.add(component)
-                errorPanel.revalidate()
-              }
-              errorPanel.repaint()
+        val modalityState = ModalityState.stateForComponent(this)
+        acquireLoginAndToken(EmptyProgressIndicator(modalityState))
+          .completionOnEdt(modalityState) { errorPanel.removeAll() }
+          .errorOnEdt(modalityState) {
+            for (validationInfo in doValidateAll()) {
+              val component = SimpleColoredComponent()
+              component.append(validationInfo.message, SimpleTextAttributes.ERROR_ATTRIBUTES)
+              errorPanel.add(component)
+              errorPanel.revalidate()
             }
-            else if (loginToken != null) {
-              val login = loginToken.first
-              val token = loginToken.second
-              if (account != null) {
-                authenticationManager.updateAccountToken(account, token)
-              }
-              else {
-                authenticationManager.registerAccount(login, getServer().host, token)
-              }
+            errorPanel.repaint()
+          }
+          .successOnEdt(modalityState) { (login, token) ->
+            if (account != null) {
+              authenticationManager.updateAccountToken(account, token)
+            }
+            else {
+              authenticationManager.registerAccount(login, getServer().host, token)
             }
           }
       })

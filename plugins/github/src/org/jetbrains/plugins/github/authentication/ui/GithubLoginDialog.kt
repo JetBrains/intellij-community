@@ -78,15 +78,18 @@ class GithubLoginDialog @JvmOverloads constructor(executorFactory: GithubApiRequ
   fun getToken(): String = token
 
   override fun doOKAction() {
-    val emptyProgressIndicator = EmptyProgressIndicator(ModalityState.stateForComponent(githubLoginPanel))
+    val modalityState = ModalityState.stateForComponent(githubLoginPanel)
+    val emptyProgressIndicator = EmptyProgressIndicator(modalityState)
     Disposer.register(disposable, Disposable { emptyProgressIndicator.cancel() })
-    githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator).successOnEdt { (login, token) ->
-      this.login = login
-      this.token = token
-      close(OK_EXIT_CODE, true)
-    }.errorOnEdt {
-      if (!GithubAsyncUtil.isCancellation(it)) startTrackingValidation()
-    }
+    githubLoginPanel.acquireLoginAndToken(emptyProgressIndicator)
+      .successOnEdt(modalityState) { (login, token) ->
+        this.login = login
+        this.token = token
+        close(OK_EXIT_CODE, true)
+      }
+      .errorOnEdt(modalityState) {
+        if (!GithubAsyncUtil.isCancellation(it)) startTrackingValidation()
+      }
   }
 
   override fun createNorthPanel(): JComponent? {
