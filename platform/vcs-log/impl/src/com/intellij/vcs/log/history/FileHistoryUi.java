@@ -79,7 +79,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     };
 
     myFilterUi = new FileHistoryFilterUi(path, revision, root, uiProperties);
-    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor());
+    myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, logData, path, !VcsLogUiUtil.isDiffPreviewInEditor(), this);
 
     if (VcsLogUiUtil.isDiffPreviewInEditor()) {
       new FileHistoryEditorDiffPreview(logData.getProject(), myUiProperties, myFileHistoryPanel);

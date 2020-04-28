@@ -72,7 +72,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   protected MainFrame createMainFrame(@NotNull VcsLogData logData,
                                       @NotNull MainVcsLogUiProperties uiProperties, @NotNull VcsLogFilterUiEx filterUi) {
     boolean isDiffPreviewAsEditor = VcsLogUiUtil.isDiffPreviewInEditor();
-    MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor);
+    MainFrame mainFrame = new MainFrame(logData, this, uiProperties, filterUi, !isDiffPreviewAsEditor, this);
     if (isDiffPreviewAsEditor) {
       new VcsLogEditorDiffPreview(myProject, myUiProperties, mainFrame);
     }

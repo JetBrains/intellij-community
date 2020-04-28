@@ -87,14 +87,15 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                    @NotNull AbstractVcsLogUi logUi,
                    @NotNull MainVcsLogUiProperties uiProperties,
                    @NotNull VcsLogFilterUiEx filterUi,
-                   boolean withDiffPreview) {
+                   boolean withDiffPreview,
+                   @NotNull Disposable disposable) {
     myLogData = logData;
     myUiProperties = uiProperties;
 
     myFilterUi = filterUi;
 
     myGraphTable = new MyVcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), logUi.getColorManager(),
-                                          () -> logUi.getRefresher().onRefresh(), logUi::requestMore, logUi);
+                                          () -> logUi.getRefresher().onRefresh(), logUi::requestMore, disposable);
     myGraphTable.setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
     myGraphTable.setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
     myGraphTable.setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
@@ -164,7 +165,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       add(myChangesBrowserSplitter);
     }
 
-    Disposer.register(logUi, this);
+    Disposer.register(disposable, this);
     myGraphTable.resetDefaultFocusTraversalKeys();
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusPolicy());
