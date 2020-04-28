@@ -17,6 +17,8 @@ import javax.swing.*;
 import java.io.File;
 
 public class PatchFileType implements FileType {
+  public static final PatchFileType INSTANCE = new PatchFileType();
+
   public static final String NAME = "PATCH"; //NON-NLS
 
   @Override
