@@ -8,13 +8,13 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
 public class TagButton extends JButton implements Disposable {
-  private final static Color backgroundColor = Color.decode("#E5E5E5");
   private final AWTEventListener myEventListener;
   private JBPopup myPopup;
   private InplaceButton myCloseButton;
@@ -22,7 +22,7 @@ public class TagButton extends JButton implements Disposable {
   public TagButton(String text, Runnable action) {
     super(text);
     setOpaque(false);
-    putClientProperty("JButton.backgroundColor", backgroundColor);
+    putClientProperty("JButton.backgroundColor", getBackgroundColor());
     addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -57,6 +57,10 @@ public class TagButton extends JButton implements Disposable {
     Toolkit.getDefaultToolkit().addAWTEventListener(myEventListener, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
   }
 
+  private static Color getBackgroundColor() {
+    return JBUI.CurrentTheme.ActionButton.hoverBackground();
+  }
+
   private void hidePopup() {
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
@@ -65,7 +69,7 @@ public class TagButton extends JButton implements Disposable {
 
   @Override
   protected void paintComponent(Graphics g) {
-    putClientProperty("JButton.borderColor", hasFocus() ? null : backgroundColor);
+    putClientProperty("JButton.borderColor", hasFocus() ? null : getBackgroundColor());
     super.paintComponent(g);
   }
 
