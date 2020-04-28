@@ -148,9 +148,10 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         try {
           XDebugSession currentSession = XDebuggerManager.getInstance(project).getCurrentSession();
           JavaSdkVersion javaVersion = getJavaVersion(currentSession);
+          PsiElement physicalContext = findPhysicalContext(psiContext);
           ExtractLightMethodObjectHandler.ExtractedData data = ExtractLightMethodObjectHandler.extractLightMethodObject(
             project,
-            findPhysicalContext(psiContext),
+            physicalContext != null ? physicalContext : psiContext,
             fragmentFactory.apply(psiContext),
             getGeneratedClassName(),
             javaVersion);
@@ -167,14 +168,10 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     return null;
   }
 
-  @NotNull
+  @Nullable
   private static PsiElement findPhysicalContext(@NotNull PsiElement element) {
-    while (!element.isPhysical()) {
-      PsiElement context = element.getContext();
-      if (context == null) {
-        break;
-      }
-      element = context;
+    while (element != null && !element.isPhysical()) {
+      element = element.getContext();
     }
     return element;
   }
