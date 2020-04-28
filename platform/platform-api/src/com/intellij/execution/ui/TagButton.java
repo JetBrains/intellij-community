@@ -44,7 +44,7 @@ public class TagButton extends JButton implements Disposable {
         }
         else if ((MouseEvent.MOUSE_ENTERED == me.getID() || MouseEvent.MOUSE_MOVED == me.getID()) &&
                 (myPopup == null || !myPopup.isVisible())) {
-          myCloseButton = new InplaceButton(new IconButton("Close", AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover),
+          myCloseButton = new InplaceButton(new IconButton("Close", AllIcons.Actions.DeleteTag),
                               a -> { action.run(); hidePopup(); });
           myCloseButton.setOpaque(false);
           myCloseButton.setPreferredSize(new Dimension(16, 16));
