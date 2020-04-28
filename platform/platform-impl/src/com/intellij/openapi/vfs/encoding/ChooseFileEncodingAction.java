@@ -125,9 +125,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     favorites.remove(alreadySelected);
 
     if (clearItemText != null) {
-      String description = IdeBundle.message("action.clear.encoding.description",
-                                             myVirtualFile == null ? IdeBundle.message("action.clear.encoding.default.description")
-                                                                   : IdeBundle.message("action.clear.encoding.file.description", myVirtualFile.getName()));
+      String description = myVirtualFile == null
+                           ? IdeBundle.message("action.clear.encoding.description")
+                           : IdeBundle.message("action.clear.encoding.description.file", myVirtualFile.getName());
       group.add(new DumbAwareAction(clearItemText, description, null) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {

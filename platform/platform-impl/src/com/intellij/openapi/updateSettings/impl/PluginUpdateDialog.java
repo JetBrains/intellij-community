@@ -164,10 +164,8 @@ public class PluginUpdateDialog extends DialogWrapper {
       setOKButtonText(CommonBundle.getCloseButtonText());
     }
     else {
-      String action = ApplicationManager.getApplication().isRestartCapable()
-                      ? IdeBundle.message("button.ide.restart.action")
-                      : IdeBundle.message("button.ide.shutdown.action");
-      setOKButtonText(restart ? IdeBundle.message("button.text.ide", action) : IdeBundle.message("button.update.all.and.0", action));
+      setOKButtonText(IdeBundle.message("button.text.ide.restart.shutdown", restart ? 0 : 1,
+                                        ApplicationManager.getApplication().isRestartCapable() ? 0 : 1));
     }
   }
 

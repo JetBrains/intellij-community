@@ -65,17 +65,15 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
                                (current.isNull() ? "" : "Current encoding: '" + current.get().displayName() + "'");
           if (bom != null) {
             Messages.showErrorDialog(XmlStringUtil.wrapInHtml(
-                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding." +
-                          explanation),
+              IdeBundle.message("dialog.title.file.0.can.t.be.reloaded", virtualFile.getName(), charset.displayName(), explanation)),
                                      IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()));
             res = -1;
           }
           else {
             res = Messages.showDialog(XmlStringUtil.wrapInHtml(
-                "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
-                explanation),
+              IdeBundle.message("dialog.title.file.0.most.likely.isn.t.stored", virtualFile.getName(), charset.displayName(), explanation)),
                                       IdeBundle.message("dialog.title.incompatible.encoding.0", charset.displayName()),
-                                      new String[]{"Reload anyway", "Cancel"}, 1,
+                                      new String[]{IdeBundle.message("button.reload.anyway"), CommonBundle.getCancelButtonText()}, 1,
                                       AllIcons.General.WarningDialog);
           }
           if (res != 0) {
