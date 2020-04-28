@@ -69,6 +69,8 @@ public class JBCefClient implements JBCefDisposable {
       try {
         myCefClient.dispose();
       }
+      catch (IllegalStateException ignore) {
+      }
       catch (Exception e) {
         LOG.warn(e);
       }
