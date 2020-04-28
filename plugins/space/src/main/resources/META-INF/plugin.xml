@@ -32,7 +32,6 @@
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <registryKey key="space.automation.enabled" defaultValue="false" restartRequired="true" description="Enable Space Automation"/>
         <applicationService serviceImplementation="circlet.settings.CircletSettings"/>
         <applicationService serviceImplementation="circlet.components.CircletUserAvatarProvider"/>
 
@@ -42,7 +41,7 @@
             displayName="Space"
             instance="circlet.settings.CircletSettingsPanel"/>
 
-        <toolWindow id="Space"
+        <toolWindow id="Space Automation"
                     icon="CircletIcons.mainToolWindowIcon"
                     anchor="right"
                     canCloseContents="true"
@@ -64,6 +63,8 @@
         <openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension implementation="circlet.vcs.clone.CircletCloneExtension"/>
 
         <postStartupActivity implementation="circlet.vcs.PostStartupActivity"/>
+        <postStartupActivity implementation="circlet.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
+
     </extensions>
 
     <application-components>

@@ -4,14 +4,13 @@ import circlet.plugins.pipelines.ui.*
 import circlet.utils.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
-import com.intellij.openapi.util.registry.*
 import com.intellij.openapi.wm.*
 import platform.common.*
 
 class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun shouldBeAvailable(project: Project): Boolean {
-        return Registry.`is`("space.automation.enabled")
+        return false
     }
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -24,12 +23,12 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     companion object {
-        const val TOOL_WINDOW_ID = "$ProductName Automation"
+        const val TOOL_WINDOW_ID = "Space Automation"
     }
 
 }
 
-val Project.toolWindow: ToolWindow?
+val Project.spaceKtsToolwindow: ToolWindow?
     get() = computeSafe {
         toolWindowManager.getToolWindow(CircletToolWindowFactory.TOOL_WINDOW_ID)
     }

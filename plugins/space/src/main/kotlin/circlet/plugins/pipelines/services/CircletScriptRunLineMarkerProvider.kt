@@ -5,6 +5,7 @@ import com.intellij.execution.*
 import com.intellij.execution.lineMarker.*
 import com.intellij.icons.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.components.*
 import com.intellij.psi.*
 import org.jetbrains.kotlin.idea.refactoring.fqName.*
 import org.jetbrains.kotlin.idea.references.*
@@ -13,9 +14,10 @@ import org.jetbrains.kotlin.psi.*
 class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
 
     override fun getInfo(element: PsiElement): Info? {
-
         val refs = element.references
         refs.forEach {
+            // TODO: optimize it!!!
+/*
             if (it is KtSimpleNameReference) {
                 val resolveResult = it.resolve()
                 if (resolveResult != null) {
@@ -36,6 +38,7 @@ class CircletScriptRunLineMarkerProvider : RunLineMarkerContributor() {
                     }
                 }
             }
+*/
         }
 
         return null

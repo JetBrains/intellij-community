@@ -1,7 +1,10 @@
 package circlet.plugins.pipelines.viewmodel
 
 import circlet.pipelines.config.api.*
+import com.intellij.build.events.*
+import com.intellij.build.events.impl.*
 import libraries.coroutines.extra.*
+import libraries.io.random.*
 import runtime.reactive.*
 import javax.swing.tree.*
 
@@ -19,13 +22,20 @@ class LogData {
     // lifetime corresponding to the entire build process, it terminates when this build finishes
     val lifetime get() = _buildLifetime
 
-    val messages = ObservableList.mutable<String>()
+    val buildId = Random.nextUID()
+
+    val messages = ObservableList.mutable<BuildEvent>()
 
     private val _buildLifetime = LifetimeSource()
 
-    fun add(message: String) {
+    fun message(message: String) {
         _buildLifetime.assertNotTerminated()
-        messages.add(message)
+        messages.add(OutputBuildEventImpl(buildId, message + "\n", true))
+    }
+
+    fun error(message: String) {
+        _buildLifetime.assertNotTerminated()
+        messages.add(OutputBuildEventImpl(buildId, message + "\n", false))
     }
 
     fun close() {

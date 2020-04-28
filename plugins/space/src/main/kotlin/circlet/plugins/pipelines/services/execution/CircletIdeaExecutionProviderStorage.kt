@@ -2,7 +2,6 @@ package circlet.plugins.pipelines.services.execution
 
 import circlet.pipelines.common.api.*
 import circlet.pipelines.config.api.*
-import circlet.pipelines.engine.api.*
 import circlet.pipelines.engine.api.storage.*
 import circlet.pipelines.provider.api.*
 import circlet.pipelines.provider.local.*

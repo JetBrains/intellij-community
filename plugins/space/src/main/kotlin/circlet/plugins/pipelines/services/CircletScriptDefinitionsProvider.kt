@@ -1,29 +1,29 @@
 package circlet.plugins.pipelines.services
 
-import circlet.pipelines.config.dsl.scriptdefinition.*
+import circlet.pipelines.config.utils.*
 import circlet.plugins.pipelines.utils.*
 import java.io.*
 import kotlin.script.experimental.intellij.*
 
 class CircletScriptDefinitionsProvider : ScriptDefinitionsProvider {
-    private val mainKtsFile : File by lazy { JarFinder.findInKotlinPlugin("kotlin-main-kts") }
 
     override val id: String = "CircletScriptDefinitionsProvider"
 
     override fun getDefinitionClasses(): Iterable<String> {
-        return listOf(ProjectScriptDefinition::class.qualifiedName!!)
+        return listOf(ScriptConstants.ScriptTemplateClassQualifiedName)
     }
 
     override fun getDefinitionsClassPath(): Iterable<File> {
-        val file = JarFinder.find("pipelines-config-dsl-scriptdefinition")
-        if (!file.exists()) {
+        val defFile = JarFinder.find("pipelines-config-scriptdefinition-compile")
+        if (!defFile.exists()) {
             throw Exception("File with ProjectScriptDefinition doesn't exist")
         }
 
-        return listOf(file, mainKtsFile)
+        return listOf(defFile)
     }
 
     override fun useDiscovery(): Boolean {
         return true
     }
+
 }

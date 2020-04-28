@@ -208,7 +208,7 @@ class CircletToolWindowService(val project: Project) : LifetimedDisposable by Li
         root.removeAllChildren()
         if (config == null) {
             if (error != null) {
-                root.add(CircletModelTreeNode("Script failed to compile"))
+                root.add(CircletModelTreeNode(error))
                 return
             }
             if (state == ScriptState.Building) {
