@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -63,7 +62,7 @@ class JrtHandler extends ArchiveHandler {
         else {
           File file = new File(path, "lib/jrt-fs.jar");
           if (!file.exists()) throw new IOException("Missing provider: " + file);
-          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), new MyClassLoader(file));
+          fs = FileSystems.newFileSystem(ROOT_URI, Collections.emptyMap(), new URLClassLoader(new URL[]{file.toURI().toURL()}, null));
         }
         myFileSystem = new SoftReference<>(fs);
       }
@@ -122,11 +121,5 @@ class JrtHandler extends ArchiveHandler {
     if (entry == null) throw new FileNotFoundException(getFile() + " : " + relativePath);
     Path path = getFileSystem().getPath("/modules/" + relativePath);
     return Files.readAllBytes(path);
-  }
-
-  private static class MyClassLoader extends URLClassLoader {
-    private MyClassLoader(File file) throws MalformedURLException {
-      super(new URL[]{file.toURI().toURL()}, null);
-    }
   }
 }
