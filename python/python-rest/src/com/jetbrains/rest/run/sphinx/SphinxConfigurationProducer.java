@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.run.sphinx;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -14,14 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.rest.RestFile;
+import com.jetbrains.rest.run.RestRunConfiguration;
 import com.jetbrains.rest.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public class SphinxConfigurationProducer extends LazyRunConfigurationProducer<SphinxRunConfiguration> {
+public class SphinxConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
@@ -29,9 +25,10 @@ public class SphinxConfigurationProducer extends LazyRunConfigurationProducer<Sp
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull SphinxRunConfiguration configuration,
+  protected boolean setupConfigurationFromContext(@NotNull RestRunConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
+    assert (configuration instanceof SphinxRunConfiguration);
     PsiElement element = sourceElement.get();
     if (!(element instanceof PsiDirectory)) return false;
 
@@ -68,18 +65,12 @@ public class SphinxConfigurationProducer extends LazyRunConfigurationProducer<Sp
   }
 
   @Override
-  public boolean isConfigurationFromContext(@NotNull SphinxRunConfiguration configuration, @NotNull ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull RestRunConfiguration configuration, @NotNull ConfigurationContext context) {
     PsiElement element = context.getPsiLocation();
     if (!(element instanceof PsiDirectory)) return false;
     final VirtualFile vFile = ((PsiDirectory)element).getVirtualFile();
     String path = vFile.getPath();
     final String scriptName = configuration.getInputFile();
     return FileUtil.toSystemIndependentName(scriptName).equals(FileUtil.toSystemIndependentName(path));
-  }
-
-  @Override
-  protected @NotNull List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
-    return ContainerUtil.filter(super.getConfigurationSettingsList(runManager),
-                                s -> s.getConfiguration() instanceof SphinxRunConfiguration);
   }
 }

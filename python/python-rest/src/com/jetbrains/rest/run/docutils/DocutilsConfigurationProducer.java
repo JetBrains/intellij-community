@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.run.docutils;
 
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -14,14 +12,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.rest.RestFileType;
+import com.jetbrains.rest.run.RestRunConfiguration;
 import com.jetbrains.rest.run.RestRunConfigurationType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-public class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<DocutilsRunConfiguration> {
+public class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<RestRunConfiguration> {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
@@ -29,9 +25,10 @@ public class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<
   }
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull DocutilsRunConfiguration configuration,
+  protected boolean setupConfigurationFromContext(@NotNull RestRunConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
+    assert (configuration instanceof DocutilsRunConfiguration);
     PsiFile script = sourceElement.get().getContainingFile();
     if (script == null || script.getFileType() != RestFileType.INSTANCE) {
       return false;
@@ -68,7 +65,7 @@ public class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<
   }
 
   @Override
-  public boolean isConfigurationFromContext(@NotNull DocutilsRunConfiguration configuration, @NotNull ConfigurationContext context) {
+  public boolean isConfigurationFromContext(@NotNull RestRunConfiguration configuration, @NotNull ConfigurationContext context) {
     final PsiElement element = context.getPsiLocation();
     if (element == null) {
       return false;
@@ -84,11 +81,5 @@ public class DocutilsConfigurationProducer extends LazyRunConfigurationProducer<
     String path = vFile.getPath();
     final String scriptName = configuration.getInputFile();
     return FileUtil.toSystemIndependentName(scriptName).equals(FileUtil.toSystemIndependentName(path));
-  }
-
-  @Override
-  protected @NotNull List<RunnerAndConfigurationSettings> getConfigurationSettingsList(@NotNull RunManager runManager) {
-    return ContainerUtil.filter(super.getConfigurationSettingsList(runManager),
-                                s -> s.getConfiguration() instanceof DocutilsRunConfiguration);
   }
 }
