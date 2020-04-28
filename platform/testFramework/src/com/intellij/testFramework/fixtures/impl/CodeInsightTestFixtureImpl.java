@@ -1906,9 +1906,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DataContext dataContext = SimpleDataContext.getSimpleContext(
       CommonDataKeys.PSI_FILE.getName(), ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(getProject()));
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    return new ClassSearchEverywhereContributor(event) {{
+    ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
     }};
+    Disposer.register(getProjectDisposable(), contributor);
+    return contributor;
   }
 
   protected void bringRealEditorBack() {
