@@ -32,8 +32,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -486,15 +484,17 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       return;
     }
 
+
     // 3. If the project is not under VCS, keep using .idea/runConfigurations
-    if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+    RunConfigurationVcsSupport vcsSupport = myProject.getService(RunConfigurationVcsSupport.class);
+    if (!vcsSupport.hasActiveVcss(myProject)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
     }
 
     // 4. If .idea/runConfigurations is not excluded from VCS (e.g. not in .gitignore), then use it
-    if (!isDotIdeaStorageVcsIgnored()) {
+    if (!isDotIdeaStorageVcsIgnored(vcsSupport)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
@@ -524,9 +524,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myFolderPathIfStoredInArbitraryFile = baseDir.getPath() + "/.run";
   }
 
-  private boolean isDotIdeaStorageVcsIgnored() {
+  private boolean isDotIdeaStorageVcsIgnored(RunConfigurationVcsSupport vcsSupport) {
     if (myDotIdeaStorageVcsIgnored == null) {
-      myDotIdeaStorageVcsIgnored = VcsIgnoreManager.getInstance(myProject).isDirectoryVcsIgnored(getDotIdeaStoragePath(myProject));
+      myDotIdeaStorageVcsIgnored = vcsSupport.isDirectoryVcsIgnored(myProject, getDotIdeaStoragePath(myProject));
     }
     return myDotIdeaStorageVcsIgnored.booleanValue();
   }
