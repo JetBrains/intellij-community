@@ -379,6 +379,10 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public Sdk createJdk(@NotNull String jdkName, @NotNull String home, boolean isJre) {
+    File jdkHomeFile = new File(home);
+    if (!jdkHomeFile.exists()) {
+      throw new IllegalArgumentException(jdkHomeFile.getAbsolutePath() + " doesn't exist");
+    }
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
@@ -387,10 +391,6 @@ public final class JavaSdkImpl extends JavaSdk {
       sdkModificator.setVersionString(jdkName);  // must be set after home path, otherwise setting home path clears the version string
     }
 
-    File jdkHomeFile = new File(home);
-    if (!jdkHomeFile.exists()) {
-      throw new IllegalStateException(jdkHomeFile.getAbsolutePath() + " doesn't exist");
-    }
     addClasses(jdkHomeFile, sdkModificator, isJre);
     addSources(jdkHomeFile, sdkModificator);
     addDocs(jdkHomeFile, sdkModificator, null);
