@@ -628,7 +628,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       }
     };
     FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint(null).registerExtension(detector, getTestRootDisposable());
-    myFileTypeManager.toLog = true;
+    FileTypeManagerImpl.toLog = true;
 
     try {
       log("T: ------ akjdhfksdjgf");
@@ -644,8 +644,6 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
       log("T: ------ reload");
       myFileTypeManager.drainReDetectQueue();
-      myFileTypeManager.clearCaches();
-      file.putUserData(FileTypeManagerImpl.DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
       getPsiManager().dropPsiCaches();
 
       ensureRedetected(file, detectorCalled);
@@ -653,7 +651,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       log("T: ------");
     }
     finally {
-      myFileTypeManager.toLog = false;
+      FileTypeManagerImpl.toLog = false;
     }
   }
 
