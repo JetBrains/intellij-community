@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiManager;
@@ -38,7 +39,7 @@ public class PyUiUtil {
    * @param message     the text, HTML markup allowed
    * @param messageType message type, changes the icon and the background.
    */
-  public static void showBalloon(@NotNull Project project, @NotNull String message, @NotNull MessageType messageType) {
+  public static void showBalloon(@NotNull Project project, @NotNull @PopupContent String message, @NotNull MessageType messageType) {
     // ripped from com.intellij.openapi.vcs.changes.ui.ChangesViewBalloonProblemNotifier
     final JFrame frame = WindowManager.getInstance().getFrame(project.isDefault() ? null : project);
     if (frame == null) return;
