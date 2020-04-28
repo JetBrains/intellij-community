@@ -654,8 +654,24 @@ class LibraryFilesPackagingElementEntity(
 ) : PackagingElementEntity()
 
 @Suppress("unused")
-class ModuleSourcePackagingElementEntityData : PackagingElementEntity() {
+class ModuleSourcePackagingElementEntityData : PEntityData<ModuleSourcePackagingElementEntity>(), PSoftLinkable {
   lateinit var module: ModuleId
+
+  override fun getLinks(): List<PersistentEntityId<*>> {
+    return listOf(module)
+  }
+
+  override fun updateLink(oldLink: PersistentEntityId<*>,
+                          newLink: PersistentEntityId<*>,
+                          affectedIds: MutableList<Pair<PersistentEntityId<*>, PersistentEntityId<*>>>): Boolean {
+    if (module != oldLink) return false
+    this.module = newLink as ModuleId
+    return true
+  }
+
+  override fun createEntity(snapshot: TypedEntityStorage): ModuleSourcePackagingElementEntity {
+    return ModuleSourcePackagingElementEntity(module).also { addMetaData(it, snapshot) }
+  }
 }
 
 class ModuleSourcePackagingElementEntity(
