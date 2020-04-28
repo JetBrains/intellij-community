@@ -215,16 +215,17 @@ public final class ConfigurableExtensionPointUtil {
                       : StringUtil.first(MessageFormat.format(
                         ep.getResourceValue("configurable.group.project.named.settings.display.name"),
                         project.getName()), 30, true);
-        node.myValue = new SortedConfigurableGroup(id, name, ep.helpTopic, ep.weight);
+        node.myValue = new SortedConfigurableGroup(id, name, ep.getDescription(), ep.helpTopic, ep.weight);
       }
       else if (root) {
-        node.myValue = new SortedConfigurableGroup(id, "ROOT GROUP", null, 0);
+        node.myValue = new SortedConfigurableGroup(id, "ROOT GROUP", null, null, 0);
       }
       else {
         LOG.warn("Use <groupConfigurable> to specify custom configurable group: " + groupId);
         int weight = getInt(bundle, id + ".settings.weight");
         String help = getString(bundle, id + ".settings.help.topic");
         String name = getName(bundle, id + ".settings.display.name");
+        String desc = getName(bundle, id + ".settings.description");
         if (name != null && project != null) {
           if (!project.isDefault() && !name.contains("{")) {
             String named = getString(bundle, id + ".named.settings.display.name");
@@ -234,7 +235,7 @@ public final class ConfigurableExtensionPointUtil {
             name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
           }
         }
-        node.myValue = new SortedConfigurableGroup(id, name, help, weight);
+        node.myValue = new SortedConfigurableGroup(id, name, desc, help, weight);
       }
     }
     if (configurables != null) {
