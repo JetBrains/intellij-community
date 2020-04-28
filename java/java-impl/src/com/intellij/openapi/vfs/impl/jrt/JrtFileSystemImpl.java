@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -163,5 +164,13 @@ public class JrtFileSystemImpl extends JrtFileSystem {
   protected boolean isCorrectFileType(@NotNull VirtualFile local) {
     String path = local.getPath();
     return JdkUtil.isModularRuntime(path) && !JdkUtil.isExplodedModularRuntime(path);
+  }
+
+  @TestOnly
+  public void release(@NotNull String localPath) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) throw new IllegalStateException();
+    ArchiveHandler handler = myHandlers.remove(localPath);
+    if (handler == null) throw new IllegalArgumentException(localPath + " not in " + myHandlers.keySet());
+    handler.dispose();
   }
 }
