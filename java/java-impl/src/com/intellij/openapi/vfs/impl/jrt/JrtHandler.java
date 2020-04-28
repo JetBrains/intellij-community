@@ -41,11 +41,11 @@ class JrtHandler extends ArchiveHandler {
         try {
           fs.close();
           ClassLoader loader = fs.getClass().getClassLoader();
-          if (loader instanceof MyClassLoader) {
-            ((MyClassLoader)loader).close();
+          if (loader instanceof AutoCloseable) {
+            ((AutoCloseable)loader).close();
           }
         }
-        catch (IOException e) {
+        catch (Exception e) {
           Logger.getInstance(JrtHandler.class).info(e);
         }
       }
