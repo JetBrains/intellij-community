@@ -20,6 +20,42 @@
     <appStarter implementation="com.intellij.ide.plugins.JarOrderStarter"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilderAppStarter"/>
 
+    <groupConfigurable id="appearance" weight="70"
+                       helpTopic="configurable.group.appearance.help.topic"
+                       displayNameKey="configurable.group.appearance.settings.display.name"
+                       descriptionKey="configurable.group.appearance.settings.description"/>
+    <groupConfigurable id="editor" weight="60"
+                       helpTopic="configurable.group.editor.help.topic"
+                       displayNameKey="configurable.group.editor.settings.display.name"
+                       descriptionKey="configurable.group.editor.settings.description"/>
+    <groupConfigurable id="proofread" parentId="editor"
+                       displayNameKey="configurable.group.proofread.settings.display.name"
+                       descriptionKey="configurable.group.proofread.settings.description"/>
+    <groupConfigurable id="project" weight="40"
+                       displayNameKey="configurable.group.project.settings.display.name"
+                       descriptionKey="configurable.group.project.settings.description"/>
+    <groupConfigurable id="build" weight="30"
+                       helpTopic="configurable.group.build.help.topic"
+                       displayNameKey="configurable.group.build.settings.display.name"
+                       descriptionKey="configurable.group.build.settings.description"/>
+    <groupConfigurable id="build.tools" parentId="build" weight="1000"
+                       displayNameKey="configurable.group.build.tools.settings.display.name"
+                       descriptionKey="configurable.group.build.tools.settings.description"/>
+    <groupConfigurable id="profiler" parentId="build"
+                       displayNameKey="configurable.group.profiler.settings.display.name"
+                       descriptionKey="configurable.group.profiler.settings.description"/>
+    <groupConfigurable id="language" weight="20"
+                       helpTopic="configurable.group.language.help.topic"
+                       displayNameKey="configurable.group.language.settings.display.name"
+                       descriptionKey="configurable.group.language.settings.description"/>
+    <groupConfigurable id="tools" weight="10"
+                       helpTopic="configurable.group.tools.help.topic"
+                       displayNameKey="configurable.group.tools.settings.display.name"
+                       descriptionKey="configurable.group.tools.settings.description"/>
+    <groupConfigurable id="other" weight="-10"
+                       displayNameKey="configurable.group.other.settings.display.name"
+                       descriptionKey="configurable.group.other.settings.description"/>
+
     <applicationService serviceImplementation="com.intellij.util.net.ssl.CertificateManager" preload="await"/>
 
     <applicationService serviceInterface="com.intellij.ide.plugins.PluginConflictReporter" serviceImplementation="com.intellij.diagnostic.GuiPluginConflictReporter"/>

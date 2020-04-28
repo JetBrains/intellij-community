@@ -195,46 +195,53 @@ public final class ConfigurableExtensionPointUtil {
 
   private static void addGroup(@NotNull Map<String, Node<SortedConfigurableGroup>> tree, Project project,
                                String groupId, List<? extends Configurable> configurables, ResourceBundle alternative) {
+    boolean root = "root".equals(groupId);
     String id = "configurable.group." + groupId;
     ResourceBundle bundle = getBundle(id + ".settings.display.name", configurables, alternative);
     if (bundle == null) {
       bundle = OptionsBundle.INSTANCE.getResourceBundle();
-      if ("root".equals(groupId)) {
-        try {
-          String value = bundle.getString("configurable.group.root.settings.display.name");
-          LOG.error("OptionsBundle does not contain root group", value);
-        }
-        catch (Exception exception) {
-          LOG.error("OptionsBundle does not contain root group", exception);
-        }
-      }
-      else {
+      if (!root) {
         LOG.warn("use other group instead of unexpected one: " + groupId);
         groupId = "other";
         id = "configurable.group." + groupId;
       }
     }
+    ConfigurableGroupEP ep = root ? null : ConfigurableGroupEP.find(groupId);
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
     if (node.myValue == null) {
-      int weight = getInt(bundle, id + ".settings.weight");
-      String help = getString(bundle, id + ".settings.help.topic");
-      String name = getName(bundle, id + ".settings.display.name");
-      if (name != null && project != null) {
-        if (!project.isDefault() && !name.contains("{")) {
-          String named = getString(bundle, id + ".named.settings.display.name");
-          name = named != null ? named : name;
-        }
-        if (name.contains("{")) {
-          name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
-        }
+      if (ep != null) {
+        String name = project == null || project.isDefault() || !"project".equals(groupId)
+                      ? ep.getDisplayName()
+                      : StringUtil.first(MessageFormat.format(
+                        ep.getResourceValue("configurable.group.project.named.settings.display.name"),
+                        project.getName()), 30, true);
+        node.myValue = new SortedConfigurableGroup(id, name, ep.helpTopic, ep.weight);
       }
-      node.myValue = new SortedConfigurableGroup(id, name, help, weight);
+      else if (root) {
+        node.myValue = new SortedConfigurableGroup(id, "ROOT GROUP", null, 0);
+      }
+      else {
+        LOG.warn("Use <groupConfigurable> to specify custom configurable group: " + groupId);
+        int weight = getInt(bundle, id + ".settings.weight");
+        String help = getString(bundle, id + ".settings.help.topic");
+        String name = getName(bundle, id + ".settings.display.name");
+        if (name != null && project != null) {
+          if (!project.isDefault() && !name.contains("{")) {
+            String named = getString(bundle, id + ".named.settings.display.name");
+            name = named != null ? named : name;
+          }
+          if (name.contains("{")) {
+            name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
+          }
+        }
+        node.myValue = new SortedConfigurableGroup(id, name, help, weight);
+      }
     }
     if (configurables != null) {
       node.myValue.myList.addAll(configurables);
     }
-    if (node.myParent == null && !groupId.equals("root")) {
-      String parentId = getString(bundle, id + ".settings.parent");
+    if (!root && node.myParent == null) {
+      String parentId = ep != null ? ep.parentId : getString(bundle, id + ".settings.parent");
       parentId = Node.cyclic(tree, parentId, "root", groupId, node);
       node.myParent = Node.add(tree, parentId, groupId);
       addGroup(tree, project, parentId, null, bundle);

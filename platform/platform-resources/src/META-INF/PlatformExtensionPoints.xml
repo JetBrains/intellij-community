@@ -32,6 +32,10 @@
       <with attribute="instance" implements="com.intellij.openapi.options.Configurable"/>
     </extensionPoint>
 
+    <extensionPoint name="groupConfigurable"
+                    beanClass="com.intellij.openapi.options.ex.ConfigurableGroupEP"
+                    dynamic="true"/>
+
     <extensionPoint name="fileType"
                     beanClass="com.intellij.openapi.fileTypes.impl.FileTypeBean"
                     dynamic="true">
