@@ -96,7 +96,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     final VirtualFile initialSourceRoot =
       initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
     final VirtualFile[] selection = new VirtualFile[]{initialSourceRoot};
-    boolean hasLeaveInSameSourceRoot = initialSourceRoot != null && !fileIndex.isInLibrarySource(initialSourceRoot);
+    boolean hasLeaveInSameSourceRoot = initialTargetDirectory == null || 
+                                       initialSourceRoot != null && !fileIndex.isInLibrarySource(initialSourceRoot);
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
