@@ -12,7 +12,6 @@ import circlet.ui.AccountsMenuListPopup
 import circlet.vcs.*
 import circlet.vcs.clone.*
 import circlet.workspaces.*
-import com.intellij.ide.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.ui.popup.*
@@ -133,30 +132,28 @@ class CircletMainToolBarAction : DumbAwareAction()  {
                                             { CircletCloneAction.runClone(project) },
                                             showSeparatorAbove = true)
         val projectContext = CircletProjectContext.getInstance(project)
-        val projectInfos = projectContext.projectDescriptions
-
-        if (projectInfos != null) {
-            val descriptions = projectInfos.second
+        val context = projectContext.context.value
+        if (!context.empty) {
+            val descriptions = context.reposInProject.keys
             if (descriptions.size > 1) {
                 menuItems += AccountMenuItem.Group("Code Reviews", descriptions.map {
-                    val reviewsUrl = Navigator.p.project(it.projectKey).reviews.absoluteHref(host)
-                    browseAction("Open for ${it.project.name} project",reviewsUrl)
+                    val reviewsUrl = Navigator.p.project(it.key).reviews.absoluteHref(host)
+                    browseAction("Open for ${it.project.name} project", reviewsUrl)
                 }.toList())
 
                 menuItems += AccountMenuItem.Group("Checklists", descriptions.map {
-                    val checklistsUrl = Navigator.p.project(it.projectKey).checklists().absoluteHref(host)
-                    browseAction("Open for ${it.project.name} project",checklistsUrl)
+                    val checklistsUrl = Navigator.p.project(it.key).checklists().absoluteHref(host)
+                    browseAction("Open for ${it.project.name} project", checklistsUrl)
                 }.toList())
 
                 menuItems += AccountMenuItem.Group("Issues", descriptions.map {
-                    val issuesUrl = Navigator.p.project(it.projectKey).issues().absoluteHref(host)
-                    browseAction("Open for ${it.project.name} project",issuesUrl)
+                    val issuesUrl = Navigator.p.project(it.key).issues().absoluteHref(host)
+                    browseAction("Open for ${it.project.name} project", issuesUrl)
                 }.toList())
-            }
-            else {
-                val p = Navigator.p.project(descriptions.first().projectKey)
+            } else {
+                val p = Navigator.p.project(descriptions.first().key)
 
-                menuItems += browseAction("Code Reviews",p.reviews.absoluteHref(host))
+                menuItems += browseAction("Code Reviews", p.reviews.absoluteHref(host))
                 menuItems += browseAction("Checklists", p.checklists().absoluteHref(host))
                 menuItems += browseAction("Issues", p.issues().absoluteHref(host))
             }

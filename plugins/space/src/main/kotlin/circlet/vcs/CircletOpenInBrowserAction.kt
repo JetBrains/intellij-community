@@ -26,7 +26,7 @@ import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
 import git4idea.repo.GitRepository
 import icons.SpaceIcons
-import runtime.routing.Location
+import runtime.routing.*
 import com.intellij.openapi.util.Ref as Ref1
 
 abstract class CircletOpenInBrowserActionGroup<T>(groupName: String) :
@@ -57,15 +57,15 @@ abstract class CircletOpenInBrowserActionGroup<T>(groupName: String) :
 }
 
 abstract class CircletOpenInBrowserAction(groupName: String) :
-    CircletOpenInBrowserActionGroup<Pair<CircletProjectDescription, String>>(groupName) {
+    CircletOpenInBrowserActionGroup<Pair<CircletProjectInfo, String>>(groupName) {
 
     override fun update(e: AnActionEvent) {
         CircletActionUtils.showIconInActionSearch(e)
         val project = e.project
         if (project != null) {
             val projectContext = CircletProjectContext.getInstance(project)
-            val projectDescriptions = projectContext.projectDescriptions
-            if (projectDescriptions != null) {
+            val projectDescriptions = !projectContext.context.value.empty
+            if (projectDescriptions) {
                 e.presentation.isEnabled = true
 
                 return
@@ -74,19 +74,19 @@ abstract class CircletOpenInBrowserAction(groupName: String) :
         e.presentation.isEnabled = false
     }
 
-    override fun buildAction(it: Pair<CircletProjectDescription, String>): AnAction =
-        object : AnAction("Open for ${it.first.projectKey.key} project") {
+    override fun buildAction(it: Pair<CircletProjectInfo, String>): AnAction =
+        object : AnAction("Open for ${it.first.key.key} project") {
             override fun actionPerformed(e: AnActionEvent) = BrowserUtil.browse(it.second)
         }
 
     companion object {
-        internal fun getProjectAwareUrls(endpoint: (ProjectLocation) -> Location, context: DataContext): List<Pair<CircletProjectDescription, String>>? {
+        internal fun getProjectAwareUrls(endpoint: (ProjectLocation) -> Location, context: DataContext): List<Pair<CircletProjectInfo, String>>? {
             val project = context.getData(CommonDataKeys.PROJECT) ?: return null
             val server = circletWorkspace.workspace.value?.client?.server?.removeSuffix("/") ?: return null
-            val description = CircletProjectContext.getInstance(project).projectDescriptions ?: return null
+            val description = CircletProjectContext.getInstance(project).context.value
 
-            return description.second.map {
-                val projectLocation = Navigator.p.project(it.projectKey)
+            return description.reposInProject.keys.map {
+                val projectLocation = Navigator.p.project(it.key)
                 val url = endpoint(projectLocation).absoluteHref(server)
 
                 it to url
@@ -96,19 +96,19 @@ abstract class CircletOpenInBrowserAction(groupName: String) :
 }
 
 class OpenReviews : CircletOpenInBrowserAction("Code reviews") {
-    override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
+    override fun getData(dataContext: DataContext): List<Pair<CircletProjectInfo, String>>? {
         return getProjectAwareUrls(ProjectLocation::reviews, dataContext)
     }
 }
 
 class OpenChecklists : CircletOpenInBrowserAction("Checklists") {
-    override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
+    override fun getData(dataContext: DataContext): List<Pair<CircletProjectInfo, String>>? {
         return getProjectAwareUrls(ProjectLocation::checklists, dataContext)
     }
 }
 
 class OpenIssues : CircletOpenInBrowserAction("Issues") {
-    override fun getData(dataContext: DataContext): List<Pair<CircletProjectDescription, String>>? {
+    override fun getData(dataContext: DataContext): List<Pair<CircletProjectInfo, String>>? {
         return getProjectAwareUrls(ProjectLocation::issues, dataContext)
     }
 }
@@ -143,9 +143,9 @@ class CircletVcsOpenInBrowserActionGroup :
         val change = changeListManager.getChange(virtualFile)
         if (change != null && change.type == Change.Type.NEW) return null
 
-        val repoKeysInfo = findProjectInfo(gitRepository, project) ?: return null
+        val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-        return repoKeysInfo.second.map { OpenData.File(project, server, it, repoKeysInfo.first, virtualFile, gitRepository) }
+        return repoDescription.projectInfos.map { OpenData.File(project, server, it, repoDescription.name, virtualFile, gitRepository) }
 
     }
 
@@ -154,26 +154,26 @@ class CircletVcsOpenInBrowserActionGroup :
         val fileRevision = dataContext.getData(VcsDataKeys.VCS_FILE_REVISION) ?: return null
         if (fileRevision !is VcsFileRevisionEx) return null
         val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(filePath) ?: return null
-        val repoKeysInfo = findProjectInfo(gitRepository, project) ?: return null
+        val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-        return repoKeysInfo.second.map { OpenData.FileRevision(project, server, it, repoKeysInfo.first, fileRevision) }
+        return repoDescription.projectInfos.map { OpenData.FileRevision(project, server, it, repoDescription.name, fileRevision) }
     }
 
     private fun getDataFromLog(dataContext: DataContext, project: Project, server: String): List<OpenData>? {
         val vcsLog = dataContext.getData(VcsLogDataKeys.VCS_LOG) ?: return null
         val selectedCommit = vcsLog.selectedCommits.firstOrNull() ?: return null
         val gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(selectedCommit.root) ?: return null
-        val repoKeysInfo = findProjectInfo(gitRepository, project) ?: return null
+        val repoDescription = findProjectInfo(gitRepository, project) ?: return null
 
-        return repoKeysInfo.second.map { OpenData.Commit(project, server, it, repoKeysInfo.first, selectedCommit) }
+        return repoDescription.projectInfos.map { OpenData.Commit(project, server, it, repoDescription.name, selectedCommit) }
     }
 
-    private fun findProjectInfo(gitRepository: GitRepository, project: Project): Pair<String, List<CircletProjectDescription>>? {
+    private fun findProjectInfo(gitRepository: GitRepository, project: Project): CircletRepoInfo? {
         val circletContext = CircletProjectContext.getInstance(project)
 
         return getRemoteUrls(gitRepository)
-            .mapNotNull { circletContext.findProjectInfo(it) }
-            .firstOrNull() ?: return null
+            .mapNotNull { circletContext.getRepoDescriptionByUrl(it) }
+            .firstOrNull()
     }
 
     private fun getRemoteUrls(gitRepository: GitRepository): List<String> {
@@ -181,7 +181,7 @@ class CircletVcsOpenInBrowserActionGroup :
     }
 
     companion object {
-        class OpenAction(private val data: OpenData) : DumbAwareAction("Open for ${data.description.project.name} project") {
+        class OpenAction(private val data: OpenData) : DumbAwareAction("Open for ${data.info.project.name} project") {
 
             override fun actionPerformed(e: AnActionEvent) {
                 data.url?.let { BrowserUtil.browse(it) }
@@ -190,20 +190,20 @@ class CircletVcsOpenInBrowserActionGroup :
 
         sealed class OpenData(val project: Project,
                               val server: String,
-                              val description: CircletProjectDescription,
+                              val info: CircletProjectInfo,
                               val repo: String
         ) {
             abstract val url: String?
 
             class Commit(project: Project,
                          server: String,
-                         projectKey: CircletProjectDescription,
+                         projectKey: CircletProjectInfo,
                          repo: String,
                          private val commit: CommitId) : OpenData(project, server, projectKey, repo) {
 
                 override val url: String?
                     get() {
-                        return Navigator.p.project(description.projectKey)
+                        return Navigator.p.project(info.key)
                             .commits(repo, "", commit.hash.asString())
                             .absoluteHref(server)
                     }
@@ -211,13 +211,13 @@ class CircletVcsOpenInBrowserActionGroup :
 
             class FileRevision(project: Project,
                                server: String,
-                               projectKey: CircletProjectDescription,
+                               projectKey: CircletProjectInfo,
                                repo: String,
                                private val vcsFileRevisionEx: VcsFileRevisionEx) : OpenData(project, server, projectKey, repo) {
 
                 override val url: String?
                     get() {
-                        return Navigator.p.project(description.projectKey)
+                        return Navigator.p.project(info.key)
                             .revision(repo, vcsFileRevisionEx.revisionNumber.asString())
                             .absoluteHref(server)
                     }
@@ -225,7 +225,7 @@ class CircletVcsOpenInBrowserActionGroup :
 
             class File(project: Project,
                        server: String,
-                       projectKey: CircletProjectDescription,
+                       projectKey: CircletProjectInfo,
                        repo: String,
                        private val virtualFile: VirtualFile, private val gitRepository: GitRepository) : OpenData(project, server, projectKey, repo) {
                 override val url: String?
@@ -233,7 +233,7 @@ class CircletVcsOpenInBrowserActionGroup :
                         val relativePath = VfsUtilCore.getRelativePath(virtualFile, gitRepository.root) ?: return null
                         val hash = getCurrentFileRevisionHash(project, virtualFile) ?: return null
 
-                        return Navigator.p.project(description.projectKey)
+                        return Navigator.p.project(info.key)
                             .fileAnnotate(repo, hash, relativePath)
                             .absoluteHref(server)
                     }

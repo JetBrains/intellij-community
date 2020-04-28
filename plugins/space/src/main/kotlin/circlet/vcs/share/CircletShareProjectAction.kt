@@ -44,8 +44,8 @@ class CircletShareProjectAction : DumbAwareAction() {
         }
 
         val context = CircletProjectContext.getInstance(project)
-        val descriptions = context.projectDescriptions
-        if (descriptions != null && descriptions.second.isNotEmpty()) {
+        val descriptions = context.context.value.empty
+        if (descriptions) {
             e.presentation.isEnabledAndVisible = false
             return
         }
