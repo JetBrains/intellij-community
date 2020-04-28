@@ -76,6 +76,14 @@ internal class LegacyBridgeModifiableModuleModel(
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
+    // If module name equals to already unloaded module, the previous should be removed from store
+    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(moduleName)
+    if (unloadedModuleDescription != null) {
+      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
+                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
+      diff.removeEntity(moduleEntity)
+    }
+
     val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
@@ -201,6 +209,14 @@ internal class LegacyBridgeModifiableModuleModel(
 
     if (module.name != newName) { // if renaming to itself, forget it altogether
       myNewNameToModule[newName] = module
+    }
+
+    // If module name equals to already unloaded module, the previous should be removed from store
+    val unloadedModuleDescription = moduleManager.getUnloadedModuleDescription(newName)
+    if (unloadedModuleDescription != null) {
+      val moduleEntity = entityStoreOnDiff.current.resolve(ModuleId(unloadedModuleDescription.name))
+                         ?: error("Could not find module to remove by id: ${unloadedModuleDescription.name}")
+      diff.removeEntity(moduleEntity)
     }
 
     if (oldModule != null) {

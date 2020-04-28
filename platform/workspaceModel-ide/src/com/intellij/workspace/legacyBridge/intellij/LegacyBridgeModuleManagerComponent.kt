@@ -146,8 +146,11 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
               nextChange@ for (change in changes) when (change) {
                 is EntityChange.Removed -> {
-                  fireBeforeModuleRemoved(change.entity.persistentId())
-                  removeModuleAndFireEvent(change.entity.persistentId())
+                  // It's possible case then idToModule doesn't contain element e.g if unloaded module was removed
+                  idToModule[change.entity.persistentId()]?.let {
+                    fireBeforeModuleRemoved(change.entity.persistentId())
+                    removeModuleAndFireEvent(change.entity.persistentId())
+                  }
                   unloadedModulesSet.remove(change.entity.name)
                 }
 
@@ -551,11 +554,6 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
 
     return module
   }
-
-  internal fun getModulePath(moduleEntity: ModuleEntity): ModulePath = ModulePath(
-    path = getModuleFilePath(moduleEntity),
-    group = moduleEntity.groupPath?.path?.joinToString(separator = ModuleManagerImpl.MODULE_GROUP_SEPARATOR)
-  )
 
   companion object {
     @JvmStatic
