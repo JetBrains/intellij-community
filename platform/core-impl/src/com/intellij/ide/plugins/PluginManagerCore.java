@@ -615,8 +615,7 @@ public final class PluginManagerCore {
 
   private static @NotNull URL localFileToUrl(@NotNull Path file, @NotNull IdeaPluginDescriptor descriptor) {
     try {
-      // it is important not to have traversal elements in classpath
-      return new URL("file", "", file.normalize().toUri().getRawPath());
+      return file.normalize().toUri().toURL();  // it is important not to have traversal elements in classpath
     }
     catch (MalformedURLException e) {
       throw new PluginException("Corrupted path element: `" + file + '`', e, descriptor.getPluginId());
