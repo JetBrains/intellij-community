@@ -40,19 +40,12 @@ fun loadExtensionWithText(
   loader: ClassLoader = DynamicPlugins::class.java.classLoader,
   ns: String = "com.intellij"
 ): Disposable {
-  val name = "test" + abs(extensionTag.hashCode())
-  val text = """<idea-plugin>
-  <name>$name</name>
-  <extensions defaultExtensionNs="$ns">
-    $extensionTag
-  </extensions>
-</idea-plugin>"""
-
-  return loadPluginWithText(text, loader, FileSystems.getDefault())
+  val builder = PluginBuilder().extensions(extensionTag, ns)
+  return loadPluginWithText(builder, loader, FileSystems.getDefault())
 }
 
-internal fun loadPluginWithText(pluginXml: String, loader: ClassLoader, fs: FileSystem): Disposable {
-  val pair = preparePluginDescriptor(pluginXml, fs)
+internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoader, fs: FileSystem): Disposable {
+  val pair = preparePluginDescriptor(pluginBuilder.text(), fs)
   val plugin = pair.first
   var descriptor = pair.second
   assertThat(DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)).isTrue()
