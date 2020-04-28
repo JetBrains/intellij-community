@@ -114,14 +114,14 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(singletonMap("build", build != null ? build.asString() : MarketplaceRequests.getBuildForPluginRepositoryRequests()));
+      url = url.addParameters(singletonMap("build", build != null ? build.asString() : MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests()));
     }
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
-    List<PluginNode> descriptors = MarketplaceRequests.readOrUpdateFile(
+    List<PluginNode> descriptors = MarketplaceRequests.getInstance().readOrUpdateFile(
       pluginListFile,
       url.toExternalForm(),
       indicator,

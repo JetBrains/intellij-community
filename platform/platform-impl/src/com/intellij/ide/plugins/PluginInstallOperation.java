@@ -305,7 +305,7 @@ public class PluginInstallOperation {
   private IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId) {
     IdeaPluginDescriptor pluginFromCustomRepos =
       myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
-    PluginNode pluginFromMarketplace = MarketplaceRequests.getLastCompatiblePluginUpdate(depPluginId.getIdString());
+    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(depPluginId.getIdString());
     if (pluginFromCustomRepos == null) {
       return pluginFromMarketplace;
     }

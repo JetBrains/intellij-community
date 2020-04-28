@@ -14,13 +14,13 @@ public class PluginInfoProviderImpl implements PluginInfoProvider {
   @Override
   @Nullable
   public List<PluginId> loadCachedPlugins() throws IOException {
-    List<String> pluginsIds = MarketplaceRequests.getMarketplaceCachedPlugins();
+    List<String> pluginsIds = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
     if (pluginsIds == null) return null;
     return ContainerUtil.map(pluginsIds, id -> PluginId.getId(id));
   }
 
   @Override
   public List<PluginId> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
-    return ContainerUtil.map(MarketplaceRequests.getMarketplacePlugins(indicator), id -> PluginId.getId(id));
+    return ContainerUtil.map(MarketplaceRequests.getInstance().getMarketplacePlugins(indicator), id -> PluginId.getId(id));
   }
 }

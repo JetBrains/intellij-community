@@ -28,13 +28,38 @@ import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
 @ApiStatus.Internal
-object MarketplaceRequests {
+open class MarketplaceRequests {
 
   private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
 
-  private const val TAG_EXT = ".etag"
+  companion object {
+    private const val TAG_EXT = ".etag"
 
-  private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
+    private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
+
+    private val INSTANCE = MarketplaceRequests()
+
+    @JvmStatic
+    fun getInstance(): MarketplaceRequests {
+      return INSTANCE
+    }
+
+    @JvmStatic
+    fun parsePluginList(reader: Reader): List<PluginNode> {
+      try {
+        val parser = SAXParserFactory.newInstance().newSAXParser()
+        val handler = RepositoryContentHandler()
+        parser.parse(InputSource(reader), handler)
+        return handler.pluginsList
+      }
+      catch (e: Exception) {
+        when (e) {
+          is ParserConfigurationException, is SAXException, is RuntimeException -> throw IOException(e)
+          else -> throw e
+        }
+      }
+    }
+  }
 
   private val PLUGIN_MANAGER_URL = ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
 
@@ -67,7 +92,6 @@ object MarketplaceRequests {
   )
 
   @Throws(IOException::class)
-  @JvmStatic
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return readOrUpdateFile(
@@ -80,13 +104,11 @@ object MarketplaceRequests {
   }
 
   @Throws(IOException::class)
-  @JvmStatic
   fun getMarketplaceCachedPlugins(): List<String>? {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
     return if (pluginXmlIdsFile.length() > 0) pluginXmlIdsFile.bufferedReader().use(::parseXmlIds) else null
   }
 
-  @JvmStatic
   fun getBuildForPluginRepositoryRequests(): String {
     val instance = ApplicationInfoImpl.getShadowInstance()
     val compatibleBuild = PluginManagerCore.getPluginsCompatibleBuild()
@@ -99,7 +121,6 @@ object MarketplaceRequests {
     else instance.apiVersion
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun searchPlugins(query: String, count: Int): List<PluginNode> {
     val marketplaceSearchPluginData = HttpRequests.request(createSearchUrl(query, count))
@@ -114,7 +135,6 @@ object MarketplaceRequests {
     return marketplaceSearchPluginData.filter { it.externalUpdateId != null }.map { it.toPluginNode() }
   }
 
-  @JvmStatic
   fun getAllPluginsVendors(): List<String> = try {
     HttpRequests
       .request(MARKETPLACE_ORGANIZATIONS_URL)
@@ -129,7 +149,6 @@ object MarketplaceRequests {
     emptyList()
   }
 
-  @JvmStatic
   fun getAllPluginsTags(): List<String> = try {
     HttpRequests
       .request(MARKETPLACE_TAGS_URL)
@@ -155,13 +174,11 @@ object MarketplaceRequests {
     ).toPluginNode()
   }
 
-  @JvmStatic
   fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
     return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
   }
 
-  @JvmStatic
   @Throws(IOException::class)
   fun <T> readOrUpdateFile(
     file: File?,
@@ -186,7 +203,7 @@ object MarketplaceRequests {
           indicator.text2 = indicatorMessage
         }
         if (file != null) {
-          synchronized(MarketplaceRequests) {
+          synchronized(INSTANCE) {
             request.saveToFile(file, indicator)
             connection.getHeaderField("ETag")?.let { saveETagForFile(file, it) }
           }
@@ -216,7 +233,6 @@ object MarketplaceRequests {
       }
   }
 
-  @JvmStatic
   @JvmOverloads
   fun getLastCompatiblePluginUpdate(id: String, buildNumber: BuildNumber? = null, indicator: ProgressIndicator? = null): PluginNode? {
     val data = try {
@@ -227,22 +243,6 @@ object MarketplaceRequests {
       null
     }
     return data?.let { loadPluginDescriptor(id, it, indicator) }
-  }
-
-  @JvmStatic
-  fun parsePluginList(reader: Reader): List<PluginNode> {
-    try {
-      val parser = SAXParserFactory.newInstance().newSAXParser()
-      val handler = RepositoryContentHandler()
-      parser.parse(InputSource(reader), handler)
-      return handler.pluginsList
-    }
-    catch (e: Exception) {
-      when (e) {
-        is ParserConfigurationException, is SAXException, is RuntimeException -> throw IOException(e)
-        else -> throw e
-      }
-    }
   }
 
   private fun parseXmlIds(reader: Reader) = objectMapper.readValue(reader, object : TypeReference<List<String>>() {})

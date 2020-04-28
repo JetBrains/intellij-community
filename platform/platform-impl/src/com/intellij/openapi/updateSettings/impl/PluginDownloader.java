@@ -346,7 +346,7 @@ public final class PluginDownloader {
 
   @NotNull
   public static String getBuildNumberForDownload(@Nullable BuildNumber buildNumber) {
-    return buildNumber != null ? buildNumber.asString() : MarketplaceRequests.getBuildForPluginRepositoryRequests();
+    return buildNumber != null ? buildNumber.asString() : MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests();
   }
 
   @NotNull

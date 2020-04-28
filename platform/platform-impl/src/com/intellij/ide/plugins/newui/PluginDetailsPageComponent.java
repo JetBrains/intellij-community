@@ -399,7 +399,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
           syncLoading = false;
           startLoading();
           ProcessIOExecutorService.INSTANCE.execute(() -> {
-            PluginNode meta = MarketplaceRequests
+            PluginNode meta = MarketplaceRequests.getInstance()
               .loadPluginDescriptor(node.getPluginId().getIdString(), node.getExternalPluginId(), node.getExternalUpdateId());
             meta.setRating(node.getRating());
             meta.setDownloads(node.getDownloads());
