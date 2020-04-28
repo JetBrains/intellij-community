@@ -4,6 +4,7 @@ package com.intellij.ide.customize;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.openapi.application.PathManager;
@@ -43,7 +44,7 @@ public class PluginGroups {
   private Runnable myLoadingCallback;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadUncachedDescriptors();
+    myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors();
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() {

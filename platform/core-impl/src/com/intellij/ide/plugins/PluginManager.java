@@ -76,7 +76,7 @@ public final class PluginManager {
                                                                   PathBasedJdomXIncluder.PathResolver<?> pathResolver) {
     DescriptorListLoadingContext parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins);
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, bundled, false, pathResolver)) {
-      return PluginManagerCore.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
+      return PluginDescriptorLoader.loadDescriptorFromFileOrDir(file, fileName, context, Files.isDirectory(file));
     }
   }
 
@@ -84,14 +84,14 @@ public final class PluginManager {
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR, PluginManagerCore.disabledPlugins(),
                                                                                   PluginManagerCore.createLoadingResult(buildNumber));
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
-      IdeaPluginDescriptorImpl descriptor = PluginManagerCore.loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
       if (descriptor == null && file.getFileName().toString().endsWith(".zip")) {
         File outputDir = FileUtil.createTempDirectory("plugin", "");
         try {
           new Decompressor.Zip(file.toFile()).extract(outputDir);
           File[] files = outputDir.listFiles();
           if (files != null && files.length == 1) {
-            descriptor = PluginManagerCore.loadDescriptorFromFileOrDir(files[0].toPath(), PluginManagerCore.PLUGIN_XML, context, true);
+            descriptor = PluginDescriptorLoader.loadDescriptorFromFileOrDir(files[0].toPath(), PluginManagerCore.PLUGIN_XML, context, true);
           }
         }
         finally {

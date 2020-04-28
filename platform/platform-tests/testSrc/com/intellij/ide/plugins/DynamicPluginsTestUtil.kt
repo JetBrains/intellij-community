@@ -24,7 +24,7 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
   val result = DescriptorLoadingContext(parentContext, isBundled, /* isEssential = */ true,
                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
-    PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
+    PluginDescriptorLoader.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
   }
   if (result == null) {
     @Suppress("USELESS_CAST")
