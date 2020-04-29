@@ -62,8 +62,8 @@ public class _LastInSuiteTest extends TestCase {
 
   @SuppressWarnings("CallToSystemGC")
   public void testDynamicExtensions() {
-    Assume.assumeTrue(!EXTENSION_POINTS_WHITE_LIST.isEmpty() ||
-                      SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false));
+    boolean testDynamicExtensions = SystemProperties.getBooleanProperty("intellij.test.all.dynamic.extension.points", false);
+    Assume.assumeTrue("intellij.test.all.dynamic.extension.points is off, no dynamic extensions to test", !EXTENSION_POINTS_WHITE_LIST.isEmpty() || testDynamicExtensions);
     Application app = ApplicationManager.getApplication();
     if (app == null) {
       return;
