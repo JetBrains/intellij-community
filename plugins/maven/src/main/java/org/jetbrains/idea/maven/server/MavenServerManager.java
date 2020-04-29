@@ -307,7 +307,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
   }
 
   /*
-  Made public for external systems intergration
+  Made public for external systems integration
    */
   public static List<File> collectClassPathAndLibsFolder(@NotNull String mavenVersion, @NotNull File mavenHome) {
     final File pluginFileOrDir = new File(PathUtil.getJarPathForClass(MavenServerManager.class));
@@ -831,7 +831,7 @@ public class MavenServerManager extends MavenRemoteObjectWrapper<MavenServer> im
     }
   }
 
-  private class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
+  private static class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
     private final MavenServerManager myServerManager;
 
     public MavenServerRemoteProcessSupport(MavenServerManager manager) {
