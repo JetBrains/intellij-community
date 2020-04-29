@@ -170,7 +170,7 @@
     <extensionPoint qualifiedName="com.intellij.attachSourcesProvider" interface="com.intellij.codeInsight.AttachSourcesProvider" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.java.compiler" area="IDEA_PROJECT"
-                    interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler"/>
+                    interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.configuration.ModuleStructureExtension" dynamic="true"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>

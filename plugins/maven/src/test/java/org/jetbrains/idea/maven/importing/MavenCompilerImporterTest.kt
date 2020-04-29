@@ -8,7 +8,6 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.MavenImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.junit.Assert.*
 import org.junit.Test
 
 class MavenCompilerImporterTest : MavenImportingTestCase() {
@@ -52,9 +51,7 @@ class MavenCompilerImporterTest : MavenImportingTestCase() {
     super.setUp()
     ideCompilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     javacCompiler = ideCompilerConfiguration.defaultCompiler
-    eclipseCompiler = EclipseCompiler(myProject);
-
-    ideCompilerConfiguration.registeredJavaCompilers.add(eclipseCompiler)
+    eclipseCompiler = ideCompilerConfiguration.registeredJavaCompilers.find { it is  EclipseCompiler } as EclipseCompiler;
   }
 
   @Test
