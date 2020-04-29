@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.aliasAnnotations
 
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
@@ -53,7 +53,7 @@ import groovy.transform.*
 @AnnotationCollector([X, Immutable])
 @interface Alias {}
 
-@<error descr="Missed attributes: excludes">Alias</error>
+@Alias<error descr="Missed attributes: excludes"></error>
 class F<caret>oo {
     Integer a, b
 }
@@ -92,7 +92,7 @@ import groovy.transform.*
 @AnnotationCollector([EqualsAndHashCode, Immutable])
 @interface Alias {}
 
-@<error descr="@interface 'groovy.transform.ToString' does not contain attribute 'foo'">Alias</error>
+@Alias<error descr="@interface 'groovy.transform.ToString' does not contain attribute 'foo'"></error>
 class Foo{}
 ''')
   }

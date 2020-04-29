@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -52,8 +52,7 @@ public abstract class CustomAnnotationChecker {
     return null;
   }
 
-  public static Pair.NonNull<PsiElement, String> checkAnnotationArguments(@NotNull PsiClass annotation,
-                                                                  @NotNull PsiElement refToHighlight,
+  public static Pair<PsiElement, String> checkAnnotationArguments(@NotNull PsiClass annotation,
                                                                   GrAnnotationNameValuePair @NotNull [] attributes,
                                                                   boolean checkMissedAttributes) {
     Set<String> usedAttrs = new HashSet<>();
@@ -90,7 +89,7 @@ public abstract class CustomAnnotationChecker {
     }
 
     if (checkMissedAttributes && !missedAttrs.isEmpty()) {
-      return Pair.createNonNull(refToHighlight, GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
+      return Pair.create(null, GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
     }
     return null;
   }

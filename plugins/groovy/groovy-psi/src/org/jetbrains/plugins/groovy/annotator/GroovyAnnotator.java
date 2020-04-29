@@ -1393,7 +1393,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
     GrAnnotation parent = (GrAnnotation)annotationArgumentList.getParent();
-    Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder, parent.getClassReference());
+    Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder);
     if (r != null && r.getFirst() != null && r.getSecond() != null) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, r.getSecond()).range(r.getFirst()).create();
     }
