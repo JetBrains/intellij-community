@@ -699,8 +699,6 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @Override
     public void doRefresh() {
       final TreeNode[] oldPath = myDialogParent.getSelfPath();
-      final TreeNode[] correctedPath = new TreeNode[oldPath.length + 1];
-      System.arraycopy(oldPath, 0, correctedPath, 1, oldPath.length);
 
       myRoot.reload(new OpeningExpander(oldPath, myBrowserComponent, myDialogParent), false);
     }
