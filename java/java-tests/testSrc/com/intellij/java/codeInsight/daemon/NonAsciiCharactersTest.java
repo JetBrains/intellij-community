@@ -30,6 +30,7 @@ public class NonAsciiCharactersTest extends DaemonAnalyzerTestCase {
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     NonAsciiCharactersInspection inspection = new NonAsciiCharactersInspection();
     inspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_IDENTIFIER_NAME = true;
+    inspection.CHECK_FOR_DIFFERENT_LANGUAGES_IN_STRING = true;
     inspection.CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = true;
     inspection.CHECK_FOR_NOT_ASCII_COMMENT = true;
     inspection.CHECK_FOR_NOT_ASCII_STRING_LITERAL = true;
