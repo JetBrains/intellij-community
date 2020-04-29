@@ -65,7 +65,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @State(name = "FileTypeManager", storages = @Storage("filetypes.xml"), additionalExportFile = FileTypeManagerImpl.FILE_SPEC )
 public class FileTypeManagerImpl extends FileTypeManagerEx implements PersistentStateComponent<Element> {
   static final ExtensionPointName<FileTypeBean> EP_NAME = ExtensionPointName.create("com.intellij.fileType");
-  static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
+  private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
   private static final int VERSION = 17;

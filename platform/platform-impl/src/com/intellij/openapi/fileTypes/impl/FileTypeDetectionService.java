@@ -143,7 +143,8 @@ class FileTypeDetectionService implements Disposable {
                       awakeReDetectExecutor();
                     }
                   }
-                } finally {
+                }
+                finally {
                   myRestrictCachedDetectedFileTypeAccess = false;
                 }
               }
@@ -357,7 +358,7 @@ class FileTypeDetectionService implements Disposable {
     }
   }
 
-
+  @Nullable
   private FileType getFileTypeDetectedFromContent(VirtualFile file) {
     String fileTypeName = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
     return fileTypeName == null ? null : myFileTypeManager.findFileTypeByName(fileTypeName);
