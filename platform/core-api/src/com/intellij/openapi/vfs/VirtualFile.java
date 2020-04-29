@@ -138,13 +138,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * exception is thrown.
    * The returned {@link Path} may not have a default filesystem behind.
    *
+   * @throws UnsupportedOperationException if this VirtualFile does not have an associated {@link Path}
+   *
    * @see #toPathOrNull()
    */
   @NotNull
-  public Path toPath() throws IllegalArgumentException {
+  public Path toPath() {
     Path path = toPathOrNull();
     if (path != null) return path;
-    throw new IllegalArgumentException("Failed to map " + this + " (filesystem " + getFileSystem() + ") into local Path");
+    throw new UnsupportedOperationException("Failed to map " + this + " (filesystem " + getFileSystem() + ") into nio Path");
   }
 
   /**
