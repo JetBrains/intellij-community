@@ -67,7 +67,7 @@ public interface RangeHighlighter extends RangeMarker {
    * @see RangeHighlighter#getTextAttributesKey()
    */
   @Nullable
-  TextAttributes getTextAttributes(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme);
+  TextAttributes getTextAttributes(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme);
 
   /**
    * Returns the renderer used for drawing line markers in the area covered by the
@@ -133,7 +133,7 @@ public interface RangeHighlighter extends RangeMarker {
    * error stripe markers.
    */
   @Nullable
-  Color getErrorStripeMarkColor(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme);
+  Color getErrorStripeMarkColor(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme);
 
   /**
    * Sets the color of the marker drawn in the error stripe in the area covered by the highlighter.

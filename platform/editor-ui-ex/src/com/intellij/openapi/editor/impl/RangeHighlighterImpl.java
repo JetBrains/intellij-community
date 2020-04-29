@@ -105,7 +105,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public @Nullable TextAttributes getTextAttributes(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme) {
+  public @Nullable TextAttributes getTextAttributes(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
     if (myForcedTextAttributes != null) return myForcedTextAttributes;
     if (myTextAttributesKey == null) return null;
 
@@ -214,7 +214,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public Color getErrorStripeMarkColor(@Nullable("when null, a global scheme will be used") EditorColorsScheme scheme) {
+  public Color getErrorStripeMarkColor(@Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
     if (myErrorStripeColor == NULL_COLOR) return null;
     if (myErrorStripeColor != null) return myErrorStripeColor;
     if (myForcedTextAttributes != null) return myForcedTextAttributes.getErrorStripeColor();
@@ -223,16 +223,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  public void setErrorStripeMarkColor(Color color) {
+  public void setErrorStripeMarkColor(@Nullable Color color) {
     if (color == null) color = NULL_COLOR;
     Color old = myErrorStripeColor;
     if (Comparing.equal(old, color)) return;
 
-    boolean oldRenderedInScrollBar = isRenderedInScrollBar();
     myErrorStripeColor = color;
-    if (isRenderedInScrollBar() != oldRenderedInScrollBar) {
-      myModel.treeFor(this).updateRenderedFlags(this);
-    }
+    myModel.treeFor(this).updateRenderedFlags(this);
     fireChanged(false, false);
   }
 

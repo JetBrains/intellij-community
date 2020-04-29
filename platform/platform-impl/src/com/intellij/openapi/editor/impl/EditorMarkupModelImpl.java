@@ -993,8 +993,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<RangeHighlighterEx> iterator1 = markup1.overlappingIterator(startOffset, endOffset, false, true);
-      MarkupIterator<RangeHighlighterEx> iterator2 = markup2.overlappingIterator(startOffset, endOffset, false, true);
+      MarkupIterator<RangeHighlighterEx> iterator1 =
+        markup1.overlappingIterator(startOffset, endOffset, false, true, myEditor.getColorsScheme());
+      MarkupIterator<RangeHighlighterEx> iterator2 =
+        markup2.overlappingIterator(startOffset, endOffset, false, true, myEditor.getColorsScheme());
       MarkupIterator<RangeHighlighterEx> iterator =
         MarkupIterator.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
       try {

@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -65,6 +66,12 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     return getGutterIconRenderer() != null || getLineMarkerRenderer() != null;
   }
 
+  /**
+   * @deprecated Use
+   * @see #getErrorStripeMarkColor(EditorColorsScheme) directly,
+   * it's impossible to tell if a highlighter should be rendered in a scroll bar since an editor can have a custom color scheme
+   */
+  @Deprecated
   default boolean isRenderedInScrollBar() {
     return getErrorStripeMarkColor(null) != null;
   }

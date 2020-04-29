@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -58,11 +59,24 @@ public interface MarkupModelEx extends MarkupModel {
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset);
 
+  /**
+   * @deprecated Use the overload with EditorColorScheme
+   */
+  @Deprecated
+  @NotNull
+  default MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
+                                                         int endOffset,
+                                                         boolean onlyRenderedInGutter,
+                                                         boolean onlyRenderedInScrollBar) {
+    return overlappingIterator(startOffset, endOffset, onlyRenderedInGutter, onlyRenderedInScrollBar, null);
+  }
+
   @NotNull
   MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                          int endOffset,
                                                          boolean onlyRenderedInGutter,
-                                                         boolean onlyRenderedInScrollBar);
+                                                         boolean onlyRenderedInScrollBar,
+                                                         @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme);
 
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
@@ -105,6 +119,7 @@ public interface MarkupModelEx extends MarkupModel {
                                                int layer,
                                                @Nullable TextAttributes textAttributes,
                                                @NotNull HighlighterTargetArea targetArea) {
+
     RangeHighlighterEx highlighter = (RangeHighlighterEx)addRangeHighlighter(null, startOffset, endOffset, layer, targetArea);
     if (textAttributes != null) {
       highlighter.setTextAttributes(textAttributes);

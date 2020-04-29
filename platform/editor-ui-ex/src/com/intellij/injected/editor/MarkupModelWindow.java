@@ -18,6 +18,7 @@ package com.intellij.injected.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -161,7 +162,8 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   public MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset,
                                                                 int endOffset,
                                                                 boolean onlyRenderedInGutter,
-                                                                boolean onlyRenderedInScrollBar) {
+                                                                boolean onlyRenderedInScrollBar,
+                                                                @Nullable("when null, the global scheme will be used") EditorColorsScheme scheme) {
     throw new UnsupportedOperationException();
   }
 
