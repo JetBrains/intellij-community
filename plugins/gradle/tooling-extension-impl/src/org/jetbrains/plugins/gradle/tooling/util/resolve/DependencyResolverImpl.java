@@ -46,7 +46,7 @@ import static java.util.Collections.*;
  */
 public class DependencyResolverImpl implements DependencyResolver {
   private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE =
-    GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.5")) >= 0;
+    GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.5")) >= 0;  // Android Studio: update workaround in SourceSetCachedFinder if this changes
 
   @NotNull
   private final Project myProject;

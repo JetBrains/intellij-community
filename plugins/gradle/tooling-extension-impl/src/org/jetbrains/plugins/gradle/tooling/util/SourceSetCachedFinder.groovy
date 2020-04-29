@@ -30,7 +30,9 @@ import org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder
 
 import static java.util.Collections.unmodifiableMap
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
+/* Android Studio: workaround for b/155196247
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable
+Android Studio: workaround for b/155196247 */
 
 /**
  * @author Vladislav.Soroka
@@ -105,6 +107,11 @@ class SourceSetCachedFinder {
 
   String findArtifactBySourceSetOutputDir(String outputPath) {
     myArtifactsMap.mySourceSetOutputDirsToArtifactsMap[outputPath]
+  }
+
+  // Android Studio: workaround for b/155196247
+  private static boolean isIsNewDependencyResolutionApplicable() {
+    GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.5")) >= 0;
   }
 
   private static ArtifactsMap createArtifactsMap(@NotNull Gradle gradle) {
