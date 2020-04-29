@@ -37,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.VariableDescriptorFactory.createDescriptor;
@@ -145,22 +144,22 @@ public final class TypeInferenceHelper {
   }
 
   static boolean isSharedVariable(@NotNull VariableDescriptor descriptor) {
-    SharedVariableTypeProvider provider =  getSharedVariableProvider(descriptor);
-    return provider != null && provider.getSharedVariableDescriptors().contains(descriptor);
+    SharedVariableInferenceCache cache = getSharedVariableCache(descriptor);
+    return cache != null && cache.getSharedVariableDescriptors().contains(descriptor);
   }
 
   private static @Nullable PsiType getSharedVariableType(@NotNull VariableDescriptor descriptor) {
-    SharedVariableTypeProvider provider =  getSharedVariableProvider(descriptor);
-    return provider == null ? null : provider.getSharedVariableType(descriptor);
+    SharedVariableInferenceCache cache = getSharedVariableCache(descriptor);
+    return cache == null ? null : cache.getSharedVariableType(descriptor);
   }
 
-  private static @Nullable SharedVariableTypeProvider getSharedVariableProvider(@NotNull VariableDescriptor descriptor) {
+  private static @Nullable SharedVariableInferenceCache getSharedVariableCache(@NotNull VariableDescriptor descriptor) {
     if (descriptor instanceof ResolvedVariableDescriptor) {
       GrControlFlowOwner trueOwner = ControlFlowUtils.findControlFlowOwner(((ResolvedVariableDescriptor)descriptor).getVariable());
       if (trueOwner == null) {
         return null;
       }
-      return getInferenceCache(trueOwner).getSharedVariableTypeProvider();
+      return getInferenceCache(trueOwner).getSharedVariableInferenceCache();
     }
     else {
       // this is definitely not a local variable

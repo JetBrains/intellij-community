@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind.*
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.SharedVariableTypeProvider.Companion.getWriteInstructionsFromNestedFlows
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.SharedVariableInferenceCache.Companion.getWriteInstructionsFromNestedFlows
 import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments

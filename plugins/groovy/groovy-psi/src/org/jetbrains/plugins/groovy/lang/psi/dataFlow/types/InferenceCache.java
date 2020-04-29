@@ -44,7 +44,7 @@ class InferenceCache {
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<List<TypeDfaState>> myVarTypes;
-  private final SharedVariableTypeProvider mySharedVariableTypeProvider;
+  private final SharedVariableInferenceCache mySharedVariableInferenceCache;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
@@ -52,7 +52,7 @@ class InferenceCache {
     myFlow = scope.getControlFlow();
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
-    mySharedVariableTypeProvider = new SharedVariableTypeProvider(scope);
+    mySharedVariableInferenceCache = new SharedVariableInferenceCache(scope);
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     List<TypeDfaState> noTypes = new ArrayList<>();
     for (int i = 0; i < myFlow.length; i++) {
@@ -173,8 +173,8 @@ class InferenceCache {
     myVarTypes.accumulateAndGet(dfaResult, (oldState, newState) -> addDfaResult(oldState, newState, storingInstructions));
   }
 
-  @NotNull SharedVariableTypeProvider getSharedVariableTypeProvider() {
-    return mySharedVariableTypeProvider;
+  @NotNull SharedVariableInferenceCache getSharedVariableInferenceCache() {
+    return mySharedVariableInferenceCache;
   }
 
   @NotNull
