@@ -23,7 +23,7 @@ public final class PythonDialectsTokenSetProvider implements Disposable {
   private final ConcurrentHashMap<String, TokenSet> myCache = new ConcurrentHashMap<>(7); // number of token types
 
   public PythonDialectsTokenSetProvider() {
-    PythonDialectsTokenSetContributor.EP_NAME.addExtensionPointListener(() -> myCache.clear(), this);
+    PythonDialectsTokenSetContributor.EP_NAME.addChangeListener(myCache::clear, this);
   }
 
   @NotNull
