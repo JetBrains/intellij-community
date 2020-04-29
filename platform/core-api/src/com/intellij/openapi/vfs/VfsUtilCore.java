@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -407,7 +407,16 @@ public class VfsUtilCore {
     return VirtualFileManager.extractPath(url);
   }
 
+  /**
+   * @return a {@link File} for a given {@link VirtualFile},
+   * the created file may not exist or may not make sense.
+   *
+   * @see VirtualFile#findNioPath()
+   * @see VirtualFile#getNioPath()
+   * @deprecated use {@link VirtualFile#findNioPath()}
+   */
   @NotNull
+  @Deprecated
   public static File virtualToIoFile(@NotNull VirtualFile file) {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
   }
@@ -422,6 +431,15 @@ public class VfsUtilCore {
     return pathToUrl(file.getPath());
   }
 
+  /**
+   * @return a {@link File} for a given {@link VirtualFile},
+   * the created file may not exist or may not make sense.
+   *
+   * @see VirtualFile#findNioPath()
+   * @see VirtualFile#getNioPath()
+   * @deprecated use {@link VirtualFile#findNioPath()}
+   */
+  @Deprecated
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
   }
