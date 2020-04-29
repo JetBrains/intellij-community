@@ -250,10 +250,8 @@
     <modelScopeItemPresenter implementation="com.intellij.analysis.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope" />
 
     <customScopesProvider implementation="com.intellij.vcs.changes.ChangeListsScopesProvider" order="last"/>
-    <projectService serviceImplementation="com.intellij.vcs.changes.ChangeListScopeViewUpdater" preload="true" />
 
     <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
-    <arbitraryPlaceUrlProvider implementation="com.intellij.vcs.IssueNavigationConfigurationUrlProvider" />
     <findInProjectExtension implementation="com.intellij.vcs.changes.ChangeListsFindInProjectExtension" />
     <silentChangeVetoer implementation="com.intellij.codeInsight.daemon.VcsSilentChangeVetoer" />
   </extensions>
