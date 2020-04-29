@@ -332,6 +332,7 @@ class CommunityRepositoryModules {
       withModuleLibrary("precompiled-draw9patch", "android.sdktools.draw9patch", "")
       withModuleLibrary("precompiled-lint-api", "android.sdktools.lint-api", "")
       withModuleLibrary("precompiled-lint-checks", "android.sdktools.lint-checks", "")
+      withModuleLibrary("precompiled-lint-model", "android.sdktools.lint-model", "")
       withModuleLibrary("precompiled-ninepatch", "android.sdktools.ninepatch", "")
       withModuleLibrary("precompiled-perflib", "android.sdktools.perflib", "")
       withModuleLibrary("precompiled-builder-model", "android.sdktools.builder-model", "")
