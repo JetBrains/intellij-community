@@ -1,0 +1,18 @@
+class Test {
+  void test() {
+    int i = <error descr="Switch expression does not have any result expressions">switch</error>(0) {
+      default -> throw new NullPointerException();
+    };
+  }
+  
+  void test2() {
+    int i = <error descr="Switch expression does not have any result expressions">switch</error>(0) {
+      case 0 -> {while(true);}
+      case 1 -> {
+        throw new RuntimeException();
+      }
+      default -> throw new NullPointerException();
+    };
+    
+  }
+}

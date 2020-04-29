@@ -11,6 +11,7 @@ class JavaSwitchExpressionsHighlightingTest : LightJavaCodeInsightFixtureTestCas
 
   fun testEnhancedSwitchStatements() = doTest()
   fun testSwitchExpressions() = doTest()
+  fun testSwitchExpressionsNoResult() = doTest()
   fun testSwitchExpressionsEnumResolve() = doTest()
   fun testSwitchNumericPromotion() = doTest()
   fun testSimpleInferenceCases() = doTest()
