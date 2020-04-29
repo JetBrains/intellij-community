@@ -939,7 +939,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBalloon != null) myBalloon.hide();
-      //noinspection HardCodedStringLiteral
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
@@ -1061,7 +1060,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       if (scope != null) myScopePanel.setScope(scope);
     }
 
-    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
     myMatchCase.setSelected(matchOptions.isCaseSensitiveMatch());
     myFileTypesComboBox.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext(getProject()));
@@ -1069,9 +1067,15 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     if (searchEditor != null) {
       searchEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
+    UIUtil.setContent(mySearchCriteriaEdit, matchOptions.getSearchPattern());
 
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (myReplace) {
+      final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
+      if (replaceEditor != null) {
+        replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+      }
+      myRecursive.setSelected(false);
       if (configuration instanceof ReplaceConfiguration) {
         final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
 
@@ -1088,11 +1092,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         myReformat.setSelected(properties.getBoolean(REFORMAT_STATE));
         myUseStaticImport.setSelected(properties.getBoolean(USE_STATIC_IMPORT_STATE));
       }
-      final Editor replaceEditor = myReplaceCriteriaEdit.getEditor();
-      if (replaceEditor != null) {
-        replaceEditor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-      }
-      myRecursive.setSelected(false);
     }
     else {
       if (configuration instanceof ReplaceConfiguration) {
@@ -1220,7 +1219,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       if (editorTextField == null) {
         return;
       }
-      @SuppressWarnings("HardCodedStringLiteral")
       final Object object = editorTextField.getClientProperty("JComponent.outline");
       if ("error".equals(object) || "warning".equals(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
@@ -1337,7 +1335,6 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       }, myDisposable, myReplace);
       editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
       getDocument().putUserData(STRUCTURAL_SEARCH_ERROR_CALLBACK, () -> {
-        //noinspection HardCodedStringLiteral
         putClientProperty("JComponent.outline", "error");
         repaint();
         getOKAction().setEnabled(false);
