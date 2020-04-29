@@ -5,6 +5,8 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.google.common.collect.Multimap
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspace.api.*
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex
@@ -433,6 +435,8 @@ internal class PEntityStorageBuilder(
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: TypedEntityStorage) {
     replaceWith as AbstractPEntityStorage
 
+    LOG.debug { "Performing replace by source" }
+
     // Map of entities in THIS builder with the entitySource that matches the predicate. Key is either hashCode or PersistentId
     val localMatchedEntities = ArrayListMultimap.create<Any, PEntityData<out TypedEntity>>()
     // Map of entities in replaceWith store with the entitySource that matches the predicate. Key is either hashCode or PersistentId
@@ -444,7 +448,7 @@ internal class PEntityStorageBuilder(
     // Association of the PId in the local store to the PId in the remote store
     val replaceMap = HashBiMap.create<PId<out TypedEntity>, PId<out TypedEntity>>()
 
-    // 1) Traverse all entities and store matched only
+    LOG.debug { "1) Traverse all entities and store matched only" }
     this.entitySourceIndex.entitySources().filter { sourceFilter(it) }.forEach { entitySource ->
       this.entitySourceIndex.getIdsByEntitySource(entitySource)?.forEach {
         val entityData = this.entityDataByIdOrDie(it)
@@ -452,7 +456,7 @@ internal class PEntityStorageBuilder(
       }
     }
 
-    // 1.1) Cleanup references
+    LOG.debug { "1.1) Cleanup references" }
     //   If the reference leads to the matched entity, we can safely remove this reference.
     //   If the reference leads to the unmatched entity, we should save the entity to try to restore the reference later.
     for (matchedEntityData in localMatchedEntities.values()) {
@@ -487,6 +491,7 @@ internal class PEntityStorageBuilder(
       }
     }
 
+    LOG.debug { "2) Traverse entities of replaceWith store" }
     // 2) Traverse entities of the enemy
     //    and trying to detect whenever the entity already present in the local builder or not.
     //    If the entity already exists we optionally perform replace operation (or nothing),
@@ -494,8 +499,8 @@ internal class PEntityStorageBuilder(
     //    Local entities that don't exist in replaceWith store will be removed later.
     for (replaceWithEntitySource in replaceWith.entitySourceIndex.entitySources().filter { sourceFilter(it) }) {
       val entityDataList = replaceWith.entitySourceIndex
-                         .getIdsByEntitySource(replaceWithEntitySource)
-                         ?.map { replaceWith.entityDataByIdOrDie(it) } ?: continue
+                             .getIdsByEntitySource(replaceWithEntitySource)
+                             ?.map { replaceWith.entityDataByIdOrDie(it) } ?: continue
       for (matchedEntityData in entityDataList) {
         replaceWithMatchedEntities.put(matchedEntityData.identificator(replaceWith), matchedEntityData)
 
@@ -533,7 +538,7 @@ internal class PEntityStorageBuilder(
       }
     }
 
-    // 3) Remove old entities
+    LOG.debug { "3) Remove old entities" }
     //   After previous operation localMatchedEntities contain only entities that exist in local store, but don't exist in replaceWith store.
     //   Those entities should be just removed.
     for (localEntity in localMatchedEntities.values()) {
@@ -544,7 +549,7 @@ internal class PEntityStorageBuilder(
       updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
     }
 
-    // 4) Restore references between matched and unmatched entities
+    LOG.debug { "4) Restore references between matched and unmatched entities" }
     //    At this moment the operation may fail because of inconsistency.
     //    E.g. after this operation we can't have non-null references without corresponding entity.
     //      This may happen if we remove the matched entity, but don't have a replacement for it.
@@ -608,7 +613,7 @@ internal class PEntityStorageBuilder(
       }
     }
 
-    // 5) Restore references in matching ids
+    LOG.debug { "5) Restore references in matching ids" }
     for (rightMatchedNode in replaceWithMatchedEntities.values()) {
       val nodeId = rightMatchedNode.createPid()
       for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId)) {
@@ -620,6 +625,8 @@ internal class PEntityStorageBuilder(
         this.refs.updateParentOfChild(connectionId, localChildId, localParentId)
       }
     }
+
+    LOG.debug { "Replace by source finished" }
   }
 
   sealed class EntityDataChange<T : PEntityData<out TypedEntity>> {
@@ -777,6 +784,8 @@ internal class PEntityStorageBuilder(
 
   companion object {
 
+    private val LOG = logger<PEntityStorageBuilder>()
+
     fun create() = from(PEntityStorage.EMPTY)
 
     fun from(storage: TypedEntityStorage): PEntityStorageBuilder {
@@ -807,7 +816,6 @@ internal class PEntityStorageBuilder(
         }
       }
     }
-
   }
 }
 
