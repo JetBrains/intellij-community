@@ -160,7 +160,7 @@
                     interface="com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.compiler" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.Compiler" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory"/>
+    <extensionPoint qualifiedName="com.intellij.compilerFactory" area="IDEA_PROJECT" interface="com.intellij.openapi.compiler.CompilerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.compilerSettingsFactory" area="IDEA_PROJECT" interface="com.intellij.compiler.CompilerSettingsFactory"/>
     <extensionPoint qualifiedName="com.intellij.compileServer.plugin" beanClass="com.intellij.compiler.server.CompileServerPlugin" dynamic="true"/>
