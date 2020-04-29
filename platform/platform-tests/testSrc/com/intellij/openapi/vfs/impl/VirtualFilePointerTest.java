@@ -218,7 +218,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMovePointedFile() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File fileToMove = tempDir.newFile("toMove.txt");
 
     LoggingListener fileToMoveListener = new LoggingListener();
@@ -231,7 +231,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMoveFileUnderExistingPointer() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File fileToMove = tempDir.newFile("toMove.txt");
 
     LoggingListener listener = new LoggingListener();
@@ -244,7 +244,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMoveSrcDirUnderNewRootShouldGenerateRootsChanged() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File dirToMove = tempDir.newFile("dirToMove");
 
     LoggingListener listener = new LoggingListener();
@@ -257,7 +257,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testMovePointedFileUnderAnotherPointer() throws IOException {
-    File moveTarget = tempDir.newFolder("moveTarget");
+    File moveTarget = tempDir.newDirectory("moveTarget");
     File fileToMove = tempDir.newFile("toMove.txt");
 
     LoggingListener listener = new LoggingListener();

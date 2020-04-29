@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An improved variant of {@link TemporaryFolder} with lazy init, no symlinks in a temporary directory path, better directory name,
- * and more convenient {@linkplain #newFile(String)} / {@linkplain #newFolder(String)} methods.
+ * and more convenient {@linkplain #newFile(String)} / {@linkplain #newDirectory(String)} methods.
  */
 public class TempDirectory extends ExternalResource {
   private String myName;
@@ -71,7 +71,7 @@ public class TempDirectory extends ExternalResource {
   /**
    * Creates a new directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
    */
-  public @NotNull File newFolder(@NotNull String relativePath) throws IOException {
+  public @NotNull File newDirectory(@NotNull String relativePath) throws IOException {
     Path dir = Paths.get(getRoot().getPath(), relativePath);
     if (Files.exists(dir)) throw new IOException("Already exists: " + dir);
     makeDirectories(dir);
@@ -81,7 +81,7 @@ public class TempDirectory extends ExternalResource {
   /**
    * Creates a new directory with random name under the root temp directory.
    */
-  public @NotNull File newFolder() throws IOException {
+  public @NotNull File newDirectory() throws IOException {
     return FileUtil.createTempDirectory(getRoot(), "dir" + myNextDirNameSuffix.incrementAndGet(), null);
   }
 
@@ -111,5 +111,21 @@ public class TempDirectory extends ExternalResource {
       makeDirectories(path.getParent());
       Files.createDirectory(path);
     }
+  }
+
+  /**
+   * @deprecated use {@link #newDirectory(String)}} instead
+   */
+  @Deprecated
+  public @NotNull File newFolder(@NotNull String relativePath) throws IOException {
+    return newDirectory(relativePath);
+  }
+
+  /**
+   * @deprecated use {@link #newDirectory()} instead
+   */
+  @Deprecated
+  public @NotNull File newFolder() throws IOException {
+    return newDirectory();
   }
 }

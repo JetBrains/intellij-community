@@ -75,7 +75,7 @@ class LegacyBridgeFilePointerProviderTest {
   fun `cache invalidated on move`() {
     val provider = LegacyBridgeFilePointerProviderImpl(project).also { Disposer.register(disposable.disposable, it) }
 
-    val targetFolder = tempDir.newFolder("target")
+    val targetFolder = tempDir.newDirectory("target")
     val targetFolderVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFolder)!!
 
     val file = tempDir.newFile("x.txt")

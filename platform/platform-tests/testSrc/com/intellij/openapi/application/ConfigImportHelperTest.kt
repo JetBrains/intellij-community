@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ConfigImportHelper.PathAndFileTime
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
@@ -15,7 +14,6 @@ import com.intellij.util.SystemProperties
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
-import org.jetbrains.annotations.NotNull
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
@@ -137,11 +135,11 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `migrate plugins to empty directory`() {
-    val oldConfigDir = localTempDir.newFolder("oldConfig").toPath()
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
     val oldPluginZip = Files.createFile(oldPluginsDir.resolve("my-plugin.zip"))
 
-    val newConfigDir = localTempDir.newFolder("newConfig").toPath()
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, LOG)
@@ -149,11 +147,11 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `do not migrate plugins to existing directory`() {
-    val oldConfigDir = localTempDir.newFolder("oldConfig").toPath()
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
     val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
     val oldPluginZip = Files.createFile(oldPluginsDir.resolve("old-plugin.zip"))
 
-    val newConfigDir = localTempDir.newFolder("newConfig").toPath()
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = Files.createDirectories(newConfigDir.resolve("plugins"))
     val newPluginZip = Files.createFile(newPluginsDir.resolve("new-plugin.zip"))
 

@@ -194,7 +194,7 @@ public class UrlClassLoaderTest {
     int counter = 1;
     for (String dirName : new String[]{"dir", "dir/", "dir.class", "dir.class/"}) {
       for (String resourceName : new String[]{"a.class", "a.txt"}) {
-        File root = tempDir.newFolder("testFindDirWhenUsingCache" + (counter++));
+        File root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++));
         File subDir = createTestDir(root, dirName);
         createTestFile(subDir, resourceName);
 

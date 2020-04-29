@@ -53,7 +53,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindChildByNamePerformance() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -109,7 +109,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   @Test
   public void testGetParentPerformance() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -203,7 +203,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   private void doAsyncRefreshTest() throws Exception {
     byte[] xxx = "xxx".getBytes(StandardCharsets.UTF_8);
 
-    File temp = myTempDir.newFolder();
+    File temp = myTempDir.newDirectory();
     LocalFileSystem fs = LocalFileSystem.getInstance();
     VirtualFile vTemp = fs.findFileByIoFile(temp);
     assertNotNull(vTemp);

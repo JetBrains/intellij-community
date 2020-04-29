@@ -143,7 +143,7 @@ class PatternInstrumenterTest {
     val testDir = PluginPathManager.getPluginHomePath("IntelliLang") + "/intellilang-jps-plugin/testData/patternInstrumenter/"
     val testName = testName.methodName.capitalize()
     val testFile = IdeaTestUtil.findSourceFile(testDir + testName)
-    val classesDir = tempDir.newFolder("out")
+    val classesDir = tempDir.newDirectory("out")
     val rootPaths = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations")
     IdeaTestUtil.compileFile(testFile, classesDir, "-cp", rootPaths.joinToString(File.pathSeparator))
 

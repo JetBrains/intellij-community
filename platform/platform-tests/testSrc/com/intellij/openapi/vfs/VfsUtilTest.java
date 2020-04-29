@@ -101,7 +101,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindChildWithTrailingSpace() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -232,7 +232,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void testNotCanonicallyNamedChild() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     assertTrue(new File(tempDir, "libFiles").createNewFile());
     assertTrue(new File(tempDir, "CssInvalidElement").createNewFile());
     assertTrue(new File(tempDir, "extFiles").createNewFile());
@@ -267,7 +267,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   private void doRenameAndRefreshTest(boolean full) throws IOException {
     assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     assertTrue(new File(tempDir, "child").createNewFile());
 
     VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
@@ -338,7 +338,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertSame(test, ProjectManager.getInstance());
 
     try {
-      final File temp = myTempDir.newFolder();
+      final File temp = myTempDir.newDirectory();
       VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
       assertNotNull(vTemp);
       vTemp.getChildren(); //to force full dir refresh?!
@@ -399,8 +399,8 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   private void checkNonModalThenModalRefresh(boolean waitForDiskRefreshCompletionBeforeStartingModality) {
     EdtTestUtil.runInEdtAndWait(() -> {
-      File dir1 = myTempDir.newFolder("dir1");
-      File dir2 = myTempDir.newFolder("dir2");
+      File dir1 = myTempDir.newDirectory("dir1");
+      File dir2 = myTempDir.newDirectory("dir2");
       VirtualFile vDir = VfsUtil.findFileByIoFile(myTempDir.getRoot(), true);
       assertThat(Stream.of(vDir.getChildren()).map(VirtualFile::getName)).containsExactly(dir1.getName(), dir2.getName());
       VirtualFile vDir1 = vDir.getChildren()[0];

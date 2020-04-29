@@ -97,7 +97,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void directory() throws IOException {
-    File file = tempDir.newFolder("dir");
+    File file = tempDir.newDirectory("dir");
 
     FileAttributes attributes = getAttributes(file);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
@@ -115,7 +115,7 @@ public abstract class FileAttributesReadingTest {
 
   @Test
   public void readOnlyDirectory() throws IOException {
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
 
     if (SystemInfo.isWindows) {
       Files.getFileAttributeView(dir.toPath(), DosFileAttributeView.class).setReadOnly(true);
@@ -224,7 +224,7 @@ public abstract class FileAttributesReadingTest {
   public void linkToDirectory() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     if (SystemInfo.isUnix) assertTrue(dir.setWritable(false, false));
     assertTrue(dir.setLastModified(dir.lastModified() - 5000));
     File link = new File(tempDir.getRoot(), "link");
@@ -262,7 +262,7 @@ public abstract class FileAttributesReadingTest {
   public void selfLink() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     File link = new File(dir, "link");
     Files.createSymbolicLink(link.toPath(), dir.toPath());
 
@@ -291,7 +291,7 @@ public abstract class FileAttributesReadingTest {
   public void junction() throws IOException {
     assumeTrue("vista-or-newer expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isWinVistaOrNewer);
 
-    File target = tempDir.newFolder("dir");
+    File target = tempDir.newDirectory("dir");
     File junction = IoTestUtil.createJunction(target.getPath(), tempDir.getRoot() + "/junction.dir");
 
     try {
@@ -333,7 +333,7 @@ public abstract class FileAttributesReadingTest {
   @Test
   public void hiddenDir() throws IOException {
     IoTestUtil.assumeWindows();
-    File dir = tempDir.newFolder("dir");
+    File dir = tempDir.newDirectory("dir");
     FileAttributes attributes = getAttributes(dir);
     assertFalse(attributes.isHidden());
     Files.getFileAttributeView(dir.toPath(), DosFileAttributeView.class).setHidden(true);

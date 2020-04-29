@@ -277,7 +277,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testEnormousFileInputStream() throws IOException {
-    File root = tempDir.newFolder("out");
+    File root = tempDir.newDirectory("out");
     FileUtil.writeToFile(new File(root, "small1"), "some text");
     FileUtil.writeToFile(new File(root, "small2"), "another text");
     try (InputStream is = new ZeroInputStream(); OutputStream os = new FileOutputStream(new File(root, "large"))) {

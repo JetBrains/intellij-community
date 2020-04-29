@@ -19,7 +19,7 @@ public class VirtualFileListenerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFireEvent() throws IOException {
-    VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.newFolder("vDir"));
+    VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.newDirectory("vDir"));
     assertNotNull(dir);
     dir.getChildren();
 
