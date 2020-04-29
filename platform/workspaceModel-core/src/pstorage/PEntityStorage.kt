@@ -994,7 +994,7 @@ internal object ClassConversion {
   fun <M : ModifiableTypedEntity<T>, T : TypedEntity> modifiableEntityToEntity(clazz: KClass<out M>): KClass<T> {
     return modifiableToEntityCache.getOrPut(clazz) {
       try {
-        Class.forName(getPackage(clazz) + clazz.simpleName!!.drop(10)).kotlin
+        Class.forName(getPackage(clazz) + clazz.java.simpleName.drop(10)).kotlin
       }
       catch (e: ClassNotFoundException) {
         error("Cannot get modifiable class for $clazz")
@@ -1004,21 +1004,21 @@ internal object ClassConversion {
 
   fun <T : TypedEntity> entityToEntityData(clazz: KClass<out T>): KClass<PEntityData<T>> {
     return entityToEntityDataCache.getOrPut(clazz) {
-      (Class.forName(clazz.qualifiedName + "Data") as Class<PEntityData<T>>).kotlin
+      (Class.forName(clazz.java.name + "Data") as Class<PEntityData<T>>).kotlin
     } as KClass<PEntityData<T>>
   }
 
   fun <M : PEntityData<out T>, T : TypedEntity> entityDataToEntity(clazz: KClass<out M>): KClass<T> {
     return entityDataToEntityCache.getOrPut(clazz) {
-      (Class.forName(clazz.qualifiedName!!.dropLast(4)) as Class<T>).kotlin
+      (Class.forName(clazz.java.name.dropLast(4)) as Class<T>).kotlin
     } as KClass<T>
   }
 
   fun <D : PEntityData<T>, T : TypedEntity> entityDataToModifiableEntity(clazz: KClass<out D>): KClass<ModifiableTypedEntity<T>> {
     return entityDataToModifiableEntityCache.getOrPut(clazz) {
-      Class.forName(getPackage(clazz) + "Modifiable" + clazz.simpleName!!.dropLast(4)).kotlin as KClass<ModifiableTypedEntity<T>>
+      Class.forName(getPackage(clazz) + "Modifiable" + clazz.java.simpleName.dropLast(4)).kotlin as KClass<ModifiableTypedEntity<T>>
     } as KClass<ModifiableTypedEntity<T>>
   }
 
-  private fun getPackage(clazz: KClass<*>): String = packageCache.getOrPut(clazz) { clazz.qualifiedName!!.dropLastWhile { it != '.' } }
+  private fun getPackage(clazz: KClass<*>): String = packageCache.getOrPut(clazz) { clazz.java.name.dropLastWhile { it != '.' } }
 }
