@@ -381,6 +381,11 @@ public abstract class NullableNotNullManager {
                                                                      @NotNull PsiAnnotation.TargetType @NotNull ... placeTargetTypes) {
     PsiElement element = place.getParent();
     while (element != null) {
+      if (element instanceof PsiTypeElement && element.getContext() instanceof PsiLocalVariable) {
+        // Type of local variables is not influenced by container annotations
+        return null;
+      }
+      
       if (element instanceof PsiModifierListOwner) {
         NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes, place, false);
         if (result != null) {
