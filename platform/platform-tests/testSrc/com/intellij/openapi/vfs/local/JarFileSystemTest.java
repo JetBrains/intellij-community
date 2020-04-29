@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -229,6 +229,10 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       writeEntry(zip, "a/b");
       writeEntry(zip, "a/b/c.txt");
       writeEntry(zip, "x\\y\\z.txt");
+      writeEntry(zip, "d1/aB");
+      writeEntry(zip, "d1/ab");
+      writeEntry(zip, "D2/f1");
+      writeEntry(zip, "d2/f2");
     }
 
     String rootPath = FileUtil.toSystemIndependentName(testZip.getPath()) + JarFileSystem.JAR_SEPARATOR;
@@ -245,7 +249,8 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
         return true;
       }
     });
-    assertThat(entries).containsExactlyInAnyOrder("a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/y/z.txt");
+    assertThat(entries).containsExactlyInAnyOrder(
+      "a/", "a/b/", "a/b/c.txt", "x/", "x/y/", "x/y/z.txt", "d1/", "d1/aB", "d1/ab", "D2/", "D2/f1", "d2/", "d2/f2");
   }
 
   private static void writeEntry(ZipOutputStream zip, String name) throws IOException {
