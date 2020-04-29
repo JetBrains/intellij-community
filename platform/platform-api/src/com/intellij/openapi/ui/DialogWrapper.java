@@ -1053,6 +1053,14 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Calls doOKAction. This is intended for internal use.
+   */
+  @ApiStatus.Internal
+  public final void performOKAction() {
+    doOKAction();
+  }
+
+  /**
    * This method is invoked by default implementation of "OK" action. It just closes dialog
    * with {@code OK_EXIT_CODE}. This is convenient place to override functionality of "OK" action.
    * Note that the method does nothing if "OK" action isn't enabled.
