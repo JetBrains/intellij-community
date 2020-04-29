@@ -35,7 +35,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   private CharSequence myContentAsText;
   private final long myStamp;
   private byte[] myFileContentHash;
-  private byte[] myDocumentHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
@@ -217,12 +216,14 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   }
 
   public byte @Nullable [] getHash() {
-    return myPhysicalContent ? myFileContentHash : myDocumentHash;
+    if (!myPhysicalContent) {
+      throw new IllegalStateException("Hashes are allowed only while physical changes indexing");
+    }
+    return myFileContentHash;
   }
 
-  public void setHashes(byte @NotNull [] fileContentHash, byte @NotNull [] documentHash) {
+  public void setHashes(byte @NotNull [] fileContentHash) {
     myFileContentHash = fileContentHash;
-    myDocumentHash = documentHash;
   }
 
   /**
