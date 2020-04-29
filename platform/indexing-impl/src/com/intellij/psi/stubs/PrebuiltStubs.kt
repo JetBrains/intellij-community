@@ -22,7 +22,8 @@ import java.nio.file.Files
 
 const val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
 
-val prebuiltStubsProvider = FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
+val prebuiltStubsProvider: FileTypeExtension<PrebuiltStubsProvider> =
+  FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
 interface PrebuiltStubsProvider {
   /**
