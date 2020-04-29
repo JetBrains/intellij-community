@@ -590,6 +590,7 @@ public final class DnDManagerImpl extends DnDManager {
       }
       resetEvents("dragDropEnd:" + dsde.getDragSourceContext().getComponent());
       Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
+      myCurrentDragContext = null;
     }
 
     @Override
