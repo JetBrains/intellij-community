@@ -2,8 +2,12 @@
 package com.intellij.testFramework.rules
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.VfsTestUtil
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -21,6 +25,7 @@ class TempDirectory : ExternalResource() {
   private var name: String? = null
   private val nextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
+  private var myVirtualFileRoot: VirtualFile? = null
 
   val root: File
     get() {
@@ -30,7 +35,17 @@ class TempDirectory : ExternalResource() {
       }
       return myRoot!!
     }
-  
+
+  private val virtualFileRoot: VirtualFile
+    get() {
+      if (myVirtualFileRoot == null) {
+        myVirtualFileRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root)
+        checkNotNull(myVirtualFileRoot) { "Cannot find virtual file by $root" }
+        VfsUtil.markDirtyAndRefresh(false, true, true, myVirtualFileRoot)
+      }
+      return myVirtualFileRoot!!
+    }
+
   override fun apply(base: Statement,
                      description: Description): Statement {
     name = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName, false), true)
@@ -40,6 +55,7 @@ class TempDirectory : ExternalResource() {
   override fun after() {
     if (myRoot != null) {
       val path = myRoot!!.toPath()
+      myVirtualFileRoot = null
       myRoot = null
       name = null
       FileUtil.delete(path)
@@ -76,6 +92,15 @@ class TempDirectory : ExternalResource() {
       Files.write(file, content)
     }
     return file.toFile()
+  }
+
+  /**
+   * Creates a new virtual directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
+   */
+  fun newVirtualDirectory(relativePath: String): VirtualFile {
+    val existing = virtualFileRoot.findFileByRelativePath(relativePath)
+    require(existing == null) { "Already exists: ${existing!!.path}"}
+    return VfsTestUtil.createDir(virtualFileRoot, relativePath)
   }
 
   @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))
