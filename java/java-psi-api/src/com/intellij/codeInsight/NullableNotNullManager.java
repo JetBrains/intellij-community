@@ -369,7 +369,11 @@ public abstract class NullableNotNullManager {
    * @param context place in PSI tree
    * @return default nullability for type-use elements at given place 
    */
-  public @Nullable NullabilityAnnotationInfo findDefaultTypeUseNullability(PsiElement context) {
+  public @Nullable NullabilityAnnotationInfo findDefaultTypeUseNullability(@Nullable PsiElement context) {
+    if (context == null) return null;
+    if (context.getParent() instanceof PsiTypeElement && context.getParent().getParent() instanceof PsiLocalVariable) {
+      return null;
+    }
     return findNullabilityDefault(context, PsiAnnotation.TargetType.TYPE_USE);
   }
 
@@ -381,11 +385,6 @@ public abstract class NullableNotNullManager {
                                                                      @NotNull PsiAnnotation.TargetType @NotNull ... placeTargetTypes) {
     PsiElement element = place.getParent();
     while (element != null) {
-      if (element instanceof PsiTypeElement && element.getContext() instanceof PsiLocalVariable) {
-        // Type of local variables is not influenced by container annotations
-        return null;
-      }
-      
       if (element instanceof PsiModifierListOwner) {
         NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes, place, false);
         if (result != null) {
