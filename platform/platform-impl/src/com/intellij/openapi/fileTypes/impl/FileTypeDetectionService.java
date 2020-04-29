@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -98,7 +99,7 @@ class FileTypeDetectionService implements Disposable {
       public @Nullable ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
         Collection<VirtualFile> files = ContainerUtil.map2Set(events, (Function<VFileEvent, VirtualFile>)event -> {
           ProgressManager.checkCanceled();
-          VirtualFile file = event instanceof VFileCreateEvent ? /* avoid expensive find child here */ null : event.getFile();
+          VirtualFile file = event instanceof VFileCreateEvent /* avoid expensive find child here */ || isReparseEvent(event) ? null : event.getFile();
           VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
           if (FileTypeManagerImpl.toLog()) {
             FileTypeManagerImpl.log("F: after() VFS event " + event +
@@ -152,6 +153,11 @@ class FileTypeDetectionService implements Disposable {
           }
         }
         return null;
+      }
+
+      private boolean isReparseEvent(@NotNull VFileEvent event) {
+        return event instanceof VFilePropertyChangeEvent &&
+               FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(((VFilePropertyChangeEvent)event).getPropertyName());
       }
     }, this);
 
