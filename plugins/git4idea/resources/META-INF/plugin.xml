@@ -305,6 +305,8 @@
     <statusBarWidgetFactory id="gitWidget"
                             implementation="git4idea.ui.branch.GitBranchWidget$Factory"
                             order="after codeStyleWidget,before readOnlyWidget"/>
+
+    <vcsBulkMovesOnlyChangesFilter implementation="git4idea.GitBulkMovesOnlyChangesFilter"/>
   </extensions>
 
   <extensionPoints>

@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.ui.GuiUtils
@@ -119,28 +120,50 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(
-        {
-          for (change in changes) {
-            indicator.checkCanceled()
-
-            val accept = filter.accept(this, change)
-
-            synchronized(LOCK) {
-              indicator.checkCanceled()
-              pending.removeAt(0)
-              if (accept) {
-                processed.add(change)
-              }
-              else {
-                filteredOut.add(change)
-              }
-            }
-
-            queueUpdatePresentation()
-          }
-          updatePresentation()
-        }, indicator)
+        { filterChanges(changes, filter, pending, processed, filteredOut) },
+        indicator)
     }
+  }
+
+  private fun filterChanges(changes: List<Change>,
+                            filter: Filter,
+                            pending: MutableList<Change>,
+                            processed: MutableList<Change>,
+                            filteredOut: MutableList<Change>) {
+    queueUpdatePresentation()
+    val filteredChanges = filter.acceptBulk(this, changes)
+    if (filteredChanges != null) {
+      synchronized(LOCK) {
+        ProgressManager.checkCanceled()
+        pending.clear()
+        processed.addAll(filteredChanges)
+        val filteredOutSet = changes.toMutableSet()
+        filteredOutSet.removeAll(filteredChanges)
+        filteredOut.addAll(filteredOutSet)
+      }
+      updatePresentation()
+      return
+    }
+
+    for (change in changes) {
+      ProgressManager.checkCanceled()
+
+      val accept = filter.accept(this, change)
+
+      synchronized(LOCK) {
+        ProgressManager.checkCanceled()
+        pending.removeAt(0)
+        if (accept) {
+          processed.add(change)
+        }
+        else {
+          filteredOut.add(change)
+        }
+      }
+
+      queueUpdatePresentation()
+    }
+    updatePresentation()
   }
 
   private fun queueUpdatePresentation() {
@@ -175,6 +198,8 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     fun isAvailable(filterer: ChangesFilterer): Boolean = true
     fun accept(filterer: ChangesFilterer, change: Change): Boolean
 
+    fun acceptBulk(filterer: ChangesFilterer, changes: List<Change>): Collection<Change>? = null
+
     @Nls
     fun getText(): String
 
@@ -185,14 +210,31 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
   private object MovesOnlyFilter : Filter {
     override fun getText(): String = VcsBundle.message("action.filter.moved.files.text")
 
+    override fun acceptBulk(filterer: ChangesFilterer, changes: List<Change>): Collection<Change>? {
+      for (epFilter in BulkMovesOnlyChangesFilter.EP_NAME.extensionList) {
+        val filteredChanges = epFilter.filter(filterer.project, changes)
+        if (filteredChanges != null) {
+          return filteredChanges
+        }
+      }
+      return null
+    }
+
     override fun accept(filterer: ChangesFilterer, change: Change): Boolean {
       val bRev = change.beforeRevision ?: return true
       val aRev = change.afterRevision ?: return true
       if (bRev.file == aRev.file) return true
 
-      val content1 = bRev.content ?: return true
-      val content2 = aRev.content ?: return true
-      return content1 != content2
+      if (bRev is ByteBackedContentRevision && aRev is ByteBackedContentRevision) {
+        val bytes1 = bRev.contentAsBytes ?: return true
+        val bytes2 = aRev.contentAsBytes ?: return true
+        return !bytes1.contentEquals(bytes2)
+      }
+      else {
+        val content1 = bRev.content ?: return true
+        val content2 = aRev.content ?: return true
+        return content1 != content2
+      }
     }
   }
 

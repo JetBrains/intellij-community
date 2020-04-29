@@ -47,6 +47,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     }
     else {
       myLoadingDecorator.startLoading();
+      myLoadingDecorator.getProgressBar().setIndeterminate(progress == 0.0f);
       myLoadingDecorator.getProgressBar().setValue((int)(100 * progress));
     }
 
@@ -93,7 +94,6 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     JComponent centerPanel = super.createCenterPanel();
     myLoadingDecorator = new ProgressBarLoadingDecorator(JBUI.Panels.simplePanel(centerPanel), this,
                                                          ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
-    myLoadingDecorator.getProgressBar().setIndeterminate(false);
     return myLoadingDecorator.getComponent();
   }
 

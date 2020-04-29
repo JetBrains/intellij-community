@@ -174,5 +174,9 @@
                     interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"
                     dynamic="true"/>
     <extensionPoint name="vcsStartupActivity" interface="com.intellij.openapi.vcs.impl.VcsStartupActivity" dynamic="false"/>
+
+    <extensionPoint name="vcsBulkMovesOnlyChangesFilter"
+                    interface="com.intellij.openapi.vcs.changes.ui.browser.BulkMovesOnlyChangesFilter"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
