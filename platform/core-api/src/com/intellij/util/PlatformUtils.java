@@ -95,7 +95,7 @@ public final class PlatformUtils {
   }
 
   public static boolean isPyCharm() {
-    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational();
+    return isPyCharmPro() || isPyCharmCommunity() || isPyCharmEducational() || isPyCharmDs();
   }
 
   public static boolean isPyCharmPro() {
