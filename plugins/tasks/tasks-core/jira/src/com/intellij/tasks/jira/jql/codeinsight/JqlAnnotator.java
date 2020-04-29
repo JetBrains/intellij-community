@@ -41,7 +41,7 @@ public class JqlAnnotator implements Annotator {
       public void visitJqlList(JqlList list) {
         JqlSimpleClause clause = PsiTreeUtil.getParentOfType(list, JqlSimpleClause.class);
         if (clause != null && !isListClause(clause)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, String.format("Not expecting list of values here")).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, "Not expecting list of values here").create();
         }
       }
 
