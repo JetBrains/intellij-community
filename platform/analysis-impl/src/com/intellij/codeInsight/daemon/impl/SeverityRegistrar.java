@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -32,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class SeverityRegistrar implements Comparator<HighlightSeverity>, ModificationTracker {
+public final class SeverityRegistrar implements Comparator<HighlightSeverity>, ModificationTracker {
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
@@ -40,18 +39,19 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
 
   private static final Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 
+  private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = Topic.create("STANDARD_SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_CHILDREN);
+
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<>();
   private final Map<String, Color> myRendererColors = new ConcurrentHashMap<>();
   static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = Topic.create("SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
-  private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = Topic.create("STANDARD_SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_CHILDREN);
   private final @NotNull MessageBus myMessageBus;
 
   private volatile OrderMap myOrderMap;
   private JDOMExternalizableStringList myReadOrder;
 
-  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES = new ConcurrentHashMap<>();
+  private static final Map<String, HighlightInfoType> STANDARD_SEVERITIES;
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
@@ -61,16 +61,24 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity>, Modific
   }
 
   static {
-    registerStandard(HighlightInfoType.ERROR, HighlightSeverity.ERROR);
-    registerStandard(HighlightInfoType.WARNING, HighlightSeverity.WARNING);
-    registerStandard(HighlightInfoType.INFO, HighlightSeverity.INFO);
-    registerStandard(HighlightInfoType.WEAK_WARNING, HighlightSeverity.WEAK_WARNING);
-    registerStandard(HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER, HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING);
-    STANDARD_SEVERITIES.put(HighlightDisplayLevel.DO_NOT_SHOW.getName(), HighlightInfoType.INFORMATION);
+    Map<String, HighlightInfoType> map = new HashMap<>();
+    map.put(HighlightSeverity.ERROR.getName(), HighlightInfoType.ERROR);
+    map.put(HighlightSeverity.WARNING.getName(), HighlightInfoType.WARNING);
+    map.put(HighlightSeverity.INFO.getName(), HighlightInfoType.INFO);
+    map.put(HighlightSeverity.WEAK_WARNING.getName(), HighlightInfoType.WEAK_WARNING);
+    map.put(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING.getName(), HighlightInfoType.GENERIC_WARNINGS_OR_ERRORS_FROM_SERVER);
+    map.put(HighlightDisplayLevel.DO_NOT_SHOW.getName(), HighlightInfoType.INFORMATION);
+    STANDARD_SEVERITIES = new ConcurrentHashMap<>(map);
   }
 
+  @SuppressWarnings("unused")
   public static void registerStandard(@NotNull HighlightInfoType highlightInfoType, @NotNull HighlightSeverity highlightSeverity) {
     STANDARD_SEVERITIES.put(highlightSeverity.getName(), highlightInfoType);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
+  }
+
+  public static void registerStandard(@NotNull Map<String, HighlightInfoType> map) {
+    STANDARD_SEVERITIES.putAll(map);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(STANDARD_SEVERITIES_CHANGED_TOPIC).run();
   }
 
