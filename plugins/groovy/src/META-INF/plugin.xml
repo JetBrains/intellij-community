@@ -643,7 +643,6 @@
                             implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyTargetElementEvaluator"/>
 
     <projectConfigurable instance="org.jetbrains.plugins.groovy.compiler.GroovyCompilerConfigurable" id="Groovy compiler"
-                         bundle="messages.GroovyBundle"
                          key="configurable.GroovyCompilerConfigurable.display.name"
                          parentId="project.propCompiler"/>
     <java.compiler implementation="org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler"/>
@@ -735,29 +734,19 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection" unfair="true"/>
 
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="second.unsafe.call" groupKey="inspection.bugs" enabledByDefault="true"
+                     key="inspection.display.name.second.unsafe.call" groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.secondUnsafeCall.SecondUnsafeCallInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedAssignment"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="unused.assignment" groupKey="inspection.data.flow" enabledByDefault="true"
+                     key="inspection.display.name.unused.assignment" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyUnusedIncOrDec"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="unused.inc.dec" groupKey="inspection.data.flow" enabledByDefault="true"
+                     key="inspection.display.name.unused.inc.dec" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="unassigned.access" groupKey="inspection.data.flow" enabledByDefault="true"
+                     key="inspection.display.name.unassigned.access" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.unassignedVariable.UnassignedVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMissingReturnStatement"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="no.return.display.name" groupKey="inspection.data.flow" enabledByDefault="true"
+                     key="inspection.display.name.no.return" groupKey="inspection.data.flow" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.type.customizer"
@@ -1007,19 +996,13 @@
                      groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="clashing.getters" groupKey="inspection.confusing"
+                     key="inspection.display.name.clashing.getters" groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingGettersInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="gr.package" groupKey="inspection.confusing" enabledByDefault="true"
+                     key="inspection.display.name.package.mismatch" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrPackageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="gr.deprecated.api.usage" groupKey="inspection.confusing" enabledByDefault="true"
+                     key="inspection.display.name.deprecated.api.usage" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrDeprecatedAPIUsageInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.nested.conditional"
                      groupKey="inspection.confusing"
@@ -1042,17 +1025,13 @@
                      groupKey="inspection.confusing"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrReassignedInClosureLocalVarInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="unnecessary.qualified.reference" groupKey="inspection.confusing" enabledByDefault="true"
+                     key="inspection.display.name.unnecessary.qualified.reference" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.UnnecessaryQualifiedReferenceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.empty.statement.body"
                      groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyEmptyStatementBodyInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="pointless.boolean.display.name" groupKey="inspection.confusing" enabledByDefault="true"
+                     key="inspection.display.name.pointless.boolean" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.pointless.arithmetic"
@@ -1104,9 +1083,7 @@
                      groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyResultOfObjectAllocationIgnoredInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="access.to.inaccessible.element" groupKey="inspection.bugs" enabledByDefault="true"
+                     key="inspection.display.name.access.to.inaccessible.element" groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection" unfair="true"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.constructor.named.arguments" groupKey="inspection.bugs"
@@ -1117,19 +1094,13 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyDocCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="incorrect.range.argument" groupKey="inspection.bugs"
+                     key="inspection.display.name.incorrect.range.argument" groupKey="inspection.bugs"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="new.instance.of.singleton" groupKey="inspection.confusing" enabledByDefault="true"
+                     key="inspection.display.name.new.instance.of.singleton" groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.NewInstanceOfSingletonInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="check.labeled.statement" groupKey="inspection.bugs" enabledByDefault="true"
+                     key="inspection.display.name.check.labeled.statement" groupKey="inspection.bugs" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyLabeledStatementInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.class.naming.convention"
                      groupKey="inspection.naming"
@@ -1188,27 +1159,22 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection"/>
 
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.annotations"
-                     bundle="messages.GroovyTransformationsBundle"
-                     groupBundle="messages.GroovyBundle"
-                     key="singleton.constructor.inspection" enabledByDefault="true" level="ERROR"
+                     key="inspection.display.name.singleton.constructor" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.plugins.groovy.transformations.singleton.SingletonConstructorInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" key="inspection.display.name.delegates.to"
                      groupKey="inspection.annotations" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.DelegatesToInspection"/>
 
     <localInspection language="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupBundle="messages.GroovyBundle"
                      groupPath="Groovy"
                      groupKey="inspection.data.flow"
-                     key="variable.can.be.final"
+                     key="inspection.display.name.variable.can.be.final"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.dataflow.GroovyVariableCanBeFinalInspection"/>
 
     <localInspection language="Groovy"
                      groupPath="Groovy"
-                     bundle="messages.GroovyInspectionBundle"
-                     groupKey="groovy.probable.bugs"
-                     key="equals.between.inconvertible.types"
+                     groupKey="inspection.bugs"
+                     key="inspection.display.name.equals.between.inconvertible.types"
                      enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrEqualsBetweenInconvertibleTypesInspection"/>
 
