@@ -246,12 +246,12 @@ public class HighlightUtil {
           else {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(conjunct)
-              .descriptionAndTooltip("Unexpected type: class is expected").create();
+              .descriptionAndTooltip(JavaErrorBundle.message("unexpected.type.class.expected")).create();
           }
           if (!erasures.add(TypeConversionUtil.erasure(conjType))) {
             final HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
               .range(conjunct)
-              .descriptionAndTooltip("Repeated interface").create();
+              .descriptionAndTooltip(JavaErrorBundle.message("repeated.interface")).create();
             QuickFixAction.registerQuickFixAction(highlightInfo, new DeleteRepeatedInterfaceFix(conjunct, conjList), null);
             return highlightInfo;
           }
@@ -268,8 +268,9 @@ public class HighlightUtil {
             return false;
           });
         if (sameGenericParameterization != null) {
-          final String message = formatClass(sameGenericParameterization) + " cannot be inherited with different arguments: " +
-                                 differentArgumentsMessage.get();
+          final String message = JavaErrorBundle
+            .message("class.cannot.be.inherited.with.different.arguments", formatClass(sameGenericParameterization),
+                     differentArgumentsMessage.get());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(expression)
             .descriptionAndTooltip(message).create();
@@ -1544,13 +1545,14 @@ public class HighlightUtil {
       for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
         final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
         if (expressionType != null && !switchExpressionType.isAssignableFrom(expressionType)) {
-          String text = "Bad type in switch expression: " + expressionType.getCanonicalText() + " cannot be converted to " + switchExpressionType.getCanonicalText();
+          String text = JavaErrorBundle
+            .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
           infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create());
         }
       }
 
       if (PsiType.VOID.equals(switchExpressionType)) {
-        String text = "Target type for switch expression cannot be void";
+        String text = JavaErrorBundle.message("switch.expression.cannot.be.void");
         infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(switchExpression.getFirstChild()).descriptionAndTooltip(text).create());
       }
     }
