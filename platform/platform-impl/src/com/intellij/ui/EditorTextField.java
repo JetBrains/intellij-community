@@ -233,7 +233,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
       boolean isFocused = isFocusOwner();
       EditorEx newEditor = createEditor();
-      releaseEditor(myEditor);
+      releaseEditorNow();
       myEditor = newEditor;
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -361,7 +361,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       // If this component is added to a dialog (for example, the settings dialog),
       // then we have to release the editor simultaneously on close.
       // Otherwise, a corresponding dynamic plugin cannot be unloaded.
-      Disposer.register(uiDisposable, () -> releaseEditor(myEditor));
+      Disposer.register(uiDisposable, this::releaseEditorNow);
     }
 
     myDisposable = Disposer.newDisposable("ETF dispose");
@@ -370,8 +370,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       ProjectManagerListener listener = new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          releaseEditor(myEditor);
-          myEditor = null;
+          releaseEditorNow();
         }
       };
       ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
@@ -420,9 +419,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  private void releaseEditor(Editor editor) {
-    if (editor == null) return;
-
+  private void releaseEditor(@NotNull Editor editor) {
     // todo IMHO this should be removed completely
     if (myProject != null && !myProject.isDisposed() && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -441,6 +438,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
+  private void releaseEditorNow() {
+    EditorEx editor = myEditor;
+    if (editor == null) return;
+    myEditor = null;
+    releaseEditor(editor);
+  }
+
   void releaseEditorLater() {
     // releasing an editor implies removing it from a component hierarchy
     // invokeLater is required because releaseEditor() may be called from
@@ -448,6 +452,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
+    if (editor == null) return;
     ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
     myEditor = null;
   }
@@ -704,8 +709,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     if (toReleaseEditor) {
-      releaseEditor(myEditor);
-      myEditor = null;
+      releaseEditorNow();
       myPassivePreferredSize = size;
     }
 
