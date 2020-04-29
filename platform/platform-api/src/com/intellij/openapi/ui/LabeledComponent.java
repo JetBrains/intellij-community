@@ -57,8 +57,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     TextWithMnemonic.fromTextWithMnemonic(text).setToLabel(myLabel);
   }
 
-  @Nullable
-  public @NlsContexts.Label String handleSemicolon(@NlsContexts.Label String text) {
+  private static String handleSemicolon(String text) {
     return StringUtil.isEmpty(text) || StringUtil.endsWithChar(text, ':') || StringUtil.endsWithChar(text, '：') ? text : text + ':';
   }
 
