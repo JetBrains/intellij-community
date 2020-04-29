@@ -171,36 +171,28 @@ class LegacyBridgeModuleLibraryTest {
 
       StoreUtil.saveDocumentsAndProjectSettings(project)
       val template = "\$MODULE_DIR\$"
-      assertEquals("""
-        <?xml version="1.0" encoding="UTF-8"?>
-        <module type="EMPTY_MODULE" version="4">
-          <component name="NewModuleRootManager">
-            <orderEntry type="sourceFolder" forTests="false" />
-            <orderEntry type="module-library">
-              <library name="$mavenLibraryName">
-                <CLASSES>
-                  <root url="$template/$antLibraryName.jar" />
-                </CLASSES>
-                <JAVADOC />
-                <SOURCES>
-                  <root url="$template/$antLibraryName-sources.jar" />
-                </SOURCES>
-              </library>
-            </orderEntry>
-            <orderEntry type="module-library">
-              <library name="$antLibraryName">
-                <CLASSES>
-                  <root url="$template/$mavenLibraryName.jar" />
-                </CLASSES>
-                <JAVADOC />
-                <SOURCES>
-                  <root url="$template/$mavenLibraryName-sources.jar" />
-                </SOURCES>
-              </library>
-            </orderEntry>
-          </component>
-        </module>
-      """.trimIndent(), moduleFile.readText())
+      assertTrue(moduleFile.readText().contains("""<orderEntry type="module-library">
+      <library name="$mavenLibraryName">
+        <CLASSES>
+          <root url="$template/$antLibraryName.jar" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="$template/$antLibraryName-sources.jar" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="$antLibraryName">
+        <CLASSES>
+          <root url="$template/$mavenLibraryName.jar" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="$template/$mavenLibraryName-sources.jar" />
+        </SOURCES>
+      </library>
+    </orderEntry>"""))
       rootModel.commit()
     }
   }
