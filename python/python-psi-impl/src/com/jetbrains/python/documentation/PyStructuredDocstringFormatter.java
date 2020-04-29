@@ -2,6 +2,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,6 +54,10 @@ public class PyStructuredDocstringFormatter {
     final DocStringFormat format = DocStringUtil.guessDocStringFormat(preparedDocstring, element);
     if (format == DocStringFormat.PLAIN) {
       return null;
+    }
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Collections.singletonList("Unittest placeholder");
     }
 
     final StructuredDocString structuredDocString = DocStringUtil.parseDocStringContent(format, preparedDocstring);
