@@ -1042,7 +1042,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   public void testUndoRedoFileMoveAndDeleteWithChangedDocument() throws Exception {
-    final String[] path = new String[1];
     final VirtualFile[] dir = new VirtualFile[1];
     final VirtualFile[] f = new VirtualFile[1];
 
@@ -1051,7 +1050,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
       f[0] = createChildData(myRoot, "foo.txt");
       setBinaryContent(f[0], "initial".getBytes(Charsets.UTF_8));
       setDocumentText(f[0], "document");
-      path[0] = f[0].getPath();
     });
     executeCommand(() -> {
       move(f[0], dir[0]);
