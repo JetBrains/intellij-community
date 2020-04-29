@@ -40,6 +40,12 @@ class Test {
       .isPresent();
   }
 
+  void flatMapsWithSameParamName(String param0) {
+    Optional.of(param0)
+      .flatMap(var0 -> Optional.of("foo").map(s -> ("foo").toLowerCase()))
+      .flatMap(var0 -> Optional.of("bar")).<caret>get()
+  }
+
   String flatMapWithOrInside() {
     return Optional.<String>empty().flatMap(s1 -> Optional.empty().or(() -> Optional.empty())).get();
   }

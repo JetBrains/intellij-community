@@ -235,8 +235,9 @@ abstract class IntermediateOperation implements Operation {
     @Override
     public void preprocessVariables(@NotNull ChainVariable inVar, @NotNull ChainVariable outVar, @NotNull OptionalToIfContext context) {
       String name = myFn.getParameterName(0);
-      if (name != null) {
+      if (name != null && !context.isUsedLambdaVarName(name)) {
         inVar.addBestNameCandidate(name);
+        context.addLambdaVarName(name);
       }
     }
   }

@@ -58,6 +58,13 @@ class Test {
       }
   }
 
+  void flatMapsWithSameParamName(String param0) {
+      if (param0 == null) throw new NullPointerException();
+      String s = "foo";
+      String toLowerCase = ("foo").toLowerCase();
+      String bar = "bar";
+  }
+
   String flatMapWithOrInside() {
       Object o1 = null;
       String empty = null;
