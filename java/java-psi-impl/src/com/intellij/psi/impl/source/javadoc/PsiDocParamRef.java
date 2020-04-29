@@ -85,6 +85,9 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         Collections.addAll(allParams, tpl.getTypeParameters());
       }
     }
+    if (owner instanceof PsiClass && ((PsiClass)owner).isRecord()) {
+      Collections.addAll(allParams, ((PsiClass)owner).getRecordComponents());
+    }
     return allParams;
   }
 
