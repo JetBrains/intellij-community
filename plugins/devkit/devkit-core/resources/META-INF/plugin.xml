@@ -118,11 +118,11 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.UniqueToolbarIdInspection"/>
-    <localInspection language="JAVA" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention description checker"
+    <localInspection language="UAST" shortName="IntentionDescriptionNotFoundInspection" displayName="Intention description checker"
                      groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.IntentionDescriptionNotFoundInspection"/>
-    <localInspection language="JAVA"
+    <localInspection language="UAST"
                      key="inspections.component.postfix.template.not.found.description.name"
                      groupPath="Plugin DevKit" groupKey="inspections.group.description.file"
                      enabledByDefault="true"
