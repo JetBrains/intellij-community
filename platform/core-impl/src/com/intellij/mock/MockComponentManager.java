@@ -134,9 +134,8 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return Conditions.alwaysFalse();
   }
 
-  @NotNull
   @Override
-  public Object createListener(@NotNull ListenerDescriptor descriptor) {
+  public @NotNull Object createListener(@NotNull ListenerDescriptor descriptor) {
     throw new UnsupportedOperationException();
   }
 }

@@ -389,9 +389,6 @@ object DynamicPlugins {
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
-          for (project in ProjectUtil.getOpenProjects()) {
-            (project.messageBus as MessageBusImpl).clearPublisherCache()
-          }
           (ApplicationManager.getApplication().messageBus as MessageBusImpl).clearPublisherCache()
 
           if (disable) {
@@ -488,7 +485,7 @@ object DynamicPlugins {
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
-    (application.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
+    (application.messageBus as MessageBusImpl).unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
     for (project in openProjects) {
       (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
@@ -496,7 +493,7 @@ object DynamicPlugins {
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
       }
-      (project.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
+      (project.messageBus as MessageBusImpl).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
     }
   }
 
