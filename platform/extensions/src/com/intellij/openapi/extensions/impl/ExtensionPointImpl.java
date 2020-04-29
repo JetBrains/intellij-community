@@ -541,6 +541,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       doNotifyListeners(false, list, myListeners);
     }
 
+    clearUserCache();
+
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
@@ -556,6 +558,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
               doNotifyListeners(false, oldList, listeners);
             }
           }
+
+          clearUserCache();
         }
       }
     });
