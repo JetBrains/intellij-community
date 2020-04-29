@@ -206,7 +206,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private @NotNull AccessToken heavyActivityStarted(@NotNull String activityName) {
-    String reason = "Indexing paused due to " + activityName;
+    String reason = IdeBundle.message("dumb.service.indexing.paused.due.to", activityName);
     synchronized (myRequestedSuspensions) {
       myRequestedSuspensions.add(reason);
     }
