@@ -18,7 +18,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchPanel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Point
@@ -72,7 +71,7 @@ internal object GHPRListComponent {
     list.cellRenderer = renderer
     UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
-    val search = GithubPullRequestSearchPanel(project, AutoPopupController.getInstance(project), dataContext.searchHolder).apply {
+    val search = GHPRSearchPanel(project, AutoPopupController.getInstance(project), dataContext.searchHolder).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 

@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.search
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 
 internal class GithubPullRequestSearchQueryHolderImpl : GithubPullRequestSearchQueryHolder {
-  private val delegate = SingleValueModel(GithubPullRequestSearchQuery.parseFromString("state:open"))
+  private val delegate = SingleValueModel(GHPRSearchQuery.parseFromString("state:open"))
 
-  override var query: GithubPullRequestSearchQuery
+  override var query: GHPRSearchQuery
     get() = delegate.value
     set(value) {
       delegate.value = value

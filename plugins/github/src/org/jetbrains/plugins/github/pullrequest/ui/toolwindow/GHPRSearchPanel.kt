@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.search
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -20,12 +20,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
+import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-internal class GithubPullRequestSearchPanel(project: Project,
-                                            private val autoPopupController: AutoPopupController,
-                                            private val holder: GithubPullRequestSearchQueryHolder)
+internal class GHPRSearchPanel(project: Project,
+                               private val autoPopupController: AutoPopupController,
+                               private val holder: GithubPullRequestSearchQueryHolder)
   : BorderLayoutPanel(), Disposable {
 
   private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
@@ -66,7 +68,7 @@ internal class GithubPullRequestSearchPanel(project: Project,
   }
 
   private fun updateQuery() {
-    holder.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
+    holder.query = GHPRSearchQuery.parseFromString(searchField.text)
   }
 
   override fun updateUI() {
@@ -98,36 +100,36 @@ internal class GithubPullRequestSearchPanel(project: Project,
     override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
       val qualifierName = getCurrentQualifierName(text, offset)
       if (qualifierName == null) {
-        result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.state)
+        result.addElement(LookupElementBuilder.create(GHPRSearchQuery.QualifierName.state)
                             .withTailText(":")
                             .withInsertHandler(addColonInsertHandler))
-        result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.author)
-                            .withTailText(":")
-                            .withTypeText("username", true)
-                            .withInsertHandler(addColonInsertHandler))
-        result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.assignee)
+        result.addElement(LookupElementBuilder.create(GHPRSearchQuery.QualifierName.author)
                             .withTailText(":")
                             .withTypeText("username", true)
                             .withInsertHandler(addColonInsertHandler))
-        result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.after)
+        result.addElement(LookupElementBuilder.create(GHPRSearchQuery.QualifierName.assignee)
+                            .withTailText(":")
+                            .withTypeText("username", true)
+                            .withInsertHandler(addColonInsertHandler))
+        result.addElement(LookupElementBuilder.create(GHPRSearchQuery.QualifierName.after)
                             .withTailText(":")
                             .withTypeText("YYYY-MM-DD", true)
                             .withInsertHandler(addColonInsertHandler))
-        result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.before)
+        result.addElement(LookupElementBuilder.create(GHPRSearchQuery.QualifierName.before)
                             .withTailText(":")
                             .withTypeText("YYYY-MM-DD", true)
                             .withInsertHandler(addColonInsertHandler))
-        result.addElement(LookupElementBuilder.create(GithubPullRequestSearchQuery.QualifierName.sortBy)
+        result.addElement(LookupElementBuilder.create(GHPRSearchQuery.QualifierName.sortBy)
                             .withTailText(":")
                             .withInsertHandler(addColonInsertHandler))
       }
       else when {
-        qualifierName.equals(GithubPullRequestSearchQuery.QualifierName.state.name, true) -> {
+        qualifierName.equals(GHPRSearchQuery.QualifierName.state.name, true) -> {
           for (state in GithubIssueState.values()) {
             result.addElement(LookupElementBuilder.create(state.name))
           }
         }
-        qualifierName.equals(GithubPullRequestSearchQuery.QualifierName.sortBy.name, true) -> {
+        qualifierName.equals(GHPRSearchQuery.QualifierName.sortBy.name, true) -> {
           for (sort in GithubIssueSearchSort.values()) {
             result.addElement(LookupElementBuilder.create(sort.name))
           }

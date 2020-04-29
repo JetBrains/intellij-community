@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.search
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.github.pullrequest.data
 
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
+internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
   fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
     for (term in terms) {
       when (term) {
@@ -35,7 +35,7 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
   companion object {
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
 
-    fun parseFromString(string: String): GithubPullRequestSearchQuery {
+    fun parseFromString(string: String): GHPRSearchQuery {
       val result = mutableListOf<Term<*>>()
       val terms = string.split(' ')
       for (term in terms) {
@@ -54,7 +54,7 @@ internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
           }
         }
       }
-      return GithubPullRequestSearchQuery(result)
+      return GHPRSearchQuery(result)
     }
   }
 

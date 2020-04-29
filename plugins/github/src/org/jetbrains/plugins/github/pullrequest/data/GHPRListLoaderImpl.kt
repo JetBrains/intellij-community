@@ -16,12 +16,9 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
-import org.jetbrains.plugins.github.util.handleOnEdt
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
@@ -66,7 +63,7 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     get() = !searchQueryHolder.query.isEmpty()
 
   override fun resetFilter() {
-    searchQueryHolder.query = GithubPullRequestSearchQuery.parseFromString("state:open")
+    searchQueryHolder.query = GHPRSearchQuery.parseFromString("state:open")
   }
 
   override fun handleResult(list: List<GHPullRequestShort>) {
@@ -147,7 +144,7 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
   }
 
   companion object {
-    private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GithubPullRequestSearchQuery?): String {
+    private fun buildQuery(repoPath: GHRepositoryPath, searchQuery: GHPRSearchQuery?): String {
       return GithubApiSearchQueryBuilder.searchQuery {
         qualifier("type", GithubIssueSearchType.pr.name)
         qualifier("repo", repoPath.toString())
