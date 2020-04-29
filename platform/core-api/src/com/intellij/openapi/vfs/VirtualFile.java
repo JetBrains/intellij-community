@@ -134,11 +134,27 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract String getPath();
 
   /**
-   * @return a related {@link Path} for a given virtual file where possible or {@code null} otherwise.
+   * @return a related {@link Path} for a given virtual file where possible otherwise an
+   * exception is thrown.
    * The returned {@link Path} may not have a default filesystem behind.
+   *
+   * @see #findNioPath()
+   */
+  @NotNull
+  public Path getNioPath() throws IllegalArgumentException {
+    Path path = findNioPath();
+    if (path != null) return path;
+    throw new IllegalArgumentException("Failed to map " + this + " (filesystem " + getFileSystem() + ") into local Path");
+  }
+
+  /**
+   * @return a related {@link Path} for a given virtual file where possible otherwise {@code null}.
+   * The returned {@link Path} may not have a default filesystem behind.
+   *
+   * @see #getNioPath()
    */
   @Nullable
-  public Path getNioPath() {
+  public Path findNioPath() {
     return getFileSystem().getNioPath(this);
   }
 
