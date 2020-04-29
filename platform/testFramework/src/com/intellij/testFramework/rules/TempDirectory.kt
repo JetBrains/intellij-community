@@ -1,146 +1,97 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.testFramework.rules;
+package com.intellij.testFramework.rules
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.rules.ExternalResource;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import org.junit.rules.ExternalResource
+import org.junit.runner.Description
+import org.junit.runners.model.Statement
+import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * An improved variant of {@link TemporaryFolder} with lazy init, no symlinks in a temporary directory path, better directory name,
- * and more convenient {@linkplain #newFile(String)} / {@linkplain #newDirectory(String)} methods.
+ * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
+ * and more convenient [newFile], [newDirectory] methods.
  */
-public class TempDirectory extends ExternalResource {
-  private String myName;
-  private final AtomicInteger myNextDirNameSuffix = new AtomicInteger();
-  private File myRoot;
+class TempDirectory : ExternalResource() {
+  private var name: String? = null
+  private val nextDirNameSuffix = AtomicInteger()
+  private var myRoot: File? = null
 
-  @Override
-  public @NotNull Statement apply(@NotNull Statement base, @NotNull Description description) {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.getMethodName(), false), true);
-    return super.apply(base, description);
+  val root: File
+    get() {
+      if (myRoot == null) {
+        checkNotNull(name) { "apply() was not called" }
+        myRoot = Files.createTempDirectory(UsefulTestCase.TEMP_DIR_MARKER + name + '_').toRealPath().toFile()
+      }
+      return myRoot!!
+    }
+  
+  override fun apply(base: Statement,
+                     description: Description): Statement {
+    name = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName, false), true)
+    return super.apply(base, description)
   }
 
-  @Override
-  protected void before() { }
-
-  @Override
-  protected void after() {
+  override fun after() {
     if (myRoot != null) {
-      Path path = myRoot.toPath();
-      myRoot = null;
-      myName = null;
-      try {
-        FileUtil.delete(path);
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
+      val path = myRoot!!.toPath()
+      myRoot = null
+      name = null
+      FileUtil.delete(path)
     }
-  }
-
-  public @NotNull File getRoot() {
-    if (myRoot == null) {
-      if (myName == null) {
-        throw new IllegalStateException("apply() was not called");
-      }
-      try {
-        myRoot = Files.createTempDirectory(UsefulTestCase.TEMP_DIR_MARKER + myName + '_').toRealPath().toFile();
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    return myRoot;
   }
 
   /**
    * Creates a new directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
    */
-  public @NotNull File newDirectory(@NotNull String relativePath) {
-    Path dir = Paths.get(getRoot().getPath(), relativePath);
-    if (Files.exists(dir)) throw new IllegalArgumentException("Already exists: " + dir);
-    makeDirectories(dir);
-    return dir.toFile();
+  fun newDirectory(relativePath: String): File {
+    val dir = Paths.get(root.path, relativePath)
+    require(!Files.exists(dir)) { "Already exists: $dir" }
+    makeDirectories(dir)
+    return dir.toFile()
   }
 
   /**
    * Creates a new directory with random name under the root temp directory.
    */
-  public @NotNull File newDirectory() {
-    try {
-      return FileUtil.createTempDirectory(getRoot(), "dir" + myNextDirNameSuffix.incrementAndGet(), null);
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  fun newDirectory(): File {
+    return FileUtil.createTempDirectory(root, "dir" + nextDirNameSuffix.incrementAndGet(), null)
   }
 
   /**
    * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
    */
-  public @NotNull File newFile(@NotNull String relativePath) {
-    return newFile(relativePath, null);
+  @JvmOverloads
+  fun newFile(relativePath: String, content: ByteArray? = null): File {
+    val file = Paths.get(root.path, relativePath)
+    require(!Files.exists(file)) { "Already exists: $file" }
+    makeDirectories(file.parent)
+    Files.createFile(file)
+    if (content != null) {
+      Files.write(file, content)
+    }
+    return file.toFile()
   }
 
-  /**
-   * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
-   */
-  public @NotNull File newFile(@NotNull String relativePath, byte @Nullable [] content) {
-    Path file = Paths.get(getRoot().getPath(), relativePath);
-    if (Files.exists(file)) throw new IllegalArgumentException("Already exists: " + file);
-    try {
-      makeDirectories(file.getParent());
-      Files.createFile(file);
-      if (content != null) {
-        Files.write(file, content);
-      }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return file.toFile();
+  @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))
+  fun newFolder(relativePath: String): File {
+    return newDirectory(relativePath)
   }
 
-  private static void makeDirectories(Path path) {
-    try {
-      if (!Files.isDirectory(path)) {
-        makeDirectories(path.getParent());
-        Files.createDirectory(path);
-      }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  @Deprecated("use newDirectory() instead", ReplaceWith("newDirectory()"))
+  fun newFolder(): File {
+    return newDirectory()
   }
 
-  /**
-   * @deprecated use {@link #newDirectory(String)}} instead
-   */
-  @Deprecated
-  public @NotNull File newFolder(@NotNull String relativePath) {
-    return newDirectory(relativePath);
-  }
-
-  /**
-   * @deprecated use {@link #newDirectory()} instead
-   */
-  @Deprecated
-  public @NotNull File newFolder() {
-    return newDirectory();
+  private fun makeDirectories(path: Path) {
+    if (!Files.isDirectory(path)) {
+      makeDirectories(path.parent)
+      Files.createDirectory(path)
+    }
   }
 }
