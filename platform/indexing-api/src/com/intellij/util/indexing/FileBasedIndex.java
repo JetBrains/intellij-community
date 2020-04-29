@@ -138,15 +138,11 @@ public abstract class FileBasedIndex {
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
    * <p> In smart mode, the behavior is similar to direct command execution
-   *
    * @param command - a command to execute
-   * @param project - project where dumb mode will be ignored
    * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
-   *                           or any data from index is fine (even outdated and not yet updated)?
    */
   @ApiStatus.Experimental
   public void ignoreDumbMode(@NotNull Runnable command,
-                             @NotNull Project project,
                              @NotNull DumbModeAccessType dumbModeAccessType) {
     throw new UnsupportedOperationException();
   }

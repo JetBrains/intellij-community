@@ -68,7 +68,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     Project project = scope.getProject();
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
       PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
-    }, project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
+    }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
   }
 
   @Override
@@ -101,7 +101,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
           return processor.process(aClass);
         }
       }, parameters.getSearchScope(), parameters.getIdFilter());
-    }, parameters.getProject(), DumbModeAccessType.RELIABLE_DATA_ONLY);
+    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
   }
 
   @Nullable
