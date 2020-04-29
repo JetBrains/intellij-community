@@ -57,7 +57,9 @@ class VirtualFileUrlProperty<T : PModifiableTypedEntity<out PTypedEntity>> : Rea
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
     thisRef.diff.virtualFileIndex.index(thisRef.id, listOf(value))
   }
 }
@@ -72,7 +74,9 @@ class VirtualFileUrlNullableProperty<T : PModifiableTypedEntity<out PTypedEntity
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
     thisRef.diff.virtualFileIndex.index(thisRef.id, value?.let{ listOf(value) })
   }
 }
@@ -87,7 +91,9 @@ class VirtualFileUrlListProperty<T : PModifiableTypedEntity<out PTypedEntity>> :
     if (!thisRef.modifiable.get()) {
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
-    ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KMutableProperty<*>).setter.call(thisRef.original, value)
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
     thisRef.diff.virtualFileIndex.index(thisRef.id, value)
   }
 }
