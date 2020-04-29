@@ -607,7 +607,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val name = IoTestUtil.getUnicodeName()
     assumeTrue("Unicode names not supported", name != null)
 
-    val root = tempDir.newFolder(name)
+    val root = tempDir.newFolder(name!!)
     val file = tempDir.newFile("${name}/${name}.txt")
     refresh(root)
     watch(root)

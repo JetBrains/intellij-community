@@ -6,6 +6,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -16,13 +17,15 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A clone of {@link TemporaryFolder} with lazy init, no symlinks in a temporary directory path, better directory name,
+ * An improved variant of {@link TemporaryFolder} with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient {@linkplain #newFile(String)} / {@linkplain #newFolder(String)} methods.
  */
-public class TempDirectory extends TemporaryFolder {
+public class TempDirectory extends ExternalResource {
   private String myName;
+  private final AtomicInteger myNextDirNameSuffix = new AtomicInteger();
   private File myRoot;
 
   @Override
@@ -49,7 +52,6 @@ public class TempDirectory extends TemporaryFolder {
     }
   }
 
-  @Override
   public @NotNull File getRoot() {
     if (myRoot == null) {
       if (myName == null) {
@@ -66,24 +68,35 @@ public class TempDirectory extends TemporaryFolder {
     return myRoot;
   }
 
-  /** Allows subdirectories in a directory name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
-  @Override
-  public @NotNull File newFolder(@NotNull String directoryName) throws IOException {
-    Path dir = Paths.get(getRoot().getPath(), directoryName);
+  /**
+   * Creates a new directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
+   */
+  public @NotNull File newFolder(@NotNull String relativePath) throws IOException {
+    Path dir = Paths.get(getRoot().getPath(), relativePath);
     if (Files.exists(dir)) throw new IOException("Already exists: " + dir);
     makeDirectories(dir);
     return dir.toFile();
   }
 
-  /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
-  @Override
-  public @NotNull File newFile(@NotNull String fileName) throws IOException {
-    return newFile(fileName, null);
+  /**
+   * Creates a new directory with random name under the root temp directory.
+   */
+  public @NotNull File newFolder() throws IOException {
+    return FileUtil.createTempDirectory(getRoot(), "dir" + myNextDirNameSuffix.incrementAndGet(), null);
   }
 
-  /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
-  public @NotNull File newFile(@NotNull String fileName, byte @Nullable [] content) throws IOException {
-    Path file = Paths.get(getRoot().getPath(), fileName);
+  /**
+   * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
+   */
+  public @NotNull File newFile(@NotNull String relativePath) throws IOException {
+    return newFile(relativePath, null);
+  }
+
+  /**
+   * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
+   */
+  public @NotNull File newFile(@NotNull String relativePath, byte @Nullable [] content) throws IOException {
+    Path file = Paths.get(getRoot().getPath(), relativePath);
     if (Files.exists(file)) throw new IOException("Already exists: " + file);
     makeDirectories(file.getParent());
     Files.createFile(file);
