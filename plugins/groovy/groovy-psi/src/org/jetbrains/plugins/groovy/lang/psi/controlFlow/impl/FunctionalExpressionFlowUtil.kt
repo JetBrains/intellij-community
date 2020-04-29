@@ -115,10 +115,13 @@ internal fun getUsagesMap(topFlowOwner: GrControlFlowOwner): Map<VariableDescrip
 }
 
 private fun computeInvocationKind(block: GrFunctionalExpression): InvocationKind {
-  val call = block.parentOfType<GrMethodCall>()?.takeIf { call ->
-    (call.invokedExpression as? GrReferenceExpression)?.referenceName in knownMethods &&
-    call.getArguments()?.any { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } ?: false
-  } ?: return UNKNOWN
+  val call = block.parentOfType<GrMethodCall>() ?: return UNKNOWN
+  if ((call.invokedExpression as? GrReferenceExpression)?.referenceName !in knownMethods) {
+    return UNKNOWN
+  }
+  if (call.getArguments()?.none { (it as? ExpressionArgument)?.expression?.skipParenthesesDown() === block } == true) {
+    return UNKNOWN
+  }
   val method = call.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
   val primaryInvocationKind = when (method?.name) {
     in trustedMethodsForExecutingOnce -> EXACTLY_ONCE

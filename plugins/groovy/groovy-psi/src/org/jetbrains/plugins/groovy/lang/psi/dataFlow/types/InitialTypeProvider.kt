@@ -5,14 +5,10 @@ import com.intellij.psi.PsiType
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
-import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.InvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.getInvocationKind
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.isNestedFlowProcessingAllowed
 
 
@@ -28,17 +24,11 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
     if (flow != null) ControlFlowUtils.findNearestInstruction(start, flow.controlFlow) else null
   }
 
-  @Suppress("unused")
-  private val invocationKind: InvocationKind
-    get() = when (start) {
-      is GrClosableBlock -> start.getInvocationKind()
-      is GrLambdaBody -> start.lambdaExpression.getInvocationKind()
-      else -> InvocationKind.UNKNOWN
-    }
-
   fun initialType(descriptor: VariableDescriptor): PsiType? {
+    val inheritedType = flowInfo.initialTypes[descriptor]
+    if (inheritedType != null) return inheritedType.resultType
     if (isNestedFlowProcessingAllowed()) {
-      val typeFromInitialContext = flowInfo.descriptorTypes[descriptor]?.resultType
+      val typeFromInitialContext = flowInfo.initialTypes[descriptor]?.resultType
       if (typeFromInitialContext != null) return typeFromInitialContext
       val type = getTypeFromParentDFA(descriptor)
       if (type != null) return type

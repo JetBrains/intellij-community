@@ -71,17 +71,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else if (instruction.getElement() instanceof GrFunctionalExpression) {
       handleFunctionalExpression(state, instruction);
-    } else if (instruction.getElement() == null) {
-      handleNullInstruction(state, instruction);
-    }
-  }
-
-  private void handleNullInstruction(@NotNull TypeDfaState state,
-                                     @NotNull Instruction instruction) {
-    if (instruction.num() == 0) {
-      for (Map.Entry<VariableDescriptor, DFAType> typeEntry : myFlowInfo.getDescriptorTypes().entrySet()) {
-        state.putType(typeEntry.getKey(), typeEntry.getValue());
-      }
     }
   }
 
@@ -223,6 +212,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case UNKNOWN:
         handleClosureDFAResult(state, blockFlowOwner, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);
+          if (existingType == null) {
+            PsiType initialType = myInitialTypeProvider.initialType(descriptor);
+            if (initialType != null) existingType = DFAType.create(initialType);
+          }
           if (existingType != null) {
             DFAType mergedType = DFAType.create(dfaType, existingType, block.getManager());
             state.putType(descriptor, mergedType);
@@ -237,13 +230,15 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
                                       @NotNull BiConsumer<? super VariableDescriptor, ? super DFAType> typeConsumer) {
     InferenceCache blockCache = TypeInferenceHelper.getInferenceCache(block);
     Instruction[] blockFlow = block.getControlFlow();
+    Map<VariableDescriptor, DFAType> initialTypesForNestedFlow = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
+    initialTypesForNestedFlow.putAll(state.getVarTypes());
     Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
     for (VariableDescriptor outerDescriptor : interestingDescriptors) {
       VariableDescriptor innerDescriptor = findNearestVariableDescriptor(blockFlow[0], outerDescriptor.getName(), true, true);
       if (innerDescriptor == null) {
         continue;
       }
-      PsiType descriptorType = blockCache.getInferredType(innerDescriptor, lastBlockInstruction, false, state.getVarTypes());
+      PsiType descriptorType = blockCache.getInferredType(innerDescriptor, lastBlockInstruction, false, initialTypesForNestedFlow);
       typeConsumer.accept(outerDescriptor, DFAType.create(descriptorType));
     }
   }

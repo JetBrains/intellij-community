@@ -6,7 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
 
-internal data class DFAFlowInfo(val descriptorTypes: Map<VariableDescriptor, DFAType>,
+internal data class DFAFlowInfo(val initialTypes: Map<VariableDescriptor, DFAType>,
                                 val interestingInstructions: Set<Instruction>,
                                 val acyclicInstructions: Set<Instruction>,
                                 val dependentOnSharedVariables: Set<Instruction>,
