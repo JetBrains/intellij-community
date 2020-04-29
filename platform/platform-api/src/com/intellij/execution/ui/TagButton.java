@@ -18,6 +18,7 @@ public class TagButton extends JButton implements Disposable {
   private final AWTEventListener myEventListener;
   private JBPopup myPopup;
   private InplaceButton myCloseButton;
+  private boolean myCanClose;
 
   public TagButton(String text, Runnable action) {
     super(text);
@@ -49,7 +50,8 @@ public class TagButton extends JButton implements Disposable {
           myCloseButton.setOpaque(false);
           myCloseButton.setPreferredSize(new Dimension(16, 16));
           myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myCloseButton, null).
-            setResizable(false).setMovable(false).setFocusable(false).setShowBorder(false).createPopup();
+            setResizable(false).setMovable(false).setFocusable(false).setShowBorder(false).setCancelCallback(() -> myCanClose).createPopup();
+          myCanClose = false;
           myPopup.show(new RelativePoint(TagButton.this, new Point(getWidth() - 12, -4)));
         }
       }
@@ -63,6 +65,7 @@ public class TagButton extends JButton implements Disposable {
 
   private void hidePopup() {
     if (myPopup != null && myPopup.isVisible()) {
+      myCanClose = true;
       myPopup.cancel();
     }
   }
