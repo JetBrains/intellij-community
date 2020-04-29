@@ -73,6 +73,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return new File(path);
   }
 
+  @Override
+  @Nullable
+  public Path getNioPath(@NotNull VirtualFile file) {
+    if (file.getFileSystem() != this) return null;
+    return convertToIOFile(file).toPath();
+  }
+
   @NotNull
   private static File convertToIOFileAndCheck(@NotNull VirtualFile file) throws FileNotFoundException {
     File ioFile = convertToIOFile(file);

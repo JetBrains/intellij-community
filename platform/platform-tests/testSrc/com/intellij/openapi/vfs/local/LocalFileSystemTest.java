@@ -845,4 +845,20 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assumeTrue("User home is mapped to root (" + userHome + ")", home != null);
     assertThat(myFS.list(home)).containsExactlyInAnyOrder(new File(home.getPath()).list());
   }
+
+  @Test
+  public void testNioPathIsImplementedForDir() {
+    File newDir = tempDir.newDirectory("someDir-32");
+    VirtualFile newDirFile = myFS.refreshAndFindFileByPath(newDir.getPath());
+    assertNotNull(newDirFile);
+    assertThat(newDirFile.getNioPath()).isNotNull().isEqualTo(newDir.toPath());
+  }
+
+  @Test
+  public void testNioPathIsImplementedForFile() {
+    File newDir = tempDir.newFile("someFile-32");
+    VirtualFile newDirFile = myFS.refreshAndFindFileByPath(newDir.getPath());
+    assertNotNull(newDirFile);
+    assertThat(newDirFile.getNioPath()).isNotNull().isEqualTo(newDir.toPath());
+  }
 }

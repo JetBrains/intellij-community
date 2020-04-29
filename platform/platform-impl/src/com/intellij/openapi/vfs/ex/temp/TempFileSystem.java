@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,6 +37,11 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
   @Override
   protected String extractRootPath(@NotNull String normalizedPath) {
     return "/";
+  }
+
+  @Override
+  public @Nullable Path getNioPath(@NotNull VirtualFile file) {
+    return null;
   }
 
   @Nullable
