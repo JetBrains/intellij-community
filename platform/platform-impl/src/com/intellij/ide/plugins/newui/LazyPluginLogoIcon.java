@@ -5,7 +5,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -25,7 +28,7 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
     LazyIcon icon = myIcons.get(key);
     if (icon == null) {
       myIcons.put(key, icon = new LazyIcon(new boolean[]{big, jb, error, disabled}));
-      icon.setIcon(myLogoIcon);
+      icon.setIcon(myLogoIcon, false);
     }
     return icon;
   }
@@ -34,37 +37,41 @@ class LazyPluginLogoIcon implements PluginLogoIconProvider {
     myLogoIcon = logoIcon;
 
     for (LazyIcon icon : myIcons.values()) {
-      icon.setIcon(logoIcon);
+      icon.setIcon(logoIcon, true);
     }
   }
 
   private static class LazyIcon implements Icon {
     private final boolean[] myState;
     private Icon myIcon;
-    private final Set<Component> myComponents = new HashSet<>();
+    private Set<Component> myComponents = new HashSet<>();
 
     private LazyIcon(boolean @NotNull [] state) {
       myState = state;
     }
 
-    private void setIcon(@NotNull PluginLogoIconProvider logoIcon) {
+    private void setIcon(@NotNull PluginLogoIconProvider logoIcon, boolean repaint) {
       myIcon = logoIcon.getIcon(myState[0], myState[1], myState[2], myState[3]);
-      for (Iterator<Component> I = myComponents.iterator(); I.hasNext(); ) {
-        Component component = I.next();
-        if (component.isShowing()) {
-          component.repaint();
-        }
-        else if (!component.isValid()) {
-          I.remove();
+
+      if (repaint) {
+        Set<Component> components = myComponents;
+        myComponents = null;
+
+        for (Component component : components) {
+          if (component.isShowing()) {
+            component.repaint();
+          }
         }
       }
     }
 
     @Override
     public void paintIcon(Component component, Graphics g, int x, int y) {
-      myComponents.removeIf(c -> !c.isValid());
-      myComponents.add(component);
       myIcon.paintIcon(component, g, x, y);
+
+      if (myComponents != null) {
+        myComponents.add(component);
+      }
     }
 
     @Override
