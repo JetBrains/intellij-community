@@ -22,6 +22,10 @@ open class EntitySourceIndex private constructor(
     return copy
   }
 
+  internal fun entitySources(): Collection<EntitySource> {
+    return index.values
+  }
+
   class MutableEntitySourceIndex private constructor(
     index: BidirectionalMap<PId<out TypedEntity>, EntitySource>
   ) : EntitySourceIndex(index) {
