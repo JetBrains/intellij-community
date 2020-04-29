@@ -66,7 +66,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
     return myPrebuiltIndexStorage != null
   }
 
-  fun get(fileContent: FileContent): Value? {
+  protected fun get(fileContent: FileContent): Value? {
     if (myPrebuiltIndexStorage != null) {
       val hashCode = myFileContentHashing.hashString(fileContent)
       try {

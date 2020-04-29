@@ -18,7 +18,6 @@ import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 
 const val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
@@ -26,7 +25,16 @@ const val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
 val prebuiltStubsProvider = FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
 interface PrebuiltStubsProvider {
-  fun findStub(fileContent: FileContent): SerializedStubTree?
+  /**
+   * Tries to find stub for [fileContent] in this provider.
+   * If stub is found, its stub and forward index will be re-serialized with provided [treeSerializationManager] and [treeForwardIndexExternalizer].
+   * It may be necessary if stub is stored in one format but another format is required.
+   */
+  fun findStub(
+    fileContent: FileContent,
+    treeSerializationManager: SerializationManagerEx,
+    treeForwardIndexExternalizer: StubForwardIndexExternalizer<*>
+  ): SerializedStubTree?
 }
 
 class FileContentHashing {
@@ -110,17 +118,19 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
   }
 
 
-  override fun findStub(fileContent: FileContent): SerializedStubTree? {
+  override fun findStub(
+    fileContent: FileContent,
+    treeSerializationManager: SerializationManagerEx,
+    treeForwardIndexExternalizer: StubForwardIndexExternalizer<*>
+  ): SerializedStubTree? {
     try {
       val stubTree = get(fileContent)
       if (stubTree != null) {
-        val newSerializationManager = IDE_SERIALIZATION_MANAGER
-        val newForwardIndexSerializer = StubForwardIndexExternalizer.getIdeUsedExternalizer()
         val indexedStubsSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
-        return stubTree.reSerialize(mySerializationManager!!, newSerializationManager, indexedStubsSerializer, newForwardIndexSerializer)
+        return stubTree.reSerialize(mySerializationManager!!, treeSerializationManager, indexedStubsSerializer, treeForwardIndexExternalizer)
       }
     }
-    catch (e: IOException) {
+    catch (e: Exception) {
       LOG.error("Can't re-serialize stub tree", e)
     }
     return null
