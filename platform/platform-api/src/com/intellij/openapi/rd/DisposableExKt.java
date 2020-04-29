@@ -63,7 +63,7 @@ public final class DisposableExKt {
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
-  public static Disposable createNestedDisposable$default(Lifetime lifetime, String debugName, int intArg, Object _) {
+  public static Disposable createNestedDisposable$default(Lifetime lifetime, String debugName, int intArg, Object ignored) {
     if((intArg & 1) != 0)
       debugName = "lifetimeToDisposable";
     return createNestedDisposable(lifetime, debugName);
