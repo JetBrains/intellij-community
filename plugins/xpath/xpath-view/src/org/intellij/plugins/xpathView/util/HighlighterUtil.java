@@ -92,9 +92,8 @@ public class HighlighterUtil {
         return false;
     }
 
-    @SuppressWarnings({"RawUseOfParameterizedType"})
     private static boolean purgeInvalidHighlighters(Editor editor, List<RangeHighlighter> hl) {
-        final Set set = ContainerUtil.newIdentityTroveSet(Arrays.asList(editor.getMarkupModel().getAllHighlighters()));
+        final Set<RangeHighlighter> set = ContainerUtil.newIdentityTroveSet(Arrays.asList(editor.getMarkupModel().getAllHighlighters()));
         boolean hasHighlighter = false;
         for (Iterator<RangeHighlighter> iterator = hl.iterator(); iterator.hasNext();) {
             final RangeHighlighter h = iterator.next();
@@ -165,9 +164,7 @@ public class HighlighterUtil {
 
         final int tabSize = CodeStyle.getSettings(element.getProject()).getTabSize(FileTypeManager.getInstance().getFileTypeByExtension("xml"));
         final char[] spaces = new char[tabSize];
-        for (int i = 0; i < spaces.length; i++) {
-            spaces[i] = ' ';
-        }
+        Arrays.fill(spaces, ' ');
 
         final int textOffset = element.getTextOffset();
         final int lineStartOffset = e.logicalPositionToOffset(new LogicalPosition(e.offsetToLogicalPosition(textOffset).line, 0));

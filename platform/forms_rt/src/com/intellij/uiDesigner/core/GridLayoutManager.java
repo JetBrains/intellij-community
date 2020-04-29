@@ -72,7 +72,7 @@ public final class GridLayoutManager extends AbstractLayout {
    * Key for accessing client property which is set on the root Swing component of the design-time component
    * hierarchy and specifies the value of extra insets added to all components.
    */
-  public static Object DESIGN_TIME_INSETS = new Object();
+  public static final Object DESIGN_TIME_INSETS = new Object();
 
   private static final int SKIP_ROW = 1;
   private static final int SKIP_COL = 2;
@@ -235,14 +235,11 @@ public final class GridLayoutManager extends AbstractLayout {
 
   private static void makeSameSizes(int[] widths) {
     int max = widths[0];
-    for (int i = 0; i < widths.length; i++) {
-      int width = widths[i];
+    for (int width : widths) {
       max = Math.max(width, max);
     }
 
-    for (int i = 0; i < widths.length; i++) {
-      widths[i] = max;
-    }
+    Arrays.fill(widths, max);
   }
 
   private static int[] getSameSizes(DimensionInfo info, int totalWidth) {
@@ -632,9 +629,7 @@ public final class GridLayoutManager extends AbstractLayout {
 
   private int[] getMinOrPrefSizes(final DimensionInfo info, final boolean min) {
     final int[] widths = new int[info.getCellCount()];
-    for (int i = 0; i < widths.length; i++) {
-      widths[i] = myMinCellSize;
-    }
+    Arrays.fill(widths, myMinCellSize);
 
     // single spaned components
     for (int i = info.getComponentCount() - 1; i >= 0; i--) {
@@ -907,22 +902,20 @@ public final class GridLayoutManager extends AbstractLayout {
   }
 
   public int[] getHorizontalGridLines() {
-    int[] result = new int [myYs.length+1];
-    result [0] = myYs [0];
-    for(int i=0; i<myYs.length-1; i++) {
-      result [i+1] = (myYs[i] + myHeights[i] + myYs[i + 1]) / 2;
-    }
-    result [myYs.length] = myYs [myYs.length-1] + myHeights [myYs.length-1];
-    return result;
+    return getGridLines(myYs, myHeights);
   }
 
   public int[] getVerticalGridLines() {
-    int[] result = new int [myXs.length+1];
-    result [0] = myXs [0];
-    for(int i=0; i<myXs.length-1; i++) {
-      result [i+1] = (myXs[i] + myWidths[i] + myXs[i + 1]) / 2;
+    return getGridLines(myXs, myWidths);
+  }
+
+  private static int[] getGridLines(int[] pos, int[] heights) {
+    int[] result = new int [pos.length + 1];
+    result [0] = pos[0];
+    for(int i = 0; i < pos.length - 1; i++) {
+      result [i+1] = (pos[i] + heights[i] + pos[i + 1]) / 2;
     }
-    result [myXs.length] = myXs [myXs.length-1] + myWidths [myXs.length-1];
+    result [pos.length] = pos[pos.length - 1] + heights[pos.length - 1];
     return result;
   }
 
