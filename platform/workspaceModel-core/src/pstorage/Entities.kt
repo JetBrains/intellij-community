@@ -127,9 +127,9 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
   }
 
   override fun hashCode(): Int {
-    return this::class.memberProperties
-      .filter { it.name != PEntityData<*>::id.name }
-      .map { it.getter.call(this).hashCode() }
+    return this.javaClass.declaredFields.filterNot { it.name == PEntityData<*>::id.name }
+      .onEach { it.isAccessible = true }
+      .mapNotNull { it.get(this)?.hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
   }
 }
