@@ -100,7 +100,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindChildWithTrailingSpace() throws IOException {
+  public void testFindChildWithTrailingSpace() {
     File tempDir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(vDir);
@@ -207,7 +207,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRootWithDenormalizedPath() throws IOException {
+  public void testFindRootWithDenormalizedPath() {
     File tempJar = IoTestUtil.createTestJar(myTempDir.newFile("test.jar"));
     VirtualFile jar = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempJar);
     assertNotNull(jar);

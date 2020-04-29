@@ -251,7 +251,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testUnicodeName() throws IOException {
+  public void testUnicodeName() {
     String name = getUnicodeName();
     assumeTrue(name != null);
     File childFile = tempDir.newFile(name + ".txt");
@@ -264,7 +264,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRoot() throws IOException {
+  public void testFindRoot() {
     assertNull(myFS.findFileByPath("wrong_path"));
 
     if (SystemInfo.isWindows) {
@@ -471,7 +471,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBadFileNameUnderUnix() throws IOException {
+  public void testBadFileNameUnderUnix() {
     assumeUnix();
 
     File file = tempDir.newFile("test\\file.txt");
@@ -511,7 +511,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCopyToPointDir() throws IOException {
+  public void testCopyToPointDir() {
     File sub = tempDir.newDirectory("sub");
     File file = tempDir.newFile("file.txt");
 

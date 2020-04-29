@@ -85,7 +85,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRootPerformance() throws IOException {
+  public void testFindRootPerformance() {
     File tempJar = IoTestUtil.createTestJar(myTempDir.newFile("test.jar"));
     VirtualFile jar = LocalFileSystem.getInstance().findFileByIoFile(tempJar);
     assertNotNull(jar);

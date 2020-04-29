@@ -78,7 +78,7 @@ public class FileUtilHeavyTest {
     assertNull(result.get("dir21"));
   }
 
-  private void setupVisitorTestDirectories() throws IOException {
+  private void setupVisitorTestDirectories() {
     tempDir.newFile("dir1/1");
     tempDir.newFile("dir1/2");
     tempDir.newFile("dir2/1");
@@ -98,39 +98,39 @@ public class FileUtilHeavyTest {
   }
 
   @Test
-  public void nonExistingFile() throws IOException {
+  public void nonExistingFile() {
     File first = tempDir.newFile("first");
     assertThat(FileUtil.findFileInProvidedPath(first.getPath() + "123", first.getName() + "123")).isNullOrEmpty();
   }
 
   @Test
-  public void existingFileInDirectory() throws IOException {
+  public void existingFileInDirectory() {
     File first = tempDir.newFile("first");
     assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "first")).isEqualTo(first.getPath());
   }
 
   @Test
-  public void existingFile() throws IOException {
+  public void existingFile() {
     File first = tempDir.newFile("first");
     assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first")).isEqualTo(first.getPath());
   }
 
   @Test
-  public void twoFilesOrderInDirectory() throws IOException {
+  public void twoFilesOrderInDirectory() {
     File first = tempDir.newFile("first");
     tempDir.newFile("second");
     assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "first", "second")).isEqualTo(first.getPath());
   }
 
   @Test
-  public void twoFilesOrderInDirectory2() throws IOException {
+  public void twoFilesOrderInDirectory2() {
     tempDir.newFile("first");
     File second = tempDir.newFile("second");
     assertThat(FileUtil.findFileInProvidedPath(tempDir.getRoot().getPath(), "second", "first")).isEqualTo(second.getPath());
   }
 
   @Test
-  public void twoFilesOrder() throws IOException {
+  public void twoFilesOrder() {
     File first = tempDir.newFile("first");
     tempDir.newFile("second");
     assertThat(FileUtil.findFileInProvidedPath(first.getPath(), "first", "second")).isEqualTo(first.getPath());

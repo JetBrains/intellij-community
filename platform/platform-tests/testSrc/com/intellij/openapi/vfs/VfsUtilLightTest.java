@@ -12,7 +12,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.intellij.mock.MockVirtualFile.dir;
 import static com.intellij.mock.MockVirtualFile.file;
@@ -63,7 +62,7 @@ public class VfsUtilLightTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testGetPathForVFileCreateEventForJarReturnsNormalizedPathSeparators() throws IOException {
+  public void testGetPathForVFileCreateEventForJarReturnsNormalizedPathSeparators() {
     File jarFile = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jarFile));
     VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");

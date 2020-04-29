@@ -96,7 +96,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void directory() throws IOException {
+  public void directory() {
     File file = tempDir.newDirectory("dir");
 
     FileAttributes attributes = getAttributes(file);
@@ -319,7 +319,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void innerJunctionResolve() throws IOException {
+  public void innerJunctionResolve() {
     assumeTrue("vista-or-newer expected but got: "+SystemInfo.getOsNameAndVersion(), SystemInfo.isWinVistaOrNewer);
 
     File file = tempDir.newFile("dir/file.txt");
@@ -425,7 +425,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void subst() throws IOException {
+  public void subst() {
     IoTestUtil.assumeWindows();
 
     tempDir.newFile("file.txt");  // just to populate a directory
@@ -522,7 +522,7 @@ public abstract class FileAttributesReadingTest {
   }
 
   @Test
-  public void permissionsCloning() throws IOException {
+  public void permissionsCloning() {
     assumeUnix();
 
     File donor = tempDir.newFile("donor");

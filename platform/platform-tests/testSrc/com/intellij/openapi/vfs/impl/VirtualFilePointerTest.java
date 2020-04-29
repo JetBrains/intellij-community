@@ -141,7 +141,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDelete() throws IOException {
+  public void testDelete() {
     File fileToDelete = tempDir.newFile("toDelete.txt");
     LoggingListener fileToDeleteListener = new LoggingListener();
     VirtualFilePointer fileToDeletePointer = createPointerByFile(fileToDelete, fileToDeleteListener);
@@ -458,7 +458,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDoubleDispose() throws IOException {
+  public void testDoubleDispose() {
     File file = tempDir.newFile("f1");
     VirtualFile vFile = getVirtualFile(file);
     Disposable disposable = Disposer.newDisposable();

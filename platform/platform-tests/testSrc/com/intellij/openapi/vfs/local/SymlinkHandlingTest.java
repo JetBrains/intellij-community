@@ -34,7 +34,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @After
-  public void tearDown() throws IOException {
+  public void tearDown() {
     VirtualFile root = refreshAndFind(myTempDir.getRoot());
     // purge VFS to avoid persisting these specific file names through to the next launch
     VfsTestUtil.deleteFile(root);
@@ -73,7 +73,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCircularLink() throws Exception {
+  public void testCircularLink() {
     File upDir = myTempDir.newDirectory("sub");
     File upLinkFile = createSymLink(upDir.getPath(), upDir.getPath() + "/up_link");
     VirtualFile upLinkVFile = refreshAndFind(upLinkFile);
@@ -94,7 +94,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testMutualRecursiveLinks() throws Exception {
+  public void testMutualRecursiveLinks() {
     File circularDir1 = myTempDir.newDirectory("dir1");
     File circularDir2 = myTempDir.newDirectory("dir2");
     File circularLink1 = createSymLink(circularDir2.getPath(), circularDir1 + "/link1");
@@ -108,7 +108,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDuplicateLinks() throws Exception {
+  public void testDuplicateLinks() {
     File targetDir = myTempDir.newDirectory("target");
     File link1 = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/link1");
     File link2 = createSymLink(targetDir.getPath(), myTempDir.getRoot() + "/link2");
@@ -116,7 +116,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testSidewaysRecursiveLink() throws Exception {
+  public void testSidewaysRecursiveLink() {
     File a = myTempDir.newDirectory("a");
     File b = createTestDir(a, "b");
     File link1 = createSymLink(SystemInfo.isWindows ? a.getPath() : "../../" + a.getName(), b.getPath() + "/link1");
@@ -130,7 +130,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testVisitAllNonRecursiveLinks() throws Exception {
+  public void testVisitAllNonRecursiveLinks() {
     File target = myTempDir.newDirectory("target");
     File child = createTestDir(target, "child");
     File link1 = createSymLink(target.getPath(), myTempDir.getRoot() + "/link1");
@@ -141,7 +141,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testTargetIsWritable() throws Exception {
+  public void testTargetIsWritable() {
     File targetFile = myTempDir.newFile("target.txt");
     File linkFile = createSymLink(targetFile.getPath(), myTempDir.getRoot() + "/link");
     VirtualFile linkVFile = refreshAndFind(linkFile);
@@ -328,7 +328,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testTraversePathBehindLink() throws Exception {
+  public void testTraversePathBehindLink() {
     File topDir = myTempDir.newDirectory("top");
     File subDir1 = createTestDir(topDir, "sub1");
     File link = createSymLink(subDir1.getPath(), myTempDir.getRoot() + "/link");
@@ -404,7 +404,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCircularSymlinksMustBeDetected() throws IOException {
+  public void testCircularSymlinksMustBeDetected() {
     File top = myTempDir.newDirectory("top");
     File sub1 = createTestDir(top, "sub1");
     File link = createSymLink(top.getPath(), sub1.getPath() + "/link");
@@ -429,7 +429,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCircularSymlinksMustBeDetectedEvenForAsideLinks() throws IOException {
+  public void testCircularSymlinksMustBeDetectedEvenForAsideLinks() {
     File top = myTempDir.newDirectory("top");
     File sub1 = createTestDir(top, "s1");
     File ss1 = createTestDir(sub1, "ss1");

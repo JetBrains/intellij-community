@@ -61,7 +61,7 @@ public class UtilsTest {
   }
 
   @Test
-  public void testDeleteLockedFileOnWindows() throws Exception {
+  public void testDeleteLockedFileOnWindows() {
     IoTestUtil.assumeWindows();
 
     File f = tempDir.newFile("temp_file");

@@ -71,9 +71,9 @@ public class TempDirectory extends ExternalResource {
   /**
    * Creates a new directory with the given relative path from the root temp directory. Throws an exception if such a directory already exists.
    */
-  public @NotNull File newDirectory(@NotNull String relativePath) throws IOException {
+  public @NotNull File newDirectory(@NotNull String relativePath) {
     Path dir = Paths.get(getRoot().getPath(), relativePath);
-    if (Files.exists(dir)) throw new IOException("Already exists: " + dir);
+    if (Files.exists(dir)) throw new IllegalArgumentException("Already exists: " + dir);
     makeDirectories(dir);
     return dir.toFile();
   }
@@ -81,35 +81,50 @@ public class TempDirectory extends ExternalResource {
   /**
    * Creates a new directory with random name under the root temp directory.
    */
-  public @NotNull File newDirectory() throws IOException {
-    return FileUtil.createTempDirectory(getRoot(), "dir" + myNextDirNameSuffix.incrementAndGet(), null);
+  public @NotNull File newDirectory() {
+    try {
+      return FileUtil.createTempDirectory(getRoot(), "dir" + myNextDirNameSuffix.incrementAndGet(), null);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   /**
    * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
    */
-  public @NotNull File newFile(@NotNull String relativePath) throws IOException {
+  public @NotNull File newFile(@NotNull String relativePath) {
     return newFile(relativePath, null);
   }
 
   /**
    * Creates a new file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
    */
-  public @NotNull File newFile(@NotNull String relativePath, byte @Nullable [] content) throws IOException {
+  public @NotNull File newFile(@NotNull String relativePath, byte @Nullable [] content) {
     Path file = Paths.get(getRoot().getPath(), relativePath);
-    if (Files.exists(file)) throw new IOException("Already exists: " + file);
-    makeDirectories(file.getParent());
-    Files.createFile(file);
-    if (content != null) {
-      Files.write(file, content);
+    if (Files.exists(file)) throw new IllegalArgumentException("Already exists: " + file);
+    try {
+      makeDirectories(file.getParent());
+      Files.createFile(file);
+      if (content != null) {
+        Files.write(file, content);
+      }
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
     return file.toFile();
   }
 
-  private static void makeDirectories(Path path) throws IOException {
-    if (!Files.isDirectory(path)) {
-      makeDirectories(path.getParent());
-      Files.createDirectory(path);
+  private static void makeDirectories(Path path) {
+    try {
+      if (!Files.isDirectory(path)) {
+        makeDirectories(path.getParent());
+        Files.createDirectory(path);
+      }
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
   }
 
@@ -117,7 +132,7 @@ public class TempDirectory extends ExternalResource {
    * @deprecated use {@link #newDirectory(String)}} instead
    */
   @Deprecated
-  public @NotNull File newFolder(@NotNull String relativePath) throws IOException {
+  public @NotNull File newFolder(@NotNull String relativePath) {
     return newDirectory(relativePath);
   }
 
@@ -125,7 +140,7 @@ public class TempDirectory extends ExternalResource {
    * @deprecated use {@link #newDirectory()} instead
    */
   @Deprecated
-  public @NotNull File newFolder() throws IOException {
+  public @NotNull File newFolder() {
     return newDirectory();
   }
 }
