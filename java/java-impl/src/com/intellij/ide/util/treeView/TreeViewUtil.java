@@ -78,7 +78,7 @@ public class TreeViewUtil {
       }
       name.insert(0, ".");
       if (packageName.length() > 2 && shouldAbbreviateName(parentPackage)) {
-        name.insert(0, packageName.substring(0, 1));
+        name.insert(0, packageName.charAt(0));
       }
       else {
         name.insert(0, packageName);

@@ -85,7 +85,7 @@ class GitInteractiveRebaseFile {
   private static String adjustFilePath(@NotNull String file) {
     if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
       final int prefixSize = CYGDRIVE_PREFIX.length();
-      return file.substring(prefixSize, prefixSize + 1) + ":" + file.substring(prefixSize + 1);
+      return file.charAt(prefixSize) + ":" + file.substring(prefixSize + 1);
     }
     return file;
   }
