@@ -42,7 +42,7 @@ public final class DnDManagerImpl extends DnDManager {
   private WeakReference<DnDTarget> myLastProcessedTarget = new WeakReference<>(NULL_TARGET);
   private DragSourceContext myCurrentDragContext;
 
-  private Component myLastProcessedOverComponent;
+  private @Nullable WeakReference<Component> myLastProcessedOverComponent;
   private Point myLastProcessedPoint;
   private String myLastMessage;
   private DnDEvent myLastProcessedEvent;
@@ -163,7 +163,8 @@ public final class DnDManagerImpl extends DnDManager {
     currentEvent.setHandlerComponent(aComponentOverDragging);
 
     boolean samePoint = currentEvent.getPoint().equals(myLastProcessedPoint);
-    boolean sameComponent = currentEvent.getCurrentOverComponent().equals(myLastProcessedOverComponent);
+    Component component = myLastProcessedOverComponent != null ? myLastProcessedOverComponent.get() : null;
+    boolean sameComponent = currentEvent.getCurrentOverComponent().equals(component);
     boolean sameAction = nativeAction == myLastProcessedAction;
 
     LOG.debug("updateCurrentEvent: point:" + aPoint);
@@ -253,7 +254,7 @@ public final class DnDManagerImpl extends DnDManager {
 
     myLastProcessedTarget = new WeakReference<>(target);
     myLastProcessedPoint = currentEvent.getPoint();
-    myLastProcessedOverComponent = currentEvent.getCurrentOverComponent();
+    myLastProcessedOverComponent = new WeakReference<>(currentEvent.getCurrentOverComponent());
     myLastProcessedAction = currentEvent.getAction().getActionId();
     myLastProcessedEvent = (DnDEvent)currentEvent.clone();
 
