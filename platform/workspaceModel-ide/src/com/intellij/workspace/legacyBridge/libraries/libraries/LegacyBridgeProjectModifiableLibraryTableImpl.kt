@@ -88,8 +88,9 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
           originalLibrary = libraryImpl,
           originalLibrarySnapshot = librarySnapshot,
           diff = diff,
-          committer = { _, diffBuilder ->
+          committer = { modifiableLib, diffBuilder ->
             this.diff.addDiff(diffBuilder)
+            libraryImpl.entityId = modifiableLib.entityId
           }
         )
       }

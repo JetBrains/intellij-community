@@ -119,6 +119,93 @@ class LegacyBridgeModuleLibraryTest {
   }
 
   @Test
+  fun `test module library rename swapping in one transaction`() = WriteCommandAction.runWriteCommandAction(project) {
+    val moduleName = "build"
+    val antLibraryName = "ant-lib"
+    val mavenLibraryName = "maven-lib"
+    val groovyLibraryName = "groovy-lib"
+
+    val moduleFile = File(project.basePath, "$moduleName.iml")
+    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
+      moduleModel.commit()
+      module
+    }
+
+    val moduleRootManager = ModuleRootManager.getInstance(module)
+    moduleRootManager.modifiableModel.let { rootModel ->
+      val modifiableModel = rootModel.moduleLibraryTable.modifiableModel
+      val antLibrary = modifiableModel.createLibrary(antLibraryName)
+      val mavenLibrary = modifiableModel.createLibrary(mavenLibraryName)
+
+      var antLibraryModel = antLibrary.modifiableModel
+      antLibraryModel.addRoot(File(project.basePath, "$antLibraryName.jar").path, OrderRootType.CLASSES)
+      antLibraryModel.addRoot(File(project.basePath, "$antLibraryName-sources.jar").path, OrderRootType.SOURCES)
+      antLibraryModel.name = groovyLibraryName
+      antLibraryModel.commit()
+
+      val mavenLibraryModel = mavenLibrary.modifiableModel
+      mavenLibraryModel.addRoot(File(project.basePath, "$mavenLibraryName.jar").path, OrderRootType.CLASSES)
+      mavenLibraryModel.addRoot(File(project.basePath, "$mavenLibraryName-sources.jar").path, OrderRootType.SOURCES)
+      mavenLibraryModel.name = antLibraryName
+      mavenLibraryModel.commit()
+
+      antLibraryModel = antLibrary.modifiableModel
+      antLibraryModel.name = mavenLibraryName
+      antLibraryModel.commit()
+
+      modifiableModel.commit()
+      rootModel.commit()
+    }
+
+    moduleRootManager.modifiableModel.let { rootModel ->
+      val libraryTable = rootModel.moduleLibraryTable
+      assertEquals(2, libraryTable.libraries.size)
+      val antLibrary = libraryTable.libraries.find { it.name == antLibraryName }!!
+      assertEquals(antLibraryName, antLibrary.name)
+      assertTrue(antLibrary.getUrls(OrderRootType.CLASSES)[0].contains(mavenLibraryName))
+
+      val mavenLibrary = libraryTable.libraries.find { it.name == mavenLibraryName }!!
+      assertEquals(mavenLibraryName, mavenLibrary.name)
+      assertTrue(mavenLibrary.getUrls(OrderRootType.CLASSES)[0].contains(antLibraryName))
+
+      StoreUtil.saveDocumentsAndProjectSettings(project)
+      val template = "\$MODULE_DIR\$"
+      assertEquals("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <module type="EMPTY_MODULE" version="4">
+          <component name="NewModuleRootManager">
+            <orderEntry type="sourceFolder" forTests="false" />
+            <orderEntry type="module-library">
+              <library name="$mavenLibraryName">
+                <CLASSES>
+                  <root url="$template/$antLibraryName.jar" />
+                </CLASSES>
+                <JAVADOC />
+                <SOURCES>
+                  <root url="$template/$antLibraryName-sources.jar" />
+                </SOURCES>
+              </library>
+            </orderEntry>
+            <orderEntry type="module-library">
+              <library name="$antLibraryName">
+                <CLASSES>
+                  <root url="$template/$mavenLibraryName.jar" />
+                </CLASSES>
+                <JAVADOC />
+                <SOURCES>
+                  <root url="$template/$mavenLibraryName-sources.jar" />
+                </SOURCES>
+              </library>
+            </orderEntry>
+          </component>
+        </module>
+      """.trimIndent(), moduleFile.readText())
+      rootModel.commit()
+    }
+  }
+
+  @Test
   fun `test module library name mangling`() = WriteCommandAction.runWriteCommandAction(project) {
     val moduleName = "build"
     val antLibraryName = "ant-lib"

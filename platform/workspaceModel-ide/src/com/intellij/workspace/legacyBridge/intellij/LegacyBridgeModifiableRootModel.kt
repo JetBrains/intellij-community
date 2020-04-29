@@ -613,8 +613,9 @@ class LegacyBridgeModifiableRootModel(
           originalLibrary = libraryImpl,
           originalLibrarySnapshot = librarySnapshot,
           diff = diff,
-          committer = { _, diffBuilder ->
+          committer = { modifiableLib, diffBuilder ->
             modifiableModel.diff.addDiff(diffBuilder)
+            libraryImpl.entityId = modifiableLib.entityId
           }
         )
       }

@@ -27,7 +27,8 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(originalLibrary.project)
-  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+  internal var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+    private set
   private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->
