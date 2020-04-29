@@ -123,10 +123,12 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
           for (change in changes) {
             indicator.checkCanceled()
 
+            val accept = filter.accept(this, change)
+
             synchronized(LOCK) {
               indicator.checkCanceled()
               pending.removeAt(0)
-              if (filter.accept(this, change)) {
+              if (accept) {
                 processed.add(change)
               }
               else {
