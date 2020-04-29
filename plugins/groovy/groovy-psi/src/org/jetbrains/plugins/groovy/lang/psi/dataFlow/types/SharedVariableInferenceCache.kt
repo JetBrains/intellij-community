@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
 
   val sharedVariableDescriptors: Set<VariableDescriptor> by lazyPub { doGetSharedVariables() }
-  private val writeInstructions: List<ReadWriteVariableInstruction> by lazyPub {
-    getWriteInstructionsFromNestedFlows(scope).mapNotNull { (instruction: ReadWriteVariableInstruction, _) ->
-      instruction.takeIf { it.descriptor in sharedVariableDescriptors }
+  private val writeInstructions: List<Pair<ReadWriteVariableInstruction, GrControlFlowOwner>> by lazyPub {
+    getWriteInstructionsFromNestedFlows(scope).mapNotNull { pair ->
+      pair.takeIf { it.first.descriptor in sharedVariableDescriptors }
     }
   }
   private val finalTypes: AtomicReferenceArray<PsiType?> = AtomicReferenceArray(sharedVariableDescriptors.size)
@@ -67,16 +67,15 @@ class SharedVariableInferenceCache(val scope: GrControlFlowOwner) {
   private fun runSharedVariableInferencePhase() {
     val flowTypes: Array<PsiType?> = Array(writeInstructions.size) { null }
     for (index: Int in writeInstructions.indices) {
-      val instruction: ReadWriteVariableInstruction = writeInstructions[index]
-      val scope = instruction.element?.parentOfType<GrControlFlowOwner>()
-      val inferenceCache = scope?.run { TypeInferenceHelper.getInferenceCache(scope) }
-      val inferredType: PsiType? = inferenceCache?.getInferredType(instruction.descriptor, instruction, false) ?: PsiType.NULL
+      val (instruction: ReadWriteVariableInstruction, scope : GrControlFlowOwner) = writeInstructions[index]
+      val inferenceCache = scope.run { TypeInferenceHelper.getInferenceCache(scope) }
+      val inferredType: PsiType? = inferenceCache.getInferredType(instruction.descriptor, instruction, false) ?: PsiType.NULL
       flowTypes[index] = inferredType
     }
     for (variable: VariableDescriptor in sharedVariableDescriptors) {
       val indexInFinalTypes: Int = sharedVariableDescriptors.indexOf(variable)
       val inferredTypesForVariable: List<PsiType?> = writeInstructions.indices
-        .filter { writeInstructions[it].descriptor == variable }
+        .filter { writeInstructions[it].first.descriptor == variable }
         .map { flowTypes[it] }
       val finalType: PsiType? = TypesUtil.getLeastUpperBoundNullable(inferredTypesForVariable, scope.manager)
       if (!finalTypes.compareAndSet(indexInFinalTypes, null, finalType)) {

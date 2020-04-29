@@ -25,8 +25,6 @@ internal class InitialTypeProvider(private val start: GrControlFlowOwner, privat
   }
 
   fun initialType(descriptor: VariableDescriptor): PsiType? {
-    val inheritedType = flowInfo.initialTypes[descriptor]
-    if (inheritedType != null) return inheritedType.resultType
     if (isNestedFlowProcessingAllowed()) {
       val typeFromInitialContext = flowInfo.initialTypes[descriptor]?.resultType
       if (typeFromInitialContext != null) return typeFromInitialContext
