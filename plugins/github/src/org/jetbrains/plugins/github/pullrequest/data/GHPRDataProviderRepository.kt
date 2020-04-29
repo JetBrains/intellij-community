@@ -6,7 +6,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 
-internal interface GHPRDataLoader : Disposable {
+internal interface GHPRDataProviderRepository : Disposable {
   @CalledInAwt
   fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider
 

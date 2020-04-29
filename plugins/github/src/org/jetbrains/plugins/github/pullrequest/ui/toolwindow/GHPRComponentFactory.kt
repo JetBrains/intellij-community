@@ -85,7 +85,7 @@ internal class GHPRComponentFactory(private val project: Project) {
       currentDisposable = Disposer.newDisposable("Pull request component disposable").also {
         Disposer.register(parentDisposable, it)
       }
-      val componentDataProvider = dataContext.dataLoader.getDataProvider(details, currentDisposable!!)
+      val componentDataProvider = dataContext.dataProviderRepository.getDataProvider(details, currentDisposable!!)
       val pullRequestComponent = createPullRequestComponent(dataContext, componentDataProvider,
                                                             details,
                                                             ::viewList,

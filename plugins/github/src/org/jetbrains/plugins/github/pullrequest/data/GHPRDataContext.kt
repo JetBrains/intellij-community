@@ -20,12 +20,12 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
                                val listModel: ListModel<GHPullRequestShort>,
                                val searchHolder: GithubPullRequestSearchQueryHolder,
                                val listLoader: GHPRListLoader,
-                               val dataLoader: GHPRDataLoader,
+                               val dataProviderRepository: GHPRDataProviderRepository,
                                val securityService: GHPRSecurityService,
                                val repositoryDataService: GHPRRepositoryDataService) : Disposable {
 
   override fun dispose() {
-    Disposer.dispose(dataLoader)
+    Disposer.dispose(dataProviderRepository)
     Disposer.dispose(listLoader)
     Disposer.dispose(repositoryDataService)
   }

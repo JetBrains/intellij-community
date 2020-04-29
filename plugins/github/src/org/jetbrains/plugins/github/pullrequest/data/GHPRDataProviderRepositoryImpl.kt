@@ -13,13 +13,13 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import java.util.*
 
-internal class GHPRDataLoaderImpl(private val detailsService: GHPRDetailsService,
-                                  private val stateService: GHPRStateService,
-                                  private val reviewService: GHPRReviewService,
-                                  private val commentService: GHPRCommentService,
-                                  private val changesService: GHPRChangesService,
-                                  private val timelineLoaderFactory: (GHPRIdentifier) -> GHPRTimelineLoader)
-  : GHPRDataLoader {
+internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDetailsService,
+                                              private val stateService: GHPRStateService,
+                                              private val reviewService: GHPRReviewService,
+                                              private val commentService: GHPRCommentService,
+                                              private val changesService: GHPRChangesService,
+                                              private val timelineLoaderFactory: (GHPRIdentifier) -> GHPRTimelineLoader)
+  : GHPRDataProviderRepository {
 
   private var isDisposed = false
 

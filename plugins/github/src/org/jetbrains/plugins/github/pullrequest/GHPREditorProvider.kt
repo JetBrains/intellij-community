@@ -39,10 +39,10 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStatePanel
@@ -74,7 +74,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
                                                     pullRequest: GHPullRequestShort): ComponentContainer {
     val disposable = Disposer.newDisposable()
 
-    val dataProvider = dataContext.dataLoader.getDataProvider(pullRequest, disposable)
+    val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
     val detailsModel = SingleValueModel(dataProvider.detailsData.loadedDetails ?: pullRequest)
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)

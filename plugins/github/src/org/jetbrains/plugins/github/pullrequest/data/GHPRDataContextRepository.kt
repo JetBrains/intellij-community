@@ -119,7 +119,8 @@ internal class GHPRDataContextRepository(private val project: Project) {
     val listLoader = GHPRListLoaderImpl(ProgressManager.getInstance(), requestExecutor, account.server, repoWithPermissions.path, listModel,
                                         searchHolder)
 
-    val dataLoader = GHPRDataLoaderImpl(detailsService, stateService, reviewService, commentService, changesService) { id ->
+    val dataProviderRepository = GHPRDataProviderRepositoryImpl(detailsService, stateService, reviewService, commentService,
+                                                                changesService) { id ->
       val timelineModel = GHPRTimelineMergingModel()
       GHPRTimelineLoader(ProgressManager.getInstance(), requestExecutor,
                          account.server, repoWithPermissions.path, id.number,
@@ -135,7 +136,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
     indicator.checkCanceled()
     return GHPRDataContext(gitRemoteCoordinates, repositoryCoordinates, account,
-                           requestExecutor, listModel, searchHolder, listLoader, dataLoader, securityService, repoDataService)
+                           requestExecutor, listModel, searchHolder, listLoader, dataProviderRepository, securityService, repoDataService)
   }
 
   companion object {
