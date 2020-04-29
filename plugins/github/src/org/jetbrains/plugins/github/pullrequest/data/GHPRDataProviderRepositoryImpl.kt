@@ -11,6 +11,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
 internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDetailsService,
@@ -23,7 +24,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
 
   private var isDisposed = false
 
-  private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder>()
+  private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
   @CalledInAwt
@@ -31,74 +32,65 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     if (isDisposed) throw IllegalStateException("Already disposed")
 
     return cache.getOrPut(id) {
-      DisposalCountingHolder(id).also {
+      DisposalCountingHolder {
+        createDataProvider(it, id)
+      }.also {
         Disposer.register(it, Disposable { cache.remove(id) })
       }
-    }.acquire(disposable)
+    }.acquireValue(disposable)
   }
 
   @CalledInAwt
-  override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.provider
+  override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.value
 
   override fun dispose() {
     isDisposed = true
     cache.values.toList().forEach(Disposer::dispose)
   }
 
-  private inner class DisposalCountingHolder(private val id: GHPRIdentifier) : Disposable {
+  private fun createDataProvider(parentDisposable: Disposable, id: GHPRIdentifier): GHPRDataProvider {
+    val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
+      override fun isDisposed() = Disposer.isDisposed(parentDisposable)
 
-    val provider = createDataProvider()
-    private var disposalCounter = 0
+      override fun createListener(descriptor: ListenerDescriptor) =
+        throw UnsupportedOperationException()
+    })
+    Disposer.register(parentDisposable, messageBus)
 
-    fun acquire(disposable: Disposable): GHPRDataProvider {
-      disposalCounter++
-      Disposer.register(disposable, Disposable {
-        disposalCounter--
-        if (disposalCounter <= 0) {
-          Disposer.dispose(this)
-        }
-      })
-      return provider
+    val detailsData = GHPRDetailsDataProviderImpl(detailsService, id, messageBus).apply {
+      addDetailsLoadedListener(parentDisposable) {
+        loadedDetails?.let { providerDetailsLoadedEventDispatcher.multicaster.onDetailsLoaded(it) }
+      }
+    }.also {
+      Disposer.register(parentDisposable, it)
     }
 
-    private fun createDataProvider(): GHPRDataProvider {
-      val messageBus = MessageBusFactory.newMessageBus(object : MessageBusOwner {
-        override fun isDisposed() = Disposer.isDisposed(this@DisposalCountingHolder)
+    val stateData = GHPRStateDataProviderImpl(stateService, id, messageBus, detailsData).also {
+      Disposer.register(parentDisposable, it)
+    }
+    val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData).also {
+      Disposer.register(parentDisposable, it)
+    }
+    val reviewData = GHPRReviewDataProviderImpl(reviewService, id, messageBus).also {
+      Disposer.register(parentDisposable, it)
+    }
+    val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
 
-        override fun createListener(descriptor: ListenerDescriptor) =
-          throw UnsupportedOperationException()
-      })
-      val detailsData = GHPRDetailsDataProviderImpl(detailsService, id, messageBus).apply {
-        addDetailsLoadedListener(this) {
-          loadedDetails?.let { providerDetailsLoadedEventDispatcher.multicaster.onDetailsLoaded(it) }
-        }
+    val timelineLoaderHolder = DisposalCountingHolder { timelineDisposable ->
+      timelineLoaderFactory(id).also {
+        messageBus.connect(timelineDisposable).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
+          override fun onStateChanged() = it.loadMore(true)
+          override fun onMetadataChanged() = it.loadMore(true)
+          override fun onCommentAdded() = it.loadMore(true)
+          override fun onReviewsChanged() = it.loadMore(true)
+        })
+        Disposer.register(timelineDisposable, it)
       }
-      val stateData = GHPRStateDataProviderImpl(stateService, id, messageBus, detailsData)
-      val changesData = GHPRChangesDataProviderImpl(changesService, id, detailsData)
-      val reviewData = GHPRReviewDataProviderImpl(reviewService, id, messageBus)
-      val commentsData = GHPRCommentsDataProviderImpl(commentService, id, messageBus)
-      val timelineLoaderHolder = GHPRCountingTimelineLoaderHolder {
-        timelineLoaderFactory(id).also {
-          messageBus.connect(it).subscribe(GHPRDataOperationsListener.TOPIC, object : GHPRDataOperationsListener {
-            override fun onStateChanged() = it.loadMore(true)
-            override fun onMetadataChanged() = it.loadMore(true)
-            override fun onCommentAdded() = it.loadMore(true)
-            override fun onReviewsChanged() = it.loadMore(true)
-          })
-        }
-      }
-      return GHPRDataProviderImpl(detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder).also {
-        Disposer.register(it, detailsData)
-        Disposer.register(it, stateData)
-        Disposer.register(it, changesData)
-        Disposer.register(it, reviewData)
-        Disposer.register(it, messageBus)
-      }
+    }.also {
+      Disposer.register(parentDisposable, it)
     }
 
-    override fun dispose() {
-      Disposer.dispose(provider)
-    }
+    return GHPRDataProviderImpl(detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder)
   }
 
   override fun addDetailsLoadedListener(listener: (GHPullRequest) -> Unit) {

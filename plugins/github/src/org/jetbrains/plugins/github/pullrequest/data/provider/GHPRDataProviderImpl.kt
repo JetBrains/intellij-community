@@ -2,21 +2,19 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoaderHolder
+import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
+import org.jetbrains.plugins.github.util.DisposalCountingHolder
 
 internal class GHPRDataProviderImpl(override val detailsData: GHPRDetailsDataProvider,
                                     override val stateData: GHPRStateDataProvider,
                                     override val changesData: GHPRChangesDataProvider,
                                     override val commentsData: GHPRCommentsDataProvider,
                                     override val reviewData: GHPRReviewDataProvider,
-                                    private val timelineLoaderHolderDelegate: GHPRTimelineLoaderHolder)
+                                    private val timelineLoaderHolder: DisposalCountingHolder<GHPRTimelineLoader>)
   : GHPRDataProvider {
 
-  override val timelineLoader get() = timelineLoaderHolderDelegate.timelineLoader
+  override val timelineLoader get() = timelineLoaderHolder.value
 
   override fun acquireTimelineLoader(disposable: Disposable) =
-    timelineLoaderHolderDelegate.acquireTimelineLoader(disposable)
-
-  override fun dispose() {
-  }
+    timelineLoaderHolder.acquireValue(disposable)
 }
