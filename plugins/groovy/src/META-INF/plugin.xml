@@ -390,6 +390,7 @@
     />
 
     <fileType name="DGM"
+              fileNames="org.codehaus.groovy.runtime.ExtensionModule"
               implementationClass="org.jetbrains.plugins.groovy.dgm.DGMFileType" fieldName="INSTANCE"/>
 
     <library.presentationProvider implementation="org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProvider"/>
