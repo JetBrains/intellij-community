@@ -119,6 +119,12 @@ internal class PEntityStorageBuilder(
       modifiableEntity.initializer()
     }
 
+    val createdEntity = pEntityData.createEntity(this)
+    val persistentId = if (TypedEntityWithPersistentId::class.java.isAssignableFrom(unmodifiableEntityClass)) {
+      (createdEntity as TypedEntityWithPersistentId).persistentId()
+    } else null
+    persistentId?.let { if (persistentIdIndex.getIdsByPersistentId(it) != null) error("Entity with persistentId: $it already exist") }
+
     // Add the change to changelog
     val pid = pEntityData.createPid()
     val parents = refs.getParentRefsOfChild(pid)
@@ -132,8 +138,7 @@ internal class PEntityStorageBuilder(
     }
 
     entitySourceIndex.index(pid, source)
-    val createdEntity = pEntityData.createEntity(this)
-    if (createdEntity is TypedEntityWithPersistentId) persistentIdIndex.index(pid, createdEntity.persistentId())
+    persistentId?.let { persistentIdIndex.index(pid, it) }
     return createdEntity
   }
 
