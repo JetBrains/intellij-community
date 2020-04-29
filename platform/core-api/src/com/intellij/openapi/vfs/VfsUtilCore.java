@@ -411,9 +411,9 @@ public class VfsUtilCore {
    * @return a {@link File} for a given {@link VirtualFile},
    * the created file may not exist or may not make sense.
    *
-   * @see VirtualFile#findNioPath()
-   * @see VirtualFile#getNioPath()
-   * @deprecated use {@link VirtualFile#findNioPath()}
+   * @see VirtualFile#toPathOrNull()
+   * @see VirtualFile#toPath()
+   * @deprecated use {@link VirtualFile#toPathOrNull()}
    */
   @NotNull
   @Deprecated
@@ -435,9 +435,9 @@ public class VfsUtilCore {
    * @return a {@link File} for a given {@link VirtualFile},
    * the created file may not exist or may not make sense.
    *
-   * @see VirtualFile#findNioPath()
-   * @see VirtualFile#getNioPath()
-   * @deprecated use {@link VirtualFile#findNioPath()}
+   * @see VirtualFile#toPathOrNull()
+   * @see VirtualFile#toPath()
+   * @deprecated use {@link VirtualFile#toPathOrNull()}
    */
   @Deprecated
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {

@@ -851,7 +851,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     File newDir = tempDir.newDirectory("someDir-32");
     VirtualFile newDirFile = myFS.refreshAndFindFileByPath(newDir.getPath());
     assertNotNull(newDirFile);
-    assertThat(newDirFile.getNioPath()).isNotNull().isEqualTo(newDir.toPath());
+    assertThat(newDirFile.toPath()).isNotNull().isEqualTo(newDir.toPath());
   }
 
   @Test
@@ -859,6 +859,6 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     File newDir = tempDir.newFile("someFile-32");
     VirtualFile newDirFile = myFS.refreshAndFindFileByPath(newDir.getPath());
     assertNotNull(newDirFile);
-    assertThat(newDirFile.getNioPath()).isNotNull().isEqualTo(newDir.toPath());
+    assertThat(newDirFile.toPath()).isNotNull().isEqualTo(newDir.toPath());
   }
 }
