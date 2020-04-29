@@ -1668,7 +1668,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (parent instanceof PsiMethod && JavaPsiRecordUtil.isCompactConstructor((PsiMethod)parent)) {
           info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement)
             .descriptionAndTooltip(JavaErrorBundle.message("record.compact.constructor.return")).create();
-        } else {
+        }
+        else {
           info = parent != null ? HighlightUtil.checkReturnStatementType(statement, parent) : null;
           if (info != null && parent instanceof PsiMethod) {
             PsiMethod method = (PsiMethod)parent;
