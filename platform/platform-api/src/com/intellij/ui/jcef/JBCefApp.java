@@ -5,11 +5,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.cef.JCefAppConfig;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.CefSettings.LogSeverity;
@@ -25,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +42,7 @@ import static com.intellij.ui.jcef.JBCefHtmlStringSchemeHandler.HTML_STRING_SCHE
  * @author tav
  */
 @ApiStatus.Experimental
-public abstract class JBCefApp {
+public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
   @NotNull private final CefApp myCefApp;
@@ -60,19 +57,18 @@ public abstract class JBCefApp {
   private static final AtomicBoolean ourInitialized = new AtomicBoolean(false);
   private static final List<JBCefSchemeHandlerFactory> ourSchemeHandlerFactoryList = Collections.synchronizedList(new ArrayList<>());
 
-  private JBCefApp() {
+  private JBCefApp(@NotNull JCefAppConfig config) {
     CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-    //noinspection AbstractMethodCallInConstructor
-    CefAppConfig config = getCefAppConfig();
-    config.mySettings.windowless_rendering_enabled = false;
-    config.mySettings.log_severity = getLogLevel();
+    CefSettings settings = config.getCefSettings();
+    settings.windowless_rendering_enabled = false;
+    settings.log_severity = getLogLevel();
     Color bg = JBColor.background();
-    config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
+    settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     if (ApplicationManager.getApplication().isInternal()) {
-      config.mySettings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
+      settings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
     }
-    CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
-    myCefApp = CefApp.getInstance(config.mySettings);
+    CefApp.addAppHandler(new MyCefAppHandler(config.getAppArgs()));
+    myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
@@ -113,37 +109,25 @@ public abstract class JBCefApp {
     if (!isEnabled()) {
       throw new IllegalStateException("JCEF is disabled");
     }
-    if (Holder.instance == null) {
+    if (Holder.INSTANCE == null) {
       throw new IllegalStateException("JCEF is not available or failed to initialize");
     }
-    return Holder.instance;
+    return Holder.INSTANCE;
   }
 
   private static class Holder {
-    static final JBCefApp instance = initInstance();
-  }
+    @Nullable static final JBCefApp INSTANCE;
 
-  @Nullable
-  private static JBCefApp initInstance() {
-    ourInitialized.set(true);
-    try {
-      if (SystemInfo.isMac) {
-        return new JBCefAppMac();
+    static {
+      ourInitialized.set(true);
+      JCefAppConfig config = null;
+      try {
+        config = JCefAppConfig.getInstance();
+      } catch (Exception e) {
+        LOG.error(e);
       }
-      else if (SystemInfo.isLinux) {
-        return new JBCefAppLinux();
-      }
-      else if (SystemInfo.isWindows) {
-        return new JBCefAppWindows();
-      }
+      INSTANCE = config != null ? new JBCefApp(config) : null;
     }
-    catch (UnsatisfiedLinkError e) {
-      LOG.warn(e.toString());
-    }
-    catch (Throwable e) {
-      LOG.warn(e);
-    }
-    return null;
   }
 
   /**
@@ -154,86 +138,6 @@ public abstract class JBCefApp {
   @Deprecated
   public static boolean isEnabled() {
     return Registry.is("ide.browser.jcef.enabled");
-  }
-
-  public static class CefAppConfig {
-    public final @NotNull CefSettings mySettings;
-    /**
-     * {@link org.cef.handler.CefAppHandler} args.
-     */
-    public final String @NotNull[] myAppArgs;
-
-    public CefAppConfig(@NotNull CefSettings settings, String @NotNull[] appArgs) {
-      this.mySettings = settings;
-      this.myAppArgs = appArgs;
-    }
-  }
-
-  @NotNull
-  protected abstract CefAppConfig getCefAppConfig();
-
-  private static class JBCefAppMac extends JBCefApp {
-    @NotNull
-    @Override
-    protected CefAppConfig getCefAppConfig() {
-      String ALT_CEF_FRAMEWORK_DIR = System.getenv("ALT_CEF_FRAMEWORK_DIR");
-      String ALT_CEF_HELPER_APP_DIR = System.getenv("ALT_CEF_HELPER_APP_DIR");
-      if (ALT_CEF_FRAMEWORK_DIR == null || ALT_CEF_HELPER_APP_DIR == null) {
-        String CONTENTS_PATH = System.getProperty("java.home") + "/..";
-        if (ALT_CEF_FRAMEWORK_DIR == null) {
-          ALT_CEF_FRAMEWORK_DIR = CONTENTS_PATH + "/Frameworks/Chromium Embedded Framework.framework";
-        }
-        if (ALT_CEF_HELPER_APP_DIR == null) {
-          ALT_CEF_HELPER_APP_DIR = CONTENTS_PATH + "/Frameworks/jcef Helper.app";
-        }
-      }
-      return new CefAppConfig(new CefSettings(), new String[] {
-        "--framework-dir-path=" + normalize(ALT_CEF_FRAMEWORK_DIR),
-        "--browser-subprocess-path=" + normalize(ALT_CEF_HELPER_APP_DIR + "/Contents/MacOS/jcef Helper"),
-        "--main-bundle-path=" + normalize(ALT_CEF_HELPER_APP_DIR),
-        "--disable-in-process-stack-traces",
-        "--use-mock-keychain"
-      });
-    }
-
-    // CEF does not accept ".." in path
-    private static String normalize(String path) {
-      try {
-        return new File(path).getCanonicalPath();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static class JBCefAppWindows extends JBCefApp {
-    @NotNull
-    @Override
-    protected CefAppConfig getCefAppConfig() {
-      String JCEF_PATH = System.getProperty("java.home") + "/bin";
-      CefSettings settings = new CefSettings();
-      settings.resources_dir_path = JCEF_PATH;
-      settings.locales_dir_path = JCEF_PATH + "/locales";
-      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
-      return new CefAppConfig(settings, ArrayUtil.EMPTY_STRING_ARRAY);
-    }
-  }
-
-  private static class JBCefAppLinux extends JBCefApp {
-    @NotNull
-    @Override
-    protected CefAppConfig getCefAppConfig() {
-      String JCEF_PATH = System.getProperty("java.home") + "/lib";
-      CefSettings settings = new CefSettings();
-      settings.resources_dir_path = JCEF_PATH;
-      settings.locales_dir_path = JCEF_PATH + "/locales";
-      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
-      double scale = JBUIScale.sysScale();
-      System.setProperty("jcef.forceDeviceScaleFactor", Double.toString(scale));
-      return new CefAppConfig(settings, new String[] {
-        "--force-device-scale-factor=" + scale
-      });
-    }
   }
 
   @NotNull
