@@ -18,8 +18,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -53,7 +51,7 @@ public class CompressedAppendableFile {
   private final int myAppendBufferLength;
   private static final int myMinAppendBufferLength = 1024;
 
-  static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
+  private static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
 
   private static int ourFilesCount;
   private final int myCount = ourFilesCount++;
@@ -88,6 +86,7 @@ public class CompressedAppendableFile {
     );
   }
 
+  @NotNull
   protected Path getChunkLengthFile() {
     return myBaseFile.resolveSibling(myBaseFile.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION);
   }

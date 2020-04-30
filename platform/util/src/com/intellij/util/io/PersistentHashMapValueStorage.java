@@ -896,7 +896,7 @@ public class PersistentHashMapValueStorage {
         streamCacheValue.release();
       }
 
-      streamCacheValue = ourAppendersCache.get(myPath.resolveSibling(myPath.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION));
+      streamCacheValue = ourAppendersCache.get(getChunkLengthFile());
       try {
         DataInputOutputUtil.writeINT(streamCacheValue.get(), compressedChunk.size());
       }
@@ -912,22 +912,17 @@ public class PersistentHashMapValueStorage {
     }
 
     @Override
-    protected Path getChunkLengthFile() {
-      return myPath.resolveSibling(myPath.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION);
-    }
-
-    @Override
     public synchronized void force() {
       super.force();
-      forceAppender(myPath.resolveSibling(myPath.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION));
+      forceAppender(getChunkLengthFile());
     }
 
     @Override
     public synchronized void dispose() {
       super.dispose();
 
-      ourAppendersCache.remove(myPath.resolveSibling(myPath.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION));
-      ourRandomAccessFileCache.remove(myPath.resolveSibling(myPath.getFileName() + INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION));
+      ourAppendersCache.remove(getChunkLengthFile());
+      ourRandomAccessFileCache.remove(getChunkLengthFile());
     }
   }
 
