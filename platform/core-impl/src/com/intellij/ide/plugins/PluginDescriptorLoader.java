@@ -2,15 +2,18 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SafeJdomFactory;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.SerializationException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.io.Decompressor;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -438,5 +441,27 @@ public class PluginDescriptorLoader {
   @ApiStatus.Internal
   public static @NotNull List<? extends IdeaPluginDescriptor> loadUncachedDescriptors() {
     return loadDescriptors().result.getEnabledPlugins();
+  }
+
+  public static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact(@NotNull Path file, @Nullable BuildNumber buildNumber) throws IOException {
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR, PluginManagerCore.disabledPlugins(),
+                                                                                  PluginManagerCore.createLoadingResult(buildNumber));
+    try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
+      IdeaPluginDescriptorImpl descriptor = loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);
+      if (descriptor == null && file.getFileName().toString().endsWith(".zip")) {
+        File outputDir = FileUtil.createTempDirectory("plugin", "");
+        try {
+          new Decompressor.Zip(file.toFile()).extract(outputDir);
+          File[] files = outputDir.listFiles();
+          if (files != null && files.length == 1) {
+            descriptor = loadDescriptorFromFileOrDir(files[0].toPath(), PluginManagerCore.PLUGIN_XML, context, true);
+          }
+        }
+        finally {
+          FileUtil.delete(outputDir);
+        }
+      }
+      return descriptor;
+    }
   }
 }
