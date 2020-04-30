@@ -242,6 +242,14 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   interface TopComponentController {
+    TopComponentController EMPTY = new TopComponentController() {
+      @Override
+      public void setLeftComponent(@Nullable Component component) {}
+
+      @Override
+      public void showProgress(boolean start) {}
+    };
+
     void setLeftComponent(@Nullable Component component);
 
     void showProgress(boolean start);
