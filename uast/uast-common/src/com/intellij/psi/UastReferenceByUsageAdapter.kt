@@ -12,7 +12,6 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.ProcessingContext
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
@@ -61,20 +60,15 @@ fun uExpressionInVariable() = injectionHostUExpression().filter {
   uastParent is UVariable || (uastParent is UPolyadicExpression && uastParent.uastParent is UVariable)
 }
 
-private val USAGE_REFERENCE_EXPRESSIONS = Key.create<MutableMap<PsiElement, UReferenceExpression>>("uast.referenceExpressions.byUsage")
+private val USAGE_REFERENCE_EXPRESSION: Key<UReferenceExpression> = Key.create("uast.referenceExpressions.byUsage")
 
 private fun getUsageReferenceExpressionWithCache(usage: PsiElement, context: ProcessingContext): UReferenceExpression? {
-  var cache = context.sharedContext.get(USAGE_REFERENCE_EXPRESSIONS)
-  if (cache == null) {
-    cache = THashMap()
-    context.sharedContext.put(USAGE_REFERENCE_EXPRESSIONS, cache)
-  }
-  val cachedElement = cache[usage]
+  val cachedElement = context.sharedContext.get(USAGE_REFERENCE_EXPRESSION, usage)
   if (cachedElement != null) return cachedElement
 
   val newElement = usage.toUElementOfType<UReferenceExpression>()
   if (newElement != null) {
-    cache[usage] = newElement
+    context.sharedContext.put(USAGE_REFERENCE_EXPRESSION, newElement)
   }
   return newElement
 }
