@@ -27,6 +27,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
+import com.intellij.util.IdempotenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,14 @@ public class XmlPsiUtil {
         startFrom = xmlConditionalSection.getBodyStart();
       }
       else if (processIncludes && XmlIncludeHandler.isXInclude(element)) {
-        for (PsiElement psiElement : InclusionProvider.getIncludedTags((XmlTag)element)) {
+        if (IdempotenceChecker.isLoggingEnabled()) {
+          IdempotenceChecker.logTrace("Processing xinclude " + element.getText());
+        }
+        PsiElement[] tags = InclusionProvider.getIncludedTags((XmlTag)element);
+        for (PsiElement psiElement : tags) {
+          if (IdempotenceChecker.isLoggingEnabled()) {
+            IdempotenceChecker.logTrace("Processing included tag " + psiElement);
+          }
           if (!processElement(psiElement, deepFlag, wideFlag, true)) return false;
         }
       }
