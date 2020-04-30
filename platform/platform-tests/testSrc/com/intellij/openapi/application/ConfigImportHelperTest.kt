@@ -2,22 +2,30 @@
 package com.intellij.openapi.application
 
 import com.intellij.ide.plugins.PluginBuilder
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.SystemProperties
+import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
+import java.io.File
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -143,9 +151,196 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, LOG)
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin.jar" }
   }
+
+  @Test fun `download incompatible plugin`() {
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldBuilder = PluginBuilder()
+      .depends("com.intellij.modules.lang")
+      .untilBuild("193.1")
+      .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    options.compatibleBuildNumber = BuildNumber.fromString("201.1")
+    options.marketplaceRequests = object : MarketplaceRequests() {
+      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+        val path = localTempDir.newDirectory("pluginTemp").toPath().resolve("my-plugin-new.jar")
+        PluginBuilder()
+          .id(oldBuilder.id)
+          .buildJar(path)
+        return path.toFile()
+      }
+    }
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin-new.jar" }
+  }
+
+  @Test fun `keep incompatible plugin if can't download compatible`() {
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    PluginBuilder()
+      .untilBuild("193.1")
+      .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    options.compatibleBuildNumber = BuildNumber.fromString("201.1")
+    options.marketplaceRequests = object : MarketplaceRequests() {
+      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+        throw IOException("404")
+      }
+    }
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin.jar" }
+  }
+
+  @Test fun `skip bundled plugins`() {
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldBundledPluginsDir = localTempDir.newDirectory("oldBundled").toPath()
+    val bundledBuilder = PluginBuilder().version("1.1").buildJar(oldBundledPluginsDir.resolve("my-plugin-bundled.jar"))
+    PluginBuilder()
+      .id(bundledBuilder.id)
+      .version("1.0")
+      .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    options.bundledPluginPath = oldBundledPluginsDir.toFile().path
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir).doesNotExist()
+  }
+
+  @Test fun `skip broken plugins`() {
+    val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val builder = PluginBuilder()
+      .version("1.0")
+      .buildJar(oldPluginsDir.resolve("my-plugin.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    options.brokenPluginVersions = mapOf(PluginId.getId(builder.id) to setOf("1.0"))
+
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir).doesNotExist()
+  }
+
+  @Test fun `skip pending upgrades`() {
+    val oldConfigDir = localTempDir.newDirectory("old/config").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsTempDir = localTempDir.newDirectory("old/system/plugins").toPath()
+
+    val tempPath = oldPluginsTempDir.resolve("my-plugin.jar")
+    val tempBuilder = PluginBuilder()
+      .version("1.1")
+      .buildJar(tempPath)
+
+    val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
+
+    PluginBuilder()
+      .id(tempBuilder.id)
+      .version("1.0")
+      .buildJar(oldPluginsDir.resolve("my-plugin-1.0.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir)
+      .isDirectoryContaining { it.fileName.toString() == "my-plugin-1.1.jar" }
+      .isDirectoryNotContaining { it.fileName.toString() == "my-plugin-1.0.jar" }
+  }
+
+  @Test fun `do not download updates for plugins with pending updates`() {
+    val oldConfigDir = localTempDir.newDirectory("old/config").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsTempDir = localTempDir.newDirectory("old/system/plugins").toPath()
+
+    val tempPath = oldPluginsTempDir.resolve("my-plugin.jar")
+    val tempBuilder = PluginBuilder()
+      .version("1.1")
+      .buildJar(tempPath)
+
+    val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
+
+    PluginBuilder()
+      .id(tempBuilder.id)
+      .version("1.0")
+      .untilBuild("193.1")
+      .buildJar(oldPluginsDir.resolve("my-plugin-1.0.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    options.compatibleBuildNumber = BuildNumber.fromString("201.1")
+    options.marketplaceRequests = object : MarketplaceRequests() {
+      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+        throw AssertionError("No file download should be requested")
+      }
+    }
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir)
+      .isDirectoryContaining { it.fileName.toString() == "my-plugin-1.1.jar" }
+      .isDirectoryNotContaining { it.fileName.toString() == "my-plugin-1.0.jar" }
+  }
+
+  @Test fun `skip pending upgrades for plugin zips`() {
+    val oldConfigDir = localTempDir.newDirectory("old/config").toPath()
+    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsTempDir = localTempDir.newDirectory("old/system/plugins").toPath()
+
+    val tempPath = oldPluginsTempDir.resolve("my-plugin.zip")
+    val tempBuilder = PluginBuilder()
+      .version("1.1")
+      .buildZip(tempPath)
+
+    val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
+    commands.add(StartupActionScriptManager.UnzipCommand(tempPath.toFile(), oldPluginsDir.toFile()))
+    StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
+
+    PluginBuilder()
+      .id(tempBuilder.id)
+      .version("1.0")
+      .buildJar(oldPluginsDir.resolve("my-plugin-1.0.jar"))
+
+    val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
+    val newPluginsDir = newConfigDir.resolve("plugins")
+
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    assertThat(newPluginsDir)
+      .isDirectoryContaining { it.fileName.toString() == tempBuilder.id && it.isDirectory() }
+      .isDirectoryNotContaining { it.fileName.toString() == "my-plugin-1.0.jar" }
+  }
+
 
   @Test fun `do not migrate plugins to existing directory`() {
     val oldConfigDir = localTempDir.newDirectory("oldConfig").toPath()
@@ -156,7 +351,9 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     val newPluginsDir = Files.createDirectories(newConfigDir.resolve("plugins"))
     val newPluginZip = Files.createFile(newPluginsDir.resolve("new-plugin.zip"))
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, LOG)
+    val options = ConfigImportHelper.ConfigImportOptions(LOG)
+    options.headless = true
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
 
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName == newPluginZip.fileName }

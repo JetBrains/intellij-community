@@ -836,15 +836,30 @@ public final class PluginManagerCore {
   }
 
   public static void getDescriptorsToMigrate(@NotNull Path dir,
+                                             @Nullable BuildNumber compatibleBuildNumber,
+                                             @Nullable String bundledPluginsPath,
+                                             @Nullable Map<PluginId, Set<String>> brokenPluginVersions,
                                              List<IdeaPluginDescriptorImpl> pluginsToMigrate,
                                              List<IdeaPluginDescriptorImpl> incompatiblePlugins) throws ExecutionException, InterruptedException {
-    PluginLoadingResult loadingResult = createLoadingResult(null);
+    PluginLoadingResult loadingResult = new PluginLoadingResult(
+      brokenPluginVersions != null ? brokenPluginVersions : getBrokenPluginVersions(),
+      () -> compatibleBuildNumber == null ? getBuildNumber() : compatibleBuildNumber
+    );
     DescriptorListLoadingContext context = new DescriptorListLoadingContext(0, Collections.emptySet(), loadingResult);
+    if (bundledPluginsPath != null) {
+      context.loadBundledPlugins = true;
+      context.bundledPluginsPath = bundledPluginsPath;
+    }
     PluginDescriptorLoader.loadBundledDescriptorsAndDescriptorsFromDir(context, dir);
 
     for (IdeaPluginDescriptorImpl descriptor : loadingResult.idMap.values()) {
       if (!descriptor.isBundled()) {
-        pluginsToMigrate.add(descriptor);
+        if (loadingResult.isBroken(descriptor.getPluginId())) {
+          incompatiblePlugins.add(descriptor);
+        }
+        else {
+          pluginsToMigrate.add(descriptor);
+        }
       }
     }
     for (IdeaPluginDescriptorImpl descriptor : loadingResult.incompletePlugins.values()) {

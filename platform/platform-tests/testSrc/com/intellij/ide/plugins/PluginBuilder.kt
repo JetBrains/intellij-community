@@ -3,6 +3,8 @@ package com.intellij.ide.plugins
 
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.write
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -19,6 +21,12 @@ class PluginBuilder {
   private var actions: String? = null
   private val extensions = mutableListOf<ExtensionBlock>()
   private var extensionPoints: String? = null
+  private var untilBuild: String? = null
+  private var version: String? = null
+
+  init {
+    depends("com.intellij.modules.lang")
+  }
 
   fun id(id: String): PluginBuilder {
     this.id = id
@@ -37,6 +45,16 @@ class PluginBuilder {
 
   fun depends(pluginId: String, configFile: String? = null): PluginBuilder {
     dependsTags.add(DependsTag(pluginId, configFile))
+    return this
+  }
+
+  fun untilBuild(buildNumber: String): PluginBuilder {
+    untilBuild = buildNumber
+    return this
+  }
+
+  fun version(version: String): PluginBuilder {
+    this.version = version
     return this
   }
 
@@ -76,6 +94,10 @@ class PluginBuilder {
           append("<depends>${dependsTag.pluginId}</depends>")
         }
       }
+      version?.let { append("<version>$it</version>") }
+      if (untilBuild != null) {
+        append("""<idea-version until-build="${untilBuild}"/>""")
+      }
       for (extensionBlock in extensions) {
         append("""<extensions defaultExtensionNs="${extensionBlock.ns}">${extensionBlock.text}</extensions>""")
       }
@@ -91,9 +113,28 @@ class PluginBuilder {
     pluginXmlPath.write(text())
   }
 
-  fun buildJar(path: Path) {
-    Compressor.Zip(Files.newOutputStream(path)).use {
+  fun buildJar(path: Path): PluginBuilder {
+    buildJarToStream(Files.newOutputStream(path))
+    return this
+  }
+
+  private fun buildJarToStream(outputStream: OutputStream) {
+    Compressor.Zip(outputStream).use {
       it.addFile("META-INF/plugin.xml", text().toByteArray())
     }
+  }
+
+  fun buildZip(path: Path): PluginBuilder {
+    val jarStream = ByteArrayOutputStream()
+    buildJarToStream(jarStream)
+
+    val pluginName = name ?: id
+    Compressor.Zip(Files.newOutputStream(path)).use {
+      it.addDirectory(pluginName)
+      it.addDirectory("$pluginName/lib")
+      it.addFile("$pluginName/lib/$pluginName.jar", jarStream.toByteArray())
+    }
+
+    return this
   }
 }

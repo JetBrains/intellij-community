@@ -109,6 +109,11 @@ public class StartupActionScriptManager {
 
   private static void saveActionScript(@Nullable List<ActionCommand> commands) throws IOException {
     Path scriptFile = getActionScriptFile();
+    saveActionScript(commands, scriptFile);
+  }
+
+  public static void saveActionScript(@Nullable List<ActionCommand> commands, Path scriptFile)
+    throws IOException {
     if (commands != null) {
       Files.createDirectories(scriptFile.getParent());
       try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
@@ -193,6 +198,10 @@ public class StartupActionScriptManager {
     public String toString() {
       return "copy[" + mySource + "," + myDestination + "]";
     }
+
+    public String getSource() {
+      return mySource;
+    }
   }
 
   public static class UnzipCommand implements Serializable, ActionCommand {
@@ -230,6 +239,10 @@ public class StartupActionScriptManager {
     @Override
     public String toString() {
       return "unzip[" + mySource + "," + myDestination + "]";
+    }
+
+    public String getSource() {
+      return mySource;
     }
   }
 
