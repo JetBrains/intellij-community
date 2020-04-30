@@ -431,6 +431,7 @@
 
     <registryKey key="use.tabbed.welcome.screen" defaultValue="false"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
+    <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen$ProjectsTabFactory"/>
     <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
     <themeProvider id="JetBrainsLightTheme" path="/themes/Light.theme.json"/>
 
