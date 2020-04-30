@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -606,7 +606,12 @@ public class EquivalenceChecker {
     }
     final PsiClass containingClass1 = PsiTreeUtil.getParentOfType(thisExpression1, PsiClass.class);
     final PsiClass containingClass2 = PsiTreeUtil.getParentOfType(thisExpression2, PsiClass.class);
-    return Match.exact(containingClass1 == containingClass2);
+    if (containingClass1 == null || containingClass2 == null) {
+      return EXACT_MISMATCH;
+    }
+    return Match.exact(containingClass1 == containingClass2 ||
+                       containingClass2.isInheritor(containingClass1, false) ||
+                       containingClass1.isInheritor(containingClass2, false));
   }
 
   protected Match lambdaExpressionsMatch(PsiLambdaExpression expression1, PsiLambdaExpression expression2) {
