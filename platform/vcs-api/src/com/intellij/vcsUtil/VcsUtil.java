@@ -60,7 +60,7 @@ public class VcsUtil {
       return userLimitKb != null ? Integer.parseInt(userLimitKb) * 1024 : result;
     }
     catch (NumberFormatException ignored) {
-      return result;
+      return Math.min(result, Integer.MAX_VALUE);
     }
   }
 
