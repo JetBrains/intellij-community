@@ -151,8 +151,8 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         }
       }
 
-      appendln("EP usage statistics (${epUsagesMap.size} non-dynamic EPs remaining):")
-      val epUsagesList = epUsagesMap.toList().sortedByDescending { it.second }
+      val epUsagesList = epUsagesMap.toList().filter { !it.first.startsWith("cidr") }.sortedByDescending { it.second }
+      appendln("EP usage statistics (${epUsagesList.size} non-dynamic EPs remaining):")
       for (pair in epUsagesList) {
         append("${pair.second}: ${pair.first}")
         if (Registry.`is`("analyze.unloadable.discover.owners")) {
