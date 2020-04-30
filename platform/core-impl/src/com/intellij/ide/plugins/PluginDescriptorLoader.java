@@ -346,7 +346,7 @@ public class PluginDescriptorLoader {
       if (isUnitTestMode && result.enabledPluginCount() <= 1) {
         // we're running in unit test mode, but the classpath doesn't contain any plugins; try to load bundled plugins anyway
         context.usePluginClassLoader = true;
-        loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
+        loadDescriptorsFromDir(Paths.get(context.bundledPluginsPath), /* isBundled = */ true, context);
       }
     }
     catch (InterruptedException | ExecutionException e) {
@@ -371,8 +371,8 @@ public class PluginDescriptorLoader {
 
     loadDescriptorsFromDir(dir, /* isBundled = */ false, context);
 
-    if (!PluginManagerCore.isUnitTestMode) {
-      loadDescriptorsFromDir(Paths.get(PathManager.getPreInstalledPluginsPath()), /* isBundled = */ true, context);
+    if (context.loadBundledPlugins) {
+      loadDescriptorsFromDir(Paths.get(context.bundledPluginsPath), /* isBundled = */ true, context);
     }
   }
 
