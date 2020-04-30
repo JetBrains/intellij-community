@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.RefreshAction
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -20,11 +19,11 @@ import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.AC
@@ -56,6 +55,7 @@ import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.event.AdjustmentListener
 import javax.swing.BorderFactory
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 internal class GHPREditorProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean {
@@ -121,12 +121,12 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
                                                                     avatarIconsProvider, dataContext.securityService.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
     }
-    val loadingIcon = AsyncProcessIcon("Loading").apply {
+    val loadingIcon = JLabel(AnimatedIcon.Default()).apply {
       border = JBUI.Borders.empty(8, 0)
       isVisible = false
     }
 
-    val timelinePanel = object : ScrollablePanel(), ComponentWithEmptyText, Disposable {
+    val timelinePanel = object : ScrollablePanel(), ComponentWithEmptyText {
       init {
         isOpaque = false
         border = JBUI.Borders.empty(24, 20)
@@ -154,8 +154,6 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       }
 
       override fun getEmptyText() = timeline.emptyText
-
-      override fun dispose() {}
     }
 
     val loaderPanel = object : GHListLoaderPanel(loader, timelinePanel, disposable, true) {
@@ -179,8 +177,6 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
     }
-    Disposer.register(disposable, timelinePanel)
-    Disposer.register(timelinePanel, loadingIcon)
 
     val stateModel = GHPRStateModelImpl(project, dataProvider, detailsModel.value, disposable)
     val statePanel = GHPRStatePanel(dataContext.securityService, stateModel)
