@@ -77,7 +77,10 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
               // Apply editorconfig settings for the current editor
               if (applyCodeStyleSettings(context)) {
                 settings.addDependencies(context.getEditorConfigFiles());
-                EditorConfigNavigationActionsFactory.getInstance(psiFile.getVirtualFile()).updateEditorConfigFilePaths(context.getFilePaths());
+                ObjectUtils.consumeIfNotNull(
+                  EditorConfigNavigationActionsFactory.getInstance(psiFile),
+                  navigationFactory -> navigationFactory.updateEditorConfigFilePaths(context.getFilePaths())
+                );
                 return true;
               }
               return false;
