@@ -372,32 +372,31 @@ NSString *getOverrideVMOptionsPath() {
     return value == nil ? @"" : value;
 }
 
+// ANDROID STUDIO [START]: parseVMOptions() supports multiple .vmoptions files.
 NSArray *parseVMOptions() {
-    NSString *vmOptionsFile = getOverrideVMOptionsPath();
-    if (! [[NSFileManager defaultManager] fileExistsAtPath:vmOptionsFile]) {
-        vmOptionsFile = getToolboxVMOptionsPath();
-    }
-    if (! [[NSFileManager defaultManager] fileExistsAtPath:vmOptionsFile]) {
-        vmOptionsFile = getUserVMOptionsPath();
-    }
-    if (! [[NSFileManager defaultManager] fileExistsAtPath:vmOptionsFile]) {
-        vmOptionsFile = getApplicationVMOptionsPath();
-    }
+    NSArray *files = @[getApplicationVMOptionsPath(),
+                       getUserVMOptionsPath(),
+                       getOverrideVMOptionsPath()];
 
     NSMutableArray *options = [NSMutableArray array];
+    NSMutableArray *used = [NSMutableArray array];
 
-    NSLog(@"Processing VMOptions file at %@", vmOptionsFile);
-    NSArray *contents = [VMOptionsReader readFile:vmOptionsFile];
-    if (contents != nil) {
-        NSLog(@"Done");
-        [options addObjectsFromArray:contents];
-        [options addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", vmOptionsFile]];
-    } else {
-        NSLog(@"No content found at %@", vmOptionsFile);
+    for (NSString *file in files) {
+        NSLog(@"Processing VMOptions file at %@", file);
+        NSArray *contents = [VMOptionsReader readFile:file];
+        if (contents != nil) {
+            NSLog(@"Done");
+            [used addObject:file];
+            [options addObjectsFromArray:contents];
+        } else {
+            NSLog(@"No content found");
+        }
     }
+    [options addObject:[NSString stringWithFormat:@"-Djb.vmOptionsFile=%@", [used componentsJoinedByString:@","]]];
 
     return options;
 }
+// ANDROID STUDIO [END]
 
 NSString *getOverridePropertiesPath() {
     NSString *variable = [[getExecutable() uppercaseString] stringByAppendingString:@"_PROPERTIES"];
