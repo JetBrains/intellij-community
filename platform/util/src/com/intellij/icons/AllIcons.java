@@ -41,6 +41,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Compile = load("/actions/compile.svg");
     /** 16x16 */ public static final @NotNull Icon Copy = load("/actions/copy.svg");
     /** 16x16 */ public static final @NotNull Icon DeleteTag = load("/actions/deleteTag.svg");
+    /** 16x16 */ public static final @NotNull Icon DeleteTagHover = load("/actions/deleteTagHover.svg");
     /** 16x16 */ public static final @NotNull Icon DiagramDiff = load("/actions/diagramDiff.svg");
     /** 16x16 */ public static final @NotNull Icon Diff = load("/actions/diff.svg");
     /** 16x16 */ public static final @NotNull Icon DiffWithClipboard = load("/actions/diffWithClipboard.svg");
