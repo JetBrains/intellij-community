@@ -11,6 +11,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
@@ -59,9 +62,24 @@ class ProjectModelRule : TestRule {
     return sdk
   }
 
+  fun addProjectLevelLibrary(name: String, setup: (Library.ModifiableModel) -> Unit = {}): Library {
+    val model = projectLibraryTable.modifiableModel
+    val library = model.createLibrary(name)
+    val libraryModel = library.modifiableModel
+    setup(libraryModel)
+    runWriteActionAndWait {
+      libraryModel.commit()
+      model.commit()
+    }
+    return library
+  }
+
   val sdkType: SdkTypeId
     get() = SimpleJavaSdkType.getInstance()
 
   val projectRootManager: ProjectRootManager
     get() = ProjectRootManager.getInstance(project)
+
+  val projectLibraryTable: LibraryTable
+    get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
 }
