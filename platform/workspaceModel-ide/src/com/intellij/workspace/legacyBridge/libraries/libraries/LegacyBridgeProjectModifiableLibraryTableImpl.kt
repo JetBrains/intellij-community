@@ -1,5 +1,6 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
+import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl
@@ -90,7 +91,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
           diff = diff,
           committer = { modifiableLib, diffBuilder ->
             this.diff.addDiff(diffBuilder)
-            libraryImpl.entityId = modifiableLib.entityId
+            runAsWriteActionIfNeeded { libraryImpl.entityId = modifiableLib.entityId }
           }
         )
       }

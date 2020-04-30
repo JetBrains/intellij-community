@@ -1,5 +1,6 @@
 package com.intellij.workspace.legacyBridge.intellij
 
+import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -615,7 +616,7 @@ class LegacyBridgeModifiableRootModel(
           diff = diff,
           committer = { modifiableLib, diffBuilder ->
             modifiableModel.diff.addDiff(diffBuilder)
-            libraryImpl.entityId = modifiableLib.entityId
+            runAsWriteActionIfNeeded { libraryImpl.entityId = modifiableLib.entityId }
           }
         )
       }
