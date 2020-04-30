@@ -307,9 +307,6 @@ internal class PEntityStorageBuilder(
     e as PTypedEntity
 
     removeEntity(e.id)
-    virtualFileIndex.index(e.id)
-    entitySourceIndex.index(e.id)
-    persistentIdIndex.index(e.id)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
@@ -327,6 +324,13 @@ internal class PEntityStorageBuilder(
           this.softLinks.remove(link, id)
         }
       }
+    }
+
+    // Update index
+    for (id in accumulator) {
+      virtualFileIndex.index(id)
+      entitySourceIndex.index(id)
+      persistentIdIndex.index(id)
     }
   }
 

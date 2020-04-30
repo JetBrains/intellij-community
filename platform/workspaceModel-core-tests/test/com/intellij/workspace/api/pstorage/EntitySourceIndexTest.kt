@@ -4,6 +4,8 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.workspace.api.EntitySource
 import com.intellij.workspace.api.TypedEntityStorage
 import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.pstorage.references.ManyToOne
+import com.intellij.workspace.api.pstorage.references.MutableManyToOne
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -26,6 +28,22 @@ internal fun TypedEntityStorageBuilder.addPSourceEntity(data: String,
   return addEntity(ModifiablePSourceEntity::class.java, source) {
     this.data = data
   }
+}
+
+internal class PChildSourceEntityData : PEntityData<PChildSourceEntity>() {
+  lateinit var data: String
+  override fun createEntity(snapshot: TypedEntityStorage): PChildSourceEntity {
+    return PChildSourceEntity(data).also { addMetaData(it, snapshot) }
+  }
+}
+
+internal class PChildSourceEntity(val data: String) : PTypedEntity() {
+  val parent: PSourceEntity by ManyToOne.NotNull(PSourceEntity::class)
+}
+
+internal class ModifiablePChildSourceEntity : PModifiableTypedEntity<PChildSourceEntity>() {
+  var data: String by EntityDataDelegation()
+  var parent: PSourceEntity by MutableManyToOne.NotNull(PChildSourceEntity::class, PSourceEntity::class)
 }
 
 class EntitySourceIndexTest {
@@ -106,5 +124,24 @@ class EntitySourceIndexTest {
     builder.addDiff(diff)
     assertEquals(firstEntity.id, builder.entitySourceIndex.getIdsByEntitySource(newSource)?.get(0))
     assertNull(builder.entitySourceIndex.getIdsByEntitySource(oldSource))
+  }
+
+  @Test
+  fun `remove entity with child`() {
+    val entitySource = PSampleEntitySource("oldSource")
+    val builder = PEntityStorageBuilder.create()
+    val firstEntity = builder.addPSourceEntity("one", entitySource)
+    builder.addEntity(ModifiablePChildSourceEntity::class.java, entitySource) {
+      this.data = "firstChild"
+      this.parent = firstEntity
+    }
+
+    var entities = builder.entitySourceIndex.getIdsByEntitySource(entitySource)
+    assertEquals(2, entities?.size)
+
+    builder.removeEntity(firstEntity)
+
+    entities = builder.entitySourceIndex.getIdsByEntitySource(entitySource)
+    assertNull(entities)
   }
 }
