@@ -26,8 +26,9 @@ import javax.swing.event.ChangeListener
 
 internal abstract class GHListLoaderPanel(private val listLoader: GHListLoader<*>,
                                           private val contentComponent: JComponent,
+                                          parentDisposable: Disposable,
                                           private val loadAllAfterFirstScroll: Boolean = false)
-  : BorderLayoutPanel(), Disposable {
+  : BorderLayoutPanel() {
 
   val scrollPane = ScrollPaneFactory.createScrollPane(contentComponent,
                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -64,12 +65,12 @@ internal abstract class GHListLoaderPanel(private val listLoader: GHListLoader<*
       isOpaque = false
     }))
 
-    listLoader.addLoadingStateChangeListener(this) {
+    listLoader.addLoadingStateChangeListener(parentDisposable) {
       setLoading(listLoader.loading)
       updateEmptyText()
     }
 
-    listLoader.addErrorChangeListener(this) {
+    listLoader.addErrorChangeListener(parentDisposable) {
       updateInfoPanel()
       updateEmptyText()
     }
@@ -148,8 +149,6 @@ internal abstract class GHListLoaderPanel(private val listLoader: GHListLoader<*
       listLoader.loadMore()
     }
   }
-
-  override fun dispose() {}
 
   companion object {
     private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {

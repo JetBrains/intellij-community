@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.ide.actions.RefreshAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.util.ProgressWindow
@@ -22,15 +23,16 @@ import javax.swing.JPanel
 internal class GHPRListLoaderPanel(private val listLoader: GHListLoader<GHPullRequestShort>,
                                    private val searchModel: SingleValueModel<String>,
                                    private val listUpdatesChecker: GHPRListUpdatesChecker,
+                                   private val parentDisposable: Disposable,
                                    private val listReloadAction: RefreshAction,
                                    contentComponent: JComponent,
                                    filterComponent: JComponent)
-  : GHListLoaderPanel(listLoader, contentComponent) {
+  : GHListLoaderPanel(listLoader, contentComponent, parentDisposable) {
 
   private lateinit var progressStripe: ProgressStripe
 
   override fun createCenterPanel(content: JComponent): JPanel {
-    val stripe = ProgressStripe(content, this,
+    val stripe = ProgressStripe(content, parentDisposable,
                                 ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     progressStripe = stripe
     return stripe
@@ -41,7 +43,7 @@ internal class GHPRListLoaderPanel(private val listLoader: GHListLoader<GHPullRe
   }
 
   init {
-    listUpdatesChecker.addOutdatedStateChangeListener(this) {
+    listUpdatesChecker.addOutdatedStateChangeListener(parentDisposable) {
       updateInfoPanel()
     }
 

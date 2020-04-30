@@ -158,7 +158,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       override fun dispose() {}
     }
 
-    val loaderPanel = object : GHListLoaderPanel(loader, timelinePanel, true) {
+    val loaderPanel = object : GHListLoaderPanel(loader, timelinePanel, disposable, true) {
       init {
         errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
           loader.reset()
@@ -179,8 +179,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
     }
-    Disposer.register(disposable, loaderPanel)
-    Disposer.register(loaderPanel, timelinePanel)
+    Disposer.register(disposable, timelinePanel)
     Disposer.register(timelinePanel, loadingIcon)
 
     val stateModel = GHPRStateModelImpl(project, dataProvider, detailsModel.value, disposable)

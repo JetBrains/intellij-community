@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -99,8 +98,9 @@ internal object GHPRListComponent {
     }
 
     val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
-    val loaderPanel = GHPRListLoaderPanel(listLoader, searchStringModel, dataContext.listUpdatesChecker,
-                                          listReloadAction, list, search).apply {
+
+    return GHPRListLoaderPanel(listLoader, searchStringModel, dataContext.listUpdatesChecker, disposable,
+                               listReloadAction, list, search).apply {
       errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
         listLoader.reset()
       }
@@ -118,12 +118,6 @@ internal object GHPRListComponent {
         else null
       }
     }
-
-    Disposer.register(disposable, Disposable {
-      Disposer.dispose(loaderPanel)
-    })
-
-    return loaderPanel
   }
 
   private fun installOpenButtonListeners(list: JBList<GHPullRequestShort>,
