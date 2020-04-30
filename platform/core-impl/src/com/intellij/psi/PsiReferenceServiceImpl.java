@@ -4,10 +4,12 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -35,10 +37,12 @@ public class PsiReferenceServiceImpl extends PsiReferenceService {
     return Arrays.asList(element.getReferences());
   }
 
+  private static final Set<String> ourReportedReferenceClasses = ContainerUtil.newConcurrentSet();
+
   private static void assertReferencesHaveSameElement(@NotNull PsiElement element, @NotNull List<PsiReference> references) {
     for (PsiReference reference : references) {
       PsiElement referenceElement = reference.getElement();
-      if (referenceElement != element) {
+      if (referenceElement != element && ourReportedReferenceClasses.add(reference.getClass().getName())) {
         LOG.error(
           "Reference element is not the same element for which references were queried",
           new RuntimeException(
