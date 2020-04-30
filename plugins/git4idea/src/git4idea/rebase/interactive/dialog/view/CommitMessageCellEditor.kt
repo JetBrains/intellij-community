@@ -30,6 +30,11 @@ internal class CommitMessageCellEditor(
   private val table: GitRebaseCommitsTableView,
   disposable: Disposable
 ) : AbstractCellEditor(), TableCellEditor {
+  companion object {
+    private val HINT_HEIGHT = JBUIScale.scale(17)
+    private val DEFAULT_COMMIT_MESSAGE_HEIGHT = GitRebaseCommitsTableView.DEFAULT_CELL_HEIGHT * 5
+  }
+
   private val closeEditorAction = object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {
       stopCellEditing()
@@ -60,7 +65,7 @@ internal class CommitMessageCellEditor(
   override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
     val model = this.table.model
     commitMessageField.text = model.getCommitMessage(row)
-    table.setRowHeight(row, GitRebaseCommitsTableView.DEFAULT_CELL_HEIGHT * 5)
+    table.setRowHeight(row, DEFAULT_COMMIT_MESSAGE_HEIGHT)
     val componentPanel = object : BorderLayoutPanel() {
       override fun requestFocus() {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
@@ -83,7 +88,7 @@ internal class CommitMessageCellEditor(
       isOpaque = true
     }
     val size = hintLabel.preferredSize
-    size.height = JBUIScale.scale(17)
+    size.height = HINT_HEIGHT
     hintLabel.preferredSize = size
     return hintLabel
   }
