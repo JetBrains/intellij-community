@@ -35,7 +35,6 @@ public class JBCefBrowser implements JBCefDisposable {
   private static final String BLANK_URI = "about:blank";
 
   private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
-  private static final String HTML_STRING_URL = JBCefHtmlStringSchemeHandler.HTML_STRING_SCHEME_NAME + "://jbcefbrowser/loadstring";
 
   @NotNull private final JBCefClient myCefClient;
   @NotNull private final MyComponent myComponent;
@@ -184,9 +183,8 @@ public class JBCefBrowser implements JBCefDisposable {
   }
 
   private static void loadString(CefBrowser cefBrowser, String html, String url) {
-    String loadUrl = HTML_STRING_URL + "?url=" + url;
-    JBCefHtmlStringSchemeHandler.registerRequest(cefBrowser, html, loadUrl);
-    cefBrowser.loadURL(loadUrl);
+    url = JBCefFileSchemeHandler.registerLoadHTMLRequest(cefBrowser, html, url);
+    cefBrowser.loadURL(url);
   }
 
   /**

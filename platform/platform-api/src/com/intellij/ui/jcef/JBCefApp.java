@@ -31,7 +31,6 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
-import static com.intellij.ui.jcef.JBCefHtmlStringSchemeHandler.HTML_STRING_SCHEME_NAME;
 
 /**
  * A wrapper over {@link CefApp}.
@@ -55,7 +54,8 @@ public final class JBCefApp {
   };
 
   private static final AtomicBoolean ourInitialized = new AtomicBoolean(false);
-  private static final List<JBCefSchemeHandlerFactory> ourSchemeHandlerFactoryList = Collections.synchronizedList(new ArrayList<>());
+  private static final List<JBCefCustomSchemeHandlerFactory> ourCustomSchemeHandlerFactoryList =
+    Collections.synchronizedList(new ArrayList<>());
 
   private JBCefApp(@NotNull JCefAppConfig config) {
     CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
@@ -146,21 +146,26 @@ public final class JBCefApp {
   }
 
   /**
-   * Adds a scheme handler factory. The method should be called prior to {@code JBCefApp} initialization
+   * Adds a custom scheme handler factory.
+   * <p>
+   * The method must be called prior to {@code JBCefApp} initialization
    * (performed by {@link #getInstance()}). For instance, via the IDE application service.
+   * <p>
+   * The method should not be called for built-in schemes ("html", "file", etc).
    *
    * @throws IllegalStateException if the method is called after {@code JBCefApp} initialization
    */
-  public static void addCefSchemeHandlerFactory(@NotNull JBCefSchemeHandlerFactory factory) {
+  @SuppressWarnings("unused")
+  /*public*/ static void addCefCustomSchemeHandlerFactory(@NotNull JBCefApp.JBCefCustomSchemeHandlerFactory factory) {
     if (ourInitialized.get()) {
       throw new IllegalStateException("JBCefApp has already been initialized!");
     }
-    ourSchemeHandlerFactoryList.add(factory);
+    ourCustomSchemeHandlerFactoryList.add(factory);
   }
 
-  public interface JBCefSchemeHandlerFactory extends CefSchemeHandlerFactory {
+  public interface JBCefCustomSchemeHandlerFactory extends CefSchemeHandlerFactory {
     /**
-     * A callback to register the scheme handler via calling:
+     * A callback to register the custom scheme handler via calling:
      * {@link CefSchemeRegistrar#addCustomScheme(String, boolean, boolean, boolean, boolean, boolean, boolean, boolean)}.
      */
     void registerCustomScheme(@NotNull CefSchemeRegistrar registrar);
@@ -184,29 +189,22 @@ public final class JBCefApp {
 
     @Override
     public void onRegisterCustomSchemes(CefSchemeRegistrar registrar) {
-      for (JBCefSchemeHandlerFactory f : ourSchemeHandlerFactoryList) {
+      for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         f.registerCustomScheme(registrar);
       }
     }
 
     @Override
     public void onContextInitialized() {
-      for (JBCefSchemeHandlerFactory f : ourSchemeHandlerFactoryList) {
+      for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         getInstance().myCefApp.registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
       }
-      ourSchemeHandlerFactoryList.clear(); // no longer needed
+      ourCustomSchemeHandlerFactoryList.clear(); // no longer needed
 
       getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
         @Override
         public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
           return FILE_SCHEME_NAME.equals(schemeName) ? new JBCefFileSchemeHandler(browser, frame) : null;
-        }
-      });
-
-      getInstance().myCefApp.registerSchemeHandlerFactory(HTML_STRING_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
-        @Override
-        public CefResourceHandler create(CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {
-          return HTML_STRING_SCHEME_NAME.equals(schemeName) ? new JBCefHtmlStringSchemeHandler(browser, frame) : null;
         }
       });
     }
