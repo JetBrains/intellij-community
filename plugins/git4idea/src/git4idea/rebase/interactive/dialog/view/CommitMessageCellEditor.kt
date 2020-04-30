@@ -2,6 +2,7 @@
 package git4idea.rebase.interactive.dialog.view
 
 import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.editor.ex.EditorEx
@@ -16,6 +17,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -36,16 +38,25 @@ private fun makeResizable(panel: JPanel, updateHeight: (newHeight: Int) -> Unit)
 }
 
 internal class CommitMessageCellEditor(
-  project: Project,
+  private val project: Project,
   private val table: GitRebaseCommitsTableView,
   disposable: Disposable
 ) : AbstractCellEditor(), TableCellEditor {
   companion object {
+    @NonNls
+    private const val COMMIT_MESSAGE_HEIGHT_KEY = "Git.Interactive.Rebase.Dialog.Commit.Message.Height"
+
     private val HINT_HEIGHT = JBUIScale.scale(17)
     private val DEFAULT_COMMIT_MESSAGE_HEIGHT = GitRebaseCommitsTableView.DEFAULT_CELL_HEIGHT * 5
 
     internal fun canResize(height: Int, point: Point): Boolean = point.y in height - HINT_HEIGHT..height
   }
+
+  private var savedHeight: Int
+    get() = PropertiesComponent.getInstance(project).getInt(COMMIT_MESSAGE_HEIGHT_KEY, DEFAULT_COMMIT_MESSAGE_HEIGHT)
+    set(value) {
+      PropertiesComponent.getInstance(project).setValue(COMMIT_MESSAGE_HEIGHT_KEY, value, DEFAULT_COMMIT_MESSAGE_HEIGHT)
+    }
 
   private val closeEditorAction = object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent?) {
@@ -77,7 +88,7 @@ internal class CommitMessageCellEditor(
   override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
     val model = this.table.model
     commitMessageField.text = model.getCommitMessage(row)
-    table.setRowHeight(row, DEFAULT_COMMIT_MESSAGE_HEIGHT)
+    table.setRowHeight(row, savedHeight)
     val componentPanel = object : BorderLayoutPanel() {
       override fun requestFocus() {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
@@ -89,7 +100,9 @@ internal class CommitMessageCellEditor(
       background = table.background
       border = JBUI.Borders.merge(IdeBorderFactory.createBorder(), JBUI.Borders.empty(6, 0, 0, 6), true)
       makeResizable(this) { newHeight ->
-        table.setRowHeight(row, max(DEFAULT_COMMIT_MESSAGE_HEIGHT, newHeight))
+        val height = max(DEFAULT_COMMIT_MESSAGE_HEIGHT, newHeight)
+        table.setRowHeight(row, height)
+        savedHeight = height
       }
     }
   }
