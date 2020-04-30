@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.codeInsight.AutoPopupController
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.Disposable
@@ -82,7 +81,7 @@ internal object GHPRListComponent {
       searchQueryHolder.queryString = searchStringModel.value
     }
 
-    val search = GHPRSearchPanel(project, AutoPopupController.getInstance(project), searchStringModel).apply {
+    val search = GHPRSearchPanel.create(project, searchStringModel).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 
