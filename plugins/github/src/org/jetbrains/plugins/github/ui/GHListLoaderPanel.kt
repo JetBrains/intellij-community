@@ -15,26 +15,41 @@ import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
+import org.jetbrains.plugins.github.ui.util.BoundedRangeModelThresholdListener
 import org.jetbrains.plugins.github.util.getName
 import java.awt.event.ActionEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 
 internal abstract class GHListLoaderPanel(private val listLoader: GHListLoader<*>,
                                           private val contentComponent: JComponent,
                                           private val loadAllAfterFirstScroll: Boolean = false)
   : BorderLayoutPanel(), Disposable {
 
-  private var userScrolled = false
   val scrollPane = ScrollPaneFactory.createScrollPane(contentComponent,
                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                       ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
     isOpaque = false
     viewport.isOpaque = false
     border = JBUI.Borders.empty()
-    verticalScrollBar.model.addChangeListener { potentiallyLoadMore() }
-    verticalScrollBar.model.addChangeListener { if (!userScrolled && verticalScrollBar.value > 0) userScrolled = true }
+    if (!loadAllAfterFirstScroll) {
+      BoundedRangeModelThresholdListener.install(verticalScrollBar) {
+        potentiallyLoadMore()
+      }
+    }
+    else {
+      verticalScrollBar.model.addChangeListener(object : ChangeListener {
+        private var firstScroll = true
+
+        override fun stateChanged(e: ChangeEvent) {
+          if (firstScroll && verticalScrollBar.value > 0) firstScroll = false
+          if (!firstScroll) potentiallyLoadMore()
+        }
+      })
+    }
   }
 
   protected val infoPanel = HtmlInfoPanel()
@@ -129,20 +144,9 @@ internal abstract class GHListLoaderPanel(private val listLoader: GHListLoader<*
   else GithubBundle.message("cannot.load.full.list")
 
   private fun potentiallyLoadMore() {
-    if (listLoader.canLoadMore() && ((userScrolled && loadAllAfterFirstScroll) || isScrollAtThreshold())) {
+    if (listLoader.canLoadMore()) {
       listLoader.loadMore()
     }
-  }
-
-  private fun isScrollAtThreshold(): Boolean {
-    val verticalScrollBar = scrollPane.verticalScrollBar
-    val visibleAmount = verticalScrollBar.visibleAmount
-    val value = verticalScrollBar.value
-    val maximum = verticalScrollBar.maximum
-    if (maximum == 0) return false
-    val scrollFraction = (visibleAmount + value) / maximum.toFloat()
-    if (scrollFraction < 0.5) return false
-    return true
   }
 
   override fun dispose() {}
