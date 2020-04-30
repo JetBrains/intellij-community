@@ -307,6 +307,9 @@ internal class PEntityStorageBuilder(
     e as PTypedEntity
 
     removeEntity(e.id)
+    virtualFileIndex.index(e.id)
+    entitySourceIndex.index(e.id)
+    persistentIdIndex.index(e.id)
     updateChangeLog { it.add(ChangeEntry.RemoveEntity(e.id)) }
   }
 
@@ -317,12 +320,6 @@ internal class PEntityStorageBuilder(
     accumulateEntitiesToRemove(idx, accumulator)
 
     for (id in accumulator) {
-
-      // Update index
-      virtualFileIndex.index(id)
-      entitySourceIndex.index(id)
-      persistentIdIndex.index(id)
-
       entitiesByType.remove(id.arrayId, id.clazz.java)
       val entityData = entityDataById(id)
       if (entityData is PSoftLinkable) {
