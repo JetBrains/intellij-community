@@ -29,6 +29,7 @@ import java.awt.*
 import javax.swing.DefaultListSelectionModel
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
+import javax.swing.event.ChangeEvent
 import javax.swing.table.TableCellEditor
 
 internal open class GitRebaseCommitsTableView(
@@ -103,6 +104,16 @@ internal open class GitRebaseCommitsTableView(
       setRowHeight(editingRow, DEFAULT_CELL_HEIGHT)
     }
     super.removeEditor()
+  }
+
+  override fun columnMarginChanged(e: ChangeEvent) {
+    // same as JTable#columnMarginChanged except for it doesn't stop editing
+    val tableHeader = getTableHeader()
+    val resizingColumn = tableHeader?.resizingColumn
+    if (resizingColumn != null && autoResizeMode == JTable.AUTO_RESIZE_OFF) {
+      resizingColumn.preferredWidth = resizingColumn.width
+    }
+    resizeAndRepaint()
   }
 
   protected open fun onEditorRemove() {}

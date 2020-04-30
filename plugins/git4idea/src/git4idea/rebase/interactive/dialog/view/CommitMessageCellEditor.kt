@@ -17,13 +17,23 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView
 import java.awt.Component
+import java.awt.Cursor
+import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.*
+import javax.swing.event.MouseInputAdapter
 import javax.swing.table.TableCellEditor
+import kotlin.math.max
+
+private fun makeResizable(panel: JPanel, updateHeight: (newHeight: Int) -> Unit) {
+  val listener = HeightResizeMouseListener(panel, updateHeight)
+  panel.addMouseListener(listener)
+  panel.addMouseMotionListener(listener)
+}
 
 internal class CommitMessageCellEditor(
   project: Project,
@@ -33,6 +43,8 @@ internal class CommitMessageCellEditor(
   companion object {
     private val HINT_HEIGHT = JBUIScale.scale(17)
     private val DEFAULT_COMMIT_MESSAGE_HEIGHT = GitRebaseCommitsTableView.DEFAULT_CELL_HEIGHT * 5
+
+    internal fun canResize(height: Int, point: Point): Boolean = point.y in height - HINT_HEIGHT..height
   }
 
   private val closeEditorAction = object : AbstractAction() {
@@ -76,6 +88,9 @@ internal class CommitMessageCellEditor(
     return componentPanel.addToCenter(commitMessageField).addToBottom(hint).apply {
       background = table.background
       border = JBUI.Borders.merge(IdeBorderFactory.createBorder(), JBUI.Borders.empty(6, 0, 0, 6), true)
+      makeResizable(this) { newHeight ->
+        table.setRowHeight(row, max(DEFAULT_COMMIT_MESSAGE_HEIGHT, newHeight))
+      }
     }
   }
 
@@ -99,5 +114,47 @@ internal class CommitMessageCellEditor(
     table.selectedRowCount > 1 -> false
     e is MouseEvent -> e.clickCount >= 2
     else -> true
+  }
+}
+
+private class HeightResizeMouseListener(
+  private val panel: JPanel,
+  private val updateHeight: (newHeight: Int) -> Unit
+) : MouseInputAdapter() {
+  private var resizedHeight = panel.height
+  private var previousPoint: Point? = null
+
+  override fun mouseReleased(e: MouseEvent) {
+    updateCursor(e)
+    previousPoint = null
+  }
+
+  override fun mouseMoved(e: MouseEvent) {
+    updateCursor(e)
+  }
+
+  override fun mouseDragged(e: MouseEvent) {
+    val current = e.locationOnScreen
+    previousPoint?.let {
+      val deltaY = current.y - it.y
+      resizedHeight += deltaY
+      updateHeight(resizedHeight)
+    }
+    previousPoint = current
+  }
+
+  override fun mousePressed(e: MouseEvent) {
+    previousPoint = e.locationOnScreen
+    resizedHeight = panel.height
+  }
+
+  private fun updateCursor(e: MouseEvent) {
+    val point = e.point
+    panel.cursor = if (CommitMessageCellEditor.canResize(panel.height, point)) {
+      Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR)
+    }
+    else {
+      Cursor.getDefaultCursor()
+    }
   }
 }
