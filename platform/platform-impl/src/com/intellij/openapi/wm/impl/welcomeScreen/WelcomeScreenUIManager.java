@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.plugins.newui.ListPluginComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -50,16 +53,30 @@ public class WelcomeScreenUIManager {
   }
 
   public static Color getProjectsBackground() {
+    if (Registry.is("use.tabbed.welcome.screen")) {
+      return getMainAssociatedComponentBackground();
+    }
     return JBColor.namedColor("WelcomeScreen.Projects.background", new JBColor(Gray.xFF, Gray.x39));
+  }
+
+  public static Color getProjectsSelectionBackground(boolean hasFocus) {
+    if (Registry.is("use.tabbed.welcome.screen")) {
+      return ListPluginComponent.HOVER_COLOR; //use the same as plugins tab use
+    }
+    return hasFocus ? JBColor.namedColor("WelcomeScreen.Projects.selectionBackground", new JBColor(0x3875d6, 0x4b6eaf))
+                    : JBColor.namedColor("WelcomeScreen.Projects.selectionInactiveBackground", new JBColor(Gray.xDD, Gray.x45));
+  }
+
+  @NotNull
+  public static Color getProjectsSelectionForeground(boolean isSelected, boolean hasFocus) {
+    if (Registry.is("use.tabbed.welcome.screen")) {
+      return UIUtil.getListForeground(); // do not change foreground for selection
+    }
+    return UIUtil.getListForeground(isSelected && hasFocus, true);// do not change foreground for selection when focused
   }
 
   public static Color getLinkNormalColor() {
     return new JBColor(Gray._0, Gray.xBB);
-  }
-
-  public static Color getListSelectionColor(boolean hasFocus) {
-    return hasFocus ? JBColor.namedColor("WelcomeScreen.Projects.selectionBackground", new JBColor(0x3875d6, 0x4b6eaf))
-                    : JBColor.namedColor("WelcomeScreen.Projects.selectionInactiveBackground", new JBColor(Gray.xDD, Gray.x45));
   }
 
   public static Color getActionLinkSelectionColor() {

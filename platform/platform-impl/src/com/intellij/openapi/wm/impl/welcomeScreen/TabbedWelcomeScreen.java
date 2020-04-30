@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.awt.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createRecentProjects;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getTabListSelectionBackgroundColor;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
@@ -116,7 +118,10 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
       JComponent keyComponent = value.getKeyComponent();
-      return JBUI.Panels.simplePanel(keyComponent);
+      JPanel wrappedPanel = JBUI.Panels.simplePanel(keyComponent);
+      UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? getTabListSelectionBackgroundColor(cellHasFocus) : list.getBackground());
+      UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected,cellHasFocus));
+      return wrappedPanel;
     }
   }
 
