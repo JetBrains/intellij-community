@@ -10,7 +10,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Set;
 
 final class DescriptorLoadingContext implements AutoCloseable {
   final Map<Path, FileSystem> openedFiles = new THashMap<>();
@@ -37,15 +36,6 @@ final class DescriptorLoadingContext implements AutoCloseable {
     return id != PluginManagerCore.CORE_ID && parentContext.disabledPlugins.contains(id);
   }
 
-  boolean isBroken(@NotNull PluginId id) {
-    Set<String> set = parentContext.result.brokenPluginVersions.get(id);
-    if (set == null) {
-      return false;
-    }
-
-    IdeaPluginDescriptorImpl descriptor = parentContext.result.idMap.get(id);
-    return descriptor != null && set.contains(descriptor.getVersion());
-  }
 
   @NotNull
   FileSystem open(@NotNull Path file) throws IOException {

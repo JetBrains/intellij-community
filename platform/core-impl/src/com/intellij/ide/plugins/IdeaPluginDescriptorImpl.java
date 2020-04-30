@@ -324,7 +324,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       isDisabledOrBroken = true;
     }
     else {
-      if (context.isBroken(dependencyId)) {
+      if (context.parentContext.result.isBroken(dependencyId)) {
         if (!isOptional) {
           context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
           markAsIncomplete(context, "Non-optional dependency " + dependencyId + " is broken", null);
