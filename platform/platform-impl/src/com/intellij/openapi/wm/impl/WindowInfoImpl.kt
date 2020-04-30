@@ -5,6 +5,7 @@ import com.intellij.facet.ui.FacetDependentToolWindow
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
@@ -148,12 +149,11 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
 }
 
 private fun canActivateOnStart(id: String): Boolean {
-  for (ep in ToolWindowEP.EP_NAME.extensionList) {
-    if (id == ep.id) {
-      return !ep.isDoNotActivateOnStart
-    }
-  }
-  for (ep in FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList) {
+  for (ep in listOf(
+    ToolWindowEP.EP_NAME.extensionList,
+    FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList,
+    LibraryDependentToolWindow.EXTENSION_POINT_NAME.extensionList).flatten()
+  ) {
     if (id == ep.id) {
       return !ep.isDoNotActivateOnStart
     }
