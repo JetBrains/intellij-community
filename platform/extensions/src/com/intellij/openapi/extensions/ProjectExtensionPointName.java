@@ -15,7 +15,13 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
- * Consider using application level extension point. Avoid project level - extension should be stateless and operate on passed context.
+ * Provides access to a project-level or module-level extension point. Since extensions are supposed to be stateless, storing different
+ * instances of an extension for each project or module just waste the memory and complicates code, so <strong>it's strongly recommended not
+ * to introduce new project-level and module-level extension points</strong>. If you need to have {@link com.intellij.openapi.project.Project Project}
+ * or {@link com.intellij.openapi.module.Module Module} instance in some extension's method, just pass it as a parameter and use the default
+ * application-level extension point.
+ *
+ * <p>Instances of this class can be safely stored in static final fields.</p>
  */
 public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ProjectExtensionPointName(@NotNull @NonNls String name) {
