@@ -646,6 +646,10 @@ public final class StartupUtil {
       }
     }
 
+    logEnvVar(log, "_JAVA_OPTIONS");
+    logEnvVar(log, "JDK_JAVA_OPTIONS");
+    logEnvVar(log, "JAVA_TOOL_OPTIONS");
+
     log.info(
       "locale=" + Locale.getDefault() +
       " JNU=" + System.getProperty("sun.jnu.encoding") +
@@ -657,6 +661,11 @@ public final class StartupUtil {
     );
 
     activity.end();
+  }
+
+  private static void logEnvVar(Logger log, String var) {
+    String value = System.getenv(var);
+    if (value != null) log.info(var + '=' + value);
   }
 
   private static String logPath(String path) {
