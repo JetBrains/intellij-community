@@ -34,8 +34,10 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   private static final Logger LOG = Logger.getInstance(ExtendsListFix.class);
 
   @Nullable
+  @SafeFieldForPreview // we don't modify this class
   protected final SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
   private final boolean myToAdd;
+  @SafeFieldForPreview // we don't mo
   private final PsiClassType myTypeToExtendFrom;
   private final String myName;
 
