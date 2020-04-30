@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
@@ -63,13 +64,30 @@ class ProjectModelRule : TestRule {
   }
 
   fun addProjectLevelLibrary(name: String, setup: (Library.ModifiableModel) -> Unit = {}): Library {
-    val model = projectLibraryTable.modifiableModel
+    return addLibrary(name, projectLibraryTable, setup)
+  }
+
+  private fun addLibrary(name: String, libraryTable: LibraryTable, setup: (Library.ModifiableModel) -> Unit): Library {
+    val model = libraryTable.modifiableModel
     val library = model.createLibrary(name)
     val libraryModel = library.modifiableModel
     setup(libraryModel)
     runWriteActionAndWait {
       libraryModel.commit()
       model.commit()
+    }
+    return library
+  }
+
+  fun addApplicationLevelLibrary(name: String): Library {
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = addLibrary(name, libraryTable) {}
+    disposableRule.disposable.attach {
+      runWriteActionAndWait {
+        if (libraryTable.getLibraryByName(name) == library) {
+          libraryTable.removeLibrary(library)
+        }
+      }
     }
     return library
   }
