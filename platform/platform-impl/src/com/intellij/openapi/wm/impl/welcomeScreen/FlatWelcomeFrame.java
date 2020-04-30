@@ -86,8 +86,8 @@ import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor, WelcomeFrameUpdater {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
-  public static final int DEFAULT_HEIGHT = 460;
-  public static final int MAX_DEFAULT_WIDTH = 777;
+  public static final int DEFAULT_HEIGHT = Registry.is("use.tabbed.welcome.screen") ? 600 : 460 ;
+  public static final int MAX_DEFAULT_WIDTH = 800;
   private final AbstractWelcomeScreen myScreen;
   private boolean myDisposed;
 
@@ -95,7 +95,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     SplashManager.hideBeforeShow(this);
 
     JRootPane rootPane = getRootPane();
-    myScreen = Registry.is("use.tabbed.welcome.screen") ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
+    boolean useTabWelcomeScreen = Registry.is("use.tabbed.welcome.screen");
+    myScreen = useTabWelcomeScreen ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
@@ -123,10 +124,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     setTitle(getWelcomeFrameTitle());
     AppUIUtil.updateWindowIcon(this);
-
-    int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
-    getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
-    setResizable(false);
+    if (useTabWelcomeScreen) {
+      getRootPane().setPreferredSize(JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight));
+    }
+    else {
+      int width = RecentProjectListActionProvider.getInstance().getActions(false).size() == 0 ? 666 : MAX_DEFAULT_WIDTH;
+      getRootPane().setPreferredSize(JBUI.size(width, defaultHeight));
+    }
+    setResizable(useTabWelcomeScreen);
 
     Dimension size = getPreferredSize();
     Point location = WindowStateService.getInstance().getLocation(WelcomeFrame.DIMENSION_KEY);
