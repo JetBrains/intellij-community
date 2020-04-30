@@ -2,25 +2,30 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.ide.actions.RefreshAction
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHPRListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.data.GHPRListUpdatesChecker
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.ui.GHListLoaderPanel
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
+internal class GHPRListLoaderPanel(private val listLoader: GHListLoader<GHPullRequestShort>,
+                                   private val searchModel: SingleValueModel<String>,
+                                   private val listUpdatesChecker: GHPRListUpdatesChecker,
                                    private val listReloadAction: RefreshAction,
                                    contentComponent: JComponent,
                                    filterComponent: JComponent)
-  : GHListLoaderPanel<GHPRListLoader>(listLoader, contentComponent), Disposable {
+  : GHListLoaderPanel(listLoader, contentComponent) {
 
   private lateinit var progressStripe: ProgressStripe
 
@@ -36,19 +41,18 @@ internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
   }
 
   init {
-    listLoader.addOutdatedStateChangeListener(this) {
+    listUpdatesChecker.addOutdatedStateChangeListener(this) {
       updateInfoPanel()
     }
 
     addToTop(filterComponent)
-    resetFilter()
   }
 
   override fun displayEmptyStatus(emptyText: StatusText) {
-    if (listLoader.filterNotEmpty) {
+    if (searchModel.value.isNotEmpty()) {
       emptyText.text = GithubBundle.message("pull.request.list.no.matches")
       emptyText.appendSecondaryText(GithubBundle.message("pull.request.list.reset.filters"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-        resetFilter()
+        searchModel.value = GHPRSearchQuery.DEFAULT.toString()
       }
     }
     else {
@@ -59,13 +63,9 @@ internal class GHPRListLoaderPanel(listLoader: GHPRListLoader,
     }
   }
 
-  private fun resetFilter() {
-    listLoader.resetFilter()
-  }
-
   override fun updateInfoPanel() {
     super.updateInfoPanel()
-    if (infoPanel.isEmpty && listLoader.outdated) {
+    if (infoPanel.isEmpty && listUpdatesChecker.outdated) {
       infoPanel.setInfo("<html><body>${GithubBundle.message("pull.request.list.outdated")} <a href=''>${GithubBundle.message(
         "pull.request.list.refresh")}</a></body></html>",
                         HtmlInfoPanel.Severity.INFO) {

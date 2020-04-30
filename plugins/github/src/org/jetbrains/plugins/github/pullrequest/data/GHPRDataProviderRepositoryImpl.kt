@@ -9,6 +9,7 @@ import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
@@ -19,7 +20,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
                                               private val reviewService: GHPRReviewService,
                                               private val commentService: GHPRCommentService,
                                               private val changesService: GHPRChangesService,
-                                              private val timelineLoaderFactory: (GHPRIdentifier) -> GHPRTimelineLoader)
+                                              private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>)
   : GHPRDataProviderRepository {
 
   private var isDisposed = false
@@ -93,12 +94,12 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     return GHPRDataProviderImpl(detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder)
   }
 
-  override fun addDetailsLoadedListener(listener: (GHPullRequest) -> Unit) {
+  override fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit) {
     providerDetailsLoadedEventDispatcher.addListener(object : DetailsLoadedListener {
       override fun onDetailsLoaded(details: GHPullRequest) {
         listener(details)
       }
-    })
+    }, disposable)
   }
 
   private interface DetailsLoadedListener : EventListener {

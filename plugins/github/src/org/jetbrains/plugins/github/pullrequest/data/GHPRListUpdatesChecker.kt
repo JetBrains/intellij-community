@@ -3,23 +3,17 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import java.util.concurrent.CompletableFuture
 
-internal interface GHPRListLoader : GHListLoader {
+interface GHPRListUpdatesChecker : Disposable {
+
   @get:CalledInAwt
   val outdated: Boolean
-  @get:CalledInAwt
-  val filterNotEmpty: Boolean
 
   @CalledInAwt
-  fun findData(id: GHPRIdentifier): GHPullRequestShort?
+  fun start()
 
   @CalledInAwt
-  fun updateData(pullRequest: GHPullRequestShort)
-
-  @CalledInAwt
-  fun resetFilter()
+  fun stop()
 
   @CalledInAwt
   fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit)

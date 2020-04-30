@@ -14,5 +14,5 @@ internal interface GHPRDataProviderRepository : Disposable {
   fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider?
 
   @CalledInAwt
-  fun addDetailsLoadedListener(listener: (GHPullRequest) -> Unit)
+  fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit)
 }

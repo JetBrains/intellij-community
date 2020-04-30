@@ -21,9 +21,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLoader: L,
-                                                            private val contentComponent: JComponent,
-                                                            private val loadAllAfterFirstScroll: Boolean = false)
+internal abstract class GHListLoaderPanel(private val listLoader: GHListLoader<*>,
+                                          private val contentComponent: JComponent,
+                                          private val loadAllAfterFirstScroll: Boolean = false)
   : BorderLayoutPanel(), Disposable {
 
   private var userScrolled = false
@@ -86,7 +86,7 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
   }
 
   private fun displayErrorStatus(emptyText: StatusText, error: Throwable) {
-    emptyText.appendText(getErrorPrefix(!listLoader.hasLoadedItems), SimpleTextAttributes.ERROR_ATTRIBUTES)
+    emptyText.appendText(getErrorPrefix(listLoader.loadedData.isEmpty()), SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
 
     errorHandler?.getActionForError(error)?.let {
@@ -103,8 +103,9 @@ internal abstract class GHListLoaderPanel<L : GHListLoader>(protected val listLo
 
   protected open fun updateInfoPanel() {
     val error = listLoader.error
-    if (error != null && listLoader.hasLoadedItems) {
-      val errorPrefix = getErrorPrefix(!listLoader.hasLoadedItems)
+    val listEmpty = listLoader.loadedData.isEmpty()
+    if (error != null && !listEmpty) {
+      val errorPrefix = getErrorPrefix(listEmpty)
       val errorText = getLoadingErrorText(error, "<br/>")
       val action = errorHandler?.getActionForError(error)
       if (action != null) {

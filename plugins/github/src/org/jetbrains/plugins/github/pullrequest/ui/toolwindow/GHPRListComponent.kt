@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
@@ -36,7 +37,19 @@ internal object GHPRListComponent {
 
     val actionManager = ActionManager.getInstance()
 
-    val list = object : JBList<GHPullRequestShort>(dataContext.listModel) {
+    val listLoader = dataContext.listLoader
+    val listModel = CollectionListModel(listLoader.loadedData)
+    listLoader.addDataListener(disposable, object : GHListLoader.ListDataListener {
+      override fun onDataAdded(startIdx: Int) {
+        val loadedData = listLoader.loadedData
+        listModel.add(loadedData.subList(startIdx, loadedData.size))
+      }
+
+      override fun onDataUpdated(idx: Int) = listModel.setElementAt(listLoader.loadedData[idx], idx)
+      override fun onAllDataRemoved() = listModel.removeAll()
+    })
+
+    val list = object : JBList<GHPullRequestShort>(listModel) {
 
       override fun getToolTipText(event: MouseEvent): String? {
         val childComponent = ListUtil.getDeepestRendererChildComponentAt(this, event.point)
@@ -86,9 +99,10 @@ internal object GHPRListComponent {
     }
 
     val listReloadAction = actionManager.getAction("Github.PullRequest.List.Reload") as RefreshAction
-    val loaderPanel = GHPRListLoaderPanel(dataContext.listLoader, listReloadAction, list, search).apply {
+    val loaderPanel = GHPRListLoaderPanel(listLoader, searchStringModel, dataContext.listUpdatesChecker,
+                                          listReloadAction, list, search).apply {
       errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
-        dataContext.listLoader.reset()
+        listLoader.reset()
       }
       scrollPane.verticalScrollBar.apply {
         isOpaque = true

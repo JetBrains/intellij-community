@@ -39,8 +39,8 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRFixedActionDataContex
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRSubmittableTextField
+import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRTimelineLoader
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRCommentsDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
@@ -79,7 +79,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val detailsModel = SingleValueModel(dataProvider.detailsData.loadedDetails ?: pullRequest)
     val reviewThreadsModelsProvider = GHPRReviewsThreadsModelsProviderImpl(dataProvider.reviewData, disposable)
 
-    val loader: GHPRTimelineLoader = dataProvider.acquireTimelineLoader(disposable)
+    val loader = dataProvider.acquireTimelineLoader(disposable)
 
     dataProvider.detailsData.loadDetails(disposable) {
       it.handleOnEdt(disposable) { pr, _ ->
@@ -104,7 +104,19 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
     val avatarIconsProvider = avatarIconsProviderFactory.create(GithubUIUtil.avatarSize, mainPanel)
 
     val header = GHPRHeaderPanel(detailsModel, avatarIconsProvider)
-    val timeline = GHPRTimelineComponent(loader.listModel,
+
+    val timelineModel = GHPRTimelineMergingModel()
+    loader.addDataListener(disposable, object : GHListLoader.ListDataListener {
+      override fun onDataAdded(startIdx: Int) {
+        val loadedData = loader.loadedData
+        timelineModel.add(loadedData.subList(startIdx, loadedData.size))
+      }
+
+      override fun onAllDataRemoved() = timelineModel.removeAll()
+
+      override fun onDataUpdated(idx: Int) = throw UnsupportedOperationException("Inplace timeline event update is not supported")
+    })
+    val timeline = GHPRTimelineComponent(timelineModel,
                                          createItemComponentFactory(project, dataProvider.reviewData, reviewThreadsModelsProvider,
                                                                     avatarIconsProvider, dataContext.securityService.currentUser)).apply {
       border = JBUI.Borders.empty(16, 0)
@@ -146,7 +158,7 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       override fun dispose() {}
     }
 
-    val loaderPanel = object : GHListLoaderPanel<GHPRTimelineLoader>(loader, timelinePanel, true) {
+    val loaderPanel = object : GHListLoaderPanel(loader, timelinePanel, true) {
       init {
         errorHandler = GHLoadingErrorHandlerImpl(project, dataContext.account) {
           loader.reset()

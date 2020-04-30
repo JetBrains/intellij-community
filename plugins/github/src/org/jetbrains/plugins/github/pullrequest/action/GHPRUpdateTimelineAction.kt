@@ -18,7 +18,7 @@ class GHPRUpdateTimelineAction
 
   override fun actionPerformed(e: AnActionEvent) {
     val dataProvider = e.getRequiredData(GHPRActionKeys.ACTION_DATA_CONTEXT).pullRequestDataProvider
-    if (dataProvider?.timelineLoader?.loadMore(true) != null)
+    if (dataProvider.timelineLoader?.loadMore(true) != null)
       dataProvider.reviewData.resetReviewThreads()
   }
 }
