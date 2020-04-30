@@ -63,7 +63,7 @@ internal class GHPRListLoaderImpl(progressManager: ProgressManager,
     get() = !searchQueryHolder.query.isEmpty()
 
   override fun resetFilter() {
-    searchQueryHolder.query = GHPRSearchQuery.parseFromString("state:open")
+    searchQueryHolder.query = GHPRSearchQuery.DEFAULT
   }
 
   override fun handleResult(list: List<GHPullRequestShort>) {

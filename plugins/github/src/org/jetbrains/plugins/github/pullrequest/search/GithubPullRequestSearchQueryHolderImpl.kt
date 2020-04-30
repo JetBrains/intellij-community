@@ -2,18 +2,23 @@
 package org.jetbrains.plugins.github.pullrequest.search
 
 import com.intellij.openapi.Disposable
+import com.intellij.util.EventDispatcher
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
+import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
 internal class GithubPullRequestSearchQueryHolderImpl : GithubPullRequestSearchQueryHolder {
-  private val delegate = SingleValueModel(GHPRSearchQuery.parseFromString("state:open"))
+
+  private val queryChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
+
+  override var queryString by observableField("", queryChangeEventDispatcher)
 
   override var query: GHPRSearchQuery
-    get() = delegate.value
+    get() = GHPRSearchQuery.parseFromString(queryString)
     set(value) {
-      delegate.value = value
+      queryString = value.toString()
     }
 
   override fun addQueryChangeListener(disposable: Disposable, listener: () -> Unit) =
-    delegate.addValueChangedListener(disposable, listener)
+    SimpleEventListener.addDisposableListener(queryChangeEventDispatcher, disposable, listener)
 }

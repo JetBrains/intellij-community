@@ -19,6 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandlerImpl
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Point
 import java.awt.Rectangle
@@ -71,7 +72,17 @@ internal object GHPRListComponent {
     list.cellRenderer = renderer
     UIUtil.putClientProperty(list, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(renderer))
 
-    val search = GHPRSearchPanel(project, AutoPopupController.getInstance(project), dataContext.searchHolder).apply {
+    val searchQueryHolder = dataContext.searchHolder
+    val searchStringModel = SingleValueModel(searchQueryHolder.queryString)
+    searchQueryHolder.addQueryChangeListener(disposable) {
+      if (searchStringModel.value != searchQueryHolder.queryString)
+        searchStringModel.value = searchQueryHolder.queryString
+    }
+    searchStringModel.addValueChangedListener {
+      searchQueryHolder.queryString = searchStringModel.value
+    }
+
+    val search = GHPRSearchPanel(project, AutoPopupController.getInstance(project), searchStringModel).apply {
       border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
     }
 
@@ -96,7 +107,6 @@ internal object GHPRListComponent {
     }
 
     Disposer.register(disposable, Disposable {
-      Disposer.dispose(search)
       Disposer.dispose(loaderPanel)
     })
 

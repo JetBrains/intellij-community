@@ -33,6 +33,8 @@ internal class GHPRSearchQuery(private val terms: List<Term<*>>) {
   }
 
   companion object {
+    val DEFAULT = GHPRSearchQuery(listOf(Term.Qualifier.Enum(QualifierName.state, GithubIssueState.open)))
+
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
 
     fun parseFromString(string: String): GHPRSearchQuery {

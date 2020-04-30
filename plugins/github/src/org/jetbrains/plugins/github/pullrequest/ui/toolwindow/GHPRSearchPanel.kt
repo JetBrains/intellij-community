@@ -8,7 +8,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -21,14 +20,14 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchSort
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
-import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQueryHolder
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
 internal class GHPRSearchPanel(project: Project,
                                private val autoPopupController: AutoPopupController,
-                               private val holder: GithubPullRequestSearchQueryHolder)
-  : BorderLayoutPanel(), Disposable {
+                               private val holder: SingleValueModel<String>)
+  : BorderLayoutPanel() {
 
   private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
 
@@ -62,21 +61,19 @@ internal class GHPRSearchPanel(project: Project,
     }
     addToLeft(icon)
     addToCenter(searchField)
-    holder.addQueryChangeListener(this) {
-      searchField.text = holder.query.toString()
+    holder.addAndInvokeValueChangedListener {
+      searchField.text = holder.value
     }
   }
 
   private fun updateQuery() {
-    holder.query = GHPRSearchQuery.parseFromString(searchField.text)
+    holder.value = searchField.text
   }
 
   override fun updateUI() {
     super.updateUI()
     background = UIUtil.getListBackground()
   }
-
-  override fun dispose() {}
 
   private inner class SearchCompletionProvider : TextFieldCompletionProviderDumbAware(true) {
     private val addColonInsertHandler = object : InsertHandler<LookupElement> {

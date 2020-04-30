@@ -6,6 +6,11 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 
 internal interface GithubPullRequestSearchQueryHolder {
+
+  @get:CalledInAwt
+  @set:CalledInAwt
+  var queryString: String
+
   @get:CalledInAwt
   @set:CalledInAwt
   var query: GHPRSearchQuery
