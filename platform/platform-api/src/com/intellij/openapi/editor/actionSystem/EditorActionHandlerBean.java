@@ -26,20 +26,11 @@ public final class EditorActionHandlerBean extends AbstractExtensionPointBean {
   @RequiredElement
   public String implementationClass;
 
-  private EditorActionHandler myHandler;
-
   public EditorActionHandler getHandler(EditorActionHandler originalHandler) {
-    EditorActionHandler handler = myHandler;
-    if (handler != null) {
-      return handler;
-    }
-
     try {
       DefaultPicoContainer container = new DefaultPicoContainer((DefaultPicoContainer)ApplicationManager.getApplication().getPicoContainer());
       container.registerComponentInstance(EditorActionHandler.class, originalHandler);
-      handler = instantiateClass(implementationClass, container);
-      myHandler = handler;
-      return handler;
+      return instantiateClass(implementationClass, container);
     }
     catch (Exception e) {
       Logger.getInstance(EditorActionHandlerBean.class).error(new PluginException(e, getPluginId()));

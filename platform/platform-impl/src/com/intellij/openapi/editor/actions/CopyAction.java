@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -34,23 +35,8 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
 
   public static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
 
-  private TransferableProvider myTransferableProvider;
-
   public CopyAction() {
     super(new Handler());
-  }
-
-  @Override
-  protected void doSetupHandler(@NotNull EditorActionHandler newHandler) {
-    super.doSetupHandler(newHandler);
-    if (newHandler instanceof TransferableProvider) {
-      myTransferableProvider = (TransferableProvider) newHandler;
-    }
-  }
-
-  @Nullable TransferableProvider getTransferableProvider() {
-    getHandler(); // make sure the handlers are loaded
-    return myTransferableProvider;
   }
 
   private static class Handler extends EditorActionHandler {
@@ -75,8 +61,8 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
 
   public static @Nullable Transferable getSelection(@NotNull Editor editor) {
     AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_COPY);
-    if (!(action instanceof CopyAction)) return null;
-    TransferableProvider provider = ((CopyAction)action).getTransferableProvider();
+    if (!(action instanceof EditorAction)) return null;
+    TransferableProvider provider = ((EditorAction)action).getHandlerOfType(TransferableProvider.class);
     return provider == null ? null : provider.getSelection(editor);
   }
 }

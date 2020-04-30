@@ -30,6 +30,8 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -75,6 +77,8 @@ import java.util.*;
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
+  private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_HANDER_EP =
+    ExtensionPointName.create("com.intellij.editorActionHandler");
 
   private static final String ACTION_ELEMENT_NAME = "action";
   private static final String GROUP_ELEMENT_NAME = "group";
@@ -158,6 +162,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
+    EDITOR_HANDER_EP.addChangeListener(this::updateAllHandlers, this);
   }
 
   @NotNull
@@ -550,6 +555,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     LOG.assertTrue(action.equals(stub));
 
     myAction2Id.put(anAction, stub.getId());
+    updateHandlers(anAction);
 
     return addToMap(stub.getId(), anAction, stub.getPlugin().getPluginId(), stub instanceof ActionStub ? ((ActionStub)stub).getProjectType() : null);
   }
@@ -1197,6 +1203,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId), null);
       notifyCustomActionsSchema(actionId);
+      updateHandlers(action);
     }
   }
 
@@ -1309,6 +1316,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           entry.getValue().remove(actionId);
         }
       }
+      updateHandlers(actionToRemove);
     }
   }
 
@@ -1594,6 +1602,34 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         queueActionPerformedEvent(action, context, event);
       });
     }, ModalityState.defaultModalityState());
+  }
+
+  @Override
+  public @NotNull List<EditorActionHandlerBean> getRegisteredHandlers(@NotNull EditorAction editorAction) {
+    List<EditorActionHandlerBean> result = new ArrayList<>();
+    String id = getId(editorAction);
+    if (id != null) {
+      List<EditorActionHandlerBean> extensions = EDITOR_HANDER_EP.getExtensionList();
+      for (int i = extensions.size() - 1; i >= 0; i--) {
+        EditorActionHandlerBean handlerBean = extensions.get(i);
+        if (handlerBean.action.equals(id)) {
+          result.add(handlerBean);
+        }
+      }
+    }
+    return result;
+  }
+
+  private void updateAllHandlers() {
+    synchronized (myLock) {
+      myAction2Id.keySet().forEach(ActionManagerImpl::updateHandlers);
+    }
+  }
+
+  private static void updateHandlers(Object action) {
+    if (action instanceof EditorAction) {
+      ((EditorAction)action).clearDynamicHandlersCache();
+    }
   }
 
   private class MyTimer extends Timer implements ActionListener {
