@@ -39,13 +39,14 @@ import java.util.stream.Stream;
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
-  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null,
-                                                                       null, PluginManagerCore.CORE_ID);
+  private static final NotificationGroup GROUP =
+    new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID);
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
+  private static final int MIN_RESERVED_CODE_CACHE_SIZE = 240;
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
-    checkPluginDirectory();
+    checkIdeDirectories();
     checkRuntime();
     checkReservedCodeCacheSize();
     checkEnvironment();
@@ -53,7 +54,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     startDiskSpaceMonitoring();
   }
 
-  private static void checkPluginDirectory() {
+  private static void checkIdeDirectories() {
     if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
       if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
         showNotification("implicit.plugin.directory.path", null);
@@ -111,18 +112,17 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkReservedCodeCacheSize() {
-    int minReservedCodeCacheSize = 240;
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
-    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
+    if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < MIN_RESERVED_CODE_CACHE_SIZE) {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
-      NotificationAction action = new NotificationAction(IdeBundle.message("vmoptions.edit.action")) {
+      NotificationAction action = new NotificationAction(IdeBundle.message("vm.options.edit.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
           notification.expire();
           ActionUtil.performActionDumbAware(vmEditAction, e);
         }
       };
-      showNotification("vmoptions.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
+      showNotification("code.cache.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, MIN_RESERVED_CODE_CACHE_SIZE);
     }
   }
 
@@ -232,7 +232,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
               }
               reported.compareAndSet(false, true);
 
-              //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
                 String productName = ApplicationNamesInfo.getInstance().getFullProductName();
                 String message = IdeBundle.message("low.disk.space.message", productName);
