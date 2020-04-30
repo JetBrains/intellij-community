@@ -40,6 +40,10 @@ class Test {
       .isPresent();
   }
 
+  void nestedFlatMapWithOuterFlatMapParam(String param0) {
+    String result = Optional.of(param0).flatMap(var0 -> Optional.of("foo").flatMap(var1 -> Optional.of(var0))).get();
+  }
+
   void nestedOr(String param0) {
     boolean result;
     result = Optional.of(param0)

@@ -191,7 +191,7 @@ abstract class IntermediateOperation implements Operation {
 
   static class FlatMap extends IntermediateOperation {
 
-    private final List<OperationRecord> myRecords;
+    private List<OperationRecord> myRecords;
     private final String myVarName;
     private final FunctionHelper myFn;
 
@@ -230,7 +230,7 @@ abstract class IntermediateOperation implements Operation {
 
     @Override
     public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
-      myRecords.forEach(r -> r.myOperation.rename(oldName, newVar, context));
+      myRecords = ContainerUtil.map(myRecords, r -> replaceFnVariable(oldName, r, newVar, context));
     }
 
     @Override
