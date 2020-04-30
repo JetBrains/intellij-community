@@ -67,6 +67,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
   private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
+  private static final Key<Boolean> MANAGED_BY_FIELD = Key.create("MANAGED_BY_FIELD");
 
   private Document myDocument;
   private final Project myProject;
@@ -508,6 +509,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
+    editor.putUserData(MANAGED_BY_FIELD, Boolean.TRUE);
 
     setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
@@ -566,6 +568,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     return editor;
+  }
+
+  public static boolean managesEditor(@NotNull Editor editor) {
+    return editor.getUserData(MANAGED_BY_FIELD) == Boolean.TRUE;
   }
 
   public static void setupTextFieldEditor(@NotNull EditorEx editor) {
