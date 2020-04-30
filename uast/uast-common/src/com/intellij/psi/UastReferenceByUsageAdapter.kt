@@ -68,7 +68,7 @@ private fun getUsageReferenceExpressionWithCache(usage: PsiElement, context: Pro
 
   val newElement = usage.toUElementOfType<UReferenceExpression>()
   if (newElement != null) {
-    context.sharedContext.put(USAGE_REFERENCE_EXPRESSION, newElement)
+    context.sharedContext.put(USAGE_REFERENCE_EXPRESSION, usage, newElement)
   }
   return newElement
 }
