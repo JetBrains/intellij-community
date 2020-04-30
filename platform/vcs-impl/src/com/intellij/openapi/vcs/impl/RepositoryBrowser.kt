@@ -15,11 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
 import com.intellij.openapi.vcs.VcsActions
-import com.intellij.openapi.vcs.actions.VcsContextFactory
-import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile
@@ -31,6 +27,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
+import com.intellij.vcsUtil.VcsUtil
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.Icon
@@ -80,6 +77,11 @@ class RepositoryBrowserPanel(
       override fun getIcon(file: VirtualFile): Icon? {
         if (file.isDirectory) {
           return PlatformIcons.FOLDER_ICON
+        }
+        if (file is VcsVirtualFile) {
+          val localPath = getLocalFilePath(file)
+          val icon = FilePathIconProvider.EP_NAME.computeSafeIfAny { it.getIcon(localPath, project) }
+          if (icon != null) return icon
         }
         return FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence).icon
       }
@@ -132,9 +134,14 @@ class RepositoryBrowserPanel(
 
   private fun createChangeVsLocal(file: VcsVirtualFile): Change {
     val repoRevision = VcsVirtualFileContentRevision(file)
-    val localPath = File(localRoot.path, file.path)
-    val localRevision = CurrentContentRevision(VcsContextFactory.SERVICE.getInstance().createFilePathOn(localPath))
+    val localPath = getLocalFilePath(file)
+    val localRevision = CurrentContentRevision(localPath)
     return Change(repoRevision, localRevision)
+  }
+
+  private fun getLocalFilePath(file: VcsVirtualFile): FilePath {
+    val localFile = File(localRoot.path, file.path)
+    return VcsUtil.getFilePath(localFile)
   }
 }
 
