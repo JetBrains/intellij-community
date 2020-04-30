@@ -39,16 +39,14 @@ class CpuTimings {
     long minTime = Integer.MAX_VALUE;
     long minIteration = -1;
 
-    StringBuilder log = new StringBuilder();
     for (int i = 0;; i++) {
       long time = TimeoutUtil.measureExecutionTime(MANDELBROT::compute);
       if (time < minTime) {
-        //log.append("Iteration " + i + ", time " + time + "\n");
         minTime = time;
         minIteration = i;
       }
       else if (i - minIteration > 100) {
-        System.out.println(log + "CPU timing: " + minTime + ", calculated in " + (System.currentTimeMillis() - start) + "ms");
+        System.out.println("CPU timing: " + minTime + ", calculated in " + (System.currentTimeMillis() - start) + "ms");
         return minTime;
       }
     }
