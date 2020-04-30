@@ -1,5 +1,5 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.application.options;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.application.options.codeStyle.cache;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -32,7 +31,6 @@ import java.util.concurrent.locks.ReentrantLock;
 class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSettings> {
   private final static Logger LOG = Logger.getInstance(CodeStyleCachedValueProvider.class);
 
-  private final static Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
   private final static int MAX_COMPUTATION_THREADS = 10;
 
   private final @NotNull WeakReference<PsiFile> myFileRef;
@@ -47,6 +45,10 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     myComputation = new AsyncComputation();
   }
 
+  boolean isExpired() {
+    return myFileRef.get() == null;
+  }
+
   CodeStyleSettings tryGetSettings() {
     try {
       final PsiFile file = getReferencedPsi();
@@ -59,13 +61,12 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
         }
       }
       else {
-        //noinspection deprecation
-        return CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
+        return null;
       }
     }
     catch (OutdatedFileReferenceException e) {
       LOG.error(e);
-      return CodeStyle.getDefaultSettings();
+      return null;
     }
   }
 
@@ -87,15 +88,6 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     }
     dependencies.add(computation.getTracker());
     return ArrayUtil.toObjectArray(dependencies);
-  }
-
-  static synchronized CodeStyleCachedValueProvider getInstance(@NotNull PsiFile file) {
-    CodeStyleCachedValueProvider instance = file.getUserData(PROVIDER_KEY);
-    if (instance == null) {
-      instance = new CodeStyleCachedValueProvider(file);
-      file.putUserData(PROVIDER_KEY, instance);
-    }
-    return instance;
   }
 
   private static void logCached(@NotNull PsiFile file, @NotNull CodeStyleSettings settings) {

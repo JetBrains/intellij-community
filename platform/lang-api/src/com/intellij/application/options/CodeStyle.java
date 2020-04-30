@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -87,7 +88,8 @@ public class CodeStyle {
     if (!file.isPhysical()) {
       return getSettings(project);
     }
-    return CodeStyleCachedValueProvider.getInstance(file).tryGetSettings();
+    CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    return cachedSettings != null ? cachedSettings : getSettings(project);
   }
 
 
