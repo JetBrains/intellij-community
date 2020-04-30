@@ -5,18 +5,17 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PathUtil;
 import com.intellij.util.Urls;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.*;
 
 /**
@@ -35,8 +33,6 @@ import java.util.*;
  */
 public final class PluginDownloader {
   private static final Logger LOG = Logger.getInstance(PluginDownloader.class);
-
-  private static final String FILENAME = "filename=";
 
   private final PluginId myPluginId;
   private final String myPluginName;
@@ -54,6 +50,7 @@ public final class PluginDownloader {
   private IdeaPluginDescriptor myDescriptor;
   private File myFile;
   private File myOldFile;
+  private MarketplaceRequests myMarketplaceRequests = MarketplaceRequests.getInstance();
 
   private boolean myShownErrors;
 
@@ -72,6 +69,10 @@ public final class PluginDownloader {
 
     myPluginVersion = descriptor.getVersion();
     myDescriptor = descriptor;
+  }
+
+  public void setMarketplaceRequests(MarketplaceRequests requests) {
+    myMarketplaceRequests = requests;
   }
 
   /**
@@ -138,6 +139,11 @@ public final class PluginDownloader {
 
   @Nullable
   public IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator) throws IOException {
+    return prepareToInstallAndLoadDescriptor(indicator, true);
+  }
+
+  @Nullable
+  public IdeaPluginDescriptorImpl prepareToInstallAndLoadDescriptor(@NotNull ProgressIndicator indicator, boolean showMessageOnError) throws IOException {
     myShownErrors = false;
 
     if (myFile != null) {
@@ -173,12 +179,14 @@ public final class PluginDownloader {
       Application app = ApplicationManager.getApplication();
       if (app != null) {
         myShownErrors = true;
-        if (errorMessage == null) {
-          errorMessage = IdeBundle.message("unknown.error");
+        if (showMessageOnError) {
+          if (errorMessage == null) {
+            errorMessage = IdeBundle.message("unknown.error");
+          }
+          String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
+          String title = IdeBundle.message("title.failed.to.download");
+          app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
         }
-        String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
-        String title = IdeBundle.message("title.failed.to.download");
-        app.invokeLater(() -> Messages.showErrorDialog(text, title), ModalityState.any());
       }
       return null;
     }
@@ -253,59 +261,10 @@ public final class PluginDownloader {
 
   @NotNull
   private File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
-    File pluginsTemp = new File(PathManager.getPluginTempPath());
-    if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
-      throw new IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp));
-    }
-
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    File file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false);
-    return HttpRequests.request(myPluginUrl).gzip(false).productNameAsUserAgent().connect(request -> {
-      request.saveToFile(file, indicator);
-
-      String fileName = guessFileName(request.getConnection(), file);
-      File newFile = new File(file.getParentFile(), fileName);
-      FileUtil.rename(file, newFile);
-      return newFile;
-    });
-  }
-
-  @NotNull
-  private String guessFileName(@NotNull URLConnection connection, @NotNull File file) throws IOException {
-    String fileName = null;
-
-    final String contentDisposition = connection.getHeaderField("Content-Disposition");
-    LOG.debug("header: " + contentDisposition);
-
-    if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
-      final int startIdx = contentDisposition.indexOf(FILENAME);
-      final int endIdx = contentDisposition.indexOf(';', startIdx);
-      fileName = contentDisposition.substring(startIdx + FILENAME.length(), endIdx > 0 ? endIdx : contentDisposition.length());
-
-      if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
-        fileName = fileName.substring(1, fileName.length() - 1);
-      }
-    }
-
-    if (fileName == null) {
-      // try to find a filename in an URL
-      final String usedURL = connection.getURL().toString();
-      LOG.debug("url: " + usedURL);
-      fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1);
-      if (fileName.length() == 0 || fileName.contains("?")) {
-        fileName = myPluginUrl.substring(myPluginUrl.lastIndexOf('/') + 1);
-      }
-    }
-
-    if (!PathUtil.isValidFileName(fileName)) {
-      LOG.debug("fileName: " + fileName);
-      FileUtil.delete(file);
-      throw new IOException("Invalid filename returned by a server");
-    }
-
-    return fileName;
+    return myMarketplaceRequests.download(myPluginUrl, indicator);
   }
 
   // creators-converters
