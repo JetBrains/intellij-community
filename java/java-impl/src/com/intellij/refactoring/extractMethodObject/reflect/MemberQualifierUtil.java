@@ -42,7 +42,7 @@ public class MemberQualifierUtil {
                                            @NotNull PsiClass outerClass,
                                            @NotNull PsiMethodCallExpression generatedCall,
                                            @NotNull PsiElementFactory elementFactory) {
-    String qualifiedName = (referencedClass).getQualifiedName();
+    String qualifiedName = referencedClass.getName();
     if (qualifiedName == null) {
       // TODO: handle this case as well
       LOG.warn("Anonymous and local classes are not supported yet");
