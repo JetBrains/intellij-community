@@ -3,10 +3,12 @@ package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.InplaceButton;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 
@@ -45,7 +47,7 @@ public class TagButton extends JButton implements Disposable {
         }
         else if ((MouseEvent.MOUSE_ENTERED == me.getID() || MouseEvent.MOUSE_MOVED == me.getID()) &&
                 (myPopup == null || !myPopup.isVisible())) {
-          myCloseButton = new InplaceButton(new IconButton("Close", AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover),
+          myCloseButton = new InplaceButton(new IconButton(OptionsBundle.message("tag.button.tooltip"), AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover),
                               a -> { action.run(); hidePopup(); });
           myCloseButton.setOpaque(false);
           myCloseButton.setPreferredSize(new Dimension(16, 16));
