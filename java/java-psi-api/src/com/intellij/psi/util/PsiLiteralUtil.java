@@ -3,15 +3,14 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PsiLiteralUtil {
   @NonNls public static final String HEX_PREFIX = "0x";
@@ -639,5 +638,45 @@ public class PsiLiteralUtil {
       if (lineBreakIdx == -1) return -1;
       return lineBreakIdx + 1;
     }
+  }
+
+  /**
+   * This method appends a suffix to a {@link PsiLiteralExpression} and returns a new
+   * {@link PsiLiteralExpression} that contains the resulting content leaving the original
+   * {@link PsiLiteralExpression} unchanged.
+   *
+   * @param expression the expression to append a string to
+   * @param suffix the suffix to add to the expression
+   * @return a new instance of {@link PsiLiteralExpression} that contains the concatenated
+   * value of the original {@link PsiLiteralExpression} and the suffix.
+   */
+  @Nullable
+  @Contract(value = "null, _ -> null; _, null -> param1; !null, _ -> !null", pure = true)
+  public static PsiLiteralExpression append(@Nullable final PsiLiteralExpression expression, @Nullable final String suffix) {
+    if (expression == null) return null;
+    if (StringUtil.isEmpty(suffix)) return expression;
+
+    final Object value = expression.getValue();
+    if (value == null) return expression;
+
+    final StringBuilder newExpression = new StringBuilder();
+
+    final String leftText = value.toString();
+    if (expression.isTextBlock()) {
+      final String indent = StringUtil.repeat(" ", getTextBlockIndent(expression));
+      newExpression.append("\"\"\"").append('\n').append(indent);
+      newExpression.append(leftText.replaceAll("\n", "\n" + indent));
+      newExpression.append(StringUtil.escapeStringCharacters(suffix));
+      newExpression.append("\"\"\"");
+    }
+    else {
+      newExpression.append('"');
+      newExpression.append(StringUtil.escapeStringCharacters(leftText));
+      newExpression.append(StringUtil.escapeStringCharacters(suffix));
+      newExpression.append('"');
+    }
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    return (PsiLiteralExpression)factory.createExpressionFromText(newExpression.toString(), null);
   }
 }
