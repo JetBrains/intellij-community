@@ -95,7 +95,6 @@ class ProjectProblemFileSelectionListener implements FileEditorManagerListener, 
   public static class MyStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (!Registry.is("project.problems.view") && !ApplicationManager.getApplication().isUnitTestMode()) return;
       ProjectProblemFileSelectionListener listener = new ProjectProblemFileSelectionListener(project);
       MessageBusConnection connection = project.getMessageBus().connect();
       connection.subscribe(FILE_EDITOR_MANAGER, listener);

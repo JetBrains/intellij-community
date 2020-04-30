@@ -27,7 +27,6 @@ public class ProjectProblemInlaySettingsProvider implements InlaySettingsProvide
   @NotNull
   @Override
   public List<InlayProviderSettingsModel> createModels(@NotNull Project project, @NotNull Language language) {
-    if (!Registry.is("project.problems.view")) return Collections.emptyList();
     InlayHintsSettings config = InlayHintsSettings.instance();
     boolean hintsEnabled = config.hintsEnabled(SettingsModel.SETTINGS_KEY, language);
     SettingsModel settingsModel = new SettingsModel(hintsEnabled, SettingsModel.SETTINGS_KEY.getId());
