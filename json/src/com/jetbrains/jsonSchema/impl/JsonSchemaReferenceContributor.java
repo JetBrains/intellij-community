@@ -55,14 +55,12 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         if (element instanceof JsonValue) {
-          final JsonValue value = (JsonValue) element;
-          if (schemaOnly && !JsonSchemaService.isSchemaFile(CompletionUtil.getOriginalOrSelf(value.getContainingFile()))) return false;
-
-          final JsonProperty property = ObjectUtils.tryCast(value.getParent(), JsonProperty.class);
-          if (property != null && property.getValue() == element) {
+          JsonProperty property = ObjectUtils.tryCast(((JsonValue)element).getParent(), JsonProperty.class);
+          if (property != null && property.getValue() == element && propertyName.equals(property.getName())) {
             final PsiFile file = property.getContainingFile();
             if (rootOnly && (!(file instanceof JsonFile) || ((JsonFile)file).getTopLevelValue() != property.getParent())) return false;
-            return propertyName.equals(property.getName());
+            if (schemaOnly && !JsonSchemaService.isSchemaFile(CompletionUtil.getOriginalOrSelf(file))) return false;
+            return true;
           }
         }
         return false;
@@ -80,12 +78,12 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         if (!(element instanceof JsonStringLiteral)) return false;
-        if (!JsonSchemaService.isSchemaFile(((JsonStringLiteral)element).getContainingFile())) return false;
         final PsiElement parent = ((JsonStringLiteral)element).getParent();
         if (!(parent instanceof JsonArray)) return false;
         PsiElement property = parent.getParent();
         if (!(property instanceof JsonProperty)) return false;
-        return "required".equals(((JsonProperty)property).getName());
+        return "required".equals(((JsonProperty)property).getName()) &&
+               JsonSchemaService.isSchemaFile(((JsonStringLiteral)element).getContainingFile());
       }
 
       @Override
