@@ -261,8 +261,7 @@ public class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }
 
     TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    builder.setChanges(filteredState.getChanges(), null);
-    setPendingChanges(builder, filteredState.getPending(), null);
+    setFilteredChanges(builder, filteredState, null);
 
     if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
       if (changes.isEmpty()) {
