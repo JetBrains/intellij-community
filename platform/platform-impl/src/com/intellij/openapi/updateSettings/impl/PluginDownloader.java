@@ -141,7 +141,7 @@ public final class PluginDownloader {
     myShownErrors = false;
 
     if (myFile != null) {
-      IdeaPluginDescriptorImpl actualDescriptor = PluginManager.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
+      IdeaPluginDescriptorImpl actualDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
       myDescriptor = actualDescriptor;
       return actualDescriptor;
     }
@@ -183,7 +183,7 @@ public final class PluginDownloader {
       return null;
     }
 
-    IdeaPluginDescriptorImpl actualDescriptor = PluginManager.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
+    IdeaPluginDescriptorImpl actualDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
     if (actualDescriptor != null) {
       InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
       if (state != null && state.wasUpdated(actualDescriptor.getPluginId())) {
