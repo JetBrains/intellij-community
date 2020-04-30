@@ -179,9 +179,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
+    final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     try {
-      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
       problemClassElement.addContent(myToolWrapper.getDisplayName());
@@ -237,8 +236,12 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
     }
     catch (RuntimeException e) {
-      e.printStackTrace();
-      LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName() + ", problem descriptor " + descriptor);
+      String message = "Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " +
+                       myToolWrapper.getShortName() + ", problem descriptor " + descriptor;
+      if (psiElement != null) {
+        message += ", element class: " + psiElement.getClass() + ", containing file: " + psiElement.getContainingFile();
+      }
+      LOG.error(message, e);
     }
   }
 
