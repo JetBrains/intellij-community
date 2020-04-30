@@ -258,8 +258,9 @@ public class UsageViewImpl implements UsageViewEx {
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
-            if (isDisposed() || myProject.isDisposed()) return;
-            collapseAll();
+            if (!isDisposed()) {
+              collapseAll();
+            }
           });
 
           myModelTracker.addListener(isPropertyChange-> {
@@ -278,9 +279,10 @@ public class UsageViewImpl implements UsageViewEx {
             public void valueChanged(final TreeSelectionEvent e) {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
-                if (isDisposed() || myProject.isDisposed()) return;
-                updateOnSelectionChanged();
-                myNeedUpdateButtons = true;
+                if (!isDisposed()) {
+                  updateOnSelectionChanged();
+                  myNeedUpdateButtons = true;
+                }
               });
             }
           });
@@ -1485,7 +1487,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public boolean isDisposed() {
-    return isDisposed;
+    return isDisposed || myProject.isDisposed();
   }
 
   private void showNode(@NotNull final UsageNode node) {
