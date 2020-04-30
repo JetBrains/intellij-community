@@ -88,14 +88,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
   public static final int DEFAULT_HEIGHT = 460;
   public static final int MAX_DEFAULT_WIDTH = 777;
-  private final FlatWelcomeScreen myScreen;
+  private final AbstractWelcomeScreen myScreen;
   private boolean myDisposed;
 
   public FlatWelcomeFrame() {
     SplashManager.hideBeforeShow(this);
 
     JRootPane rootPane = getRootPane();
-    myScreen = new FlatWelcomeScreen();
+    myScreen = Registry.is("use.tabbed.welcome.screen") ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane) {
       @Override
@@ -224,7 +224,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private final class FlatWelcomeScreen extends AbstractWelcomeScreen {
+  private final class FlatWelcomeScreen extends AbstractWelcomeScreen implements WelcomeFrameUpdater {
     private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
     private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
@@ -630,12 +630,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
   @Override
   public void showPluginUpdates(@NotNull Runnable callback) {
-    myScreen.showPluginUpdates(callback);
+    if (myScreen instanceof WelcomeFrameUpdater) {
+      ((WelcomeFrameUpdater)myScreen).showPluginUpdates(callback);
+    }
   }
 
   @Override
   public void hidePluginUpdates() {
-    myScreen.hidePluginUpdates();
+    if (myScreen instanceof WelcomeFrameUpdater) {
+      ((WelcomeFrameUpdater)myScreen).hidePluginUpdates();
+    }
   }
 
   @Nullable

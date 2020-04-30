@@ -19,6 +19,8 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
@@ -38,6 +40,50 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManag
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
 
 public class WelcomeScreenComponentFactory {
+
+  @NotNull
+  static JComponent createSmallLogo() {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+
+    NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
+
+    String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
+    if (welcomeScreenLogoUrl != null) {
+      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl);
+      float scale = 28f / icon.getIconWidth();
+      Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
+      JLabel logo = new JLabel(smallLogoIcon);
+      logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
+      logo.setHorizontalAlignment(SwingConstants.CENTER);
+      panel.add(logo, BorderLayout.WEST);
+    }
+
+    String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
+                             ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+                             : ApplicationNamesInfo.getInstance().getFullProductName();
+    JLabel appName = new JLabel(applicationName);
+    appName.setForeground(JBColor.foreground());
+    appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
+    appName.setHorizontalAlignment(SwingConstants.CENTER);
+
+    String appVersion = appInfo.getFullVersion();
+
+    if (appInfo.isEAP() && !appInfo.getBuild().isSnapshot()) {
+      appVersion += " (" + appInfo.getBuild().asStringWithoutProductCode() + ")";
+    }
+
+    JLabel version = new JLabel(appVersion);
+    version.setFont(version.getFont().deriveFont((float)JBUIScale.scale(11)));
+    version.setHorizontalAlignment(SwingConstants.CENTER);
+    version.setForeground(Gray._128);
+    NonOpaquePanel textPanel = new NonOpaquePanel();
+    textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+    textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
+    textPanel.add(appName);
+    textPanel.add(version);
+    panel.add(textPanel, BorderLayout.CENTER);
+    return panel;
+  }
 
   @NotNull
   static JComponent createLogo() {
