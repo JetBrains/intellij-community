@@ -6,13 +6,13 @@ import com.intellij.codeInspection.streamToLoop.ChainVariable;
 import com.intellij.codeInspection.streamToLoop.FunctionHelper;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -42,6 +42,32 @@ abstract class IntermediateOperation implements Operation {
     return null;
   }
 
+  private static @NotNull OperationRecord replaceFnVariable(@NotNull String oldName,
+                                                            @NotNull OperationRecord record,
+                                                            @NotNull ChainVariable outerVar,
+                                                            @NotNull OptionalToIfContext context) {
+    ChainVariable inVar = replaceFnVariable(oldName, record.myInVar, outerVar);
+    ChainVariable outVar = replaceFnVariable(oldName, record.myOutVar, outerVar);
+    Operation operation = record.myOperation;
+    operation.rename(oldName, outerVar, context);
+    return new OperationRecord(inVar, outVar, operation);
+  }
+
+  private static @NotNull ChainVariable replaceFnVariable(@NotNull String oldName,
+                                                          @NotNull ChainVariable variable,
+                                                          @NotNull ChainVariable replacement) {
+    return oldName.equals(variable.getName()) ? replacement : variable;
+  }
+
+
+  private static @Nullable List<OperationRecord> extractRecords(@NotNull FunctionHelper fn) {
+    PsiMethodCallExpression chainExpression = tryCast(fn.getExpression(), PsiMethodCallExpression.class);
+    if (chainExpression == null) return null;
+    List<Operation> operations = OptionalToIfInspection.extractOperations(chainExpression, false);
+    if (operations == null || operations.isEmpty()) return null;
+    return OptionalToIfInspection.createRecords(operations);
+  }
+
   static class Filter extends IntermediateOperation {
 
     private final FunctionHelper myFn;
@@ -58,8 +84,8 @@ abstract class IntermediateOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myFn.rename(oldName, newName, context);
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myFn.rename(oldName, newVar.getName(), context);
     }
 
     @Override
@@ -94,8 +120,8 @@ abstract class IntermediateOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myFn.rename(oldName, newName, context);
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myFn.rename(oldName, newVar.getName(), context);
     }
 
     @NotNull
@@ -118,7 +144,7 @@ abstract class IntermediateOperation implements Operation {
 
   static class Or extends IntermediateOperation {
 
-    private final List<OperationRecord> myRecords;
+    private List<OperationRecord> myRecords;
 
     @Contract(pure = true)
     Or(List<OperationRecord> records) {
@@ -132,20 +158,14 @@ abstract class IntermediateOperation implements Operation {
     }
 
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myRecords.forEach(r -> r.myOperation.rename(oldName, newName, context));
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myRecords = ContainerUtil.map(myRecords, r -> replaceFnVariable(oldName, r, newVar, context));
     }
 
     @NotNull
     @Override
     public StreamEx<OperationRecord> nestedOperations() {
       return StreamEx.of(myRecords).flatMap(or -> StreamEx.of(or).append(or.myOperation.nestedOperations()));
-    }
-
-    @Nullable
-    static Or create(@NotNull FunctionHelper fn) {
-      List<OperationRecord> records = extractRecords(fn);
-      return records == null ? null : new Or(records);
     }
 
     @Nullable
@@ -161,6 +181,11 @@ abstract class IntermediateOperation implements Operation {
              orCode +
              "\n}" +
              context.generateNotNullCondition(outVar.getName(), code);
+    }
+
+    static @Nullable Or create(@NotNull FunctionHelper fn) {
+      List<OperationRecord> records = extractRecords(fn);
+      return records == null ? null : new Or(records);
     }
   }
 
@@ -184,14 +209,6 @@ abstract class IntermediateOperation implements Operation {
       return myVarName.equals(outVar.getName()) ? inVar : outVar;
     }
 
-    @Nullable
-    static FlatMap create(@NotNull FunctionHelper fn) {
-      String varName = fn.tryLightTransform();
-      if (varName == null) return null;
-      List<OperationRecord> records = extractRecords(fn);
-      return records == null ? null : new FlatMap(records, varName, fn);
-    }
-
     @NotNull
     @Override
     public StreamEx<OperationRecord> nestedOperations() {
@@ -205,31 +222,15 @@ abstract class IntermediateOperation implements Operation {
                            @NotNull String code,
                            @NotNull OptionalToIfContext context) {
       String elseBranch = context.getElseBranch();
-      List<OperationRecord> records = StreamEx.of(myRecords).map(r -> replaceFnVariable(r, inVar, context)).collect(Collectors.toList());
+      List<OperationRecord> records = ContainerUtil.map(myRecords, r -> replaceFnVariable(myVarName, r, inVar, context));
       String wrapped = OptionalToIfInspection.wrapCode(context, records, code);
       context.setElseBranch(elseBranch);
       return wrapped;
     }
 
-    @NotNull
-    @Contract("_, _, _ -> new")
-    private OperationRecord replaceFnVariable(@NotNull OperationRecord record,
-                                              @NotNull ChainVariable outerVar,
-                                              @NotNull OptionalToIfContext context) {
-      ChainVariable inVar = replaceFnVariable(record.myInVar, outerVar);
-      ChainVariable outVar = replaceFnVariable(record.myOutVar, outerVar);
-      Operation operation = record.myOperation;
-      operation.rename(myVarName, outerVar.getName(), context);
-      return new OperationRecord(inVar, outVar, operation);
-    }
-
-    private ChainVariable replaceFnVariable(@NotNull ChainVariable variable, @NotNull ChainVariable replacement) {
-      return myVarName.equals(variable.getName()) ? replacement : variable;
-    }
-
     @Override
-    public void rename(@NotNull String oldName, @NotNull String newName, @NotNull OptionalToIfContext context) {
-      myRecords.forEach(r -> r.myOperation.rename(oldName, newName, context));
+    public void rename(@NotNull String oldName, @NotNull ChainVariable newVar, @NotNull OptionalToIfContext context) {
+      myRecords.forEach(r -> r.myOperation.rename(oldName, newVar, context));
     }
 
     @Override
@@ -240,14 +241,12 @@ abstract class IntermediateOperation implements Operation {
         context.addLambdaVarName(name);
       }
     }
-  }
 
-  @Nullable
-  private static List<OperationRecord> extractRecords(@NotNull FunctionHelper fn) {
-    PsiMethodCallExpression chainExpression = tryCast(fn.getExpression(), PsiMethodCallExpression.class);
-    if (chainExpression == null) return null;
-    List<Operation> operations = OptionalToIfInspection.extractOperations(chainExpression, false);
-    if (operations == null || operations.isEmpty()) return null;
-    return OptionalToIfInspection.createRecords(operations);
+    static @Nullable FlatMap create(@NotNull FunctionHelper fn) {
+      String varName = fn.tryLightTransform();
+      if (varName == null) return null;
+      List<OperationRecord> records = extractRecords(fn);
+      return records == null ? null : new FlatMap(records, varName, fn);
+    }
   }
 }

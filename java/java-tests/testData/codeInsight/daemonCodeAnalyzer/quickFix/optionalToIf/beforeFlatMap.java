@@ -40,6 +40,13 @@ class Test {
       .isPresent();
   }
 
+  void nestedOr(String param0) {
+    boolean result;
+    result = Optional.of(param0)
+      .flatMap(var0 -> Optional.<String>empty().or(() -> Optional.of(var0)))
+      .isEmpty();
+  }
+
   void flatMapsWithSameParamName(String param0) {
     Optional.of(param0)
       .flatMap(var0 -> Optional.of("foo").map(s -> ("foo").toLowerCase()))

@@ -58,6 +58,16 @@ class Test {
       }
   }
 
+  void nestedOr(String param0) {
+    boolean result;
+      result = true;
+      String s = null;
+      if (param0 == null) throw new NullPointerException();
+      String empty = null;
+      s = param0;
+      result = false;
+  }
+
   void flatMapsWithSameParamName(String param0) {
       if (param0 == null) throw new NullPointerException();
       String s = "foo";
