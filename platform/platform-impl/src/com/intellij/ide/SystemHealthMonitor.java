@@ -33,6 +33,8 @@ import java.io.File;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
@@ -46,6 +48,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
     checkPluginDirectory();
     checkRuntime();
     checkReservedCodeCacheSize();
+    checkEnvironment();
     checkSignalBlocking();
     startDiskSpaceMonitoring();
   }
@@ -120,6 +123,15 @@ final class SystemHealthMonitor extends PreloadingActivity {
         }
       };
       showNotification("vmoptions.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
+    }
+  }
+
+  private static void checkEnvironment() {
+    String usedVars = Stream.of("_JAVA_OPTIONS", "JDK_JAVA_OPTIONS", "JAVA_TOOL_OPTIONS")
+      .filter(var -> StringUtil.isNotEmpty(System.getenv(var)))
+      .collect(Collectors.joining(", "));
+    if (!usedVars.isEmpty()) {
+      showNotification("vm.options.env.vars", null, usedVars);
     }
   }
 
