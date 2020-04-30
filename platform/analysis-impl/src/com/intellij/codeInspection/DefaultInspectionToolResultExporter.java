@@ -31,9 +31,9 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -219,11 +219,11 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       @NonNls String problemText = StringUtil
         .replace(StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : ""), " #loc ", " ");
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
-      descriptionElement.addContent(XmlStringUtil.escapeIllegalXmlChars(problemText));
+      descriptionElement.addContent(sanitizeIllegalXmlChars(problemText));
       element.addContent(descriptionElement);
 
       Element highLightedElement = new Element("highlighted_element");
-      highLightedElement.addContent(XmlStringUtil.escapeIllegalXmlChars(highlightedText));
+      highLightedElement.addContent(sanitizeIllegalXmlChars(highlightedText));
       element.addContent(highLightedElement);
 
       if (descriptor instanceof ProblemDescriptorBase) {
@@ -244,6 +244,12 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       LOG.error(message, e);
     }
+  }
+
+  private static String sanitizeIllegalXmlChars(String text) {
+    if (Verifier.checkCharacterData(text) == null) return text;
+    return text.codePoints().map(cp -> Verifier.isXMLCharacter(cp) ? cp : '?')
+      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
   }
 
   protected String getSeverityDelegateName() {
