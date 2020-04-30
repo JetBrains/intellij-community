@@ -31,6 +31,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -218,11 +219,11 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       @NonNls String problemText = StringUtil
         .replace(StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : ""), " #loc ", " ");
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
-      descriptionElement.addContent(problemText);
+      descriptionElement.addContent(XmlStringUtil.escapeIllegalXmlChars(problemText));
       element.addContent(descriptionElement);
 
       Element highLightedElement = new Element("highlighted_element");
-      highLightedElement.addContent(highlightedText);
+      highLightedElement.addContent(XmlStringUtil.escapeIllegalXmlChars(highlightedText));
       element.addContent(highLightedElement);
 
       if (descriptor instanceof ProblemDescriptorBase) {
