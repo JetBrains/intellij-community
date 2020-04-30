@@ -5,12 +5,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiSwitchLabeledRuleStatement;
-import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
@@ -28,6 +26,14 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
       JavaPsiBundle.message("expected.switch.rule"))) {
       QuickFixAction.registerQuickFixAction(
         highlightInfo, QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix((PsiSwitchLabeledRuleStatement)parent));
+    }
+    if (parent instanceof PsiJavaFile && errorElement.getErrorDescription().equals(
+      JavaPsiBundle.message("expected.class.or.interface"))) {
+      PsiElement child = errorElement.getFirstChild();
+      if (child instanceof PsiIdentifier && child.textMatches(PsiKeyword.RECORD)) {
+        HighlightUtil.registerIncreaseLanguageLevelFixes(
+          new QuickFixActionRegistrarImpl(highlightInfo), errorElement, HighlightingFeature.RECORDS);
+      }
     }
   }
 }

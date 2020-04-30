@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.JavaModuleSystemEx;
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
@@ -3239,12 +3240,19 @@ public class HighlightUtil {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
       String message = getUnsupportedFeatureMessage(element, feature, level, file);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
-      QuickFixAction.registerQuickFixAction(info, getFixFactory().createIncreaseLanguageLevelFix(getApplicableLevel(file, feature)));
-      QuickFixAction.registerQuickFixAction(info, getFixFactory().createShowModulePropertiesFix(element));
+      registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(info), element, feature);
       return info;
     }
 
     return null;
+  }
+
+  public static void registerIncreaseLanguageLevelFixes(@NotNull QuickFixActionRegistrar registrar,
+                                                        @NotNull PsiElement element,
+                                                        @NotNull HighlightingFeature feature) {
+    if (feature.isAvailable(element)) return;
+    registrar.register(getFixFactory().createIncreaseLanguageLevelFix(getApplicableLevel(element.getContainingFile(), feature)));
+    registrar.register(getFixFactory().createShowModulePropertiesFix(element));
   }
 
   private static @NotNull String getUnsupportedFeatureMessage(@NotNull PsiElement element,
