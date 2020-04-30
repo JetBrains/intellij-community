@@ -114,21 +114,21 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   public void execute() throws Exception {
-      final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-      reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
-                                                            appInfo.getFullApplicationName() +
-                                                            " (build " +
-                                                            appInfo.getBuild().asString() +
-                                                            ")"));
-      reportMessage(1, InspectionsBundle.message("inspection.done"));
+    final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
+                                                          appInfo.getFullApplicationName() +
+                                                          " (build " +
+                                                          appInfo.getBuild().asString() +
+                                                          ")"));
+    reportMessage(1, InspectionsBundle.message("inspection.done"));
 
-      Disposable disposable = Disposer.newDisposable();
-      try {
-        run(Paths.get(FileUtil.toCanonicalPath(myProjectPath)), disposable);
-      }
-      finally {
-        Disposer.dispose(disposable);
-      }
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      run(Paths.get(FileUtil.toCanonicalPath(myProjectPath)), disposable);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   private void printHelp() {
@@ -176,8 +176,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
     myInspectionProfile = loadInspectionProfile(project);
     if (myInspectionProfile == null) return;
-
-    GlobalInspectionContextEx context = createGlobalInspectionContext(project);
 
     final AnalysisScope scope;
     if (myAnalyzeChanges) {

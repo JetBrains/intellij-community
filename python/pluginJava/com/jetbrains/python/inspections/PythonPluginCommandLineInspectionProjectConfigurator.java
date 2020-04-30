@@ -5,7 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -62,12 +62,11 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
           logger.reportMessage(3, sdk.getHomePath());
         }
         final Sdk sdk = detectedSdks.get(0);
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            logger.reportMessage(1, "Settings up interpreter " + sdk.getName());
-            ProjectJdkTable.getInstance().addJdk(sdk);
-          });
+        WriteAction.runAndWait(() -> {
+          logger.reportMessage(1, "Settings up interpreter " + sdk.getName());
+          ProjectJdkTable.getInstance().addJdk(sdk);
         });
+
         PythonSdkUpdater.update(sdk, null, null, null);
       }
       else {
@@ -88,7 +87,7 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
 
           Module m = ModuleUtilCore.findModuleForFile(f, project);
           if (m != null && FacetManager.getInstance(m).getFacetByType(facetType.getId()) == null) {
-            ApplicationManager.getApplication().invokeAndWait(() -> {
+            WriteAction.runAndWait(() -> {
               FacetManager.getInstance(m).addFacet(facetType, facetType.getPresentableName(), null);
             });
           }
