@@ -63,7 +63,6 @@ public class MavenProjectsManagerWatcher {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
-    myManager.addManagerListener(new MavenProjectWatcher());
     registerGeneralSettingsWatcher(myManager, this, myBackgroundExecutor, myDisposable);
     myProjectTracker.register(myProjectsAware);
     myProjectTracker.activate(myProjectsAware.getProjectId());
@@ -200,18 +199,6 @@ public class MavenProjectsManagerWatcher {
       // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
       MavenProject mavenProject = myManager.findProject(module);
       if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-    }
-  }
-
-  private class MavenProjectWatcher implements MavenProjectsManager.Listener {
-    @Override
-    public void projectsScheduled() {
-      scheduleReloadNotificationUpdate();
-    }
-
-    @Override
-    public void importAndResolveScheduled() {
-      scheduleReloadNotificationUpdate();
     }
   }
 }
