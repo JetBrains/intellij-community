@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -643,5 +644,20 @@ public class EditorImplTest extends AbstractEditorTest {
     EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
     mouse().pressAtXY(0, 0).dragToXY(0, getEditor().getLineHeight()).release();
     checkResultByText("abc<caret>");
+  }
+
+  public void testMouseDraggingWithCamelHumpsDisabledForMouse() {
+    boolean savedOption = EditorSettingsExternalizable.getInstance().isCamelWords();
+    try {
+      EditorSettingsExternalizable.getInstance().setCamelWords(true);
+      initText("AbcDefGhi");
+      EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
+      getEditor().getSettings().setMouseClickSelectionHonorsCamelWords(false);
+      mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 5).release();
+      checkResultByText("<selection>AbcDefGhi<caret></selection>");
+    }
+    finally {
+      EditorSettingsExternalizable.getInstance().setCamelWords(savedOption);
+    }
   }
 }
