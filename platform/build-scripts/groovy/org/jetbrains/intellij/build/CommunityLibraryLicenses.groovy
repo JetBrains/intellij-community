@@ -177,6 +177,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
     new LibraryLicense(libraryName: "bouncy-castle-provider", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
+    new LibraryLicense(libraryName: "byte-buddy-agent"),  // module library in intellij.platform.ide.impl added by commit ec4f0f8
 
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
