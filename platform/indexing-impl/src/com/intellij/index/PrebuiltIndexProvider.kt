@@ -19,6 +19,7 @@ import java.io.File
 import java.io.FileFilter
 import java.io.IOException
 
+
 abstract class PrebuiltIndexProvider<Value>: Disposable {
   private val myFileContentHashing = FileContentHashing()
   private var myPrebuiltIndexStorage: PersistentHashMap<HashCode, Value>? = null
@@ -32,6 +33,9 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
 
     @JvmField
     val DEBUG_PREBUILT_INDICES: Boolean = SystemProperties.getBooleanProperty("debug.prebuilt.indices", false)
+
+    @JvmField
+    val USE_PREBUILT_INDEX = Registry.`is`("use.prebuilt.indices")
   }
 
   init {
@@ -39,7 +43,7 @@ abstract class PrebuiltIndexProvider<Value>: Disposable {
   }
 
   internal fun init() : Boolean {
-    if (Registry.`is`("use.prebuilt.indices")) {
+    if (USE_PREBUILT_INDEX) {
       var indexesRoot = findPrebuiltIndicesRoot()
       try {
         if (indexesRoot != null && indexesRoot.exists()) {
