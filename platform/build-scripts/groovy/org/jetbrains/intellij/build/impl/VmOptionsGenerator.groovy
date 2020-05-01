@@ -28,6 +28,7 @@ Android Studio: removed by Change Ie7351d92 */
       '-Djdk.module.illegalAccess.silent=true',
       '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
       '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
+      '-Didea.vendor.name=Google',  // Android Studio
     ]
 
   static List<String> computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
