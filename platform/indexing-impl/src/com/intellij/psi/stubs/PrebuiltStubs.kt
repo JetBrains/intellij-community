@@ -63,19 +63,18 @@ open class HashCodeExternalizers : DataExternalizer<HashCode> {
   }
 }
 
-private val IDE_SERIALIZATION_MANAGER = SerializationManagerEx.getInstanceEx()
-
-class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, IDE_SERIALIZATION_MANAGER, StubForwardIndexExternalizer.createFileLocalExternalizer())
+class GeneratingFullStubExternalizer : SerializedStubTreeDataExternalizer(true,
+                                                                          SerializationManagerEx.getInstanceEx(),
+                                                                          StubForwardIndexExternalizer.createFileLocalExternalizer())
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubTree>(), PrebuiltStubsProvider {
-
-  private var mySerializationManager: SerializationManagerImpl? = null
+  private lateinit var mySerializationManager: SerializationManagerImpl
 
   protected abstract val stubVersion: Int
 
   override val indexName: String get() = SDK_STUBS_STORAGE_NAME
 
-  override val indexExternalizer: FullStubExternalizer get() = FullStubExternalizer()
+  override val indexExternalizer: SerializedStubTreeDataExternalizer get() = SerializedStubTreeDataExternalizer(true, mySerializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer())
 
   companion object {
     const val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"

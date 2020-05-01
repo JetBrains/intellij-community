@@ -55,7 +55,7 @@ open class StubsGenerator(private val stubsVersion: String, private val stubsSto
 
   override fun createStorage(stubsStorageFilePath: String): PersistentHashMap<HashCode, SerializedStubTree> {
     return PersistentHashMap(File("$stubsStorageFilePath.input").toPath(),
-                             HashCodeDescriptor.instance, FullStubExternalizer())
+                             HashCodeDescriptor.instance, GeneratingFullStubExternalizer())
   }
 
   open fun buildStubForFile(fileContent: FileContentImpl,
@@ -74,7 +74,7 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
   ProjectManager.getInstance().loadAndOpenProject(projectPath)!!
   // we don't need a project here, but I didn't find a better way to wait until indices and components are initialized
 
-  val stubExternalizer = FullStubExternalizer()
+  val stubExternalizer = GeneratingFullStubExternalizer()
 
   val storageFile = File(stubsFilePath, "$stubsFileName.input")
   if (storageFile.exists()) {
