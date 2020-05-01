@@ -17,6 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,19 +29,17 @@ import java.nio.file.StandardOpenOption;
 import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
 /**
- * Replacement of read-write random-access file with shadow file pointer / size, valid when file manipulations happen in with this class only.
- * Note that sharing policy is the same as RandomAccessFile
+ * Replacement of read-write file channel with shadow file size, valid when file manipulations happen in with this class only.
  */
-class RandomAccessFileWithLengthAndSizeTracking {
-  private static final Logger LOG = Logger.getInstance(RandomAccessFileWithLengthAndSizeTracking.class.getName());
+class FileChannelWithSizeTracking {
+  private static final Logger LOG = Logger.getInstance(FileChannelWithSizeTracking.class);
   private static final boolean doAssertions = SystemProperties.getBooleanProperty("idea.do.random.access.wrapper.assertions", false);
 
   private final Path myPath;
   private final FileChannel myChannel;
   private volatile long mySize;
-  private volatile long myPointer;
 
-  RandomAccessFileWithLengthAndSizeTracking(Path path) throws IOException {
+  FileChannelWithSizeTracking(@NotNull Path path) throws IOException {
     Path parent = path.getParent();
     if (!Files.exists(parent)) {
       Files.createDirectories(parent);
@@ -54,71 +53,26 @@ class RandomAccessFileWithLengthAndSizeTracking {
     }
   }
 
-  void seek(long pos) throws IOException {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("Seek:" + this + "," + Thread.currentThread() + "," + pos + "," + myPointer + "," + mySize);
-    }
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-    if (myPointer == pos) {
-      return;
-    }
-    myChannel.position(pos);
-    myPointer = pos;
-  }
-
   long length() throws IOException {
     if (doAssertions) {
-      checkSizeAndPointerAssertions();
+      assert mySize == myChannel.size();
     }
     return mySize;
   }
 
-  private void checkSizeAndPointerAssertions() throws IOException {
-    assert myPointer == myChannel.position();
-    assert mySize == myChannel.size();
+  void write(long addr, byte[] dst, int off, int len) throws IOException {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
+    }
+    int written = myChannel.write(ByteBuffer.wrap(dst, off, len), addr);
+    mySize = Math.max(written + addr, length());
   }
 
-  void write(byte[] b, int off, int len) throws IOException {
+  void read(long addr, byte[] dst, int off, int len) throws IOException {
     if (LOG.isTraceEnabled()) {
-      LOG.trace("write:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer + "," + mySize);
+      LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + addr);
     }
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-
-    long pointer = myPointer;
-    myChannel.write(ByteBuffer.wrap(b, off, len));
-
-    if (pointer == 0) { // first write can introduce extra bytes, reload the position to avoid position tracking problem, e.g. IDEA-106306
-      pointer = myChannel.position();
-    } else {
-      pointer += len;
-    }
-    myPointer = pointer;
-    mySize = Math.max(pointer, mySize);
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("after write:" + this + "," + Thread.currentThread() + "," + myPointer + "," + mySize );
-    }
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-  }
-
-  int read(byte[] b, int off, int len) throws IOException {
-    if (LOG.isTraceEnabled()) {
-      LOG.trace("read:" + this + "," + Thread.currentThread() + "," + len + "," + myPointer );
-    }
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-    int read = myChannel.read(ByteBuffer.wrap(b, off, len));
-    if (read != -1) myPointer += read;
-    if (doAssertions) {
-      checkSizeAndPointerAssertions();
-    }
-    return read;
+    myChannel.read(ByteBuffer.wrap(dst, off, len), addr);
   }
 
   void close() throws IOException {

@@ -166,7 +166,7 @@ public class CompressedAppendableFile {
       if (myChunkLengthTable == null) initChunkLengthTable();
       assert chunkNumber < myChunkTableLength;
 
-      try (DataInputStream keysStream = getChunkStream(getChunksFile(), chunkNumber)) {
+      try (DataInputStream keysStream = getChunkStream(chunkNumber)) {
         if (keysStream.available() > 0) {
           byte[] decompressedBytes = decompress(keysStream);
           if (decompressedBytes.length != myAppendBufferLength) {
@@ -185,7 +185,7 @@ public class CompressedAppendableFile {
   }
 
   @NotNull
-  private DataInputStream getChunkStream(final Path appendFile, int pageNumber) throws IOException {
+  private DataInputStream getChunkStream(int pageNumber) throws IOException {
     assert myFileLength != 0;
     int limit;
     long pageStartOffset;
@@ -199,7 +199,7 @@ public class CompressedAppendableFile {
       limit = (int)pageEndOffset;
     }
 
-    return new DataInputStream(getChunkInputStream(appendFile, pageStartOffset, limit));
+    return new DataInputStream(getChunkInputStream(pageStartOffset, limit));
   }
 
   private long calcOffsetOfPage(int pageNumber) {
@@ -216,8 +216,8 @@ public class CompressedAppendableFile {
   }
 
   @NotNull
-  protected InputStream getChunkInputStream(Path appendFile, long offset, int pageSize) throws IOException {
-    InputStream in = Files.newInputStream(appendFile);
+  protected InputStream getChunkInputStream(long offset, int pageSize) throws IOException {
+    InputStream in = Files.newInputStream(getChunksFile());
     if (offset > 0) {
       in.skip(offset);
     }
@@ -303,7 +303,7 @@ public class CompressedAppendableFile {
       compressedDataOut.close();
 
       assert compressedDataOut.size() <= MAX_PAGE_LENGTH; // we need to be in short range for chunk length table
-      saveChunk(compressedOut, myFileLength);
+      saveChunk(compressedOut);
 
       myBufferPosition = 0;
       initChunkLengthTable();
@@ -341,15 +341,24 @@ public class CompressedAppendableFile {
     return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream, myAppendBufferLength);
   }
 
-  protected void saveChunk(BufferExposingByteArrayOutputStream compressedChunk, long endOfFileOffset) throws IOException {
-    try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(getChunksFile().toFile(), true)))) {
+  private void saveChunk(BufferExposingByteArrayOutputStream compressedChunk) throws IOException {
+    try (DataOutputStream stream = getChunkAppendStream()) {
       stream.write(compressedChunk.getInternalBuffer(), 0, compressedChunk.size());
     }
 
-    try (DataOutputStream chunkLengthStream = new DataOutputStream(
-      new BufferedOutputStream(new FileOutputStream(getChunkLengthFile().toFile(), true)))) {
+    try (DataOutputStream chunkLengthStream = getChunkLengthAppendStream()) {
       DataInputOutputUtil.writeINT(chunkLengthStream, compressedChunk.size());
     }
+  }
+
+  @NotNull
+  protected DataOutputStream getChunkLengthAppendStream() throws IOException {
+    return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(getChunkLengthFile().toFile(), true)));
+  }
+
+  @NotNull
+  protected DataOutputStream getChunkAppendStream() throws IOException {
+    return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(getChunksFile().toFile(), true)));
   }
 
   @NotNull

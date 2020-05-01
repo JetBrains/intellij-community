@@ -200,7 +200,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (myDoTrace) LOG.info("Opened " + file);
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file), options);
+      myValueStorage = new PersistentHashMapValueStorage(getDataFile(file), options);
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -615,7 +615,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       valueRead = myValueExternalizer.read(input);
     }
 
-    if (myValueStorage.performChunksCompaction(readResult.chunksCount, readResult.buffer.length)) {
+    if (myValueStorage.performChunksCompaction(readResult.chunksCount)) {
       long newValueOffset = myValueStorage.compactChunks(new ValueDataAppender() {
         @Override
         public void append(DataOutput out) throws IOException {
@@ -810,7 +810,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       final Path newPath = oldDataFile.resolveSibling(oldDataFile.getFileName() + ".new");
       PersistentHashMapValueStorage.CreationTimeOptions options = myValueStorage.getOptions();
-      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, options);
+      final PersistentHashMapValueStorage newStorage = new PersistentHashMapValueStorage(newPath, options);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
@@ -861,7 +861,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         FileUtil.rename(f, new File(parentFile, nameAfterRename));
       }
 
-      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile, options);
+      myValueStorage = new PersistentHashMapValueStorage(oldDataFile, options);
       LOG.info("Compacted " + myEnumerator.myFile + ":" + sizeBefore + " bytes into " +
                newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);
