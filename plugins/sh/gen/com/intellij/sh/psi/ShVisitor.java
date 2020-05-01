@@ -275,6 +275,14 @@ public class ShVisitor extends PsiElementVisitor {
     visitCompositeElement(o);
   }
 
+  public void visitRegexCondition(@NotNull ShRegexCondition o) {
+    visitCondition(o);
+  }
+
+  public void visitRegexPattern(@NotNull ShRegexPattern o) {
+    visitCompositeElement(o);
+  }
+
   public void visitSelectCommand(@NotNull ShSelectCommand o) {
     visitCommand(o);
   }

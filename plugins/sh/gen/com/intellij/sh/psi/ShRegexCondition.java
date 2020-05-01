@@ -5,15 +5,15 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface ShEqualityCondition extends ShCondition {
+public interface ShRegexCondition extends ShCondition {
 
   @NotNull
-  List<ShCondition> getConditionList();
+  ShCondition getCondition();
 
-  @Nullable
-  PsiElement getEq();
+  @NotNull
+  ShRegexPattern getRegexPattern();
 
-  @Nullable
-  PsiElement getNe();
+  @NotNull
+  PsiElement getRegexp();
 
 }

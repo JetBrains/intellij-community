@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShEqualityConditionImpl extends ShConditionImpl implements ShEqualityCondition {
+public class ShRegexConditionImpl extends ShConditionImpl implements ShRegexCondition {
 
-  public ShEqualityConditionImpl(ASTNode node) {
+  public ShRegexConditionImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull ShVisitor visitor) {
-    visitor.visitEqualityCondition(this);
+    visitor.visitRegexCondition(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
@@ -27,20 +27,20 @@ public class ShEqualityConditionImpl extends ShConditionImpl implements ShEquali
 
   @Override
   @NotNull
-  public List<ShCondition> getConditionList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, ShCondition.class);
+  public ShCondition getCondition() {
+    return findNotNullChildByClass(ShCondition.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getEq() {
-    return findChildByType(EQ);
+  @NotNull
+  public ShRegexPattern getRegexPattern() {
+    return findNotNullChildByClass(ShRegexPattern.class);
   }
 
   @Override
-  @Nullable
-  public PsiElement getNe() {
-    return findChildByType(NE);
+  @NotNull
+  public PsiElement getRegexp() {
+    return findNotNullChildByType(REGEXP);
   }
 
 }
