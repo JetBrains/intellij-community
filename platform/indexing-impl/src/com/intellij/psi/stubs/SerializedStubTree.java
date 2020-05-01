@@ -30,13 +30,8 @@ public final class SerializedStubTree {
   final int myIndexedStubByteLength;
   private Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> myIndexedStubs;
 
-  private final SerializationManagerEx mySerializationManager;
-
-  private volatile @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
-
-  private void setStubIndexesExternalizer(@NotNull StubForwardIndexExternalizer<?> stubIndexesExternalizer) {
-    myStubIndexesExternalizer = stubIndexesExternalizer;
-  }
+  private final @NotNull SerializationManagerEx mySerializationManager;
+  private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
 
   public SerializedStubTree(byte @NotNull [] treeBytes,
                             int treeByteLength,
@@ -78,28 +73,21 @@ public final class SerializedStubTree {
     );
   }
 
-  public @NotNull SerializedStubTree reSerialize(@NotNull SerializationManagerEx currentSerializationManager,
-                                                 @NotNull SerializationManagerEx newSerializationManager,
-                                                 @NotNull StubForwardIndexExternalizer currentForwardIndexSerializer,
-                                                 @NotNull StubForwardIndexExternalizer newForwardIndexSerializer) throws IOException {
+  public @NotNull SerializedStubTree reSerialize(@NotNull SerializationManagerEx newSerializationManager,
+                                                 @NotNull StubForwardIndexExternalizer<?> newForwardIndexSerializer) throws IOException {
     BufferExposingByteArrayOutputStream outStub = new BufferExposingByteArrayOutputStream();
-    currentSerializationManager.reSerialize(new ByteArrayInputStream(myTreeBytes, 0, myTreeByteLength), outStub, newSerializationManager);
+    mySerializationManager.reSerialize(new ByteArrayInputStream(myTreeBytes, 0, myTreeByteLength), outStub, newSerializationManager);
 
     byte[] reSerializedIndexBytes;
     int reSerializedIndexByteLength;
 
-    if (currentForwardIndexSerializer == newForwardIndexSerializer) {
+    if (myStubIndexesExternalizer == newForwardIndexSerializer) {
       reSerializedIndexBytes = myIndexedStubBytes;
       reSerializedIndexByteLength = myIndexedStubByteLength;
     }
     else {
       BufferExposingByteArrayOutputStream reSerializedStubIndices = new BufferExposingByteArrayOutputStream();
-      if (myIndexedStubs == null) {
-        setStubIndexesExternalizer(currentForwardIndexSerializer);
-        restoreIndexedStubs();
-      }
-      assert myIndexedStubs != null;
-      newForwardIndexSerializer.save(new DataOutputStream(reSerializedStubIndices), myIndexedStubs);
+      newForwardIndexSerializer.save(new DataOutputStream(reSerializedStubIndices), getStubIndicesValueMap());
       reSerializedIndexBytes = reSerializedStubIndices.getInternalBuffer();
       reSerializedIndexByteLength = reSerializedStubIndices.size();
     }

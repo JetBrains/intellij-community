@@ -107,9 +107,8 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
         val value = fromStorage.get(key)
 
         // re-serialize stub tree to correctly enumerate strings in the new string enumerator
-        val oldForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
         val newForwardIndexSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
-        val newStubTree = value.reSerialize(serializationManager, newSerializationManager, oldForwardIndexSerializer, newForwardIndexSerializer)
+        val newStubTree = value.reSerialize(newSerializationManager, newForwardIndexSerializer)
 
         if (storage.containsMapping(key)) {
           if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???

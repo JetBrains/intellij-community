@@ -28,14 +28,8 @@ val prebuiltStubsProvider: FileTypeExtension<PrebuiltStubsProvider> =
 interface PrebuiltStubsProvider {
   /**
    * Tries to find stub for [fileContent] in this provider.
-   * If stub is found, its stub and forward index will be re-serialized with provided [treeSerializationManager] and [treeForwardIndexExternalizer].
-   * It may be necessary if stub is stored in one format but another format is required.
    */
-  fun findStub(
-    fileContent: FileContent,
-    treeSerializationManager: SerializationManagerEx,
-    treeForwardIndexExternalizer: StubForwardIndexExternalizer<*>
-  ): SerializedStubTree?
+  fun findStub(fileContent: FileContent): SerializedStubTree?
 }
 
 class FileContentHashing {
@@ -119,20 +113,12 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
   }
 
 
-  override fun findStub(
-    fileContent: FileContent,
-    treeSerializationManager: SerializationManagerEx,
-    treeForwardIndexExternalizer: StubForwardIndexExternalizer<*>
-  ): SerializedStubTree? {
+  override fun findStub(fileContent: FileContent): SerializedStubTree? {
     try {
-      val stubTree = get(fileContent)
-      if (stubTree != null) {
-        val indexedStubsSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer()
-        return stubTree.reSerialize(mySerializationManager!!, treeSerializationManager, indexedStubsSerializer, treeForwardIndexExternalizer)
-      }
+      return get(fileContent)
     }
     catch (e: Exception) {
-      LOG.error("Can't re-serialize stub tree", e)
+      LOG.error("Can't get prebuilt stub tree from ${this.javaClass.name}", e)
     }
     return null
   }
