@@ -37,7 +37,7 @@ public class JBCefBrowser implements JBCefDisposable {
   private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
 
   @NotNull private final JBCefClient myCefClient;
-  @NotNull private final MyComponent myComponent;
+  @NotNull private final JPanel myComponent;
   @NotNull private final CefBrowser myCefBrowser;
   @Nullable private volatile JBCefCookieManager myJBCefCookieManager;
   @NotNull private final CefFocusHandler myCefFocusHandler;
@@ -101,7 +101,7 @@ public class JBCefBrowser implements JBCefDisposable {
     myCefClient = client;
     myIsDefaultClient = isDefaultClient;
 
-    myComponent = new MyComponent(new BorderLayout());
+    myComponent = new JPanel(new BorderLayout());
     myComponent.setBackground(JBColor.background());
 
     myCefBrowser = cefBrowser != null ?
@@ -245,7 +245,7 @@ public class JBCefBrowser implements JBCefDisposable {
   }
 
   @Nullable
-  private Window getActiveFrame(){
+  private static Window getActiveFrame() {
     for (Frame frame : Frame.getFrames()) {
       if (frame.isActive()) return frame;
     }
@@ -326,16 +326,6 @@ public class JBCefBrowser implements JBCefDisposable {
         return true;
       }
       return false;
-    }
-  }
-
-  private class MyComponent extends JPanel {
-    MyComponent(BorderLayout layout) {
-      super(layout);
-    }
-
-    JBCefBrowser getJBCefBrowser() {
-      return JBCefBrowser.this;
     }
   }
 }
