@@ -65,6 +65,17 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
       textAttributesKey, hostRange.getStartOffset(), hostRange.getEndOffset(), layer, targetArea);
   }
 
+  @Override
+  public @NotNull RangeHighlighter addRangeHighlighter(int startOffset,
+                                                       int endOffset,
+                                                       int layer,
+                                                       @Nullable TextAttributes textAttributes,
+                                                       @NotNull HighlighterTargetArea targetArea) {
+    TextRange hostRange = myDocument.injectedToHost(new ProperTextRange(startOffset, endOffset));
+    return myHostModel.addRangeHighlighter(
+      hostRange.getStartOffset(), hostRange.getEndOffset(), layer, textAttributes, targetArea);
+  }
+
   @NotNull
   @Override
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
@@ -95,6 +106,12 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
   }
 
   @Override
+  public @NotNull RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
+    int hostLine = myDocument.injectedToHostLine(line);
+    return myHostModel.addLineHighlighter(hostLine, layer, textAttributes);
+  }
+
+  @Override
   public void removeHighlighter(@NotNull final RangeHighlighter rangeHighlighter) {
     myHostModel.removeHighlighter(rangeHighlighter);
   }
@@ -120,6 +137,12 @@ public class MarkupModelWindow extends UserDataHolderBase implements MarkupModel
                                                          final int layer) {
     int hostLine = myDocument.injectedToHostLine(line);
     return myHostModel.addPersistentLineHighlighter(textAttributesKey, hostLine, layer);
+  }
+
+  @Override
+  public @Nullable RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
+    int hostLine = myDocument.injectedToHostLine(lineNumber);
+    return myHostModel.addPersistentLineHighlighter(hostLine, layer, textAttributes);
   }
 
 

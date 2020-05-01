@@ -60,6 +60,15 @@ public class EmptyMarkupModel implements MarkupModelEx {
     throw new ProcessCanceledException();
   }
 
+  @Override
+  public @NotNull RangeHighlighter addRangeHighlighter(int startOffset,
+                                                       int endOffset,
+                                                       int layer,
+                                                       @Nullable TextAttributes textAttributes,
+                                                       @NotNull HighlighterTargetArea targetArea) {
+    throw new ProcessCanceledException();
+  }
+
   @NotNull
   @Override
   public RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
@@ -80,6 +89,11 @@ public class EmptyMarkupModel implements MarkupModelEx {
   @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int line, int layer) {
+    throw new ProcessCanceledException();
+  }
+
+  @Override
+  public @NotNull RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
     throw new ProcessCanceledException();
   }
 
@@ -111,6 +125,11 @@ public class EmptyMarkupModel implements MarkupModelEx {
 
   @Override
   public RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
+    return null;
+  }
+
+  @Override
+  public @Nullable RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
     return null;
   }
 

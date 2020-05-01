@@ -125,6 +125,11 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
+  public @Nullable RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
+    return myDelegate.addPersistentLineHighlighter(lineNumber, layer, textAttributes);
+  }
+
+  @Override
   public void addRangeHighlighter(@NotNull RangeHighlighterEx marker,
                                   int start,
                                   int end,
@@ -144,9 +149,23 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
+  public @NotNull RangeHighlighter addRangeHighlighter(int startOffset,
+                                                       int endOffset,
+                                                       int layer,
+                                                       @Nullable TextAttributes textAttributes,
+                                                       @NotNull HighlighterTargetArea targetArea) {
+    return myDelegate.addRangeHighlighter(startOffset, endOffset, layer, textAttributes, targetArea);
+  }
+
+  @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int line, int layer) {
     return myDelegate.addLineHighlighter(textAttributesKey, line, layer);
+  }
+
+  @Override
+  public @NotNull RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
+    return myDelegate.addLineHighlighter(line, layer, textAttributes);
   }
 
   @Override

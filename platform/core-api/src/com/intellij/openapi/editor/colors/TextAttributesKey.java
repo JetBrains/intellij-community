@@ -25,6 +25,9 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
+ * Use one of {@link #createTextAttributesKey(String)} {@link #createTextAttributesKey(String, TextAttributesKey)}
+ * to create a new key, fallbacks will help finding colors in all colors schemes.
+ * If you want to have the key to be highlighted differently from the fallback use the additionalTextAttributes extension point.
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   public static final TextAttributesKey[] EMPTY_ARRAY = new TextAttributesKey[0];

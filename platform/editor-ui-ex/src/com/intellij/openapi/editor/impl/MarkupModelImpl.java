@@ -62,28 +62,64 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @Override
+  public @NotNull RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
+    return addLineHighlighter(null, textAttributes, line, layer);
+  }
+
+  @Override
   @NotNull
   public RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
+    return addLineHighlighter(textAttributesKey, null, lineNumber, layer);
+  }
+
+  private RangeHighlighter addLineHighlighter(@Nullable TextAttributesKey textAttributesKey,
+                                              @Nullable TextAttributes textAttributes,
+                                              int lineNumber,
+                                              int layer) {
     if (isNotValidLine(lineNumber)) {
       throw new IndexOutOfBoundsException("lineNumber:" + lineNumber + ". Must be in [0, " + (getDocument().getLineCount() - 1) + "]");
     }
 
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
-    return addRangeHighlighter(textAttributesKey, offset, offset, layer, HighlighterTargetArea.LINES_IN_RANGE);
+    HighlighterTargetArea area = HighlighterTargetArea.LINES_IN_RANGE;
+    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> {
+      ex.setTextAttributes(textAttributes);
+    };
+    return addRangeHighlighterAndChangeAttributes(textAttributesKey, offset, offset, layer, area, false, changeAction);
   }
 
   @Override
   @Nullable
   public RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer) {
+    return addPersistentLineHighlighter(textAttributesKey, null, lineNumber, layer);
+  }
+
+  @Override
+  @Nullable
+  public RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
+    return addPersistentLineHighlighter(null, textAttributes, lineNumber, layer);
+  }
+
+  @Nullable
+  private RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey,
+                                                          @Nullable TextAttributes textAttributes,
+                                                          int lineNumber,
+                                                          int layer) {
+
     if (isNotValidLine(lineNumber)) {
       return null;
     }
 
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
+
+    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> {
+      ex.setTextAttributes(textAttributes);
+    };
+
     return addRangeHighlighter(
       PersistentRangeHighlighterImpl.create(
         this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false),
-      null);
+      changeAction);
   }
 
   private boolean isNotValidLine(int lineNumber) {
@@ -170,6 +206,18 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                               @NotNull HighlighterTargetArea targetArea) {
     return addRangeHighlighterAndChangeAttributes(textAttributesKey, startOffset, endOffset, layer, targetArea, false,
                                                   null);
+  }
+
+  @Override
+  public @NotNull RangeHighlighter addRangeHighlighter(int startOffset,
+                                                       int endOffset,
+                                                       int layer,
+                                                       @Nullable TextAttributes textAttributes,
+                                                       @NotNull HighlighterTargetArea targetArea) {
+    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> {
+      ex.setTextAttributes(textAttributes);
+    };
+    return addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, layer, targetArea, false, changeAction);
   }
 
   @Override

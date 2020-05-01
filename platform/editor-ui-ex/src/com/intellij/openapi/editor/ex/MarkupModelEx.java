@@ -22,17 +22,14 @@ public interface MarkupModelEx extends MarkupModel {
   RangeHighlighterEx addPersistentLineHighlighter(@Nullable TextAttributesKey textAttributesKey, int lineNumber, int layer);
 
   /**
-   * @deprecated Use the overload with TextAttributeKey
+   * Consider using {@link #addPersistentLineHighlighter(TextAttributesKey, int, int)}
+   * unless it's really necessary.
+   * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
+   * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
+   * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
    */
-  @Deprecated
   @Nullable
-  default RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes) {
-    RangeHighlighterEx highlighter = addPersistentLineHighlighter(null, lineNumber, layer);
-    if (textAttributes != null && highlighter != null) {
-      highlighter.setTextAttributes(textAttributes);
-    }
-    return highlighter;
-  }
+  RangeHighlighterEx addPersistentLineHighlighter(int lineNumber, int layer, @Nullable TextAttributes textAttributes);
 
   void fireAttributesChanged(@NotNull RangeHighlighterEx segmentHighlighter, boolean renderersChanged, boolean fontStyleChanged);
 
@@ -89,9 +86,12 @@ public interface MarkupModelEx extends MarkupModel {
                                                             Consumer<? super RangeHighlighterEx> changeAttributesAction);
 
   /**
-   * @deprecated Use the overload with TextAttributesKey
+   * Consider using {@link #addRangeHighlighterAndChangeAttributes(TextAttributesKey, int, int, int, HighlighterTargetArea, boolean, Consumer)}
+   * unless it's really necessary.
+   * Creating a highlighter with hard-coded {@link TextAttributes} makes it stay the same in all {@link EditorColorsScheme}
+   * An editor can provide a custom scheme different from the global one, also a user can change the global scheme explicitly.
+   * Using the overload taking a {@link TextAttributesKey} will make the platform take care of all these cases.
    */
-  @Deprecated
   @NotNull
   default RangeHighlighterEx addRangeHighlighterAndChangeAttributes(int startOffset,
                                                                     int endOffset,
@@ -110,31 +110,4 @@ public interface MarkupModelEx extends MarkupModel {
 
   // runs change attributes action and fires highlighterChanged event if there were changes
   void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter, @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction);
-
-  @Override
-  @Deprecated
-  @NotNull
-  default RangeHighlighter addRangeHighlighter(int startOffset,
-                                               int endOffset,
-                                               int layer,
-                                               @Nullable TextAttributes textAttributes,
-                                               @NotNull HighlighterTargetArea targetArea) {
-
-    RangeHighlighterEx highlighter = (RangeHighlighterEx)addRangeHighlighter(null, startOffset, endOffset, layer, targetArea);
-    if (textAttributes != null) {
-      highlighter.setTextAttributes(textAttributes);
-    }
-    return highlighter;
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  default RangeHighlighter addLineHighlighter(int line, int layer, @Nullable TextAttributes textAttributes) {
-    RangeHighlighterEx highlighter = (RangeHighlighterEx)addLineHighlighter(null, line, layer);
-    if (textAttributes != null) {
-      highlighter.setTextAttributes(textAttributes);
-    }
-    return highlighter;
-  }
 }
