@@ -41,8 +41,8 @@ public final class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<Ima
   private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
     @Override
     protected ImageInfo computeValue(@NotNull FileContent inputData) {
-      ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent(), inputData.getFileName());
-      return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
+      ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
+      return info != null ? new ImageInfo(info.width, info.height, info.bpp) : null;
     }
   };
 
