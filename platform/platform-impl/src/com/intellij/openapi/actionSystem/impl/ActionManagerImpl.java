@@ -77,7 +77,7 @@ import java.util.*;
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final ExtensionPointName<ActionConfigurationCustomizer> EP =
     new ExtensionPointName<>("com.intellij.actionConfigurationCustomizer");
-  private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_HANDER_EP =
+  private static final ExtensionPointName<EditorActionHandlerBean> EDITOR_ACTION_HANDLER_EP =
     ExtensionPointName.create("com.intellij.editorActionHandler");
 
   private static final String ACTION_ELEMENT_NAME = "action";
@@ -162,7 +162,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
-    EDITOR_HANDER_EP.addChangeListener(this::updateAllHandlers, this);
+    EDITOR_ACTION_HANDLER_EP.addChangeListener(this::updateAllHandlers, this);
   }
 
   @NotNull
@@ -1609,7 +1609,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     List<EditorActionHandlerBean> result = new ArrayList<>();
     String id = getId(editorAction);
     if (id != null) {
-      List<EditorActionHandlerBean> extensions = EDITOR_HANDER_EP.getExtensionList();
+      List<EditorActionHandlerBean> extensions = EDITOR_ACTION_HANDLER_EP.getExtensionList();
       for (int i = extensions.size() - 1; i >= 0; i--) {
         EditorActionHandlerBean handlerBean = extensions.get(i);
         if (handlerBean.action.equals(id)) {
