@@ -171,7 +171,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
   }
 
   public synchronized <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
-    EditorActionHandler handler = myHandler;
+    EditorActionHandler handler = getHandler();
     if (handler != null) {
       T result = handler.getHandlerOfType(type);
       if (result != null) return result;
