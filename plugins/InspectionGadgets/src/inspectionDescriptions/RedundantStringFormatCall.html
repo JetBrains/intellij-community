@@ -1,10 +1,7 @@
 <html>
 <body>
-Reports any calls to <b>String.format()</b> or <b>PrintStream.printf()</b> where only a format string is
-provided, but no arguments. Such a call is unnecessary and can be replaced with just
-the string or a call to <b>PrintStream.print()</b> respectively.
+Reports the combinations of System.out.println(String.format(...)) so they can be converted to System.out.printf(...) using a quick-fix
 <!-- tooltip end -->
-<p>
-
+<p>Quick fix: removes String.format() calls and converts println to printf. E.g. System.out.<strong>println</strong>(String.format("%s, %s!", "Hello", "World")) will be converted to System.out.<strong>printf</strong>("%s, %s!<strong>%n</strong>", "Hello", "World")</p>
 </body>
 </html>
