@@ -24,6 +24,7 @@ Android Studio: removed by Change Ie7351d92 */
       '-Dkotlinx.coroutines.debug=off',
       '-Djna.nosys=true',  // Android Studio: added by Change Ie7351d92
       '-Djna.boot.library.path=',  // Android Studio: added by Change Ie7351d92
+      '-Didea.vendor.name=Google',  // Android Studio
     ]
 
   static final String defaultCodeCacheSetting = '-XX:ReservedCodeCacheSize=512m'
