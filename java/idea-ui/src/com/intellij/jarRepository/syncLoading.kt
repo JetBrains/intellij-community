@@ -2,19 +2,16 @@
 package com.intellij.jarRepository
 
 import com.intellij.jarRepository.JarRepositoryManager.loadArtifactForDependenciesAsync
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.util.registry.Registry
 import org.eclipse.aether.artifact.Artifact
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
@@ -62,7 +59,7 @@ internal fun submitLoadJobs(project: Project, toSync: Collection<Library>, queue
   for (library in toSync.filter(LibraryTableImplUtil::isValidLibrary)) {
     val properties = (library as LibraryEx).properties
     if (properties is RepositoryLibraryProperties) {
-      val descriptor = JpsMavenRepositoryLibraryDescriptor(properties.mavenId)
+      val descriptor = properties.repositoryLibraryDescriptor
       val promise = loadArtifactForDependenciesAsync(project, descriptor, EnumSet.of(ArtifactKind.ARTIFACT), null)
       promise.onProcessed { artifacts: Collection<Artifact>? ->
         try {
