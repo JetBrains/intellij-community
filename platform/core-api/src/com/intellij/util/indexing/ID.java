@@ -10,14 +10,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import gnu.trove.THashMap;
-import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
@@ -107,8 +108,14 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return myUniqueId;
+  }
+
+  @Override
+  public final boolean equals(Object obj) {
+    // IDs are singletons per unique ID. Compare them by object identity.
+    return this == obj;
   }
 
   public int getUniqueId() {
