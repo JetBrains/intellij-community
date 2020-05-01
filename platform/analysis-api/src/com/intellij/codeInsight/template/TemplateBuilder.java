@@ -4,6 +4,8 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,11 +36,18 @@ public interface TemplateBuilder {
 
   void replaceElement(@NotNull PsiElement element, TextRange rangeWithinElement, Expression expression);
 
-  /**
-   * Creates a replacement box for the specified text range within the container element.
-   * @param rangeWithinElement range within the container element.
-   * @param replacementText the initial value for the replacement.
-   */
+  @ApiStatus.Experimental
+  void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt);
+
+  @ApiStatus.Experimental
+  void replaceElement (PsiElement element, String varName, String dependantVariableName, boolean alwaysStopAt);
+
+
+    /**
+     * Creates a replacement box for the specified text range within the container element.
+     * @param rangeWithinElement range within the container element.
+     * @param replacementText the initial value for the replacement.
+     */
   void replaceRange(TextRange rangeWithinElement, String replacementText);
 
   /**

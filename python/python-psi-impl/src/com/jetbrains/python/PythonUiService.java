@@ -5,9 +5,13 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.*;
+import com.intellij.openapi.util.NlsContexts.Checkbox;
+import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
@@ -19,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 @ApiStatus.Experimental
@@ -26,9 +31,15 @@ public class PythonUiService {
 
   public void showBalloonInfo(Project project, @PopupContent String message) {}
 
+  public void showBalloonWarning(Project project, @PopupContent String message) {}
+
   public void showBalloonError(Project project, @PopupContent String message) {}
 
   public Editor openTextEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return null;
+  }
+
+  public Editor openTextEditor(@NotNull Project project, VirtualFile virtualFile, int offset) {
     return null;
   }
 
@@ -97,6 +108,9 @@ public class PythonUiService {
     return null;
   }
 
+  public void showErrorHint(Editor editor, String message) {
+  }
+
   public static PythonUiService getInstance() {
     return ServiceManager.getService(PythonUiService.class);
   }
@@ -115,5 +129,42 @@ public class PythonUiService {
   }
 
   public void showPopup(Project project, List<String> items, @PopupTitle String title, Consumer<String> callback) {
+  }
+
+  /**
+   * Shows a panel with name redefinition conflicts, if needed.
+   *
+   * @param project
+   * @param conflicts what {@link #findDefinitions} would return
+   * @param obscured  name or its topmost qualifier that is obscured, used at top of pane.
+   * @param name      full name (maybe qualified) to show as obscured and display as qualifier in "would be" chunks.
+   * @return true iff conflicts is not empty and the panel is shown.
+   */
+  public boolean showConflicts(Project project,
+                               List<? extends Pair<PsiElement, PsiElement>> conflicts,
+                               String obscured,
+                               @Nullable String name) {
+    return false;
+  }
+
+  @Nullable
+  public String showInputDialog(@Nullable Project project,
+                                @DialogMessage String message,
+                                @DialogTitle String title,
+                                @Nullable String initialValue,
+                                @Nullable InputValidator validator) {
+    return null;
+  }
+
+
+  public int showChooseDialog(@Nullable Project project,
+                              @Nullable Component parentComponent,
+                              String message,
+                              String title,
+                              String[] values,
+                              String initialValue,
+                              @Nullable Icon icon) {
+    return -1;
+
   }
 }
