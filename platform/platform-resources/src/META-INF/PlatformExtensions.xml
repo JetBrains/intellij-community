@@ -62,6 +62,10 @@
                         serviceImplementation="com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl" preload="true"/>
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileManager"
                         serviceImplementation="com.intellij.openapi.vfs.PlatformVirtualFileManager" preload="true"/>
+
+    <applicationService serviceImplementation="com.intellij.openapi.vfs.VirtualFileLookupService"
+                        testServiceImplementation="com.intellij.openapi.vfs.VirtualFileLookupServiceImpl"/>
+
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
                         serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
 
