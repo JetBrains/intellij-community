@@ -11,7 +11,13 @@ internal data class VirtualFileLookupImpl(
 ): VirtualFileLookup {
   override fun withRefresh() = copy(withRefresh = true)
 
-  override fun fromIoFile(file: File): VirtualFile? = fromNioPath(file.toPath())
+  override fun fromIoFile(file: File): VirtualFile? {
+    val fs = LocalFileSystem.getInstance()
+    return when {
+      withRefresh -> fs.refreshAndFindFileByIoFile(file)
+      else -> fs.findFileByIoFile(file)
+    }
+  }
 
   override fun fromPath(path: String): VirtualFile? {
     return findWithFilesSystem(LocalFileSystem.getInstance(), FileUtil.toSystemDependentName(path))
@@ -19,7 +25,7 @@ internal data class VirtualFileLookupImpl(
 
   override fun fromNioPath(path: Path): VirtualFile? {
     if (path.fileSystem == FileSystems.getDefault()) {
-      return findWithFilesSystem(LocalFileSystem.getInstance(), path.toFile().absolutePath)
+      return fromIoFile(path.toFile())
     }
 
     //TODO[jo] add EP to check for custom FS implementations for non-default filesystems
