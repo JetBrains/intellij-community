@@ -8636,29 +8636,29 @@
     <option name="actions" path="ActionManager" hit="Registration Actions" />
     <option name="registration" path="ActionManager" hit="Registration Actions" />
     <option name="registry" path="ActionManager" hit="Registry..." />
-    <option name="reimport" path="ActionManager" hit="Reimport" />
-    <option name="all" path="ActionManager" hit="Reimport All Maven Projects" />
-    <option name="maven" path="ActionManager" hit="Reimport All Maven Projects" />
-    <option name="projects" path="ActionManager" hit="Reimport All Maven Projects" />
-    <option name="reimport" path="ActionManager" hit="Reimport All Maven Projects" />
-    <option name="projects" path="ActionManager" hit="Reimport Projects" />
-    <option name="reimport" path="ActionManager" hit="Reimport Projects" />
-    <option name="reimport" path="ActionManager" hit="Reimport Workspace" />
-    <option name="workspace" path="ActionManager" hit="Reimport Workspace" />
-    <option name="bnd" path="ActionManager" hit="Reimport entire Bnd/Bndtools workspace" />
-    <option name="bndtools" path="ActionManager" hit="Reimport entire Bnd/Bndtools workspace" />
-    <option name="entire" path="ActionManager" hit="Reimport entire Bnd/Bndtools workspace" />
-    <option name="reimport" path="ActionManager" hit="Reimport entire Bnd/Bndtools workspace" />
-    <option name="workspace" path="ActionManager" hit="Reimport entire Bnd/Bndtools workspace" />
-    <option name="bnd" path="ActionManager" hit="Reimport selected Bnd/Bndtools projects" />
-    <option name="bndtools" path="ActionManager" hit="Reimport selected Bnd/Bndtools projects" />
-    <option name="projects" path="ActionManager" hit="Reimport selected Bnd/Bndtools projects" />
-    <option name="reimport" path="ActionManager" hit="Reimport selected Bnd/Bndtools projects" />
-    <option name="selected" path="ActionManager" hit="Reimport selected Bnd/Bndtools projects" />
-    <option name="maven" path="ActionManager" hit="Reimport selected Maven projects" />
-    <option name="projects" path="ActionManager" hit="Reimport selected Maven projects" />
-    <option name="reimport" path="ActionManager" hit="Reimport selected Maven projects" />
-    <option name="selected" path="ActionManager" hit="Reimport selected Maven projects" />
+    <option name="reload" path="ActionManager" hit="Reload" />
+    <option name="all" path="ActionManager" hit="Reload All Maven Projects" />
+    <option name="maven" path="ActionManager" hit="Reload All Maven Projects" />
+    <option name="projects" path="ActionManager" hit="Reload All Maven Projects" />
+    <option name="reload" path="ActionManager" hit="Reload All Maven Projects" />
+    <option name="projects" path="ActionManager" hit="Reload Projects" />
+    <option name="reload" path="ActionManager" hit="Reload Projects" />
+    <option name="reload" path="ActionManager" hit="Reload Workspace" />
+    <option name="workspace" path="ActionManager" hit="Reload Workspace" />
+    <option name="bnd" path="ActionManager" hit="Reload entire Bnd/Bndtools workspace" />
+    <option name="bndtools" path="ActionManager" hit="Reload entire Bnd/Bndtools workspace" />
+    <option name="entire" path="ActionManager" hit="Reload entire Bnd/Bndtools workspace" />
+    <option name="reload" path="ActionManager" hit="Reload entire Bnd/Bndtools workspace" />
+    <option name="workspace" path="ActionManager" hit="Reload entire Bnd/Bndtools workspace" />
+    <option name="bnd" path="ActionManager" hit="Reload selected Bnd/Bndtools projects" />
+    <option name="bndtools" path="ActionManager" hit="Reload selected Bnd/Bndtools projects" />
+    <option name="projects" path="ActionManager" hit="Reload selected Bnd/Bndtools projects" />
+    <option name="reload" path="ActionManager" hit="Reload selected Bnd/Bndtools projects" />
+    <option name="selected" path="ActionManager" hit="Reload selected Bnd/Bndtools projects" />
+    <option name="maven" path="ActionManager" hit="Reload selected Maven projects" />
+    <option name="projects" path="ActionManager" hit="Reload selected Maven projects" />
+    <option name="reload" path="ActionManager" hit="Reload selected Maven projects" />
+    <option name="selected" path="ActionManager" hit="Reload selected Maven projects" />
     <option name="data" path="ActionManager" hit="Related Data" />
     <option name="related" path="ActionManager" hit="Related Data" />
     <option name="related" path="ActionManager" hit="Related Symbol..." />
@@ -31774,13 +31774,13 @@
     <option name="in" hit="Keep project files in:" />
     <option name="keep" hit="Keep project files in:" />
     <option name="project" hit="Keep project files in:" />
-    <option name="and" hit="Keep source and test folders on reimport" />
-    <option name="folders" hit="Keep source and test folders on reimport" />
-    <option name="keep" hit="Keep source and test folders on reimport" />
-    <option name="on" hit="Keep source and test folders on reimport" />
-    <option name="reimport" hit="Keep source and test folders on reimport" />
-    <option name="source" hit="Keep source and test folders on reimport" />
-    <option name="test" hit="Keep source and test folders on reimport" />
+    <option name="and" hit="Keep source and test folders on project reload" />
+    <option name="folders" hit="Keep source and test folders on project reload" />
+    <option name="keep" hit="Keep source and test folders on project reload" />
+    <option name="on" hit="Keep source and test folders on project reload" />
+    <option name="reload" hit="Keep source and test folders on project reload" />
+    <option name="source" hit="Keep source and test folders on project reload" />
+    <option name="test" hit="Keep source and test folders on project reload" />
     <option name="be" hit="Phase to be used for folders update:" />
     <option name="folders" hit="Phase to be used for folders update:" />
     <option name="for" hit="Phase to be used for folders update:" />
