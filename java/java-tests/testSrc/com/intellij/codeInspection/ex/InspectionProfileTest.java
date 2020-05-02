@@ -618,6 +618,18 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertEquals(mergedText, serialize(profile));
   }
 
+  public void testMergedBooleanMethodNameMustStartWithQuestionWithOldDefaultSerialData() throws Exception {
+    checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                         "  <inspection_tool class=\"BooleanMethodNameMustStartWithQuestion\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                         "    <option name=\"ignoreBooleanMethods\" value=\"false\" />\n" +
+                         "    <option name=\"ignoreInAnnotationInterface\" value=\"true\" />\n" +
+                         "    <option name=\"onlyWarnOnBaseMethods\" value=\"true\" />\n" +
+                         "    <option name=\"questionString\" value=\"add,are,can,check,contains,could,endsWith,equals,has,is,matches,must,put,remove,shall,should,startsWith,was,were,will,would\" />\n" +
+                         "  </inspection_tool>\n" +
+                         "</profile>");
+  }
+
   public void testDisabledUnusedDeclarationWithoutChanges() throws Exception {
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
