@@ -43,8 +43,7 @@ public class LocalFileSystemApi extends LocalFileSystem {
   @Nullable
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    //TODO[jo]: should we delegate it to VirtualFileLookup?
-    return getRealInstance().findFileByPathIfCached(path);
+    return VirtualFileLookup.newLookup().onlyIfCached().fromPath(path);
   }
 
   @Nullable

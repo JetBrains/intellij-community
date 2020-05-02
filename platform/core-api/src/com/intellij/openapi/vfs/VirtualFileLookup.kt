@@ -22,6 +22,12 @@ interface VirtualFileLookup {
   fun withRefresh() : VirtualFileLookup
 
   /**
+   * Only checks if a given file is in caches of the respective
+   * [com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem]
+   */
+  fun onlyIfCached() : VirtualFileLookup
+
+  /**
    * Searches for a [VirtualFile] corresponding to the given [File]
    */
   fun fromIoFile(file: File) : VirtualFile?

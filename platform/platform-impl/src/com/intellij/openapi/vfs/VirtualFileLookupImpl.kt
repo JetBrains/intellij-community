@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -11,13 +12,16 @@ private fun realLocalFileSystem() = VirtualFileManager
   .getFileSystem(LocalFileSystem.PROTOCOL) as LocalFileSystem
 
 internal data class VirtualFileLookupImpl(
-  val withRefresh: Boolean = false
+  val withRefresh: Boolean = false,
+  val onlyIfCached: Boolean = false
 ): VirtualFileLookup {
   override fun withRefresh() = copy(withRefresh = true)
+  override fun onlyIfCached() = copy(onlyIfCached = true)
 
   override fun fromIoFile(file: File): VirtualFile? {
     val fs = realLocalFileSystem()
     return when {
+      onlyIfCached -> null
       withRefresh -> fs.refreshAndFindFileByIoFile(file)
       else -> fs.findFileByIoFile(file)
     }
@@ -32,11 +36,14 @@ internal data class VirtualFileLookupImpl(
       return fromIoFile(path.toFile())
     }
 
+    if (onlyIfCached) return null
+
     //TODO[jo] add EP to check for custom FS implementations for non-default filesystems
     return null
   }
 
   override fun fromUrl(url: String): VirtualFile? {
+    if (onlyIfCached) return null
     val protocol = VirtualFileManager.extractProtocol(url) ?: return null
     val path = VirtualFileManager.extractPath(url)
     val fs = VirtualFileManager.getInstance().getFileSystem(protocol) ?: return null
@@ -45,6 +52,7 @@ internal data class VirtualFileLookupImpl(
 
   private fun findWithFilesSystem(fs: VirtualFileSystem, path: String): VirtualFile? {
     return when {
+      fs is NewVirtualFileSystem && onlyIfCached -> fs.findFileByPathIfCached(path)
       withRefresh -> fs.refreshAndFindFileByPath(path)
       else -> fs.findFileByPath(path)
     }
