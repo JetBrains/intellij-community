@@ -426,18 +426,18 @@ public abstract class UsefulTestCase extends TestCase {
     System.out.println("Setup costs");
     long totalSetup = 0;
     for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalSetup += entry.getValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
     for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalTeardown += entry.getValue();
     }
-    System.out.println(String.format("Total overhead: setup %d ms, teardown %d ms", totalSetup, totalTeardown));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']", totalSetup));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
+    System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']%n", totalTeardown);
   }
 
   @Override

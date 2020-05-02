@@ -50,7 +50,7 @@ public class ConsoleUpdaterUI implements UpdaterUI {
 
     System.out.println("Validation info:");
     for (ValidationResult item : validationResults) {
-      System.out.println(String.format("  %s  %s: %s", item.kind, item.path, item.message));
+      System.out.printf("  %s  %s: %s%n", item.kind, item.path, item.message);
       if (item.kind == ValidationResult.Kind.ERROR) hasErrors = true;
       if (item.kind == ValidationResult.Kind.CONFLICT) hasConflicts = true;
     }

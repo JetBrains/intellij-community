@@ -186,7 +186,7 @@ public class _LastInSuiteTest extends TestCase {
     long started = _FirstInSuiteTest.getSuiteStartTime();
     if (started != 0) {
       long testSuiteDuration = System.nanoTime() - started;
-      System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']", testSuiteDuration / 1000000));
+      System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']%n", testSuiteDuration / 1000000);
     }
     LightPlatformTestCase.reportTestExecutionStatistics();
   }
