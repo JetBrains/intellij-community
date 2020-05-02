@@ -58,7 +58,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       isKotlinDslUsed = false
     )
 
-    step("gradle reimport after editing gradle files") {
+    step("reload gradle project after editing gradle files") {
       gradleReimport()
     }
     waitAMoment()
