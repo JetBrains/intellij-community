@@ -195,7 +195,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       return process;
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to start " + Arrays.toString(command) + " in " + workingDir, e);
+      String errorMessage = "Failed to start " + Arrays.toString(command) + " in " + workingDir;
+      if (workingDir != null && !new File(workingDir).isDirectory()) {
+        errorMessage = "No such directory: " + workingDir;
+      }
+      throw new ExecutionException(errorMessage, e);
     }
   }
 
