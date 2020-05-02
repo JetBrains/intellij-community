@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -75,9 +76,8 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
       if (vcs == null) {
         return result;
       }
-      new HgCommandResultNotifier(project).notifyError(result, "Checking for incoming/outgoing changes disabled",
-                                                       "Authentication is required to check incoming/outgoing changes in " + repositoryURL +
-                                                       "<br/>You may enable checking for changes <a href='#'>in the Settings</a>.",
+      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.changesets.error"),
+                                                       HgBundle.message("hg4idea.changesets.error.msg", repositoryURL),
                                                        new NotificationListener() {
                                                          @Override
                                                          public void hyperlinkUpdate(@NotNull Notification notification,

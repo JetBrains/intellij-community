@@ -54,10 +54,8 @@ public class CreateAction extends PatchAction {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
-      return new ValidationResult(ValidationResult.Kind.CONFLICT, getPath(),
-                                  ValidationResult.Action.CREATE,
-                                  ValidationResult.ALREADY_EXISTS_MESSAGE,
-                                  options);
+      return new ValidationResult(
+        ValidationResult.Kind.CONFLICT, getPath(), ValidationResult.Action.CREATE, ValidationResult.ALREADY_EXISTS_MESSAGE, options);
     }
     return null;
   }

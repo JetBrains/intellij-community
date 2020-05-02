@@ -15,7 +15,6 @@
  */
 package org.intellij.plugins.intelliLang.inject.java;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -25,6 +24,8 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UExpression;
+
+import java.util.Objects;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
@@ -43,7 +44,7 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         "isLanguageAnnotation") {
         @Override
         public boolean accepts(@NotNull final String s, final ProcessingContext context) {
-          return Comparing.equal(configuration.getAdvancedConfiguration().getLanguageAnnotationClass(), s);
+          return Objects.equals(configuration.getAdvancedConfiguration().getLanguageAnnotationClass(), s);
         }
       }), "value"), new UastInjectionHostReferenceProvider() {
 
@@ -61,6 +62,12 @@ public final class LanguageReferenceProvider extends PsiReferenceContributor {
         return PsiUtilEx.isStringOrCharacterLiteral(expression);
       }
     }), new PsiReferenceProvider() {
+
+      @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PsiLiteral;
+      }
+
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
         final PsiLiteralExpression expression = (PsiLiteralExpression)psiElement;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.build.BuildContentManager;
@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -122,10 +123,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
+  @NotNull
+  protected Module createModule(@NotNull DataNode<E> module, @NotNull IdeModifiableModelsProvider modelsProvider) {
+    ModuleData data = module.getData();
+    return modelsProvider.newModule(data);
+  }
+
   private void createModules(@NotNull Collection<? extends DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
-    for (final DataNode<E> module : toCreate) {
-      ModuleData data = module.getData();
-      final Module created = modelsProvider.newModule(data);
+    for (DataNode<E> module : toCreate) {
+      Module created = createModule(module, modelsProvider);
       module.putUserData(MODULE_KEY, created);
 
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
@@ -466,7 +472,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
-    Collections.sort(noOrderAwareItems, new Comparator<OrderEntry>() {
+    noOrderAwareItems.sort(new Comparator<OrderEntry>() {
       @Override
       public int compare(OrderEntry o1, OrderEntry o2) {
         return o1.toString().compareTo(o2.toString());

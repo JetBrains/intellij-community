@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.tasks;
 
 import com.intellij.tasks.impl.SimpleComment;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.i18n.GithubBundle;
 
 import java.util.Date;
 
@@ -35,10 +36,12 @@ public class GithubComment extends SimpleComment {
     }
     builder.append("</td><td>");
     if (getAuthor() != null) {
-      builder.append("<b>Author:</b> <a href=\"").append(myUserHtmlUrl).append("\">").append(getAuthor()).append("</a><br>");
+      builder.append("<b>").append(GithubBundle.message("task.comment.author")).append("</b> <a href=\"").append(myUserHtmlUrl)
+        .append("\">").append(getAuthor()).append("</a><br>");
     }
     if (getDate() != null) {
-      builder.append("<b>Date:</b> ").append(DateFormatUtil.formatDateTime(getDate())).append("<br>");
+      builder.append("<b>").append(GithubBundle.message("task.comment.date")).append("</b> ")
+        .append(DateFormatUtil.formatDateTime(getDate())).append("<br>");
     }
     builder.append("</td></tr></table>");
 

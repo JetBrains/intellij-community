@@ -86,15 +86,15 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
       .addListener(new TabsListener() {
         @Override
-        public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
-          final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-          final FileEditor oldEditor = oldSelection != null ? editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject()) : null;
+        public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+          FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
+          FileEditor oldEditor = oldSelection != null ? editorManager.getSelectedEditor((VirtualFile)oldSelection.getObject()) : null;
           if (oldEditor != null) {
             oldEditor.deselectNotify();
           }
 
           VirtualFile newFile = (VirtualFile)newSelection.getObject();
-          final FileEditor newEditor = editorManager.getSelectedEditor(newFile);
+          FileEditor newEditor = editorManager.getSelectedEditor(newFile);
           if (newEditor != null) {
             newEditor.selectNotify();
           }
@@ -105,7 +105,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         }
       })
       .setSelectionChangeHandler((info, requestFocus, doChangeSelection) -> {
-        final ActionCallback result = new ActionCallback();
+        ActionCallback result = new ActionCallback();
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myProject)).onSelectionChanged();
           result.notify(doChangeSelection.run());
@@ -136,12 +136,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   }
 
   @NotNull
-  public ActionCallback setSelectedIndex(final int indexToSelect) {
+  public ActionCallback setSelectedIndex(int indexToSelect) {
     return setSelectedIndex(indexToSelect, true);
   }
 
   @NotNull
-  public ActionCallback setSelectedIndex(final int indexToSelect, boolean focusEditor) {
+  public ActionCallback setSelectedIndex(int indexToSelect, boolean focusEditor) {
     if (indexToSelect >= myTabs.getTabCount()) return ActionCallback.REJECTED;
     return myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
   }
@@ -156,18 +156,18 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     return myTabs.getComponent();
   }
 
-  public ActionCallback removeTabAt(final int componentIndex, int indexToSelect, boolean transferFocus) {
+  public ActionCallback removeTabAt(int componentIndex, int indexToSelect, boolean transferFocus) {
     TabInfo toSelect = indexToSelect >= 0 && indexToSelect < myTabs.getTabCount() ? myTabs.getTabAt(indexToSelect) : null;
-    final TabInfo info = myTabs.getTabAt(componentIndex);
+    TabInfo info = myTabs.getTabAt(componentIndex);
     // removing hidden tab happens on end of drag-out, we've already selected the correct tab for this case in dragOutStarted
     if (info.isHidden() || !myProject.isOpen()) {
       toSelect = null;
     }
-    final ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
+    ActionCallback callback = myTabs.removeTab(info, toSelect, transferFocus);
     return myProject.isOpen() ? callback : ActionCallback.DONE;
   }
 
-  public ActionCallback removeTabAt(final int componentIndex, int indexToSelect) {
+  public ActionCallback removeTabAt(int componentIndex, int indexToSelect) {
     return removeTabAt(componentIndex, indexToSelect, true);
   }
 
@@ -175,33 +175,33 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     return myTabs.getIndexOf(myTabs.getSelectedInfo());
   }
 
-  void setForegroundAt(final int index, final Color color) {
+  void setForegroundAt(int index, @NotNull Color color) {
     myTabs.getTabAt(index).setDefaultForeground(color);
   }
 
-  void setWaveColor(final int index, @Nullable final Color color) {
-    final TabInfo tab = myTabs.getTabAt(index);
+  void setWaveColor(int index, @Nullable Color color) {
+    TabInfo tab = myTabs.getTabAt(index);
     tab.setDefaultStyle(color == null ? SimpleTextAttributes.STYLE_PLAIN : SimpleTextAttributes.STYLE_WAVED);
     tab.setDefaultWaveColor(color);
   }
 
-  void setIconAt(final int index, final Icon icon) {
+  void setIconAt(int index, Icon icon) {
     myTabs.getTabAt(index).setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null);
   }
 
-  public void setTitleAt(final int index, final String text) {
+  void setTitleAt(int index, @NotNull String text) {
     myTabs.getTabAt(index).setText(text);
   }
 
-  void setToolTipTextAt(final int index, final String text) {
+  void setToolTipTextAt(int index, String text) {
     myTabs.getTabAt(index).setTooltipText(text);
   }
 
-  void setBackgroundColorAt(final int index, final Color color) {
+  void setBackgroundColorAt(int index, @Nullable Color color) {
     myTabs.getTabAt(index).setTabColor(color);
   }
 
-  void setTabLayoutPolicy(final int policy) {
+  void setTabLayoutPolicy(int policy) {
     switch (policy) {
       case JTabbedPane.SCROLL_TAB_LAYOUT:
         myTabs.getPresentation().setSingleRow(true);
@@ -214,7 +214,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  public void setTabPlacement(final int tabPlacement) {
+  public void setTabPlacement(int tabPlacement) {
     switch (tabPlacement) {
       case SwingConstants.TOP:
         myTabs.getPresentation().setTabsPosition(JBTabsPosition.top);
@@ -236,25 +236,25 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  void updateTabsLayout(TabsLayoutInfo newTabsLayoutInfo) {
+  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
     myTabs.updateTabsLayout(newTabsLayoutInfo);
   }
 
   /**
-   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
+   * @param ignorePopup if {@code false} and context menu is shown currently for some tab,
    *                    component for which menu is invoked will be returned
    */
   @Nullable
   public Object getSelectedComponent(boolean ignorePopup) {
-    final TabInfo info = ignorePopup ? myTabs.getSelectedInfo() : myTabs.getTargetInfo();
+    TabInfo info = ignorePopup ? myTabs.getSelectedInfo() : myTabs.getTargetInfo();
     return info != null ? info.getComponent() : null;
   }
 
   public void insertTab(@NotNull VirtualFile file,
-                        final Icon icon,
+                        Icon icon,
                         @NotNull JComponent component,
                         @Nullable String tooltip,
-                        final int indexToInsert,
+                        int indexToInsert,
                         @NotNull Disposable parentDisposable) {
     TabInfo tab = myTabs.findInfo(file);
     if (tab != null) {
@@ -270,7 +270,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       .setDragOutDelegate(myDragOutDelegate);
     tab.setTestableUi(new MyQueryable(tab));
 
-    final DefaultActionGroup tabActions = new DefaultActionGroup();
+    DefaultActionGroup tabActions = new DefaultActionGroup();
     tabActions.add(new CloseTab(component, file, parentDisposable));
 
     tab.setTabLabelActions(tabActions, ActionPlaces.EDITOR_TAB);
@@ -325,12 +325,13 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     return EditorTabPresentationUtil.getEditorTabBackgroundColor(project, file, null);
   }
 
-  public Component getComponentAt(final int i) {
-    final TabInfo tab = myTabs.getTabAt(i);
+  public Component getComponentAt(int i) {
+    TabInfo tab = myTabs.getTabAt(i);
     return tab.getComponent();
   }
 
   public final class CloseTab extends AnAction implements DumbAware {
+    @NotNull
     private final VirtualFile myFile;
 
     CloseTab(@NotNull JComponent c, @NotNull VirtualFile file, @NotNull Disposable parentDisposable) {
@@ -347,8 +348,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
       EditorWindow window;
       if (ActionPlaces.EDITOR_TAB.equals(e.getPlace())) {
         window = myWindow;
@@ -372,12 +373,12 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
   private final class MyDataProvider implements DataProvider {
     @Override
-    public Object getData(@NotNull @NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        final VirtualFile selectedFile = myWindow.getSelectedFile();
+        VirtualFile selectedFile = myWindow.getSelectedFile();
         return selectedFile != null && selectedFile.isValid() ? selectedFile : null;
       }
       if (EditorWindow.DATA_KEY.is(dataId)) {
@@ -419,7 +420,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     @Override
     public void mouseReleased(MouseEvent e) {
       if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
-        final TabInfo info = myTabs.findInfo(e);
+        TabInfo info = myTabs.findInfo(e);
         if (info != null) {
           IdeEventQueue.getInstance().blockNextEvents(e);
           if (e.isAltDown() && e.getButton() == MouseEvent.BUTTON1) {//close others
@@ -436,13 +437,13 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     @Override
-    public void mousePressed(final MouseEvent e) {
+    public void mousePressed(MouseEvent e) {
       if (UIUtil.isActionClick(e)) {
         if (e.getClickCount() == 1) {
           myActionClickCount = 0;
         }
         // clicks on the close window button don't count in determining whether we have a double-click on tab (IDEA-70403)
-        final Component deepestComponent = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
+        Component deepestComponent = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
         if (!(deepestComponent instanceof InplaceButton)) {
           myActionClickCount++;
         }
@@ -455,7 +456,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     @Override
     public void mouseClicked(MouseEvent e) {
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown() || !SystemInfo.isMac && e.isControlDown())) {
-        final TabInfo info = myTabs.findInfo(e);
+        TabInfo info = myTabs.findInfo(e);
         Object o = info == null ? null : info.getObject();
         if (o instanceof VirtualFile) {
           ShowFilePathAction.show((VirtualFile)o, e);
@@ -464,9 +465,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  public void doHideAll(MouseEvent e) {
+  private static void doHideAll(@NotNull MouseEvent e) {
     if (!Registry.is("editor.maximize.on.double.click")) return;
-    final ActionManager mgr = ActionManager.getInstance();
+    ActionManager mgr = ActionManager.getInstance();
     mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
   }
 
@@ -478,7 +479,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     @Override
     public void dragOutStarted(@NotNull MouseEvent mouseEvent, @NotNull TabInfo info) {
       TabInfo previousSelection = info.getPreviousSelection();
-      final Image img = JBTabsImpl.getComponentImage(info);
+      Image img = JBTabsImpl.getComponentImage(info);
       if (previousSelection == null) {
         previousSelection = myTabs.getToSelectOnRemoveOf(info);
       }
@@ -640,7 +641,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
 
     @Override
-    protected void paintChildren(final Graphics g) {
+    protected void paintChildren(Graphics g) {
       super.paintChildren(g);
       drawBorder(g);
     }
@@ -672,7 +673,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       return new JBEditorTabsBorder(this);
     }
 
-    private boolean active = false;
+    private boolean active;
 
     @NotNull
     @Override
@@ -717,11 +718,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       int index = getIndexOf(info);
       if (index != -1) {
         VirtualFile file = myWindow.getFileAt(index);
-        if (file != null) {
-          int indexToSelect = myWindow.calcIndexToSelect(file, index);
-          if (indexToSelect >= 0 && indexToSelect < getTabs().size()) {
-            return getTabAt(indexToSelect);
-          }
+        int indexToSelect = myWindow.calcIndexToSelect(file, index);
+        if (indexToSelect >= 0 && indexToSelect < getTabs().size()) {
+          return getTabAt(indexToSelect);
         }
       }
       return super.getToSelectOnRemoveOf(info);

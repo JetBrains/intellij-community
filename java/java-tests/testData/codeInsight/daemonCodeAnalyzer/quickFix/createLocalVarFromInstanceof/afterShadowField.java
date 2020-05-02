@@ -1,11 +1,11 @@
 // "Insert '(String)x' declaration" "true"
 
 class C {
-  Object x = new Object();
+  Object s = new Object();
 
   void x() {
     if (x instanceof String) {
-        String x = (String) this.x;
+        String s1 = (String) x;
         <caret>
     }
   }

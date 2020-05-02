@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,20 +14,27 @@ public class DeprecatedMethodException extends RuntimeException {
     super(message);
   }
 
+  /**
+   * This method reports the error only once for every same {@param message}
+   */
   public static void report(@NotNull String message) {
-    String text = "This method in '" + ReflectionUtil.findCallerClass(2) +
+    if (!BEAT_DEAD_HORSE.add(message)) return;
+    Class<?> superClass = ReflectionUtil.findCallerClass(2);
+    String superClassName = superClass != null ? superClass.getName() : "<no class>";
+    String text = "This method in '" + superClassName +
                       "' is deprecated and going to be removed soon. " + message;
-    if (BEAT_DEAD_HORSE.add(text)) {
-      LOG.warn(new DeprecatedMethodException(text));
-    }
+    LOG.warn(new DeprecatedMethodException(text));
   }
 
+  /**
+   * This method reports the error only for every same parameters
+   */
   public static void reportDefaultImplementation(@NotNull Class<?> thisClass, @NotNull String methodName, @NotNull String message) {
+    if (!BEAT_DEAD_HORSE.add(methodName + "###" + message + "###" + thisClass)) return;
     Class<?> superClass = ReflectionUtil.findCallerClass(2);
-    String text = "The default implementation of method '" +superClass.getName()+"."+methodName+"' is deprecated, you need to override it in '" +
+    String superClassName = superClass != null ? superClass.getName() : "<no class>";
+    String text = "The default implementation of method '" + superClassName + "." + methodName + "' is deprecated, you need to override it in '" +
                   thisClass + "'. " + message;
-    if (BEAT_DEAD_HORSE.add(text)) {
-      LOG.warn(new DeprecatedMethodException(text));
-    }
+    LOG.warn(new DeprecatedMethodException(text));
   }
 }

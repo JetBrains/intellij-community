@@ -122,9 +122,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     Frame curFrame = new Frame();
     Object curResult = null;
     final StringBuilder curString = new StringBuilder();
-    while (true) {
-      if (curPos > text.length()) break;
-      final char ch = curPos++ < text.length()? text.charAt(curPos-1) : 0;
+    while (curPos <= text.length()) {
+      final char ch = curPos++ < text.length() ? text.charAt(curPos - 1) : 0;
       switch (curFrame.state) {
         case init:
           if (Character.isWhitespace(ch)) {
@@ -144,10 +143,10 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           else if (ch == '(' || Character.isWhitespace(ch)) {
             curFrame.methodName = curString.toString();
             curString.setLength(0);
-            curFrame.state = ch == '('? State.param_start : State.name_end;
+            curFrame.state = ch == '(' ? State.param_start : State.name_end;
           }
           else {
-            throwError(curPos, ch, "'"+curString+ch+"' method name start is invalid, '(' expected");
+            throwError(curPos, ch, "'" + curString + ch + "' method name start is invalid, '(' expected");
           }
           break;
         case name_end:
@@ -155,7 +154,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.param_start;
           }
           else if (!Character.isWhitespace(ch)) {
-            throwError(curPos, ch, "'(' expected after '"+curFrame.methodName+"'");
+            throwError(curPos, ch, "'(' expected after '" + curFrame.methodName + "'");
           }
           break;
         case param_start:
@@ -244,8 +243,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curFrame.state = State.invoke_end;
           }
           else {
-            throwError(curPos, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
-                                            + "expected after '" + curFrame.methodName + "' call");
+            throwError(curPos, ch, (stack.isEmpty() ? "'.' or <eof>" : "'.' or ')'")
+                                   + "expected after '" + curFrame.methodName + "' call");
           }
           break;
         case invoke_end:
@@ -266,8 +265,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
             curResult = null;
           }
           else if (!Character.isWhitespace(ch)) {
-            throwError(curPos, ch, (stack.isEmpty()? "'.' or <eof>" : "'.' or ')'")
-                                            + "expected after '" + curFrame.methodName + "' call");
+            throwError(curPos, ch, (stack.isEmpty() ? "'.' or <eof>" : "'.' or ')'")
+                                   + "expected after '" + curFrame.methodName + "' call");
           }
           break;
       }
@@ -389,14 +388,14 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     sb.append(isInterface ? "interface ": "class ");
     dumpType(aClass, aClass, sb, classes);
     final Type superClass = aClass.getGenericSuperclass();
-    final Class<?> rawSuperClass = (Class)(superClass instanceof ParameterizedType ? ((ParameterizedType)superClass).getRawType() : superClass);
+    final Class<?> rawSuperClass = (Class<?>)(superClass instanceof ParameterizedType ? ((ParameterizedType)superClass).getRawType() : superClass);
     if (superClass != null && classes.containsKey(rawSuperClass)) {
       sb.append(" extends ");
       dumpType(null, superClass, sb, classes);
     }
     int implementsIdx = 1;
     for (Type superInterface : aClass.getGenericInterfaces()) {
-      final Class<?> rawSuperInterface = (Class)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superInterface);
+      final Class<?> rawSuperInterface = (Class<?>)(superInterface instanceof ParameterizedType ? ((ParameterizedType)superInterface).getRawType() : superInterface);
       if (classes.containsKey(rawSuperInterface)) {
         if (implementsIdx++ == 1) sb.append(isInterface? " extends " : " implements ");
         else sb.append(", ");
@@ -435,7 +434,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       }
     }
     else if (type instanceof TypeVariable) {
-      TypeVariable typeVariable = (TypeVariable)type;
+      TypeVariable<?> typeVariable = (TypeVariable<?>)type;
       sb.append(typeVariable.getName());
       if (typeVariable.getGenericDeclaration() == owner) {
         dumpTypeParametersArray(null, typeVariable.getBounds(), sb, " extends ", "", classes);
@@ -665,7 +664,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     @Override
     public boolean equals(final Object obj) {
       return obj instanceof LazyPresentablePattern &&
-             ((LazyPresentablePattern)obj).myHashCode == myHashCode;
+             ((LazyPresentablePattern<?>)obj).myHashCode == myHashCode;
     }
   }
 }

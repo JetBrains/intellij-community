@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
+import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.icons.AllIcons;
@@ -39,6 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.sun.jdi.*;
@@ -145,8 +147,7 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
       private @Nullable DebuggerDfaRunner createRunner(StackFrameProxyImpl proxy) {
         Callable<DebuggerDfaRunner> action = () -> {
           try {
-            StackFrame frame = proxy.getStackFrame();
-            return createDfaRunner(frame, pointer.getElement());
+            return createDfaRunner(proxy, pointer.getElement());
           }
           catch (VMDisconnectedException | VMOutOfMemoryException | InternalException | 
             EvaluateException | InconsistentDebugInfoException | InvalidStackFrameException ignore) {
@@ -191,12 +192,12 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
 
   private void cleanUp() {
     cancelComputation();
-    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myInlays));
+    UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(myInlays));
   }
 
   private void displayInlays(Map<PsiExpression, DfaHint> hints) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Disposer.dispose(myInlays);
+    cleanUp();
     if (hints.isEmpty()) return;
     EditorImpl editor = ObjectUtils.tryCast(FileEditorManager.getInstance(myProject).getSelectedTextEditor(), EditorImpl.class);
     if (editor == null) return;
@@ -229,15 +230,16 @@ public class DfaAssist implements DebuggerContextListener, Disposable {
     return visitor.getHints();
   }
 
-  static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrame frame, @Nullable PsiElement element) {
+  static @Nullable DebuggerDfaRunner createDfaRunner(@NotNull StackFrameProxyEx proxy, @Nullable PsiElement element)
+    throws EvaluateException {
     if (element == null || !element.isValid() || DumbService.isDumb(element.getProject())) return null;
 
-    if (!locationMatches(element, frame.location())) return null;
+    if (!locationMatches(element, proxy.location())) return null;
     PsiElement anchor = getAnchor(element);
     if (anchor == null) return null;
     PsiElement body = getCodeBlock(anchor);
     if (body == null) return null;
-    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, anchor, frame);
+    DebuggerDfaRunner runner = new DebuggerDfaRunner(body, anchor, proxy);
     return runner.isValid() ? runner : null;
   }
 

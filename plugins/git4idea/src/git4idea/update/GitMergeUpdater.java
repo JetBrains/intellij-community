@@ -23,6 +23,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.*;
+import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
@@ -255,8 +256,8 @@ public class GitMergeUpdater extends GitUpdater {
     
     private static Params makeParams(Project project) {
       Params params = new Params(project);
-      params.setErrorNotificationTitle("Can't complete update");
-      params.setMergeDescription("Merge conflicts detected. Resolve them before continuing update.");
+      params.setErrorNotificationTitle(GitBundle.message("merge.update.project.generic.error.title"));
+      params.setMergeDescription(GitBundle.message("merge.update.project.conflict.merge.description.label"));
       return params;
     }
 

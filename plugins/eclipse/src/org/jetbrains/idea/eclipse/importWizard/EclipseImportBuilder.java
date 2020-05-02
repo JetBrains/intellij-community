@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.application.options.CodeStyle;
@@ -112,7 +112,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           }
           return true;
         });
-        Collections.sort(roots, (path1, path2) -> {
+        roots.sort((path1, path2) -> {
           final String projectName1 = EclipseProjectFinder.findProjectName(path1);
           final String projectName2 = EclipseProjectFinder.findProjectName(path2);
           return projectName1 != null && projectName2 != null ? projectName1.compareToIgnoreCase(projectName2) : 0;

@@ -14,10 +14,7 @@ import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeyMapBundle;
-import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.keymap.*;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.ShortcutRestrictions;
@@ -103,8 +100,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         @Override
         public void actionPerformed(ActionEvent e) {
           KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(preferKeyPositionOverCharOption.isSelected());
-          VMOptions.writeOption("com.jetbrains.use.old.keyevent.processing", "=",
-                                Boolean.toString(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
+          VMOptions.writeOption(KeyboardSettingsExternalizable.VMOption, "=",
+                                Boolean.toString(!KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
           ApplicationManager.getApplication().invokeLater(
             () -> ApplicationManager.getApplication().restart(),
             ModalityState.NON_MODAL
@@ -134,6 +131,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     mySystemShortcutConflictsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
     add(mySystemShortcutConflictsPanel, BorderLayout.SOUTH);
+
+    KeymapExtension.EXTENSION_POINT_NAME.addChangeListener(this::currentKeymapChanged, this);
   }
 
   private void fillConflictsPanel(@NotNull Keymap keymap) {

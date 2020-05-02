@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.PowerSaveMode;
@@ -18,11 +18,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PostponableLogRefresher implements VcsLogRefresher {
+public final class PostponableLogRefresher implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
-  @NotNull protected final VcsLogData myLogData;
-  @NotNull private final Set<VirtualFile> myRootsToRefresh = new HashSet<>();
-  @NotNull private final Set<VcsLogWindow> myLogWindows = new HashSet<>();
+  private final @NotNull VcsLogData myLogData;
+  private final @NotNull Set<VirtualFile> myRootsToRefresh = new HashSet<>();
+  private final @NotNull Set<VcsLogWindow> myLogWindows = new HashSet<>();
 
   public PostponableLogRefresher(@NotNull VcsLogData logData) {
     myLogData = logData;
@@ -34,8 +34,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     });
   }
 
-  @NotNull
-  public Disposable addLogWindow(@NotNull VcsLogWindow window) {
+  public @NotNull Disposable addLogWindow(@NotNull VcsLogWindow window) {
     LOG.assertTrue(!ContainerUtil.exists(myLogWindows, w -> w.getId().equals(window.getId())),
                    "Log window with id '" + window.getId() + "' was already added.");
 
@@ -51,7 +50,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     return Registry.is("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled();
   }
 
-  protected boolean canRefreshNow() {
+  private boolean canRefreshNow() {
     if (keepUpToDate()) return true;
     return isLogVisible();
   }
@@ -79,7 +78,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   }
 
   @Override
-  public void refresh(@NotNull final VirtualFile root) {
+  public void refresh(final @NotNull VirtualFile root) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (canRefreshNow()) {
         myLogData.refresh(Collections.singleton(root));
@@ -91,28 +90,26 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     }, ModalityState.any());
   }
 
-  protected void refreshPostponedRoots() {
+  private void refreshPostponedRoots() {
     Set<VirtualFile> toRefresh = new HashSet<>(myRootsToRefresh);
     myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
     myLogData.refresh(toRefresh);
   }
 
-  @NotNull
-  public Set<VcsLogWindow> getLogWindows() {
+  public @NotNull Set<VcsLogWindow> getLogWindows() {
     return myLogWindows;
   }
 
   public static class VcsLogWindow {
-    @NotNull private final String myId;
-    @NotNull private final VisiblePackRefresher myRefresher;
+    private final @NotNull String myId;
+    private final @NotNull VisiblePackRefresher myRefresher;
 
     public VcsLogWindow(@NotNull String id, @NotNull VisiblePackRefresher refresher) {
       myId = id;
       myRefresher = refresher;
     }
 
-    @NotNull
-    public VisiblePackRefresher getRefresher() {
+    public @NotNull VisiblePackRefresher getRefresher() {
       return myRefresher;
     }
 
@@ -120,8 +117,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
       return true;
     }
 
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return myId;
     }
 

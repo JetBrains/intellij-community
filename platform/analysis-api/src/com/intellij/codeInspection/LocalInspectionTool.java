@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
@@ -15,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Base class for local inspections.
+ */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
 
@@ -77,12 +80,12 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Override this method and return true if your inspection (unlike almost all others)
+   * Override and return {@code true} if your inspection (unlike almost all others)
    * must be called for every element in the whole file for each change, whatever small it was.
-   * <p/>
+   * <p>
    * For example, 'Field can be local' inspection can report the field declaration when reference to it was added inside method hundreds lines below.
    * Hence, this inspection must be rerun on every change.
-   * <p/>
+   * <p>
    * Please note that re-scanning the whole file can take considerable time and thus seriously impact the responsiveness, so
    * beg please use this mechanism once in a blue moon.
    *
@@ -93,7 +96,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Override this to report problems at file level.
+   * Override to report problems at file level.
    *
    * @param file       to check.
    * @param manager    InspectionManager to ask for ProblemDescriptor's from.
@@ -105,7 +108,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Override the method to provide your own inspection visitor, if you need to store additional state in the
+   * Override to provide your own inspection visitor, if you need to store additional state in the
    * LocalInspectionToolSession user data or get information about the inspection scope.
    * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
@@ -123,7 +126,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Override the method to provide your own inspection visitor.
+   * Override to provide your own inspection visitor.
    * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
@@ -159,7 +162,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * The method finds problem container (ex: method, class, file) that used to be shown as inspection view tree node.
+   * Returns problem container (e.g., method, class, file) that is used as inspection view tree node.
    *
    * Consider {@link com.intellij.codeInspection.lang.RefManagerExtension#getElementContainer(PsiElement)}
    * to override container element for any inspection for given language.
@@ -183,6 +186,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    */
   @Deprecated
   public void inspectionFinished(@NotNull LocalInspectionToolSession session) {}
+  
   @NotNull
   public List<ProblemDescriptor> processFile(@NotNull PsiFile file, @NotNull InspectionManager manager) {
     final ProblemsHolder holder = new ProblemsHolder(manager, file, false);

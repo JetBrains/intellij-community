@@ -70,6 +70,19 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   }
 
   @Override
+  public LookupElementRenderer<? extends LookupElement> getExpensiveRenderer() {
+    //noinspection rawtypes
+    LookupElementRenderer renderer = myDelegate.getExpensiveRenderer();
+    return renderer == null ? null : new LookupElementRenderer<LookupElementDecorator<?>>() {
+      @Override
+      public void renderElement(LookupElementDecorator<?> element, LookupElementPresentation presentation) {
+        //noinspection unchecked
+        renderer.renderElement(element.myDelegate, presentation);
+      }
+    };
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

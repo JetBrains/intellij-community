@@ -85,7 +85,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private TypeSelector mySelector;
   private final Supplier<Integer> myDuplicatesCountSupplier;
 
-  protected ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
+  public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
                                 PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
                                 boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
                                 String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,

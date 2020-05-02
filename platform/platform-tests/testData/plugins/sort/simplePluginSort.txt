@@ -21,10 +21,10 @@
 + plugin1
 + plugin2
 
-Plugin "incompatible0" is incompatible (until build 1.111111 < 202.SNAPSHOT).
-Plugin "incompatible0-alt" is incompatible (until build 1.111 < 202.SNAPSHOT).
-Plugin "incompatible1" is incompatible (since build 2001.0 > 202.SNAPSHOT).
-Plugin "incompatible2" is incompatible (until build 1.111111 < 202.SNAPSHOT).
+Plugin "incompatible0" is incompatible (until build 1.111111 < 2042.42).
+Plugin "incompatible0-alt" is incompatible (until build 1.111 < 2042.42).
+Plugin "incompatible1" is incompatible (since build 9999.0 > 2042.42).
+Plugin "incompatible2" is incompatible (until build 1.111111 < 2042.42).
 Plugin "missing4" is incompatible (supported only in IntelliJ IDEA).
 Module com.intellij.modules.duplicate is declared by plugins:
   PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml)

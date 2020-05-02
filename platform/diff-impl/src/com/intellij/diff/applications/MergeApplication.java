@@ -1,21 +1,30 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.applications;
 
+import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.merge.MergeRequest;
+import com.intellij.diff.merge.MergeRequestProducer;
 import com.intellij.diff.merge.MergeResult;
 import com.intellij.ide.CliResult;
+import com.intellij.idea.SplashManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -34,6 +43,11 @@ class MergeApplication extends DiffApplicationBase {
     return DiffBundle.message("merge.application.usage.parameters.and.description", scriptName);
   }
 
+  @Override
+  public int getRequiredModality() {
+    return NOT_IN_EDT;
+  }
+
   @NotNull
   @Override
   public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
@@ -43,19 +57,67 @@ class MergeApplication extends DiffApplicationBase {
 
     List<VirtualFile> contents = Arrays.asList(files.get(0), files.get(2), files.get(1)); // left, base, right
     VirtualFile outputFile = files.get(files.size() - 1);
-
     if (outputFile == null) throw new Exception("Can't find output file: " + ContainerUtil.getLastItem(filePaths));
-    contents = replaceNullsWithEmptyFile(contents);
 
-    AtomicReference<MergeResult> resultRef = new AtomicReference<>();
-    MergeRequest request = DiffRequestFactory.getInstance().createMergeRequestFromFiles(project, outputFile, contents,
-                                                                                        result -> resultRef.set(result));
+    CompletableFuture<CliResult> future = new CompletableFuture<>();
+    AtomicReference<CliResult> resultRef = new AtomicReference<>(new CliResult(127, null));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      MergeRequestProducer requestProducer = new MyMergeRequestProducer(project, outputFile, contents, resultRef);
 
-    DiffManagerEx.getInstance().showMergeBuiltin(project, request);
+      WindowWrapper.Mode mode = project != null ? WindowWrapper.Mode.FRAME : WindowWrapper.Mode.MODAL;
+      DiffDialogHints dialogHints = new DiffDialogHints(mode, null, wrapper -> {
+        Window window = wrapper.getWindow();
+        SplashManager.hideBeforeShow(window);
 
-    Document document = FileDocumentManager.getInstance().getCachedDocument(outputFile);
-    if (document != null) FileDocumentManager.getInstance().saveDocument(document);
+        UIUtil.runWhenWindowClosed(window, () -> {
+          future.complete(resultRef.get());
+        });
+      });
+      DiffManagerEx.getInstance().showMergeBuiltin(project, requestProducer, dialogHints);
+    });
+    return future;
+  }
 
-    return CompletableFuture.completedFuture(new CliResult(resultRef.get() != MergeResult.CANCEL ? 0 : 1, null));
+  private static class MyMergeRequestProducer implements MergeRequestProducer {
+    private final Project myProject;
+    private final VirtualFile myOutputFile;
+    private final List<VirtualFile> myContents;
+    private final AtomicReference<CliResult> myResultRef;
+
+    private MyMergeRequestProducer(@Nullable Project project,
+                                   @NotNull VirtualFile outputFile,
+                                   @NotNull List<VirtualFile> contents,
+                                   @NotNull AtomicReference<CliResult> resultRef) {
+      myProject = project;
+      myOutputFile = outputFile;
+      myContents = contents;
+      myResultRef = resultRef;
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return DiffBundle.message("merge.window.title.file", myOutputFile.getPresentableUrl());
+    }
+
+    @Override
+    public @NotNull MergeRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
+      throws DiffRequestProducerException, ProcessCanceledException {
+      try {
+        List<VirtualFile> contents = replaceNullsWithEmptyFile(myContents);
+        return DiffRequestFactory.getInstance().createMergeRequestFromFiles(myProject, myOutputFile, contents, result -> {
+          try {
+            saveIfNeeded(myOutputFile);
+          }
+          finally {
+            int exitCode = result != MergeResult.CANCEL ? 0 : 1;
+            myResultRef.set(new CliResult(exitCode, null));
+          }
+        });
+      }
+      catch (Throwable e) {
+        myResultRef.set(new CliResult(127, e.getMessage()));
+        throw new DiffRequestProducerException(e);
+      }
+    }
   }
 }

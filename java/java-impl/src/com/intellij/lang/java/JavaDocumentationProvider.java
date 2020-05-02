@@ -582,17 +582,37 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
-  public @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
-    JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
+  public @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    PsiElement target = comment.getOwner();
+    if (target == null) target = comment;
+    JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(target.getProject(), target);
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateRenderedDocInfo());
   }
 
   @Override
   public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
-    PsiClass[] classes = ((PsiJavaFile)file).getClasses();
-    for (PsiClass aClass : classes) {
-      collectDocComments(aClass, sink);
+    String fileName = file.getName();
+    if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName)) {
+      PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();
+      if (packageStatement != null) {
+        PsiElement prevElement = PsiTreeUtil.skipWhitespacesBackward(packageStatement);
+        if (prevElement instanceof PsiDocCommentBase) {
+          sink.accept((PsiDocCommentBase)prevElement);
+        }
+      }
+    }
+    else if (PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
+      PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
+      if (module != null) {
+        collectDocComment(module, sink);
+      }
+    }
+    else {
+      PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      for (PsiClass aClass : classes) {
+        collectDocComments(aClass, sink);
+      }
     }
   }
 
@@ -609,7 +629,8 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
   }
 
-  private static void collectDocComment(@NotNull PsiDocCommentOwner commentOwner, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+  private static void collectDocComment(@NotNull PsiJavaDocumentedElement commentOwner,
+                                        @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
     PsiDocComment comment = commentOwner.getDocComment();
     if (comment != null) sink.accept(comment);
   }

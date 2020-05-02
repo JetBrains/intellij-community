@@ -16,12 +16,13 @@
 package com.intellij.ide.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import org.jetbrains.annotations.Nls;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DaemonCodeAnalyzerOptionDescription extends EditorOptionDescription {
-  public DaemonCodeAnalyzerOptionDescription(String fieldName, String option, String configurableId) {
+  public DaemonCodeAnalyzerOptionDescription(String fieldName, @Nls String option, String configurableId) {
     super(fieldName, option, configurableId);
   }
 

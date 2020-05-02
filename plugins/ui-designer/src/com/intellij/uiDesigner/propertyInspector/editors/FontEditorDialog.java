@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors;
 
 import com.intellij.openapi.project.Project;
@@ -22,7 +22,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -145,7 +144,7 @@ public class FontEditorDialog extends DialogWrapper {
         result.add(FontDescriptor.fromSwingFont((String) key));
       }
     }
-    Collections.sort(result, (o1, o2) -> o1.getSwingFont().compareTo(o2.getSwingFont()));
+    result.sort((o1, o2) -> o1.getSwingFont().compareTo(o2.getSwingFont()));
     return result.toArray(new FontDescriptor[0]);
   }
 

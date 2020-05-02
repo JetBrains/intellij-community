@@ -7,11 +7,11 @@ import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public abstract class CompletionService {
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
   @Deprecated
-  public abstract void setAdvertisementText(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String text);
+  public abstract void setAdvertisementText(@Nullable @NlsContexts.PopupAdvertisement String text);
 
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors

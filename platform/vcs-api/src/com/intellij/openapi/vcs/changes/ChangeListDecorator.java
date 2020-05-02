@@ -22,6 +22,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,6 +35,7 @@ public interface ChangeListDecorator {
 
   @NotNull
   static List<ChangeListDecorator> getDecorators(@NotNull Project project) {
+    if (project.isDisposed()) return Collections.emptyList();
     //noinspection deprecation
     return ContainerUtil.concat(EP_NAME.getExtensions(project),
                                 project.getComponentInstancesOfType(ChangeListDecorator.class));

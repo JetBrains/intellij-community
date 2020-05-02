@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class CommonActionsManager {
-
   public static CommonActionsManager getInstance() {
     return ServiceManager.getService(CommonActionsManager.class);
   }

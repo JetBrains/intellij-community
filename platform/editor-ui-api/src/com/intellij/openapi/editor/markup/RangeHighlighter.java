@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +128,7 @@ public interface RangeHighlighter extends RangeMarker {
    * @param tooltipObject the error stripe tooltip objects, or {@code null} if the highlighter does not
    *                      add any error stripe markers or the marker has no tooltip.
    */
-  void setErrorStripeTooltip(@Nullable Object tooltipObject);
+  void setErrorStripeTooltip(@Nullable @Tooltip Object tooltipObject);
 
   /**
    * Returns the value indicating whether the error stripe marker has reduced width (like

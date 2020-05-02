@@ -29,8 +29,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -207,9 +205,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   private Document setupFileEditorAndDocument(@NotNull String relativePath, @NotNull String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, StandardCharsets.UTF_8);
-    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized()) {
-      EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, StandardCharsets.UTF_8);
-    }
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     deleteVFile();
 

@@ -78,39 +78,39 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
   }
 
-  protected TestCaseBuider testCase(String... lines) {
-    return new TestCaseBuider().withLines(lines);
+  protected TestCaseBuilder testCase(String... lines) {
+    return new TestCaseBuilder().withLines(lines);
   }
 
-  protected class TestCaseBuider {
-    private List<String> myLines = new ArrayList<>();
-    private List<MavenLoggedEventParser> myParsers = new ArrayList<>();
-    private List<Pair<String, Matcher<BuildEvent>>> myExpectedEvents = new ArrayList<>();
+  protected class TestCaseBuilder {
+    private final List<String> myLines = new ArrayList<>();
+    private final List<MavenLoggedEventParser> myParsers = new ArrayList<>();
+    private final List<Pair<String, Matcher<BuildEvent>>> myExpectedEvents = new ArrayList<>();
     private boolean mySkipOutput = false;
 
-    public TestCaseBuider withLines(String... lines) {
+    public TestCaseBuilder withLines(String... lines) {
       List<String> joinedAndSplitted = ContainerUtil.newArrayList(StringUtil.join(lines, "\n").split("\n"));
       myLines.addAll(joinedAndSplitted);
       return this;
     }
 
-    public TestCaseBuider withParsers(MavenLoggedEventParser... parsers) {
+    public TestCaseBuilder withParsers(MavenLoggedEventParser... parsers) {
       ContainerUtil.addAll(myParsers, parsers);
       return this;
     }
 
-    public TestCaseBuider expectSucceed(String message) {
+    public TestCaseBuilder expectSucceed(String message) {
       myExpectedEvents.add(event(message, StartEventMatcher::new));
       myExpectedEvents.add(event(message, FinishSuccessEventMatcher::new));
       return this;
     }
 
-    public TestCaseBuider expect(String message, Function<String, Matcher<BuildEvent>> creator) {
+    public TestCaseBuilder expect(String message, Function<String, Matcher<BuildEvent>> creator) {
       myExpectedEvents.add(event(message, creator));
       return this;
     }
 
-    public TestCaseBuider expect(String message, Matcher<BuildEvent> matcher) {
+    public TestCaseBuilder expect(String message, Matcher<BuildEvent> matcher) {
       myExpectedEvents.add(Pair.create(message, matcher));
       return this;
     }
@@ -221,14 +221,14 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
       return collectConsumer.myReceivedEvents;
     }
 
-    public TestCaseBuider withSkippedOutput() {
+    public TestCaseBuilder withSkippedOutput() {
       mySkipOutput = true;
       return this;
     }
   }
 
-  private class CollectConsumer implements Consumer<BuildEvent> {
-    private List<BuildEvent> myReceivedEvents = new ArrayList<>();
+  private static class CollectConsumer implements Consumer<BuildEvent> {
+    private final List<BuildEvent> myReceivedEvents = new ArrayList<>();
 
     @Override
     public void accept(BuildEvent buildEvent) {
@@ -241,7 +241,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     return Pair.create(message, creator.apply(message));
   }
 
-  public class FinishSuccessEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+  public static class FinishSuccessEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
     private final String myMessage;
 
     public FinishSuccessEventMatcher(String message) {myMessage = message;}
@@ -255,29 +255,11 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     @Override
     public void describeTo(@NotNull Description description) {
-      description.appendText("Expected successfull FinishEvent " + myMessage);
+      description.appendText("Expected successful FinishEvent " + myMessage);
     }
   }
 
-  public class FinishFailedEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
-    private final String myMessage;
-
-    public FinishFailedEventMatcher(String message) {myMessage = message;}
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof FinishEvent
-             && ((FinishEvent)item).getMessage().equals(myMessage)
-             && ((FinishEvent)item).getResult() instanceof FailureResult;
-    }
-
-    @Override
-    public void describeTo(@NotNull Description description) {
-      description.appendText("Expected failed FinishEvent " + myMessage);
-    }
-  }
-
-  public class StartEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+  public static class StartEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
     private final String myMessage;
 
     public StartEventMatcher(String message) {myMessage = message;}
@@ -294,7 +276,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
   }
 
-  public class WarningEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+  public static class WarningEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
     private final String myMessage;
 
     public WarningEventMatcher(String message) {myMessage = message;}
@@ -312,7 +294,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
   }
 
-  public class FileEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
+  public static class FileEventMatcher extends BaseMatcher<BuildEvent> implements SelfDescribing {
     private final String myMessage;
     private final String myFileName;
     private final int myLine;
@@ -340,8 +322,8 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
     }
   }
 
-  private class StubBuildOutputReader implements BuildOutputInstantReader {
-    private List<String> myLines;
+  private static class StubBuildOutputReader implements BuildOutputInstantReader {
+    private final List<String> myLines;
     private int myPosition = -1;
 
     StubBuildOutputReader(List<String> lines) {

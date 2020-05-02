@@ -106,7 +106,7 @@ public interface PsiSearchHelper {
   /**
    * Returns the scope in which references to the specified element are searched. This scope includes the result of
    * {@link PsiElement#getUseScope()} and also the results returned from the registered
-   * com.intellij.psi.search.UseScopeEnlarger instances.
+   * {@link UseScopeEnlarger} instances.
    *
    * @param element the element to return the use scope form.
    * @return the search scope instance.

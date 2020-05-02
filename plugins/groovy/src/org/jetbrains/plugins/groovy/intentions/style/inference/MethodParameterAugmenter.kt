@@ -6,6 +6,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
@@ -26,24 +28,22 @@ class MethodParameterAugmenter : TypeAugmenter() {
         return null
       }
       val scope = getFileScope(method) ?: return null
-      val options = SignatureInferenceOptions(scope, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
-      return computeInferredMethod(method, options)
+      return computeInferredMethod(method, scope)
     }
 
-    private fun computeInferredMethod(method: GrMethod, options: SignatureInferenceOptions): InferenceResult? =
+    private fun computeInferredMethod(method: GrMethod, scope : SearchScope): InferenceResult? =
       RecursionManager.doPreventingRecursion(method, true) {
         CachedValuesManager.getCachedValue(method) {
+          val options = SignatureInferenceOptions(scope, true, ClosureIgnoringInferenceContext(method.manager), lazy { unreachable() })
           val typedMethod = runInferenceProcess(method, options)
           val typeParameterSubstitutor = createVirtualToActualSubstitutor(typedMethod, method)
           CachedValueProvider.Result(InferenceResult(typedMethod, typeParameterSubstitutor), method)
         }
       }
 
-    private fun getFileScope(method: GrMethod): GlobalSearchScope? {
+    private fun getFileScope(method: GrMethod): SearchScope? {
       val originalMethod = getOriginalMethod(method)
-      return with(originalMethod.containingFile?.virtualFile) {
-        if (this == null) return null else GlobalSearchScope.fileScope(originalMethod.project, this)
-      }
+      return originalMethod.containingFile?.run {GlobalSearchScope.fileScope(this)}
     }
 
   }

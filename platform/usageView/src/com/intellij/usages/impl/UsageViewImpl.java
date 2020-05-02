@@ -258,8 +258,9 @@ public class UsageViewImpl implements UsageViewEx {
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
-            if (isDisposed() || myProject.isDisposed()) return;
-            collapseAll();
+            if (!isDisposed()) {
+              collapseAll();
+            }
           });
 
           myModelTracker.addListener(isPropertyChange-> {
@@ -278,9 +279,10 @@ public class UsageViewImpl implements UsageViewEx {
             public void valueChanged(final TreeSelectionEvent e) {
               //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
-                if (isDisposed() || myProject.isDisposed()) return;
-                updateOnSelectionChanged();
-                myNeedUpdateButtons = true;
+                if (!isDisposed()) {
+                  updateOnSelectionChanged();
+                  myNeedUpdateButtons = true;
+                }
               });
             }
           });
@@ -390,7 +392,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @NotNull
-  UsageViewSettings getUsageViewSettings() {
+  public UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
   }
 
@@ -1078,12 +1080,15 @@ public class UsageViewImpl implements UsageViewEx {
       final ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
       String description = null;
       try {
-        description = configurableUsageTarget == null ? null : "Show settings for " + configurableUsageTarget.getLongDescriptiveName();
+        description = configurableUsageTarget == null
+                      ? null
+                      : UsageViewBundle
+                        .message("action.ShowSettings.show.settings.for.description", configurableUsageTarget.getLongDescriptiveName());
       }
       catch (IndexNotReadyException ignored) {
       }
       if (description == null) {
-        description = "Show find usages settings dialog";
+        description = UsageViewBundle.message("action.ShowSettings.show.find.usages.settings.dialog.description");
       }
       getTemplatePresentation().setDescription(description);
       KeyboardShortcut shortcut =
@@ -1482,7 +1487,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public boolean isDisposed() {
-    return isDisposed;
+    return isDisposed || myProject.isDisposed();
   }
 
   private void showNode(@NotNull final UsageNode node) {

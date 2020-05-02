@@ -3,14 +3,10 @@ package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import icons.PlatformImplIcons;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,13 +33,13 @@ public class PluginGroups {
   private final Map<String, String> myDescriptions = new LinkedHashMap<>();
   private final List<IdeaPluginDescriptor> myPluginsFromRepository = new ArrayList<>();
   private final Collection<PluginId> myDisabledPluginIds = new HashSet<>();
-  private final List<? extends IdeaPluginDescriptor> myAllPlugins;
+  private final List<IdeaPluginDescriptorImpl> myAllPlugins;
   private boolean myInitialized;
   private final Set<String> myFeaturedIds = new HashSet<>();
   private Runnable myLoadingCallback;
 
   public PluginGroups() {
-    myAllPlugins = PluginManagerCore.loadUncachedDescriptors();
+    myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors();
     SwingWorker worker = new SwingWorker<List<IdeaPluginDescriptor>, Object>() {
       @Override
       protected List<IdeaPluginDescriptor> doInBackground() {
@@ -69,8 +65,6 @@ public class PluginGroups {
     };
     worker.execute();
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
-
-    initGroups(myTree, myFeaturedPlugins);
 
     Map<String, Pair<Icon, List<String>>> treeMap = new LinkedHashMap<>();
     initGroups(treeMap, myFeaturedPlugins);
@@ -114,9 +108,11 @@ public class PluginGroups {
   /**
    * @deprecated use {@link #initGroups(List, Map)} instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   protected void initGroups(Map<String, Pair<Icon, List<String>>> tree, Map<String, String> featuredPlugins) {
+    initGroups(myTree, myFeaturedPlugins);
   }
 
   protected void initGroups(@NotNull List<Group> groups, @NotNull Map<String, String> featuredPlugins) {
@@ -364,8 +360,7 @@ public class PluginGroups {
     return myGroups.get(group);
   }
 
-  @Nullable
-  IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
+  final @Nullable IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
     for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
       if (pluginDescriptor.getPluginId() == id) {
         return pluginDescriptor;
@@ -430,7 +425,12 @@ public class PluginGroups {
   void setPluginEnabledWithDependencies(@NotNull PluginId pluginId, boolean enabled) {
     initIfNeeded();
     Set<PluginId> ids = new HashSet<>();
-    collectInvolvedIds(pluginId, enabled, ids);
+    Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptor = new HashMap<>(myAllPlugins.size());
+    for (IdeaPluginDescriptorImpl pluginDescriptor : myAllPlugins) {
+      idToDescriptor.put(pluginDescriptor.getPluginId(), pluginDescriptor);
+    }
+
+    collectInvolvedIds(pluginId, enabled, ids, idToDescriptor);
     Set<IdSet> sets = new HashSet<>();
     for (PluginId id : ids) {
       IdSet set = getSet(id);
@@ -451,42 +451,33 @@ public class PluginGroups {
     }
   }
 
-  private void collectInvolvedIds(PluginId pluginId, boolean toEnable, Set<PluginId> ids) {
+  private void collectInvolvedIds(@NotNull PluginId pluginId,
+                                  boolean toEnable,
+                                  @NotNull Set<PluginId> ids,
+                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptor) {
     ids.add(pluginId);
     if (toEnable) {
-      for (PluginId id : getNonOptionalDependencies(pluginId)) {
-        collectInvolvedIds(id, true, ids);
+      IdeaPluginDescriptorImpl descriptor = idToDescriptor.get(pluginId);
+      if (descriptor != null) {
+        for (PluginDependency dependency : descriptor.getPluginDependencies()) {
+          if (!dependency.isOptional && dependency.id != PluginManagerCore.CORE_ID) {
+            collectInvolvedIds(dependency.id, true, ids, idToDescriptor);
+          }
+        }
       }
     }
     else {
-      Condition<PluginId> condition = id -> pluginId == id;
-      for (final IdeaPluginDescriptor plugin : myAllPlugins) {
-        if (null != ContainerUtil.find(plugin.getDependentPluginIds(), condition) &&
-            null == ContainerUtil.find(plugin.getOptionalDependentPluginIds(), condition)) {
-          collectInvolvedIds(plugin.getPluginId(), false, ids);
+      for (IdeaPluginDescriptorImpl plugin : myAllPlugins) {
+        for (PluginDependency dependency : plugin.getPluginDependencies()) {
+          if (!dependency.isOptional && dependency.id == pluginId) {
+            collectInvolvedIds(plugin.getPluginId(), false, ids, idToDescriptor);
+          }
         }
       }
     }
   }
 
-  @NotNull
-  private List<PluginId> getNonOptionalDependencies(PluginId id) {
-    List<PluginId> result = new ArrayList<>();
-    IdeaPluginDescriptor descriptor = findPlugin(id);
-    if (descriptor != null) {
-      for (PluginId pluginId : descriptor.getDependentPluginIds()) {
-        if (pluginId == PluginManagerCore.CORE_ID) {
-          continue;
-        }
-        if (!ArrayUtil.contains(pluginId, descriptor.getOptionalDependentPluginIds())) {
-          result.add(pluginId);
-        }
-      }
-    }
-    return result;
-  }
-
-  public static class Group {
+  public static final class Group {
     private final String myName;
     private final Icon myIcon;
     private final String myDescription;
@@ -499,23 +490,19 @@ public class PluginGroups {
       myPluginIdDescription = pluginIdDescription;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
-    @Nullable
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myIcon;
     }
 
-    @Nullable
-    public String getDescription() {
+    public @Nullable String getDescription() {
       return myDescription;
     }
 
-    @NotNull
-    public List<String> getPluginIdDescription() {
+    public @NotNull List<String> getPluginIdDescription() {
       return myPluginIdDescription;
     }
   }

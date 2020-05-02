@@ -1,4 +1,4 @@
-/*****************************************************************************
+/*
  * Copyright (c) PicoContainer Organization. All rights reserved.            *
  * ------------------------------------------------------------------------- *
  * The software in this package is published under the terms of the BSD      *
@@ -6,15 +6,13 @@
  * the LICENSE.txt file.                                                     *
  *                                                                           *
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant   *
- *****************************************************************************/
-
+*/
 package org.picocontainer;
 
 /**
  * Subclass of {@link PicoException} that is thrown when there is a problem initializing the container or some other
  * part of the PicoContainer api, for example, when a cyclic dependency between components occurs.
  *
- * @version $Revision$
  * @since 1.0
  */
 public class PicoInitializationException extends PicoException {

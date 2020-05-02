@@ -5,6 +5,8 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -38,26 +40,26 @@ public class MessagesEx extends Messages {
     return fileIsReadOnly(project, file.getPresentableUrl());
   }
 
-  public static MessageInfo error(Project project, String message) {
+  public static MessageInfo error(Project project, @DialogMessage String message) {
     return error(project, message, UIBundle.message("error.dialog.title"));
   }
 
   @NotNull
-  public static MessageInfo error(Project project, String message, String title) {
+  public static MessageInfo error(Project project, @DialogMessage String message, @DialogTitle String title) {
     return new MessageInfo(project, message, title);
   }
 
-  public static void showErrorDialog(@Nullable Component parent, String message, @NotNull String title) {
+  public static void showErrorDialog(@Nullable Component parent, @DialogMessage String message, @NotNull @DialogTitle String title) {
     if (parent != null) Messages.showErrorDialog(parent, message, title);
     else showErrorDialog(message, title);
   }
 
-  public static void showWarningDialog(@Nullable Component parent, String message, @NotNull String title) {
+  public static void showWarningDialog(@Nullable Component parent, @DialogMessage String message, @NotNull @DialogTitle String title) {
     if (parent != null) Messages.showWarningDialog(parent, message, title);
     else showWarningDialog(message, title);
   }
 
-  public static void showInfoMessage(@Nullable Component parent, String message, @NotNull String title) {
+  public static void showInfoMessage(@Nullable Component parent, @DialogMessage String message, @NotNull @DialogTitle String title) {
     if (parent != null) Messages.showInfoMessage(parent, message, title);
     else showInfoMessage(message, title);
   }
@@ -74,7 +76,7 @@ public class MessagesEx extends Messages {
       myProject = project;
     }
 
-    public BaseDialogInfo(Project project, @NotNull String message, String title, Icon icon) {
+    public BaseDialogInfo(Project project, @NotNull @DialogMessage String message, @DialogTitle String title, Icon icon) {
       this(project);
       myMessage = message;
       myTitle = title;
@@ -82,7 +84,7 @@ public class MessagesEx extends Messages {
     }
 
     @NotNull
-    public ThisClass setTitle(String title) {
+    public ThisClass setTitle(@DialogTitle String title) {
       myTitle = title;
       return getThis();
     }
@@ -92,7 +94,7 @@ public class MessagesEx extends Messages {
     }
 
     @NotNull
-    public ThisClass appendMessage(@NotNull String message) {
+    public ThisClass appendMessage(@NotNull @DialogMessage String message) {
       myMessage += message;
       return getThis();
     }
@@ -111,7 +113,7 @@ public class MessagesEx extends Messages {
       return getThis();
     }
 
-    public void setMessage(@NotNull String message) {
+    public void setMessage(@NotNull @DialogMessage String message) {
       myMessage = message;
     }
 

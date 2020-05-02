@@ -11,7 +11,7 @@ import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.lang.UrlClassLoader
 import java.nio.file.Paths
 
-object LangDownloader {
+internal object LangDownloader {
   private val downloader by lazy { DownloadableFileService.getInstance() }
 
   fun download(lang: Lang, project: Project?): Boolean {
@@ -21,7 +21,7 @@ object LangDownloader {
     val result = downloader.createDownloader(
       listOf(downloader.createFileDescription(lang.remote.url, lang.remote.fileName)),
       msg("grazie.settings.proofreading.languages.download.name", lang.nativeName)
-    ).downloadFilesWithProgress(GrazieDynamic.dynamicFolder.canonicalPath, project, null)
+    ).downloadFilesWithProgress(GrazieDynamic.dynamicFolder.toRealPath().toString(), project, null)
 
     // null if canceled or failed, zero result if nothing found
     if (result != null && result.isNotEmpty()) {

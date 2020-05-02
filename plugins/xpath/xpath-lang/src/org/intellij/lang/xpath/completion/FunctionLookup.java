@@ -17,8 +17,8 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.openapi.util.Comparing;
 import icons.XpathIcons;
+import java.util.Objects;
 import org.intellij.lang.xpath.context.functions.Function;
 
 public class FunctionLookup extends AbstractLookup {
@@ -55,7 +55,7 @@ public class FunctionLookup extends AbstractLookup {
 
     final FunctionLookup that = (FunctionLookup)o;
 
-    if (!Comparing.equal(myPresentation, that.myPresentation)) return false;
+    if (!Objects.equals(myPresentation, that.myPresentation)) return false;
 
     return true;
   }

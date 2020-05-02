@@ -2,7 +2,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -594,7 +593,7 @@ public class AnnotationUtil {
     if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attributeName)) attributeName = null;
     for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
       final String name = attribute.getName();
-      if (Comparing.equal(name, attributeName) || attributeName == null && PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
+      if (Objects.equals(name, attributeName) || attributeName == null && PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(name)) {
         return attribute;
       }
     }

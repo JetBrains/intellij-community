@@ -253,9 +253,9 @@ public final class NST {
           IconLoader.getDarkIcon(id.getIcon(), true) : null;
 
         if (id.darkIcon != null) {
-          id.fMulX = getIconScaleForTouchbar(id.getIcon());
-          id.scaledWidth = Math.round(id.getIcon().getIconWidth()*id.fMulX);
-          id.scaledHeight = Math.round(id.getIcon().getIconHeight()*id.fMulX);
+          id.fMulX = getIconScaleForTouchbar(id.darkIcon);
+          id.scaledWidth = Math.round(id.darkIcon.getIconWidth()*id.fMulX);
+          id.scaledHeight = Math.round(id.darkIcon.getIconHeight()*id.fMulX);
           final int sizeInBytes = id.scaledWidth * id.scaledHeight * 4;
           final int totalSize = sizeInBytes + 4;
           byteCount += totalSize;

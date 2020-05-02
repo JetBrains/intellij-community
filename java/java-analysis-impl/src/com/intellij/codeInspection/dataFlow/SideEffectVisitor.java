@@ -53,7 +53,7 @@ public class SideEffectVisitor extends StandardInstructionVisitor {
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
                                                DataFlowRunner runner,
                                                DfaMemoryState memState) {
-    if (instruction.shouldFlushFields()) {
+    if (!instruction.getMutationSignature().isPure()) {
       runner.cancel();
     }
     return super.visitMethodCall(instruction, runner, memState);

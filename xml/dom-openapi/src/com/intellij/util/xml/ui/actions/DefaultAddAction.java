@@ -24,12 +24,12 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     super(XmlDomBundle.messagePointer("action.add"));
   }
 
-  public DefaultAddAction(@Nls @NlsActions.ActionText String text) {
+  public DefaultAddAction(@NlsActions.ActionText String text) {
     super(text);
   }
 
-  public DefaultAddAction(@Nls @NlsActions.ActionText String text,
-                          @Nls @NlsActions.ActionDescription String description, Icon icon) {
+  public DefaultAddAction(@NlsActions.ActionText String text,
+                          @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 

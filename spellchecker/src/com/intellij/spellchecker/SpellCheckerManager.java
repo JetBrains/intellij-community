@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
@@ -81,9 +81,9 @@ public class SpellCheckerManager implements Disposable {
     myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
     myCustomDictFileListener = new CustomDictFileListener(settings);
     LocalFileSystem.getInstance().addVirtualFileListener(myCustomDictFileListener);
-    BundledDictionaryProvider.EP_NAME.addExtensionPointListener(this::fillEngineDictionary, this);
-    RuntimeDictionaryProvider.EP_NAME.addExtensionPointListener(this::fillEngineDictionary, this);
-    CustomDictionaryProvider.EP_NAME.addExtensionPointListener(this::fillEngineDictionary, this);
+    BundledDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
+    RuntimeDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
+    CustomDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
   }
 
   @SuppressWarnings("unused")  // used in Rider

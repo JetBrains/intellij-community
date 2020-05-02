@@ -181,11 +181,6 @@ public class JUnit5Framework extends JavaTestFramework {
   }
 
   @Override
-  public char getMnemonic() {
-    return '5';
-  }
-
-  @Override
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Class.java");
   }

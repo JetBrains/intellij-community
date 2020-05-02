@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class SortedConfigurableGroup
@@ -18,21 +17,23 @@ public final class SortedConfigurableGroup
 
   private final String myId;
   private final String myDisplayName;
+  private final String myDescription;
   private final String myHelpTopic;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
   List<Configurable> myList = new ArrayList<>();
 
-  SortedConfigurableGroup(String id, String displayName, String helpTopic, int weight) {
+  SortedConfigurableGroup(String id, String displayName, String description, String helpTopic, int weight) {
     myId = id;
     myDisplayName = displayName;
+    myDescription = description;
     myHelpTopic = helpTopic;
     myWeight = weight;
   }
 
   @Override
   protected Configurable[] buildConfigurables() {
-    Collections.sort(myList, COMPARATOR);
+    myList.sort(COMPARATOR);
     Configurable[] result = myList.toArray(new Configurable[0]);
     myList.clear();
     myList = null;
@@ -60,5 +61,9 @@ public final class SortedConfigurableGroup
   @Override
   public String getDisplayName() {
     return myDisplayName;
+  }
+
+  public String getDescription() {
+    return myDescription;
   }
 }

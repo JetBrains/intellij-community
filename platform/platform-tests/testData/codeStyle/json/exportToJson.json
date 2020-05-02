@@ -111,7 +111,8 @@
       "space_around_equality_in_attribute": false,
       "space_inside_empty_tag": false,
       "tab_width": 4,
-      "text_wrap": "normal"
+      "text_wrap": "normal",
+      "uniform_ident": false
     }
   }
 }

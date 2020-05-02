@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventPair;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public abstract class ResizeToolWindowAction extends AnAction implements DumbAware, FusAwareAction {
   private ToolWindow myLastWindow;
@@ -133,12 +134,12 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   @Override
-  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull List<EventPair> data) {
     Project project = event.getProject();
     if (project != null) {
       ToolWindow toolWindow = getToolWindow(project);
       if (toolWindow != null) {
-        data.addData("toolwindow", toolWindow.getId());
+        data.add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
       }
     }
   }

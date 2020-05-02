@@ -181,7 +181,7 @@ public final class MavenIndicesManager implements Disposable {
       return localIndex;
     }
     catch (MavenIndexException e) {
-      MavenLog.LOG.warn(e);
+      MavenLog.LOG.warn("Cannot create index:" + e.getMessage());
       return null;
     }
   }

@@ -15,7 +15,7 @@ public class MapForwardIndexAccessor<Key, Value> extends AbstractMapForwardIndex
 
   @Nullable
   @Override
-  protected Map<Key, Value> convertToMap(@Nullable Map<Key, Value> inputData) {
+  protected Map<Key, Value> convertToMap(int inputId, @Nullable Map<Key, Value> inputData) {
     return inputData;
   }
 

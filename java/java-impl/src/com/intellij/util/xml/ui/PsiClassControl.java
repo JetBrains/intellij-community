@@ -87,7 +87,7 @@ public class PsiClassControl extends EditorTextFieldControl<PsiClassPanel> {
         PsiClass baseClass = null;
         ClassFilter filter = null;
         if (extend != null) {
-          baseClass = JavaPsiFacade.getInstance(control.getProject()).findClass(extend.value(), resolveScope);
+          if (extend.value().length == 1) baseClass = JavaPsiFacade.getInstance(control.getProject()).findClass(extend.value()[0], resolveScope);
           if (extend.instantiatable()) {
             filter = ClassFilter.INSTANTIABLE;
           }

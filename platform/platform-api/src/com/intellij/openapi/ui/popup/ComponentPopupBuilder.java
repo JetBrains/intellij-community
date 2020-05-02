@@ -4,12 +4,12 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ import java.util.List;
 
 public interface ComponentPopupBuilder {
   @NotNull
-  ComponentPopupBuilder setTitle(@Nls @NlsContexts.DialogTitle String title);
+  ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title);
 
   @NotNull
   ComponentPopupBuilder setResizable(boolean forceResizable);
@@ -111,10 +111,10 @@ public interface ComponentPopupBuilder {
    * Adds "advertising" text to the bottom (e.g.: hints in code completion popup).
    */
   @NotNull
-  ComponentPopupBuilder setAdText(@Nullable String text);
+  ComponentPopupBuilder setAdText(@Nullable @PopupAdvertisement String text);
 
   @NotNull
-  ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment);
+  ComponentPopupBuilder setAdText(@Nullable @PopupAdvertisement String text, int textAlignment);
 
   @NotNull
   ComponentPopupBuilder setShowShadow(boolean show);

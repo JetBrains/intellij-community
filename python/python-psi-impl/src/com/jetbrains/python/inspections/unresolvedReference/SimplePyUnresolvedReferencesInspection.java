@@ -25,7 +25,9 @@ public class SimplePyUnresolvedReferencesInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, session);
+    Visitor visitor = new Visitor(holder, session);
+    session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, this);
+    return visitor;
   }
 
   @Nullable
@@ -34,8 +36,8 @@ public class SimplePyUnresolvedReferencesInspection extends PyInspection {
     return "";
   }
 
-  private static class Visitor extends PyUnresolvedReferencesVisitor {
-    Visitor(@Nullable ProblemsHolder holder,
+  public static class Visitor extends PyUnresolvedReferencesVisitor {
+    public Visitor(@Nullable ProblemsHolder holder,
             @NotNull LocalInspectionToolSession session) {
       super(holder, session, Collections.emptyList());
     }
@@ -43,11 +45,6 @@ public class SimplePyUnresolvedReferencesInspection extends PyInspection {
     @Override
     boolean isEnabled(@NotNull PsiElement anchor) {
       return true;
-    }
-
-    @Override
-    boolean ignoreUnresolved(@NotNull PyElement node, @NotNull PsiReference reference) {
-      return false;
     }
 
     @Override

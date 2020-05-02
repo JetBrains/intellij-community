@@ -1653,12 +1653,12 @@ public class Mappings {
         debug("Field: ", f.name);
 
         if (!myProcessConstantsIncrementally && !f.isPrivate() && (f.access & INLINABLE_FIELD_MODIFIERS_MASK) == INLINABLE_FIELD_MODIFIERS_MASK && f.hasValue()) {
-          debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
-          if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
-            debug("End of Differentiate, returning false");
-            return false;
+            debug("Field had value and was (non-private) final static => a switch to non-incremental mode requested");
+            if (!incrementalDecision(it.name, f, myAffectedFiles, myFilesToCompile, myFilter)) {
+              debug("End of Differentiate, returning false");
+              return false;
+            }
           }
-        }
 
         final TIntHashSet propagated = myPresent.propagateFieldAccess(f.name, it.name);
         myPresent.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
@@ -2338,7 +2338,6 @@ public class Mappings {
             return false;
           }
           assert myAffectedFiles != null;
-          //assert myDelayedWorks != null;
 
           final Collection<String> removed = myDelta.myRemovedFiles;
           if (removed != null) {
@@ -2346,7 +2345,7 @@ public class Mappings {
               myAffectedFiles.remove(new File(r));
             }
           }
-          return true/*myDelayedWorks.doWork(myAffectedFiles)*/;
+          return true;
         }
         finally {
           if (myFilesToCompile != null) {
@@ -2491,8 +2490,7 @@ public class Mappings {
      final Collection<? extends File> compiledWithErrors,
      final Collection<? extends File> compiledFiles,
      final Collection<? super File> affectedFiles,
-     @NotNull final DependentFilesFilter filter,
-     @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
+     @NotNull final DependentFilesFilter filter) {
     return new Differential(delta, removed, filesToCompile, compiledWithErrors, compiledFiles, affectedFiles, filter).differentiate();
   }
 

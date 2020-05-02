@@ -61,4 +61,9 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
     final List<T> ts = forKey(t);
     return ts.isEmpty() ? null : ts.get(0);
   }
+
+  @Override
+  protected void invalidateCacheForExtension(String key) {
+    clearCache();
+  }
 }

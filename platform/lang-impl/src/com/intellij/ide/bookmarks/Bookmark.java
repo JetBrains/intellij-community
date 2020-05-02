@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
@@ -55,6 +56,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Objects;
 
 import static com.intellij.ide.ui.UISettings.setupAntialiasing;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
@@ -563,13 +565,13 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     @NotNull
     @Override
     public String getAccessibleName() {
-      return "icon: bookmark " + myBookmark.myMnemonic;
+      return LangBundle.message("accessible.name.icon.bookmark.0", myBookmark.myMnemonic);
     }
 
     @Override
     public boolean equals(Object obj) {
       return obj instanceof MyGutterIconRenderer &&
-             Comparing.equal(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
+             Objects.equals(getTooltipText(), ((MyGutterIconRenderer)obj).getTooltipText()) &&
              Comparing.equal(getIcon(), ((MyGutterIconRenderer)obj).getIcon());
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -64,7 +63,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
         types.add(fileType);
       }
     }
-    Collections.sort(types, (o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
+    types.sort((o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
     final List<FileTypeInfo> infos = new ArrayList<>();
     for (LanguageFileType fileType : types) {
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
@@ -82,7 +81,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
       infos.add(new FileTypeInfo(fileType, language, null, false));
 
       List<Language> dialects = new ArrayList<>(language.getDialects());
-      Collections.sort(dialects, Comparator.comparing(Language::getDisplayName));
+      dialects.sort(Comparator.comparing(Language::getDisplayName));
       for (Language dialect : dialects) {
         if (profile.isMyLanguage(dialect)) {
           infos.add(new FileTypeInfo(fileType, dialect, null, true));

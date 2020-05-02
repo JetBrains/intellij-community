@@ -13,7 +13,7 @@ public class SshConfigCredentialsHandler extends RemoteCredentialsHandlerBase<Ss
   }
 
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getCredentials().getCredentialsId();
   }
 

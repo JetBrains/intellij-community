@@ -25,7 +25,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -98,7 +98,7 @@ public class PyInterpreterInspection extends PyInspection {
       final String product = pyCharm ? "PyCharm" : "Python plugin";
 
       if (sdk == null) {
-        registerProblem(node, PyBundle.message("python.sdk.no.interpreter.configured.owner", interpreterOwner), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        registerProblem(node, PyPsiBundle.message("python.sdk.no.interpreter.configured.owner", interpreterOwner), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
         final Module associatedModule = PySdkExtKt.getAssociatedModule(sdk);
@@ -256,8 +256,8 @@ public class PyInterpreterInspection extends PyInspection {
     @Override
     public String getFamilyName() {
       return PlatformUtils.isPyCharm()
-             ? PyBundle.message("INSP.interpreter.interpreter.settings")
-             : PyBundle.message("INSP.interpreter.configure.python.interpreter");
+             ? PyPsiBundle.message("INSP.interpreter.interpreter.settings")
+             : PyPsiBundle.message("INSP.interpreter.configure.python.interpreter");
     }
 
     @Override
@@ -303,7 +303,7 @@ public class PyInterpreterInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return PyBundle.message("INSP.interpreter.configure.python.interpreter");
+      return PyPsiBundle.message("INSP.interpreter.configure.python.interpreter");
     }
 
     @Override
@@ -335,13 +335,13 @@ public class PyInterpreterInspection extends PyInspection {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public @NotNull String getFamilyName() {
-      return PyBundle.message("INSP.interpreter.use.suggested.interpreter");
+      return PyPsiBundle.message("INSP.interpreter.use.suggested.interpreter");
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public @NotNull String getName() {
-      return PyBundle.message("INSP.interpreter.use.interpreter", PySdkPopupFactory.Companion.shortenNameInPopup(mySdk, 75));
+      return PyPsiBundle.message("INSP.interpreter.use.interpreter", PySdkPopupFactory.Companion.shortenNameInPopup(mySdk, 75));
     }
 
     @Override

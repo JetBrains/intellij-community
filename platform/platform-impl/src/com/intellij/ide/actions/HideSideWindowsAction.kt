@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 
 internal class HideSideWindowsAction : AnAction(), DumbAware {
@@ -24,7 +25,7 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
       return
     }
 
-    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project)
+    val toolWindowManager = ToolWindowManager.getInstance(project)
     var id = toolWindowManager.activeToolWindowId
     if (id != null) {
       presentation.isEnabled = true

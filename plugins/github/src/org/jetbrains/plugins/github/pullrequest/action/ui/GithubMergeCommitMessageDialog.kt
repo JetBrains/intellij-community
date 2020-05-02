@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action.ui
 
 import com.intellij.openapi.project.Project
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -22,13 +23,13 @@ class GithubMergeCommitMessageDialog(project: Project, title: String, subject: S
     Disposer.register(disposable, commitMessage)
 
     setTitle(title)
-    setOKButtonText("Merge")
+    setOKButtonText(GithubBundle.message("merge.commit.dialog.merge.button"))
     init()
   }
 
   override fun createCenterPanel(): JComponent? {
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP)
-      .addToTop(JLabel("Merge commit message:"))
+      .addToTop(JLabel(GithubBundle.message("merge.commit.dialog.message")))
       .addToCenter(commitMessage)
   }
 

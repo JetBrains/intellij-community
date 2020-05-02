@@ -89,7 +89,7 @@ text.html.markdown meta.paragraph.markdown: [1046, 1047], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [1047, 1050], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [1050, 1051], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [1051, 1071], {Why Use Validations?}
-text.html.markdown meta.block-level.markdown: [1071, 1072], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [1071, 1072], {
 }
 text.html.markdown: [1072, 1073], {
 }
@@ -162,7 +162,7 @@ text.html.markdown meta.paragraph.markdown: [3074, 3075], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [3075, 3078], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [3078, 3079], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [3079, 3107], {When Does Validation Happen?}
-text.html.markdown meta.block-level.markdown: [3107, 3108], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [3107, 3108], {
 }
 text.html.markdown: [3108, 3109], {
 }
@@ -377,7 +377,7 @@ text.html.markdown meta.paragraph.markdown: [5071, 5072], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [5072, 5075], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [5075, 5076], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [5076, 5096], {Skipping Validations}
-text.html.markdown meta.block-level.markdown: [5096, 5097], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [5096, 5097], {
 }
 text.html.markdown: [5097, 5098], {
 }
@@ -484,7 +484,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5620, 5621], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [5621, 5629], {invalid?}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [5629, 5630], {`}
-text.html.markdown meta.block-level.markdown: [5630, 5631], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [5630, 5631], {
 }
 text.html.markdown: [5631, 5632], {
 }
@@ -661,7 +661,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [7128, 712
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [7129, 7130], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [7130, 7138], {errors[]}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [7138, 7139], {`}
-text.html.markdown meta.block-level.markdown: [7139, 7140], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [7139, 7140], {
 }
 text.html.markdown: [7140, 7141], {
 }
@@ -816,7 +816,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [9156, 915
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [9157, 9158], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [9158, 9168], {acceptance}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [9168, 9169], {`}
-text.html.markdown meta.block-level.markdown: [9169, 9170], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [9169, 9170], {
 }
 text.html.markdown: [9170, 9171], {
 }
@@ -893,7 +893,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [10057, 10
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [10058, 10059], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [10059, 10079], {validates_associated}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [10079, 10080], {`}
-text.html.markdown meta.block-level.markdown: [10080, 10081], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [10080, 10081], {
 }
 text.html.markdown: [10081, 10082], {
 }
@@ -964,7 +964,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [10781, 10
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [10782, 10783], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [10783, 10795], {confirmation}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [10795, 10796], {`}
-text.html.markdown meta.block-level.markdown: [10796, 10797], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [10796, 10797], {
 }
 text.html.markdown: [10797, 10798], {
 }
@@ -1061,7 +1061,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [11774, 11
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [11775, 11776], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [11776, 11785], {exclusion}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [11785, 11786], {`}
-text.html.markdown meta.block-level.markdown: [11786, 11787], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [11786, 11787], {
 }
 text.html.markdown: [11787, 11788], {
 }
@@ -1132,7 +1132,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [12457, 12
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [12458, 12459], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [12459, 12465], {format}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [12465, 12466], {`}
-text.html.markdown meta.block-level.markdown: [12466, 12467], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [12466, 12467], {
 }
 text.html.markdown: [12467, 12468], {
 }
@@ -1175,7 +1175,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [12815, 12
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [12816, 12817], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [12817, 12826], {inclusion}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [12826, 12827], {`}
-text.html.markdown meta.block-level.markdown: [12827, 12828], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [12827, 12828], {
 }
 text.html.markdown: [12828, 12829], {
 }
@@ -1243,7 +1243,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [13498, 13
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [13499, 13500], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [13500, 13506], {length}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [13506, 13507], {`}
-text.html.markdown meta.block-level.markdown: [13507, 13508], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [13507, 13508], {
 }
 text.html.markdown: [13508, 13509], {
 }
@@ -1444,7 +1444,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [15590, 15
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [15591, 15592], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [15592, 15604], {numericality}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [15604, 15605], {`}
-text.html.markdown meta.block-level.markdown: [15605, 15606], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [15605, 15606], {
 }
 text.html.markdown: [15606, 15607], {
 }
@@ -1625,7 +1625,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [17602, 17
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [17603, 17604], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [17604, 17612], {presence}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [17612, 17613], {`}
-text.html.markdown meta.block-level.markdown: [17613, 17614], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [17613, 17614], {
 }
 text.html.markdown: [17614, 17615], {
 }
@@ -1759,7 +1759,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [18839, 18
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [18840, 18841], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [18841, 18851], {uniqueness}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [18851, 18852], {`}
-text.html.markdown meta.block-level.markdown: [18852, 18853], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [18852, 18853], {
 }
 text.html.markdown: [18853, 18854], {
 }
@@ -1866,7 +1866,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [20139, 20
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [20140, 20141], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [20141, 20155], {validates_with}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [20155, 20156], {`}
-text.html.markdown meta.block-level.markdown: [20156, 20157], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [20156, 20157], {
 }
 text.html.markdown: [20157, 20158], {
 }
@@ -2080,7 +2080,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [22150, 22
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [22151, 22152], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [22152, 22166], {validates_each}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [22166, 22167], {`}
-text.html.markdown meta.block-level.markdown: [22167, 22168], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [22167, 22168], {
 }
 text.html.markdown: [22168, 22169], {
 }
@@ -2142,7 +2142,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [23007, 23
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23008, 23009], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [23009, 23019], {:allow_nil}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23019, 23020], {`}
-text.html.markdown meta.block-level.markdown: [23020, 23021], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [23020, 23021], {
 }
 text.html.markdown: [23021, 23022], {
 }
@@ -2180,7 +2180,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [23286, 23
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23287, 23288], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [23288, 23300], {:allow_blank}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23300, 23301], {`}
-text.html.markdown meta.block-level.markdown: [23301, 23302], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [23301, 23302], {
 }
 text.html.markdown: [23302, 23303], {
 }
@@ -2233,7 +2233,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [23690, 23
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23691, 23692], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [23692, 23700], {:message}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23700, 23701], {`}
-text.html.markdown meta.block-level.markdown: [23701, 23702], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [23701, 23702], {
 }
 text.html.markdown: [23702, 23703], {
 }
@@ -2260,7 +2260,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [23969, 23
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23970, 23971], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [23971, 23974], {:on}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [23974, 23975], {`}
-text.html.markdown meta.block-level.markdown: [23975, 23976], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [23975, 23976], {
 }
 text.html.markdown: [23976, 23977], {
 }
@@ -2440,7 +2440,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [25875, 25876], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [25876, 25883], {:unless}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [25883, 25884], {`}
-text.html.markdown meta.block-level.markdown: [25884, 25885], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [25884, 25885], {
 }
 text.html.markdown: [25885, 25886], {
 }
@@ -2496,7 +2496,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [26285, 26286], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [26286, 26293], {:unless}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [26293, 26294], {`}
-text.html.markdown meta.block-level.markdown: [26294, 26295], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [26294, 26295], {
 }
 text.html.markdown: [26295, 26296], {
 }
@@ -2536,7 +2536,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [26619, 26620], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [26620, 26627], {:unless}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [26627, 26628], {`}
-text.html.markdown meta.block-level.markdown: [26628, 26629], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [26628, 26629], {
 }
 text.html.markdown: [26629, 26630], {
 }
@@ -2585,7 +2585,7 @@ text.html.markdown meta.paragraph.markdown: [27017, 27018], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [27018, 27021], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [27021, 27022], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [27022, 27054], {Grouping Conditional validations}
-text.html.markdown meta.block-level.markdown: [27054, 27055], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [27054, 27055], {
 }
 text.html.markdown: [27055, 27056], {
 }
@@ -2640,7 +2640,7 @@ text.html.markdown meta.paragraph.markdown: [27479, 27480], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [27480, 27483], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [27483, 27484], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [27484, 27515], {Combining Validation Conditions}
-text.html.markdown meta.block-level.markdown: [27515, 27516], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [27515, 27516], {
 }
 text.html.markdown: [27516, 27517], {
 }
@@ -2714,7 +2714,7 @@ text.html.markdown meta.paragraph.markdown: [28235, 28236], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [28236, 28239], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [28239, 28240], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [28240, 28257], {Custom Validators}
-text.html.markdown meta.block-level.markdown: [28257, 28258], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [28257, 28258], {
 }
 text.html.markdown: [28258, 28259], {
 }
@@ -2842,7 +2842,7 @@ text.html.markdown meta.paragraph.markdown: [29645, 29646], {
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [29646, 29649], {###}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [29649, 29650], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [29650, 29664], {Custom Methods}
-text.html.markdown meta.block-level.markdown: [29664, 29665], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [29664, 29665], {
 }
 text.html.markdown: [29665, 29666], {
 }
@@ -3020,7 +3020,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [31399, 31
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [31400, 31401], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [31401, 31407], {errors}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [31407, 31408], {`}
-text.html.markdown meta.block-level.markdown: [31408, 31409], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [31408, 31409], {
 }
 text.html.markdown: [31409, 31410], {
 }
@@ -3069,7 +3069,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [31907, 31
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [31908, 31909], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [31909, 31917], {errors[]}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [31917, 31918], {`}
-text.html.markdown meta.block-level.markdown: [31918, 31919], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [31918, 31919], {
 }
 text.html.markdown: [31919, 31920], {
 }
@@ -3125,7 +3125,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [32665, 32
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [32666, 32667], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [32667, 32677], {errors.add}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [32677, 32678], {`}
-text.html.markdown meta.block-level.markdown: [32678, 32679], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [32678, 32679], {
 }
 text.html.markdown: [32679, 32680], {
 }
@@ -3246,7 +3246,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [33866, 33
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [33867, 33868], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [33868, 33881], {errors[:base]}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [33881, 33882], {`}
-text.html.markdown meta.block-level.markdown: [33882, 33883], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [33882, 33883], {
 }
 text.html.markdown: [33883, 33884], {
 }
@@ -3292,7 +3292,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [34398, 34
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [34399, 34400], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [34400, 34412], {errors.clear}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [34412, 34413], {`}
-text.html.markdown meta.block-level.markdown: [34413, 34414], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [34413, 34414], {
 }
 text.html.markdown: [34414, 34415], {
 }
@@ -3361,7 +3361,7 @@ text.html.markdown meta.paragraph.markdown: [35173, 35189], {p.errors[:name]
 text.html.markdown meta.block-level.markdown markup.heading.markdown punctuation.definition.heading.markdown: [35189, 35190], {#}
 text.html.markdown meta.block-level.markdown markup.heading.markdown: [35190, 35191], { }
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown: [35191, 35254], {=> ["can't be blank", "is too short (minimum is 3 characters)"]}
-text.html.markdown meta.block-level.markdown: [35254, 35255], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [35254, 35255], {
 }
 text.html.markdown meta.paragraph.markdown: [35255, 35259], {```
 }
@@ -3372,7 +3372,7 @@ text.html.markdown meta.block-level.markdown markup.heading.markdown: [35263, 35
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [35264, 35265], {`}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown: [35265, 35276], {errors.size}
 text.html.markdown meta.block-level.markdown markup.heading.markdown entity.name.section.markdown markup.raw.inline.markdown punctuation.definition.raw.markdown: [35276, 35277], {`}
-text.html.markdown meta.block-level.markdown: [35277, 35278], {
+text.html.markdown meta.block-level.markdown markup.heading.markdown: [35277, 35278], {
 }
 text.html.markdown: [35278, 35279], {
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -350,7 +350,8 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(myProject, Collections.singleton(file))) {
       return;
     }
-    WriteAction.run(() -> {
+    WriteAction.run(() -> WriteCommandAction.runWriteCommandAction(myProject, ResourceBundleEditorBundle.message(
+      "resource.bundle.update.property.value"), null, () -> {
       PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file, myProject);
       if (propertiesFile != null) {
         if (currentValue.isEmpty() &&
@@ -361,7 +362,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
           myPropertiesInsertDeleteManager.insertOrUpdateTranslation(currentSelectedProperty, currentValue, propertiesFile);
         }
       }
-    });
+    }));
   }
 
   void recreateEditorsPanel() {
@@ -532,7 +533,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
           final ResourceBundle bundle = propertiesFile.getResourceBundle();
           if (bundle.equals(myResourceBundle) && myEditors.containsKey(propertiesFile.getVirtualFile())) {
             final IProperty property = PropertiesImplUtil.getProperty(event.getParent());
-            if (property != null && Comparing.equal(property.getName(), getSelectedPropertyName())) {
+            if (property != null && Objects.equals(property.getName(), getSelectedPropertyName())) {
               updateEditorsFromProperties(false);
             }
           }
@@ -795,7 +796,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   }
 
   @Override
-  public Document[] getDocuments() {
+  public Document @NotNull [] getDocuments() {
     return ContainerUtil.map2Array(myEditors.keySet(), new Document[myEditors.size()], propertiesFile -> FileDocumentManager.getInstance().getDocument(propertiesFile));
   }
 

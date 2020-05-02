@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.localVcs;
 
+import com.intellij.openapi.LineNumberConstants;
+
 public interface UpToDateLineNumberProvider {
-  int ABSENT_LINE_NUMBER = -1;
-  int FAKE_LINE_NUMBER = -2;
+  int ABSENT_LINE_NUMBER = LineNumberConstants.ABSENT_LINE_NUMBER;
+  int FAKE_LINE_NUMBER = LineNumberConstants.FAKE_LINE_NUMBER;
 
   int getLineCount();
   int getLineNumber(int currentNumber);

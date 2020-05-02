@@ -61,7 +61,7 @@ public class UtilsTest {
   }
 
   @Test
-  public void testDeleteLockedFileOnWindows() throws Exception {
+  public void testDeleteLockedFileOnWindows() {
     IoTestUtil.assumeWindows();
 
     File f = tempDir.newFile("temp_file");
@@ -99,7 +99,7 @@ public class UtilsTest {
 
   @Test
   public void testRecursiveDelete() throws Exception {
-    File topDir = tempDir.newFolder("temp_dir");
+    File topDir = tempDir.newDirectory("temp_dir");
     for (int i = 0; i < 3; i++) {
       for (int j = 0; j < 3; j++) {
         File file = new File(topDir, "dir" + i + "/file" + j);
@@ -116,7 +116,7 @@ public class UtilsTest {
   public void testNonRecursiveSymlinkDelete() throws Exception {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newFolder("temp_dir");
+    File dir = tempDir.newDirectory("temp_dir");
     File file = new File(dir, "file");
     FileUtil.writeToFile(file, "test");
     assertThat(dir.listFiles()).containsExactly(file);
@@ -135,7 +135,7 @@ public class UtilsTest {
   public void testDeleteDanglingSymlink() throws Exception {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File dir = tempDir.newFolder("temp_dir");
+    File dir = tempDir.newDirectory("temp_dir");
     File link = new File(dir, "link");
     Utils.createLink("dangling", link);
     assertThat(dir.listFiles()).containsExactly(link);

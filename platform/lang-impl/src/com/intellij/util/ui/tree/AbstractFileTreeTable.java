@@ -1,10 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.ui.tree;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -167,7 +169,8 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     if (subdirectoryMappings.isEmpty()) {
       return true;
     }
-    int ret = Messages.showYesNoCancelDialog(myProject, message, title, "Override", "Do Not Override", "Cancel",
+    int ret = Messages.showYesNoCancelDialog(myProject, message, title, LangBundle.message("button.override"),
+                                             LangBundle.message("button.do.not.override"), CommonBundle.getCancelButtonText(),
                                              Messages.getWarningIcon());
     if (ret == Messages.YES) {
       for (VirtualFile file : subdirectoryMappings.keySet()) {
@@ -402,7 +405,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
         setUserObject(myObject);
         final List<ConvenientNode> children = new ArrayList<>();
         appendChildrenTo(children);
-        Collections.sort(children, (node1, node2) -> {
+        children.sort((node1, node2) -> {
           Object o1 = node1.getObject();
           Object o2 = node2.getObject();
           if (o1 == o2) return 0;

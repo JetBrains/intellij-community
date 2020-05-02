@@ -268,6 +268,9 @@
   <item name='java.awt.Toolkit java.lang.Object getDesktopProperty(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.awt.Window java.awt.Component getMostRecentFocusOwner()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name='java.awt.Window void setLocation(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>

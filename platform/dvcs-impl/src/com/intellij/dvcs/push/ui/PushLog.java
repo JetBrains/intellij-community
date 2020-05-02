@@ -66,7 +66,6 @@ public final class PushLog extends JPanel implements DataProvider {
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
-  private final VcsCommitInfoBalloon myBalloon;
   private final CommitDetailsPanel myDetailsPanel;
   private final MyShowDetailsAction myShowDetailsAction;
   private boolean myShouldRepaint = false;
@@ -201,13 +200,11 @@ public final class PushLog extends JPanel implements DataProvider {
     TreeUtil.collapseAll(myTree, 1);
     final VcsBranchEditorListener linkMouseListener = new VcsBranchEditorListener(myTreeCellRenderer);
     linkMouseListener.installOn(myTree);
-    myBalloon = new VcsCommitInfoBalloon(myTree);
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         updateChangesView();
-        myBalloon.updateCommitDetails();
       }
     });
     myTree.addFocusListener(new FocusAdapter() {
@@ -401,7 +398,7 @@ public final class PushLog extends JPanel implements DataProvider {
     for (int row : rows) {
       sorted.add(row);
     }
-    Collections.sort(sorted, Collections.reverseOrder());
+    sorted.sort(Collections.reverseOrder());
     return sorted;
   }
 

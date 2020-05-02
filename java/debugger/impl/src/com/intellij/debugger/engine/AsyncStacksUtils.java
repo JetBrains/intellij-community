@@ -8,6 +8,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.GeneratedLocation;
+import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
@@ -23,7 +24,11 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,20 +45,23 @@ public class AsyncStacksUtils {
   }
 
   @Nullable
-  public static List<StackFrameItem> getAgentRelatedStack(JavaStackFrame frame, @NotNull SuspendContextImpl suspendContext) {
-    if (isAgentEnabled() && suspendContext.getDebugProcess().isEvaluationPossible(suspendContext)) {
-      Location location = frame.getDescriptor().getLocation();
-      if (location != null) {
-        Method method = DebuggerUtilsEx.getMethod(location);
-        // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
-        if (method != null && method.name().endsWith("$$$capture")) {
-          try {
-            return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame.getStackFrameProxy()));
-          }
-          catch (EvaluateException e) {
-            LOG.error(e);
-          }
-        }
+  public static List<StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+    if (!isAgentEnabled() || !frame.threadProxy().equals(suspendContext.getThread())) { // only for the current thread for now
+      return null;
+    }
+    try {
+      Method method = DebuggerUtilsEx.getMethod(frame.location());
+      // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
+      if (method != null && method.name().endsWith("$$$capture")) {
+        return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame));
+      }
+    }
+    catch (EvaluateException e) {
+      if (e.getCause() instanceof IncompatibleThreadStateException) {
+        LOG.warn(e);
+      }
+      else {
+        LOG.error(e);
       }
     }
     return null;
@@ -94,33 +102,33 @@ public class AsyncStacksUtils {
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
     List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
-    Value resArray = evaluationContext.computeAndKeep(
+    String value = DebuggerUtils.processCollectibleValue(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
-                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true));
-    if (resArray instanceof ArrayReference) {
-      List<Value> values = ((ArrayReference)resArray).getValues();
-      List<StackFrameItem> res = new ArrayList<>(values.size());
+                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true),
+      result -> result instanceof StringReference ? ((StringReference)result).value() : null
+    );
+    if (value != null) {
+      List<StackFrameItem> res = new ArrayList<>();
       ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
-      for (Value value : values) {
-        if (value == null) {
-          res.add(null);
+      try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
+        while (dis.available() > 0) {
+          ProcessStackFrameItem item = null;
+          if (dis.readBoolean()) {
+            String className = dis.readUTF();
+            String methodName = dis.readUTF();
+            int line = dis.readInt();
+            Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
+            item = new ProcessStackFrameItem(location, className, methodName);
+          }
+          res.add(item);
         }
-        else {
-          List<Value> values1 = ((ArrayReference)value).getValues();
-          String className = getStringRefValue((StringReference)values1.get(0));
-          String methodName = getStringRefValue((StringReference)values1.get(2));
-          int line = Integer.parseInt(((StringReference)values1.get(3)).value());
-          Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
-          res.add(new ProcessStackFrameItem(location, className, methodName));
-        }
+        return res;
       }
-      return res;
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
     return null;
-  }
-
-  private static String getStringRefValue(StringReference ref) {
-    return ref != null ? ref.value() : null;
   }
 
   public static void setupAgent(DebugProcessImpl process) {

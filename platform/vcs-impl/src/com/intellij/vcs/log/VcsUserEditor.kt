@@ -12,7 +12,7 @@ private fun createCompletionProvider(values: List<String>): TextCompletionProvid
   ValuesCompletionProviderDumbAware(StringValueDescriptor(), values)
 
 class VcsUserEditor(project: Project, values: List<String> = getAllUsers(project)) :
-  TextFieldWithCompletion(project, createCompletionProvider(values), "", true, true, true) {
+  TextFieldWithCompletion(project, createCompletionProvider(values), "", true, true, false) {
 
   var user: VcsUser?
     get() = VcsUserParser.parse(project, text)

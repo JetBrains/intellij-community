@@ -384,13 +384,19 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                                      "myTag", "myTagWithoutAnnotation")
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
+  void testActionExtensionPointAttributeHighlighting() {
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    doHighlightingTest("actionExtensionPointAttribute.xml", "MyActionAttributeEPBean.java")
+  }
+
   void testLanguageAttributeHighlighting() {
-    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     doHighlightingTest("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
   }
 
   void testLanguageAttributeCompletion() {
-    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguageAttributeEPBean.java"))
     myFixture.configureByFile("languageAttribute.xml")
 
@@ -405,14 +411,6 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     element.renderElement(presentation)
     assertEquals(lookupString, presentation.itemText)
     assertEquals(typeText, presentation.typeText)
-  }
-
-  private void configureLanguageAttributeTest() {
-    myFixture.addClass("package com.intellij.lang; " +
-                       "public class Language { " +
-                       "  protected Language(String id) {}" +
-                       "}")
-    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
   }
 
   @SuppressWarnings("ComponentNotRegistered")
@@ -631,7 +629,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testRegistrationCheck() {
-    configureLanguageAttributeTest()
+    myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguage.java"))
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(AnAction.class))))
@@ -665,6 +663,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                                 "../additionalModuleDir/AdditionalModuleClass.java")
     def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
                                                       "MainModuleClass.java")
+    def mainModuleBeanClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleBeanClass.java",
+                                                          "MainModuleBeanClass.java")
     def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
                                                        "META-INF/MainModulePlugin.xml")
 
@@ -678,6 +678,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
     myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
+    myFixture.configureFromExistingVirtualFile(mainModuleBeanClass)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 
     myFixture.allowTreeAccessForAllFiles()

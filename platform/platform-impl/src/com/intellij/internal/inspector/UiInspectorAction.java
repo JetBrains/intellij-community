@@ -1153,6 +1153,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     @Override
     public void setValue(@NotNull final Object value) {
       setText(getToStringValue(value));
+      setIcon(getText().contains("$$$setupUI$$$") ? AllIcons.FileTypes.UiForm : null);
       if (!getText().equals(getText().trim())) {
         setForeground(JBColor.RED);
       }
@@ -1669,10 +1670,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (constraint.isNoGrid() != newConstraint.isNoGrid()) {
         stringBuilder.append(" noGrid=").append(constraint.isNoGrid());
       }
-      if (!Comparing.equal(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
+      if (!Objects.equals(constraint.getSizeGroup(), newConstraint.getSizeGroup())) {
         stringBuilder.append(" sizeGroup=").append(constraint.getSizeGroup());
       }
-      if (!Comparing.equal(constraint.getEndGroup(), newConstraint.getEndGroup())) {
+      if (!Objects.equals(constraint.getEndGroup(), newConstraint.getEndGroup())) {
         stringBuilder.append(" endGroup=").append(constraint.getEndGroup());
       }
       return stringBuilder.toString();

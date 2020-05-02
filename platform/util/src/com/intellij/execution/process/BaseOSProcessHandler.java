@@ -167,7 +167,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
         LOG.warn("Process hasn't generated any output for a long time.\n" +
                  "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with" +
                  " 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
-                 "Command line: " + StringUtil.trimLog(myCommandLine, 1000),
+                 "Command line: " + StringUtil.trimLog(StringUtil.notNullize(myCommandLine), 1000),
                  myProcessStart);
       }
     }

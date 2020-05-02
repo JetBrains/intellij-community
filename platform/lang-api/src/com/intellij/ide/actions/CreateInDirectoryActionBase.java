@@ -20,8 +20,8 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase() {
   }
 
-  protected CreateInDirectoryActionBase(@Nls @NlsActions.ActionText String text,
-                                        @Nls @NlsActions.ActionDescription String description,
+  protected CreateInDirectoryActionBase(@NlsActions.ActionText String text,
+                                        @NlsActions.ActionDescription String description,
                                         Icon icon) {
     super(text, description, icon);
   }

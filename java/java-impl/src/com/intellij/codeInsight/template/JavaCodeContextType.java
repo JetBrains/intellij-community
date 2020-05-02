@@ -22,6 +22,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -57,7 +58,13 @@ public abstract class JavaCodeContextType extends TemplateContextType {
 
     return false;
   }
-  
+
+  /**
+   * Checks whether the element belongs to this context. Could be called inside the dumb mode!
+   * 
+   * @param element element to check
+   * @return true if given element belongs to this context.
+   */
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
   @NotNull
@@ -99,6 +106,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
       if (!(element instanceof PsiIdentifier)) return false;
       PsiReferenceExpression parent = ObjectUtils.tryCast(element.getParent(), PsiReferenceExpression.class);
       if (parent == null) return false;
+      if (DumbService.isDumb(parent.getProject())) return false;
       PsiType type = ExpectedTypeUtils.findExpectedType(parent, false);
       if (type == null) return false;
       PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);

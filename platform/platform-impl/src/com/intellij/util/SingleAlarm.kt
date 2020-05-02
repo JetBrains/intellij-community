@@ -5,22 +5,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 
-class SingleAlarm @JvmOverloads constructor(private val task: Runnable,
-                                            private val delay: Int,
-                                            parentDisposable: Disposable? = null,
-                                            threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
-                                            private val modalityState: ModalityState? = computeDefaultModality(threadToUse)) : Alarm(threadToUse, parentDisposable) {
-  constructor(task: Runnable, delay: Int, modalityState: ModalityState, parentDisposable: Disposable) : this(task, delay = delay,
-                                                                                                             parentDisposable = parentDisposable,
-                                                                                                             threadToUse = ThreadToUse.SWING_THREAD,
-                                                                                                             modalityState = modalityState)
+class SingleAlarm @JvmOverloads constructor(
+  private val task: Runnable,
+  private val delay: Int,
+  private val parentDisposable: Disposable? = null,
+  private val threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
+  private val modalityState: ModalityState? = computeDefaultModality(threadToUse)
+) : Alarm(threadToUse, parentDisposable) {
+  constructor(task: Runnable, delay: Int, modalityState: ModalityState, parentDisposable: Disposable)
+    : this(task, delay = delay, parentDisposable = parentDisposable, threadToUse = ThreadToUse.SWING_THREAD, modalityState = modalityState)
 
-  constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable) : this(task,
-                                                                                                         delay = delay,
-                                                                                                         parentDisposable = parentDisposable,
-                                                                                                         threadToUse = threadToUse,
-                                                                                                         modalityState = computeDefaultModality(
-                                                                                                           threadToUse))
+  constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
+    : this(task, delay = delay, parentDisposable = parentDisposable, threadToUse = threadToUse, modalityState = computeDefaultModality(threadToUse))
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {

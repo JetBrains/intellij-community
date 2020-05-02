@@ -239,7 +239,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private final U myRootObject;
     private final Function<U, Iterable<U>> myStructure;
     private SpeedSearchSupply mySpeedSearch;
-    private Map<U, N> myNodeCache = ContainerUtil.newIdentityHashMap();
+    private Map<U, N> myNodeCache = new IdentityHashMap<>();
     private final EventDispatcher<Listener> myNodeChanged = EventDispatcher.create(Listener.class);
 
     public SearchTreeModel(@NotNull N root, @NotNull SpeedSearchSupply speedSearch,
@@ -294,7 +294,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     public void updateStructure() {
-      Map<U, N> newNodes = ContainerUtil.newIdentityHashMap();
+      Map<U, N> newNodes = new IdentityHashMap<>();
       for (U node : JBTreeTraverser.from(myStructure).withRoot(getRootObject())) {
         N treeNode = myNodeCache.get(node);
         newNodes.put(node, treeNode == null ? createNode(node) : treeNode);

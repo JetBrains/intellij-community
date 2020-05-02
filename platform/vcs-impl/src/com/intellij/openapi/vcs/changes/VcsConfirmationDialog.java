@@ -3,12 +3,10 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.OptionsDialog;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,12 +24,12 @@ class VcsConfirmationDialog extends OptionsDialog {
   private final String myDoNotShowMessage;
 
   VcsConfirmationDialog(@NotNull Project project,
-                        @NotNull @Nls @NlsContexts.DialogTitle String title,
-                        @NotNull @Nls @NlsUI.Button String okText,
-                        @NotNull @Nls @NlsUI.Button String cancelText,
+                        @NotNull @NlsContexts.DialogTitle String title,
+                        @NotNull @NlsContexts.Button String okText,
+                        @NotNull @NlsContexts.Button String cancelText,
                         @NotNull VcsShowConfirmationOption option,
-                        @NotNull @Nls @NlsUI.Label String message,
-                        @NotNull @NlsUI.Checkbox String doNotShowMessage) {
+                        @NotNull @NlsContexts.Label String message,
+                        @NotNull @NlsContexts.Checkbox String doNotShowMessage) {
     super(project);
     myOkText = okText;
     myCancelText = cancelText;

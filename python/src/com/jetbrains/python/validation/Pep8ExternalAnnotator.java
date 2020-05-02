@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
@@ -34,7 +34,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.*;
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyPep8Inspection;
@@ -50,12 +53,16 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -189,7 +196,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   private static void reportMissingInterpreter() {
     LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
     List<Sdk> allSdks = PythonSdkUtil.getAllSdks();
-    Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
+    allSdks.sort(PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
       LOG.info("  Path: " + sdk.getHomePath() + "; Flavor: " + PythonSdkFlavor.getFlavor(sdk) + "; Remote: " + PythonSdkUtil.isRemote(sdk));
     }
@@ -200,7 +207,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   @Override
   public Results doAnnotate(State collectedInfo) {
     if (collectedInfo == null) return null;
-    ArrayList<String> options = Lists.newArrayList();
+    ArrayList<String> options = new ArrayList<>();
 
     if (!collectedInfo.ignoredErrors.isEmpty()) {
       options.add("--ignore=" + DEFAULT_IGNORED_ERRORS + "," + StringUtil.join(collectedInfo.ignoredErrors, ","));
@@ -287,6 +294,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           problemRange = new TextRange(offset, lineEndOffset);
         }
 
+        @NonNls
         final String message = "PEP 8: " + problem.myCode + " " + problem.myDescription;
         HighlightSeverity severity;
         if (annotationResult.level == HighlightDisplayLevel.ERROR) {

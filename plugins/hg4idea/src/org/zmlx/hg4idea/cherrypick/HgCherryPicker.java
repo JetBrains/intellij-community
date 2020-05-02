@@ -78,7 +78,8 @@ public class HgCherryPicker extends VcsCherryPicker {
     HgCommandResult result = command.startGrafting(hashes);
     boolean hasConflicts = HgConflictResolver.hasConflicts(project, root);
     if (!hasConflicts && HgErrorUtil.isCommandExecutionFailed(result)) {
-      new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't  graft.");
+      new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"), HgBundle.message(
+        "action.hg4idea.Graft.error"));
       return;
     }
     final UpdatedFiles updatedFiles = UpdatedFiles.create();
@@ -90,7 +91,8 @@ public class HgCherryPicker extends VcsCherryPicker {
         hasConflicts = HgConflictResolver.hasConflicts(project, root);
       }
       else {
-        new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue grafting");
+        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                                                         HgBundle.message("action.hg4idea.Graft.continue.error"));
         break;
       }
     }

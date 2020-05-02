@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       return;
     }
     final PsiStatement statement = (PsiStatement)element;
+    final Project project = element.getProject();
     if (ExpandBooleanPredicate.isBooleanAssignment(statement)) {
       final PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)statement;
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)assignmentStatement.getExpression();
@@ -58,15 +59,16 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       if (rhs == null) {
         return;
       }
-      CommentTracker tracker = new CommentTracker();
+      final CommentTracker tracker = new CommentTracker();
       tracker.markUnchanged(rhs);
       final String lhsText = assignmentExpression.getLExpression().getText();
       final String signText = assignmentExpression.getOperationSign().getText();
       @NonNls final String newStatementText = "if(" + ((signText.length() == 2) ? lhsText + signText.charAt(0) : "") + "true)" +
                                               lhsText + "=true; else " + lhsText + "=false;";
       final PsiIfStatement newIfStatement =
-        (PsiIfStatement)JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(newStatementText, element);
+        (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, element);
       final PsiExpression condition = newIfStatement.getCondition();
+      assert condition != null;
       if (condition instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
         final PsiExpression operand = binaryExpression.getROperand();
@@ -77,7 +79,8 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       else {
         condition.replace(rhs);
       }
-      tracker.replaceAndRestoreComments(statement, newIfStatement);
+      final PsiElement newElement = tracker.replaceAndRestoreComments(statement, newIfStatement);
+      CodeStyleManager.getInstance(project).reformat(newElement);
     }
     else if (ExpandBooleanPredicate.isBooleanReturn(statement)) {
       final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
@@ -87,13 +90,14 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       }
       @NonNls final String newStatementText = "if(true) return true; else return false;";
       final PsiIfStatement newIfStatement =
-        (PsiIfStatement)JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(newStatementText, element);
+        (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, element);
       final PsiExpression condition = newIfStatement.getCondition();
       assert condition != null;
-      CommentTracker tracker = new CommentTracker();
+      final CommentTracker tracker = new CommentTracker();
       tracker.markUnchanged(returnValue);
       condition.replace(returnValue);
-      tracker.replaceAndRestoreComments(statement, newIfStatement);
+      final PsiElement newElement = tracker.replaceAndRestoreComments(statement, newIfStatement);
+      CodeStyleManager.getInstance(project).reformat(newElement);
     }
     else if (ExpandBooleanPredicate.isBooleanDeclaration(statement)) {
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement;
@@ -108,16 +112,14 @@ public class ExpandBooleanIntention extends MutablyNamedIntention {
       }
       final String name = variable.getName();
       @NonNls final String newStatementText = "if(true) " + name +"=true; else " + name + "=false;";
-      final Project project = statement.getProject();
       final PsiIfStatement newIfStatement =
         (PsiIfStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatementText, statement);
       final PsiExpression condition = newIfStatement.getCondition();
       assert condition != null;
       condition.replace(initializer);
       CodeStyleManager.getInstance(project).reformat(declarationStatement.getParent().addAfter(newIfStatement, declarationStatement));
-      PsiTypeElement typeElement = variable.getTypeElement();
-      if (typeElement.isInferredType() && 
-          PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement.isInferredType() && PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
         return;
       }
       initializer.delete();

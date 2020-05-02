@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
-public class MavenRemoteRepository implements Serializable {
+public final class MavenRemoteRepository implements Serializable {
   private final String myId;
   private final String myName;
   private final String myUrl;

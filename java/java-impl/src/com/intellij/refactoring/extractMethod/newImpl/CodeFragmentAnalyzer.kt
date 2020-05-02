@@ -1,20 +1,32 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
+import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.value.DfaValue
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.controlFlow.*
 import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
+import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
+import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
 import com.intellij.util.containers.IntArrayList
 import com.siyeh.ig.psiutils.VariableAccessUtils
+import java.util.LinkedHashSet
+import kotlin.Comparator
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
@@ -25,13 +37,12 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   init {
     require(elements.isNotEmpty())
   }
-
+  private val codeFragment = ControlFlowUtil.findCodeFragment(elements.first())
   private val flow: ControlFlow = createControlFlow(elements)
-
   private val flowRange = findFlowRange(flow, elements)
 
   private fun createControlFlow(elements: List<PsiElement>): ControlFlow {
-    val fragmentToAnalyze: PsiElement = ControlFlowUtil.findCodeFragment(elements.first())
+    val fragmentToAnalyze: PsiElement = codeFragment
     val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
     val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
     return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
@@ -54,7 +65,24 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   fun findExternalReferences(): List<ExternalReference> {
     return ControlFlowUtil.getInputVariables(flow, flowRange.first, flowRange.last)
       .filterNot { variable -> variable in this }
+      .sortedWith( Comparator { v1: PsiVariable, v2: PsiVariable -> when {
+          v1.type is PsiEllipsisType -> 1
+          v2.type is PsiEllipsisType -> -1
+          else -> v1.textOffset - v2.textOffset
+      }})
       .map { variable -> ExternalReference(variable, findVariableReferences(variable)) }
+  }
+
+  fun findUsedVariablesAfter(): List<PsiVariable> {
+    return ControlFlowUtil.getUsedVariables(flow, flowRange.last, flow.size)
+  }
+
+  fun findOuterLocals(sourceClassMember: PsiElement, targetClassMember: PsiElement): List<ExternalReference>? {
+    val outerVariables = mutableListOf<PsiVariable>()
+    val canBeExtracted = elements
+      .all { element -> ControlFlowUtil.collectOuterLocals(outerVariables, element, sourceClassMember, targetClassMember) }
+    if (!canBeExtracted) return null
+    return outerVariables.map { variable -> ExternalReference(variable, findVariableReferences(variable)) }
   }
 
   fun findOutputVariables(): List<PsiVariable> {
@@ -69,6 +97,10 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       .filterNot { variable ->
         variable.textRange in TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)
       }
+  }
+
+  fun hasObservableThrowExit(): Boolean {
+    return ControlFlowUtil.hasObservableThrowExitPoints(flow, flowRange.first, flowRange.last, elements.toTypedArray(), codeFragment)
   }
 
   fun findExitDescription(): ExitDescription {
@@ -110,9 +142,10 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     if (instructionOffset >= flow.size) return instructionOffset
     val instruction = flow.instructions[instructionOffset]
     fun returnsValue(instructionOffset: Int): Boolean = (flow.getElement(instructionOffset) as? PsiReturnStatement)?.returnValue != null
-    return when {
-      instruction is GoToInstruction && !returnsValue(instructionOffset) -> lastGotoPointFrom(instruction.offset)
-      else -> instructionOffset
+    return if (instruction is GoToInstruction && !returnsValue(instructionOffset)) {
+      lastGotoPointFrom(instruction.offset)
+    } else {
+      instructionOffset
     }
   }
 
@@ -141,7 +174,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
         else -> listOf(flowRange.last)
       }
       return defaultExits.filterNot { it in flowRange.first until flowRange.last }
-    } else {
+    }
+    else {
       return emptyList()
     }
   }
@@ -169,12 +203,14 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   fun findExposedLocalVariables(expressions: List<PsiExpression>): List<PsiVariable> {
-    val writtenVariables = ControlFlowUtil.getWrittenVariables(flow, flowRange.first, flowRange.last, false)
     val exposedLocalVariables = HashSet<PsiVariable>()
     val visitor = object : JavaRecursiveElementWalkingVisitor() {
 
       override fun visitReferenceExpression(reference: PsiReferenceExpression) {
-        exposedLocalVariables.addAll(writtenVariables.filter { variable: PsiVariable -> reference.isReferenceTo(variable) })
+        val variable = reference.resolve() as? PsiVariable ?: return
+        if (variable.textRange in TextRange(elements.first().textRange.startOffset, elements.last().textRange.endOffset)) {
+          exposedLocalVariables += variable
+        }
       }
     }
     expressions.forEach { it.accept(visitor) }
@@ -203,6 +239,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   companion object {
     fun inferNullability(expressionGroup: List<PsiExpression>): Nullability {
+      if (expressionGroup.any { it.type == PsiType.NULL }) return Nullability.NULLABLE
+
       if (expressionGroup.isEmpty()) return Nullability.UNKNOWN
       val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionGroup.first())
       val dfaRunner = DataFlowRunner(fragmentToAnalyze.project)
@@ -224,23 +262,32 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       val visitor = Visitor()
       val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, visitor)
-      return when (runnerState) {
-        RunnerResult.OK -> DfaNullability.toNullability(nullability)
-        else -> Nullability.UNKNOWN
+      return if (runnerState == RunnerResult.OK) {
+        DfaNullability.toNullability(nullability)
+      } else {
+        Nullability.UNKNOWN
       }
     }
 
-    fun inferNullability(scopeElements: List<PsiElement>, expression: String?): Nullability {
-      if (expression == null) return Nullability.UNKNOWN
-      val factory = PsiElementFactory.getInstance(scopeElements.first().project)
-      val analyzer = CodeFragmentAnalyzer(scopeElements)
-      val codeBlock = factory.createCodeBlock()
-      val inputVariables = analyzer.findUndeclaredVariables()
-      val virtualReturn = factory.createStatementFromText("return $expression;", null)
-      inputVariables.forEach { codeBlock.add(it) }
-      codeBlock.addRange(scopeElements.first(), scopeElements.last())
-      val probeExpression = (codeBlock.add(virtualReturn) as PsiReturnStatement).returnValue ?: return Nullability.UNKNOWN
-      return inferNullability(listOf(probeExpression))
+    fun inferNullability(place: PsiStatement, probeExpression: String?): Nullability {
+      if (probeExpression == null) return Nullability.UNKNOWN
+      val factory = PsiElementFactory.getInstance(place.project)
+      val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN
+      val copyFile = sourceClass.containingFile.copy() as PsiFile
+      val copyPlace = PsiTreeUtil.findSameElementInCopy(place, copyFile)
+      val probeStatement = factory.createStatementFromText("return $probeExpression;", null)
+
+      val parent = copyPlace.parent
+      val codeBlock = if (parent is PsiCodeBlock) {
+        copyPlace.parent as PsiCodeBlock
+      } else {
+        val block = copyPlace.parent.replace(factory.createCodeBlock()) as PsiCodeBlock
+        block.add(copyPlace)
+        block
+      }
+      val artificialReturn = codeBlock.add(probeStatement) as PsiReturnStatement
+      val artificialExpression = requireNotNull(artificialReturn.returnValue)
+      return inferNullability(listOf(artificialExpression))
     }
 
     fun findReturnExpressionsIn(scope: PsiElement): List<PsiExpression> {

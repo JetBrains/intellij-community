@@ -16,6 +16,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBCheckBox;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.provider.update.HgUpdateConfigurationSettings;
 import org.zmlx.hg4idea.provider.update.HgUpdateType;
 
@@ -69,18 +70,15 @@ public class HgUpdateDialog {
     MigLayout migLayout = new MigLayout(panelConstraints);
     JPanel contentPane = new JPanel(migLayout);
 
-    myPullCheckBox = new JBCheckBox("Pull", true);
-    myPullCheckBox.setMnemonic('p');
-    myPullCheckBox.setToolTipText("Pull from the default remote repository");
+    myPullCheckBox = new JBCheckBox(HgBundle.message("action.hg4idea.pull.p"), true);
+    myPullCheckBox.setToolTipText(HgBundle.message("action.hg4idea.pull.from.default.remote"));
     myPullCheckBox.setSelected(true);
 
-    myOnlyUpdateButton = new JRadioButton("Only Update", true);
-    myOnlyUpdateButton.setMnemonic('u');
-    myOnlyUpdateButton.setToolTipText("Update to the head of the current branch");
+    myOnlyUpdateButton = new JRadioButton(HgBundle.message("action.hg4idea.pull.only.update"), true);
+    myOnlyUpdateButton.setToolTipText(HgBundle.message("action.hg4idea.pull.update.to.head"));
 
-    myMergeRadioButton = new JRadioButton("Merge", false);
-    myMergeRadioButton.setMnemonic('m');
-    myMergeRadioButton.setToolTipText("Merge if pulling resulted in extra heads");
+    myMergeRadioButton = new JRadioButton(HgBundle.message("action.hg4idea.pull.update.merge"), false);
+    myMergeRadioButton.setToolTipText(HgBundle.message("action.hg4idea.pull.merge.if.in.extra"));
     myMergeRadioButton.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -88,19 +86,16 @@ public class HgUpdateDialog {
       }
     });
 
-    myCommitAfterMergeCheckBox = new JCheckBox("Commit after merge without conflicts", false);
-    myCommitAfterMergeCheckBox.setMnemonic('c');
-    myCommitAfterMergeCheckBox.setToolTipText("Commit automatically after the merge");
+    myCommitAfterMergeCheckBox = new JCheckBox(HgBundle.message("action.hg4idea.pull.commit.after.merge"), false);
+    myCommitAfterMergeCheckBox.setToolTipText(HgBundle.message("action.hg4idea.pull.commit.automatically"));
     myCommitAfterMergeCheckBox.setSelected(false);
 
-    myRebaseRadioButton = new JRadioButton("Rebase", false);
-    myRebaseRadioButton.setToolTipText("Rebase changesets to a branch tip as destination");
-    myRebaseRadioButton.setMnemonic('r');
-
+    myRebaseRadioButton = new JRadioButton(HgBundle.message("action.hg4idea.pull.rebase"), false);
+    myRebaseRadioButton.setToolTipText(HgBundle.message("action.hg4idea.pull.rebase.tooltip"));
 
     contentPane.add(myPullCheckBox, "left");
     JPanel strategyPanel = new JPanel(new MigLayout(panelConstraints));
-    strategyPanel.setBorder(IdeBorderFactory.createTitledBorder("Update Strategy", false));
+    strategyPanel.setBorder(IdeBorderFactory.createTitledBorder(HgBundle.message("action.hg4idea.pull.update.strategy"), false));
     strategyPanel.add(myOnlyUpdateButton, "left");
     strategyPanel.add(myMergeRadioButton, "left");
     strategyPanel.add(myCommitAfterMergeCheckBox, "gapx 5%");

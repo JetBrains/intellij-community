@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
@@ -38,8 +25,8 @@ public class UniqueToolbarIdInspection extends DevKitInspectionBase {
             if (parameters.length > 0 &&  parameters[0].getType() instanceof PsiClassType) {
               PsiType type = parameters[0].getType();
               //first check doesn't require resolve
-              if (Comparing.equal(((PsiClassType)type).getClassName(), CommonClassNames.JAVA_LANG_STRING_SHORT)
-                && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText(false))) {
+              if (Objects.equals(((PsiClassType)type).getClassName(), CommonClassNames.JAVA_LANG_STRING_SHORT)
+                  && CommonClassNames.JAVA_LANG_STRING.equals(type.getCanonicalText(false))) {
                 PsiExpression[] expressions = expression.getArgumentList().getExpressions();
                 if (expressions.length > 0) {
                   String text = expressions[0].getText();

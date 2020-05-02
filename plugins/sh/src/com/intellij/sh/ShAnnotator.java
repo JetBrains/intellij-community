@@ -28,7 +28,7 @@ public class ShAnnotator implements Annotator {
       mark(literal, holder, VARIABLE_DECLARATION);
     }
     else if (o instanceof ShShellParameterExpansion) {
-      ASTNode[] children = o.getNode().getChildren(TokenSet.create(ShTypes.PARAMETER_EXPANSION_BODY));
+      ASTNode[] children = o.getNode().getChildren(TokenSet.create(ShTypes.PARAM_SEPARATOR));
       for (ASTNode node : children) {
         mark(node.getPsi(), holder, COMPOSED_VARIABLE);
       }

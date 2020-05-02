@@ -29,15 +29,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.text.AttributedCharacterIterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 import static com.intellij.openapi.util.text.StringUtil.isEmpty;
-import static java.awt.font.TextAttribute.KERNING;
-import static java.util.Collections.singletonMap;
+import static com.intellij.util.FontUtil.disableKerning;
 
 /**
  * @author Konstantin Bulenkov
@@ -49,7 +46,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   private static final String POPUP = "JTextField.Search.FindPopup";
   private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
-  private static final Map<AttributedCharacterIterator.Attribute, Integer> DISABLE_KERNING = singletonMap(KERNING, null);
 
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
@@ -163,9 +159,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     super.installDefaults();
     if (SystemInfo.isMacOSCatalina) {
       JTextComponent component = getComponent();
-      Font oldFont = component.getFont();
-      Font newFont = oldFont.deriveFont(DISABLE_KERNING);
-      component.setFont(oldFont instanceof UIResource ? new FontUIResource(newFont) : newFont);
+      component.setFont(disableKerning(component.getFont()));
     }
   }
 
@@ -581,7 +575,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         Font font = component.getFont();
         if (font == null || font instanceof UIResource) {
           font = UIManager.getFont(getPropertyPrefix() + ".font");
-          component.setFont(!monospaced ? font : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
+          component.setFont(!monospaced
+                            ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
+                            : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
         }
       }
     }

@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -100,7 +101,7 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    throw new RuntimeConfigurationException("Broken configuration due to unavailable plugin or invalid configuration data.");
+    throw new RuntimeConfigurationException(LangBundle.message("dialog.message.broken.configuration"));
   }
 
   @Override

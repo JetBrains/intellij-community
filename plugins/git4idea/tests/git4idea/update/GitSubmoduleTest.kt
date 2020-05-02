@@ -62,7 +62,7 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     git("push")
 
     insertLogMarker("update process")
-    val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), false, true).update(MERGE)
+    val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
 
     assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
     assertEquals("Last commit in submodule is incorrect", submoduleHash, sub.last())
@@ -83,7 +83,7 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
       git("push")
 
       insertLogMarker("update process")
-      val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), false, true).update(MERGE)
+      val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), null, false, true).update(MERGE)
 
       assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
       assertEquals("Last commit in submodule is incorrect", submoduleHash, sub.last())
@@ -109,7 +109,7 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     addCommit("msg")
 
     insertLogMarker("update process")
-    val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), false, true).update(REBASE)
+    val result = GitUpdateProcess(project, EmptyProgressIndicator(), listOf(main, sub), UpdatedFiles.create(), null, false, true).update(REBASE)
 
     assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
     assertEquals("Submodule should be on branch", "master", sub.currentBranchName)

@@ -13,9 +13,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,20 +21,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ApplicationUtil {
-  // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
-  @SuppressWarnings("unused")
-  @ApiStatus.Internal
-  public static boolean acquireWriteIntentLockIfNeeded() {
-    if (!EDT.isCurrentThreadEdt()) return false; // do not do anything for non-EDT calls
-    return ApplicationManager.getApplication().acquireWriteIntentLockIfNeeded();
-  }
-
-  // Used in com.intellij.ide.instrument.LockWrappingClassVisitor
-  @SuppressWarnings("unused")
-  @ApiStatus.Internal
-  public static void releaseWriteIntentLockIfNeeded(boolean needed) {
-    ApplicationManager.getApplication().releaseWriteIntentLockIfNeeded(needed);
-  }
 
   // throws exception if can't grab read action right now
   public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {

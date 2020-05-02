@@ -21,6 +21,7 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.*;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.ThreesideTextDiffViewer;
+import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
@@ -441,6 +442,24 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     @Nullable
     public Data createState(@Nullable List<? extends MergeLineFragment> fragments,
                             @NotNull FoldingModelSupport.Settings settings) {
+      return createState(fragments, countLines(myEditors), settings);
+    }
+
+    @Nullable
+    public Data createState(@Nullable List<? extends MergeLineFragment> fragments,
+                            @NotNull List<LineOffsets> lineOffsets,
+                            @NotNull FoldingModelSupport.Settings settings) {
+      int[] lineCount = new int[myEditors.length];
+      for (int i = 0; i < myEditors.length; i++) {
+        lineCount[i] = lineOffsets.get(i).getLineCount();
+      }
+      return createState(fragments, lineCount, settings);
+    }
+
+    @Nullable
+    private Data createState(@Nullable List<? extends MergeLineFragment> fragments,
+                             int @NotNull [] lineCount,
+                             @NotNull FoldingModelSupport.Settings settings) {
       Iterator<int[]> it = map(fragments, fragment -> new int[]{
         fragment.getStartLine(ThreeSide.LEFT),
         fragment.getEndLine(ThreeSide.LEFT),
@@ -449,12 +468,37 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
         fragment.getStartLine(ThreeSide.RIGHT),
         fragment.getEndLine(ThreeSide.RIGHT)
       });
-      return computeFoldedRanges(it, settings);
+      return computeFoldedRanges(it, lineCount, settings);
+    }
+
+    @Nullable
+    private Data computeFoldedRanges(@Nullable final Iterator<int[]> changedLines,
+                                     int @NotNull [] lineCount,
+                                     @NotNull final Settings settings) {
+      if (changedLines == null || settings.range == -1) return null;
+
+      FoldingBuilderBase builder = new MyFoldingBuilder(myEditors, lineCount, settings);
+      return builder.build(changedLines);
     }
 
     public void paintOnDivider(@NotNull Graphics2D gg, @NotNull Component divider, @NotNull Side side) {
       MyPaintable paintable = side.select(myPaintable1, myPaintable2);
       paintable.paintOnDivider(gg, divider);
+    }
+
+    private static class MyFoldingBuilder extends FoldingBuilderBase {
+      private final EditorEx @NotNull [] myEditors;
+
+      private MyFoldingBuilder(EditorEx @NotNull [] editors, int @NotNull [] lineCount, @NotNull Settings settings) {
+        super(lineCount, settings);
+        myEditors = editors;
+      }
+
+      @Nullable
+      @Override
+      protected FoldedRangeDescription getDescription(@NotNull Project project, int lineNumber, int index) {
+        return getLineSeparatorDescription(project, myEditors[index].getDocument(), lineNumber);
+      }
     }
   }
 

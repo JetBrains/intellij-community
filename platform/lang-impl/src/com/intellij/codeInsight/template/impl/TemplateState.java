@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -35,7 +36,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbService;
@@ -412,10 +412,6 @@ public class TemplateState implements Disposable {
       LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
       calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
       LOG.assertTrue(myTemplateRange.isValid(), getRangesDebugInfo());
-      if (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
-        finishTemplate(false);
-        return;
-      }
       doReformat();
 
       int nextVariableNumber = getNextVariableNumber(-1);
@@ -653,7 +649,7 @@ public class TemplateState implements Disposable {
       ActionManager am = ActionManager.getInstance();
       String enterShortcut = KeymapUtil.getFirstKeyboardShortcutText(am.getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM));
       String tabShortcut = KeymapUtil.getFirstKeyboardShortcutText(am.getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE));
-      lookup.addAdvertisement("Press " + enterShortcut + " or " + tabShortcut + " to replace", null);
+      lookup.addAdvertisement(LangBundle.message("popup.advertisement.press.or.to.replace", enterShortcut, tabShortcut), null);
     }
     lookup.setLookupFocusDegree(lookupFocusDegree);
     lookup.refreshUi(true, true);
@@ -1052,7 +1048,7 @@ public class TemplateState implements Disposable {
         cleanupTemplateState();
         TemplateManagerImpl.clearTemplateState(editor);
         fireTemplateFinished(broken);
-      } 
+      }
       finally {
         Disposer.dispose(this);
       }
@@ -1189,7 +1185,7 @@ public class TemplateState implements Disposable {
       int index = indices.get(i);
       rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));
     }
-    Collections.sort(rangesToRemove, (o1, o2) -> {
+    rangesToRemove.sort((o1, o2) -> {
       int startDiff = o2.getStartOffset() - o1.getStartOffset();
       return startDiff != 0 ? startDiff : o2.getEndOffset() - o1.getEndOffset();
     });

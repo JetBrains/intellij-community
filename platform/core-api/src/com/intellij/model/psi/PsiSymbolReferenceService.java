@@ -28,4 +28,11 @@ public interface PsiSymbolReferenceService {
    */
   @NotNull
   Collection<? extends PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints);
+
+  /**
+   * @return external references from this element, which match {@code hints}
+   */
+  @NotNull
+  Iterable<? extends PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost host,
+                                                               @NotNull PsiSymbolReferenceHints hints);
 }

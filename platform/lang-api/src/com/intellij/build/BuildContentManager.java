@@ -3,6 +3,8 @@ package com.intellij.build;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContext;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +32,7 @@ public interface BuildContentManager {
 
   Content addTabbedContent(@NotNull JComponent contentComponent,
                            @NotNull String groupPrefix,
-                           @NotNull String tabName,
+                           @NotNull @NlsContexts.DialogTitle String tabName,
                            @Nullable Icon icon,
                            @Nullable Disposable childDisposable);
 

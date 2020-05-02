@@ -93,12 +93,6 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     myBuildParams = new HashMap<>();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    myProjectDir = null;
-    super.tearDown();
-  }
-
   protected static void assertOutput(final String outputPath, TestFileSystemBuilder expected) {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(outputPath)));
   }
@@ -341,7 +335,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScopeTestBuilder scopeBuilder) {
-    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, null, true);
+    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), myBuildParams, CanceledStatus.NULL, true);
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {

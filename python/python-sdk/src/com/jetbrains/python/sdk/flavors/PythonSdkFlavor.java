@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,7 +115,7 @@ public abstract class PythonSdkFlavor {
   }
 
   public static List<PythonSdkFlavor> getPlatformIndependentFlavors() {
-    List<PythonSdkFlavor> result = Lists.newArrayList();
+    List<PythonSdkFlavor> result = new ArrayList<>();
     for (PythonSdkFlavor flavor : EP_NAME.getExtensionList()) {
       if (flavor.isPlatformIndependent()) {
         result.add(flavor);

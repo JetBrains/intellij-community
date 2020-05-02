@@ -5,7 +5,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +17,8 @@ import org.jetbrains.idea.devkit.util.ActionType;
 public class RegisterActionFix extends AbstractRegisterFix {
   private NewActionDialog myDialog;
 
-  public RegisterActionFix(@NotNull SmartPsiElementPointer<PsiClass> pointer) {
-    super(pointer);
+  public RegisterActionFix(@NotNull PsiClass psiClass) {
+    super(psiClass);
   }
 
   @Override

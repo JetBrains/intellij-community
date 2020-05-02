@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -15,9 +15,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-class ProgressSlidePainter {
-  public final boolean hasSlides;
-
+final class ProgressSlidePainter {
   private static final int PREFETCH_BUFFER_SIZE = 5;
   private final BlockingQueue<Slide> myPrefetchQueue = new ArrayBlockingQueue<>(PREFETCH_BUFFER_SIZE);
   private boolean isFinish;
@@ -38,29 +36,21 @@ class ProgressSlidePainter {
 
   ProgressSlidePainter(@NotNull ApplicationInfoEx appInfo) {
     myProgressSlides = appInfo.getProgressSlides();
-    if (myProgressSlides.isEmpty()) {
-      hasSlides = false;
-      return;
-    } else {
-      hasSlides = true;
-    }
-    myProgressSlides.sort(Comparator.comparing(ProgressSlide::getProgressRation));
+    myProgressSlides.sort(Comparator.comparing(it -> it.progressRation));
   }
 
   public void startPreloading() {
-    if (!hasSlides) {
-      return;
-    }
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       for (int i = 0; i < myProgressSlides.size(); i++) {
         ProgressSlide slide = myProgressSlides.get(i);
         try {
-          Image image = ImageLoader.loadFromUrl(slide.getUrl(), Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
+          Image image = ImageLoader.loadFromUrl(slide.url, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
           if (image == null) {
-            throw new IllegalStateException("Cannot load slide by url: " + slide.getUrl());
+            throw new IllegalStateException("Cannot load slide by url: " + slide.url);
           }
-          myPrefetchQueue.put(new Slide(slide.getProgressRation(), image, i == myProgressSlides.size() - 1));
-        } catch (InterruptedException e) {
+          myPrefetchQueue.put(new Slide(slide.progressRation, image, i == myProgressSlides.size() - 1));
+        }
+        catch (InterruptedException e) {
           return;
         }
       }
@@ -68,9 +58,10 @@ class ProgressSlidePainter {
   }
 
   public void paintSlides(@NotNull Graphics g, double currentProgress) {
-    if (isFinish || (nextSlide != null && nextSlide.progress > currentProgress) || !hasSlides) {
+    if (isFinish || (nextSlide != null && nextSlide.progress > currentProgress)) {
       return;
     }
+
     if (nextSlide != null) {
       StartupUiUtil.drawImage(g, nextSlide.image, 0, 0, null);
       if (nextSlide.isLastSlide) {
@@ -84,7 +75,8 @@ class ProgressSlidePainter {
     do {
       try {
         newSlide = myPrefetchQueue.take();
-      } catch (InterruptedException e) {
+      }
+      catch (InterruptedException e) {
         return;
       }
       if (newSlide.progress <= currentProgress) {
@@ -93,10 +85,12 @@ class ProgressSlidePainter {
           nextSlide = null;
           isFinish = true;
         }
-      } else {
+      }
+      else {
         nextSlide = newSlide;
         break;
       }
-    } while (!newSlide.isLastSlide);
+    }
+    while (!newSlide.isLastSlide);
   }
 }

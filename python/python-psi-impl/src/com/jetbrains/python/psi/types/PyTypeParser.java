@@ -16,7 +16,6 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
@@ -412,7 +411,7 @@ public class PyTypeParser {
       if (resolveResults.isEmpty()) {
         return getImplicitlyResolvedType(tokens, context, types, fullRanges, firstRange);
       }
-      final List<PyType> members = Lists.newArrayList();
+      final List<PyType> members = new ArrayList<>();
       for (RatedResolveResult result : resolveResults) {
         final PsiElement resolved = result.getElement();
         PyType type = null;

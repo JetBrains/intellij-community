@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, DataProvider {
-
   private JComponent myToolbar;
   private JComponent myContent;
 
@@ -80,8 +79,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     return myToolbar != null && myToolbar.isVisible();
   }
 
-  @Nullable
-  public JComponent getToolbar() {
+  public @Nullable JComponent getToolbar() {
     return myToolbar;
   }
 
@@ -108,8 +106,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     return QuickActionProvider.KEY.is(dataId) && myProvideQuickActions ? this : null;
   }
 
@@ -119,11 +116,12 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   @Override
-  @NotNull
-  public List<AnAction> getActions(boolean originalProvider) {
+  public @NotNull List<AnAction> getActions(boolean originalProvider) {
     JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(myToolbar).traverse().filter(ActionToolbar.class);
-    if (toolbars.size() == 0) return Collections.emptyList();
-    return toolbars.flatten(toolbar -> toolbar.getActions()).toList();
+    if (toolbars.size() == 0) {
+      return Collections.emptyList();
+    }
+    return toolbars.flatten(ActionToolbar::getActions).toList();
   }
 
   @Override
@@ -131,8 +129,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     return this;
   }
 
-  @Nullable
-  public JComponent getContent() {
+  public @Nullable JComponent getContent() {
     return myContent;
   }
 

@@ -65,7 +65,6 @@ public class JvmMainMethodUtil {
     return isStringArray(parameters[0].getType());
   }
 
-  @Contract(value = "null -> false", pure = true)
   private static boolean isVoid(@NotNull JvmType type) {
     return type instanceof JvmPrimitiveType && ((JvmPrimitiveType)type).getKind() == JvmPrimitiveTypeKind.VOID;
   }

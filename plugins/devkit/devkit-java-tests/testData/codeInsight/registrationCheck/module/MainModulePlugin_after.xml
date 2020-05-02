@@ -9,6 +9,9 @@
 
   <extensionPoints>
     <extensionPoint name="myMainModuleClassEp" interface="MainModuleClass"/>
+    <extensionPoint name="myMainModuleClassEpBeanClass" beanClass="MainModuleBeanClass">
+      <with attribute="implementationClass" implements="DependencyModuleClass"/>
+    </extensionPoint>
     <extensionPoint name="myDependencyModuleClassEp" interface="DependencyModuleClass"/>
     <extensionPoint name="myAdditionalClassEp" beanClass="AdditionalModuleClass"/>
   </extensionPoints>

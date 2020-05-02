@@ -35,7 +35,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.MessageFormat;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -161,7 +160,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     final JScrollPane scroll = ScrollPaneFactory.createScrollPane(myTable, SideBorder.TOP);
     final DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("MemoryView.SettingsPopupActionGroup");
     group.setPopup(true);
-    final Presentation actionsPresentation = new Presentation("Memory View Settings");
+    final Presentation actionsPresentation = new Presentation(XDebuggerBundle.messagePointer("action.memory.view.settings.text"));
     actionsPresentation.setIcon(AllIcons.General.GearPlain);
 
     final ActionButton button = new ActionButton(group, actionsPresentation, ActionPlaces.UNKNOWN, new JBDimension(25, 25));

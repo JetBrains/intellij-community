@@ -5,6 +5,8 @@ import com.intellij.internal.statistic.StatisticsEventLogUtil;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -68,9 +70,10 @@ public abstract class SettingsConnectionService {
     if (mySettingsUrl == null) return Collections.emptyMap();
 
     try {
-      HttpEntity entity = StatisticsEventLogUtil.create(myUserAgent).execute(new HttpGet(mySettingsUrl)).getEntity();
+      CloseableHttpResponse response = StatisticsEventLogUtil.create(myUserAgent).execute(new HttpGet(mySettingsUrl));
+      HttpEntity entity = response.getEntity();
       InputStream content = entity != null ? entity.getContent() : null;
-      if (content != null) {
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK && content != null) {
         Map<String, String> settings = new LinkedHashMap<>();
         try {
           Element root = StatisticsEventLogUtil.parseXml(content);

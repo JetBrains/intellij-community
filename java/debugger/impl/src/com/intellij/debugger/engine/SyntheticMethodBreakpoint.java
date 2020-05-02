@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.ui.breakpoints.WildcardMethodBreakpoint;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.sun.jdi.Method;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
+
+import java.util.Objects;
 
 public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint {
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
@@ -28,7 +29,7 @@ public class SyntheticMethodBreakpoint extends WildcardMethodBreakpoint {
   public StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
     String methodName = getMethodName();
     return methods
-      .filter(m -> Comparing.equal(methodName, m.name()) && (mySignature == null || Comparing.equal(mySignature, m.signature())))
+      .filter(m -> Objects.equals(methodName, m.name()) && (mySignature == null || Objects.equals(mySignature, m.signature())))
       .limit(1);
   }
 

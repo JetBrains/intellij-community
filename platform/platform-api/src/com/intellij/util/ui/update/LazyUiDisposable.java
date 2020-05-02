@@ -67,9 +67,5 @@ public abstract class LazyUiDisposable<T> implements Activatable {
     }
   }
 
-  @Override
-  public final void hideNotify() {
-  }
-
   protected abstract void initialize(@NotNull Disposable parent, @NotNull T child, @Nullable Project project);
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.java.JavaBundle;
@@ -27,6 +28,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -50,6 +52,12 @@ class MigrateToStreamFix implements LocalQuickFix {
   @Override
   public String getFamilyName() {
     return JavaBundle.message("quickfix.family.replace.with.stream.api.equivalent");
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    // Has non-trivial fields but safe
+    return this;
   }
 
   @Override

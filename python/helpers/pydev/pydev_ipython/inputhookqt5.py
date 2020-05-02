@@ -137,7 +137,7 @@ def create_inputhook_qt5(mgr, app=None):
                 timer.timeout.connect(event_loop.quit)
                 while not stdin_ready():
                     timer.start(50)
-                    event_loop.exec_()
+                    event_loop.processEvents()
                     timer.stop()
         except KeyboardInterrupt:
             global got_kbdint, sigint_timer

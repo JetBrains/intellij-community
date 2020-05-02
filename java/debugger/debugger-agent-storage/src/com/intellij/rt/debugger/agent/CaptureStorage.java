@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -212,8 +215,8 @@ public class CaptureStorage {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
-  public static Object[][] getCurrentCapturedStack(int limit) {
-    return wrapInArray(CURRENT_STACKS.get().peekLast(), limit);
+  public static String getCurrentCapturedStack(int limit) throws IOException {
+    return wrapInString(CURRENT_STACKS.get().peekLast(), limit);
   }
 
   // to be run from the debugger
@@ -221,6 +224,26 @@ public class CaptureStorage {
   public static Object[][] getRelatedStack(Object key, int limit) {
     //noinspection SuspiciousMethodCalls
     return wrapInArray(STORAGE.get(new HardKey(key)), limit);
+  }
+
+  private static String wrapInString(CapturedStack stack, int limit) throws IOException {
+    if (stack == null) {
+      return null;
+    }
+    ByteArrayOutputStream bas = new ByteArrayOutputStream();
+    DataOutputStream dos = new DataOutputStream(bas);
+    for (StackTraceElement elem : getStackTrace(stack, limit)) {
+      if (elem == null) {
+        dos.writeBoolean(false);
+      }
+      else {
+        dos.writeBoolean(true);
+        dos.writeUTF(elem.getClassName());
+        dos.writeUTF(elem.getMethodName());
+        dos.writeInt(elem.getLineNumber());
+      }
+    }
+    return bas.toString("ISO-8859-1");
   }
 
   private static Object[][] wrapInArray(CapturedStack stack, int limit) {
@@ -255,12 +278,12 @@ public class CaptureStorage {
         }
         int newEnd = depth + 2;
         if (newEnd > size) {
-          IllegalStateException exception = new IllegalStateException("Insertion point was not found in stack:");
-          exception.setStackTrace(stackTrace.toArray(new StackTraceElement[0]));
-          throw exception;
+          stack = null; // Insertion point was not found - stop
         }
-        stackTrace = stackTrace.subList(0, newEnd);
-        stack = ((DeepCapturedStack)stack).myInsertMatch;
+        else {
+          stackTrace = stackTrace.subList(0, newEnd);
+          stack = ((DeepCapturedStack)stack).myInsertMatch;
+        }
       }
       else {
         stack = null;

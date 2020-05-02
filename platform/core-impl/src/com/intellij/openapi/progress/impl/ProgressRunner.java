@@ -4,6 +4,7 @@ package com.intellij.openapi.progress.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +16,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
+import com.intellij.codeWithMe.ClientId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +58,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   }
 
   @NotNull
-  private final Function<? super ProgressIndicator, R> myComputation;
+  private final Function<? super ProgressIndicator, ? extends R> myComputation;
 
   private final boolean isSync;
 
@@ -73,7 +75,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    * @param computation runnable to be executed under progress
    */
   public ProgressRunner(@NotNull Runnable computation) {
-    this((progress) -> {
+    this(progress -> {
       computation.run();
       return null;
     });
@@ -86,7 +88,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    * @param task task to be executed under progress
    */
   public ProgressRunner(@NotNull Task task) {
-    this((progress) -> {
+    this(progress -> {
       try {
         task.run(progress);
       }
@@ -105,15 +107,15 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
    *
    * @param computation runnable to be executed under progress
    */
-  public ProgressRunner(@NotNull Function<? super ProgressIndicator, R> computation) {
+  public ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation) {
     this(computation, false, false, ThreadToUse.POOLED, null);
   }
 
-  private ProgressRunner(@NotNull Function<? super ProgressIndicator, R> computation,
+  private ProgressRunner(@NotNull Function<? super ProgressIndicator, ? extends R> computation,
                          boolean sync,
                          boolean modal, @NotNull ThreadToUse use,
                          @Nullable CompletableFuture<P> progressIndicatorFuture) {
-    myComputation = computation;
+    myComputation = ClientId.decorateFunction(computation);
     isSync = sync;
     isModal = modal;
     myThreadToUse = use;
@@ -332,7 +334,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   private CompletableFuture<R> normalExec(CompletableFuture<? extends ProgressIndicator> progressFuture,
                                           Semaphore modalityEntered,
                                           Supplier<R> onThreadCallable) {
-    Function<ProgressIndicator, ProgressIndicator> modalityRunnable = (progressIndicator) -> {
+    Function<ProgressIndicator, ProgressIndicator> modalityRunnable = progressIndicator -> {
       LaterInvocator.enterModal(progressIndicator, (ModalityStateEx)progressIndicator.getModalityState());
       modalityEntered.up();
       return progressIndicator;
@@ -392,13 +394,13 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
   }
 
   private static void pollLaterInvocatorActively(CompletableFuture<?> resultFuture, @NotNull Runnable pollAction) {
-    ApplicationManager.getApplication().runUnlockingIntendedWrite(() -> {
+    ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
       while (true) {
         try {
           resultFuture.get(10, TimeUnit.MILLISECONDS);
         }
         catch (TimeoutException ignore) {
-          ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(pollAction);
+          ApplicationManagerEx.getApplicationEx().runIntendedWriteActionOnCurrentThread(pollAction);
           continue;
         }
         catch (Throwable ignored) {

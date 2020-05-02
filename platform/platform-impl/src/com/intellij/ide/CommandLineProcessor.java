@@ -4,9 +4,10 @@ package com.intellij.ide;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.idea.SplashManager;
+import com.intellij.idea.CommandLineArgs;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -21,6 +22,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.CommandLineProjectOpenProcessor;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,10 +32,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
 public final class CommandLineProcessor {
   private static final Logger LOG = Logger.getInstance(CommandLineProcessor.class);
   private static final String OPTION_WAIT = "--wait";
+  public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
 
   private CommandLineProcessor() { }
 
@@ -46,7 +53,7 @@ public final class CommandLineProcessor {
       return doOpenFile(file, -1, -1, false, shouldWait);
     }
     else {
-      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForProject(project) : OK_FUTURE);
     }
   }
 
@@ -55,19 +62,28 @@ public final class CommandLineProcessor {
     assert file != null;
 
     Project[] projects = tempProject ? new Project[0] : ProjectUtil.getOpenProjects();
+    if (PlatformUtils.isDataGrip() && !tempProject && projects.length == 0) {
+      RecentProjectsManager recentProjectsManager = RecentProjectsManager.getInstance();
+      if (recentProjectsManager.willReopenProjectOnStart() &&
+          recentProjectsManager.reopenLastProjectsOnStart()) {
+        projects = ProjectUtil.getOpenProjects();
+      }
+    }
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(file, line, column, tempProject);
       if (project == null) {
         return CommandLineProcessorResult.createError("No project found to open file in");
       }
 
-      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : OK_FUTURE);
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
       if (LightEdit.owns(project)) {
-        LightEdit.openFile(file);
+        if (LightEdit.openFile(file)) {
+          LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+        }
       }
       else {
         Navigatable navigatable = line > 0
@@ -78,7 +94,7 @@ public final class CommandLineProcessor {
         });
       }
 
-      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : OK_FUTURE);
     }
   }
 
@@ -115,7 +131,7 @@ public final class CommandLineProcessor {
     logMessage.append("-----");
     LOG.info(logMessage.toString());
     if (args.isEmpty()) {
-      return new CommandLineProcessorResult(null, CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(null, OK_FUTURE);
     }
 
     String command = args.get(0);
@@ -139,7 +155,7 @@ public final class CommandLineProcessor {
     if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
       JetBrainsProtocolHandler.processJetBrainsLauncherParameters(command);
       ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
-      return new CommandLineProcessorResult(null, CliResult.OK_FUTURE);
+      return new CommandLineProcessorResult(null, OK_FUTURE);
     }
 
     CommandLineProcessorResult projectAndCallback = null;
@@ -150,7 +166,7 @@ public final class CommandLineProcessor {
 
     for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
-      if (SplashManager.NO_SPLASH.equals(arg) || OPTION_WAIT.equals(arg)) {
+      if (CommandLineArgs.isKnownArgument(arg) || OPTION_WAIT.equals(arg)) {
         continue;
       }
 
@@ -212,6 +228,6 @@ public final class CommandLineProcessor {
       return new CommandLineProcessorResult(null, CliResult.error(1, "--wait must be supplied with file or project to wait for"));
     }
 
-    return projectAndCallback == null ? new CommandLineProcessorResult(null, CliResult.OK_FUTURE) : projectAndCallback;
+    return projectAndCallback == null ? new CommandLineProcessorResult(null, OK_FUTURE) : projectAndCallback;
   }
 }

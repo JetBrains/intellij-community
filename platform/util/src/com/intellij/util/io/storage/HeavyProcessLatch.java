@@ -1,24 +1,26 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
+import com.intellij.UtilBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Deque;
 import java.util.EventListener;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public final class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Set<String> myHeavyProcesses = ContainerUtil.newConcurrentSet();
+  private final Map<String, Type> myHeavyProcesses = new ConcurrentHashMap<>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final Deque<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedDeque<>();
@@ -26,9 +28,31 @@ public final class HeavyProcessLatch {
   private HeavyProcessLatch() {
   }
 
-  @NotNull
-  public AccessToken processStarted(@NotNull final String operationName) {
-    myHeavyProcesses.add(operationName);
+  /**
+   * Approximate type of a heavy operation. Used in <code>TrafficLightRenderer</code> UI as brief description.
+   */
+  public enum Type {
+    Indexing("heavyProcess.type.indexing"),
+    Refreshing("heavyProcess.type.refreshing"),
+    Paused("heavyProcess.type.paused");
+
+    private final String bundleKey;
+    Type(String bundleKey) {
+      this.bundleKey = bundleKey;
+    }
+
+    @Override
+    public String toString() {
+      return UtilBundle.message(bundleKey);
+    }
+  }
+
+  public @NotNull AccessToken processStarted(@NotNull String operationName) {
+    return processStarted(operationName, Type.Paused);
+  }
+
+  public AccessToken processStarted(@NotNull String operationName, @NotNull Type type) {
+    myHeavyProcesses.put(operationName, type);
     myEventDispatcher.getMulticaster().processStarted();
     return new AccessToken() {
       @Override
@@ -60,12 +84,17 @@ public final class HeavyProcessLatch {
     return !myHeavyProcesses.isEmpty();
   }
 
-  public String getRunningOperationName() {
+  public @Nullable String getRunningOperationName() {
+    Map.Entry<String, Type> runningOperation = getRunningOperation();
+    return runningOperation != null ? runningOperation.getKey() : null;
+  }
+
+  public @Nullable Map.Entry<String, Type> getRunningOperation() {
     if (myHeavyProcesses.isEmpty()) {
       return null;
     }
     else {
-      Iterator<String> iterator = myHeavyProcesses.iterator();
+      Iterator<Map.Entry<String, Type>> iterator = myHeavyProcesses.entrySet().iterator();
       return iterator.hasNext() ? iterator.next() : null;
     }
   }

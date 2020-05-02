@@ -28,6 +28,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBImageIcon;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,6 +43,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,8 +54,7 @@ public final class AppUIUtil {
   private static List<Image> ourIcons = null;
   private static volatile boolean ourMacDocIconSet = false;
 
-  @NotNull
-  private static Logger getLogger() {
+  private static @NotNull Logger getLogger() {
     return Logger.getInstance(AppUIUtil.class);
   }
 
@@ -112,20 +113,17 @@ public final class AppUIUtil {
   }
 
   @SuppressWarnings("SameParameterValue")
-  @NotNull
-  private static Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
+  private static @NotNull Image loadSmallApplicationIconImage(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     @SuppressWarnings("deprecation") String fallbackSmallIconUrl = appInfo.getSmallIconUrl();
     return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), ctx, size, fallbackSmallIconUrl);
   }
 
-  @NotNull
-  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
+  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
     return loadSmallApplicationIcon(ctx, 16);
   }
 
-  @NotNull
-  public static Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
+  public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx, int size) {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     String smallIconUrl = appInfo.getSmallApplicationSvgIconUrl();
 
@@ -140,8 +138,7 @@ public final class AppUIUtil {
     return icon;
   }
 
-  @Nullable
-  public static Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
+  public static @Nullable Icon loadApplicationIcon(@NotNull ScaleContext ctx, int size) {
     String url = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
     return loadApplicationIcon(url, ctx, size);
   }
@@ -150,8 +147,7 @@ public final class AppUIUtil {
    * Returns a hidpi-aware image.
    */
   @Contract("_, _, _, !null -> !null")
-  @Nullable
-  private static Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
+  private static @Nullable Image loadApplicationIconImage(String svgPath, ScaleContext ctx, int size, String fallbackPath) {
     Icon icon = loadApplicationIcon(svgPath, ctx, size);
     if (icon != null) {
       return IconUtil.toImage(icon, ctx);
@@ -164,8 +160,7 @@ public final class AppUIUtil {
     return null;
   }
 
-  @Nullable
-  private static Icon loadApplicationIcon(String svgPath, ScaleContext ctx, int size) {
+  private static @Nullable Icon loadApplicationIcon(String svgPath, ScaleContext ctx, int size) {
     if (svgPath == null) return null;
 
     Icon icon = IconLoader.findIcon(svgPath);
@@ -179,8 +174,7 @@ public final class AppUIUtil {
     return scaleIconToSize(icon, size);
   }
 
-  @NotNull
-  private static Icon scaleIconToSize(Icon icon, int size) {
+  private static @NotNull Icon scaleIconToSize(Icon icon, int size) {
     int width = icon.getIconWidth();
     if (width == size) return icon;
 
@@ -260,8 +254,7 @@ public final class AppUIUtil {
 
   private static final int MIN_ICON_SIZE = 32;
 
-  @Nullable
-  public static String findIcon() {
+  public static @Nullable String findIcon() {
     String iconsPath = PathManager.getBinPath();
     String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtilRt.EMPTY_STRING_ARRAY);
 
@@ -272,9 +265,12 @@ public final class AppUIUtil {
       }
     }
 
-    File svgFile = ApplicationInfoEx.getInstanceEx().getApplicationSvgIconFile();
-    if (svgFile != null) {
-      return svgFile.getAbsolutePath();
+    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
+    if (svgIconUrl != null) {
+      URL url = ApplicationInfoEx.class.getResource(svgIconUrl);
+      if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+        return URLUtil.urlToFile(url).getAbsolutePath();
+      }
     }
 
     // 2. look for .png icon of max size
@@ -343,15 +339,13 @@ public final class AppUIUtil {
 
     ConsentSettingsUi ui = new ConsentSettingsUi(false);
     final DialogWrapper dialog = new DialogWrapper(true) {
-      @Nullable
       @Override
-      protected Border createContentPaneBorder() {
+      protected @Nullable Border createContentPaneBorder() {
         return null;
       }
 
-      @Nullable
       @Override
-      protected JComponent createSouthPanel() {
+      protected @Nullable JComponent createSouthPanel() {
         JComponent southPanel = super.createSouthPanel();
         if (southPanel != null) {
           southPanel.setBorder(createDefaultBorder());

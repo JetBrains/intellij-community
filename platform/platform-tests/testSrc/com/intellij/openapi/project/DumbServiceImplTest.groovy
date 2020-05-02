@@ -25,10 +25,12 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.caches.IndexUpdateRunner
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 
@@ -105,7 +107,8 @@ class DumbServiceImplTest extends BasePlatformTestCase {
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
-            index.indexFiles(project, [child], indicator)
+            new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
+              .indexFiles(project, [child], indicator)
           }
         }
         catch (ProcessCanceledException e) {

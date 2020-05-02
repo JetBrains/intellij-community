@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
@@ -17,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 class TestMethod extends TestObject {
   TestMethod(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -93,8 +93,8 @@ class TestMethod extends TestObject {
       return Comparing.equal(testMethod.getName(), data.getMethodName());
     }*/
     return
-      Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(testClass), data.getMainClassName()) &&
-      Comparing.equal(JUnitConfiguration.Data.getMethodPresentation(testMethod), data.getMethodNameWithSignature());
+      Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(testClass), data.getMainClassName()) &&
+      Objects.equals(JUnitConfiguration.Data.getMethodPresentation(testMethod), data.getMethodNameWithSignature());
   }
 
   @Override
@@ -114,7 +114,7 @@ class TestMethod extends TestObject {
     boolean found = false;
     boolean testAnnotated = false;
     for (final PsiMethod method : psiClass.findMethodsByName(methodName, true)) {
-      if (filter.value(method) && Comparing.equal(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
+      if (filter.value(method) && Objects.equals(methodNameWithSignature, JUnitConfiguration.Data.getMethodPresentation(method))) {
         found = true;
       }
       if (JUnitUtil.isTestAnnotated(method)) testAnnotated = true;
@@ -123,7 +123,7 @@ class TestMethod extends TestObject {
       throw new RuntimeConfigurationWarning(JUnitBundle.message("test.method.doesnt.exist.error.message", methodName));
     }
 
-    if (!testAnnotated && 
+    if (!testAnnotated &&
         !AnnotationUtil.isAnnotated(psiClass, JUnitUtil.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY) &&
         !MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(JUnitUtil.CUSTOM_TESTABLE_ANNOTATION))) {
       try {

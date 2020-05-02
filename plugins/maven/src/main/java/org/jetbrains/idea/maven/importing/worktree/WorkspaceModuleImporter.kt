@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing.worktree
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.MavenModelUtil
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -22,11 +23,12 @@ class WorkspaceModuleImporter(private val project: Project,
                               private val projectsTree: MavenProjectsTree,
                               private val diff: TypedEntityStorageBuilder) {
 
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
   private lateinit var moduleEntity: ModuleEntity
   fun importModule() {
     val dependencies = collectDependencies();
     moduleEntity = diff.addModuleEntity(mavenProject.displayName, dependencies, MavenExternalSource.INSTANCE)
-    diff.addContentRootEntity(VirtualFileUrlManager.fromPath(mavenProject.directory), emptyList(), emptyList(), moduleEntity,
+    diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(), moduleEntity,
                               MavenExternalSource.INSTANCE)
     importFolders()
     importLanguageLevel();
@@ -88,7 +90,7 @@ class WorkspaceModuleImporter(private val project: Project,
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
     val roots = ArrayList<LibraryRoot>()
 
-    roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+    roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                           LibraryRootTypeId("CLASSES"),
                           LibraryRoot.InclusionOptions.ROOT_ITSELF))
 
@@ -127,15 +129,15 @@ class WorkspaceModuleImporter(private val project: Project,
   private fun addLibraryToProjectTable(artifact: MavenArtifact): LibraryEntity {
     val roots = ArrayList<LibraryRoot>()
 
-    roots.add(LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
+    roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
                           LibraryRootTypeId("CLASSES"),
                           LibraryRoot.InclusionOptions.ROOT_ITSELF))
     roots.add(
-      LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
+      LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
                   LibraryRootTypeId("JAVADOC"),
                   LibraryRoot.InclusionOptions.ROOT_ITSELF))
     roots.add(
-      LibraryRoot(VirtualFileUrlManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
+      LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
                   LibraryRootTypeId("SOURCES"),
                   LibraryRoot.InclusionOptions.ROOT_ITSELF))
 
@@ -154,7 +156,7 @@ class WorkspaceModuleImporter(private val project: Project,
         .firstOrNull { it.type == entry.value }) as? JpsModuleSourceRootPropertiesSerializer
                        ?: error("Module source root type ${entry}.value is not registered as JpsModelSerializerExtension")
 
-      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, VirtualFileUrlManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
+      val sourceRootEntity = diff.addSourceRootEntity(moduleEntity, virtualFileManager.fromUrl(VfsUtilCore.pathToUrl(entry.key)),
                                                       entry.value.isForTests,
                                                       serializer.typeId,
                                                       MavenExternalSource.INSTANCE)

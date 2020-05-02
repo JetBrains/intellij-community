@@ -6,9 +6,11 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 public class ShDocumentationProvider implements DocumentationProvider {
@@ -86,12 +87,13 @@ public class ShDocumentationProvider implements DocumentationProvider {
 
     return myManCache.computeIfAbsent(commandName, s -> {
       try {
-        return ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        return ApplicationUtil.runWithCheckCanceled(() -> {
           GeneralCommandLine commandLine = new GeneralCommandLine(manExecutable).withParameters(commandName);
           ProcessOutput output = ExecUtil.execAndGetOutput(commandLine, TIMEOUT_IN_MILLISECONDS);
           return output.getExitCode() != 0 ? output.getStderr() : output.getStdout();
-        }).get(TIMEOUT_IN_MILLISECONDS, TimeUnit.MILLISECONDS);
+        }, ProgressManager.getInstance().getProgressIndicator());
       }
+      catch (ProcessCanceledException e) { throw  e; }
       catch (Exception e) {
         LOG.warn(e);
         return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -120,11 +120,11 @@ public class VcsUtil {
    * File is considered to be a valid vcs file if it resides under the content
    * root controlled by the given vcs.
    */
-  public static boolean isFileForVcs(@NotNull VirtualFile file, Project project, AbstractVcs host) {
+  public static boolean isFileForVcs(@NotNull VirtualFile file, @NotNull Project project, @Nullable AbstractVcs host) {
     return getVcsFor(project, file) == host;
   }
 
-  public static boolean isFileForVcs(FilePath path, Project project, AbstractVcs host) {
+  public static boolean isFileForVcs(@NotNull FilePath path, @NotNull Project project, @Nullable AbstractVcs host) {
     return getVcsFor(project, path) == host;
   }
 

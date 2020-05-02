@@ -22,7 +22,6 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.JetBrainsAnnotationsExternalLibraryResolver;
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
@@ -76,7 +75,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
   private JCheckBox myAnnotateLocalVariablesCb;
 
   public InferNullityAnnotationsAction() {
-    super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaPsiBundle.messagePointer("action.description.infer.nullity.annotations"));
+    super(JavaBundle.messagePointer("dialog.title.infer.nullity"), JavaBundle.messagePointer("action.description.infer.nullity.annotations"));
   }
 
   @Override

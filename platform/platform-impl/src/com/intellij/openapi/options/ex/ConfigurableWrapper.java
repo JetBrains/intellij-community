@@ -9,8 +9,6 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +52,20 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     return configurable;
   }
 
-  public static <T extends UnnamedConfigurable> List<T> createConfigurables(ExtensionPointName<? extends ConfigurableEP<T>> name) {
-    return ContainerUtil.mapNotNull(name.getExtensionList(), (NullableFunction<ConfigurableEP<T>, T>)ep -> wrapConfigurable(ep));
+  public static <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
+    Collection<? extends ConfigurableEP<T>> collection = name.getExtensionList();
+    if (collection.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<T> result = new ArrayList<>(collection.size());
+    for (ConfigurableEP<T> item : collection) {
+      T o = wrapConfigurable(item, false);
+      if (o != null) {
+        result.add(o);
+      }
+    }
+    return result.isEmpty() ? Collections.emptyList() : result;
   }
 
   public static boolean hasOwnContent(UnnamedConfigurable configurable) {
@@ -315,7 +325,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
         if (configurable instanceof Weighted) {
           if (((Weighted)configurable).getWeight() != 0) {
             myComparator = COMPARATOR;
-            Collections.sort(list, myComparator);
+            list.sort(myComparator);
             break;
           }
         }

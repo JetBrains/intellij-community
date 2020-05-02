@@ -3,7 +3,7 @@ package com.intellij.ui.content;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ import javax.swing.*;
 
 public interface ContentFactory {
   @NotNull
-  Content createContent(@Nullable JComponent component, @Nullable @Nls(capitalization = Nls.Capitalization.Title) String displayName, boolean isLockable);
+  Content createContent(@Nullable JComponent component, @Nullable @NlsContexts.TabTitle String displayName, boolean isLockable);
 
   @NotNull
   ContentManager createContentManager(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project);

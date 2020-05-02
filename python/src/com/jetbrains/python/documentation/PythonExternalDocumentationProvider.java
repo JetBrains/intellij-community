@@ -81,6 +81,12 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
 
         for (final PythonDocumentationLinkProvider documentationLinkProvider :
           PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
+          final String providedUrl = ReadAction.compute(() -> {
+            return documentationLinkProvider.getExternalDocumentationUrl(namedElement, namedElement);
+          });
+          if (!url.equals(providedUrl)) {
+            continue;
+          }
 
           Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 

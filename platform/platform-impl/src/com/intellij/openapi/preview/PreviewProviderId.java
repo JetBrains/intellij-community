@@ -15,23 +15,8 @@
  */
 package com.intellij.openapi.preview;
 
+@Deprecated
 public class PreviewProviderId<V, C> {
-  private final String myVisualName;
-
-  public static <V, C> PreviewProviderId<V, C> create(String visualName) {
-    return new PreviewProviderId<>(visualName);
-  }
-
-  private PreviewProviderId(String visualName) {
-    myVisualName = visualName;
-  }
-
-  public final String getVisualName() {
-    return myVisualName;
-  }
-
-  @Override
-  public final String toString() {
-    return getVisualName();
+  private PreviewProviderId() {
   }
 }

@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -47,6 +50,10 @@ public abstract class PatchAction {
   }
 
   public String getPath() {
+    return myPath;
+  }
+
+  protected String getReportPath() {
     return myPath;
   }
 
@@ -125,27 +132,38 @@ public abstract class PatchAction {
     if (!toFile.exists() || toFile.isDirectory()) return null;
     ValidationResult result = validateProcessLock(toFile, action);
     if (result != null) return result;
-    if (!checkWriteable) return null;
-    if (toFile.canRead() && toFile.canWrite() && isWritable(toFile)) return null;
+    if (!checkWriteable || isWritable(toFile.toPath())) return null;
     ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-    return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, ValidationResult.ACCESS_DENIED_MESSAGE, options);
+    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ACCESS_DENIED_MESSAGE, options);
   }
 
-  private static boolean isWritable(File toFile) {
-    try (FileOutputStream s = new FileOutputStream(toFile, true); FileChannel ch = s.getChannel(); FileLock lock = ch.tryLock()) {
-      return lock != null;
-    }
-    catch (OverlappingFileLockException | IOException e) {
-      Runner.logger().warn(toFile, e);
+  private static boolean isWritable(Path path) {
+    if (!Files.isReadable(path)) {
+      Runner.logger().warn("unreadable: " + path);
       return false;
     }
+    if (!Files.isWritable(path)) {
+      Runner.logger().warn("read-only: " + path);
+      return false;
+    }
+    try (FileChannel ch = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.APPEND); FileLock lock = ch.tryLock()) {
+      if (lock == null) {
+        Runner.logger().warn("cannot lock: " + path);
+        return false;
+      }
+    }
+    catch (OverlappingFileLockException | IOException e) {
+      Runner.logger().warn(path, e);
+      return false;
+    }
+    return true;
   }
 
   private ValidationResult validateProcessLock(File toFile, ValidationResult.Action action) {
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
-    if (processes.size() == 0) return null;
+    if (processes.isEmpty()) return null;
     String message = "Locked by: " + processes.stream().map(p -> p.name).collect(Collectors.joining(", "));
-    return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, message, ValidationResult.Option.KILL_PROCESS);
+    return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, message, ValidationResult.Option.KILL_PROCESS);
   }
 
   protected ValidationResult doValidateNotChanged(File toFile, ValidationResult.Action action) throws IOException {
@@ -168,12 +186,12 @@ public abstract class PatchAction {
             options = new ValidationResult.Option[]{ValidationResult.Option.IGNORE};
           }
         }
-        return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, ValidationResult.MODIFIED_MESSAGE, options);
+        return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.MODIFIED_MESSAGE, options);
       }
     }
     else if (!isOptional()) {
       ValidationResult.Option[] options = {myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE};
-      return new ValidationResult(ValidationResult.Kind.ERROR, myPath, action, ValidationResult.ABSENT_MESSAGE, options);
+      return new ValidationResult(ValidationResult.Kind.ERROR, getReportPath(), action, ValidationResult.ABSENT_MESSAGE, options);
     }
 
     return null;

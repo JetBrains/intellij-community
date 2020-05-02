@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -218,6 +219,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // openProcessPopup may require dispatch thread
+
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 
@@ -508,7 +511,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public Couple<String> setText(@Nullable final String text, @Nullable final String requestor) {
-    if (StringUtil.isEmpty(text) && !Comparing.equal(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
+    if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
       return Couple.of(myInfoPanel.getText(), myCurrentRequestor);
     }
 
@@ -525,7 +528,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshIcon.setToolTipText(tooltip);
   }
 
-  public BalloonHandler notifyByBalloon(MessageType type, String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener) {
+  public BalloonHandler notifyByBalloon(MessageType type, @PopupContent String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener) {
     final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
       htmlBody.replace("\n", "<br>"),
       icon != null ? icon : type.getDefaultIcon(),

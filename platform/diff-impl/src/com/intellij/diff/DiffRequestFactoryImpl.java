@@ -1,5 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff;
+
+import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
@@ -13,29 +17,24 @@ import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.TextMergeRequestImpl;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.vcs.DiffVcsFacade;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.ObjectUtils.notNull;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
   public static final String DIFF_TITLE_RENAME_SEPARATOR = " -> ";
@@ -101,14 +100,14 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   public String getContentTitle(@Nullable VirtualFile file) {
     if (file == null) return null;
-    return getContentTitle(VcsUtil.getFilePath(file));
+    return getContentTitle(DiffVcsFacade.getInstance().getFilePath(file));
   }
 
   @NotNull
   @Override
   public String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
-    FilePath path1 = file1 != null ? VcsUtil.getFilePath(file1) : null;
-    FilePath path2 = file2 != null ? VcsUtil.getFilePath(file2) : null;
+    FilePath path1 = file1 != null ? DiffVcsFacade.getInstance().getFilePath(file1) : null;
+    FilePath path2 = file2 != null ? DiffVcsFacade.getInstance().getFilePath(file2) : null;
     return getTitle(path1, path2, " vs ");
   }
 
@@ -168,7 +167,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
                                         @NotNull String sep) {
     if (path1.equals(path2)) return getContentTitle(name1, path1, parentPath1);
 
-    if (Comparing.equal(parentPath1, parentPath2)) {
+    if (Objects.equals(parentPath1, parentPath2)) {
       if (parentPath1 != null) {
         return name1 + sep + name2 + " (" + parentPath1 + ")";
       }

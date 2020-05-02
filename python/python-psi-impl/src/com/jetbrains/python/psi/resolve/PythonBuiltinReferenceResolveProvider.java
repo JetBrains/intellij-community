@@ -19,7 +19,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -59,7 +58,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
 
     // ...as a builtin symbol
     final PyFile builtinsFile = builtinCache.getBuiltinsFile();
-    if (builtinsFile != null && !PyUtil.isClassPrivateName(referencedName) && PyUtil.getInitialUnderscores(referencedName) != 1) {
+    if (builtinsFile != null) {
       for (RatedResolveResult resolveResult : builtinsFile.multiResolveName(referencedName)) {
         result.add(new ImportedResolveResult(resolveResult.getElement(), resolveResult.getRate(), null));
       }

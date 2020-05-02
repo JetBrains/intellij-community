@@ -267,8 +267,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
 
     if (myHasHiddenUnversioned) {
       myViewer.getEmptyText()
-        .setText("Unversioned files available. ")
-        .appendText("Show", SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
+        .setText(VcsBundle.message("status.text.unversioned.files.available"))
+        .appendText(VcsBundle.message("plugins.configurable.show"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
     }
     else {
       myViewer.getEmptyText()
@@ -291,7 +291,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @Override
   public Object getData(@NotNull String dataId) {
     if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG).userObjectsStream(FilePath.class);
+      return ChangesListView.getSelectedUnversionedFiles(myViewer);
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return myDeleteProvider;

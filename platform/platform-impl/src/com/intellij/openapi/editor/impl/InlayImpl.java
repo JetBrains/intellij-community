@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +115,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
   @Nullable
   @Override
   public Rectangle getBounds() {
-    if (myEditor.getFoldingModel().isOffsetCollapsed(getOffset())) return null;
+    if (EditorUtil.isInlayFolded(this)) return null;
     Point pos = getPosition();
     return new Rectangle(pos.x, pos.y, getWidthInPixels(), getHeightInPixels());
   }

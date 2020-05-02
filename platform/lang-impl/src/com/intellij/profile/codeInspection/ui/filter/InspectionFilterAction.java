@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.filter;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -27,7 +27,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
                                 @NotNull InspectionsFilter inspectionsFilter,
                                 @NotNull Project project,
                                 @NotNull FilterComponent filterComponent) {
-    super("Filter Inspections", true);
+    super(ActionsBundle.message("action.InspectionFilterAction.filter.inspections.text"), true);
     myInspectionsFilter = inspectionsFilter;
     myFilterComponent = filterComponent;
     mySeverityRegistrar = profile.getProfileManager().getSeverityRegistrar();
@@ -81,7 +80,8 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     final Set<String> languageIds = new THashSet<>();
     for (ScopeToolState state : profile.getDefaultStates(project)) {
-      languageIds.add(state.getTool().getLanguage());
+      final String language = state.getTool().getLanguage();
+      if (language != null) languageIds.add(language);
     }
 
     final List<Language> languages = new SmartList<>();
@@ -96,9 +96,9 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     if (!languages.isEmpty()) {
       final DefaultActionGroup languageActionGroupParent =
-        new DefaultActionGroup("Filter by Language", languages.size() >= MIN_LANGUAGE_COUNT_TO_WRAP);
+        new DefaultActionGroup(ActionsBundle.message("action.InspectionFilterAction.filter.by.language.text"), languages.size() >= MIN_LANGUAGE_COUNT_TO_WRAP);
       add(languageActionGroupParent);
-      Collections.sort(languages, Comparator.comparing(Language::getDisplayName));
+      languages.sort(Comparator.comparing(Language::getDisplayName));
       for (Language language : languages) {
         languageActionGroupParent.add(new LanguageFilterAction(language));
       }

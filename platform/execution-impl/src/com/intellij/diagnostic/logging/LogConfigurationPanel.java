@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,14 +25,25 @@ import com.intellij.util.ui.CellEditorComponentWithBrowseButton;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import org.jetbrains.annotations.NotNull;
 
 public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
@@ -217,7 +227,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
 
     for (int i = 0; i < myModel.getRowCount(); i++) {
       LogFileOptions options = (LogFileOptions)myModel.getValueAt(i, 1);
-      if (Comparing.equal(options.getPathPattern(), "")) {
+      if (Objects.equals(options.getPathPattern(), "")) {
         continue;
       }
       final Boolean checked = (Boolean)myModel.getValueAt(i, 0);

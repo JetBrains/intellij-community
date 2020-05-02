@@ -24,12 +24,11 @@ import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -654,7 +653,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return null;
   }
 
-  @Nls @NlsContexts.StatusText
+  @NlsContexts.StatusText
   @Nullable
   protected String getEmptySelectionString() {
     return null;

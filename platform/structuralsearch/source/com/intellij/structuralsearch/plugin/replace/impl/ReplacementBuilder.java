@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -131,7 +131,7 @@ public final class ReplacementBuilder {
     assert profile != null;
 
     List<ParameterInfo> sorted = new SmartList<>(parameterizations.values());
-    Collections.sort(sorted, Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
+    sorted.sort(Comparator.comparingInt(ParameterInfo::getStartIndex).reversed());
     for (ParameterInfo info : sorted) {
       final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {

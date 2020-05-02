@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
+@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"), reportStatistic = true)
 public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -92,8 +93,15 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     }
     String path = browser.getPath();
     if (path != null) {
-      int index = path.lastIndexOf('/');
-      return index > 0 ? path.indexOf(what, index + 1) != -1 : path.contains(what);
+      String fileName = PathUtil.getFileName(path);
+      if (StringUtil.containsIgnoreCase(fileName, what)) return true;
+      String parentPath = PathUtil.getParentPath(path);
+      String parentPathName = PathUtil.getFileName(parentPath);
+      if ("bin".equals(parentPathName)) {
+        parentPath = PathUtil.getParentPath(parentPath);
+        parentPathName = PathUtil.getFileName(parentPath);
+      }
+      return StringUtil.containsIgnoreCase(parentPathName, what);
     }
     return false;
   }

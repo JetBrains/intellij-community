@@ -83,7 +83,8 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private final DataProvider myDataProviderDelegate;
 
   private boolean myMultilineMode;
-  private String myStatusText = "";
+  @NotNull private String myStatusText = "";
+  @NotNull private Color myStatusColor = UIUtil.getLabelForeground();
   private DefaultActionGroup myTouchbarActions;
 
   @NotNull
@@ -277,6 +278,11 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     return myStatusText;
   }
 
+  @NotNull
+  public Color getStatusColor() {
+    return myStatusColor;
+  }
+
   public void replace() {
     if (myReplaceAction != null) {
       myReplaceAction.run();
@@ -291,10 +297,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   public void setRegularBackground() {
     mySearchTextComponent.setBackground(UIUtil.getTextFieldBackground());
+    myStatusColor = UIUtil.getLabelForeground();
   }
 
   public void setNotFoundBackground() {
     mySearchTextComponent.setBackground(LightColors.RED);
+    myStatusColor = UIUtil.getErrorForeground();
   }
 
   @Nullable
@@ -475,6 +483,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     final JBTextArea textComponent = new JBTextArea();
     textComponent.setRows(isMultiline() ? 2 : 1);
     textComponent.setColumns(32);
+    if (search) {
+      textComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.search.accessible.name"));
+    }
+    else {
+      textComponent.getAccessibleContext().setAccessibleName(FindBundle.message("find.replace.accessible.name"));
+    }
     SearchTextArea textArea = new SearchTextArea(textComponent, search);
     if (search) {
       myExtraSearchButtons.clear();
@@ -615,6 +629,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     void multilineStateChanged();
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static class Builder {
     private final Project myProject;
     private final JComponent myTargetComponent;

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.jetbrains.python.codeInsight.mlcompletion.prev2calls.PyPrevCallsCompletionFeatures
+import com.jetbrains.python.psi.PyParameter
 
 class PyElementFeatureProvider : ElementFeatureProvider {
   override fun getName(): String = "python"
@@ -18,6 +19,7 @@ class PyElementFeatureProvider : ElementFeatureProvider {
 
     val lookupString = element.lookupString
     val locationPsi = location.completionParameters.position
+    val lookupPsiElement = element.psiElement
 
     PyCompletionFeatures.getPyLookupElementInfo(element)?.let { info ->
       result["kind"] = MLFeatureValue.categorical(info.kind)
@@ -35,12 +37,13 @@ class PyElementFeatureProvider : ElementFeatureProvider {
     }
 
     result["is_dict_key"] = MLFeatureValue.binary(PyCompletionFeatures.isDictKey(element))
-    result["is_the_same_file"] = MLFeatureValue.binary(PyCompletionFeatures.isTheSameFile(element, location))
     result["is_takes_parameter_self"] = MLFeatureValue.binary(PyCompletionFeatures.isTakesParameterSelf(element))
     result["underscore_type"] = MLFeatureValue.categorical(PyCompletionFeatures.getElementNameUnderscoreType(lookupString))
     result["number_of_tokens"] = MLFeatureValue.numerical(PyNamesMatchingMlCompletionFeatures.getNumTokensFeature(lookupString))
     result["element_is_py_file"] = MLFeatureValue.binary(PyCompletionFeatures.isPsiElementIsPyFile(element))
     result["element_is_psi_directory"] = MLFeatureValue.binary(PyCompletionFeatures.isPsiElementIsPsiDirectory(element))
+
+    result.putAll(PyCompletionFeatures.getElementPsiLocationFeatures(element, location))
 
     PyCompletionFeatures.getElementModuleCompletionFeatures(element)?.let { with(it) {
         result["element_module_is_std_lib"] = MLFeatureValue.binary(isFromStdLib)
@@ -77,6 +80,14 @@ class PyElementFeatureProvider : ElementFeatureProvider {
       result["receiver_num_matched_tokens"] = MLFeatureValue.numerical(numMatchedTokens)
       result["receiver_tokens_num"] = MLFeatureValue.numerical(receiverTokensNum)
     }}
+
+    result.putAll(PyNamesMatchingMlCompletionFeatures.getMatchingWithEnclosingMethodFeatures(contextFeatures, element))
+
+    if (lookupString.endsWith("Warning")) result["is_warning"] = MLFeatureValue.binary(true)
+    if (lookupString.endsWith("Error")) result["is_error"] = MLFeatureValue.binary(true)
+    if (lookupString.endsWith("Exception")) result["is_exception"] = MLFeatureValue.binary(true)
+    if (lookupString.endsWith("s")) result["ends_with_s"] = MLFeatureValue.binary(true)
+    if (lookupPsiElement is PyParameter && lookupPsiElement.isSelf) result["is_self"] = MLFeatureValue.binary(true)
 
     contextFeatures.getUserData(PyPrevCallsCompletionFeatures.PREV_CALLS_CONTEXT_INFO_KEY)?.let { contextInfo ->
       PyPrevCallsCompletionFeatures.getResult(lookupString, contextInfo)?.let { with (it) {

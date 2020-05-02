@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
@@ -198,7 +199,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
 
     private static boolean isExplicitBoxingNecessary(PsiExpression expressionToReplace, PsiExpression replacementExpression) {
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expressionToReplace);
-      return call != null && replacementExpression.getType() instanceof PsiPrimitiveType;
+      return call != null && TypeConversionUtil.isPrimitiveAndNotNull(replacementExpression.getType());
     }
   }
 

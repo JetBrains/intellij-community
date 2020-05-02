@@ -107,10 +107,13 @@ class HtmlRtfPane {
                 Styles.LINK
             }
             "HINT" -> Styles.HINT
-            "SUP" -> Styles.SUP
+            //"SUP" -> Styles.SUP don't use superscript due to IDEA-235457
+            "SUP" -> null
             else -> Styles.REGULAR
         }
-        styledDocument.setCharacterAttributes(offsetInDocument, nodeElement.text().length, style, false)
+        if (style != null) {
+            styledDocument.setCharacterAttributes(offsetInDocument, nodeElement.text().length, style, false)
+        }
         if (nodeElement.childNodes().isEmpty()) return
         nodeElement.childNodes().forEach {
             if (it is TextNode) {

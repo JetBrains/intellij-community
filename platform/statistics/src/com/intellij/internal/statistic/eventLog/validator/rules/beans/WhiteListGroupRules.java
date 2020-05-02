@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.beans;
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*;
 
@@ -22,7 +23,7 @@ public class WhiteListGroupRules {
     new WhiteListGroupRules(Collections.emptySet(), Collections.emptyMap(), WhiteListGroupContextData.EMPTY);
 
   private final FUSRule[] eventIdRules;
-  private final Map<String, FUSRule[]> eventDataRules = ContainerUtil.newConcurrentMap();
+  private final Map<String, FUSRule[]> eventDataRules = new ConcurrentHashMap<>();
 
   private WhiteListGroupRules(@Nullable Set<String> eventIdRules,
                               @Nullable Map<String, Set<String>> eventDataRules, @NotNull WhiteListGroupContextData contextData) {
@@ -59,8 +60,7 @@ public class WhiteListGroupRules {
     return fusRules.toArray(FUSRule.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static Comparator<FUSRule> getRulesComparator() {
+  private static @NotNull Comparator<FUSRule> getRulesComparator() {
     // todo: do it better )))
     return (o1, o2) -> {
       if (o1 instanceof EnumWhiteListRule) return o2 instanceof EnumWhiteListRule ? -1 : 0;
@@ -124,10 +124,9 @@ public class WhiteListGroupRules {
     return prevResult != null ? prevResult : REJECTED;
   }
 
-  @NotNull
-  public static WhiteListGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                           @Nullable Map<String, Set<String>> globalEnums,
-                                           @Nullable Map<String, String> globalRegexps) {
+  public static @NotNull WhiteListGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
+                                                    @Nullable Map<String, Set<String>> globalEnums,
+                                                    @Nullable Map<String, String> globalRegexps) {
     FUStatisticsWhiteListGroupsService.WLRule rules = group.rules;
     return rules == null
            ? EMPTY

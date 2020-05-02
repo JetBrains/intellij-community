@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.clientProperties;
 
@@ -189,7 +189,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
 
   private void fillClassTree() {
     List<Class<?>> configuredClasses = myManager.getConfiguredClasses(myProject);
-    Collections.sort(configuredClasses, Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
+    configuredClasses.sort(Comparator.comparingInt(ConfigureClientPropertiesDialog::getInheritanceLevel));
 
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);

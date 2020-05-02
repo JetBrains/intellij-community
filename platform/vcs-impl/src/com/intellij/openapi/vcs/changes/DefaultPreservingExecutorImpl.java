@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,7 +71,7 @@ class DefaultPreservingExecutorImpl {
       catch (VcsException e) {
         LOG.info("Couldn't save local changes", e);
         VcsNotifier.getInstance(myProject).notifyError(
-          "Couldn't save uncommitted changes.",
+          VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
           String.format("Tried to save uncommitted changes in shelve before %s, but failed with an error.<br/>%s",
                         myOperationTitle, join(e.getMessages())));
         return false;

@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link LowPriorityAction LowPriorityAction} or {@link PriorityAction} to change ordering.
  * <p/>
  * Can be {@link com.intellij.openapi.project.DumbAware}.
- *
- * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
  */
 public interface IntentionAction extends FileModifier {
 
@@ -36,7 +35,7 @@ public interface IntentionAction extends FileModifier {
    * @return the text to show in the intention popup.
    * @see #isAvailable(Project, Editor, PsiFile)
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionName
   @NotNull
   String getText();
 
@@ -47,10 +46,9 @@ public interface IntentionAction extends FileModifier {
    * The name is also shown in settings tree.
    *
    * @return the intention family name.
-   * @see IntentionManager#registerIntentionAndMetaData(IntentionAction, String...)
    */
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @IntentionFamilyName
   String getFamilyName();
 
   /**

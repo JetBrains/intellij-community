@@ -21,6 +21,7 @@ import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,16 +51,13 @@ public class TextPatchBuilder {
 
   @NotNull private final String myBasePath;
   private final boolean myIsReversePath;
-  private final boolean myIsCaseSensitive;
   @Nullable private final Runnable myCancelChecker;
 
   private TextPatchBuilder(@NotNull String basePath,
                            boolean isReversePath,
-                           boolean isCaseSensitive,
                            @Nullable Runnable cancelChecker) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
-    myIsCaseSensitive = isCaseSensitive;
     myCancelChecker = cancelChecker;
   }
 
@@ -66,10 +65,23 @@ public class TextPatchBuilder {
   public static List<FilePatch> buildPatch(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes,
                                            @NotNull String basePath,
                                            boolean reversePatch,
+                                           @Nullable Runnable cancelChecker) throws VcsException {
+    TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, cancelChecker);
+    return builder.build(changes);
+  }
+
+  /**
+   * @deprecated use method without caseSensitive parameter
+   */
+  @NotNull
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  public static List<FilePatch> buildPatch(@NotNull Collection<? extends BeforeAfter<AirContentRevision>> changes,
+                                           @NotNull String basePath,
+                                           boolean reversePatch,
                                            boolean isCaseSensitive,
                                            @Nullable Runnable cancelChecker) throws VcsException {
-    TextPatchBuilder builder = new TextPatchBuilder(basePath, reversePatch, isCaseSensitive, cancelChecker);
-    return builder.build(changes);
+    return buildPatch(changes, basePath, reversePatch, cancelChecker);
   }
 
   @NotNull
@@ -350,11 +362,11 @@ public class TextPatchBuilder {
   }
 
   @NotNull
-  private String getRelativePath(@NotNull String secondPath) {
-    String baseModified = FileUtil.toSystemIndependentName(myBasePath);
+  public static String getRelativePath(@NotNull String basePath, @NotNull String secondPath) {
+    String baseModified = FileUtil.toSystemIndependentName(basePath);
     String secondModified = FileUtil.toSystemIndependentName(secondPath);
 
-    String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', myIsCaseSensitive);
+    String relPath = FileUtil.getRelativePath(baseModified, secondModified, '/', SystemInfo.isFileSystemCaseSensitive);
     if (relPath == null) return secondModified;
     return relPath;
   }
@@ -370,10 +382,10 @@ public class TextPatchBuilder {
   private void setPatchHeading(@NotNull FilePatch result,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(getRelativePath(beforeRevision.getPath().getPath()));
+    result.setBeforeName(getRelativePath(myBasePath, beforeRevision.getPath().getPath()));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(getRelativePath(afterRevision.getPath().getPath()));
+    result.setAfterName(getRelativePath(myBasePath, afterRevision.getPath().getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 

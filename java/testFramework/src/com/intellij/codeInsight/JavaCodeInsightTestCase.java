@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,10 +49,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   protected Editor myEditor;
@@ -450,7 +446,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
       String actualText = StringUtil.convertLineSeparators(myFile.getText());
 
-      if (!Comparing.equal(expectedText, actualText)) {
+      if (!Objects.equals(expectedText, actualText)) {
         throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
       }
 

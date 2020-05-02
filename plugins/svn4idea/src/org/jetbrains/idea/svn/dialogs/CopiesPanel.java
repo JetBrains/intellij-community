@@ -1,9 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
+
+import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Collections.singletonList;
 
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -28,9 +37,40 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.NestedCopyType;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopiesContent;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
@@ -44,24 +84,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.util.List;
-import java.util.*;
-
-import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static java.util.Collections.singletonList;
 
 public class CopiesPanel {
 
@@ -107,7 +129,7 @@ public class CopiesPanel {
           }
           myCurrentInfoList = newList;
         }
-        Collections.sort(infoList, WCComparator.getInstance());
+        infoList.sort(WCComparator.getInstance());
         updateList(infoList, supportedFormats);
         myRefreshLabel.setEnabled(true);
         showErrorNotification(hasErrors);
@@ -490,7 +512,7 @@ public class CopiesPanel {
       if (val1 == null || val2 == null || val1.getClass() != val2.getClass()) return false;
 
       if (! Comparing.equal(val1.getFormat(), val2.getFormat())) return false;
-      if (! Comparing.equal(val1.getPath(), val2.getPath())) return false;
+      if (!Objects.equals(val1.getPath(), val2.getPath())) return false;
       if (! Comparing.equal(val1.getStickyDepth(), val2.getStickyDepth())) return false;
       if (! Comparing.equal(val1.getType(), val2.getType())) return false;
       if (! Comparing.equal(val1.getUrl(), val2.getUrl())) return false;

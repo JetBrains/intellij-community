@@ -4,6 +4,7 @@ package com.intellij.ide.lightEdit;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.completion.EmptyCompletionNotifier;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.Editor;
@@ -30,6 +31,8 @@ import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
+
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
@@ -40,7 +43,10 @@ public final class LightEditUtil {
   public static boolean openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      return LightEdit.openFile(virtualFile);
+      if (LightEdit.openFile(virtualFile)) {
+        LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
+        return true;
+      }
     }
     return false;
   }
@@ -56,7 +62,7 @@ public final class LightEditUtil {
 
   static boolean confirmClose(@NotNull String message,
                               @NotNull String title,
-                              @NotNull Runnable saveRunnable) {
+                              @NotNull LightEditSaveConfirmationHandler handler) {
     final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
@@ -64,7 +70,10 @@ public final class LightEditUtil {
         return false;
       }
       else if (getCloseSave().equals(options[result])) {
-        saveRunnable.run();
+        handler.onSave();
+      }
+      else if (getCloseDiscard().equals(options[result])){
+        handler.onDiscard();
       }
       return true;
     }
@@ -78,8 +87,8 @@ public final class LightEditUtil {
     FileSaverDialog saver =
       FileChooserFactory.getInstance()
         .createSaveFileDialog(new FileSaverDescriptor(
-          "Save as",
-          "Choose a target file",
+          IdeBundle.message("dialog.title.save.as"),
+          IdeBundle.message("label.choose.target.file"),
           getKnownExtensions()),parent);
     VirtualFileWrapper fileWrapper = saver.save(VfsUtil.getUserHomeDir(), editorInfo.getFile().getPresentableName());
     if (fileWrapper != null) {

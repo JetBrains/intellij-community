@@ -95,6 +95,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     UIUtil.invokeLaterIfNeeded(() -> EventLog.expireNotification(notification));
   }
 
+  public void expireAll() {
+    for (Notification notification : getNotificationsOfType(Notification.class, null)) {
+      notification.expire();
+    }
+ }
+
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable final Project project) {
     final List<T> result = new ArrayList<>();
@@ -109,15 +115,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private static void doNotify(@NotNull final Notification notification,
-                               @Nullable NotificationDisplayType displayType,
-                               @Nullable final Project project) {
-    final NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
+  private static void doNotify(Notification notification, @Nullable Project project) {
+    NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
-      configuration.register(notification.getGroupId(), displayType == null ? NotificationDisplayType.BALLOON : displayType);
+      configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
     }
 
-    final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
+    NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
     boolean shouldLog = settings.isShouldLog();
     boolean displayable = settings.getDisplayType() != NotificationDisplayType.NONE;
 
@@ -137,16 +141,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showNotification(@NotNull final Notification notification, @Nullable final Project project) {
+  private static void showNotification(Notification notification, @Nullable Project project) {
     if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ApplicationManager.getApplication().invokeLater(() -> showNotification(notification, project), ModalityState.current());
       return;
     }
 
-
-
     String groupId = notification.getGroupId();
-    final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
+    NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
     NotificationDisplayType type = settings.getDisplayType();
     String toolWindowId = NotificationsConfigurationImpl.getInstanceImpl().getToolWindowId(groupId);
@@ -158,9 +160,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     switch (type) {
       case NONE:
         return;
-      //case EXTERNAL:
-      //  notifyByExternal(notification);
-      //  break;
       case STICKY_BALLOON:
       case BALLOON:
       default:
@@ -197,10 +196,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         };
         assert toolWindowId != null;
         assert notification.getActions().isEmpty() : "Actions are not shown for toolwindow notifications. " +
-                                                     "Toolwindow id " + toolWindowId +
-                                                     ", group id \'" + notification.getGroupId() + "\"" +
-                                                     ", title \'" + notification.getTitle() + "\"" +
-                                                     ", content \'" + notification.getContent() + "\"";
+                                                     "ToolWindow id " + toolWindowId +
+                                                     ", group id '" + notification.getGroupId() + "'" +
+                                                     ", title '" + notification.getTitle() + "'" +
+                                                     ", content '" + notification.getContent() + "'";
         String msg = notification.getTitle();
         if (StringUtil.isNotEmpty(notification.getContent())) {
           if (StringUtil.isNotEmpty(msg)) {
@@ -348,6 +347,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.mergeData = null;
     }
     layoutData.id = notification.id;
+    layoutData.displayId = notification.displayId;
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -629,6 +629,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     final BalloonImpl balloon = (BalloonImpl)builder.createBalloon();
+    balloon.getContent().addMouseListener(new MouseAdapter() {
+    });
     balloon.setAnimationEnabled(false);
     notification.setBalloon(balloon);
 
@@ -636,7 +638,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id));
+        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
     }
 
     Disposer.register(parentDisposable, balloon);
@@ -1073,7 +1075,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     @Override
     public void notify(@NotNull Notification notification) {
-      doNotify(notification, null, myProject);
+      doNotify(notification, myProject);
     }
   }
 

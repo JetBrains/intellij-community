@@ -16,8 +16,8 @@
 package org.zmlx.hg4idea.command.mq;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -39,8 +39,8 @@ public class HgQDeleteCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qdelete", patchNames);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, "QDelete command failed",
-                     "Could not delete selected " + StringUtil.pluralize("patch", patchNames.size()));
+        .notifyError(result, HgBundle.message("action.hg4idea.QDelete.error"),
+                     HgBundle.message("action.hg4idea.QDelete.error.msg", patchNames.size()));
     }
     myRepository.update();
   }

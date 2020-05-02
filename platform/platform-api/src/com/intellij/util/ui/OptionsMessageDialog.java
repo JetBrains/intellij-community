@@ -17,9 +17,8 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
-import com.intellij.openapi.util.NlsUI;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,8 +29,8 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
   private final Icon myIcon;
 
   protected OptionsMessageDialog(Project project,
-                                 @Nls @NlsUI.Label String message,
-                                 @Nls @NlsContexts.DialogTitle String title,
+                                 @NlsContexts.Label String message,
+                                 @NlsContexts.DialogTitle String title,
                                  final Icon icon) {
     super(project);
     myMessage = message;
@@ -40,7 +39,9 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     setButtonsAlignment(SwingUtilities.CENTER);
   }
 
+  @ActionText
   protected abstract String getOkActionName();
+  @ActionText
   protected abstract String getCancelActionName();
 
   @Override

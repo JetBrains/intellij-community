@@ -19,11 +19,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
-import com.intellij.openapi.util.ParserError;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.intellij.lang.regexp.psi.impl.RegExpCharImpl;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -427,7 +426,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         parseBranch(builder);
       }
       checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.conditional"));
-      marker.done(RegExpElementTypes.PY_COND_REF);
+      marker.done(RegExpElementTypes.CONDITIONAL);
     }
     else if (type == RegExpTT.PROPERTY) {
       marker.drop();
@@ -572,7 +571,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     builder.advanceLexer();
   }
 
-  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @Nls @ParserError String message) {
+  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull @NlsContexts.ParsingError String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
       return true;

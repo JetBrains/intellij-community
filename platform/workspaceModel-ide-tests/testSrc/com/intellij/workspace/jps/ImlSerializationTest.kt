@@ -3,12 +3,21 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.TypedEntityStorageBuilder
-import com.intellij.workspace.api.verifySerializationRoundTrip
+import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspace.api.verifyPSerializationRoundTrip
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
 import java.io.File
 
 class ImlSerializationTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManagerImpl()
+  }
+
   @Test
   fun sampleProject() {
     val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
@@ -23,9 +32,9 @@ class ImlSerializationTest {
 
   private fun serializationRoundTrip(projectFile: File) {
     val storageBuilder = TypedEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadProject(projectFile.asStoragePlace(), storageBuilder)
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     val storage = storageBuilder.toStorage()
-    val byteArray = verifySerializationRoundTrip(storage)
+    val byteArray = verifyPSerializationRoundTrip(storage, virtualFileManager)
     println("Serialized size: ${byteArray.size}")
   }
 

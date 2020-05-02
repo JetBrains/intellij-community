@@ -1,19 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.*;
@@ -26,13 +25,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.Pattern;
-import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -42,31 +41,27 @@ import java.util.List;
  */
 public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
-  @NotNull private Configuration myConfiguration;
-  private InspectionProfileImpl myProfile = null;
-  private Element myOldConfig = null;
+  private Configuration myMainConfiguration;
+  @NotNull private final List<Configuration> myConfigurations;
 
-  public StructuralSearchFakeInspection(@NotNull Configuration configuration) {
-    myConfiguration = configuration;
-  }
-
-  public StructuralSearchFakeInspection(StructuralSearchFakeInspection copy) {
-    myConfiguration = copy.myConfiguration;
-    myProfile = copy.myProfile;
-    myOldConfig = null;
+  public StructuralSearchFakeInspection(@NotNull Collection<@NotNull Configuration> configurations) {
+    if (configurations.isEmpty()) throw new IllegalArgumentException();
+    myConfigurations = new SmartList<>(configurations);
+    myConfigurations.sort(Comparator.comparingInt(Configuration::getOrder));
+    myMainConfiguration = myConfigurations.get(0);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
   public String getDisplayName() {
-    return myConfiguration.getName();
+    return myMainConfiguration.getName();
   }
 
   @NotNull
   @Override
   public String getShortName() {
-    return myConfiguration.getUuid().toString();
+    return myMainConfiguration.getUuid().toString();
   }
 
   @Override
@@ -79,11 +74,12 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getID() {
-    final String suppressId = myConfiguration.getSuppressId();
-    if (!StringUtil.isEmpty(suppressId)) {
-      return suppressId;
+    final HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
+    if (key != null) {
+      return key.getID(); // to avoid using a new suppress id before it is registered.
     }
-    return SSBasedInspection.SHORT_NAME;
+    final String suppressId = myMainConfiguration.getSuppressId();
+    return !StringUtil.isEmpty(suppressId) ? suppressId : SSBasedInspection.SHORT_NAME;
   }
 
   @Override
@@ -107,45 +103,31 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @Nullable
   @Override
   public String getStaticDescription() {
-    final String description = myConfiguration.getDescription();
+    final String description = myMainConfiguration.getDescription();
     if (StringUtil.isEmpty(description)) {
       return SSRBundle.message("no.description.message");
     }
     return description;
   }
 
-  public void setProfile(InspectionProfileImpl profile) {
-    myProfile = profile;
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    super.writeSettings(node);
-    if (isModified()) node.setAttribute("modified", String.valueOf(true));
-  }
-
-  private boolean isModified() {
-    if (myOldConfig == null) return false;
-    return !JDOMUtil.areElementsEqual(myOldConfig, getSettingsElement());
-  }
-
-  private Element getSettingsElement() {
-    final SSBasedInspection inspection = getStructuralSearchInspection();
-    final Element element = new Element("inspection");
-    inspection.writeSettings(element);
-    return element;
+  public @NotNull List<Configuration> getConfigurations() {
+    return Collections.unmodifiableList(myConfigurations);
   }
 
   @Override
   public @Nullable JComponent createOptionsPanel() {
-    myOldConfig = getSettingsElement();
     final MyListModel model = new MyListModel();
     final JButton button = new JButton(SSRBundle.message("edit.metadata.button"));
     button.addActionListener(e -> {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
-      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-      if (StructuralSearchProfileActionProvider.saveInspection(project, getStructuralSearchInspection(), model.getElementAt(0))) {
-        myProfile.getProfileManager().fireProfileChanged(myProfile);
+      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
+      final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(button);
+      if (profile == null) return;
+      final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
+      if (saveInspection(project, inspection, myMainConfiguration)) {
+        for (Configuration configuration : myConfigurations) {
+          configuration.setName(myMainConfiguration.getName());
+        }
+        InspectionProfileUtil.fireProfileChanged(profile);
       }
     });
 
@@ -177,11 +159,33 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     return panel;
   }
 
+  private static boolean saveInspection(Project project, SSBasedInspection inspection, Configuration configuration) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      inspection.addConfiguration(configuration);
+      return true;
+    }
+
+    final StructuralSearchProfileActionProvider.InspectionDataDialog
+      dialog = new StructuralSearchProfileActionProvider.InspectionDataDialog(project, inspection, configuration);
+    if (!dialog.showAndGet()) {
+      return false;
+    }
+    final List<Configuration> configurations = inspection.getConfigurationsWithUuid(configuration.getUuid());
+    configurations.removeIf(c -> c.getOrder() == 0);
+    final String name = dialog.getName();
+    for (Configuration c : inspection.getConfigurationsWithUuid(configuration.getUuid())) {
+      c.setName(name);
+    }
+    configurations.add(configuration);
+    inspection.addConfigurations(configurations);
+    return true;
+  }
+
   private void performMove(JList<Configuration> list, boolean up) {
     final MyListModel model = (MyListModel)list.getModel();
     final List<Configuration> values = list.getSelectedValuesList();
     final Comparator<Configuration> c = Comparator.comparingInt(Configuration::getOrder);
-    Collections.sort(values, up ? c : c.reversed());
+    values.sort(up ? c : c.reversed());
     final int[] indices = new int[values.size()];
     for (int i = 0, size = values.size(); i < size; i++) {
       final Configuration value = values.get(i);
@@ -189,9 +193,16 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       model.swap(order, order + (up ? -1 : +1));
       indices[i] = value.getOrder();
     }
-    myConfiguration = moveMetaData(myConfiguration, model.getElementAt(0));
+    myMainConfiguration = moveMetaData(myMainConfiguration, myConfigurations.get(0));
     list.setSelectedIndices(indices);
     model.fireContentsChanged(list);
+
+    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
+    if (profile == null) return;
+    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
+    inspection.addConfigurations(myConfigurations);
+    profile.setModified(true);
   }
 
   private static Configuration moveMetaData(Configuration source, Configuration target) {
@@ -215,56 +226,56 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   }
 
   private void performRemove(JList<Configuration> list) {
-    final SSBasedInspection inspection = getStructuralSearchInspection();
     boolean metaData = false;
     for (Configuration configuration : list.getSelectedValuesList()) {
       if (configuration.getOrder() == 0) {
         metaData = true;
       }
-      inspection.removeConfiguration(configuration);
+      myConfigurations.remove(configuration);
+    }
+    if (metaData) {
+      myMainConfiguration = moveMetaData(myMainConfiguration, myConfigurations.get(0));
+    }
+    final int size = myConfigurations.size();
+    for (int i = 0; i < size; i++){
+      myConfigurations.get(i).setOrder(i);
+    }
+    ((MyListModel)list.getModel()).fireContentsChanged(list);
+    if (list.getSelectedIndex() >= size) {
+      list.setSelectedIndex(size - 1);
     }
 
-    final MyListModel model = (MyListModel)list.getModel();
-    model.clearCache();
-    if (metaData) {
-      myConfiguration = moveMetaData(myConfiguration, model.getElementAt(0));
-    }
-    for (int i = 0, max = model.getSize(); i < max; i++){
-      model.getElementAt(i).setOrder(i);
-    }
-    model.fireContentsChanged(list);
+    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
+    if (profile == null) return;
+    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
+    inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
+    inspection.addConfigurations(myConfigurations);
+    profile.setModified(true);
   }
 
   private void performEdit(JList<Configuration> list) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(list));
-    if (project == null) {
-      return;
-    }
+    if (project == null) return;
     final Configuration configuration = list.getSelectedValue();
-    if (configuration == null) {
-      return;
-    }
+    if (configuration == null) return;
     final SearchContext searchContext = new SearchContext(project);
     final StructuralSearchDialog dialog = new StructuralSearchDialog(searchContext, !(configuration instanceof SearchConfiguration), true);
     dialog.loadConfiguration(configuration);
     dialog.setUseLastConfiguration(true);
     if (!dialog.showAndGet()) return;
     final Configuration newConfiguration = dialog.getConfiguration();
-    final SSBasedInspection inspection = getStructuralSearchInspection();
     if (configuration.getOrder() == 0) {
-      myConfiguration = newConfiguration;
+      myMainConfiguration = newConfiguration;
     }
+    final MyListModel model = (MyListModel)list.getModel();
+    model.fireContentsChanged(list);
+
+    final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
+    if (profile == null) return;
+    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
     inspection.removeConfiguration(configuration);
     inspection.addConfiguration(newConfiguration);
-    final MyListModel model = (MyListModel)list.getModel();
-    model.clearCache();
-    model.fireContentsChanged(list);
-  }
-
-  private SSBasedInspection getStructuralSearchInspection() {
-    final InspectionToolWrapper<?, ?> wrapper = myProfile.getInspectionTool(SSBasedInspection.SHORT_NAME, (Project)null);
-    assert wrapper != null;
-    return (SSBasedInspection)wrapper.getTool();
+    profile.setModified(true);
   }
 
   private class AddTemplateAction extends DumbAwareAction {
@@ -288,57 +299,53 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
       final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
       if (!dialog.showAndGet()) return;
       final Configuration configuration = dialog.getConfiguration();
-      configuration.setUuid(myConfiguration.getUuid());
-      configuration.setName(myConfiguration.getName());
+      configuration.setUuid(myMainConfiguration.getUuid());
+      configuration.setName(myMainConfiguration.getName());
       final MyListModel model = (MyListModel)myList.getModel();
-      configuration.setOrder(model.getSize());
+      final int size = model.getSize();
+      configuration.setOrder(size);
 
-      getStructuralSearchInspection().addConfiguration(configuration);
-      model.clearCache();
-      model.fireContentsChanged(myList);
+      final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(myList);
+      if (profile == null) return;
+      if (InspectionProfileUtil.getStructuralSearchInspection(profile).addConfiguration(configuration)) {
+        myConfigurations.add(configuration);
+        model.fireContentsChanged(myList);
+        myList.setSelectedIndex(size);
+        profile.setModified(true);
+      }
+      else {
+        final int index = myConfigurations.indexOf(configuration);
+        if (index >= 0) {
+          myList.setSelectedIndex(index);
+        }
+      }
     }
   }
 
   private class MyListModel extends AbstractListModel<Configuration> {
 
-    private final List<Configuration> cache = new SmartList<>();
-
     @Override
     public int getSize() {
-      initialize();
-      return cache.size();
+      return myConfigurations.size();
     }
 
     @Override
     public Configuration getElementAt(int index) {
-      initialize();
-      return cache.get(index);
+      return myConfigurations.get(index);
     }
 
     public void fireContentsChanged(Object source) {
       fireContentsChanged(source, -1, -1);
     }
 
-    public void clearCache() {
-      cache.clear();
-    }
-
     public void swap(int first, int second) {
-      final Configuration one = cache.get(first);
-      final Configuration two = cache.get(second);
+      final Configuration one = myConfigurations.get(first);
+      final Configuration two = myConfigurations.get(second);
       final int order = one.getOrder();
       one.setOrder(two.getOrder());
       two.setOrder(order);
-      cache.set(second, one);
-      cache.set(first, two);
-    }
-
-    private void initialize() {
-      if (!cache.isEmpty()) return;
-
-      final List<Configuration> configurations = getStructuralSearchInspection().getConfigurationsWithUuid(myConfiguration.getUuid());
-      cache.addAll(configurations);
-      Collections.sort(cache, Comparator.comparingInt(Configuration::getOrder));
+      myConfigurations.set(second, one);
+      myConfigurations.set(first, two);
     }
   }
 }

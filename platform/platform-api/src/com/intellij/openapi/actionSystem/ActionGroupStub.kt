@@ -1,18 +1,20 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 
 interface ActionStubBase {
   val id: String
 
   @Deprecated(message = "Use plugin", replaceWith = ReplaceWith("plugin.pluginId"))
+  @JvmDefault
   val pluginId: PluginId?
     get() = plugin.pluginId
 
-  val plugin: IdeaPluginDescriptor
+  val plugin: PluginDescriptor
   val iconPath: String?
 }
 

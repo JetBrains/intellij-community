@@ -595,7 +595,7 @@ public abstract class PatchApplyingRevertingTest extends PatchTestCase {
 
   @Test
   public void multipleDirectorySymlinks() throws Exception {
-    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     resetNewerDir();
 

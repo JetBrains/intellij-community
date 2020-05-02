@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.plugins.intelliLang;
 
@@ -115,8 +115,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
         .put(support.getId(), action == null ? AbstractLanguageInjectionSupport.createDefaultEditAction(myProject, producer) : action);
       mySupports.put(support.getId(), support);
     }
-    Collections.sort(myAddActions,
-                     (o1, o2) -> Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText()));
+    myAddActions.sort((o1, o2) -> Comparing.compare(o1.getTemplatePresentation().getText(), o2.getTemplatePresentation().getText()));
     decorator.disableUpDownActions();
     decorator.setAddActionUpdater(e -> !myAddActions.isEmpty());
     decorator.setAddAction(this::performAdd);
@@ -342,7 +341,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
       }
-      Collections.sort(configurables, (o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName()));
+      configurables.sort((o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName()));
       return configurables.toArray(new Configurable[0]);
   }
 
@@ -353,7 +352,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
   }
 
   private static void sortInjections(final List<? extends BaseInjection> injections) {
-    Collections.sort(injections, (o1, o2) -> {
+    injections.sort((o1, o2) -> {
       final int support = Comparing.compare(o1.getSupportId(), o2.getSupportId());
       if (support != 0) return support;
       final int lang = Comparing.compare(o1.getInjectedLanguageId(), o2.getInjectedLanguageId());

@@ -12,22 +12,29 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import javax.swing.Icon;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "DependencyValidationManager",
@@ -191,7 +198,7 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
     Arrays.sort(scopes, (s1, s2) -> {
       final String name1 = s1.getName();
       final String name2 = s2.getName();
-      if (Comparing.equal(name1, name2)){
+      if (Objects.equals(name1, name2)){
         return 0;
       }
       final List<String> order = myNamedScopeManager.myOrderState.myOrder;

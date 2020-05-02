@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -43,7 +43,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,9 +80,8 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Nullable
   private final Object myPreselectedNodeObject;
   private CheckboxTree myTree;
-  @SuppressWarnings("unchecked")
   private final MultiMap<DataNode<Identifiable>, DataNode<Identifiable>> dependentNodeMap =
-    MultiMap.create(TObjectHashingStrategy.IDENTITY);
+    MultiMap.create(ContainerUtil.identityStrategy());
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
   private final CachedValue<SelectionState> selectionState = new CachedValueImpl<>(
@@ -402,8 +400,8 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     }
 
     List<TreeNode> nodes = projectNode != null ? TreeUtil.listChildren(projectNode) : ContainerUtil.emptyList();
-    Collections.sort(nodes, (o1, o2) -> {
-      if(o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
+    nodes.sort((o1, o2) -> {
+      if (o1 instanceof DataNodeCheckedTreeNode && o2 instanceof DataNodeCheckedTreeNode) {
         if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o1).comment)) return -1;
         if (rootModuleComment.equals(((DataNodeCheckedTreeNode)o2).comment)) return 1;
         return StringUtil.naturalCompare(((DataNodeCheckedTreeNode)o1).text, ((DataNodeCheckedTreeNode)o2).text);
@@ -798,8 +796,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   @Override
   public boolean showAndGet() {
     final BooleanValueHolder result = new BooleanValueHolder(false);
-    DumbService.getInstance(myProject).suspendIndexingAndRun(
-      "Select External Data",
+    DumbService.getInstance(myProject).suspendIndexingAndRun(ExternalSystemBundle.message("activity.name.select.external.data"),
       () -> result.setValue(super.showAndGet())
     );
     return result.getValue();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -78,7 +78,7 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
     }
   }
 
-  private boolean hasValue(String localName) {
+  boolean hasValue(String localName) {
     if(!mySyntheticLocals.containsKey(localName)) {
       if(myParentFragmentEvaluator != null){
         return myParentFragmentEvaluator.hasValue(localName);

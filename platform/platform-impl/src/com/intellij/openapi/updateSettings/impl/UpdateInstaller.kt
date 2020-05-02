@@ -16,6 +16,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.copy
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -25,9 +26,9 @@ import java.util.zip.ZipFile
 import javax.swing.JComponent
 import javax.swing.UIManager
 
-data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
+internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
 
-object UpdateInstaller {
+internal object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
 
   private const val PATCH_FILE_NAME = "patch-file.zip"
@@ -164,14 +165,14 @@ object UpdateInstaller {
       java = javaCopy.path
     }
 
-    val args = arrayListOf<String>()
+    val args = mutableListOf<String>()
 
     if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
-      if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {
-        args += launcher.copyTo(File(tempDir, launcher.name), true).path
-        elevator.copyTo(File(tempDir, elevator.name), true)
+      if (launcher != null && elevator != null && Files.isExecutable(launcher) && Files.isExecutable(elevator)) {
+        args.add(launcher.copy(tempDir.toPath().resolve(launcher.fileName)).toString())
+        elevator.copy(tempDir.toPath().resolve(elevator.fileName))
       }
     }
 
@@ -200,7 +201,7 @@ object UpdateInstaller {
 
   private fun findLib(libName: String): File {
     val libFile = File(PathManager.getLibPath(), libName)
-    return if (libFile.exists()) libFile else throw IOException("Missing: ${libFile}")
+    return if (libFile.exists()) libFile else throw IOException("Missing: $libFile")
   }
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")

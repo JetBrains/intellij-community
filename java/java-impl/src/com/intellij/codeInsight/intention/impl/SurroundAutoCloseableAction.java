@@ -16,17 +16,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -222,7 +223,9 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     PsiStatement statement = (PsiStatement)expression.getParent();
 
     CommentTracker commentTracker = new CommentTracker();
-    String text = "try (" + type.getCanonicalText(true) + " r = " + commentTracker.text(expression) + ") {}";
+    List<String> names = new VariableNameGenerator(expression, VariableKind.LOCAL_VARIABLE).byType(type).byExpression(expression)
+      .generateAll(true);
+    String text = "try (" + type.getCanonicalText(true) + " " + names.get(0) + " = " + commentTracker.text(expression) + ") {}";
     PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
 
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
@@ -230,18 +233,17 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     tryStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(tryStatement);
 
     PsiResourceList resourceList = tryStatement.getResourceList();
-    if (resourceList != null) {
+    if (resourceList != null && resourceList.isPhysical()) {
       PsiResourceVariable var = (PsiResourceVariable)resourceList.iterator().next();
       PsiIdentifier id = var.getNameIdentifier();
       PsiExpression initializer = var.getInitializer();
       if (id != null && initializer != null) {
         type = initializer.getType();
-        String[] names = IntroduceVariableBase.getSuggestedName(type, initializer).names;
         PsiType[] types = Stream.of(new TypeSelectorManagerImpl(project, type, initializer, PsiExpression.EMPTY_ARRAY).getTypesForAll())
             .filter(SurroundAutoCloseableAction::rightType)
             .toArray(PsiType[]::new);
         TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(var);
-        builder.replaceElement(id, new ConstantNode(names[0]).withLookupStrings(names));
+        builder.replaceElement(id, new ConstantNode(var.getName()).withLookupStrings(names));
         builder.replaceElement(var.getTypeElement(), new TypeExpression(project, types));
         builder.run(editor, true);
       }

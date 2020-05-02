@@ -20,7 +20,7 @@ public class ChangedLinesCounterTest extends BasePlatformTestCase {
     try {
       PsiFile file = myFixture.getFile();
       if (file != null) {
-        file.putUserData(FormatChangedTextUtil.TEST_REVISION_CONTENT, null);
+        file.putUserData(VcsFacade.TEST_REVISION_CONTENT, null);
       }
     }
     catch (Throwable e) {
@@ -40,7 +40,7 @@ public class ChangedLinesCounterTest extends BasePlatformTestCase {
     file = myFixture.getFile();
     Document document = myFixture.getDocument(file);
 
-    int linesChanged = FormatChangedTextUtil.getInstance().calculateChangedLinesNumber(document, revisionContent);
+    int linesChanged = VcsFacade.getInstance().calculateChangedLinesNumber(document, revisionContent);
     Assert.assertTrue(linesChanged > 0);
     Assert.assertEquals(expectedLinesChanged, linesChanged);
   }

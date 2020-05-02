@@ -20,6 +20,8 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import one.util.streamex.IntStreamEx;
@@ -72,6 +74,17 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
   public void testLongQualifierChainInsideLambda() {
     PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
+
+  public void testLongQualifierChainInsideLambdaWithOverloads() {
+    PlatformTestUtil.startPerformanceTest("long qualifier chain", 12000, () -> {
+      configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+      PsiMethodCallExpression callExpression =
+        PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+      assertNotNull(callExpression);
+      assertNotNull(callExpression.getText(), callExpression.getType());
+    }).assertTiming();
+  }
+
   public void testLongQualifierChainInsideLambdaInTypeCast() {
     enableInspectionTool(new RedundantCastInspection());
      @Language("JAVA")

@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
@@ -39,6 +40,7 @@ class LegacyBridgeRootsWatcher(
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
 
   private val rootFilePointers = LegacyModelRootsFilePointers(project)
 
@@ -100,7 +102,7 @@ class LegacyBridgeRootsWatcher(
       private fun updateRoots(map: MutableMap<VirtualFileUrl, Disposable>, oldUrl: String, newUrl: String) {
         map.filter { it.key.url == oldUrl }.forEach { (url, disposable) ->
           map.remove(url)
-          val newVirtualFileUrl = VirtualFileUrlManager.fromUrl(newUrl)
+          val newVirtualFileUrl = virtualFileManager.fromUrl(newUrl)
           map[newVirtualFileUrl]?.let { Disposer.dispose(it) }
           map[newVirtualFileUrl] = disposable
         }

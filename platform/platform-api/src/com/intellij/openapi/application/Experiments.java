@@ -9,20 +9,20 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public final class Experiments {
   public static final ExtensionPointName<ExperimentalFeature> EP_NAME = ExtensionPointName.create("com.intellij.experimentalFeature");
   private static final Logger LOG = Logger.getInstance(Experiments.class);
 
-  private final Map<String, Boolean> cache = ContainerUtil.newConcurrentMap();
+  private final Map<String, Boolean> cache = new ConcurrentHashMap<>();
 
   public Experiments() {
     // log enabled experimental features
@@ -47,8 +47,7 @@ public final class Experiments {
     });
   }
 
-  @NotNull
-  public static Experiments getInstance() {
+  public static @NotNull Experiments getInstance() {
     return ApplicationManager.getApplication().getService(Experiments.class);
   }
 
@@ -81,8 +80,7 @@ public final class Experiments {
     }
   }
 
-  @Nullable
-  private static ExperimentalFeature getFeatureById(@NotNull String featureId) {
+  private static @Nullable ExperimentalFeature getFeatureById(@NotNull String featureId) {
     if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
       return null;
     }

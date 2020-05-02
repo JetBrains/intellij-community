@@ -19,8 +19,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
@@ -30,18 +30,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class PyDataViewDialog extends DialogWrapper {
-  private final JPanel myMainPanel;
+  private final JSplitPane myMainPanel;
+  private static final int TABLE_DEFAULT_WIDTH = 700;
+  private static final int TABLE_DEFAULT_HEIGHT = 500;
 
   PyDataViewDialog(@NotNull Project project, @NotNull final PyDebugValue value) {
     super(project, false);
     setModal(false);
     setCancelButtonText(PyBundle.message("debugger.data.view.close"));
     setCrossClosesWindow(true);
-    myMainPanel = new JPanel(new VerticalFlowLayout());
+    myMainPanel = new JSplitPane();
+    myMainPanel.setOrientation(JSplitPane.VERTICAL_SPLIT);
     final PyDataViewerPanel panel = new PyDataViewerPanel(project, value.getFrameAccessor());
     panel.apply(value);
-    myMainPanel.add(panel);
-    panel.setBorder(BorderFactory.createLineBorder(JBColor.GRAY));
+    panel.setPreferredSize(JBUI.size(TABLE_DEFAULT_WIDTH, TABLE_DEFAULT_HEIGHT));
+    myMainPanel.add(panel, JSplitPane.TOP);
     final JBCheckBox colored = new JBCheckBox(PyBundle.message("debugger.data.view.colored.cells"));
     final JBCheckBox resize = new JBCheckBox(PyBundle.message("debugger.data.view.resize.automatically"));
     resize.setSelected(PropertiesComponent.getInstance(project).getBoolean(PyDataView.AUTO_RESIZE, true));
@@ -60,8 +63,10 @@ public class PyDataViewDialog extends DialogWrapper {
         panel.updateUI();
       }
     });
-    myMainPanel.add(colored);
-    myMainPanel.add(resize);
+    JPanel buttonsPanel = new JPanel(new VerticalFlowLayout());
+    buttonsPanel.add(colored);
+    buttonsPanel.add(resize);
+    myMainPanel.add(buttonsPanel, JSplitPane.BOTTOM);
     setTitle(value.getFullName());
     init();
   }

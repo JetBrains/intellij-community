@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
@@ -56,7 +56,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
           newExpression.append(tracker.text(nextSibling));
           nextSibling = nextSibling.getNextSibling();
         }
-        merge((PsiLiteralExpressionImpl)prev, (PsiLiteralExpressionImpl)operand, newExpression);
+        merge((PsiLiteralExpression)prev, (PsiLiteralExpression)operand, newExpression);
         nextSibling = operand.getNextSibling();
         while (nextSibling != null) {
           newExpression.append(tracker.text(nextSibling));
@@ -68,14 +68,14 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), tracker);
   }
 
-  private static void merge(PsiLiteralExpressionImpl left, PsiLiteralExpressionImpl right, StringBuilder newExpression) {
+  private static void merge(PsiLiteralExpression left, PsiLiteralExpression right, StringBuilder newExpression) {
     String leftText = Objects.requireNonNull(left.getValue()).toString();
     String rightText = Objects.requireNonNull(right.getValue()).toString();
-    if (left.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      String indent = StringUtil.repeat(" ", left.getTextBlockIndent());
+    if (left.isTextBlock()) {
+      String indent = StringUtil.repeat(" ", PsiLiteralUtil.getTextBlockIndent(left));
       newExpression.append("\"\"\"").append('\n').append(indent);
       newExpression.append(leftText.replaceAll("\n", "\n" + indent));
-      if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
+      if (right.isTextBlock()) {
         newExpression.append(rightText.replaceAll("\n", "\n" + indent));
       }
       else {
@@ -83,8 +83,8 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
       }
       newExpression.append("\"\"\"");
     }
-    else if (right.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-      String indent = StringUtil.repeat(" ", right.getTextBlockIndent());
+    else if (right.isTextBlock()) {
+      String indent = StringUtil.repeat(" ", PsiLiteralUtil.getTextBlockIndent(right));
       newExpression.append("\"\"\"").append('\n').append(indent);
       newExpression.append(StringUtil.escapeStringCharacters(leftText));
       newExpression.append(rightText.replaceAll("\n", "\n" + indent));

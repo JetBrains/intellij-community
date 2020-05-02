@@ -27,7 +27,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   @Override
   public UsageFilteringRule @NotNull [] getActiveRules(@NotNull Project project) {
-    final List<UsageFilteringRule> rules = new ArrayList<>();
+    List<UsageFilteringRule> rules = new ArrayList<>();
 
     if (!myReadWriteState.isShowReadAccess()) {
       rules.add(new ReadAccessFilteringRule());
@@ -40,16 +40,16 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
 
   @Override
   public AnAction @NotNull [] createFilteringActions(@NotNull UsageView view) {
-    final UsageViewImpl impl = (UsageViewImpl)view;
     if (!view.getPresentation().isCodeUsages()) {
       return AnAction.EMPTY_ARRAY;
     }
-    final JComponent component = view.getComponent();
+    JComponent component = view.getComponent();
 
-    final ShowReadAccessUsagesAction read = new ShowReadAccessUsagesAction();
+    UsageViewImpl impl = (UsageViewImpl)view;
+    ShowReadAccessUsagesAction read = new ShowReadAccessUsagesAction();
     read.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)), component, impl);
 
-    final ShowWriteAccessUsagesAction write = new ShowWriteAccessUsagesAction();
+    ShowWriteAccessUsagesAction write = new ShowWriteAccessUsagesAction();
     write.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_W, InputEvent.CTRL_DOWN_MASK)), component, impl);
     return new AnAction[] {read, write};
   }
@@ -62,7 +62,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       return myShowReadAccess;
     }
 
-    void setShowReadAccess(final boolean showReadAccess) {
+    void setShowReadAccess(boolean showReadAccess) {
       myShowReadAccess = showReadAccess;
       if (!showReadAccess) {
         myShowWriteAccess = true;
@@ -73,7 +73,7 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
       return myShowWriteAccess;
     }
 
-    void setShowWriteAccess(final boolean showWriteAccess) {
+    void setShowWriteAccess(boolean showWriteAccess) {
       myShowWriteAccess = showWriteAccess;
       if (!showWriteAccess) {
         myShowReadAccess = true;

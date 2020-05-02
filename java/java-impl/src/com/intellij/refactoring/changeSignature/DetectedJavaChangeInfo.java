@@ -39,7 +39,7 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
                          CanonicalTypes.Type newType,
                          ParameterInfoImpl @NotNull [] newParms,
                          ThrownExceptionInfo[] newExceptions,
-                         String newName, String oldName, final boolean delegate) {
+                         String newName, @NotNull String oldName, final boolean delegate) {
     super(newVisibility, method, newName, newType, newParms, newExceptions, delegate, new HashSet<>(), new HashSet<>(), oldName);
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     myModifiers = new String[parameters.length];

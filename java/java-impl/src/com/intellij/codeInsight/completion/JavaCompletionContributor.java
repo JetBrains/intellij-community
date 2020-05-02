@@ -17,14 +17,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +43,6 @@ import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -511,9 +507,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       }
 
       final Object[] variants = reference.getVariants();
-      //noinspection ConstantConditions
       if (variants == null) {
         LOG.error("Reference=" + reference);
+        return;
       }
       for (Object completion : variants) {
         if (completion == null) {
@@ -584,7 +580,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   public static boolean mayStartClassName(CompletionResultSet result) {
-    return StringUtil.isNotEmpty(result.getPrefixMatcher().getPrefix());
+    return InternalCompletionSettings.getInstance().mayStartClassNameCompletion(result);
   }
 
   private static void completeAnnotationAttributeName(CompletionResultSet result, PsiElement insertedElement,
@@ -624,7 +620,7 @@ public class JavaCompletionContributor extends CompletionContributor {
         final String attrName = method.getName();
         for (PsiNameValuePair existingAttr : existingPairs) {
           if (PsiTreeUtil.isAncestor(existingAttr, insertedElement, false)) break;
-          if (Comparing.equal(existingAttr.getName(), attrName) ||
+          if (Objects.equals(existingAttr.getName(), attrName) ||
               PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(attrName) && existingAttr.getName() == null) continue methods;
         }
         LookupElementBuilder element = LookupElementBuilder.createWithIcon(method)
@@ -848,7 +844,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
     }
 
-    if (semicolonNeeded(context.getEditor(), file, offset)) {
+    if (semicolonNeeded(file, offset)) {
       return CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED + ";";
     }
 
@@ -860,54 +856,61 @@ public class JavaCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public static boolean semicolonNeeded(Editor editor, PsiFile file, int startOffset) {
+  public static boolean semicolonNeeded(PsiFile file, int startOffset) {
+    return semicolonNeeded(null, file, startOffset);
+  }
+
+  /**
+   * @deprecated use {@link #semicolonNeeded(PsiFile, int)}
+   */
+  @Deprecated
+  public static boolean semicolonNeeded(@Nullable Editor editor, PsiFile file, int startOffset) {
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiJavaCodeReferenceElement.class, false);
     if (ref != null && !(ref instanceof PsiReferenceExpression)) {
       if (ref.getParent() instanceof PsiTypeElement) {
         return true;
       }
     }
-    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(file.findElementAt(startOffset))) {
+    PsiElement at = file.findElementAt(startOffset);
+    if (psiElement(PsiIdentifier.class).withParent(psiParameter()).accepts(at)) {
       return true;
     }
 
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
-    if (iterator.atEnd()) return false;
-
-    if (iterator.getTokenType() == JavaTokenType.IDENTIFIER) {
-      iterator.advance();
+    if (at != null && at.getNode().getElementType() == JavaTokenType.IDENTIFIER) {
+      at = PsiTreeUtil.nextLeaf(at);
     }
 
-    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
-      iterator.advance();
-    }
+    at = skipWhitespacesAndComments(at);
 
-    if (!iterator.atEnd() &&
-        iterator.getTokenType() == JavaTokenType.LPARENTH &&
+    if (at != null &&
+        at.getNode().getElementType() == JavaTokenType.LPARENTH &&
         PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
       // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 
-    if (!iterator.atEnd() &&
-        iterator.getTokenType() == JavaTokenType.COLON &&
+    if (at != null &&
+        at.getNode().getElementType() == JavaTokenType.COLON &&
         PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false) == null) {
       return true;
     }
 
-    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
-      iterator.advance();
+    at = skipWhitespacesAndComments(at);
+
+    if (at == null || at.getNode().getElementType() != JavaTokenType.IDENTIFIER) {
+      return false;
     }
 
-    if (iterator.atEnd() || iterator.getTokenType() != JavaTokenType.IDENTIFIER) return false;
-    iterator.advance();
+    at = PsiTreeUtil.nextLeaf(at);
+    at = skipWhitespacesAndComments(at);
 
-    while (!iterator.atEnd() && ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(iterator.getTokenType())) {
-      iterator.advance();
-    }
-    if (iterator.atEnd()) return false;
+    // <caret> foo = something, we don't want the reference to be treated as a type
+    return at != null && at.getNode().getElementType() == JavaTokenType.EQ;
+  }
 
-    return iterator.getTokenType() == JavaTokenType.EQ; // <caret> foo = something, we don't want the reference to be treated as a type
+  @Nullable
+  private static PsiElement skipWhitespacesAndComments(@Nullable PsiElement at) {
+    return at instanceof PsiWhiteSpace || at instanceof PsiComment ? PsiTreeUtil.skipWhitespacesAndCommentsForward(at) : at;
   }
 
   private static void autoImport(@NotNull final PsiFile file, int offset, @NotNull final Editor editor) {

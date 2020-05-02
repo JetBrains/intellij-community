@@ -70,6 +70,8 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import com.jetbrains.jdi.ClassLoaderReferenceImpl;
+import com.jetbrains.jdi.MethodImpl;
 import com.jetbrains.jdi.VirtualMachineManagerImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
@@ -134,7 +136,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
-    NodeRenderer.EP_NAME.addExtensionPointListener(this::reloadRenderers, myDisposable);
+    NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
     reloadRenderers();
     myDebugProcessDispatcher.addListener(new DebugProcessListener() {
       @Override
@@ -559,6 +561,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
+    }
+    if (Registry.is("debugger.jb.jdi") || SystemInfo.isJavaVersionAtLeast(13)) {
+      setConnectorArgument("localAddress", "*");
     }
     setConnectorArgument("timeout", "0"); // wait forever
     try {
@@ -1170,17 +1175,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             //  assertThreadSuspended(thread, context);
             if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
               // ensure args are not collected
-              for (Value arg : myArgs) {
-                if (arg instanceof ObjectReference) {
-                  if (Registry.is("debugger.postpone.collection")) {
-                    getManagerThread()
-                      .schedule(PrioritizedTask.Priority.LOWEST, () -> DebuggerUtilsEx.enableCollection((ObjectReference)arg));
-                  }
-                  else {
-                    DebuggerUtilsEx.enableCollection((ObjectReference)arg);
-                  }
-                }
-              }
+              StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::enableCollection);
             }
           }
         }
@@ -1239,6 +1234,15 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     @NotNull Method method,
                                     @NotNull List<? extends Value> args,
                                     final int invocationOptions) throws EvaluateException {
+    return invokeInstanceMethod(evaluationContext, objRef, method, args, invocationOptions, false);
+  }
+
+  public Value invokeInstanceMethod(@NotNull EvaluationContext evaluationContext,
+                                    @NotNull final ObjectReference objRef,
+                                    @NotNull Method method,
+                                    @NotNull List<? extends Value> args,
+                                    final int invocationOptions,
+                                    boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     return new InvokeCommand<Value>(method, args) {
       @Override
@@ -1248,7 +1252,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         return objRef.invokeMethod(thread, method, args, invokePolicy | invocationOptions);
       }
-    }.start((EvaluationContextImpl)evaluationContext, false);
+    }.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
   }
 
   private static ThreadReference getEvaluationThread(final EvaluationContext evaluationContext) throws EvaluateException {
@@ -1342,20 +1346,29 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      @NotNull final ClassType classType,
                                      @NotNull Method method,
                                      @NotNull List<? extends Value> args) throws EvaluateException {
+    return newInstance(evaluationContext, classType, method, args, 0, false);
+  }
+
+  public ObjectReference newInstance(@NotNull final EvaluationContext evaluationContext,
+                                     @NotNull final ClassType classType,
+                                     @NotNull Method method,
+                                     @NotNull List<? extends Value> args,
+                                     final int invocationOptions,
+                                     boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
     InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(method, args) {
       @Override
       protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                                       ClassNotLoadedException,
-                                                                                       IncompatibleThreadStateException,
-                                                                                       InvalidTypeException {
+                                                                                                                 ClassNotLoadedException,
+                                                                                                                 IncompatibleThreadStateException,
+                                                                                                                 InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("New instance " + classType.name() + "." + method.name());
         }
-        return classType.newInstance(thread, method, args, invokePolicy);
+        return classType.newInstance(thread, method, args, invokePolicy | invocationOptions);
       }
     };
-    return invokeCommand.start((EvaluationContextImpl)evaluationContext, false);
+    return invokeCommand.start((EvaluationContextImpl)evaluationContext, internalEvaluate);
   }
 
   public void clearCashes(@MagicConstant(flagsFromClass = EventRequest.class) int suspendPolicy) {
@@ -1432,6 +1445,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     // for this refType and the refType is not visible to the loader.
     // Attempt to evaluate method with this refType will yield ClassNotLoadedException.
     // The only way to say for sure whether the class is _visible_ to the given loader, is to use the following API call
+    if (fromLoader instanceof ClassLoaderReferenceImpl) {
+      return ((ClassLoaderReferenceImpl)fromLoader).isVisible(refType);
+    }
     return fromLoader.visibleClasses().contains(refType);
   }
 
@@ -1481,9 +1497,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //forNameMethod = classClassType.concreteMethodByName("forName", "(Ljava/lang/String;)Ljava/lang/Class;");
         forNameMethod = DebuggerUtils.findMethod(classClassType, "forName", "(Ljava/lang/String;)Ljava/lang/Class;");
       }
-      Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args);
+      Value classReference = invokeMethod(evaluationContext, classClassType, forNameMethod, args, MethodImpl.SKIP_ASSIGNABLE_CHECK, true);
       if (classReference instanceof ClassObjectReference) {
         refType = ((ClassObjectReference)classReference).reflectedType();
+        if (classLoader instanceof ClassLoaderReferenceImpl) {
+          ((ClassLoaderReferenceImpl)classLoader).addVisible(refType);
+        }
       }
     }
     return refType;

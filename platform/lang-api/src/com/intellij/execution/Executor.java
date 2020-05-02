@@ -60,11 +60,11 @@ public abstract class Executor {
    *
    * @return the executor action description.
    */
-  @Nls @NlsActions.ActionDescription
+  @NlsActions.ActionDescription
   public abstract String getDescription();
 
   @NotNull
-  @Nls @NlsActions.ActionText
+  @NlsActions.ActionText
   public abstract String getActionName();
 
   /**

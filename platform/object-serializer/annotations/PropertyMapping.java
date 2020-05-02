@@ -7,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Kotlin: `@PropertyMapping("name", "name2")`
- * Java: `@PropertyMapping({"name", "name2"})`
+ * <p>Usage in Kotlin: {@code @PropertyMapping("name", "name2")}</p>
+ * <p>Usage in Java: {@code @PropertyMapping({"name", "name2"})}</p>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.CONSTRUCTOR)

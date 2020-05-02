@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -15,12 +15,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.LinkedListWithSum;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.datatransfer.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
@@ -251,7 +256,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   @Override
   public Transferable @NotNull [] getAllContents() {
     String clipString = getContents(DataFlavor.stringFlavor);
-    if (clipString != null && (myData.isEmpty() || !Comparing.equal(clipString, getStringContent(myData.get(0))))) {
+    if (clipString != null && (myData.isEmpty() || !Objects.equals(clipString, getStringContent(myData.get(0))))) {
       addToTheTopOfTheStack(new StringSelection(clipString));
     }
     return myData.toArray(new Transferable[0]);

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -31,6 +29,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   private final Namer<? super T> myNamer;
@@ -87,14 +86,15 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     return true;
   }
 
+  @NlsContexts.DialogTitle
   protected String subjDisplayName() {
     return "item";
   }
 
   @Nullable
-  public String askForProfileName(String titlePattern) {
+  public String askForProfileName(@NlsContexts.DialogTitle String titlePattern) {
     String title = MessageFormat.format(titlePattern, subjDisplayName());
-    return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+    return Messages.showInputDialog(IdeBundle.message("dialog.message.new.name", subjDisplayName()), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
         return s.length() > 0 && findByName(s) == null;
@@ -110,7 +110,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   @Nullable
   protected T findByName(String name) {
     for (T item : myItems) {
-      if (Comparing.equal(name, myNamer.getName(item))) return item;
+      if (Objects.equals(name, myNamer.getName(item))) return item;
     }
 
     return null;
@@ -277,7 +277,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-      final String profileName = askForProfileName("Copy {0}");
+      @SuppressWarnings("UnresolvedPropertyKey") final String profileName = askForProfileName(IdeBundle.message("dialog.title.copy"));
       if (profileName == null) return;
 
       @SuppressWarnings("unchecked") final T clone = myCloner.copyOf((T)getSelectedObject());
@@ -320,7 +320,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   @Nullable
   protected T createItem() {
-    final String name = askForProfileName("Create new {0}");
+    @SuppressWarnings("UnresolvedPropertyKey") final String name = askForProfileName(IdeBundle.message("dialog.title.create.new"));
     if (name == null) return null;
     final T newItem = myFactory.create();
     myNamer.setName(newItem, name);

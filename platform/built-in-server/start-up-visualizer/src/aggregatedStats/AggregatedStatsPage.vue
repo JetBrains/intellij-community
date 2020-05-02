@@ -49,32 +49,7 @@
 
     <h3>Aggregated</h3>
 
-    <el-form :inline="true" size="small">
-      <el-form-item label="Operator">
-        <el-select v-model="chartSettings.aggregationOperator" data-lpignore="true" filterable>
-          <el-option v-for='name in ["median", "min", "max", "quantile"]' :key="name" :label="name" :value="name"/>
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-input-number v-if="chartSettings.aggregationOperator === 'quantile'"
-                         :min="0" :max="100" :step="10"
-                         v-model="chartSettings.quantile"/>
-      </el-form-item>
-    </el-form>
-
-    <el-row :gutter="5">
-      <!-- more space for duration events (because number of duration metrics more than instant) -->
-      <el-col :span="16">
-        <el-card shadow="never" :body-style="{ padding: '0px' }">
-          <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "appComponentCreation_d", "projectComponentCreation_d"]' :chartSettings="chartSettings"/>
-        </el-card>
-      </el-col>
-      <el-col :span="8">
-        <el-card shadow="never" :body-style="{ padding: '0px' }">
-          <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
-        </el-card>
-      </el-col>
-    </el-row>
+    <ClusteredPage :dataRequest="dataRequest"/>
 
     <el-tabs value="date" size="small">
       <el-tab-pane v-for='item in [
@@ -91,19 +66,43 @@
               </el-form-item>
             </el-form>
 
+            <el-divider class="dividerAfterForm">Bootstrap</el-divider>
             <el-row :gutter="5">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                                      :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "pluginDescriptorLoading_d", "euaShowing_d", "appStarter_d"]'
+                                      :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
-                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest" :metrics='["appComponentCreation_d", "projectComponentCreation_d", "moduleLoading_d"]' :chartSettings="chartSettings"/>
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                                      :metrics='["pluginDescriptorInitV18_d", "appComponentCreation_d", "projectComponentCreation_d"]'
+                                      :chartSettings="chartSettings"/>
                 </el-card>
               </el-col>
             </el-row>
 
+            <el-divider>Services</el-divider>
+            <el-row :gutter="5" style="margin-top: 5px;">
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                                      :metrics='["appComponentCreation_d", "serviceSyncPreloading_d", "serviceAsyncPreloading_d"]'
+                                      :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+              <el-col :span="12">
+                <el-card shadow="never" :body-style="{ padding: '0px' }">
+                  <LineChartComponent type="duration" :order="item.order" :dataRequest="dataRequest"
+                                      :metrics='["projectComponentCreation_d", "projectServiceSyncPreloading_d", "projectServiceAsyncPreloading_d", "moduleLoading_d"]'
+                                      :chartSettings="chartSettings"/>
+                </el-card>
+              </el-col>
+            </el-row>
+
+            <el-divider>Post-opening</el-divider>
             <el-row :gutter="5" style="margin-top: 5px;">
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
@@ -113,19 +112,6 @@
               <el-col :span="12">
                 <el-card shadow="never" :body-style="{ padding: '0px' }">
                   <LineChartComponent type="instant" :order="item.order" :dataRequest="dataRequest" :metrics='["splash_i", "startUpCompleted_i"]' :chartSettings="chartSettings"/>
-                </el-card>
-              </el-col>
-            </el-row>
-
-            <el-row :gutter="5" style="margin-top: 5px;">
-              <el-col :span="12">
-                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
-                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["bootstrap_d", "appInitPreparation_d", "appInit_d", "splash_i"]' :chartSettings="chartSettings" timeRange="1M"/>
-                </el-card>
-              </el-col>
-              <el-col :span="12">
-                <el-card v-if="item.order === 'date'" shadow="never" :body-style="{ padding: '0px' }">
-                  <ClusteredChartComponent :dataRequest="dataRequest" :metrics='["projectDumbAware_d", "editorRestoring_d", "editorRestoringTillPaint_d"]' :chartSettings="chartSettings" timeRange="1M"/>
                 </el-card>
               </el-col>
             </el-row>
@@ -143,6 +129,9 @@
           <li>
             <small>Events <code>editorRestoring</code> and <code>projectDumbAware_d</code> are reliably reported since 23 November 2019.</small>
           </li>
+          <li>
+            <small>Event <code>pluginDescriptorInit</code> is reported since March 2019.</small>
+          </li>
         </ul>
       </el-col>
     </el-row>
@@ -155,5 +144,9 @@
 .aggregatedChart {
   width: 100%;
   height: 300px;
+}
+
+.dividerAfterForm {
+  margin-top: 0 !important;
 }
 </style>

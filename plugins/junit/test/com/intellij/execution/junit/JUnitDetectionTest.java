@@ -4,9 +4,11 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.PsiLocation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestFramework;
 
@@ -112,5 +114,26 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(framework.isTestClass(aClass));
     assertFalse(framework.isTestMethod(aClass.getMethods()[0]));
     assertFalse(framework.isTestMethod(aClass.getMethods()[1]));
+  }
+
+  public void testJqwikProperty() {
+    myFixture.addClass("package net.jqwik.api;" +
+                       "@org.junit.platform.commons.annotation.Testable public @interface Property {}");
+    myFixture.addClass("package org.junit.platform.commons.annotation;" +
+                       "public @interface Testable {}");
+    myFixture.addClass("package net.jqwik.api; public @interface ForAll {}");
+    PsiFile file = myFixture.configureByText("JqwikPropertyTest.java",
+                                             "import net.jqwik.api.ForAll;\n" +
+                                             "import net.jqwik.api.Property;\n" +
+                                             "class JqwikPropertyTests {\n" +
+                                             "\t@Property\n" +
+                                             "\tvoid aProperty(@ForAll int anInt) {}\n" +
+                                             "}"
+    );
+
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    assertTrue(JUnitUtil.isTestClass(aClass));
+    PsiMethod psiMethod = aClass.getMethods()[0];
+    assertTrue(JUnitUtil.isTestMethod(PsiLocation.fromPsiElement(psiMethod), false));
   }
 }

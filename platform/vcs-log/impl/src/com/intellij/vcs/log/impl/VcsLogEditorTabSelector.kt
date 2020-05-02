@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
@@ -9,10 +9,10 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerAdapter
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.TabbedContent
-import com.intellij.vcs.log.ui.VcsLogUiImpl
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 
+@Deprecated("Unused, to be removed")
 open class VcsLogEditorTabSelector(private val project: Project) : ContentManagerAdapter(), PropertyChangeListener {
 
   override fun selectionChanged(event: ContentManagerEvent) {
@@ -23,11 +23,6 @@ open class VcsLogEditorTabSelector(private val project: Project) : ContentManage
   }
 
   protected open fun selectEditorTab(content: Content) {
-    val ui = VcsLogContentUtil.getLogUi(content.component)
-    if (ui is VcsLogUiImpl) {
-      val frame = ui.mainFrame
-      frame.openLogEditorTab()
-    }
   }
 
   override fun contentAdded(event: ContentManagerEvent) {

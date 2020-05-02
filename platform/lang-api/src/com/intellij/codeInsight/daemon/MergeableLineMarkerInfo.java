@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.IdeBundle;
@@ -159,7 +159,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
     MergedGutterIconNavigationHandler(List<? extends MergeableLineMarkerInfo<?>> markers) {
       final List<LineMarkerInfo<?>> infos = new ArrayList<>(markers);
-      Collections.sort(infos, Comparator.comparingInt(o -> o.startOffset));
+      infos.sort(Comparator.comparingInt(o -> o.startOffset));
       myInfos = Collections.unmodifiableList(infos);
     }
 

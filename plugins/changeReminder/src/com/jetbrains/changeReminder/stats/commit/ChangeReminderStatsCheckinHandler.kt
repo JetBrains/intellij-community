@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.changeReminder.stats.commit
 
 import com.intellij.openapi.components.service
@@ -7,13 +7,14 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.jetbrains.changeReminder.predict.PredictionService
 import com.jetbrains.changeReminder.stats.ChangeReminderChangesCommittedEvent
 import com.jetbrains.changeReminder.stats.logEvent
+import git4idea.GitVcs
 
-class ChangeReminderStatsCheckinHandler : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext) = object : CheckinHandler() {
+class ChangeReminderStatsCheckinHandler : VcsCheckinHandlerFactory(GitVcs.getKey()) {
+  override fun createVcsHandler(panel: CheckinProjectPanel, commitContext: CommitContext) = object : CheckinHandler() {
     override fun beforeCheckin(): ReturnResult {
       val project = panel.project
       val prediction = project.service<PredictionService>().predictionDataToDisplay

@@ -27,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 
 public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  static final Logger LOG = Logger.getInstance(VariableTypeFix.class);
+  private static final Logger LOG = Logger.getInstance(VariableTypeFix.class);
 
   private final PsiType myReturnType;
   protected final String myName;
 
-  public VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
+  protected VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     super(variable);
     myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
     myName = variable.getName();
@@ -42,8 +42,10 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @Override
   public String getText() {
     PsiType type = getReturnType();
+    PsiElement startElement = getStartElement();
+    String typeName = startElement == null ? "?" : UsageViewUtil.getType(startElement);
     return QuickFixBundle.message("fix.variable.type.text",
-                                  UsageViewUtil.getType(getStartElement()),
+                                  typeName,
                                   myName,
                                   type == null || !type.isValid() ? "???" : type.getPresentableText());
   }

@@ -25,14 +25,13 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.Convertor;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
 import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +66,7 @@ public class VcsStructureChooser extends DialogWrapper {
   private Tree myTree;
 
   public VcsStructureChooser(@NotNull Project project,
-                             @Nls @NlsContexts.DialogTitle @NotNull String title,
+                             @NlsContexts.DialogTitle @NotNull String title,
                              @NotNull Collection<VirtualFile> initialSelection,
                              @NotNull List<VirtualFile> roots) {
     super(project, true);

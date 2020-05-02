@@ -9,16 +9,16 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
-import com.intellij.internal.statistic.beans.addIfDiffers
+import com.intellij.internal.statistic.beans.addMetricsIfDiffers
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import java.util.*
 
 class DiffUsagesCollector : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "vcs.diff"
-  override fun getVersion(): Int = 2
+  override fun getVersion(): Int = 3
 
-  override fun getMetrics(): MutableSet<MetricEvent> {
+  override fun getMetrics(): Set<MetricEvent> {
     val set = HashSet<MetricEvent>()
 
     val places = listOf(DiffPlaces.DEFAULT,
@@ -37,15 +37,21 @@ class DiffUsagesCollector : ApplicationUsagesCollector() {
       val textSettings = TextDiffSettings.getSettings(place)
       val defaultTextSettings = TextDiffSettings.getDefaultSettings(place)
 
-      addIfDiffers(set, textSettings, defaultTextSettings, { it.ignorePolicy }, "ignore.policy", data)
-      addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightPolicy }, "highlight.policy", data)
-      addIfDiffers(set, textSettings, defaultTextSettings, { it.highlightingLevel }, "show.warnings.policy", data)
-      addBoolIfDiffers(set, textSettings, defaultTextSettings, { !it.isExpandByDefault }, "collapse.unchanged", data)
-      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isShowLineNumbers }, "show.line.numbers", data)
-      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isUseSoftWraps }, "use.soft.wraps", data)
+      addMetricsIfDiffers(set, textSettings, defaultTextSettings, data) {
+        addBool("sync.scroll" ) { it.isEnableSyncScroll }
+        add("ignore.policy") { it.ignorePolicy }
+        add("highlight.policy") { it.highlightPolicy }
+        add("show.warnings.policy") { it.highlightingLevel }
+        add("context.range") { it.contextRange }
+        addBool("collapse.unchanged") { !it.isExpandByDefault }
+        addBool("show.line.numbers") { it.isShowLineNumbers }
+        addBool("use.soft.wraps") { it.isUseSoftWraps }
+        addBool("enable.read.lock") { it.isReadOnlyLock }
+        add("show.breadcrumbs") { it.breadcrumbsPlacement }
+        addBool("merge.apply.non.conflicted") { it.isAutoApplyNonConflictedChanges }
+        addBool("merge.enable.lst.markers") { it.isEnableLstGutterMarkersInMerge }
+      }
       addBoolIfDiffers(set, diffSettings, defaultDiffSettings, { isUnifiedToolDefault(it) }, "use.unified.diff", data)
-      addBoolIfDiffers(set, textSettings, defaultTextSettings, { it.isReadOnlyLock }, "enable.read.lock", data)
-      addIfDiffers(set, textSettings, defaultTextSettings, { it.breadcrumbsPlacement }, "show.breadcrumbs", data)
     }
 
     val diffSettings = DiffSettings.getSettings(DiffPlaces.DEFAULT)

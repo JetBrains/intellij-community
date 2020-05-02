@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -29,12 +28,10 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(PsiLiteralExpression expression) {
-        PsiLiteralExpressionImpl literalExpression = tryCast(expression, PsiLiteralExpressionImpl.class);
-        if (literalExpression == null) return;
-        if (literalExpression.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL || literalExpression.getTextBlockText() == null) {
+        if (!expression.isTextBlock()|| PsiLiteralUtil.getTextBlockText(expression) == null) {
           return;
         }
-        holder.registerProblem(literalExpression, JavaBundle.message("inspection.text.block.backward.migration.message"),
+        holder.registerProblem(expression, JavaBundle.message("inspection.text.block.backward.migration.message"),
                                new ReplaceWithRegularStringLiteralFix());
       }
     };
@@ -51,9 +48,9 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpressionImpl literalExpression = tryCast(descriptor.getPsiElement(), PsiLiteralExpressionImpl.class);
-      if (literalExpression == null || literalExpression.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) return;
-      String text = literalExpression.getTextBlockText();
+      PsiLiteralExpression literalExpression = tryCast(descriptor.getPsiElement(), PsiLiteralExpression.class);
+      if (literalExpression == null || !literalExpression.isTextBlock()) return;
+      String text = PsiLiteralUtil.getTextBlockText(literalExpression);
       if (text == null) return;
       String replacement = convertToConcatenation(text);
       PsiFile file = descriptor.getPsiElement().getContainingFile();

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.documentation.DocFontSizePopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -32,8 +34,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,14 +48,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.*;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 public class DocRenderItem {
   private static final Key<DocRenderItem> OUR_ITEM = Key.create("doc.render.item");
   private static final Key<Collection<DocRenderItem>> OUR_ITEMS = Key.create("doc.render.items");
-  private static final Key<VisibleAreaListener> VISIBLE_AREA_LISTENER = Key.create("doc.render.visible.area.listener");
   private static final Key<Disposable> LISTENERS_DISPOSABLE = Key.create("doc.render.listeners.disposable");
 
   final Editor editor;
@@ -66,7 +71,7 @@ public class DocRenderItem {
     int endOffset = range.getEndOffset();
     int startLine = document.getLineNumber(startOffset);
     int endLine = document.getLineNumber(endOffset);
-    return startLine > 0 && endLine < document.getLineCount() - 1 &&
+    return endLine < document.getLineCount() - 1 &&
            CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) &&
            CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(endOffset, document.getLineEndOffset(endLine)));
   }
@@ -86,18 +91,18 @@ public class DocRenderItem {
       List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
       boolean updated = false;
       for (Iterator<DocRenderItem> it = items.iterator(); it.hasNext(); ) {
-        DocRenderItem item = it.next();
-        DocRenderPassFactory.Item matchingItem = item.isValid() ? itemsToSet.removeItem(item.highlighter) : null;
-        if (matchingItem == null) {
-          updated |= item.remove(foldingTasks);
+        DocRenderItem existingItem = it.next();
+        DocRenderPassFactory.Item matchingNewItem = existingItem.isValid() ? itemsToSet.removeItem(existingItem.highlighter) : null;
+        if (matchingNewItem == null) {
+          updated |= existingItem.remove(foldingTasks);
           it.remove();
         }
-        else if (matchingItem.textToRender != null && !matchingItem.textToRender.equals(item.textToRender)) {
-          item.textToRender = matchingItem.textToRender;
-          itemsToUpdateInlays.add(item);
+        else if (matchingNewItem.textToRender != null && !matchingNewItem.textToRender.equals(existingItem.textToRender)) {
+          existingItem.textToRender = matchingNewItem.textToRender;
+          itemsToUpdateInlays.add(existingItem);
         }
         else {
-          item.updateIcon();
+          existingItem.updateIcon();
         }
       }
       Collection<DocRenderItem> newRenderItems = new ArrayList<>();
@@ -121,11 +126,6 @@ public class DocRenderItem {
 
   private static void setupListeners(@NotNull Editor editor, boolean disable) {
     if (disable) {
-      VisibleAreaListener visibleAreaListener = editor.getUserData(VISIBLE_AREA_LISTENER);
-      if (visibleAreaListener != null) {
-        editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
-        editor.putUserData(VISIBLE_AREA_LISTENER, null);
-      }
       Disposable listenersDisposable = editor.getUserData(LISTENERS_DISPOSABLE);
       if (listenersDisposable != null) {
         Disposer.dispose(listenersDisposable);
@@ -133,15 +133,11 @@ public class DocRenderItem {
       }
     }
     else {
-      if (editor.getUserData(VISIBLE_AREA_LISTENER) == null) {
-        VisibleAreaListener visibleAreaListener = new MyVisibleAreaListener(editor);
-        editor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
-        editor.putUserData(VISIBLE_AREA_LISTENER, visibleAreaListener);
-      }
       if (editor.getUserData(LISTENERS_DISPOSABLE) == null) {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
         connection.setDefaultHandler((event, params) -> updateInlays(editor));
         connection.subscribe(EditorColorsManager.TOPIC);
+        connection.subscribe(LafManagerListener.TOPIC);
         EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
           @Override
           public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -156,6 +152,14 @@ public class DocRenderItem {
         DocRenderMouseEventBridge mouseEventBridge = new DocRenderMouseEventBridge();
         editor.addEditorMouseListener(mouseEventBridge, connection);
         editor.addEditorMouseMotionListener(mouseEventBridge, connection);
+        IconVisibilityController iconVisibilityController = new IconVisibilityController();
+        editor.addEditorMouseListener(iconVisibilityController, connection);
+        editor.addEditorMouseMotionListener(iconVisibilityController, connection);
+        editor.getScrollingModel().addVisibleAreaListener(iconVisibilityController, connection);
+        Disposer.register(connection, iconVisibilityController);
+
+        editor.getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(editor), connection);
+        editor.getInlayModel().addListener(new MyInlayListener(), connection);
 
         editor.putUserData(LISTENERS_DISPOSABLE, connection);
       }
@@ -174,12 +178,27 @@ public class DocRenderItem {
     Document document = editor.getDocument();
     if (offset < 0 || offset > document.getTextLength()) return null;
     int line = document.getLineNumber(offset);
-    return items.stream().filter(i -> {
+    DocRenderItem itemOnAdjacentLine = items.stream().filter(i -> {
       if (!i.isValid()) return false;
       int startLine = document.getLineNumber(i.highlighter.getStartOffset());
       int endLine = document.getLineNumber(i.highlighter.getEndOffset());
       return line >= startLine - 1 && line <= endLine + 1;
     }).min(Comparator.comparingInt(i -> i.highlighter.getStartOffset())).orElse(null);
+    if (itemOnAdjacentLine != null) return itemOnAdjacentLine;
+
+    Project project = editor.getProject();
+    if (project == null) return null;
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    return items.stream().filter(item -> {
+      if (!item.isValid()) return false;
+      PsiDocCommentBase comment = item.getComment();
+      if (comment == null) return false;
+      PsiElement owner = comment.getOwner();
+      if (owner == null) return false;
+      TextRange ownerTextRange = owner.getTextRange();
+      if (ownerTextRange == null) return false;
+      return ownerTextRange.containsOffset(offset);
+    }).findFirst().orElse(null);
   }
 
   private static void resetToDefaultState(@NotNull Editor editor) {
@@ -191,7 +210,7 @@ public class DocRenderItem {
       List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
       boolean updated = false;
       for (DocRenderItem item : items) {
-        if ((item.inlay == null) == globalSetting) {
+        if (item.isValid() && (item.inlay == null) == globalSetting) {
           updated |= item.toggle(foldingTasks);
           itemsToUpdateInlays.add(item);
         }
@@ -212,38 +231,23 @@ public class DocRenderItem {
     }
   }
 
+  public static EditorCustomElementRenderer createDemoRenderer(@NotNull Editor editor) {
+    DocRenderItem item = new DocRenderItem(editor, new TextRange(0, 0), "Rendered documentation with <a href='''>link</a>");
+    return new DocRenderer(item);
+  }
+
   private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
-    assert editor.getProject() != null;
     highlighter = editor.getMarkupModel()
       .addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(), 0, null, HighlighterTargetArea.EXACT_RANGE);
     updateIcon();
   }
 
-  private int calcFoldStartOffset() {
-    Document document = highlighter.getDocument();
-    int startLine = document.getLineNumber(highlighter.getStartOffset());
-    return startLine == 0 ? 0 : document.getLineEndOffset(startLine - 1);
-  }
-
-  private int calcFoldEndOffset() {
-    return highlighter.getEndOffset();
-  }
-
-  private int calcInlayOffset() {
-    Document document = highlighter.getDocument();
-    int endOffset = highlighter.getEndOffset();
-    int endLine = document.getLineNumber(endOffset);
-    return endLine < document.getLineCount() - 1 ? document.getLineStartOffset(endLine + 1) : endOffset;
-  }
-
   private boolean isValid() {
-    if (!highlighter.isValid() || highlighter.getStartOffset() >= highlighter.getEndOffset()) return false;
-    return foldRegion == null && inlay == null ||
-           foldRegion != null && foldRegion.isValid() &&
-           foldRegion.getStartOffset() == calcFoldStartOffset() && foldRegion.getEndOffset() == calcFoldEndOffset() &&
-           inlay != null && inlay.isValid() && inlay.getOffset() == calcInlayOffset();
+    return highlighter.isValid() &&
+           highlighter.getStartOffset() < highlighter.getEndOffset() &&
+           new RelevantOffsets(highlighter).match(foldRegion, inlay);
   }
 
   private void cleanup() {
@@ -275,14 +279,13 @@ public class DocRenderItem {
         generateHtmlInBackgroundAndToggle();
         return false;
       }
-      int inlayOffset = calcInlayOffset();
-      inlay = editor.getInlayModel().addBlockElement(inlayOffset, true, true, BlockInlayPriority.DOC_RENDER, new DocRenderer(this));
+      RelevantOffsets offsets = new RelevantOffsets(highlighter);
+      inlay = editor.getInlayModel().addBlockElement(offsets.inlayOffset, false, true, BlockInlayPriority.DOC_RENDER,
+                                                     new DocRenderer(this));
       if (inlay != null) {
-        int foldStartOffset = calcFoldStartOffset();
-        int foldEndOffset = calcFoldEndOffset();
         Runnable foldingTask = () -> {
           // if this fails (setting 'foldRegion' to null), 'cleanup' method will fix the mess
-          foldRegion = foldingModel.createFoldRegion(foldStartOffset, foldEndOffset, "", null, true);
+          foldRegion = foldingModel.createFoldRegion(offsets.foldStartOffset, offsets.foldEndOffset, "", null, true);
           if (foldRegion != null) foldRegion.putUserData(OUR_ITEM, this);
         };
         if (foldingTasks == null) {
@@ -358,7 +361,7 @@ public class DocRenderItem {
     boolean iconExists = highlighter.getGutterIconRenderer() != null;
     if (iconEnabled != iconExists) {
       if (iconEnabled) {
-        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(AllIcons.Gutter.JavadocRead));
+        highlighter.setGutterIconRenderer(new MyGutterIconRenderer(AllIcons.Gutter.JavadocRead, false));
       }
       else {
         highlighter.setGutterIconRenderer(null);
@@ -369,6 +372,51 @@ public class DocRenderItem {
 
   AnAction createToggleAction() {
     return new ToggleRenderingAction(this);
+  }
+
+  private void setIconVisible(boolean visible) {
+    MyGutterIconRenderer iconRenderer = (MyGutterIconRenderer)highlighter.getGutterIconRenderer();
+    if (iconRenderer != null) {
+      iconRenderer.setIconVisible(visible);
+      int y = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getStartOffset()));
+      repaintGutter(y);
+    }
+    if (inlay != null) {
+      MyGutterIconRenderer inlayIconRenderer = (MyGutterIconRenderer)inlay.getGutterIconRenderer();
+      if (inlayIconRenderer != null) {
+        inlayIconRenderer.setIconVisible(visible);
+        Rectangle bounds = inlay.getBounds();
+        if (bounds != null) {
+          repaintGutter(bounds.y);
+        }
+      }
+    }
+  }
+
+  private void repaintGutter(int startY) {
+    JComponent gutter = (JComponent)editor.getGutter();
+    gutter.repaint(0, startY, gutter.getWidth(), startY + editor.getLineHeight());
+  }
+
+  private static class RelevantOffsets {
+    private final int foldStartOffset;
+    private final int foldEndOffset;
+    private final int inlayOffset;
+
+    private RelevantOffsets(@NotNull RangeHighlighter highlighter) {
+      Document document = highlighter.getDocument();
+      int startLine = document.getLineNumber(highlighter.getStartOffset());
+      int endLine = document.getLineNumber(highlighter.getEndOffset());
+      inlayOffset = foldStartOffset = document.getLineStartOffset(startLine);
+      foldEndOffset = endLine < document.getLineCount() - 1 ? document.getLineStartOffset(endLine + 1) : document.getLineEndOffset(endLine);
+    }
+
+    private boolean match(FoldRegion foldRegion, Inlay inlay) {
+      return foldRegion == null && inlay == null ||
+             foldRegion != null && foldRegion.isValid() &&
+             foldRegion.getStartOffset() == foldStartOffset && foldRegion.getEndOffset() == foldEndOffset &&
+             inlay != null && inlay.isValid() && inlay.getOffset() == inlayOffset;
+    }
   }
 
   private static class MyCaretListener implements CaretListener {
@@ -421,11 +469,30 @@ public class DocRenderItem {
     }
   }
 
-  class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
-    private final Icon icon;
+  private static class MyInlayListener implements InlayModel.Listener {
+    @Override
+    public void onRemoved(@NotNull Inlay inlay) {
+      EditorCustomElementRenderer renderer = inlay.getRenderer();
+      if (renderer instanceof DocRenderer) {
+        ((DocRenderer)renderer).dispose();
+      }
+    }
+  }
 
-    MyGutterIconRenderer(Icon icon) {
-      this.icon = icon;
+  class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
+    private final LayeredIcon icon;
+
+    MyGutterIconRenderer(Icon icon, boolean iconVisible) {
+      this.icon = new LayeredIcon(icon);
+      setIconVisible(iconVisible);
+    }
+
+    boolean isIconVisible() {
+      return icon.isLayerEnabled(0);
+    }
+
+    void setIconVisible(boolean visible) {
+      icon.setLayerEnabled(0, visible);
     }
 
     @Override
@@ -504,6 +571,106 @@ public class DocRenderItem {
       if (editor != null) {
         DocFontSizePopup.show(() -> updateInlays(editor), editor.getContentComponent());
       }
+    }
+  }
+
+  private static class IconVisibilityController implements EditorMouseListener, EditorMouseMotionListener, VisibleAreaListener, Disposable {
+    private DocRenderItem myCurrentItem;
+    private Editor myQueuedEditor;
+
+    @Override
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
+      doUpdate(e.getEditor(), e);
+    }
+
+    @Override
+    public void mouseExited(@NotNull EditorMouseEvent e) {
+      doUpdate(e.getEditor(), e);
+    }
+
+    @Override
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
+      Editor editor = e.getEditor();
+      if (((EditorImpl)editor).isCursorHidden()) return;
+      if (myQueuedEditor == null) {
+        myQueuedEditor = editor;
+        // delay update: multiple visible area updates within same EDT event will cause only one icon update,
+        // and we'll not observe the item in inconsistent state during toggling
+        SwingUtilities.invokeLater(() -> {
+          if (myQueuedEditor != null && !myQueuedEditor.isDisposed()) {
+            doUpdate(myQueuedEditor, null);
+          }
+          myQueuedEditor = null;
+        });
+      }
+    }
+
+    private void doUpdate(@NotNull Editor editor, @Nullable EditorMouseEvent event) {
+      int y = 0;
+      int offset = -1;
+      if (event == null) {
+        PointerInfo info = MouseInfo.getPointerInfo();
+        if (info != null) {
+          Point screenPoint = info.getLocation();
+          JComponent component = editor.getComponent();
+
+          Point componentPoint = new Point(screenPoint);
+          SwingUtilities.convertPointFromScreen(componentPoint, component);
+
+          if (new Rectangle(component.getSize()).contains(componentPoint)) {
+            Point editorPoint = new Point(screenPoint);
+            SwingUtilities.convertPointFromScreen(editorPoint, editor.getContentComponent());
+            y = editorPoint.y;
+            offset = editor.visualPositionToOffset(new VisualPosition(editor.yToVisualLine(y), 0));
+          }
+        }
+      }
+      else {
+        y = event.getMouseEvent().getY();
+        offset = event.getOffset();
+      }
+      DocRenderItem item = offset < 0 ? null : findItem(editor, y, offset);
+      if (item != myCurrentItem) {
+        if (myCurrentItem != null) myCurrentItem.setIconVisible(false);
+        myCurrentItem = item;
+        if (myCurrentItem != null) myCurrentItem.setIconVisible(true);
+      }
+    }
+
+    private static DocRenderItem findItem(Editor editor, int y, int neighborOffset) {
+      Document document = editor.getDocument();
+      int lineNumber = document.getLineNumber(neighborOffset);
+      int searchStartOffset = document.getLineStartOffset(Math.max(0, lineNumber - 1));
+      int searchEndOffset = document.getLineEndOffset(lineNumber);
+      Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
+      assert items != null;
+      for (DocRenderItem item : items) {
+        RangeHighlighter highlighter = item.highlighter;
+        if (highlighter.isValid() && highlighter.getStartOffset() <= searchEndOffset && highlighter.getEndOffset() >= searchStartOffset) {
+          int itemStartY = 0;
+          int itemEndY = 0;
+          if (item.inlay == null) {
+            itemStartY = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getStartOffset()));
+            itemEndY = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getEndOffset())) + editor.getLineHeight();
+          }
+          else {
+            Rectangle bounds = item.inlay.getBounds();
+            if (bounds != null) {
+              itemStartY = bounds.y;
+              itemEndY = bounds.y + bounds.height;
+            }
+          }
+          if (y >= itemStartY && y < itemEndY) return item;
+          break;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public void dispose() {
+      myCurrentItem = null;
+      myQueuedEditor = null;
     }
   }
 }

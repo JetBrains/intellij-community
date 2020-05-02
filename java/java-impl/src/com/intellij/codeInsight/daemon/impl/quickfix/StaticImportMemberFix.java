@@ -81,10 +81,10 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
            && getElement() != null
            && getElement().isValid()
            && getQualifierExpression() == null
-           && resolveRef() == null
            && BaseIntentionAction.canModify(file)
            && !candidates.isEmpty()
            && ContainerUtil.all(candidates, PsiElement::isValid)
+           && resolveRef() == null
       ;
   }
 

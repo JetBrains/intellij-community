@@ -17,6 +17,7 @@ package com.intellij.lang.surroundWith;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayFactory;
@@ -39,6 +40,7 @@ public interface Surrounder {
    *
    * @return the template name
    */
+  @NlsActions.ActionText
   String getTemplateDescription();
 
   /**

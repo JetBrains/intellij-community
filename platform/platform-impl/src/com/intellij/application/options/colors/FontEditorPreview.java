@@ -110,7 +110,6 @@ public class FontEditorPreview implements PreviewPanel{
     settings.setWhitespacesShown(true);
     settings.setLineMarkerAreaShown(false);
     settings.setIndentGuidesShown(false);
-    settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setRightMarginShown(true);
@@ -159,7 +158,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
-    public void paint(Component c, Graphics g, Rectangle r) {
+    public void paint(@NotNull Component c, Graphics g, @NotNull Rectangle r) {
       Icon icon = AllIcons.General.InspectionsOK;
       icon.paintIcon(c, g, r.x, r.y);
     }

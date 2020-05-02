@@ -10,7 +10,9 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -30,6 +32,8 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -91,7 +95,12 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
       }
 
       if (e instanceof LibraryOrderEntry) {
-        if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
+        if (Registry.is("maven.always.remove.bad.entries")) {
+          if (!isMavenLibrary((LibraryOrderEntry)e)) continue;
+        }
+        else {
+          if (!isMavenLibrary(((LibraryOrderEntry)e).getLibrary())) continue;
+        }
       }
       if (e instanceof ModuleOrderEntry) {
         Module m = ((ModuleOrderEntry)e).getModule();
@@ -184,7 +193,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   private boolean exists(String path) {
-    return new File(toPath(path).getPath()).exists();
+    return Files.exists(Paths.get(toPath(path).getPath()));
   }
 
   @Override
@@ -430,6 +439,10 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   public static boolean isMavenLibrary(@Nullable Library library) {
     return library != null && MavenArtifact.isMavenLibrary(library.getName());
+  }
+
+  public static boolean isMavenLibrary(@Nullable LibraryOrderEntry entry) {
+    return entry != null && MavenArtifact.isMavenLibrary(entry.getLibraryName());
   }
 
   public static ProjectModelExternalSource getMavenExternalSource() {

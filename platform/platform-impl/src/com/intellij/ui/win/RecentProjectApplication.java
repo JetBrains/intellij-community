@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.win;
 
 import com.intellij.ide.CliResult;
@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 final class RecentProjectApplication extends ApplicationStarterBase {
@@ -24,6 +25,6 @@ final class RecentProjectApplication extends ApplicationStarterBase {
   @Override
   protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     ProjectUtil.openProject(args.get(1), null, false);
-    return CliResult.OK_FUTURE;
+    return CompletableFuture.completedFuture(CliResult.OK);
   }
 }

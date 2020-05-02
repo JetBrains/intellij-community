@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin
 
 import com.intellij.openapi.Disposable
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.*
@@ -23,8 +22,10 @@ import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
 import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitUserRegistry
 import git4idea.GitUtil.getRepositoryManager
+import git4idea.checkin.GitCheckinEnvironment.collectActiveMovementProviders
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import java.awt.GridBagConstraints
@@ -52,11 +53,11 @@ internal var CommitContext.isSignOffCommit: Boolean by commitProperty(IS_SIGN_OF
 internal var CommitContext.isCommitRenamesSeparately: Boolean by commitProperty(IS_COMMIT_RENAMES_SEPARATELY_KEY)
 
 private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
+private val HierarchyEvent.isParentChanged get() = (changeFlags and HierarchyEvent.PARENT_CHANGED.toLong()) != 0L
 
 class GitCommitOptionsUi(
   private val commitPanel: CheckinProjectPanel,
   private val commitContext: CommitContext,
-  private val explicitMovementProviders: List<GitCheckinExplicitMovementProvider>,
   private val showAmendOption: Boolean
 ) : RefreshableOnComponent,
     CheckinChangeListSpecificComponent,
@@ -75,16 +76,15 @@ class GitCommitOptionsUi(
 
   private val panel = JPanel(GridBagLayout())
   private val authorField = VcsUserEditor(project, getKnownCommitAuthors())
-  private val signOffCommit = JBCheckBox("Sign-off commit", settings.shouldSignOffCommit()).apply {
+  private val signOffCommit = JBCheckBox(GitBundle.message("commit.options.sign.off.commit.checkbox"), settings.shouldSignOffCommit()).apply {
     mnemonic = VK_G
 
     val user = commitPanel.roots.mapNotNull { userRegistry.getUser(it) }.firstOrNull()
     val signature = user?.let { escapeXmlEntities(VcsUserUtil.toExactString(it)) }.orEmpty()
-    toolTipText = "<html>Adds the following line at the end of the commit message:<br/>" +
-                  "Signed-off by: $signature</html>"
+    toolTipText = XmlStringUtil.wrapInHtml(GitBundle.message("commit.options.sign.off.commit.message.line", signature))
   }
   private val commitRenamesSeparately = JBCheckBox(
-    explicitMovementProviders.singleOrNull()?.description ?: "Create extra commit with file movements",
+    GitBundle.message("commit.options.create.extra.commit.with.file.movements"),
     settings.isCommitRenamesSeparately
   )
 
@@ -125,6 +125,9 @@ class GitCommitOptionsUi(
     add(commitRenamesSeparately, gb.nextLine().next().coverLine())
   }
 
+  // called before popup size calculation => changing preferred size here will be correctly reflected by popup
+  private fun beforeShow() = updateRenamesCheckboxState()
+
   override fun amendCommitModeToggled() = updateRenamesCheckboxState()
 
   override fun dispose() = Unit
@@ -134,6 +137,10 @@ class GitCommitOptionsUi(
   override fun restoreState() {
     if (commitPanel.isNonModalCommit) {
       changeListManager.addChangeListListener(this, this)
+
+      panel.addHierarchyListener { e ->
+        if (e.isParentChanged && panel == e.changed && panel.parent != null) beforeShow()
+      }
     }
     refresh()
   }
@@ -141,6 +148,7 @@ class GitCommitOptionsUi(
   override fun refresh() = refresh(null)
 
   override fun saveState() {
+    if (commitPanel.isNonModalCommit) updateRenamesCheckboxState()
     val author = getAuthor()
 
     commitContext.apply {
@@ -180,7 +188,7 @@ class GitCommitOptionsUi(
     authorField.user = author.takeUnless { isAuthorNullOrDefault }
 
     if (!isAuthorNullOrDefault) {
-      authorField.putClientProperty("JComponent.outline", "warning")
+      authorField.putClientProperty("JComponent.outline", "warning") // NON-NLS
       if (authorField.isShowing) showAuthorWarning()
     }
   }
@@ -206,10 +214,13 @@ class GitCommitOptionsUi(
     }
 
   private fun updateRenamesCheckboxState() {
-    val canCommitRenamesSeparately = explicitMovementProviders.isNotEmpty() && Registry.`is`("git.allow.explicit.commit.renames")
+    val providers = collectActiveMovementProviders(project)
 
-    commitRenamesSeparately.isVisible = canCommitRenamesSeparately
-    commitRenamesSeparately.isEnabled = canCommitRenamesSeparately && !amendHandler.isAmendCommitMode
+    commitRenamesSeparately.apply {
+      text = providers.singleOrNull()?.description ?: GitBundle.message("commit.options.create.extra.commit.with.file.movements")
+      isVisible = providers.isNotEmpty()
+      isEnabled = isVisible && !amendHandler.isAmendCommitMode
+    }
   }
 
   private fun showAuthorWarning() {
@@ -217,7 +228,7 @@ class GitCommitOptionsUi(
 
     val builder = JBPopupFactory.getInstance()
       .createBalloonBuilder(JLabel(GitBundle.getString("commit.author.diffs")))
-      .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
+      .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets")) // NON-NLS
       .setBorderColor(JBUI.CurrentTheme.Validator.warningBorderColor())
       .setFillColor(JBUI.CurrentTheme.Validator.warningBackgroundColor())
       .setHideOnClickOutside(true)
@@ -228,7 +239,7 @@ class GitCommitOptionsUi(
   }
 
   private fun clearAuthorWarning() {
-    authorField.putClientProperty("JComponent.outline", null)
+    authorField.putClientProperty("JComponent.outline", null) // NON-NLS
     authorWarning?.hide()
     authorWarning = null
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -64,7 +63,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     if (icon == null) return null;
 
     if (infos.size() > 1) {
-      Collections.sort(infos, COMPARATOR);
+      infos.sort(COMPARATOR);
       final Info first = infos.get(0);
       for (Iterator<Info> it = infos.iterator(); it.hasNext(); ) {
         Info info = it.next();

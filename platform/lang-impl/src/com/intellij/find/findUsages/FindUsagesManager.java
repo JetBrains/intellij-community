@@ -47,6 +47,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -90,6 +91,7 @@ public final class FindUsagesManager {
    */
   @Deprecated
   public FindUsagesManager(@NotNull Project project, @SuppressWarnings("unused") UsageViewManager anotherManager) {
+    DeprecatedMethodException.report("Please use FindUsagesManager(Project) instead");
     myProject = project;
   }
 
@@ -345,11 +347,11 @@ public final class FindUsagesManager {
    * @throws PsiInvalidElementAccessException when the searcher can't be created (i.e. because element was invalidated)
    */
   @NotNull
-  public static UsageSearcher createUsageSearcher(PsiElement2UsageTargetAdapter @NotNull [] primaryTargets,
-                                                  PsiElement2UsageTargetAdapter @NotNull [] secondaryTargets,
-                                                  @NotNull FindUsagesHandlerBase handler,
-                                                  @NotNull FindUsagesOptions options,
-                                                  PsiFile scopeFile) throws PsiInvalidElementAccessException {
+  private static UsageSearcher createUsageSearcher(PsiElement2UsageTargetAdapter @NotNull [] primaryTargets,
+                                                   PsiElement2UsageTargetAdapter @NotNull [] secondaryTargets,
+                                                   @NotNull FindUsagesHandlerBase handler,
+                                                   @NotNull FindUsagesOptions options,
+                                                   PsiFile scopeFile) throws PsiInvalidElementAccessException {
     ReadAction.run(() -> {
       PsiElement[] primaryElements = PsiElement2UsageTargetAdapter.convertToPsiElements(primaryTargets);
       PsiElement[] secondaryElements = PsiElement2UsageTargetAdapter.convertToPsiElements(secondaryTargets);
@@ -379,15 +381,15 @@ public final class FindUsagesManager {
         Usage usage = ReadAction.compute(() -> UsageInfoToUsageConverter.convert(primaryElements, usageInfo));
         return processor.process(usage);
       });
-      Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
+      PsiElement[] elements = ArrayUtil.mergeArrays(primaryElements, secondaryElements, PsiElement.ARRAY_FACTORY);
 
-      optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
+      optionsClone.fastTrack = new SearchRequestCollector(new SearchSession(elements));
       if (optionsClone.searchScope instanceof GlobalSearchScope) {
         // we will search in project scope always but warn if some usage is out of scope
         optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
       }
       try {
-        for (PsiElement element : elements) {
+        for (PsiElement element :elements) {
           if (!handler.processElementUsages(element, usageInfoProcessor, optionsClone)) {
             return;
           }

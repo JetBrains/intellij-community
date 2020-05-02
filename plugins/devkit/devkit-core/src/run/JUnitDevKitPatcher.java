@@ -108,11 +108,17 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
   }
 
-  private static final Key<Boolean> LOADER_VALID = Key.create("LOADER_VALID");
+  private static final Key<Boolean> LOADER_VALID_8 = Key.create("LOADER_VALID_8");
+  private static final Key<Boolean> LOADER_VALID_9 = Key.create("LOADER_VALID_9");
 
   private static boolean loaderValid(Project project, Module module, String qualifiedName, Sdk jdk) {
+    boolean jdk9 = JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9);
+    if (jdk9 && !Registry.is("idea.use.loader.for.jdk9")) {
+      return false;
+    }
     UserDataHolder holder = module != null ? module : project;
-    Boolean res = holder.getUserData(LOADER_VALID);
+    Key<Boolean> cacheKey = jdk9 ? LOADER_VALID_9 : LOADER_VALID_8;
+    Boolean res = holder.getUserData(cacheKey);
     if (res == null) {
       res = ReadAction.compute(() -> {
         //noinspection RedundantCast
@@ -120,11 +126,9 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
           PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, module != null ? GlobalSearchScope
             .moduleWithDependenciesAndLibrariesScope(module) : GlobalSearchScope.allScope(project));
           if (aClass != null) {
-            if (JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_9)) {
-              if (Registry.is("idea.use.loader.for.jdk9")) {
-                PsiClass builder = aClass.findInnerClassByName(UrlClassLoader.Builder.class.getSimpleName(), false);
-                return builder != null && !ArrayUtil.isEmpty(builder.findMethodsByName("urlsFromAppClassLoader"));
-              }
+            if (jdk9) {
+              PsiClass builder = aClass.findInnerClassByName(UrlClassLoader.Builder.class.getSimpleName(), false);
+              return builder != null && !ArrayUtil.isEmpty(builder.findMethodsByName("urlsFromAppClassLoader"));
             }
             else {
               return true;
@@ -133,7 +137,7 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
           return false;
         });
       });
-      holder.putUserData(LOADER_VALID, res);
+      holder.putUserData(cacheKey, res);
     }
     return res;
   }

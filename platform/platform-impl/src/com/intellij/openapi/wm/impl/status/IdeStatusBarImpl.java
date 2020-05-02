@@ -13,17 +13,17 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetWrapper;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -31,7 +31,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -441,13 +440,13 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
-  public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull String htmlBody) {
+  public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type, @NotNull @PopupContent String htmlBody) {
     return notifyProgressByBalloon(type, htmlBody, null, null);
   }
 
   @Override
   public BalloonHandler notifyProgressByBalloon(@NotNull MessageType type,
-                                                @NotNull String htmlBody,
+                                                @NotNull @PopupContent String htmlBody,
                                                 @Nullable Icon icon,
                                                 @Nullable HyperlinkListener listener) {
     return myInfoAndProgressPanel.notifyByBalloon(type, htmlBody, icon, listener);
@@ -466,7 +465,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
                                                                             : StatusBarWidget.WidgetBorder.INSTANCE);
       }
       // wrap with a panel, so it will fill entire status bar height
-      JComponent result = component instanceof JLabel ? UI.Panels.simplePanel(component) : component;
+      JComponent result = component instanceof JLabel ? new NonOpaquePanel(new BorderLayout(), component) : component;
       result.putClientProperty(WIDGET_ID, widget.ID());
       return result;
     }
@@ -478,13 +477,33 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   private void hoverComponent(@Nullable Component component) {
+    if (myHoveredComponent == component) return;
+    myHoveredComponent = component;
+    // widgets shall not be opaque, as it may conflict with bg images
+    // the following code can be dropped in future
     if (myHoveredComponent != null) {
       myHoveredComponent.setBackground(null);
     }
     if (component != null && component.isEnabled()) {
       component.setBackground(JBUI.CurrentTheme.StatusBar.hoverBackground());
     }
-    myHoveredComponent = component;
+    repaint();
+  }
+
+  private void paintHoveredComponentBackground(Graphics g) {
+    if (myHoveredComponent != null && myHoveredComponent.isEnabled() &&
+        !(myHoveredComponent instanceof MemoryUsagePanel)) {
+      Rectangle bounds = myHoveredComponent.getBounds();
+      Point point = new RelativePoint(myHoveredComponent.getParent(), bounds.getLocation()).getPoint(this);
+      g.setColor(JBUI.CurrentTheme.StatusBar.hoverBackground());
+      g.fillRect(point.x, point.y, bounds.width, bounds.height);
+    }
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    paintHoveredComponentBackground(g);
+    super.paintChildren(g);
   }
 
   @Override

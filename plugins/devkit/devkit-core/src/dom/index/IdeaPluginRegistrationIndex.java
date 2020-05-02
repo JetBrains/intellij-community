@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.dom.index;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.psi.PsiClass;
@@ -29,7 +28,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
@@ -100,12 +98,6 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   @Override
   public int getVersion() {
     return INDEX_VERSION;
-  }
-
-  @NotNull
-  @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(StdFileTypes.XML);
   }
 
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {

@@ -47,8 +47,9 @@ internal open class GitRebaseCommitsTableView(
 ) : JBTable(model) {
 
   companion object {
-    const val DEFAULT_CELL_HEIGHT = PaintParameters.ROW_HEIGHT
     const val GRAPH_LINE_WIDTH = 1.5f
+    val DEFAULT_CELL_HEIGHT: Int
+      get() = JBUI.scale(PaintParameters.ROW_HEIGHT)
     val GRAPH_COLOR = JBColor.namedColor("VersionControl.GitCommits.graphColor", JBColor(Color(174, 185, 192), Color(135, 146, 154)))
   }
 
@@ -318,7 +319,8 @@ private class GitRebaseCommitIconTableCellRenderer : CommitIconTableCellRenderer
   companion object {
     private const val NODE_WIDTH = 8
     private const val NODE_CENTER_X = NODE_WIDTH
-    private const val NODE_CENTER_Y = DEFAULT_CELL_HEIGHT / 2
+    private val NODE_CENTER_Y
+      get() = DEFAULT_CELL_HEIGHT / 2
   }
 
   private var isHead = false

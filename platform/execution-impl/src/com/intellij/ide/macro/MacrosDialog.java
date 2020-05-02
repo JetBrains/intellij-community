@@ -31,7 +31,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -112,7 +111,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     List<Macro> macros = ContainerUtil.filter(MacroManager.getInstance().getMacros(),
                                               macro -> MacroFilter.GLOBAL.accept(macro) && filter.test(macro));
-    Collections.sort(macros, new Comparator<Macro>() {
+    macros.sort(new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {
         String name1 = macro1.getName();

@@ -853,6 +853,45 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), numTraverser().filter(IS_ODD).toList());
   }
 
+  public void testTraverserOpsOrder() {
+    int[] count = {0};
+    Condition<Integer> c1 = __ -> { assertEquals("incorrect order (1)", 1, count[0]++ % 3 + 1); return true; };
+    Condition<Integer> c2 = __ -> { assertEquals("incorrect order (2)", 2, count[0]++ % 3 + 1); return true; };
+    Condition<Integer> c3 = __ -> { assertEquals("incorrect order (3)", 3, count[0]++ % 3 + 1); return true; };
+    List<Integer> all = numTraverser().toList();
+
+    // expand
+    count[0] = 0;
+    assertEquals(all, numTraverser().expand(c1).expand(c2).expand(c3).toList());
+
+    // filter
+    count[0] = 0;
+    assertEquals(all, numTraverser().filter(c1).filter(c2).filter(c3).toList());
+
+    // forceIgnore
+    count[0] = 0;
+    assertEquals(all, numTraverser().forceIgnore(not(c1)).forceIgnore(not(c2)).forceIgnore(not(c3)).toList());
+
+    // regard
+    count[0] = 0;
+    assertEquals(all, numTraverser().regard(c1).regard(c2).regard(c3).toList());
+
+    // forceDisregard
+    count[0] = 0;
+    assertEquals(all, numTraverser().forceDisregard(not(c1)).forceDisregard(not(c2)).forceDisregard(not(c3)).toList());
+
+    // forceDisregard & regard
+    count[0] = 0;
+    assertEquals(all, numTraverser().regard(c2).forceDisregard(not(c1)).regard(c3).toList());
+
+    // intercept
+    count[0] = 0;
+    Function.Mono<TreeTraversal> f1 = o -> { c1.value(0); return o; };
+    Function.Mono<TreeTraversal> f2 = o -> { c2.value(0); return o; };
+    Function.Mono<TreeTraversal> f3 = o -> { c3.value(0); return o; };
+    assertEquals(all, numTraverser().intercept(f1).intercept(f2).intercept(f3).toList());
+  }
+
   public void testSimpleExpand() {
     assertEquals(Arrays.asList(1, 2, 3, 8, 9, 10, 4), numTraverser().expand(IS_ODD).toList());
   }

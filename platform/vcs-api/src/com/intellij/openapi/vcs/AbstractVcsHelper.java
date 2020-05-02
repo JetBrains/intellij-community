@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -16,8 +17,7 @@ import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +43,9 @@ public abstract class AbstractVcsHelper {
     return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
-  public abstract void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
+  public abstract void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull @TabTitle String tabDisplayName);
 
-  public abstract void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull String tabDisplayName);
+  public abstract void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull @TabTitle String tabDisplayName);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction
@@ -53,7 +53,7 @@ public abstract class AbstractVcsHelper {
    */
   public abstract List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters);
 
-  public void showError(final VcsException e, final String tabDisplayName) {
+  public void showError(final VcsException e, @TabTitle String tabDisplayName) {
     showErrors(Collections.singletonList(e), tabDisplayName);
   }
 
@@ -61,20 +61,20 @@ public abstract class AbstractVcsHelper {
 
   public abstract void showAnnotation(FileAnnotation annotation, VirtualFile file, AbstractVcs vcs, int line);
 
-  public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls @NlsContexts.DialogTitle String title);
+  public abstract void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @NlsContexts.DialogTitle String title);
 
-  public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls @NlsContexts.DialogTitle String title);
+  public abstract void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @NlsContexts.DialogTitle String title);
 
   public abstract void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
                                                    @NotNull RepositoryLocation location,
-                                                   @Nullable @Nls @NlsContexts.DialogTitle String title,
+                                                   @Nullable @NlsContexts.DialogTitle String title,
                                                    @Nullable Component parent);
 
   public abstract void openCommittedChangesTab(@NotNull CommittedChangesProvider provider,
                                                @NotNull RepositoryLocation location,
                                                @NotNull ChangeBrowserSettings settings,
                                                int maxCount,
-                                               @Nullable @Nls @NlsContexts.DialogTitle String title);
+                                               @Nullable @NlsContexts.DialogTitle String title);
 
   /**
    * Shows the multiple file merge dialog for resolving conflicts in the specified set of virtual files.
@@ -123,24 +123,24 @@ public abstract class AbstractVcsHelper {
 
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                               @Nls @NlsContexts.DialogTitle String title,
-                                                               @Nullable String prompt,
+                                                               @NlsContexts.DialogTitle String title,
+                                                               @NlsContexts.Label @Nullable String prompt,
                                                                @Nullable String singleFileTitle,
                                                                @Nullable String singleFilePromptTemplate,
                                                                @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                @Nls @NlsContexts.DialogTitle String title,
-                                                                @Nullable String prompt,
+                                                                @NlsContexts.DialogTitle String title,
+                                                                @NlsContexts.Label @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,
                                                                 @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                                @Nls @NlsContexts.DialogTitle String title,
-                                                                @Nullable String prompt,
+                                                                @NlsContexts.DialogTitle String title,
+                                                                @NlsContexts.Label @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,
                                                                 @NotNull VcsShowConfirmationOption confirmationOption,

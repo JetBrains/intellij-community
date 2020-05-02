@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
@@ -55,7 +55,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -83,8 +82,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
 
   private final Set<Document> myUnsavedDocuments = ContainerUtil.newConcurrentSet();
-
-  private final MessageBus myBus;
 
   private static final Object lock = new Object();
   private final FileDocumentManagerListener myMultiCaster;
@@ -120,8 +117,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   };
 
   public FileDocumentManagerImpl() {
-    myBus = ApplicationManager.getApplication().getMessageBus();
-
     InvocationHandler handler = (proxy, method, args) -> {
       multiCast(method, args);
       return null;
@@ -129,6 +124,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
 
     ClassLoader loader = FileDocumentManagerListener.class.getClassLoader();
     myMultiCaster = (FileDocumentManagerListener)Proxy.newProxyInstance(loader, new Class[]{FileDocumentManagerListener.class}, handler);
+
+    BinaryFileTypeDecompilers.getInstance().addExtensionPointChangeListener(this::clearCachedDocumentsForBinaryFiles, null);
   }
 
   static final class MyProjectCloseHandler implements ProjectCloseHandler {
@@ -160,7 +157,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
-      method.invoke(myBus.syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
     }
     catch (ClassCastException e) {
       LOG.error("Arguments: "+ Arrays.toString(args), e);
@@ -805,13 +802,12 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
   private void handleErrorsOnSave(@NotNull Map<Document, IOException> failures) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       IOException ioException = ContainerUtil.getFirstItem(failures.values());
-      if (ioException != null) {
-        throw new RuntimeException(ioException);
-      }
+      if (ioException != null) throw new RuntimeException(ioException);
       return;
     }
-    for (IOException exception : failures.values()) {
-      LOG.warn(exception);
+
+    for (Map.Entry<Document, IOException> entry : failures.entrySet()) {
+      LOG.warn("file: " + getFile(entry.getKey()), entry.getValue());
     }
 
     final String text = StringUtil.join(failures.values(), Throwable::getMessage, "\n");
@@ -858,9 +854,20 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
   }
 
+  private void clearCachedDocumentsForBinaryFiles() {
+    myDocumentCache.keySet().forEach(key -> {
+      if (key.getFileType().isBinary()) {
+        key.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+        removeDocumentFromCache(key);
+      }
+    });
+  }
+
   private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
 
-  //temp setter for Rider 2017.1
+  /** @deprecated another dirty Rider hack; don't use */
+  @Deprecated
+  @SuppressWarnings("ALL")
   public static boolean ourConflictsSolverEnabled = true;
 
   protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

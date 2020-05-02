@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
-import org.jetbrains.plugins.github.pullrequest.data.GHPRReviewDataProvider
+import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.util.handleOnEdt
 
 class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRReviewDataProvider,

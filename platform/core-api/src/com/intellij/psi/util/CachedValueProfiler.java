@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ConcurrentMultiMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class CachedValueProfiler {
@@ -16,7 +16,7 @@ public class CachedValueProfiler {
   private volatile ConcurrentMultiMap<StackTraceElement, ProfilingInfo> myStorage = null;
 
   private final Object myLock = new Object();
-  private final ConcurrentMap<CachedValueProvider.Result, ProfilingInfo> myTemporaryResults = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<CachedValueProvider.Result, ProfilingInfo> myTemporaryResults = new ConcurrentHashMap<>();
 
   public static boolean canProfile() {
     return ApplicationManager.getApplication().isInternal();
@@ -40,8 +40,7 @@ public class CachedValueProfiler {
     }
   }
 
-  @NotNull
-  public static CachedValueProfiler getInstance() {
+  public static @NotNull CachedValueProfiler getInstance() {
     return ourInstance;
   }
 
@@ -58,8 +57,7 @@ public class CachedValueProfiler {
     myTemporaryResults.put(result, info);
   }
 
-  @Nullable
-  public <T> ProfilingInfo getTemporaryInfo(@NotNull CachedValueProvider.Result<T> result) {
+  public @Nullable <T> ProfilingInfo getTemporaryInfo(@NotNull CachedValueProvider.Result<T> result) {
     return myTemporaryResults.remove(result);
   }
 
@@ -67,15 +65,13 @@ public class CachedValueProfiler {
     return myStorage.copy();
   }
 
-  @Nullable
-  private static StackTraceElement findOrigin() {
+  private static @Nullable StackTraceElement findOrigin() {
     StackTraceElement[] stackTrace = new Throwable().getStackTrace();
     return findFirstStackTraceElementExcluding(stackTrace, CachedValueProfiler.class.getName(), CachedValueProvider.class.getName());
   }
 
-  @Nullable
-  private static StackTraceElement findFirstStackTraceElementExcluding(StackTraceElement @NotNull [] stackTraceElements,
-                                                                       String @NotNull ... excludedClasses) {
+  private static @Nullable StackTraceElement findFirstStackTraceElementExcluding(StackTraceElement @NotNull [] stackTraceElements,
+                                                                                 String @NotNull ... excludedClasses) {
     for (StackTraceElement element : stackTraceElements) {
       if (!matches(element, excludedClasses)) {
         return element;

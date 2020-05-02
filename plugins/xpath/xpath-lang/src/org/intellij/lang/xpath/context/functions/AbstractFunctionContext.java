@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.Factory;
@@ -12,9 +12,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractFunctionContext implements FunctionContext {
-  private static final Map<ContextType, FunctionContext> ourInstances = ContainerUtil.newConcurrentMap();
+  private static final Map<ContextType, FunctionContext> ourInstances = new ConcurrentHashMap<>();
 
   private final Map<Pair<QName, Integer>, Function> myFunctions;
   private final Map<QName, Function> myDefaultMap = new HashMap<>();
@@ -60,9 +61,8 @@ public abstract class AbstractFunctionContext implements FunctionContext {
     return myFunctions;
   }
 
-  @Nullable
   @Override
-  public Function resolve(QName name, int argCount) {
+  public @Nullable Function resolve(QName name, int argCount) {
     if (!myDefaultMap.containsKey(name)) return null;
 
     final Function function = getFunctions().get(Pair.create(name, argCount));

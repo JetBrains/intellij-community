@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -43,12 +44,13 @@ public class LaterInvocator {
   private static final Map<Project, List<Dialog>> projectToModalEntities = ContainerUtil.createWeakMap();
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = ContainerUtil.createWeakMap();
   private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);
-  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster = EventDispatcher.create(ModalityStateListener.class);
+  private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
+    EventDispatcher.create(ModalityStateListener.class);
 
   private static final Executor ourWriteThreadExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Write Thread", 1);
   private static final FlushQueue ourEdtQueue = new FlushQueue(SwingUtilities::invokeLater);
-  private static final FlushQueue ourWtQueue = new FlushQueue(r ->
-    ourWriteThreadExecutor.execute(() -> ApplicationManager.getApplication().runIntendedWriteActionOnCurrentThread(r)));
+  private static final FlushQueue ourWtQueue = new FlushQueue(r -> ourWriteThreadExecutor.execute(() -> ApplicationManagerEx
+    .getApplicationEx().runIntendedWriteActionOnCurrentThread(r)));
 
 
   public static void addModalityStateListener(@NotNull ModalityStateListener listener, @NotNull Disposable parentDisposable) {

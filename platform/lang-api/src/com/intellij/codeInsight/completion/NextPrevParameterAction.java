@@ -13,12 +13,13 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class NextPrevParameterAction extends CodeInsightAction {
+public abstract class NextPrevParameterAction extends CodeInsightAction implements DumbAware {
   private static final LanguageExtension<TemplateParameterTraversalPolicy> EP = new LanguageExtension<>("com.intellij.templateParameterTraversalPolicy");
   private final boolean myNext;
 

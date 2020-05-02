@@ -10,7 +10,6 @@ interface GHLoadingModel {
   val error: Throwable?
 
   fun addStateChangeListener(listener: StateChangeListener)
-  fun removeStateChangeListener(listener: StateChangeListener)
 
   interface StateChangeListener : EventListener {
     fun onLoadingStarted() {}

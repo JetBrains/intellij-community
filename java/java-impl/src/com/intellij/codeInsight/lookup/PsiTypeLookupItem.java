@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -269,7 +269,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       assert object instanceof PsiType;
 
       if (!(object instanceof PsiPrimitiveType)) {
-        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
       }
 
       presentation.setItemText(((PsiType)object).getCanonicalText());
@@ -310,7 +310,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
     while (ref != null) {
       PsiElement qualifier = ref.getQualifier();
       PsiClass outer = aClass.getContainingClass();
-      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !Comparing.equal(aClass.getName(), ref.getReferenceName()) || outer == null) break;
+      if (!(qualifier instanceof PsiJavaCodeReferenceElement) || !Objects.equals(aClass.getName(), ref.getReferenceName()) || outer == null) break;
 
       goneDeeper = true;
       ref = (PsiJavaCodeReferenceElement)qualifier;

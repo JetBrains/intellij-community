@@ -124,8 +124,8 @@ public class RegExpParserDefinition implements ParserDefinition {
             return new RegExpIntersectionImpl(node);
         } else if (type == RegExpElementTypes.NAMED_GROUP_REF) {
             return new RegExpNamedGroupRefImpl(node);
-        } else if (type == RegExpElementTypes.PY_COND_REF) {
-            return new RegExpPyCondRefImpl(node);
+        } else if (type == RegExpElementTypes.CONDITIONAL) {
+            return new RegExpConditionalImpl(node);
         } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
             return new RegExpPosixBracketExpressionImpl(node);
         } else if (type == RegExpElementTypes.NUMBER) {

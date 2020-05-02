@@ -153,7 +153,8 @@ public class ListPluginComponent extends JPanel {
         myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
 
         myInstallButton
-          .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
+          .addActionListener(
+            e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
         myInstallButton.setEnabled(PluginManagerCore.getPlugin(myPlugin.getPluginId()) == null,
                                    IdeBundle.message("plugin.status.installed"));
         ColorButton.setWidth72(myInstallButton);
@@ -237,8 +238,9 @@ public class ListPluginComponent extends JPanel {
       }
     }
     else {
-      String version = !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
-      
+      String version =
+        !myPlugin.isBundled() || myPlugin.allowBundledUpdate() ? myPlugin.getVersion() : IdeBundle.message("plugin.status.bundled");
+
       if (!StringUtil.isEmptyOrSpaces(version)) {
         myVersion = createRatingLabel(panel, version, null);
       }
@@ -274,7 +276,7 @@ public class ListPluginComponent extends JPanel {
   private void createLicensePanel() {
     String productCode = myPlugin.getProductCode();
     LicensingFacade instance = LicensingFacade.getInstance();
-    if (myMarketplace || productCode == null || instance == null) {
+    if (myMarketplace || productCode == null || instance == null || myPlugin.isBundled()) {
       return;
     }
 
@@ -351,7 +353,8 @@ public class ListPluginComponent extends JPanel {
           }
         }
 
-        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
+        myUpdateLicensePanel
+          .setText(IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or"), true, false);
         myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
         myUpdateLicensePanel.setVisible(true);
       }
@@ -419,7 +422,9 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateErrors() {
-    boolean errors = myPluginModel.hasErrors(myPlugin);
+    Ref<String> enableAction = new Ref<>();
+    String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
+    boolean errors = message != null;
     updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
     if (myAlignButton != null) {
@@ -434,8 +439,6 @@ public class ListPluginComponent extends JPanel {
         myLayout.addLineComponent(myErrorPanel);
       }
 
-      Ref<String> enableAction = new Ref<>();
-      String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
       myErrorComponent = ErrorComponent.show(myErrorPanel, BorderLayout.CENTER, myErrorComponent, message, enableAction.get(),
                                              enableAction.isNull() ? null : () -> myPluginModel.enableRequiredPlugins(myPlugin));
       myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
@@ -632,7 +635,9 @@ public class ListPluginComponent extends JPanel {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"), null, KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(
+      result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"),
+      null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
@@ -649,7 +654,8 @@ public class ListPluginComponent extends JPanel {
       group.addSeparator();
     }
 
-    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
+    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE,
+                             EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {

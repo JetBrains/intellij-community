@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.changeBrowser;
 
 import com.intellij.CvsBundle;
@@ -10,11 +10,15 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.ChangeListColumn;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.committed.RepositoryLocationGroup;
@@ -27,16 +31,22 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import gnu.trove.TObjectLongHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.netbeans.lib.cvsclient.admin.Entry;
-import org.netbeans.lib.cvsclient.command.log.Revision;
-
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.netbeans.lib.cvsclient.admin.Entry;
+import org.netbeans.lib.cvsclient.command.log.Revision;
 
 public class CvsCommittedChangesProvider implements CachingCommittedChangesProvider<CvsChangeList, ChangeBrowserSettings> {
   private static final Logger LOG = Logger.getInstance(CvsCommittedChangesProvider.class);
@@ -355,7 +365,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       localTag = getDirectoryTag(validParent);
     }
     final String remoteTag = changeList.getBranch();
-    if (!Comparing.equal(localTag, remoteTag)) {
+    if (!Objects.equals(localTag, remoteTag)) {
       if (LOG.isDebugEnabled()) LOG.info(filePath + ": local tag " + localTag + ", remote tag " + remoteTag);
       return true;
     }

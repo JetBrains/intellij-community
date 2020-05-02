@@ -4,11 +4,15 @@ package com.intellij.openapi.options;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -123,7 +127,7 @@ import java.util.Collection;
  */
 public interface Configurable extends UnnamedConfigurable {
   ExtensionPointName<ConfigurableEP<Configurable>> APPLICATION_CONFIGURABLE = new ExtensionPointName<>("com.intellij.applicationConfigurable");
-  ExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ExtensionPointName<>("com.intellij.projectConfigurable");
+  ProjectExtensionPointName<ConfigurableEP<Configurable>> PROJECT_CONFIGURABLE = new ProjectExtensionPointName<>("com.intellij.projectConfigurable");
 
   /**
    * Returns the visible name of the configurable component.
@@ -133,7 +137,7 @@ public interface Configurable extends UnnamedConfigurable {
    *
    * @return the visible name of the configurable component
    */
-  @Nls @NlsContexts.Configurable
+  @NlsContexts.ConfigurableName
   @Contract(pure = true)
   String getDisplayName();
 
@@ -195,11 +199,13 @@ public interface Configurable extends UnnamedConfigurable {
    * Examples: postfix template configurable. If we have added a plugin with new postfix templates we have to re-create the configurable
    * (but only if the content of the configurable was loaded)
    *
-   * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor
+   * @apiNote if the configurable is not marked as dynamic=true it must not initialize EP-depend resources in the constructor. 
+   * This interface also can be used with {@link ConfigurableProvider}.
+   * 
    */
   interface WithEpDependencies {
     /**
-     * @return EPName-s that affect the configurable
+     * @return EPName-s that affect the configurable or configurable provider
      */
     @NotNull
     Collection<BaseExtensionPointName<?>> getDependencies();

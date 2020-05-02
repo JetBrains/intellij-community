@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
@@ -13,11 +13,11 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -425,15 +425,15 @@ public final class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     private static List<TextRange> getTextBlockInjectedArea(PsiLanguageInjectionHost host) {
-      if (!(host instanceof PsiLiteralExpressionImpl)) {
+      if (!(host instanceof PsiLiteralExpression)) {
         return null;
       }
-      final PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl)host;
-      if (literalExpression.getLiteralElementType() != JavaTokenType.TEXT_BLOCK_LITERAL) {
+      final PsiLiteralExpression literalExpression = (PsiLiteralExpression)host;
+      if (!literalExpression.isTextBlock()) {
         return null;
       }
       final TextRange textRange = ElementManipulators.getValueTextRange(host);
-      final int indent = literalExpression.getTextBlockIndent();
+      final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
       if (indent <= 0) {
         return Collections.singletonList(textRange);
       }

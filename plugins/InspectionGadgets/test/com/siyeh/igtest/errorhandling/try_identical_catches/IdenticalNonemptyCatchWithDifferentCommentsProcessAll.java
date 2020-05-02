@@ -2,7 +2,8 @@ class C {
   void foo() {
     try {
       bar();
-    } catch (NullPointerException e) {
+    } catch (java.//line comment
+      lang.NullPointerException e) {
       /*same comment*/
       // comment 1
       e.printStackTrace();

@@ -8,9 +8,9 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
-import com.jetbrains.python.psi.PythonVisitorFilter;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
+import com.jetbrains.python.psi.PythonVisitorFilter;
 import com.jetbrains.python.psi.impl.PythonASTFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,6 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDocstringTokenSetContributor());
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
-    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override

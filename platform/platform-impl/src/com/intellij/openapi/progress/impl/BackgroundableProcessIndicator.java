@@ -2,18 +2,19 @@
 
 package com.intellij.openapi.progress.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsProgress;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,36 +24,63 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   private PerformInBackgroundOption myOption;
   private TaskInfo myInfo;
 
+  private boolean myDidInitializeOnEdt = false;
   private boolean myDisposed;
 
   public BackgroundableProcessIndicator(@NotNull Task.Backgroundable task) {
     this(task.getProject(), task, task);
   }
 
-  public BackgroundableProcessIndicator(@Nullable final Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
-    super(info.isCancellable(), true, project, info.getCancelText());
+  public BackgroundableProcessIndicator(@Nullable Project project, @NotNull TaskInfo info, @NotNull PerformInBackgroundOption option) {
+    this(project, info, option, null);
+  }
+
+  @VisibleForTesting
+  BackgroundableProcessIndicator(@Nullable Project project,
+                                 @NotNull TaskInfo info,
+                                 @NotNull PerformInBackgroundOption option,
+                                 @Nullable StatusBarEx statusBarOverride) {
+    super(info.isCancellable(), true, project, null, info.getCancelText());
     setOwnerTask(info);
     myOption = option;
     myInfo = info;
-    setTitle(info.getTitle());
-    final Project nonDefaultProject = project == null || project.isDisposed() || project.isDefault() ? null : project;
-    IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
-    myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+    myStatusBar = statusBarOverride;
     myBackgrounded = shouldStartInBackground();
-    if (myBackgrounded) {
-      doBackground();
+    UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
+  }
+
+  @CalledInAwt
+  @Override
+  protected void initializeOnEdtIfNeeded() {
+    super.initializeOnEdtIfNeeded();
+    initializeStatusBar();
+  }
+
+  @CalledInAwt
+  private void initializeStatusBar() {
+    if (myDisposed || myDidInitializeOnEdt) return;
+    myDidInitializeOnEdt = true;
+
+    setTitle(myInfo.getTitle());
+
+    if (myStatusBar == null) {
+      Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
+      IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
+      myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
     }
+    myBackgrounded &= myStatusBar != null;
+    if (myBackgrounded) doBackground(myStatusBar);
   }
 
   private boolean shouldStartInBackground() {
-    return (Registry.is("ide.background.tasks") || myOption.shouldStartInBackground()) && myStatusBar != null;
+    return Registry.is("ide.background.tasks") || myOption.shouldStartInBackground();
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @Nls @NlsProgress.ProgressTitle final String progressTitle,
+                                        @NlsContexts.ProgressTitle final String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nullable @Nls @NlsUI.Button final String cancelButtonText,
-                                        @Nls @NlsUI.ButtonTooltip final String backgroundStopTooltip,
+                                        @Nullable @NlsContexts.Button final String cancelButtonText,
+                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, new TaskInfo() {
 
@@ -82,8 +110,9 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Override
   protected void showDialog() {
     if (myDisposed) return;
+    initializeOnEdtIfNeeded(); // could happen before initialization succeeds - in that case we do it now
 
-    if (shouldStartInBackground()) {
+    if (shouldStartInBackground() && myStatusBar != null) {
       return;
     }
 
@@ -93,15 +122,17 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
   @Override
   public void background() {
     if (myDisposed) return;
+    assert myDidInitializeOnEdt : "Call to background action before showing dialog";
 
     myOption.processSentToBackground();
-    doBackground();
+    doBackground(myStatusBar);
     super.background();
   }
 
-  private void doBackground() {
-    if (myStatusBar != null) { //not welcome screen
-      myStatusBar.addProgress(this, myInfo);
+  @CalledInAwt
+  private void doBackground(@Nullable StatusBarEx statusBar) {
+    if (statusBar != null) { //not welcome screen
+      statusBar.addProgress(this, myInfo);
     }
   }
 

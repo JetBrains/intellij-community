@@ -11,6 +11,11 @@ public class ProtectedMembers {
   }
 
   protected static class StaticInner {
+
+    protected StaticInner() {}
+
+    protected StaticInner(int x) {}
+
     protected void protectedMethod() {
     }
   }

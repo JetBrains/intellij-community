@@ -29,8 +29,8 @@ public final class EmptyAction extends AnAction {
     myEnabled = enabled;
   }
 
-  public EmptyAction(@Nullable @Nls @NlsActions.ActionText String text,
-                     @Nullable @Nls @NlsActions.ActionDescription String description, @Nullable Icon icon) {
+  public EmptyAction(@Nullable @NlsActions.ActionText String text,
+                     @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
 
@@ -83,7 +83,7 @@ public final class EmptyAction extends AnAction {
            new MyDelegatingAction(action);
   }
 
-  public static class MyDelegatingAction extends AnAction {
+  public static class MyDelegatingAction extends AnAction implements ActionWithDelegate<AnAction> {
     @NotNull private final AnAction myDelegate;
 
     public MyDelegatingAction(@NotNull AnAction action) {
@@ -115,6 +115,12 @@ public final class EmptyAction extends AnAction {
     @Override
     public boolean isInInjectedContext() {
       return myDelegate.isInInjectedContext();
+    }
+
+    @NotNull
+    @Override
+    public AnAction getDelegate() {
+      return myDelegate;
     }
   }
 

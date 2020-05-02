@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.DFALimitExceededException;
@@ -190,7 +189,7 @@ public class ScopeImpl implements Scope {
     if (myNamedElements == null) {
       collectDeclarations();
     }
-    final List<PsiNamedElement> results = Lists.newArrayList();
+    final List<PsiNamedElement> results = new ArrayList<>();
     for (Collection<PsiNamedElement> elements : myNamedElements.values()) {
       results.addAll(elements);
     }

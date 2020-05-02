@@ -81,7 +81,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
@@ -361,7 +361,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    WriteCommandAction.runWriteCommandAction(project, "Adjust line indent", "Structural Search",
+    WriteCommandAction.runWriteCommandAction(project, SSRBundle.message("command.name.adjust.line.indent"), "Structural Search",
                                              () -> CodeStyleManager.getInstance(project)
                                                .adjustLineIndent(file, new TextRange(0, document.getTextLength())), file);
   }
@@ -731,7 +731,7 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
     assert psiFile != null;
     final TemplateBuilder builder = new StructuralSearchTemplateBuilder(psiFile).buildTemplate();
     WriteCommandAction
-      .runWriteCommandAction(getProject(), "Live search template builder", "Structural Search",
+      .runWriteCommandAction(getProject(), SSRBundle.message("command.name.live.search.template.builder"), "Structural Search",
                              () -> builder.run(Objects.requireNonNull(mySearchCriteriaEdit.getEditor()), true));
   }
 
@@ -1100,6 +1100,9 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
       final boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(scope.getDisplayName());
       // We need to reset search within hierarchy scope during online validation since the scope works with user participation
       matchOptions.setScope(searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : scope);
+    }
+    else {
+      matchOptions.setScope(null);
     }
     matchOptions.setFileType(myFileType);
     matchOptions.setDialect(myDialect);

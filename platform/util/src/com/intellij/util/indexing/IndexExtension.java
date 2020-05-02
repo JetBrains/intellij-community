@@ -21,21 +21,31 @@ import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Eugene Zhuravlev
- * V class MUST have equals / hashcode properly defined!!!
+ * Represents index data format specification, namely
+ * serialization format for keys & values,
+ * and a mapping from input to indexing data.
+ *
+ * To create index corresponding to any extension
+ * one could use {@link com.intellij.util.indexing.impl.MapReduceIndex}.
  */
-public abstract class IndexExtension<K, V, I> {
+public abstract class IndexExtension<Key, Value, Input> {
+  /**
+   * @return unique name identifier of index extension
+   */
   @NotNull
-  public abstract IndexId<K, V> getName();
+  public abstract IndexId<Key, Value> getName();
+
+  /**
+   * @return indexer which determines the procedure how input should be transformed to indexed data
+   */
+  @NotNull
+  public abstract DataIndexer<Key, Value, Input> getIndexer();
 
   @NotNull
-  public abstract DataIndexer<K, V, I> getIndexer();
+  public abstract KeyDescriptor<Key> getKeyDescriptor();
 
   @NotNull
-  public abstract KeyDescriptor<K> getKeyDescriptor();
-
-  @NotNull
-  public abstract DataExternalizer<V> getValueExternalizer();
+  public abstract DataExternalizer<Value> getValueExternalizer();
 
   public abstract int getVersion();
 }

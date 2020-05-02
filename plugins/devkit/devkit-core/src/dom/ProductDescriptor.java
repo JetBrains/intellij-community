@@ -6,6 +6,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ProductDescriptor extends DomElement {
 
@@ -21,4 +22,7 @@ public interface ProductDescriptor extends DomElement {
   @NotNull
   @Required
   GenericAttributeValue<Integer> getReleaseVersion();
+
+  @Nullable
+  GenericAttributeValue<Boolean> getOptional();
 }

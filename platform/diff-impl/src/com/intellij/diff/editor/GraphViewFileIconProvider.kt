@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.Icon
 
+@Deprecated("Unused, to be removed")
 class GraphViewFileIconProvider : FileIconProvider {
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {

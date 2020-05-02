@@ -1,12 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
+
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.reverseOrder;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -16,11 +32,15 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -33,7 +53,16 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
@@ -50,24 +79,37 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Font;
+import java.awt.datatransfer.StringSelection;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTree;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.io.IOException;
-import java.util.List;
-import java.util.*;
-
-import static java.util.Comparator.comparing;
-import static java.util.Comparator.reverseOrder;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * author: lesya
@@ -202,7 +244,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
                                 DateFormatUtil.formatDate(time),
                                 DateFormatUtil.formatTime(time)));
     if (revision instanceof VcsFileRevisionEx) {
-      if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
+      if (!Objects.equals(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
         sb.append(" (").append(VcsBundle.message("file.history.details.committer.info",
                                                  ((VcsFileRevisionEx)revision).getCommitterName())).append(")");
       }
@@ -226,7 +268,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
                                       @NotNull FilePath filePath2, @Nullable VcsRevisionNumber startingRevision2) {
     String existingRevision = startingRevision1 == null ? null : startingRevision1.asString();
     String newRevision = startingRevision2 == null ? null : startingRevision2.asString();
-    return filePath1.equals(filePath2) && Comparing.equal(existingRevision, newRevision);
+    return filePath1.equals(filePath2) && Objects.equals(existingRevision, newRevision);
   }
 
   private DualViewColumnInfo @NotNull [] createColumnList(@NotNull Project project,
@@ -752,7 +794,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
           VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
           StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;");
-          if (ex.getCommitterName() != null && !Comparing.equal(ex.getAuthor(), ex.getCommitterName())) {
+          if (ex.getCommitterName() != null && !Objects.equals(ex.getAuthor(), ex.getCommitterName())) {
             sb.append(", ").append(VcsBundle.message("file.history.details.committer.tooltip.info", ex.getCommitterName()));
             if (ex.getCommitterEmail() != null) sb.append(" &lt;").append(ex.getCommitterEmail()).append("&gt;");
           }
@@ -767,7 +809,7 @@ public class FileHistoryPanelImpl extends JPanel implements DataProvider, Dispos
     @Override
     public String valueOf(VcsFileRevision revision) {
       if (revision instanceof VcsFileRevisionEx) {
-        if (!Comparing.equal(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
+        if (!Objects.equals(revision.getAuthor(), ((VcsFileRevisionEx)revision).getCommitterName())) {
           return revision.getAuthor() + "*";
         }
       }

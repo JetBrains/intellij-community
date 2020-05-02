@@ -5,15 +5,13 @@ import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +44,12 @@ public class AutomaticGetterSetterRenamer extends AutomaticRenamer {
   }
 
   @Override
-  public @Nls @NlsContexts.DialogTitle String getDialogTitle() {
+  public @NlsContexts.DialogTitle String getDialogTitle() {
     return JavaRefactoringBundle.message("rename.accessors.title");
   }
 
   @Override
-  public @Nls @NlsUI.Button String getDialogDescription() {
+  public @NlsContexts.Button String getDialogDescription() {
     return JavaRefactoringBundle.message("rename.accessors.with.the.following.names.to");
   }
 

@@ -21,10 +21,14 @@ class FlipComparisonPredicate implements PsiElementPredicate {
     final PsiJavaToken sign = expression.getOperationSign();
     if (">".equals(sign.getText()) && expression.getROperand() instanceof PsiReferenceExpression) {
       // would get parsed as type element when flipped and reparsed
-      PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiPolyadicExpression.class, PsiAssignmentExpression.class);
+      PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiPolyadicExpression.class);
       if (parent instanceof PsiExpressionStatement) {
         return false;
       }
+    }
+    if (expression.getParent() instanceof PsiAssignmentExpression &&
+        ((PsiAssignmentExpression)expression.getParent()).getLExpression() == expression) {
+      return false;
     }
     return !ErrorUtil.containsDeepError(element);
   }

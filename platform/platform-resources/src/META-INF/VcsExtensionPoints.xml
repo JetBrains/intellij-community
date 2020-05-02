@@ -72,6 +72,8 @@
     <extensionPoint name="vcsSelectionProvider"
                     interface="com.intellij.vcsUtil.VcsSelectionProvider"
                     dynamic="true"/>
+    <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.LocalCommitExecutor"
+                    area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="vcsConfigurableProvider"
                     interface="com.intellij.openapi.vcs.VcsConfigurableProvider"
@@ -171,5 +173,6 @@
     <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"
                     interface="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionActionExtension"
                     dynamic="true"/>
+    <extensionPoint name="vcsStartupActivity" interface="com.intellij.openapi.vcs.impl.VcsStartupActivity" dynamic="false"/>
   </extensionPoints>
 </idea-plugin>

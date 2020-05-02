@@ -2,6 +2,8 @@
 package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -37,7 +39,7 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
  *   </ol>
  * </p>
  */
-public abstract class GitXmlRpcHandlerService<T> {
+public abstract class GitXmlRpcHandlerService<T> implements Disposable {
   private static final Logger LOG = getInstance(GitXmlRpcHandlerService.class);
 
   @NotNull private final String myScriptTempFilePrefix;
@@ -124,6 +126,14 @@ public abstract class GitXmlRpcHandlerService<T> {
       final UUID key = UUID.randomUUID();
       handlers.put(key, handler);
       return key;
+    }
+  }
+
+  @Override
+  public void dispose() {
+    XmlRpcServer xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer.class);
+    if (xmlRpcServer != null) {
+      xmlRpcServer.removeHandler(myHandlerName);
     }
   }
 

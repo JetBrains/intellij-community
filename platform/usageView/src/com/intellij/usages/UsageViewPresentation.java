@@ -1,18 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.regex.Pattern;
-
-import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public class UsageViewPresentation {
 
@@ -284,7 +282,7 @@ public class UsageViewPresentation {
   public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
     if (p1 == null) return p2 == null;
     if (p2 == null) return false;
-    return Comparing.equal(p1.pattern(), p2.pattern()) && p1.flags() == p2.flags();
+    return Objects.equals(p1.pattern(), p2.pattern()) && p1.flags() == p2.flags();
   }
 
   public static int getHashCode(Pattern pattern) {

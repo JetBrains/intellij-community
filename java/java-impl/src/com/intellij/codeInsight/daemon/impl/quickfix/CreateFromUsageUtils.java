@@ -207,7 +207,7 @@ public class CreateFromUsageUtils {
         PsiFile containingFile = body.getContainingFile();
         final String lineIndent = styleManager.getLineIndent(containingFile, Math.min(start, end));
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
-        manager.doPostponedOperationsAndUnblockDocument(manager.getDocument(containingFile));
+        manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
         EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
         EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
       }
@@ -481,7 +481,7 @@ public class CreateFromUsageUtils {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
         if (expression instanceof PsiReferenceExpression &&
             (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
-          if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
+          if (Objects.equals(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }
         }
@@ -491,7 +491,8 @@ public class CreateFromUsageUtils {
       @Override public void visitMethodCallExpression(PsiMethodCallExpression expr) {
         if (expression instanceof PsiMethodCallExpression) {
           PsiReferenceExpression methodExpression = expr.getMethodExpression();
-          if (Comparing.equal(methodExpression.getReferenceName(), ((PsiMethodCallExpression) expression).getMethodExpression().getReferenceName()) &&
+          if (Objects.equals(methodExpression.getReferenceName(),
+                             ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceName()) &&
               methodExpression.resolve() == ((PsiMethodCallExpression)expression).resolveMethod()) {
             result.add(expr.getMethodExpression());
           }

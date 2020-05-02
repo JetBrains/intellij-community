@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -14,7 +14,10 @@ import org.jetbrains.idea.svn.info.Info;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public abstract class AbstractSvnUpdatePanel {
   protected final SvnVcs myVCS;
@@ -30,7 +33,7 @@ public abstract class AbstractSvnUpdatePanel {
     configureRootsPanel.setLayout(new BorderLayout());
 
     final ArrayList<FilePath> rootsCopy = new ArrayList<>(roots);
-    Collections.sort(rootsCopy, FilePathByPathComparator.getInstance());
+    rootsCopy.sort(FilePathByPathComparator.getInstance());
     for (FilePath root : rootsCopy) {
       Url url = getUrlFor(root);
       if (url != null) {

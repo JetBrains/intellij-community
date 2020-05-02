@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.AbstractMatchingVisitor;
@@ -30,23 +30,32 @@ import java.util.Map;
 import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
- * Visitor class to manage pattern matching
+ * GlobalMatchingVisitor does the walking of the pattern tree, and invokes the language specific MatchingVisitor on elements.
+ * It also stores the current code element to match. MatchingVisitor visits pattern elements, not code elements.
+ * A language specific matching visitor can retrieve the current code element from the GlobalMatchingVisitor by calling
+ * {@link #getElement()} from inside the visit methods.
  */
 public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private static final Logger LOG = Logger.getInstance(GlobalMatchingVisitor.class);
   public static final Key<List<? extends PsiElement>> UNMATCHED_ELEMENTS_KEY = Key.create("UnmatchedElements");
 
-  // the pattern element for visitor check
+  /**
+   *  The current element to match.
+   */
   private PsiElement myElement;
 
-  // the result of matching in visitor
+  /**
+   * The result of matching in visitor
+   */
   private boolean myResult;
 
-  // context of matching
   private MatchContext matchContext;
 
   private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<>(1);
 
+  /**
+   * @return the current code element to match.
+   */
   public PsiElement getElement() {
     return myElement;
   }
@@ -105,31 +114,31 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   /**
    * Identifies the match between given element of program tree and pattern element
    *
-   * @param el1 the pattern for matching
-   * @param el2 the tree element for matching
+   * @param patternElement the pattern element
+   * @param matchElement the match element from the code.
    * @return true if equal and false otherwise
    */
   @Override
-  public boolean match(PsiElement el1, PsiElement el2) {
+  public boolean match(PsiElement patternElement, PsiElement matchElement) {
     ProgressManager.checkCanceled();
-    if (el1 == el2) return true;
-    if (el1 == null) {
+    if (patternElement == matchElement) return true;
+    if (patternElement == null) {
       // absence of pattern element is match
       return true;
     }
-    if (el2 == null) {
+    if (matchElement == null) {
       // absence of match element needs check if allowed.
-      return allowsAbsenceOfMatch(el1);
+      return allowsAbsenceOfMatch(patternElement);
     }
 
     // copy changed data to local stack
     PsiElement prevElement = myElement;
-    myElement = el2;
+    myElement = matchElement;
 
     try {
-      PsiElementVisitor visitor = getVisitorForElement(el1);
+      PsiElementVisitor visitor = getVisitorForElement(patternElement);
       if (visitor != null) {
-        el1.accept(visitor);
+        patternElement.accept(visitor);
       }
     }
     catch (ClassCastException ex) {
@@ -183,9 +192,9 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   }
 
   /**
-   * Descents the tree in depth finding matches
+   * Descends the tree in depth finding matches
    *
-   * @param elements the element for which the sons are looked for match
+   * @param elements  the element of which the children are checked for a match
    */
   public void matchContext(@NotNull NodeIterator elements) {
     final CompiledPattern pattern = matchContext.getPattern();

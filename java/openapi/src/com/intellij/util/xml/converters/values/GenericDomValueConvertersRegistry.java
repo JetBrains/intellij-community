@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.converters.values;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class GenericDomValueConvertersRegistry {
 
@@ -113,6 +114,6 @@ public class GenericDomValueConvertersRegistry {
 
   public void registerConverter(@NotNull Converter<?> provider, @NotNull Class type) {
     final String name = type.getCanonicalName();
-    registerConverter(provider, pair -> pair.first != null && Comparing.equal(name, pair.first.getCanonicalText()));
+    registerConverter(provider, pair -> pair.first != null && Objects.equals(name, pair.first.getCanonicalText()));
   }
 }

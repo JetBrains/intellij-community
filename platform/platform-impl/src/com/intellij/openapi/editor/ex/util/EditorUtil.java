@@ -676,7 +676,7 @@ public final class EditorUtil {
 
   public static int yPositionToLogicalLine(@NotNull Editor editor, int y) {
     int line = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
-    return line > 0 ? editor.visualToLogicalPosition(new VisualPosition(line, 0)).line : 0;
+    return editor.visualToLogicalPosition(new VisualPosition(line, 0)).line;
   }
 
   /**
@@ -687,7 +687,7 @@ public final class EditorUtil {
     int visualLine = editor.yToVisualLine(y);
     int visualLineStartY = editor.visualLineToY(visualLine);
     if (y < visualLineStartY || y >= visualLineStartY + editor.getLineHeight()) return -1;
-    return visualLine > 0 ? editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line : 0;
+    return editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
   }
 
   public static boolean isAtLineEnd(@NotNull Editor editor, int offset) {
@@ -862,6 +862,22 @@ public final class EditorUtil {
 
   public static int getInlaysHeight(@NotNull Editor editor, int visualLine, boolean above) {
     return getTotalInlaysHeight(editor.getInlayModel().getBlockElementsForVisualLine(visualLine, above));
+  }
+
+  /**
+   * Tells whether given inlay element is invisible due to folding of text in editor
+   */
+  public static boolean isInlayFolded(@NotNull Inlay inlay) {
+    Editor editor = inlay.getEditor();
+    Inlay.Placement placement = inlay.getPlacement();
+    int offset = inlay.getOffset();
+    if (placement == Inlay.Placement.AFTER_LINE_END) {
+      offset = DocumentUtil.getLineEndOffset(offset, editor.getDocument());
+    }
+    else if ((placement == Inlay.Placement.ABOVE_LINE || placement == Inlay.Placement.BELOW_LINE) && !inlay.isRelatedToPrecedingText()) {
+      offset--;
+    }
+    return editor.getFoldingModel().isOffsetCollapsed(offset);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -22,6 +22,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -48,7 +49,7 @@ public class LibraryScopeCache {
         return Arrays.equals(o1, o2);
       }
     });
-  private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, GlobalSearchScope> mySdkScopes = new ConcurrentHashMap<>();
   private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryResolveScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryScope(key));
   private final Map<List<? extends OrderEntry>, GlobalSearchScope> myLibraryUseScopeCache = ConcurrentFactoryMap.createMap(key -> calcLibraryUseScope(key));
 
@@ -64,13 +65,11 @@ public class LibraryScopeCache {
     myLibraryUseScopeCache.clear();
   }
 
-  @NotNull
-  public GlobalSearchScope getLibrariesOnlyScope() {
+  public @NotNull GlobalSearchScope getLibrariesOnlyScope() {
     return myLibrariesOnlyScope;
   }
 
-  @NotNull
-  private GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<? extends Module> modulesLibraryIsUsedIn) {
+  private @NotNull GlobalSearchScope getScopeForLibraryUsedIn(@NotNull List<? extends Module> modulesLibraryIsUsedIn) {
     Module[] array = modulesLibraryIsUsedIn.toArray(Module.EMPTY_ARRAY);
     GlobalSearchScope scope = myLibraryScopes.get(array);
     return scope != null ? scope : ConcurrencyUtil.cacheOrGet(myLibraryScopes, array,
@@ -82,8 +81,7 @@ public class LibraryScopeCache {
    * @param orderEntries the order entries that reference a particular SDK/library
    * @return a cached resolve scope
    */
-  @NotNull
-  public GlobalSearchScope getLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
+  public @NotNull GlobalSearchScope getLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myLibraryResolveScopeCache.get(orderEntries);
   }
 
@@ -92,13 +90,11 @@ public class LibraryScopeCache {
    * @param orderEntries the order entries that reference a particular SDK/library
    * @return a cached use scope
    */
-  @NotNull
-  public GlobalSearchScope getLibraryUseScope(@NotNull List<? extends OrderEntry> orderEntries) {
+  public @NotNull GlobalSearchScope getLibraryUseScope(@NotNull List<? extends OrderEntry> orderEntries) {
     return myLibraryUseScopeCache.get(orderEntries);
   }
 
-  @NotNull
-  private GlobalSearchScope calcLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
+  private @NotNull GlobalSearchScope calcLibraryScope(@NotNull List<? extends OrderEntry> orderEntries) {
     List<Module> modulesLibraryUsedIn = new ArrayList<>();
 
     LibraryOrderEntry lib = null;
@@ -117,7 +113,7 @@ public class LibraryScopeCache {
     }
 
     Comparator<Module> comparator = Comparator.comparing(Module::getName);
-    Collections.sort(modulesLibraryUsedIn, comparator);
+    modulesLibraryUsedIn.sort(comparator);
     List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
 
     GlobalSearchScope allCandidates = uniquesList.isEmpty() ? myLibrariesOnlyScope : getScopeForLibraryUsedIn(uniquesList);
@@ -140,8 +136,7 @@ public class LibraryScopeCache {
   }
 
 
-  @NotNull
-  public GlobalSearchScope getScopeForSdk(@NotNull JdkOrderEntry jdkOrderEntry) {
+  public @NotNull GlobalSearchScope getScopeForSdk(@NotNull JdkOrderEntry jdkOrderEntry) {
     final String jdkName = jdkOrderEntry.getJdkName();
     if (jdkName == null) return GlobalSearchScope.allScope(myProject);
     GlobalSearchScope scope = mySdkScopes.get(jdkName);
@@ -152,8 +147,7 @@ public class LibraryScopeCache {
     return scope;
   }
 
-  @NotNull
-  private GlobalSearchScope calcLibraryUseScope(@NotNull List<? extends OrderEntry> entries) {
+  private @NotNull GlobalSearchScope calcLibraryUseScope(@NotNull List<? extends OrderEntry> entries) {
     Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
     Set<Module> modulesWithSdk = new THashSet<>(entries.size());
     for (OrderEntry entry : entries) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.packageDependencies.ui;
 
@@ -13,6 +13,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.ExporterToTextFile;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -233,7 +234,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       for (PsiFile from : searchIn) {
         for (PsiFile to : initialSearchFor) {
           final List<List<PsiFile>> paths = builder.findPaths(from, to);
-          Collections.sort(paths, Comparator.comparingInt(List::size));
+          paths.sort(Comparator.comparingInt(List::size));
           for (List<PsiFile> path : paths) {
             if (!path.isEmpty()){
               path.add(0, from);
@@ -625,7 +626,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private void setEmptyText(boolean flag) {
-    final String emptyText = flag ? "No illegal dependencies found" : "Nothing to show";
+    final String emptyText = flag ? LangBundle.message("status.text.no.illegal.dependencies.found") : LangBundle.message("status.text.nothing.to.show");
     myLeftTree.getEmptyText().setText(emptyText);
     myRightTree.getEmptyText().setText(emptyText);
   }
@@ -652,7 +653,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final Element rootElement = new Element("root");
       rootElement.setAttribute("isBackward", String.valueOf(!myForward));
       final List<PsiFile> files = new ArrayList<>(myDependencies.keySet());
-      Collections.sort(files, (f1, f2) -> {
+      files.sort((f1, f2) -> {
         final VirtualFile virtualFile1 = f1.getVirtualFile();
         final VirtualFile virtualFile2 = f2.getVirtualFile();
         if (virtualFile1 != null && virtualFile2 != null) {
@@ -773,7 +774,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
       final Dimension dimension = pane.getPreferredSize();
       scrollPane.setMinimumSize(new Dimension(dimension.width, dimension.height + 20));
       scrollPane.setPreferredSize(new Dimension(dimension.width, dimension.height + 20));
-      JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, pane).setTitle("Dependencies")
+      JBPopupFactory.getInstance().createComponentPopupBuilder(scrollPane, pane).setTitle(LangBundle.message("popup.title.dependencies"))
         .setMovable(true).createPopup().showInBestPositionFor(e.getDataContext());
     }
 

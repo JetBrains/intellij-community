@@ -15,8 +15,8 @@
  */
 package com.intellij.lang;
 
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public abstract class ExpressionTypeProvider<T extends PsiElement> {
    * Returns HTML string if no target found at position.
    */
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @HintText
   public abstract String getErrorHint();
 
   /**

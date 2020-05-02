@@ -1,26 +1,29 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListListener;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.ErrorCode;
 import org.jetbrains.idea.svn.change.ChangeListClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
-
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
 
 public class SvnChangelistListener implements ChangeListListener {
   private final static Logger LOG = Logger.getInstance(SvnChangelistListener.class);
@@ -64,7 +67,7 @@ public class SvnChangelistListener implements ChangeListListener {
 
   @Override
   public void changeListRenamed(final ChangeList list, final String oldName) {
-    if (Comparing.equal(list.getName(), oldName)) {
+    if (Objects.equals(list.getName(), oldName)) {
       return;
     }
     if (LocalChangeList.getDefaultName().equals(list.getName())) {

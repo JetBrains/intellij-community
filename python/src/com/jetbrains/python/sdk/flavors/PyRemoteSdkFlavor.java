@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
@@ -28,7 +28,7 @@ public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
   @NotNull
   @Override
   public Collection<String> suggestHomePaths(@Nullable Module module, @Nullable UserDataHolder context) {
-    return Lists.newArrayList();
+    return new ArrayList<>();
   }
 
   @Override

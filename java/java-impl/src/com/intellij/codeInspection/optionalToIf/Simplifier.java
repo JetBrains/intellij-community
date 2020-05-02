@@ -7,7 +7,9 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +24,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 interface Simplifier {
 
   Simplifier[] SIMPLIFIERS = {
-    new RemoveChecks(), new MergeChecks(), new RemoveAfterReturn(), new MergeImmediateReturn(), new MergeImmediateAssignment()
+    new RemoveChecks(), new MergeChecks(), new RemoveAfterReturnOrThrow(), new MergeImmediateReturn(), new MergeImmediateAssignment()
   };
 
   List<Instruction> run(@NotNull List<Instruction> instructions);
@@ -98,7 +100,9 @@ interface Simplifier {
       PsiExpression cond1 = c1.myCondition;
       PsiExpression cond2 = c2.myCondition;
       PsiElementFactory factory = PsiElementFactory.getInstance(cond1.getProject());
-      return factory.createExpressionFromText(cond1.getText() + operator + cond2.getText(), cond1);
+      return factory.createExpressionFromText(ParenthesesUtils.getText(cond1, ParenthesesUtils.OR_PRECEDENCE) +
+                                              operator +
+                                              ParenthesesUtils.getText(cond2, ParenthesesUtils.OR_PRECEDENCE), cond1);
     }
 
     @Nullable
@@ -116,14 +120,27 @@ interface Simplifier {
       return new Check(disjunction, check.myInstructions, null);
     }
 
-    @Contract("null -> null")
     private static Instruction getSingleInstruction(@NotNull Check check) {
-      List<Instruction> instructions = check.myInstructions;
-      return instructions.size() == 1 ? instructions.get(0) : null;
+      return ContainerUtil.getOnlyItem(check.myInstructions);
     }
   }
 
-  class RemoveAfterReturn implements Simplifier {
+  /**
+   * Removes all code that appears after throw or return instruction.
+   * This might happen after applying other simplifications, in particular the ones that remove redundant checks.
+   * E.g. for method
+   * String test(String in) {
+   *   if (in == null) return "foo";
+   *   return Optional.ofNullable(in).orElse("bar");
+   * }
+   * We would have two instructions:
+   * - Check(in != null) with Return(in) inside
+   * - Return "bar"
+   *
+   * After simplification of Check that is always true we
+   * end up with two returns in the row, so the second one must be removed.
+   */
+  class RemoveAfterReturnOrThrow implements Simplifier {
 
     @Override
     public List<Instruction> run(@NotNull List<Instruction> instructions) {
@@ -132,7 +149,7 @@ interface Simplifier {
         Check check = tryCast(instruction, Check.class);
         if (check != null && !check.hasElseBranch()) check.myInstructions = run(check.myInstructions);
         simplified.add(instruction);
-        if (instruction instanceof Return) return simplified;
+        if (instruction instanceof Return || instruction instanceof Throw) return simplified;
       }
       return simplified;
     }

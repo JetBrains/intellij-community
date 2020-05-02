@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch.tool;
 
-import com.intellij.diff.DiffContentFactory;
-import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffDialogHints;
-import com.intellij.diff.DiffManager;
+import com.intellij.diff.*;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.SetEditorSettingsAction;
@@ -630,7 +627,10 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       DocumentContent resultContent = myPatchRequest.getResultContent();
-      DocumentContent localContent = DiffContentFactory.getInstance().create(myProject, myPatchRequest.getLocalContent(), resultContent);
+      DocumentContent localContent = DiffContentFactoryEx.getInstanceEx()
+        .documentContent(myProject, true)
+        .contextByReferent(resultContent)
+        .buildFromText(myPatchRequest.getLocalContent(), false);
 
       SimpleDiffRequest request = new SimpleDiffRequest(myPatchRequest.getTitle(),
                                                         localContent, resultContent,

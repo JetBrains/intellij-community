@@ -1,5 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.generic;
+
+import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
+import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -12,6 +16,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import javax.swing.Icon;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
@@ -19,15 +33,6 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-
-import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
-import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
-import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
 
 /**
  * @author Evgeny.Zakrevsky
@@ -146,9 +151,9 @@ public class GenericRepository extends BaseRepositoryImpl {
     if (!(o instanceof GenericRepository)) return false;
     if (!super.equals(o)) return false;
     GenericRepository that = (GenericRepository)o;
-    if (!Comparing.equal(getLoginUrl(), that.getLoginUrl())) return false;
-    if (!Comparing.equal(getTasksListUrl(), that.getTasksListUrl())) return false;
-    if (!Comparing.equal(getSingleTaskUrl(), that.getSingleTaskUrl())) return false;
+    if (!Objects.equals(getLoginUrl(), that.getLoginUrl())) return false;
+    if (!Objects.equals(getTasksListUrl(), that.getTasksListUrl())) return false;
+    if (!Objects.equals(getSingleTaskUrl(), that.getSingleTaskUrl())) return false;
     if (!Comparing.equal(getLoginMethodType(), that.getLoginMethodType())) return false;
     if (!Comparing.equal(getTasksListMethodType(), that.getTasksListMethodType())) return false;
     if (!Comparing.equal(getSingleTaskMethodType(), that.getSingleTaskMethodType())) return false;

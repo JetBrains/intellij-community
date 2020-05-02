@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
@@ -105,6 +106,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     myAfterLineEndInlayUpdated = false;
     myDuringDocumentUpdate = true;
     if (myDocument.isInBulkUpdate()) return;
+    assertValidState();
     final int offset = event.getOffset();
     // Although the result of getMoveOffset() can point to invalid offset when used from within beforeDocumentChange(),
     // the actual value is not used until doInvalidateRange() called from documentChanged().
@@ -159,8 +161,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     if (inlay.getPlacement() == Inlay.Placement.INLINE || inlay.getPlacement() == Inlay.Placement.AFTER_LINE_END) {
       onLineInlayUpdate(inlay);
     }
-    else if (myWidestBlockInlayValid && inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() &&
-             !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+    else if (myWidestBlockInlayValid && inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() && !EditorUtil.isInlayFolded(inlay)) {
       myWidestBlockInlay = inlay;
     }
   }
@@ -190,8 +191,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     }
     else if (myWidestBlockInlayValid &&
              (inlay == myWidestBlockInlay ||
-              inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() &&
-              !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset()))) {
+              inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() && !EditorUtil.isInlayFolded(inlay))) {
       if (inlay == myWidestBlockInlay) {
         invalidateCachedBlockInlayWidth();
       }
@@ -514,8 +514,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       myWidestBlockInlayValid = true;
       myWidestBlockInlay = null;
       myEditor.getInlayModel().getBlockElementsInRange(0, myDocument.getTextLength()).forEach(inlay -> {
-        if (!myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset()) &&
-            inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth()) {
+        if (inlay.getWidthInPixels() > getCachedWidestBlockInlayWidth() && !EditorUtil.isInlayFolded(inlay)) {
           myWidestBlockInlay = inlay;
         }
       });
@@ -619,8 +618,8 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     if (myLineWidths.size() != myEditor.getVisibleLineCount()) {
       LOG.error("Inconsistent state", new Attachment("editor.txt", myEditor.dumpState()));
       reset();
+      assert myLineWidths.size() == myEditor.getVisibleLineCount();
     }
-    assert myLineWidths.size() == myEditor.getVisibleLineCount();
   }
 
   private void assertCorrectCachedWidths() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -90,8 +90,8 @@ public class VcsProjectLog implements Disposable {
 
   private void subscribeToMappingsAndEPsChanges() {
     myMessageBus.connect(myListenersDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
-    LOG_PROVIDER_EP.getPoint(myProject).addExtensionPointListener(() -> disposeLog(true), false, myListenersDisposable);
-    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.addExtensionPointListener(myProject, () -> disposeLog(true), myListenersDisposable);
+    LOG_PROVIDER_EP.getPoint(myProject).addChangeListener(() -> disposeLog(true), myListenersDisposable);
+    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.addChangeListener(myProject, () -> disposeLog(true), myListenersDisposable);
   }
 
   @Nullable

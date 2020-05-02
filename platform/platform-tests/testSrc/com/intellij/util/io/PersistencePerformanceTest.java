@@ -12,6 +12,8 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.caches.IndexUpdateRunner;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -103,7 +105,8 @@ public class PersistencePerformanceTest extends BasePlatformTestCase {
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
-      index.indexFiles(getProject(), files, new EmptyProgressIndicator());
+      new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, UnindexedFilesUpdater.getNumberOfIndexingThreads())
+        .indexFiles(getProject(), files, new EmptyProgressIndicator());
     }
     for (Future<Boolean> future : futures) {
       assertTrue(future.get());

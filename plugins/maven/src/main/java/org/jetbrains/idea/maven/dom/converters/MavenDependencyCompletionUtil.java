@@ -22,7 +22,6 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.DomElement;
@@ -103,7 +102,7 @@ public class MavenDependencyCompletionUtil {
   public static LookupElementBuilder lookupElement(MavenRepositoryArtifactInfo info, String presentableText) {
     LookupElementBuilder elementBuilder = LookupElementBuilder.create(info, getLookupString(info.getItems()[0]))
       .withPresentableText(presentableText);
-    elementBuilder.putUserData((Key<Object>)BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, new Object());
+    elementBuilder.putUserData(BaseCompletionLookupArranger.FORCE_MIDDLE_MATCH, new Object());
     if (info.getItems().length == 1) {
       return elementBuilder.withIcon(getIcon(info.getItems()[0].getType()));
     }

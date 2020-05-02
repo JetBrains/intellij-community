@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl;
 
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReferenceProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
@@ -37,9 +39,11 @@ public final class NamedReferenceProviders {
 
   // There are 2 XmlNamedReferenceHost inheritors currently.
   private final Map<Class<?>, ByHostClass> myByHostClass = new ConcurrentHashMap<>(2);
+  private final Map<Class<?>, Collection<PsiSymbolReferenceProvider>> myByTargetClass = new ConcurrentHashMap<>();
 
   public NamedReferenceProviders() {
-    EP_NAME.addExtensionPointListener(() -> myByHostClass.clear(), ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(() -> myByHostClass.clear(), ApplicationManager.getApplication());
+    EP_NAME.addChangeListener(() -> myByTargetClass.clear(), ApplicationManager.getApplication());
   }
 
 
@@ -101,5 +105,19 @@ public final class NamedReferenceProviders {
         ObjectUtils.notNull(myCaseInsensitiveMap.get(hostName), Collections.emptyList())
       );
     }
+  }
+
+  @NotNull Collection<@NotNull PsiSymbolReferenceProvider> getNamedReferenceProviders(@NotNull Symbol target) {
+    return myByTargetClass.computeIfAbsent(target.getClass(), NamedReferenceProviders::byTargetClassInner);
+  }
+
+  private static @NotNull Collection<PsiSymbolReferenceProvider> byTargetClassInner(@NotNull Class<?> targetClass) {
+    List<PsiSymbolReferenceProvider> result = new SmartList<>();
+    for (XmlNamedReferenceProviderBean bean : EP_NAME.getExtensionList()) {
+      if (targetClass.isAssignableFrom(bean.getResolveTargetClass())) {
+        result.add(bean.getInstance());
+      }
+    }
+    return result;
   }
 }

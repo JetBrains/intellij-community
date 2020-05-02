@@ -1,12 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
+import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.types.JvmType
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OVERRIDE
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariablesOrder
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.intentions.style.inference.driver.getJavaLangObject
 import org.jetbrains.plugins.groovy.intentions.style.inference.graph.InferenceUnitNode
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -16,13 +20,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocat
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_OBJECT
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSession
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
-import org.jetbrains.plugins.groovy.lang.typing.box
 
 
 class NameGenerator(private val postfix: String = "",
@@ -148,6 +152,9 @@ fun PsiType?.typeParameter(): PsiTypeParameter? {
 
 fun findOverridableMethod(method: GrMethod): PsiMethod? {
   val clazz = method.containingClass ?: return null
+  if (method.project.isDefault) {
+    return null
+  }
   val superMethods = method.findSuperMethods()
   val hasJavaLangOverride = method.annotations.any { it.qualifiedName == JAVA_LANG_OVERRIDE }
   if (hasJavaLangOverride && superMethods.isNotEmpty()) {
@@ -173,23 +180,18 @@ private fun methodsAgree(pattern: PsiMethod,
   if (pattern.name != tested.name || tested.parameterList.parametersCount != pattern.parameterList.parametersCount) {
     return false
   }
-  val parameterList = pattern.parameters.zip(tested.parameters)
-  return parameterList.all { (patternParameter, testedParameter) ->
-    val boxedPatternParameter = (patternParameter.type as? PsiPrimitiveType)?.box(tested) ?: patternParameter.type
-    testedParameter.typeElement == null ||
-    (testedParameter.type.box(tested) as PsiClassType).erasure() == (boxedPatternParameter as? PsiClassType)?.erasure()
+  val parameterList: List<Pair<JvmParameter?, GrParameter?>> = pattern.parameters.zip(tested.parameters)
+  return parameterList.all { (patternParameter: JvmParameter?, testedParameter: GrParameter?) ->
+    if (testedParameter?.typeElement == null) return@all true
+    val patternType: JvmType? = patternParameter?.type
+    val erasedPatternType = if (patternType is PsiType) patternType.erasure() else patternType
+    val erasedTestedType = testedParameter.type.erasure()
+    erasedPatternType == erasedTestedType
   }
 }
 
-fun PsiClassType.erasure(): PsiClassType {
-  val raw = rawType()
-  val typeParameter = raw.typeParameter()
-  return if (typeParameter != null) {
-    typeParameter.extendsListTypes.firstOrNull()?.erasure() ?: getJavaLangObject(typeParameter)
-  }
-  else {
-    raw
-  }
+private fun PsiType.erasure(): PsiType {
+  return TypeConversionUtil.erasure(this)
 }
 
 private fun getContainingClasses(startClass: PsiClass?): List<PsiClass> {
@@ -336,12 +338,27 @@ fun PsiElement.properResolve(): GroovyResolveResult? {
   }
 }
 
+private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
+  val containingClass = method.containingClass
+  if (containingClass == null) {
+    return file.methods.find { methodsAgree(it, method) }
+  }
+  else {
+    val outerClasses = containingClass.parentsOfType<PsiClass>(true).toList().reversed()
+    val initialClass = file.classes.find { it.name == outerClasses.first().name } ?: return null
+    val innermostClass = outerClasses.drop(1).fold(initialClass) { currentOriginalClass, psiClass ->
+      currentOriginalClass.innerClasses.find { it.name == psiClass.name } ?: return null
+    }
+    return innermostClass.methods.find { it.name == method.name } as? GrMethod
+  }
+}
+
 @Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
       null -> method
       method.containingFile -> method
-      is GroovyFileBase -> originalFile.methods.find { methodsAgree(it, method) } ?: method
+      is GroovyFileBase -> locateMethod(originalFile, method) ?: method
       else -> originalFile.findElementAt(method.textOffset)?.parentOfType<GrMethod>()?.takeIf { it.name == method.name } ?: method
     }
 }

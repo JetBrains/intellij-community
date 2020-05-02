@@ -5,9 +5,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 
-class GHPROpenPullRequestTimelineAction : DumbAwareAction("View Conversations", "View pull request timeline", null) {
+class GHPROpenPullRequestTimelineAction
+  : DumbAwareAction(GithubBundle.messagePointer("pull.request.view.conversations.action"),
+                    GithubBundle.messagePointer("pull.request.view.conversations.action.description"),
+                    null) {
+
   override fun update(e: AnActionEvent) {
     val dataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)
     val actionDataContext = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)

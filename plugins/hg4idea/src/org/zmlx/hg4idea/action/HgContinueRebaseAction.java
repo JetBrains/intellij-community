@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.command.HgRebaseCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -40,14 +41,15 @@ public class HgContinueRebaseAction extends HgProcessStateAction {
                          @NotNull Collection<HgRepository> repositories,
                          @Nullable final HgRepository selectedRepo) {
 
-    new Task.Backgroundable(project, "Continue Rebasing...") {
+    new Task.Backgroundable(project, HgBundle.message("action.hg4idea.Rebase.Continue.progress")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (selectedRepo != null) {
           HgRebaseCommand rebaseCommand = new HgRebaseCommand(project, selectedRepo);
           HgCommandResult result = rebaseCommand.continueRebase();
           if (HgErrorUtil.isAbort(result)) {
-            new HgCommandResultNotifier(project).notifyError(result, "Hg Error", "Couldn't continue rebasing");
+            new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("hg4idea.hg.error"),
+                                                             HgBundle.message("action.hg4idea.Rebase.Continue.error"));
           }
           HgUtil.markDirectoryDirty(project, selectedRepo.getRoot());
         }

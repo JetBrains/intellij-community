@@ -31,7 +31,7 @@ public class ConstructorDescriptor implements ItemToReplaceDescriptor {
     PsiMethod constructor = expression.resolveConstructor();
     if (constructor != null) {
       PsiClass containingClass = constructor.getContainingClass();
-      if (containingClass != null && !PsiReflectionAccessUtil.isAccessibleMember(constructor)) {
+      if (containingClass != null && !PsiReflectionAccessUtil.isPublicMember(constructor)) {
         return new ConstructorDescriptor(expression, constructor, containingClass);
       }
     }

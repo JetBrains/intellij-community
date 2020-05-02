@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -183,7 +183,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         files = new ArrayList<>(myAntFileToContextFileMap.keySet());
       }
       // sort in order to minimize changes
-      Collections.sort(files, Comparator.comparing(VirtualFile::getUrl));
+      files.sort(Comparator.comparing(VirtualFile::getUrl));
       for (VirtualFile file : files) {
         final Element element = new Element(CONTEXT_MAPPING);
         element.setAttribute(URL, file.getUrl());
@@ -595,7 +595,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
 
     if (events != null) {
-      Collections.sort(events, EventElementComparator.INSTANCE);
+      events.sort(EventElementComparator.INSTANCE);
       for (Element eventElement : events) {
         element.addContent(eventElement);
       }

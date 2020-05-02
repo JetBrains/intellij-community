@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,10 +19,11 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
+import java.io.IOException;
 
 public class JarRootsRefreshTest extends HeavyPlatformTestCase {
-  public void testJarRefreshOnRenameOrMove() {
-    File jar = IoTestUtil.createTestJar();
+  public void testJarRefreshOnRenameOrMove() throws IOException {
+    File jar = IoTestUtil.createTestJar(createTempFile("test.jar", ""));
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
     WriteCommandAction.writeCommandAction(myProject).run(() -> PsiTestUtil.addContentRoot(myModule, vFile.getParent()));

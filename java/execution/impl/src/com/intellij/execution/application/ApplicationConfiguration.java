@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -19,8 +19,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
@@ -99,6 +99,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", false)) {
+      return new JavaApplicationSettingsEditor(getProject());
+    }
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ApplicationConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
@@ -186,7 +189,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     WORKING_DIRECTORY = PathUtil.toSystemDependentName(normalizedValue);
 
     String independentValue = PathUtil.toSystemIndependentName(normalizedValue);
-    getOptions().setWorkingDirectory(Comparing.equal(independentValue, getProject().getBasePath()) ? null : independentValue);
+    getOptions().setWorkingDirectory(Objects.equals(independentValue, getProject().getBasePath()) ? null : independentValue);
   }
 
   @Override

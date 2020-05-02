@@ -25,5 +25,14 @@ interface SimpleEventListener : EventListener {
         }
       })
     }
+
+    fun addAndInvokeListener(dispatcher: EventDispatcher<SimpleEventListener>, listener: () -> Unit) {
+      dispatcher.addListener(object : SimpleEventListener {
+        override fun eventOccurred() {
+          listener()
+        }
+      })
+      listener()
+    }
   }
 }

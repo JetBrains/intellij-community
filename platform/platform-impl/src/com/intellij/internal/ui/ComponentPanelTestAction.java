@@ -16,7 +16,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -35,7 +35,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -867,11 +866,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         final String myText;
         final ImmutableList<Item> myChildren;
 
-        Item(@NotNull Icon icon, @NotNull @Nls @NlsUI.ComboboxItem String text) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text) {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull @Nls @NlsUI.ComboboxItem String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
           this.myChildren = ImmutableList.copyOf(myChildren);
@@ -969,7 +968,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   private static class MyAction extends DumbAwareAction {
-    private MyAction(@Nullable @Nls @NlsActions.ActionText String name, @Nullable Icon icon) {
+    private MyAction(@Nullable @NlsActions.ActionText String name, @Nullable Icon icon) {
       super(name, null, icon);
     }
 
@@ -983,7 +982,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return this;
     }
 
-    public MyAction withDescription(@Nullable @Nls @NlsActions.ActionDescription String description) {
+    public MyAction withDescription(@Nullable @NlsActions.ActionDescription String description) {
       getTemplatePresentation().setDescription(description);
       return this;
     }

@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -35,9 +34,8 @@ public class GroovyRangeTypeCheckTest extends LightJavaCodeInsightFixtureTestCas
 
     LocalQuickFix[] fixes = {fix};
     final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject()).createProblemDescriptor(range, "bla-bla", false, fixes, ProblemHighlightType.WEAK_WARNING);
-    WriteCommandAction.runWriteCommandAction(null, () -> {
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       fix.applyFix(myFixture.getProject(), descriptor);
-      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     });
 
 

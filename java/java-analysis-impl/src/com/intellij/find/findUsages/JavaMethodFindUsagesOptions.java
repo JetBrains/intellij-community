@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * @author peter
@@ -56,12 +56,12 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     properties.setValue(prefix + "isImplicitToString", isImplicitToString, true);
   }
 
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (!super.equals(o)) return false;
     if (getClass() != o.getClass()) return false;
 
-    final JavaMethodFindUsagesOptions that = (JavaMethodFindUsagesOptions)o;
+    JavaMethodFindUsagesOptions that = (JavaMethodFindUsagesOptions)o;
 
     if (isCheckDeepInheritance != that.isCheckDeepInheritance) return false;
     if (isImplementingMethods != that.isImplementingMethods) return false;
@@ -85,7 +85,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull LinkedHashSet<? super String> strings) {
+  protected void addUsageTypes(@NotNull Set<? super String> strings) {
     super.addUsageTypes(strings);
     if (isIncludeOverloadUsages) {
       strings.add(JavaAnalysisBundle.message("find.usages.panel.title.overloaded.methods.usages"));

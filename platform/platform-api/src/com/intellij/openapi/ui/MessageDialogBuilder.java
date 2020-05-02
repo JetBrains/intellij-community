@@ -2,12 +2,10 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,19 +22,19 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
   protected Icon myIcon;
   protected DialogWrapper.DoNotAskOption myDoNotAskOption;
 
-  private MessageDialogBuilder(@NotNull @Nls @NlsContexts.DialogTitle String title,
-                               @NotNull @Nls @NlsContexts.DialogMessage String message) {
+  private MessageDialogBuilder(@NotNull @NlsContexts.DialogTitle String title,
+                               @NotNull @NlsContexts.DialogMessage String message) {
     myTitle = title;
     myMessage = message;
   }
 
   @NotNull
-  public static YesNo yesNo(@NotNull @Nls @NlsContexts.DialogTitle String title, @NotNull @Nls @NlsContexts.DialogMessage String message) {
+  public static YesNo yesNo(@NotNull @NlsContexts.DialogTitle String title, @NotNull @NlsContexts.DialogMessage String message) {
     return new YesNo(title, message).icon(Messages.getQuestionIcon());
   }
 
-  public static YesNoCancel yesNoCancel(@NotNull @Nls @NlsContexts.DialogTitle String title,
-                                        @NotNull @Nls @NlsContexts.DialogMessage String message) {
+  public static YesNoCancel yesNoCancel(@NotNull @NlsContexts.DialogTitle String title,
+                                        @NotNull @NlsContexts.DialogMessage String message) {
     return new YesNoCancel(title, message).icon(Messages.getQuestionIcon());
   }
 
@@ -65,12 +63,12 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
     return getThis();
   }
 
-  public T yesText(@NotNull @Nls @NlsUI.Button String yesText) {
+  public T yesText(@NotNull @NlsContexts.Button String yesText) {
     myYesText = yesText;
     return getThis();
   }
 
-  public T noText(@NotNull @Nls @NlsUI.Button String noText) {
+  public T noText(@NotNull @NlsContexts.Button String noText) {
     myNoText = noText;
     return getThis();
   }
@@ -113,7 +111,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
       super(title, message);
     }
 
-    public YesNoCancel cancelText(@NotNull @Nls @NlsUI.Button String cancelText) {
+    public YesNoCancel cancelText(@NotNull @NlsContexts.Button String cancelText) {
       myCancelText = cancelText;
       return getThis();
     }

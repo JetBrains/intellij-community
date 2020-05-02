@@ -168,7 +168,7 @@ public class CloudAccountSelectionEditor {
 
   public void validate() throws ConfigurationException {
     if (getSelectedAccount() == null) {
-      throw new ConfigurationException("Account required");
+      throw new ConfigurationException(CloudBundle.message("dialog.message.account.required"));
     }
   }
 

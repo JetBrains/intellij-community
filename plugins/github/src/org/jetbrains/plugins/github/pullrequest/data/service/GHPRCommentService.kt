@@ -8,7 +8,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.util.concurrent.CompletableFuture
 
 interface GHPRCommentService {
-  fun canComment(): Boolean
 
   @CalledInAny
   fun addComment(progressIndicator: ProgressIndicator, pullRequestId: GHPRIdentifier, body: String)

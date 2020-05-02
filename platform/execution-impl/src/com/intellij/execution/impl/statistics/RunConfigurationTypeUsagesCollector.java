@@ -40,7 +40,7 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @NotNull
@@ -126,6 +126,7 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
           if (featureUsed) {
             FeatureUsageData data = new FeatureUsageData()
               .addData(ID_FIELD, runConfiguration.getType().getId())
+              .addPluginInfo(info)
               .addData("featureName", name);
             addOrIncrement(templates, new Template("feature.used", data));
           }

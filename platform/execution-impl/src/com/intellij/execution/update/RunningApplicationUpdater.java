@@ -2,7 +2,7 @@
 package com.intellij.execution.update;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -11,7 +11,7 @@ import javax.swing.*;
  * Instance of {@link RunningApplicationUpdater} may be provided by {@link RunningApplicationUpdaterProvider}.
  */
 public interface RunningApplicationUpdater {
-  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @NlsActions.ActionText
   String getDescription();
 
   String getShortName();

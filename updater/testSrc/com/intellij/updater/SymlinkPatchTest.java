@@ -2,6 +2,7 @@
 package com.intellij.updater;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
@@ -9,12 +10,11 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assume.assumeFalse;
 
 public class SymlinkPatchTest extends PatchTestCase {
   @Override
   public void setUp() throws Exception {
-    assumeFalse("Windows-allergic", Utils.IS_WINDOWS);
+    IoTestUtil.assumeSymLinkCreationIsSupported();
 
     super.setUp();
 

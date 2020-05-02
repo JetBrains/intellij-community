@@ -1,14 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -514,7 +512,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
-      if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName))) {
+      if ((Objects.equals(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName))) {
         if (!haveQualifiers(element)) {
           final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
           final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
@@ -659,7 +657,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @Override
   public Object @NotNull [] getVariants() {
-    final List<LookupElement> ret = Lists.newArrayList();
+    final List<LookupElement> ret = new ArrayList<>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
     final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
@@ -730,7 +728,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * Throws away fake elements used for completion internally.
    */
   protected List<LookupElement> getOriginalElements(@NotNull CompletionVariantsProcessor processor) {
-    final List<LookupElement> ret = Lists.newArrayList();
+    final List<LookupElement> ret = new ArrayList<>();
     for (LookupElement item : processor.getResultList()) {
       final PsiElement e = item.getPsiElement();
       if (e != null) {

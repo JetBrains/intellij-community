@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -53,7 +53,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -1201,7 +1200,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
       ensureIndexesUpToDate(getProject());
       ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivitiesRegisteredDynamically();
-      CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
+      CodeStyle.setTemporarySettings(getProject(), CodeStyle.createTestSettings());
 
       IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
       if (policy != null) {
@@ -1249,7 +1248,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         }
 
         // return default value to avoid unnecessary save
-        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ServiceManager.getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+        DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings =
+          ApplicationManager.getApplication().getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
         if (daemonCodeAnalyzerSettings != null) {
           daemonCodeAnalyzerSettings.setImportHintEnabled(true);
         }
@@ -1640,7 +1640,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     actualText = StringUtil.convertLineSeparators(actualText);
 
-    if (!Comparing.equal(expectedText, actualText)) {
+    if (!Objects.equals(expectedText, actualText)) {
       if (loader.filePath != null) {
         if (loader.caretState.hasExplicitCaret()) {
           int offset = editor.getCaretModel().getOffset();
@@ -1906,9 +1906,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     DataContext dataContext = SimpleDataContext.getSimpleContext(
       CommonDataKeys.PSI_FILE.getName(), ObjectUtils.tryCast(context, PsiFile.class), SimpleDataContext.getProjectContext(getProject()));
     AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    return new ClassSearchEverywhereContributor(event) {{
+    ClassSearchEverywhereContributor contributor = new ClassSearchEverywhereContributor(event) {{
       myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
     }};
+    Disposer.register(getProjectDisposable(), contributor);
+    return contributor;
   }
 
   protected void bringRealEditorBack() {

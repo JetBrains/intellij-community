@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.jvm.source;
 
+import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.jvm.JvmElement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
@@ -14,10 +15,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.lang.jvm.source.JvmDeclarationSearcher.EP;
-
-public class JvmDeclarationSearch {
-
+public final class JvmDeclarationSearch {
   private JvmDeclarationSearch() {}
 
   /**
@@ -40,8 +38,7 @@ public class JvmDeclarationSearch {
    * In this case the result will consist of two {@link com.intellij.lang.jvm.JvmMethod JvmMethods} corresponding to respective method overload
    * (because in class file there will be two methods).
    */
-  @NotNull
-  public static Iterable<JvmElement> getElementsByIdentifier(@NotNull PsiElement identifierElement) {
+  public static @NotNull Iterable<JvmElement> getElementsByIdentifier(@NotNull PsiElement identifierElement) {
     PsiElement declaringElement = findDeclaringElement(identifierElement);
     if (declaringElement == null) {
       return Collections.emptyList();
@@ -51,8 +48,7 @@ public class JvmDeclarationSearch {
     }
   }
 
-  @Nullable
-  private static PsiElement findDeclaringElement(@NotNull PsiElement potentiallyIdentifyingElement) {
+  private static @Nullable PsiElement findDeclaringElement(@NotNull PsiElement potentiallyIdentifyingElement) {
     PsiElement parent = potentiallyIdentifyingElement.getParent();
     if (parent instanceof PsiNameIdentifierOwner
         && ((PsiNameIdentifierOwner)parent).getIdentifyingElement() == potentiallyIdentifyingElement) {
@@ -63,15 +59,13 @@ public class JvmDeclarationSearch {
     }
   }
 
-  @NotNull
-  private static Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement) {
-    List<JvmDeclarationSearcher> searchers = EP.allForLanguage(declaringElement.getLanguage());
+  private static @NotNull Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement) {
+    List<JvmDeclarationSearcher> searchers = JvmDeclarationSearcher.EP.allForLanguage(declaringElement.getLanguage());
     return searchers.isEmpty() ? Collections.emptyIterator() : iterateDeclarations(declaringElement, searchers);
   }
 
-  @NotNull
-  private static Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement,
-                                                          @NotNull Collection<? extends JvmDeclarationSearcher> searchers) {
+  private static @NotNull Iterator<JvmElement> iterateDeclarations(@NotNull PsiElement declaringElement,
+                                                                   @NotNull Collection<? extends JvmDeclarationSearcher> searchers) {
     return new FlatteningIterator<JvmDeclarationSearcher, JvmElement>(searchers.iterator()) {
       @Override
       public boolean hasNext() {
@@ -96,9 +90,8 @@ public class JvmDeclarationSearch {
    * In this case the result will consist of two {@link com.intellij.lang.jvm.JvmMethod JvmMethods} corresponding to respective method overload
    * (because in class file there will be two methods).
    */
-  @NotNull
-  public static Iterable<JvmElement> getImmediatelyContainingElements(@NotNull PsiElement place) {
-    List<JvmDeclarationSearcher> extensions = EP.allForLanguage(place.getLanguage());
+  public static @NotNull Iterable<JvmElement> getImmediatelyContainingElements(@NotNull PsiElement place) {
+    List<JvmDeclarationSearcher> extensions = JvmDeclarationSearcher.EP.allForLanguage(place.getLanguage());
     if (extensions.isEmpty()) {
       return Collections.emptyList();
     }

@@ -55,7 +55,9 @@
 
     <action id="ActivateNavBar" class="com.intellij.ide.navigationToolbar.ActivateNavigationBarAction" popup="true"/>
 
-    <action id="EditorIndentLineOrSelection" class="com.intellij.openapi.editor.actions.IndentLineOrSelectionAction"/>
+    <action id="EditorIndentLineOrSelection" class="com.intellij.openapi.editor.actions.IndentLineOrSelectionAction">
+      <add-to-group group-id="EditorActions"/>
+    </action>
 
     <action id="BraceOrQuoteOut" class="com.intellij.codeInsight.editorActions.BraceOrQuoteOutAction"/>
 
@@ -219,9 +221,7 @@
 
     <!-- Go To -->
     <group id="GoToTargetEx">
-      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction">
-        <override-text place="MainMenu"/>
-      </action>
+      <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
       <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction">
         <override-text place="MainMenu"/>
       </action>
@@ -1397,7 +1397,8 @@
     </action>
     <group id="TodoMainGroup">
       <add-to-group group-id="Other.KeymapGroup"/>
-      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" popup="true">
+      <group id="TodoViewGroupByGroup" class="com.intellij.ide.todo.TodoPanel$GroupByActionGroup" icon="AllIcons.Actions.GroupBy"
+             popup="true">
         <separator text="Group By"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowModulesAction" id="TodoViewGroupByShowModules"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>

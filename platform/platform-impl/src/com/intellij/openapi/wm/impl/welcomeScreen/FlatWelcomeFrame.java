@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
+
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
@@ -12,13 +14,23 @@ import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginDropHandler;
+import com.intellij.ide.plugins.newui.VerticalLayout;
 import com.intellij.idea.SplashManager;
 import com.intellij.jdkEx.JdkEx;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,11 +40,18 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -42,7 +61,18 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
-import com.intellij.ui.*;
+import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.BalloonLayout;
+import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.ErrorLabel;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBCardLayout;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ListSpeedSearch;
+import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBSlidingPanel;
@@ -56,12 +86,47 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MouseEventAdapter;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.FocusTraversalPolicy;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
@@ -69,19 +134,11 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.awt.datatransfer.Transferable;
-import java.awt.dnd.*;
-import java.awt.event.*;
-import java.io.File;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.function.Consumer;
 
-import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
+import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -237,7 +294,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   protected String getWelcomeFrameTitle() {
-    String title = "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
+    String title = IdeBundle.message("label.welcome.to.0", ApplicationNamesInfo.getInstance().getFullProductName());
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
@@ -428,8 +485,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
       toolbar.add(createErrorsLink());
       toolbar.add(createEventsLink());
-      toolbar.add(createActionLink("Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE, AllIcons.General.GearPlain, !registeredVisible));
-      toolbar.add(createActionLink("Get Help", IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
+      toolbar.add(createActionLink(IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
+                                   AllIcons.General.GearPlain, !registeredVisible));
+      toolbar.add(createActionLink(IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, false));
 
       panel.add(toolbar, BorderLayout.EAST);
 
@@ -448,12 +506,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     private JComponent createEventsLink() {
       final Ref<ActionLink> actionLinkRef = new Ref<>();
-      final JComponent panel = createActionLink("Events", AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ((WelcomeBalloonLayoutImpl)myBalloonLayout).showPopup();
-        }
-      });
+      final JComponent panel =
+        createActionLink(IdeBundle.message("action.Events"), AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            ((WelcomeBalloonLayoutImpl)myBalloonLayout).showPopup();
+          }
+        });
       panel.setVisible(false);
       myEventListener = types -> {
         NotificationType type = null;
@@ -484,7 +543,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
-    private JComponent createActionLink(final String text, final String groupId, Icon icon, boolean focusListOnLeft) {
+    private JComponent createActionLink(@Nls String text, final String groupId, Icon icon, boolean focusListOnLeft) {
       final Ref<ActionLink> ref = new Ref<>(null);
       AnAction action = new AnAction() {
         @Override
@@ -503,7 +562,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel;
     }
 
-    private JComponent createActionLink(String text, Icon icon, Ref<? super ActionLink> ref, AnAction action) {
+    private JComponent createActionLink(@Nls String text, Icon icon, Ref<? super ActionLink> ref, AnAction action) {
       ActionLink link = new ActionLink(text, icon, action);
       ref.set(link);
       // Don't allow focus, as the containing panel is going to focusable.
@@ -522,9 +581,35 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
 
-      GridBag gc = new GridBag();
-      JPanel panel = new JPanel(new GridBagLayout());
+      JPanel mainPanel = new JPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
+      mainPanel.setOpaque(false);
+
+      JPanel panel = new JPanel(new VerticalLayout(JBUI.scale(5))) {
+        Component firstAction = null;
+
+        @Override
+        public Component add(Component comp) {
+          Component cmp = super.add(comp);
+          if(firstAction == null) {
+            firstAction = cmp;
+          }
+          return cmp;
+        }
+
+        @Override
+        public void addNotify() {
+          super.addNotify();
+
+          if(firstAction != null) {
+            onFirstActionShown(firstAction);
+          }
+
+        }
+      };
       panel.setOpaque(false);
+
+      extendActionsGroup(mainPanel);
+      mainPanel.add(panel);
 
       myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
@@ -555,16 +640,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
 
-          panel.add(Box.createHorizontalGlue(), gc.nextLine().next().fillCellHorizontally());
-          panel.add(button, gc.next().anchor(GridBagConstraints.LINE_START));
-          panel.add(Box.createHorizontalGlue(), gc.next().fillCellHorizontally());
+          panel.add(button);
 
           myTouchbarActions.add(action);
         }
       }
 
-      panel.add(Box.createGlue(), gc.nextLine().next().fillCell().anchor(GridBagConstraints.PAGE_END).coverLine(3).weighty(1.0));
-      return panel;
+      return mainPanel;
     }
 
     @Nullable
@@ -597,6 +679,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
 
       protected final class AccessibleJActionLinkPanel extends AccessibleContextDelegate {
+        private final AccessibleJComponent myAccessibleHelper = new AccessibleJComponent() {};
+
         AccessibleJActionLinkPanel(AccessibleContext context) {
           super(context);
         }
@@ -610,6 +694,16 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         public AccessibleRole getAccessibleRole() {
           return AccessibleRole.PUSH_BUTTON;
         }
+
+        @Override
+        public int getAccessibleChildrenCount() {
+          return myAccessibleHelper.getAccessibleChildrenCount();
+        }
+
+        @Override
+        public Accessible getAccessibleChild(int i) {
+          return myAccessibleHelper.getAccessibleChild(i);
+        }
       }
     }
 
@@ -617,7 +711,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
         final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, () -> goBack(), this);
         final Runnable onDone = () -> {
-          setTitle("New Project");
+          setTitle(ProjectBundle.message("dialog.title.new.project"));
           final JBList<AnAction> list = panel.second;
           ScrollingUtil.ensureSelectionExists(list);
           final ListSelectionListener[] listeners =
@@ -843,6 +937,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
   }
 
+  protected void extendActionsGroup(JPanel panel) {
+  }
+
+  protected void onFirstActionShown(@NotNull Component action) {
+  }
+
   @Override
   public void showPluginUpdates(@NotNull Runnable callback) {
     myScreen.showPluginUpdates(callback);
@@ -946,7 +1046,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
          AnAction upper = model.get(index - 1);
          if (getParentGroupName(upper) == null && parentGroupName != null) return true;
 
-         return !Comparing.equal(getParentGroupName(upper), parentGroupName);
+         return !Objects.equals(getParentGroupName(upper), parentGroupName);
        }
      })
 

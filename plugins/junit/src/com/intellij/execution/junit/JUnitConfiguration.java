@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -631,20 +631,20 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     public boolean equals(final Object object) {
       if (!(object instanceof Data)) return false;
       final Data second = (Data)object;
-      return Comparing.equal(TEST_OBJECT, second.TEST_OBJECT) &&
-             Comparing.equal(getMainClassName(), second.getMainClassName()) &&
-             Comparing.equal(getPackageName(), second.getPackageName()) &&
-             Comparing.equal(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
-             Comparing.equal(getWorkingDirectory(), second.getWorkingDirectory()) &&
-             Comparing.equal(VM_PARAMETERS, second.VM_PARAMETERS) &&
-             Comparing.equal(PARAMETERS, second.PARAMETERS) &&
+      return Objects.equals(TEST_OBJECT, second.TEST_OBJECT) &&
+             Objects.equals(getMainClassName(), second.getMainClassName()) &&
+             Objects.equals(getPackageName(), second.getPackageName()) &&
+             Objects.equals(getMethodNameWithSignature(), second.getMethodNameWithSignature()) &&
+             Objects.equals(getWorkingDirectory(), second.getWorkingDirectory()) &&
+             Objects.equals(VM_PARAMETERS, second.VM_PARAMETERS) &&
+             Objects.equals(PARAMETERS, second.PARAMETERS) &&
              Comparing.equal(myPattern, second.myPattern) &&
-             Comparing.equal(FORK_MODE, second.FORK_MODE) &&
-             Comparing.equal(DIR_NAME, second.DIR_NAME) &&
-             Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
+             Objects.equals(FORK_MODE, second.FORK_MODE) &&
+             Objects.equals(DIR_NAME, second.DIR_NAME) &&
+             Objects.equals(CATEGORY_NAME, second.CATEGORY_NAME) &&
              Arrays.equals(UNIQUE_ID, second.UNIQUE_ID) &&
-             Comparing.equal(TAGS, second.TAGS) &&
-             Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
+             Objects.equals(TAGS, second.TAGS) &&
+             Objects.equals(REPEAT_MODE, second.REPEAT_MODE) &&
              REPEAT_COUNT == second.REPEAT_COUNT;
     }
 

@@ -5,6 +5,8 @@ import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -26,6 +28,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Set;
 
-public final class XmlTagNameSynchronizer implements CommandListener, EditorFactoryListener {
+public final class XmlTagNameSynchronizer implements EditorFactoryListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
@@ -57,24 +60,36 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
 
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
 
-  private XmlTagNameSynchronizer() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
-  }
+  private XmlTagNameSynchronizer() {}
 
-  @Override
-  public void editorCreated(@NotNull EditorFactoryEvent event) {
-    Editor editor = event.getEditor();
+  private static void createSynchronizerFor(Editor editor) {
     Project project = editor.getProject();
     if (project == null || !(editor instanceof EditorImpl)) {
       return;
     }
-
     Document document = editor.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     Language language = findXmlLikeLanguage(project, file);
     if (language != null) {
       new TagNameSynchronizer((EditorImpl)editor, project, language).listenForDocumentChanges();
     }
+  }
+
+  private static void recreateSynchronizers() {
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      TagNameSynchronizer synchronizer = editor.getUserData(SYNCHRONIZER_KEY);
+      if (synchronizer != null) {
+        Disposer.dispose(synchronizer);
+      }
+      createSynchronizerFor(editor);
+    }
+  }
+
+  private static TagNameSynchronizer @NotNull [] findSynchronizers(final Document document) {
+    if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
+    final Editor[] editors = EditorFactory.getInstance().getEditors(document);
+
+    return ContainerUtil.mapNotNull(editors, editor -> editor.getUserData(SYNCHRONIZER_KEY), TagNameSynchronizer.EMPTY);
   }
 
   private static Language findXmlLikeLanguage(Project project, VirtualFile file) {
@@ -90,21 +105,6 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     return null;
   }
 
-  private static TagNameSynchronizer @NotNull [] findSynchronizers(final Document document) {
-    if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
-    final Editor[] editors = EditorFactory.getInstance().getEditors(document);
-
-    return ContainerUtil.mapNotNull(editors, editor -> editor.getUserData(SYNCHRONIZER_KEY), TagNameSynchronizer.EMPTY);
-  }
-
-  @Override
-  public void beforeCommandFinished(@NotNull CommandEvent event) {
-    final TagNameSynchronizer[] synchronizers = findSynchronizers(event.getDocument());
-    for (TagNameSynchronizer synchronizer : synchronizers) {
-      synchronizer.beforeCommandFinished();
-    }
-  }
-
   public static void runWithoutCancellingSyncTagsEditing(@NotNull Document document, @NotNull Runnable runnable) {
     document.putUserData(SKIP_COMMAND, Boolean.TRUE);
     try {
@@ -115,7 +115,36 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
     }
   }
 
-  private static class TagNameSynchronizer implements DocumentListener {
+  public static class MyEditorFactoryListener implements EditorFactoryListener {
+    @Override
+    public void editorCreated(@NotNull EditorFactoryEvent event) {
+      createSynchronizerFor(event.getEditor());
+    }
+  }
+
+  public static class MyCommandListener implements CommandListener {
+    @Override
+    public void beforeCommandFinished(@NotNull CommandEvent event) {
+      final TagNameSynchronizer[] synchronizers = findSynchronizers(event.getDocument());
+      for (TagNameSynchronizer synchronizer : synchronizers) {
+        synchronizer.beforeCommandFinished();
+      }
+    }
+  }
+
+  public static class MyDynamicPluginListener implements DynamicPluginListener {
+    @Override
+    public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      recreateSynchronizers();
+    }
+
+    @Override
+    public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      recreateSynchronizers();
+    }
+  }
+
+  private static class TagNameSynchronizer implements DocumentListener, Disposable {
     private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
     private static final TagNameSynchronizer[] EMPTY = new TagNameSynchronizer[0];
     private final PsiDocumentManagerBase myDocumentManager;
@@ -131,10 +160,14 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       myProject = project;
     }
 
+    @Override
+    public void dispose() {
+      myEditor.putUserData(SYNCHRONIZER_KEY, null);
+    }
+
     private void listenForDocumentChanges() {
-      final Disposable disposable = myEditor.getDisposable();
-      final Document document = myEditor.getDocument();
-      document.addDocumentListener(this, disposable);
+      Disposer.register(myEditor.getDisposable(), this);
+      myEditor.getDocument().addDocumentListener(this, this);
       myEditor.putUserData(SYNCHRONIZER_KEY, this);
     }
 
@@ -293,7 +326,8 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       final int offset = leader.getStartOffset();
       PsiElement element = findNameElement(InjectedLanguageUtil.findElementAtNoCommit(file, offset));
       TextRange support = findSupportRange(element);
-      if (!isSupportRangeValid(document, leaderRange, support) && file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
+      if (!isSupportRangeValid(document, leaderRange, support) &&
+          file.getViewProvider() instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
         element = findNameElement(file.getViewProvider().findElementAt(offset, myLanguage));
         support = findSupportRange(element);
       }
@@ -302,7 +336,7 @@ public final class XmlTagNameSynchronizer implements CommandListener, EditorFact
       return document.createRangeMarker(support.getStartOffset(), support.getEndOffset(), true);
     }
 
-    private PsiElement findNameElement(@Nullable PsiElement element) {
+    private static PsiElement findNameElement(@Nullable PsiElement element) {
       return element instanceof OuterLanguageElement ? TemplateLanguageUtil.getSameLanguageTreeNext(element) : element;
     }
 

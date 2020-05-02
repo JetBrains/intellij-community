@@ -108,7 +108,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     String path = myDirectoryField.getText();
-    new Task.Modal(myProject, "Creating Destination Directory", true) {
+    new Task.Modal(myProject, DvcsBundle.message("progress.title.creating.destination.directory"), true) {
       private ValidationInfo error = null;
 
       @Override
@@ -251,7 +251,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private void schedule(@NotNull String serviceDisplayName, @NotNull RepositoryListLoader loader) {
-    mySpinnerProgressManager.run(new Task.Backgroundable(myProject, "Not Visible") {
+    mySpinnerProgressManager.run(new Task.Backgroundable(myProject, DvcsBundle.message("progress.title.visible")) {
       private final List<String> myNewRepositories = new ArrayList<>();
       private final List<RepositoryListLoadingException> myErrors = new ArrayList<>();
 

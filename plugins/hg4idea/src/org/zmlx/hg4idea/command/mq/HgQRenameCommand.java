@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -49,8 +50,8 @@ public class HgQRenameCommand {
       return;
     }
     final String oldName = patchInfo.getName();
-    final String newName = Messages.showInputDialog(project, String.format("Enter a new name for %s patch:", oldName),
-                                                    "Rename Patch", Messages.getQuestionIcon(), "", new HgPatchReferenceValidator(
+    final String newName = Messages.showInputDialog(project, HgBundle.message("action.hg4idea.QRename.enter.patch.name", oldName),
+                                                    HgBundle.message("action.hg4idea.QRename.title"), Messages.getQuestionIcon(), "", new HgPatchReferenceValidator(
         myRepository));
     if (newName != null) {
       performPatchRename(myRepository, oldName, newName);
@@ -66,8 +67,8 @@ public class HgQRenameCommand {
       HgCommandExecutor executor = new HgCommandExecutor(project);
       HgCommandResult result = executor.executeInCurrentThread(repository.getRoot(), "qrename", Arrays.asList(oldName, newName));
       if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-        new HgCommandResultNotifier(project).notifyError(result, "Qrename command failed",
-                                                         "Could not rename patch " + oldName + " to " + newName);
+        new HgCommandResultNotifier(project).notifyError(result, HgBundle.message("action.hg4idea.QRename.error"),
+                                                         HgBundle.message("action.hg4idea.QRename.error.msg", oldName, newName));
       }
       repository.update();
     });

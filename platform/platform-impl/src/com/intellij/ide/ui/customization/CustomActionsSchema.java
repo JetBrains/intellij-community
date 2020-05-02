@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -83,7 +83,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     for (CustomizableActionGroupProvider provider : CustomizableActionGroupProvider.EP_NAME.getExtensions()) {
       provider.registerGroups(registrar);
     }
-    Collections.sort(extList, (o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
+    extList.sort((o1, o2) -> StringUtil.naturalCompare(o1.second, o2.second));
     for (Couple<String> couple : extList) {
       myIdToName.put(couple.first, couple.second);
     }
@@ -95,7 +95,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     ourAdditionalIdToName.put(itemId, itemName);
 
     // Need to sync new items with global instance (if it has been created)
-    CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+    CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionSchema != null) {
       customActionSchema.myIdToName.put(itemId, itemName);
     }
@@ -105,7 +105,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     ourAdditionalIdToName.remove(itemId);
 
     // Need to sync new items with global instance (if it has been created)
-    CustomActionsSchema customActionSchema = ServiceManager.getServiceIfCreated(CustomActionsSchema.class);
+    CustomActionsSchema customActionSchema = ApplicationManager.getApplication().getServiceIfCreated(CustomActionsSchema.class);
     if (customActionSchema != null) {
         customActionSchema.myIdToName.remove(itemId);
     }
@@ -147,7 +147,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
   }
 
   private void resortActions() {
-    Collections.sort(myActions, ActionUrlComparator.INSTANCE);
+    myActions.sort(ActionUrlComparator.INSTANCE);
   }
 
   public boolean isModified(CustomActionsSchema schema) {
@@ -352,7 +352,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       int index = 0;
       if (groupPath.size() <= actionUrl.getGroupPath().size()) {
         while (index < groupPath.size()) {
-          if (!Comparing.equal(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
+          if (!Objects.equals(groupPath.get(index), actionUrl.getGroupPath().get(index))) {
             break;
           }
           index++;

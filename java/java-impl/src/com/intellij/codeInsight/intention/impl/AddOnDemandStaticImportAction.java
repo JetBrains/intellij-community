@@ -96,7 +96,19 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       final PsiJavaCodeReferenceElement copy = JavaPsiFacade.getElementFactory(refNameElement.getProject())
         .createReferenceFromText(refNameElement.getText(), refExpr);
       final PsiElement target = copy.resolve();
-      if (target != null && PsiTreeUtil.getParentOfType(target, PsiClass.class) != psiClass) return null;
+      if (target != null) {
+        PsiClass parentClass = PsiTreeUtil.getParentOfType(target, PsiClass.class);
+        if (parentClass != psiClass) {
+          if (parentClass == null || parentClass.isPhysical()) {
+            return null;
+          }
+          // In preview mode we could resolve to real class instead of non-physical one
+          String qualifiedName = parentClass.getQualifiedName();
+          if (qualifiedName == null || !qualifiedName.equals(psiClass.getQualifiedName())) {
+            return null;
+          }
+        }
+      }
       PsiElement resolve = ((PsiJavaCodeReferenceElement)gParent).resolve();
       if (resolve instanceof PsiMember && !((PsiMember)resolve).hasModifierProperty(PsiModifier.STATIC)) return null;
     }

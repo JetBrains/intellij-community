@@ -34,7 +34,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -131,7 +130,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
             toolWindows.add(tw);
           }
         }
-        Collections.sort(toolWindows, (o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
+        toolWindows.sort((o1, o2) -> StringUtil.naturalCompare(o1.getStripeTitle(), o2.getStripeTitle()));
 
         JBList<ToolWindow> list = new JBList<>(toolWindows);
         list.setCellRenderer(new ListCellRenderer<ToolWindow>() {

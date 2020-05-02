@@ -18,6 +18,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -70,18 +71,20 @@ public final class TerminalView {
 
   private ToolWindow myToolWindow;
   private final Project myProject;
-  private final LocalTerminalDirectRunner myTerminalRunner;
+  private final AbstractTerminalRunner<?> myTerminalRunner;
   private TerminalDockContainer myDockContainer;
   private final Map<JBTerminalWidget, TerminalContainer> myContainerByWidgetMap = new HashMap<>();
 
   @NotNull
-  public LocalTerminalDirectRunner getTerminalRunner() {
+  public AbstractTerminalRunner<?> getTerminalRunner() {
     return myTerminalRunner;
   }
 
   public TerminalView(@NotNull Project project) {
     myProject = project;
-    myTerminalRunner = LocalTerminalDirectRunner.createTerminalRunner(myProject);
+    myTerminalRunner = ApplicationManager.getApplication()
+      .getService(DefaultTerminalRunnerFactory.class)
+      .create(project);
   }
 
   public static TerminalView getInstance(@NotNull Project project) {

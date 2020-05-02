@@ -18,14 +18,17 @@ import org.jetbrains.annotations.TestOnly
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 
 const val EP_NAME = "com.intellij.filetype.prebuiltStubsProvider"
 
-val prebuiltStubsProvider = FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
+val prebuiltStubsProvider: FileTypeExtension<PrebuiltStubsProvider> =
+  FileTypeExtension<PrebuiltStubsProvider>(EP_NAME)
 
 interface PrebuiltStubsProvider {
+  /**
+   * Tries to find stub for [fileContent] in this provider.
+   */
   fun findStub(fileContent: FileContent): SerializedStubTree?
 }
 
@@ -60,19 +63,18 @@ open class HashCodeExternalizers : DataExternalizer<HashCode> {
   }
 }
 
-private val IDE_SERIALIZATION_MANAGER = SerializationManagerEx.getInstanceEx()
-
-class FullStubExternalizer : SerializedStubTreeDataExternalizer(true, IDE_SERIALIZATION_MANAGER, StubForwardIndexExternalizer.createFileLocalExternalizer(IDE_SERIALIZATION_MANAGER))
+class GeneratingFullStubExternalizer : SerializedStubTreeDataExternalizer(true,
+                                                                          SerializationManagerEx.getInstanceEx(),
+                                                                          StubForwardIndexExternalizer.createFileLocalExternalizer())
 
 abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubTree>(), PrebuiltStubsProvider {
-
-  private var mySerializationManager: SerializationManagerImpl? = null
+  private lateinit var mySerializationManager: SerializationManagerImpl
 
   protected abstract val stubVersion: Int
 
   override val indexName: String get() = SDK_STUBS_STORAGE_NAME
 
-  override val indexExternalizer: FullStubExternalizer get() = FullStubExternalizer()
+  override val indexExternalizer: SerializedStubTreeDataExternalizer get() = SerializedStubTreeDataExternalizer(true, mySerializationManager, StubForwardIndexExternalizer.createFileLocalExternalizer())
 
   companion object {
     const val PREBUILT_INDICES_PATH_PROPERTY = "prebuilt_indices_path"
@@ -112,16 +114,10 @@ abstract class PrebuiltStubsProviderBase : PrebuiltIndexProvider<SerializedStubT
 
   override fun findStub(fileContent: FileContent): SerializedStubTree? {
     try {
-      val stubTree = get(fileContent)
-      if (stubTree != null) {
-        val newSerializationManager = IDE_SERIALIZATION_MANAGER
-        val newForwardIndexSerializer = StubForwardIndexExternalizer.getIdeUsedExternalizer(newSerializationManager)
-        val indexedStubsSerializer = StubForwardIndexExternalizer.createFileLocalExternalizer(mySerializationManager!!)
-        return stubTree.reSerialize(mySerializationManager!!, newSerializationManager, indexedStubsSerializer, newForwardIndexSerializer)
-      }
+      return get(fileContent)
     }
-    catch (e: IOException) {
-      LOG.error("Can't re-serialize stub tree", e)
+    catch (e: Exception) {
+      LOG.error("Can't get prebuilt stub tree from ${this.javaClass.name}", e)
     }
     return null
   }

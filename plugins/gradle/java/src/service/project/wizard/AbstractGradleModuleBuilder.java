@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.ExternalStateComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -212,9 +211,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
     modulePropertyManager.setExternalId(GradleConstants.SYSTEM_ID);
     // set linked project path to be able to map the module with the module data obtained from the import
-    ExternalStateComponent moduleState = modulePropertyManager.getState();
-    moduleState.setRootProjectPath(rootProjectPath);
-    moduleState.setLinkedProjectPath(rootProjectPath);
+    modulePropertyManager.setRootProjectPath(rootProjectPath);
+    modulePropertyManager.setLinkedProjectPath(rootProjectPath);
 
     final Project project = module.getProject();
     FileDocumentManager.getInstance().saveAllDocuments();

@@ -4,6 +4,7 @@ package com.intellij.dvcs.actions;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -48,7 +49,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(branchNames)
-      .setTitle("Select Branch to Compare")
+      .setTitle(DvcsBundle.message("popup.title.select.branch.to.compare"))
       .setItemChosenCallback(selected -> showDiffWithBranchUnderModalProgress(project, file, presentableRevisionName, selected))
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
@@ -86,7 +87,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
                                                     @NotNull final VirtualFile file,
                                                     @NotNull final String head,
                                                     @NotNull final String compare) {
-    new Task.Backgroundable(project, "Collecting Changes...", true) {
+    new Task.Backgroundable(project, DvcsBundle.message("progress.title.collecting.changes"), true) {
       private Collection<Change> changes;
 
       @Override
@@ -95,7 +96,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
           changes = getDiffChanges(project, file, compare);
         }
         catch (VcsException e) {
-          VcsNotifier.getInstance(project).notifyImportantWarning("Couldn't compare with branch", String
+          VcsNotifier.getInstance(project).notifyImportantWarning(DvcsBundle.message("notification.title.couldn.t.compare.with.branch"), String
             .format("Couldn't compare " + DvcsUtil.fileOrFolder(file) + " [%s] with branch [%s];\n %s", file, compare, e.getMessage()));
         }
       }

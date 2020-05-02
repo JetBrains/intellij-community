@@ -19,7 +19,6 @@ import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -150,7 +149,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       if (o == null || getClass() != o.getClass()) return false;
 
       TemplateKey that = (TemplateKey)o;
-      return Comparing.equal(groupName, that.groupName) && Comparing.equal(key, that.key);
+      return Objects.equals(groupName, that.groupName) && Objects.equals(key, that.key);
     }
 
     public int hashCode() {
@@ -275,7 +274,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
 
     doLoadTemplates(mySchemeManager.loadSchemes());
 
-    Macro.EP_NAME.addExtensionPointListener(() -> {
+    Macro.EP_NAME.addChangeListener(() -> {
       for (TemplateImpl template : myTemplates.values()) {
         template.dropParsedData();
       }
@@ -284,8 +283,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       }
     }, ApplicationManager.getApplication());
 
-    DefaultLiveTemplateEP.EP_NAME.addExtensionPointListener(mySchemeManager::reload,
-                                                            ApplicationManager.getApplication());
+    DefaultLiveTemplateEP.EP_NAME.addChangeListener(mySchemeManager::reload,
+                                                    ApplicationManager.getApplication());
   }
 
   private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {

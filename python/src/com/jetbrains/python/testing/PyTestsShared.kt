@@ -284,10 +284,10 @@ data class ConfigurationTarget(@ConfigField override var target: String,
    */
   fun checkValid() {
     if (targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
-      throw RuntimeConfigurationWarning("Target not provided")
+      throw RuntimeConfigurationWarning(PyBundle.message("python.testing.target.not.provided"))
     }
     if (targetType == PyRunTargetVariant.PYTHON && !isWellFormed()) {
-      throw RuntimeConfigurationError("Provide a qualified name of function, class or a module")
+      throw RuntimeConfigurationError(PyBundle.message("python.testing.provide.qualified.name"))
     }
   }
 

@@ -273,6 +273,7 @@
     <keyboard-shortcut first-keystroke="meta B"/>
     <mouse-shortcut keystroke="meta button1"/>
     <mouse-shortcut keystroke="Force touch" />
+    <mouse-shortcut keystroke="button2" />
   </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="control shift B"/>

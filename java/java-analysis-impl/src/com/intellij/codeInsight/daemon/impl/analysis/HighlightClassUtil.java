@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Checks and Highlights problems with classes
@@ -73,11 +73,27 @@ public class HighlightClassUtil {
       return null;
     }
 
-    String baseClassName = HighlightUtil.formatClass(aClass, false);
-    String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
-    String messageKey = aClass instanceof PsiEnumConstantInitializer || aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant ?
-                 "class.must.implement.method" : "class.must.be.abstract";
-    String message = JavaErrorBundle.message(messageKey, baseClassName, methodName, HighlightUtil.formatClass(superClass, false));
+    final String messageKey;
+    final String referenceName;
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      messageKey = "enum.constant.must.implement.method";
+
+      final PsiEnumConstantInitializer enumConstant = (PsiEnumConstantInitializer)aClass;
+      referenceName = enumConstant.getEnumConstant().getName();
+    }
+    else if (aClass.isRecord() || implementsFixElement instanceof PsiEnumConstant) {
+      messageKey = "class.must.implement.method";
+      referenceName = HighlightUtil.formatClass(aClass, false);
+    }
+    else {
+      messageKey = "class.must.be.abstract";
+      referenceName = HighlightUtil.formatClass(aClass, false);
+    }
+
+    final String message = JavaErrorBundle.message(messageKey,
+                                                   referenceName,
+                                                   JavaHighlightUtil.formatMethod(abstractMethod),
+                                                   HighlightUtil.formatClass(superClass, false));
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     final PsiMethod anyMethodToImplement = ClassUtil.getAnyMethodToImplement(aClass);
@@ -90,8 +106,9 @@ public class HighlightClassUtil {
         QuickFixAction.registerQuickFixActions(errorResult, null, JvmElementActionFactories.createModifierActions(anyMethodToImplement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true)));
       }
     }
-    if (!(aClass instanceof PsiAnonymousClass) && 
+    if (!(aClass instanceof PsiAnonymousClass) &&
         !aClass.isEnum()
+        && aClass.getModifierList() != null
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
       QuickFixAction.registerQuickFixAction(
         errorResult,
@@ -103,7 +120,7 @@ public class HighlightClassUtil {
 
   static HighlightInfo checkClassMustBeAbstract(@NotNull PsiClass aClass, @NotNull TextRange textRange) {
     if (aClass.isEnum()) {
-      if (hasEnumConstantsWithInitializer(aClass)) return null; 
+      if (hasEnumConstantsWithInitializer(aClass)) return null;
     }
     else if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null) {
       return null;
@@ -384,7 +401,7 @@ public class HighlightClassUtil {
     PsiModifierList modifierList = aClass.getModifierList();
     if (modifierList != null) {
       for (PsiElement element = modifierList.getFirstChild(); element != null; element = element.getNextSibling()) {
-        if (Comparing.equal(element.getText(), PsiModifier.STATIC)) {
+        if (Objects.equals(element.getText(), PsiModifier.STATIC)) {
           context = element;
           break;
         }
@@ -758,7 +775,21 @@ public class HighlightClassUtil {
             String description = JavaErrorBundle.message("private.symbol",
                                                          HighlightUtil.formatClass(base),
                                                          HighlightUtil.formatClass(baseClass));
-            infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description).create();
+            final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(extendRef)
+              .descriptionAndTooltip(description)
+              .create();
+
+            QuickFixAction.registerQuickFixAction(
+              info,
+              QUICK_FIX_FACTORY.createModifierListFix(base, PsiModifier.PUBLIC, true, false)
+            );
+            QuickFixAction.registerQuickFixAction(
+              info,
+              QUICK_FIX_FACTORY.createModifierListFix(base, PsiModifier.PROTECTED, true, false)
+            );
+
+            infos[0] = info;
             return;
           }
 

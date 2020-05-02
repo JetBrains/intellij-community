@@ -188,19 +188,19 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public final Self unique(@NotNull final Function<? super T, Object> identity) {
-    return interceptTraversal(traversal -> traversal.unique(identity));
+    return intercept(traversal -> traversal.unique(identity));
   }
 
   /**
    * Configures the traverser to cache its structure.
    * <p/>
    * This property is not reset by {@code reset()} call.
-   * @see TreeTraversal#cached()
+   * @see TreeTraversal#cached(Map)
    */
   @NotNull
   public final Self cached() {
     IdentityHashMap<Object, Object> cache = new IdentityHashMap<>();
-    return interceptTraversal(traversal -> traversal.cached(cache));
+    return intercept(traversal -> traversal.cached(cache));
   }
 
   /**
@@ -211,7 +211,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    */
   @NotNull
   public Self onRange(@NotNull final Condition<? super T> rangeCondition) {
-    return interceptTraversal(traversal -> traversal.onRange(rangeCondition));
+    return intercept(traversal -> traversal.onRange(rangeCondition));
   }
 
   /**
@@ -247,7 +247,7 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
    * @see FilteredTraverserBase#onRange(Condition)
    */
   @NotNull
-  public final Self interceptTraversal(@NotNull Function<? super TreeTraversal, ? extends TreeTraversal> transform) {
+  public final Self intercept(@NotNull Function<? super TreeTraversal, ? extends TreeTraversal> transform) {
     return newInstance(myMeta.interceptTraversal(transform));
   }
 
@@ -464,28 +464,35 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     private Condition<? super T> buildExpandConditionForChildren(T parent) {
-      // implements: or2(forceExpandAndSkip, not(childFilter));
+      // implements: or(forceDisregard, not(regard));
       // and handles JBIterable.StatefulTransform and EdgeFilter conditions
-      Cond<T> copy = null;
-      boolean invert = true;
-      Cond<T> c = regard;
+      //noinspection unchecked
+      Condition<? super T>[] impls = new Condition[regard.length + forceDisregard.length];
+      int count = 0;
+      boolean isRegard = false;
+      Cond<T> c = forceDisregard;
       while (c != null) {
-        Condition<? super T> impl = JBIterable.Stateful.copy(c.impl);
-        if (impl != (invert ? Conditions.alwaysTrue() : Conditions.alwaysFalse())) {
-          copy = new Cond<>(invert ? not(impl) : impl, copy);
+        if (c.impl != (isRegard ? Conditions.alwaysTrue() : Conditions.alwaysFalse())) {
+          Condition<? super T> impl = JBIterable.Stateful.copy(c.impl);
           if (impl instanceof EdgeFilter) {
             ((EdgeFilter)impl).edgeSource = parent;
           }
+          impls[count++] = isRegard ? not(impl) : impl;
         }
         if (c.next == null) {
-          c = invert ? forceDisregard : null;
-          invert = false;
+          c = isRegard ? null : regard;
+          isRegard = true;
         }
         else {
           c = c.next;
         }
       }
-      return copy == null ? Conditions.alwaysFalse() : copy.or();
+      if (count <= 0) return Conditions.alwaysFalse();
+      Cond<T> result = null;
+      for (int i = 0; i < count; i++) {
+        result = new Cond<>(impls[count - i - 1], result);
+      }
+      return result.or();
     }
 
   }
@@ -496,14 +503,20 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
 
     final Condition<? super T> impl;
     final Cond<T> next;
+    final int length;
 
     Cond(Condition<? super T> impl, Cond<T> next) {
       this.impl = impl;
       this.next = next;
+      this.length = next == null ? 1 : next.length + 1;
     }
 
     Cond<T> append(Condition<? super T> impl) {
-      return new Cond<>(impl, this);
+      Cond<T> result = new Cond<>(impl, null);
+      for (Cond<T> o : toArray(true)) {
+        result = new Cond<>(o.impl, result);
+      }
+      return result;
     }
 
     boolean valueAnd(T t) {
@@ -536,6 +549,15 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
         result = result != null && c.impl != Conditions.alwaysTrue() ? null : result;
       }
       return result == null ? (Condition<T>)this::valueAnd : Conditions.alwaysTrue();
+    }
+
+    /** @noinspection SameParameterValue*/
+    Cond<T>[] toArray(boolean inverse) {
+      //noinspection unchecked
+      Cond<T>[] result = new Cond[length];
+      Cond<T> cur = this;
+      for (int i = 0; i < length; i++, cur = cur.next) result[inverse ? length - i - 1 : i] = cur;
+      return result;
     }
 
     @Override

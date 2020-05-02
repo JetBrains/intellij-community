@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -48,14 +35,14 @@ public class InspectionProfileWrapper {
     myProfile = profile;
   }
 
-  public static void checkInspectionsDuplicates(InspectionToolWrapper @NotNull [] toolWrappers) {
+  public static void checkInspectionsDuplicates(@NotNull List<InspectionToolWrapper<?, ?>> toolWrappers) {
     if (alreadyChecked) {
       return;
     }
 
     alreadyChecked = true;
-    Set<InspectionProfileEntry> uniqueTools = new THashSet<>(toolWrappers.length);
-    for (InspectionToolWrapper toolWrapper : toolWrappers) {
+    Set<InspectionProfileEntry> uniqueTools = new THashSet<>(toolWrappers.size());
+    for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
       if (!uniqueTools.add(toolWrapper.getTool())) {
         LOG.error("Inspection " + toolWrapper.getDisplayName() + " (" + toolWrapper.getTool().getClass() + ") already registered");
@@ -67,17 +54,15 @@ public class InspectionProfileWrapper {
     return myProfile.isToolEnabled(key, element);
   }
 
-  @NotNull
-  public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
+  public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey inspectionToolKey, PsiElement element) {
     return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 
-  public InspectionToolWrapper getInspectionTool(final String shortName, PsiElement element) {
+  public InspectionToolWrapper<?, ?> getInspectionTool(final String shortName, PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
   }
 
-  @NotNull
-  public InspectionProfileImpl getInspectionProfile() {
+  public @NotNull InspectionProfileImpl getInspectionProfile() {
     return myProfile;
   }
 }

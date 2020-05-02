@@ -3,8 +3,8 @@ package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.ContentUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,7 @@ import org.zmlx.hg4idea.ui.HgMqUnAppliedPatchesPanel;
 import java.util.Collection;
 import java.util.Objects;
 
-public class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoAction {
+public final class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoAction {
   @Override
   protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
     if (selectedRepo != null) {
@@ -33,7 +33,7 @@ public class HgShowUnAppliedPatchesAction extends HgAbstractGlobalSingleRepoActi
   }
 
   public static void showUnAppliedPatches(@NotNull Project project, @NotNull HgRepository selectedRepo) {
-    ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS));
+    ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID));
     String tabName = selectedRepo.getRoot().getName();
     ContentUtilEx.addTabbedContent(toolWindow.getContentManager(), new HgMqUnAppliedPatchesPanel(selectedRepo),
                                    "MQ",

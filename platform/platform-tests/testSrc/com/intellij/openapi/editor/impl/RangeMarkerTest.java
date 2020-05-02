@@ -372,7 +372,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     assertEquals(newText, document.getText());
     DocumentEvent event = assertOneElement(events);
-    assertEquals("DocumentEventImpl[myOffset=22, myOldLength=28, myNewLength=0, myOldString='import java.util.ArrayList;\n', myNewString=''].", event.toString());
+    assertEquals("DocumentEventImpl[myOffset=22, myOldLength=28, myNewLength=0].", event.toString());
   }
 
   public void testPsi2DocReplaceAfterAdd() {

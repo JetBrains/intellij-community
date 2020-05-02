@@ -86,7 +86,7 @@ public class GitExecutableDetector {
     }
 
     // greater is better => sorting in the descending order to match the best version first, when iterating
-    Collections.sort(distrs, Collections.reverseOrder(new VersionDirsComparator()));
+    distrs.sort(Collections.reverseOrder(new VersionDirsComparator()));
 
     for (File distr : distrs) {
       String exec = checkDistributive(distr);

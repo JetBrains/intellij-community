@@ -17,7 +17,10 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Bas Leijdekkers
@@ -78,7 +81,7 @@ public class StructuralSearchHighlightInfoFilter implements HighlightInfoFilter 
   private static List<PsiErrorElement> findErrors(PsiFile file) {
     final Collection<PsiErrorElement> errors = PsiTreeUtil.findChildrenOfType(file, PsiErrorElement.class);
     final List<PsiErrorElement> errorList = new ArrayList<>(errors);
-    Collections.sort(errorList, ERROR_COMPARATOR);
+    errorList.sort(ERROR_COMPARATOR);
     file.putUserData(ERRORS, errorList);
     return errorList;
   }

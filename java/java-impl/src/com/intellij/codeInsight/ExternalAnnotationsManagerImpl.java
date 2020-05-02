@@ -217,7 +217,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
       public void run() throws RuntimeException {
         if (project.isDisposed()) return;
         if (DumbService.isDumb(project)) {
-          DumbService.getInstance(project).runWhenSmart(this::run);
+          DumbService.getInstance(project).runWhenSmart(() -> WriteCommandAction.writeCommandAction(project).run(this));
           return;
         }
         try {

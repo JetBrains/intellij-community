@@ -6,7 +6,6 @@ import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.ListenerDescriptor;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @ApiStatus.Internal
 public final class ContainerDescriptor {
@@ -22,7 +22,7 @@ public final class ContainerDescriptor {
   @Nullable List<ListenerDescriptor> listeners;
   @Nullable List<ExtensionPointImpl<?>> extensionPoints;
 
-  transient THashMap<String, List<Element>> extensions;
+  transient Map<String, List<Element>> extensions;
 
   public @NotNull List<ServiceDescriptor> getServices() {
     return ContainerUtil.notNullize(services);
@@ -63,7 +63,6 @@ public final class ContainerDescriptor {
     components = concatOrNull(components, another.components);
     services = concatOrNull(services, another.services);
     extensionPoints = concatOrNull(extensionPoints, another.extensionPoints);
-
     listeners = concatOrNull(listeners, another.listeners);
   }
 

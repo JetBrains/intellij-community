@@ -187,7 +187,7 @@ private fun startApp(app: ApplicationImpl,
 
       val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
-        app.loadComponents(SplashManager.getProgressIndicator())
+        app.loadComponents(SplashManager.createProgressIndicator())
       }, edtExecutor)
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
@@ -229,11 +229,11 @@ private fun startApp(app: ApplicationImpl,
       }
       else {
         // backward compatibility
-        ApplicationManager.getApplication().invokeLater(Runnable {
+        ApplicationManager.getApplication().invokeLater {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
             starter.main(args)
           }
-        })
+        }
       }
     }
     .exceptionally {
@@ -307,13 +307,15 @@ private fun addActivateAndWindowsCliListeners() {
         return@invokeAndWait
       }
 
+      val windowManager = WindowManager.getInstance()
       if (result.project == null) {
-        val frame = WindowManager.getInstance().findVisibleFrame()
-        frame.toFront()
-        DialogEarthquakeShaker.shake(frame)
+        windowManager.findVisibleFrame()?.let { frame ->
+          frame.toFront()
+          DialogEarthquakeShaker.shake(frame)
+        }
       }
       else {
-        WindowManager.getInstance().getFrame(result.project)?.let {
+        windowManager.getFrame(result.project)?.let {
           AppIcon.getInstance().requestFocus()
         }
       }
@@ -449,7 +451,7 @@ private fun processProgramArguments(args: List<String>): List<String> {
         continue
       }
     }
-    if (SplashManager.NO_SPLASH != arg) {
+    if (!CommandLineArgs.isKnownArgument(arg)) {
       arguments.add(arg)
     }
   }
@@ -475,7 +477,8 @@ fun callAppInitialized(app: Application, executor: Executor): CompletableFuture<
   }
 
   val result = mutableListOf<CompletableFuture<Void>>()
-  val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
+  val extensionArea = app.extensionArea as ExtensionsAreaImpl
+  val extensionPoint = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
   extensionPoint.processImplementations(/* shouldBeSorted = */ false) { supplier, _ ->
     CompletableFuture.runAsync(Runnable {
       LOG.runAndLogException {

@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="XStream" level="project" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>

@@ -13,8 +13,8 @@ public class Pair<A, B> {
   public final B second;
 
   @NotNull
-  @SuppressWarnings("DontUsePairConstructor")
   public static <A, B> Pair<A, B> create(A first, B second) {
+    //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
 
@@ -24,8 +24,8 @@ public class Pair<A, B> {
   }
 
   @NotNull
-  @SuppressWarnings("DontUsePairConstructor")
   public static <A, B> Pair<A, B> pair(A first, B second) {
+    //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
 
@@ -49,8 +49,9 @@ public class Pair<A, B> {
   @SuppressWarnings("rawtypes")
   private static final Pair EMPTY = create(null, null);
 
-  @SuppressWarnings("unchecked")
+  @NotNull
   public static <A, B> Pair<A, B> empty() {
+    //noinspection unchecked
     return EMPTY;
   }
 

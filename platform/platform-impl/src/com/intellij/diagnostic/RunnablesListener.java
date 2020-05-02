@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
 
 @ApiStatus.Experimental
@@ -24,6 +26,8 @@ public interface RunnablesListener {
   default void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
                                   @NotNull Collection<InvocationsInfo> infos,
                                   @NotNull Collection<WrapperDescription> wrappers) {}
+
+  default void locksAcquired(@NotNull Collection<LockAcquirementDescription> acquirements) {}
 
   final class InvocationDescription implements Comparable<InvocationDescription> {
 
@@ -231,6 +235,100 @@ public interface RunnablesListener {
         myFQN,
         myUsagesCount
       );
+    }
+  }
+
+  final class LockAcquirementDescription implements Comparable<LockAcquirementDescription> {
+
+    static @NotNull LockAcquirementDescription computeNext(@NotNull String fqn,
+                                                           @Nullable LockAcquirementDescription description,
+                                                           @NotNull LockKind lockKind) {
+      EnumMap<LockKind, Long> acquirements = description == null ?
+                                             createMapWithDefaultValue() :
+                                             new EnumMap<>(description.myAcquirements);
+
+      acquirements.compute(
+        lockKind,
+        (ignored, count) -> {
+          //noinspection ConstantConditions
+          return count + 1;
+        }
+      );
+      return new LockAcquirementDescription(fqn, acquirements);
+    }
+
+    private final @NotNull String myFQN;
+    private final @NotNull EnumMap<LockKind, Long> myAcquirements;
+
+    private LockAcquirementDescription(@NotNull String fqn,
+                                       @NotNull EnumMap<LockKind, Long> acquirements) {
+      myFQN = fqn;
+      myAcquirements = acquirements;
+    }
+
+    public @NotNull String getFQN() {
+      return myFQN;
+    }
+
+    public long getReads() {
+      return getCount(LockKind.READ);
+    }
+
+    public long getWrites() {
+      return getCount(LockKind.WRITE);
+    }
+
+    public long getWriteIntents() {
+      return getCount(LockKind.WRITE_INTENT);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LockAcquirementDescription that = (LockAcquirementDescription)o;
+      return myFQN.equals(that.myFQN) &&
+             myAcquirements.equals(that.myAcquirements);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myFQN, myAcquirements);
+    }
+
+    @Override
+    public int compareTo(@NotNull LockAcquirementDescription description) {
+      for (LockKind kind : LockKind.values()) {
+        int result = Long.compare(getCount(kind), description.getCount(kind));
+        if (result != 0) return result;
+      }
+
+      return myFQN.compareTo(description.myFQN);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder builder = new StringBuilder(myFQN);
+      for (Map.Entry<LockKind, Long> entry : myAcquirements.entrySet()) {
+        builder.append("; ")
+          .append(entry.getKey())
+          .append("=")
+          .append(entry.getValue());
+      }
+      return builder.toString();
+    }
+
+    private long getCount(@NotNull LockKind lockKind) {
+      return myAcquirements.get(lockKind);
+    }
+
+    private static @NotNull EnumMap<LockKind, Long> createMapWithDefaultValue() {
+      EnumMap<LockKind, Long> result = new EnumMap<>(LockKind.class);
+      for (LockKind kind : LockKind.values()) {
+        result.put(kind, 0L);
+      }
+      return result;
     }
   }
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -25,15 +24,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
+public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
-  private int nextAvailableId;
+  private final AtomicInteger nextAvailableId = new AtomicInteger();
   private boolean checkedForCycles;
   private final Project myProject;
   private boolean runInspectionsAfterCompletionOfGeneralHighlightPass;
@@ -41,7 +40,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
 
-    reregisterFactories();
+    reRegisterFactories();
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<TextEditorHighlightingPassFactoryRegistrar>() {
       @Override
@@ -56,31 +55,27 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       @Override
       public void extensionRemoved(@NotNull TextEditorHighlightingPassFactoryRegistrar factoryRegistrar,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-        reregisterFactories();
+        reRegisterFactories();
       }
-    }, this);
+    }, project);
   }
 
-  private void reregisterFactories() {
+  private void reRegisterFactories() {
     synchronized (this) {
       checkedForCycles = false;
       myRegisteredPassFactories.clear();
-      nextAvailableId = Pass.LAST_PASS + 1;
+      nextAvailableId.set(Pass.LAST_PASS + 1);
       myDirtyScopeTrackingFactories.clear();
     }
-    for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
-      factoryRegistrar.registerHighlightingPassFactory(this, myProject);
-    }
-  }
-
-  @Override
-  public void dispose() {
+    EP_NAME.forEachExtensionSafe(registrar -> {
+      registrar.registerHighlightingPassFactory(this, myProject);
+    });
   }
 
   @ApiStatus.Internal
   void runInspectionsAfterCompletionOfGeneralHighlightPass(boolean flag) {
     runInspectionsAfterCompletionOfGeneralHighlightPass = flag;
-    reregisterFactories();
+    reRegisterFactories();
   }
 
   @ApiStatus.Internal
@@ -112,7 +107,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                                                                       : runAfterCompletionOf,
                                      runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY
                                                                                                       : runAfterOfStartingOf);
-    int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
+    int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
@@ -122,7 +117,8 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     return passId;
   }
 
-  synchronized int getNextAvailableId() {
+  @NotNull
+  AtomicInteger getNextAvailableId() {
     return nextAvailableId;
   }
 
@@ -144,7 +140,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       assert documentFromFile == document : "Documents are different. Doc: " + document + "; Doc from file: " + documentFromFile +"; File: "+psiFile +"; Virtual file: "+
                                             PsiUtilCore.getVirtualFile(psiFile);
     }
-    final TIntObjectHashMap<TextEditorHighlightingPass> id2Pass = new TIntObjectHashMap<>();
+    List<TextEditorHighlightingPass> result = new ArrayList<>(myRegisteredPassFactories.size());
     final TIntArrayList passesRefusedToCreate = new TIntArrayList();
     boolean isDumb = DumbService.getInstance(myProject).isDumb();
     myRegisteredPassFactories.forEachKey(passId -> {
@@ -153,7 +149,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       }
       PassConfig passConfig = myRegisteredPassFactories.get(passId);
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      final TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory)
+      TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory)
                                               ? null : factory.createHighlightingPass(psiFile, editor);
       if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
         passesRefusedToCreate.add(passId);
@@ -173,7 +169,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
         }
         pass.setStartingPredecessorIds(ids.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : ids.toNativeArray());
         pass.setId(passId);
-        id2Pass.put(passId, pass);
+        result.add(pass);
       }
       return true;
     });
@@ -185,7 +181,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       return true;
     });
 
-    return (List)Arrays.asList(id2Pass.getValues());
+    return result;
   }
 
   @NotNull

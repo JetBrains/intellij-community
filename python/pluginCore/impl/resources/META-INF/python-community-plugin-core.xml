@@ -15,10 +15,8 @@
     </action>
   </actions>
 
-  <application-components>
-    <component>
-      <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
-    </component>
-  </application-components>
+  <applicationListeners>
+    <listener class="com.jetbrains.python.facet.PythonSdkTableListener" topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
+  </applicationListeners>
 
 </idea-plugin>

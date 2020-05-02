@@ -27,11 +27,9 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
-import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
@@ -48,7 +46,6 @@ import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -91,7 +88,6 @@ public final class IncProjectBuilder {
   private final BuilderRegistry myBuilderRegistry;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
-  @Nullable private final Callbacks.ConstantAffectionResolver myJavaConstantResolver;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<>();
   private final MessageHandler myMessageDispatcher = new MessageHandler() {
     @Override
@@ -105,16 +101,14 @@ public final class IncProjectBuilder {
 
   private final int myTotalModuleLevelBuilderCount;
   private final List<Future> myAsyncTasks = Collections.synchronizedList(new ArrayList<>());
-  private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<Builder, AtomicLong> myElapsedTimeNanosByBuilder = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = new ConcurrentHashMap<>();
 
-  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
-                           @Nullable Callbacks.ConstantAffectionResolver javaConstantResolver, final boolean isTestMode) {
+  public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs, final boolean isTestMode) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
     myCancelStatus = cs;
-    myJavaConstantResolver = javaConstantResolver;
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
     myIsTestMode = isTestMode;
   }
@@ -484,8 +478,7 @@ public final class IncProjectBuilder {
       .forEach(context::processMessage);
   }
 
-  @Nullable
-  static Future<Void> startTempDirectoryCleanupTask(final ProjectDescriptor pd) {
+  static @Nullable Future<Void> startTempDirectoryCleanupTask(final ProjectDescriptor pd) {
     final String tempPath = System.getProperty("java.io.tmpdir", null);
     if (StringUtil.isEmptyOrSpaces(tempPath)) {
       return null;
@@ -515,30 +508,8 @@ public final class IncProjectBuilder {
     return null;
   }
 
-  private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
-    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
-
-    final Callbacks.ConstantAffectionResolver javaResolver = myJavaConstantResolver;
-    if (javaResolver == null) {
-      JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, null);
-    }
-    else {
-      final List<Callbacks.ConstantAffectionResolver> resolvers = getResolvers();
-      resolvers.add(javaResolver);
-      for (JavaBuilderExtension provider : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
-        final Callbacks.ConstantAffectionResolver extResolver = provider.getConstantSearch(context);
-        if (extResolver != null) {
-          resolvers.add(extResolver);
-        }
-      }
-      JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, resolvers.size() == 1? resolvers.get(0) : new CompositeConstantResolver(resolvers));
-    }
-    return context;
-  }
-
-  @NotNull
-  private SmartList<Callbacks.ConstantAffectionResolver> getResolvers() {
-    return new SmartList<>();
+  private CompileContextImpl createContext(CompileScope scope) {
+    return new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
   }
 
   private void cleanOutputRoots(CompileContext context, boolean cleanCaches) throws ProjectBuildException {
@@ -778,7 +749,7 @@ public final class IncProjectBuilder {
           okToDelete = false;
         }
         else {
-          final Set<File> _outRoot = ContainerUtil.newTroveSet(FileUtil.FILE_HASHING_STRATEGY, outputRoot);
+          final Set<File> _outRoot = new THashSet<>(Arrays.asList(outputRoot), FileUtil.FILE_HASHING_STRATEGY);
           for (File srcRoot : allSourceRoots) {
             if (JpsPathUtil.isUnder(_outRoot, srcRoot)) {
               okToDelete = false;

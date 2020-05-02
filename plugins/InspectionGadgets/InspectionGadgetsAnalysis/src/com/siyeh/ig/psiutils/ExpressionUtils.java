@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -7,12 +7,12 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -493,6 +493,20 @@ public class ExpressionUtils {
     return hasType(expression, CommonClassNames.JAVA_LANG_STRING);
   }
 
+  /**
+   * The method checks if the passed expression does not need to be converted to string explicitly,
+   * because the containing expression (e.g. a {@code PrintStream#println} call or string concatenation expression)
+   * will convert to the string automatically.
+   *
+   * This is the case for some StringBuilder/Buffer, PrintStream/Writer and some logging methods.
+   * Otherwise it considers the conversion necessary and returns true.
+   *
+   * @param expression an expression to examine
+   * @param throwable is the first parameter a conversion to string on a throwable? Either {@link Throwable#toString()}
+   *                 or {@link String#valueOf(Object)}
+   *
+   * @return true if the explicit conversion to string is not required, otherwise - false
+   */
   public static boolean isConversionToStringNecessary(PsiExpression expression, boolean throwable) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (parent instanceof PsiPolyadicExpression) {
@@ -1040,7 +1054,7 @@ public class ExpressionUtils {
     return expression;
   }
 
-  @Contract(value = "null -> null")
+  @Contract("null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -1147,9 +1161,17 @@ public class ExpressionUtils {
   public static boolean isDifference(@NotNull PsiExpression from, @NotNull PsiExpression to, @NotNull PsiExpression diff) {
     diff = PsiUtil.skipParenthesizedExprDown(diff);
     if (diff == null) return false;
+
     EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
     if (isZero(from) && eq.expressionsAreEquivalent(to, diff)) return true;
     if (isZero(diff) && eq.expressionsAreEquivalent(to, from)) return true;
+
+    if (to instanceof PsiPolyadicExpression && from instanceof PsiPolyadicExpression) {
+      final Pair<@NotNull PsiExpression, @NotNull PsiExpression> polyadicDiff = getPolyadicDiff(((PsiPolyadicExpression)from),
+                                                                                                ((PsiPolyadicExpression)to));
+      from = polyadicDiff.first;
+      to = polyadicDiff.second;
+    }
     if (diff instanceof PsiBinaryExpression && ((PsiBinaryExpression)diff).getOperationTokenType().equals(JavaTokenType.MINUS)) {
       PsiExpression left = ((PsiBinaryExpression)diff).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)diff).getROperand();
@@ -1179,6 +1201,61 @@ public class ExpressionUtils {
     Integer diffConstant = tryCast(computeConstantExpression(diff), Integer.class);
     if (diffConstant == null) return false;
     return diffConstant == toConstant - fromConstant;
+  }
+
+  /**
+   * Get a diff from two {@link PsiPolyadicExpression} instances using {@link EquivalenceChecker}.
+   * @param from the first expression to examine
+   * @param to the second expression to examine
+   * @return a pair of expressions without common parts if the original expressions had any,
+   * or the original expressions if no common parts were found
+   */
+  @NotNull
+  private static Pair<@NotNull PsiExpression, @NotNull PsiExpression> getPolyadicDiff(@NotNull final PsiPolyadicExpression from,
+                                                                                      @NotNull final PsiPolyadicExpression to) {
+    final EquivalenceChecker eq = EquivalenceChecker.getCanonicalPsiEquivalence();
+    final EquivalenceChecker.Match match = eq.expressionsMatch(from, to);
+    if (match.isPartialMatch()) {
+      final PsiExpression leftDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getLeftDiff());
+      final PsiExpression rightDiff = PsiUtil.skipParenthesizedExprDown((PsiExpression)match.getRightDiff());
+
+      if (leftDiff == null || rightDiff == null) return Pair.create(from, to);
+
+      final PsiPolyadicExpression leftParent = PsiTreeUtil.getParentOfType(leftDiff, PsiPolyadicExpression.class);
+      assert leftParent != null;
+
+      final IElementType op = leftParent.getOperationTokenType();
+      if (op == JavaTokenType.MINUS || op == JavaTokenType.PLUS) {
+        if (shouldBeInverted(leftDiff, from)) return Pair.create(rightDiff, leftDiff);
+        else return Pair.create(leftDiff, rightDiff);
+      }
+    }
+    return Pair.create(from, to);
+  }
+
+  /**
+   * The method checks all the algebraic rules for subtraction to decide
+   * if the operand comes into the expression with the negative or positive sign
+   * by traversing the PSI tree going up to the specified element.
+   *
+   * @param start the operand to check the sign for
+   * @param end the end element to stop traversal
+   * @return true if the operand comes into the expression with the positive sign, otherwise false
+   */
+  private static boolean shouldBeInverted(@NotNull PsiElement start, @NotNull final PsiElement end) {
+    boolean result = false;
+    PsiElement parent = start;
+    while (parent != end) {
+      start = parent;
+      parent = parent.getParent();
+      if (!(parent instanceof PsiPolyadicExpression)) continue;
+
+      final IElementType op = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      if (op == JavaTokenType.MINUS && parent.getFirstChild() != start) {
+        result = !result;
+      }
+    }
+    return result;
   }
 
   /**
@@ -1276,13 +1353,13 @@ public class ExpressionUtils {
   public static TextRange findStringLiteralRange(PsiExpression expression, int from, int to) {
     if (to < 0 || from > to) return null;
     if (expression == null || !TypeUtils.isJavaLangString(expression.getType())) return null;
-    if (expression instanceof PsiLiteralExpressionImpl) {
-      PsiLiteralExpressionImpl literalExpression = (PsiLiteralExpressionImpl) expression;
+    if (expression instanceof PsiLiteralExpression) {
+      PsiLiteralExpression literalExpression = (PsiLiteralExpression) expression;
       String value = tryCast(literalExpression.getValue(), String.class);
       if (value == null || value.length() < from || value.length() < to) return null;
       String text = expression.getText();
-      if (literalExpression.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-        int indent = literalExpression.getTextBlockIndent();
+      if (literalExpression.isTextBlock()) {
+        int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
         if (indent == -1) return null;
         return PsiLiteralUtil.mapBackTextBlockRange(text, from, to, indent);
       }
@@ -1530,18 +1607,18 @@ public class ExpressionUtils {
    * Convert initializer expression to a normal expression that could be used in another context.
    * Currently the only case when initializer cannot be used in another context is array initializer:
    * in this case it's necessary to add explicit array creation like {@code new ArrayType[] {...}}.
-   * 
+   *
    * <p>
-   * If conversion is required a non-physical expression is created without affecting the original expression. 
+   * If conversion is required a non-physical expression is created without affecting the original expression.
    * No write action is required.
    * @param initializer initializer to convert
    * @param factory element factory to use
    * @param type expected expression type
-   * @return the converted expression. May return the original expression if conversion is not necessary. 
+   * @return the converted expression. May return the original expression if conversion is not necessary.
    */
   @Contract("null, _, _ -> null")
-  public static PsiExpression convertInitializerToExpression(@Nullable PsiExpression initializer, 
-                                                             @NotNull PsiElementFactory factory, 
+  public static PsiExpression convertInitializerToExpression(@Nullable PsiExpression initializer,
+                                                             @NotNull PsiElementFactory factory,
                                                              @Nullable PsiType type) {
     if (initializer instanceof PsiArrayInitializerExpression && type instanceof PsiArrayType) {
       PsiNewExpression result =
@@ -1554,11 +1631,11 @@ public class ExpressionUtils {
 
   /**
    * Splits variable declaration and initialization. Currently works for single variable declarations only. Requires write action.
-   * 
+   *
    * @param declaration declaration to split
    * @param project current project.
-   * @return the assignment expression created if the declaration was successfully split. 
-   * In this case, the declaration is still valid and could be used afterwards. 
+   * @return the assignment expression created if the declaration was successfully split.
+   * In this case, the declaration is still valid and could be used afterwards.
    * Returns null if it the splitting wasn't successful (no changes in the document are performed in this case).
    */
   @Nullable

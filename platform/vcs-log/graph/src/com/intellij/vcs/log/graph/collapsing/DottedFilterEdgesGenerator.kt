@@ -19,9 +19,10 @@ import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import kotlin.math.max
+import kotlin.math.min
 
 abstract class DottedFilterEdgesGenerator internal constructor(private val graph: LiteLinearGraph,
                                                                private val upIndex: Int,
@@ -72,10 +73,10 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
           }
 
           if (nodeIsVisible(upNode)) {
-            maxAdjNumber = Math.max(maxAdjNumber, numbers.getNumber(upNode))
+            maxAdjNumber = max(maxAdjNumber, numbers.getNumber(upNode))
           }
           else {
-            nearlyUp = Math.max(nearlyUp, numbers.getNumber(upNode))
+            nearlyUp = max(nearlyUp, numbers.getNumber(upNode))
           }
         }
 
@@ -93,10 +94,10 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
         var nearlyUp = Integer.MIN_VALUE
         for (upNode in graph.getNodes(currentNodeIndex, NodeFilter.UP)) {
           if (nodeIsVisible(upNode)) {
-            nearlyUp = Math.max(nearlyUp, upNode)
+            nearlyUp = max(nearlyUp, upNode)
           }
           else {
-            if (upNode >= upIndex) nearlyUp = Math.max(nearlyUp, numbers.getNumber(upNode))
+            if (upNode >= upIndex) nearlyUp = max(nearlyUp, numbers.getNumber(upNode))
           }
         }
         numbers.setNumber(currentNodeIndex, nearlyUp)
@@ -116,10 +117,10 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
           }
 
           if (nodeIsVisible(downNode)) {
-            minAdjNumber = Math.min(minAdjNumber, numbers.getNumber(downNode))
+            minAdjNumber = min(minAdjNumber, numbers.getNumber(downNode))
           }
           else {
-            nearlyDown = Math.min(nearlyDown, numbers.getNumber(downNode))
+            nearlyDown = min(nearlyDown, numbers.getNumber(downNode))
           }
         }
 
@@ -137,10 +138,10 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
         var nearlyDown = Integer.MAX_VALUE
         for (downNode in graph.getNodes(currentNodeIndex, NodeFilter.DOWN)) {
           if (nodeIsVisible(downNode)) {
-            nearlyDown = Math.min(nearlyDown, downNode)
+            nearlyDown = min(nearlyDown, downNode)
           }
           else {
-            if (downNode <= downIndex) nearlyDown = Math.min(nearlyDown, numbers.getNumber(downNode))
+            if (downNode <= downIndex) nearlyDown = min(nearlyDown, numbers.getNumber(downNode))
           }
         }
         numbers.setNumber(currentNodeIndex, nearlyDown)
@@ -206,7 +207,7 @@ class InplaceFilterEdgesGenerator(private val collapsedGraph: CollapsedGraph,
   override fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
     val delegateIndex1 = collapsedGraph.convertToDelegateNodeIndex(nodeIndex1)
     val delegateIndex2 = collapsedGraph.convertToDelegateNodeIndex(nodeIndex2)
-    modification.createEdge(GraphEdge.createNormalEdge(delegateIndex1, delegateIndex2, GraphEdgeType.DOTTED))
+    modification.createEdge(GraphEdge.createNormalEdge(delegateIndex1, delegateIndex2, DOTTED))
   }
 
   override fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {

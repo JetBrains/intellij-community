@@ -2,7 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +18,7 @@ import javax.swing.*;
  */
 public final class ValidationInfo {
   @Nls
-  @NlsContexts.ValidationInfo
+  @NlsContexts.DialogMessage
   @NotNull
   public final String message;
 
@@ -35,7 +35,7 @@ public final class ValidationInfo {
    * @param message   the error message to display.
    * @param component the component containing the invalid data.
    */
-  public ValidationInfo(@Nls @NlsContexts.ValidationInfo @NotNull String message, @Nullable JComponent component) {
+  public ValidationInfo(@NlsContexts.DialogMessage @NotNull String message, @Nullable JComponent component) {
     this.message = message;
     this.component = component;
   }
@@ -45,7 +45,7 @@ public final class ValidationInfo {
    *
    * @param message the error message to display.
    */
-  public ValidationInfo(@Nls @NlsContexts.ValidationInfo @NotNull String message) {
+  public ValidationInfo(@NlsContexts.DialogMessage @NotNull String message) {
     this(message, null);
   }
 

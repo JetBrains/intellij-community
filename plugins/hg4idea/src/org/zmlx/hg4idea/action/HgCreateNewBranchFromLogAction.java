@@ -36,7 +36,7 @@ public class HgCreateNewBranchFromLogAction extends HgLogSingleCommitAction {
     final Project project = repository.getProject();
     FileDocumentManager.getInstance().saveAllDocuments();
     String shortHash = commit.toShortString();
-    final String name = getNewBranchNameFromUser(repository, "Create New Branch From " + shortHash);
+    final String name = getNewBranchNameFromUser(repository, HgBundle.message("hg4idea.branch.create.from", shortHash));
     if (name != null) {
       new Task.Backgroundable(project, HgBundle.message("hg4idea.progress.updatingTo", shortHash)) {
         @Override

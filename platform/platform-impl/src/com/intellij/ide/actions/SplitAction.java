@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public abstract class SplitAction extends AnAction implements DumbAware {
-  public static final Key<Object> FORBID_TAB_SPLIT = new Key<Object>("FORBID_TAB_SPLIT");
+  public static final Key<Boolean> FORBID_TAB_SPLIT = new Key<>("FORBID_TAB_SPLIT");
   private final int myOrientation;
   private final boolean myCloseSource;
 
@@ -57,8 +57,7 @@ public abstract class SplitAction extends AnAction implements DumbAware {
       final int minimum = myCloseSource ? 2 : 1;
       final boolean enabled = project != null
                               && window != null
-                              && window.getTabCount() >= minimum
-                              && !window.getOwner().isPreview();
+                              && window.getTabCount() >= minimum;
       event.getPresentation().setEnabledAndVisible(enabled);
     }
   }

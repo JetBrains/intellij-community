@@ -74,7 +74,7 @@ public class WriteIntentLockInstrumenter {
 
           Logger.getInstance(MainRunner.class).info("Redefining " + className);
           ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES);
-          cr.accept(new LockWrappingClassVisitor(cw, methodsToAnnotate), ClassReader.SKIP_FRAMES);
+          cr.accept(new LockWrappingClassVisitor(cw, className, methodsToAnnotate), ClassReader.SKIP_FRAMES);
           return cw.toByteArray();
         }
       }, true);

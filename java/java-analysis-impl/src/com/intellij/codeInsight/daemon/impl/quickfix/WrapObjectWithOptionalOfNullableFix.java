@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -25,6 +26,7 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -62,6 +64,12 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return PsiUtil.isLanguageLevel8OrHigher(file) && super.isAvailable(project, editor, file);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new WrapObjectWithOptionalOfNullableFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+                                                   myArgumentFixerActionFactory);
   }
 
   public static IntentionAction createFix(@Nullable PsiType type, @NotNull PsiExpression expression) {

@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
@@ -138,6 +139,10 @@ class CachedValueStabilityChecker {
 
     if (v1 instanceof Object[] && v2 instanceof Object[]) {
       return Arrays.deepEquals((Object[])v1, (Object[])v2);
+    }
+
+    if (v1 instanceof Reference && v2 instanceof Reference) {
+      return Objects.equals(((Reference<?>)v1).get(), ((Reference<?>)v2).get());
     }
 
     return false;

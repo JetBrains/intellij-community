@@ -16,15 +16,9 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,14 +27,12 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -53,12 +45,11 @@ public class ExceptionWorker {
 
   private final Project myProject;
   private Filter.Result myResult;
-  private PsiClass[] myClasses = PsiClass.EMPTY_ARRAY;
-  private PsiFile[] myFiles = PsiFile.EMPTY_ARRAY;
+  private ExceptionInfoCache.ClassResolveInfo myClassResolveInfo;
   private String myMethod;
   private ParsedLine myInfo;
   private final ExceptionInfoCache myCache;
-  private Predicate<PsiElement> myLocationRefiner;
+  private ExceptionLineRefiner myLocationRefiner;
 
   public ExceptionWorker(@NotNull ExceptionInfoCache cache) {
     myProject = cache.getProject();
@@ -69,7 +60,7 @@ public class ExceptionWorker {
     return execute(line, textEndOffset, null);
   }
 
-  public Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable Predicate<PsiElement> elementMatcher) {
+  Filter.Result execute(@NotNull String line, final int textEndOffset, @Nullable ExceptionLineRefiner elementMatcher) {
     myResult = null;
     myInfo = parseExceptionLine(line);
     if (myInfo == null || myProject.isDisposed()) {
@@ -78,15 +69,14 @@ public class ExceptionWorker {
 
     myMethod = myInfo.methodNameRange.substring(line);
 
-    Pair<PsiClass[], PsiFile[]> pair = myCache.resolveClass(myInfo.classFqnRange.substring(line).trim());
-    myClasses = pair.first;
-    myFiles = pair.second;
-    if (myFiles.length == 0 && myInfo.fileName != null) {
+    myClassResolveInfo = myCache.resolveClass(myInfo.classFqnRange.substring(line).trim());
+    if (myClassResolveInfo.myClasses.isEmpty() && myInfo.fileName != null) {
       // try find the file with the required name
       //todo[nik] it would be better to use FilenameIndex here to honor the scope by it isn't accessible in Open API
-      myFiles = PsiShortNamesCache.getInstance(myProject).getFilesByName(myInfo.fileName);
+      PsiFile[] files = PsiShortNamesCache.getInstance(myProject).getFilesByName(myInfo.fileName);
+      myClassResolveInfo = ExceptionInfoCache.ClassResolveInfo.create(myProject, files);
     }
-    if (myFiles.length == 0) return null;
+    if (myClassResolveInfo.myClasses.isEmpty()) return null;
 
     /*
      IDEADEV-4976: Some scramblers put something like SourceFile mock instead of real class name.
@@ -101,37 +91,12 @@ public class ExceptionWorker {
     int highlightStartOffset = textStartOffset + myInfo.fileLineRange.getStartOffset();
     int highlightEndOffset = textStartOffset + myInfo.fileLineRange.getEndOffset();
 
-    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
-    List<VirtualFile> virtualFilesInLibraries = new ArrayList<>();
-    List<VirtualFile> virtualFilesInContent = new ArrayList<>();
-    for (PsiFile file : myFiles) {
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (index.isInContent(virtualFile)) {
-        virtualFilesInContent.add(virtualFile);
-      }
-      else {
-        virtualFilesInLibraries.add(virtualFile);
-      }
-    }
-
-    List<VirtualFile> virtualFiles;
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
-    if (virtualFilesInContent.isEmpty()) {
-      Color libTextColor = UIUtil.getInactiveTextColor();
-      attributes = attributes.clone();
-      attributes.setForegroundColor(libTextColor);
-      attributes.setEffectColor(libTextColor);
-
-      virtualFiles = virtualFilesInLibraries;
-    }
-    else {
-      virtualFiles = virtualFilesInContent;
-    }
+    List<VirtualFile> virtualFiles = new ArrayList<>(myClassResolveInfo.myClasses.keySet());
     ToIntFunction<PsiFile> columnFinder =
       elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
     HyperlinkInfo linkInfo =
       HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject, columnFinder);
-    Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
+    Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, myClassResolveInfo.myInLibrary);
     if (myMethod.startsWith("access$")) {
       myLocationRefiner = elementMatcher;
     }
@@ -145,7 +110,7 @@ public class ExceptionWorker {
     return result;
   }
 
-  public Predicate<PsiElement> getLocationRefiner() {
+  ExceptionLineRefiner getLocationRefiner() {
     return myLocationRefiner;
   }
 
@@ -172,7 +137,7 @@ public class ExceptionWorker {
   }
 
   public PsiClass getPsiClass() {
-    return ArrayUtil.getFirstElement(myClasses);
+    return ObjectUtils.tryCast(ContainerUtil.getFirstItem(myClassResolveInfo.myClasses.values()), PsiClass.class);
   }
 
   public String getMethod() {
@@ -180,7 +145,8 @@ public class ExceptionWorker {
   }
 
   public PsiFile getFile() {
-    return ArrayUtil.getFirstElement(myFiles);
+    PsiElement element = ContainerUtil.getFirstItem(myClassResolveInfo.myClasses.values());
+    return element == null ? null : element.getContainingFile();
   }
 
   public ParsedLine getInfo() {
@@ -341,7 +307,7 @@ public class ExceptionWorker {
     } 
   }
   
-  private static class StackFrameMatcher implements Predicate<PsiElement> {
+  private static class StackFrameMatcher implements ExceptionLineRefiner {
     private final String myMethodName;
     private final String myClassName;
     private final boolean myHasDollarInName;
@@ -426,7 +392,7 @@ public class ExceptionWorker {
     }
   }
 
-  private static class FunctionCallMatcher implements Predicate<PsiElement> {
+  private static class FunctionCallMatcher implements ExceptionLineRefiner {
     @Override
     public boolean test(@NotNull PsiElement element) {
       if (!(element instanceof PsiIdentifier)) return false;

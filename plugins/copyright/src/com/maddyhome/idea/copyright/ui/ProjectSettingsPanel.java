@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightBundle;
@@ -256,7 +256,7 @@ public class ProjectSettingsPanel {
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
           final List<CopyrightProfile> copyrights = new ArrayList<>(myProfilesModel.getAllProfiles().values());
-          Collections.sort(copyrights, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+          copyrights.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
           myProfilesChooser.setCell(table, row, column);
           myProfilesChooser.setOptions(copyrights.toArray());
           myProfilesChooser.setDefaultValue(scopeSetting.getProfile());

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.vcs.VcsKey;
@@ -173,7 +173,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   @Override
   public List<VcsFileRevision> getRevisions() {
     final List<VcsFileRevision> result = new ArrayList<>(myRevisionMap.values());
-    Collections.sort(result, (o1, o2) -> o2.getRevisionNumber().compareTo(o1.getRevisionNumber()));
+    result.sort((o1, o2) -> o2.getRevisionNumber().compareTo(o1.getRevisionNumber()));
     return result;
   }
 

@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 @FunctionalInterface
 public interface FileEditorManagerChange {
 
-  void run(EditorsSplitters splitters);
+  void run(@NotNull EditorsSplitters splitters);
 
 }

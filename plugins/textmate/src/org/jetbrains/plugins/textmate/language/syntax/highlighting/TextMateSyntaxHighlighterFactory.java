@@ -14,6 +14,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateHighlighting
 
 public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   private static final SyntaxHighlighter PLAIN_SYNTAX_HIGHLIGHTER = new TextMateHighlighter(null);
+  private static final Logger LOG = Logger.getInstance(TextMateSyntaxHighlighterFactory.class);
 
   @NotNull
   @Override
@@ -26,9 +27,8 @@ public class TextMateSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     if (textMateService != null) {
       final TextMateLanguageDescriptor languageDescriptor = textMateService.getLanguageDescriptorByFileName(virtualFile.getName());
       if (languageDescriptor != null) {
-        Logger.getInstance(getClass()).debug("Textmate highlighting: " + virtualFile.getPath());
-        return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor.getScopeName(),
-                                                                     languageDescriptor.getRootSyntaxNode(),
+        LOG.debug("Textmate highlighting: " + virtualFile.getPath());
+        return new TextMateHighlighter(new TextMateHighlightingLexer(languageDescriptor,
                                                                      Registry.get("textmate.line.highlighting.limit").asInteger()));
       }
     }

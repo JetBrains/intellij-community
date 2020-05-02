@@ -4,7 +4,9 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('A=x')
+        PsiElement(word)('A')
+        PsiElement(param_separator)('=')
+        PsiElement(word)('x')
         PsiElement(})('}')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -12,5 +14,7 @@ SHELL_SCRIPT
       PsiElement($)('$')
       SHELL_PARAMETER_EXPANSION
         PsiElement({)('{')
-        PsiElement(parameter_expansion_body)('A:=x')
+        PsiElement(word)('A')
+        PsiElement(param_separator)(':=')
+        PsiElement(word)('x')
         PsiElement(})('}')

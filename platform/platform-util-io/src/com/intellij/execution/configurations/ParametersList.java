@@ -311,7 +311,7 @@ public final class ParametersList implements Cloneable {
   }
 
   @NotNull
-  ParametersList copyTo(@NotNull ParametersList target) {
+  public ParametersList copyTo(@NotNull ParametersList target) {
     target.myParameters.addAll(myParameters);
     for (ParamsGroup group : myGroups) {
       target.myGroups.add(group.clone());

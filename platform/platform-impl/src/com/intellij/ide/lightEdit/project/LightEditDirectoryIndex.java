@@ -22,6 +22,10 @@ class LightEditDirectoryIndex extends DirectoryIndex {
   @NotNull
   @Override
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
+    return getFileInfo();
+  }
+
+  static DirectoryInfo getFileInfo() {
     return LightEditDirectoryInfo.INSTANCE;
   }
 
@@ -66,7 +70,7 @@ class LightEditDirectoryIndex extends DirectoryIndex {
 
     @Override
     public boolean isInProject(@NotNull VirtualFile file) {
-      return true;
+      return false;
     }
 
     @Override

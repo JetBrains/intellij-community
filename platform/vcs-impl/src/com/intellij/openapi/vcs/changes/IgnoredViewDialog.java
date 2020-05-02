@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class IgnoredViewDialog extends SpecificFilesViewDialog {
   public IgnoredViewDialog(@NotNull Project project) {
-    super(project, "Ignored Files", ChangesListView.IGNORED_FILE_PATHS_DATA_KEY,
+    super(project, VcsBundle.message("dialog.title.ignored.files"), ChangesListView.IGNORED_FILE_PATHS_DATA_KEY,
           ChangeListManagerImpl.getInstanceImpl(project).getIgnoredFilePaths());
   }
 

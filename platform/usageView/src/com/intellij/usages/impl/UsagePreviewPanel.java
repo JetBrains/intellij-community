@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.usages.impl;
 
@@ -24,14 +10,25 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -45,7 +42,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -56,14 +57,19 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.StatusText;
+import java.awt.BorderLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Pattern;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author cdr
@@ -198,9 +204,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
 
       TextRange elementRange = psiElement.getTextRange();
       TextRange infoRange = info.getRangeInElement();
-      TextRange textRange = infoRange == null 
-                            || infoRange.getStartOffset() > elementRange.getLength() 
-                            || infoRange.getEndOffset() > elementRange.getLength() ? null 
+      TextRange textRange = infoRange == null
+                            || infoRange.getStartOffset() > elementRange.getLength()
+                            || infoRange.getEndOffset() > elementRange.getLength() ? null
                                                                                    : elementRange.cutOut(infoRange);
       if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
@@ -245,8 +251,8 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       String replacementPreviewText = FindManager.getInstance(project)
                                                  .getStringToReplace(editor.getDocument().getText(range), findModel, range.getStartOffset(),
                                                                      editor.getDocument().getText());
-    if (!Registry.is("ide.find.show.replacement.hint.for.simple.regexp")
-        && (Comparing.equal(replacementPreviewText, findModel.getStringToReplace()))) {
+      if (!Registry.is("ide.find.show.replacement.hint.for.simple.regexp")
+        && (Objects.equals(replacementPreviewText, findModel.getStringToReplace()))) {
       return;
     }
     ReplacementView replacementView = new ReplacementView(replacementPreviewText);

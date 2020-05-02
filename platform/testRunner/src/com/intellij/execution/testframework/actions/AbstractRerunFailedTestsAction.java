@@ -10,10 +10,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.TestConsoleProperties;
-import com.intellij.execution.testframework.TestFrameworkRunningModel;
+import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -189,7 +186,7 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction implements
             return component;
           }
         })
-        .setTitle("Restart Failed Tests")
+        .setTitle(TestRunnerBundle.message("popup.title.restart.failed.tests"))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)

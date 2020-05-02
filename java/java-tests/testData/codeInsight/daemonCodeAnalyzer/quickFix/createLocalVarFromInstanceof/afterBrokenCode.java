@@ -2,7 +2,7 @@
 class X {
     void foo(Object o) {
         if (o instanceof String) {
-            String o1 = (String) o;
+            String s = (String) o;
             <caret>
             String substring = o.();
         }

@@ -2,9 +2,8 @@
 package com.intellij.util.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ReflectionUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,14 +12,14 @@ import java.awt.event.ItemEvent;
 
 public class CheckBox extends JCheckBox {
 
-  public CheckBox(@NotNull @Nls @NlsUI.Checkbox String label, @NotNull InspectionProfileEntry owner, @NonNls String property) {
+  public CheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull InspectionProfileEntry owner, @NonNls String property) {
     this(label, (Object)owner, property);
   }
 
   /**
    * @param property field must be non-private (or ensure that it won't be scrambled by other means)
    */
-  public CheckBox(@NotNull @Nls @NlsUI.Checkbox String label, @NotNull Object owner, @NonNls String property) {
+  public CheckBox(@NotNull @NlsContexts.Checkbox String label, @NotNull Object owner, @NonNls String property) {
     super(label, getPropertyValue(owner, property));
     addItemListener(e -> ReflectionUtil.setField(owner.getClass(), owner, boolean.class, property, e.getStateChange() == ItemEvent.SELECTED));
   }

@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.openapi.wm.impl.content.SelectContentStep;
 import com.intellij.ui.*;
@@ -92,7 +93,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private ContentManager myManager;
   private final RunnerLayout myLayoutSettings;
 
-  @NotNull private final ActionManager myActionManager;
+  private final @NotNull ActionManager myActionManager;
   private final String mySessionName;
   private final String myRunnerId;
   private NonOpaquePanel myComponent;
@@ -179,14 +180,14 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myWindow = window == 0 ? original.findFreeWindow() : window;
   }
 
-  void setTopLeftActions(@NotNull final ActionGroup topActions, @NotNull String place) {
+  void setTopLeftActions(final @NotNull ActionGroup topActions, @NotNull String place) {
     myTopLeftActions = topActions;
     myTopLeftActionsPlace = place;
 
     rebuildCommonActions();
   }
 
-  void setTopRightActions(@NotNull final ActionGroup topActions, @NotNull String place) {
+  void setTopRightActions(final @NotNull ActionGroup topActions, @NotNull String place) {
     myTopRightActions = topActions;
     myTopRightActionsPlace = place;
 
@@ -390,7 +391,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  public void propertyChange(@NotNull final PropertyChangeEvent evt) {
+  public void propertyChange(final @NotNull PropertyChangeEvent evt) {
     Content content = (Content)evt.getSource();
     final GridImpl grid = getGridFor(content, false);
     if (grid == null) return;
@@ -481,15 +482,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  @NotNull
   @Override
-  public RelativeRectangle getAcceptArea() {
+  public @NotNull RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(myTabs.getComponent());
   }
 
-  @NotNull
   @Override
-  public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
+  public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
     if (!(content instanceof DockableGrid)) {
       return ContentResponse.DENY;
     }
@@ -656,8 +655,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return contents;
   }
 
-  @NotNull
-  private static PlaceInGrid calcPlaceInGrid(Point point, Dimension size) {
+  private static @NotNull PlaceInGrid calcPlaceInGrid(Point point, Dimension size) {
     // 1/3 (left) |   (center/bottom) | 1/3 (right)
     if (point.x < size.width / 3) return PlaceInGrid.left;
     if (point.x > size.width * 2 / 3) return PlaceInGrid.right;
@@ -668,8 +666,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return PlaceInGrid.center;
   }
 
-  @Nullable
-  private JBTabs getTabsAt(DockableContent content, RelativePoint point) {
+  private @Nullable JBTabs getTabsAt(DockableContent content, RelativePoint point) {
     if (content instanceof DockableGrid) {
       final Point p = point.getPoint(getComponent());
       Component c = SwingUtilities.getDeepestComponentAt(getComponent(), p.x, p.y);
@@ -703,13 +700,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  public void setManager(@NotNull final ContentManager manager) {
+  public void setManager(final @NotNull ContentManager manager) {
     assert myManager == null;
 
     myManager = manager;
     myManager.addContentManagerListener(new ContentManagerListener() {
       @Override
-      public void contentAdded(@NotNull final ContentManagerEvent event) {
+      public void contentAdded(final @NotNull ContentManagerEvent event) {
         initUi();
         if (event.getContent().getUserData(LIGHTWEIGHT_CONTENT_MARKER) == Boolean.TRUE) {
           myLayoutSettings.setLightWeight(event.getContent());
@@ -756,7 +753,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       }
 
       @Override
-      public void contentRemoved(@NotNull final ContentManagerEvent event) {
+      public void contentRemoved(final @NotNull ContentManagerEvent event) {
         final Content content = event.getContent();
         content.removePropertyChangeListener(RunnerContentUi.this);
 
@@ -784,11 +781,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       }
 
       @Override
-      public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
+      public void contentRemoveQuery(final @NotNull ContentManagerEvent event) {
       }
 
       @Override
-      public void selectionChanged(@NotNull final ContentManagerEvent event) {
+      public void selectionChanged(final @NotNull ContentManagerEvent event) {
         if (isStateBeingRestored()) return;
 
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
@@ -798,8 +795,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     });
   }
 
-  @Nullable
-  private GridImpl getSelectedGrid() {
+  private @Nullable GridImpl getSelectedGrid() {
     TabInfo selection = myTabs.getSelectedInfo();
     return selection != null ? getGridFor(selection) : null;
   }
@@ -813,8 +809,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  @Nullable
-  private GridImpl getGridFor(@NotNull Content content, boolean createIfMissing) {
+  private @Nullable GridImpl getGridFor(@NotNull Content content, boolean createIfMissing) {
     GridImpl grid = (GridImpl)findGridFor(content);
     if (grid != null || !createIfMissing) {
       return grid;
@@ -923,8 +918,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  @Nullable
-  public GridCell findCellFor(@NotNull final Content content) {
+  public @Nullable GridCell findCellFor(final @NotNull Content content) {
     GridImpl cell = getGridFor(content, false);
     return cell != null ? cell.getCellFor(content) : null;
   }
@@ -1119,8 +1113,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  @Nullable
-  public Tab getTabFor(final Grid grid) {
+  public @Nullable Tab getTabFor(final Grid grid) {
     TabInfo info = myTabs.findInfo((Component)grid);
     return getTabFor(info);
   }
@@ -1133,11 +1126,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  @Override
-  public void hideNotify() {}
-
-  @Nullable
-  private static TabImpl getTabFor(@Nullable final TabInfo tab) {
+  private static @Nullable TabImpl getTabFor(final @Nullable TabInfo tab) {
     if (tab == null) {
       return null;
     }
@@ -1149,8 +1138,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  @Nullable
-  public Grid findGridFor(@NotNull Content content) {
+  public @Nullable Grid findGridFor(@NotNull Content content) {
     TabImpl tab = (TabImpl)getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       TabImpl t = getTabFor(each);
@@ -1160,8 +1148,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return null;
   }
 
-  @NotNull
-  private List<GridImpl> getGrids() {
+  private @NotNull List<GridImpl> getGrids() {
     return ContainerUtil.map(myTabs.getTabs(), RunnerContentUi::getGridFor);
   }
 
@@ -1200,27 +1187,23 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return ExecutionBundle.message("select.previous.tab");
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return ExecutionBundle.message("select.next.tab");
   }
 
@@ -1358,8 +1341,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return map.computeIfAbsent(key, __ -> defaultPolicy);
   }
 
-  @Nullable
-  public Content findContent(final String key) {
+  public @Nullable Content findContent(final String key) {
     final ContentManager manager = getContentManager();
     if (manager == null || key == null) return null;
 
@@ -1480,12 +1462,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       super(layout);
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
-      setBorder(new ToolWindow.Border(false, false, false, false));
+      setBorder(new ToolWindowEx.Border(false, false, false, false));
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
+    public @Nullable Object getData(@NotNull @NonNls String dataId) {
       if (QuickActionProvider.KEY.is(dataId)) {
         return RunnerContentUi.this;
       }
@@ -1508,15 +1489,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       return null;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return RunnerContentUi.this.getName();
     }
 
-    @NotNull
     @Override
-    public List<AnAction> getActions(boolean originalProvider) {
+    public @NotNull List<AnAction> getActions(boolean originalProvider) {
       return RunnerContentUi.this.getActions(originalProvider);
     }
 
@@ -1675,9 +1654,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myManager;
   }
 
-  @NotNull
   @Override
-  public ActionManager getActionManager() {
+  public @NotNull ActionManager getActionManager() {
     return myActionManager;
   }
 
@@ -1687,12 +1665,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  public View getStateFor(@NotNull final Content content) {
+  public View getStateFor(final @NotNull Content content) {
     return myLayoutSettings.getStateFor(content);
   }
 
   @Override
-  public ActionCallback select(@NotNull final Content content, final boolean requestFocus) {
+  public ActionCallback select(final @NotNull Content content, final boolean requestFocus) {
     final GridImpl grid = (GridImpl)findGridFor(content);
     if (grid == null) return ActionCallback.DONE;
 
@@ -1741,7 +1719,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
 
     @Override
-    public Dimension preferredLayoutSize(@NotNull final Container parent) {
+    public Dimension preferredLayoutSize(final @NotNull Container parent) {
 
       Dimension size = new Dimension();
       Dimension leftSize = myLeft.getPreferredSize();
@@ -1754,7 +1732,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
 
     @Override
-    public void layoutContainer(@NotNull final Container parent) {
+    public void layoutContainer(final @NotNull Container parent) {
       Dimension size = parent.getSize();
       Dimension prefSize = parent.getPreferredSize();
       if (prefSize.width <= size.width) {
@@ -1812,15 +1790,13 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return myRunnerUi;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return mySessionName;
   }
 
-  @NotNull
   @Override
-  public List<AnAction> getActions(boolean originalProvider) {
+  public @NotNull List<AnAction> getActions(boolean originalProvider) {
     ArrayList<AnAction> result = new ArrayList<>();
     if (myLeftToolbarActions != null) {
       AnAction[] kids = myLeftToolbarActions.getChildren(null);
@@ -1904,9 +1880,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       myWindow = window;
     }
 
-    @NotNull
     @Override
-    public List<Content> getKey() {
+    public @NotNull List<Content> getKey() {
       return myContents;
     }
 
@@ -1938,8 +1913,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       return myOriginal != null ? myOriginal : RunnerContentUi.this;
     }
 
-    @NotNull
-    public List<Content> getContents() {
+    public @NotNull List<Content> getContents() {
       return myContents;
     }
 

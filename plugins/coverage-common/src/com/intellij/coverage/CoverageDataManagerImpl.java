@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -152,8 +153,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
           if (configuration instanceof RunConfigurationBase) {
             CoverageEnabledConfiguration coverageEnabledConfiguration =
               ((RunConfigurationBase)configuration).getCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY);
-            if (coverageEnabledConfiguration != null) {
+            if (coverageEnabledConfiguration != null && Objects.equals(coverageRunner.getId(), coverageEnabledConfiguration.getRunnerId())) {
               coverageEnabledConfiguration.coverageRunnerExtensionRemoved(coverageRunner);
+              ((RunConfigurationBase)configuration).putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
             }
           }
         }
@@ -169,6 +171,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
             }
           }
         }
+
+        ActionToolbarImpl.updateAllToolbarsImmediately();
       }
     }, myProject);
 

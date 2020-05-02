@@ -6,8 +6,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
 
 public interface RegistryManager {
-  @NotNull
-  static RegistryManager getInstance() {
+  static @NotNull RegistryManager getInstance() {
     return ApplicationManager.getApplication().getService(RegistryManager.class);
   }
 

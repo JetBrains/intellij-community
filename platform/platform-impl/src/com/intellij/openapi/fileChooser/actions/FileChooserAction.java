@@ -17,8 +17,8 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
-  protected FileChooserAction(final @Nls @NlsActions.ActionText String text,
-                              final @Nls @NlsActions.ActionDescription String description, final Icon icon) {
+  protected FileChooserAction(final @NlsActions.ActionText String text,
+                              final @NlsActions.ActionDescription String description, final Icon icon) {
     this(() -> text, () -> description, icon);
   }
 

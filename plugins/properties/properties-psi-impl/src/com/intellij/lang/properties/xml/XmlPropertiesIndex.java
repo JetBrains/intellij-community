@@ -1,15 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.xml;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
@@ -17,14 +21,17 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
-import net.n3.nanoxml.StdXMLReader;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import net.n3.nanoxml.StdXMLReader;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -150,7 +157,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
 
   @Override
   public boolean isEqual(Key val1, Key val2) {
-    return val1.isMarker == val2.isMarker && Comparing.equal(val1.key, val2.key);
+    return val1.isMarker == val2.isMarker && Objects.equals(val1.key, val2.key);
   }
 
   public static class Key {

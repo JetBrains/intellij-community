@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.*;
@@ -93,7 +94,7 @@ public class ChangeListChooserPanel extends JPanel {
 
       @Override
       protected void nameChangedImpl(Project project, LocalChangeList initial) {
-        nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? "Cannot create new changelist with empty name." : null);
+        nameChanged(StringUtil.isEmptyOrSpaces(getChangeListName()) ? VcsBundle.message("new.changelist.empty.name.error") : null);
       }
     };
     myOkEnabledListener = okEnabledListener;
@@ -216,7 +217,7 @@ public class ChangeListChooserPanel extends JPanel {
       super(PREF_WIDTH);
       JBColor fg = new JBColor(0x00b53d, 0x6ba65d);
       JBColor bg = new JBColor(0xebfcf1, 0x313b32);
-      TextIcon icon = new TextIcon("New", fg, bg, JBUIScale.scale(2));
+      TextIcon icon = new TextIcon(VcsBundle.message("new.changelist.new.label"), fg, bg, JBUIScale.scale(2));
       icon.setFont(RelativeFont.TINY.derive(getFont()));
       icon.setRound(JBUIScale.scale(4));
       JLabel label = new JLabel(icon);

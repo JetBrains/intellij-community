@@ -283,14 +283,14 @@ final class SearchForUsagesRunnable implements Runnable {
     rangeBlinker.startBlinking();
   }
 
-  private UsageViewEx getUsageView(@NotNull ProgressIndicator indicator) {
+  private UsageViewEx getUsageView(@NotNull ProgressIndicator indicator, long startSearchStamp) {
     UsageViewEx usageView = myUsageViewRef.get();
     if (usageView != null) {
       return usageView;
     }
 
     int usageCount = myUsageCountWithoutDefinition.get();
-    if (usageCount < 2 && (usageCount != 1 || !myProcessPresentation.isShowPanelIfOnlyOneUsage())) {
+    if (usageCount == 0 || usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage() && System.currentTimeMillis() < startSearchStamp + 500) {
       return null;
     }
 
@@ -364,7 +364,7 @@ final class SearchForUsagesRunnable implements Runnable {
       findStartedBalloonShown.set(true);
     }, 300, ModalityState.NON_MODAL);
     UsageSearcher usageSearcher = mySearcherFactory.create();
-
+    long startSearchStamp = System.currentTimeMillis();
     usageSearcher.generate(usage -> {
       ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (currentIndicator == null) throw new IllegalStateException("must run find usages under progress");
@@ -384,7 +384,7 @@ final class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-        UsageViewEx usageView = getUsageView(originalIndicator);
+        UsageViewEx usageView = getUsageView(originalIndicator, startSearchStamp);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(originalIndicator);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
@@ -397,7 +397,7 @@ final class SearchForUsagesRunnable implements Runnable {
       }
       return true;
     });
-    if (getUsageView(indicator) != null) {
+    if (getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
     Disposer.dispose(findUsagesStartedBalloon);

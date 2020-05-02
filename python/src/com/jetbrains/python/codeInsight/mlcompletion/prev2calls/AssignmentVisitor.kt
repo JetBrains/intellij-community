@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.mlcompletion.prev2calls
 
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.codeInsight.mlcompletion.PyMlCompletionHelpers
 import com.jetbrains.python.psi.*
 
 class AssignmentVisitor(private val borderOffset: Int,
@@ -39,7 +40,7 @@ class AssignmentVisitor(private val borderOffset: Int,
       val left = it.first
       val right = it.second
       if (left is PyTargetExpression) {
-        val leftName = getQualifierComponents(left).joinToString(".")
+        val leftName = PyMlCompletionHelpers.getQualifiedComponents(left).joinToString(".")
         val rightName = getResolvedExpression(right).resolvedExpression
         if (rightName.isNotEmpty() && leftName.isNotEmpty()) {
           fullNames[leftName] = rightName
@@ -49,10 +50,10 @@ class AssignmentVisitor(private val borderOffset: Int,
   }
 
   data class ResolvedExpression(val resolvedExpression: String = "", val resolvedPrefix: String = "")
-  private fun getResolvedExpression(node: PsiElement?): ResolvedExpression {
+  private fun getResolvedExpression(node: PyExpression?): ResolvedExpression {
     if (node == null) return ResolvedExpression()
 
-    val components = getQualifierComponents(node)
+    val components = PyMlCompletionHelpers.getQualifiedComponents(node)
     for (i in components.indices) {
       val firstN = i + 1
       val prefix = components.take(firstN).joinToString(".")
@@ -67,13 +68,6 @@ class AssignmentVisitor(private val borderOffset: Int,
 
     return ResolvedExpression(components.joinToString("."))
   }
-
-  private fun getQualifierComponents(node: PsiElement): List<String> =
-    generateSequence(node) { it.firstChild }
-      .filterIsInstance<PyQualifiedExpression>()
-      .mapNotNull { it.name }
-      .toList()
-      .asReversed()
 
   override fun visitPyFunction(node: PyFunction) {
     if (node == scope) super.visitPyFunction(node)

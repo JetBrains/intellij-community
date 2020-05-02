@@ -75,7 +75,7 @@ public class GitRebaseEditorMain implements GitExternalApp {
       params.add(handlerId);
       if (System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows") && file.startsWith(CYGDRIVE_PREFIX)) {
         int p = CYGDRIVE_PREFIX.length();
-        file = file.substring(p, p + 1) + ":" + file.substring(p + 1);
+        file = file.charAt(p) + ":" + file.substring(p + 1);
       }
       params.add(new File(file).getAbsolutePath());
       Integer exitCode = (Integer)client.execute(HANDLER_NAME + ".editCommits", params);

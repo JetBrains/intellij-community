@@ -34,7 +34,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
    */
   override fun processIntention(element: PsiElement, project: Project, editor: Editor?) {
     val method: GrMethod = element as GrMethod
-    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), DefaultInferenceContext, lazy { unreachable() })
+    val options = SignatureInferenceOptions(GlobalSearchScope.allScope(project), false, DefaultInferenceContext, lazy { unreachable() })
     val virtualMethod = runInferenceProcess(method, options)
     substituteMethodSignature(virtualMethod, method)
   }
@@ -63,7 +63,7 @@ internal class InferMethodParametersTypesIntention : Intention() {
     for ((actual, inferred) in sinkMethod.parameters.zip(sourceMethod.parameters)) {
       actual.setType(inferred.type)
       actual.modifierList.setModifierProperty("def", false)
-      if (actual.isVarArgs && !inferred.isVarArgs) {
+      if (actual.isVarArgs) {
         actual.ellipsisDots!!.delete()
       }
       val currentAnnotations = actual.annotations.map { it.text }

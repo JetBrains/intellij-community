@@ -12,7 +12,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
@@ -33,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GrScopeProcessorWith
 import org.jetbrains.plugins.groovy.transformations.impl.GroovyObjectTransformationSupport;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
@@ -81,11 +82,11 @@ public class GrUnresolvedAccessChecker {
     return checkContainer(patternMethod, container);
   }
 
-  private static boolean checkContainer(@NotNull final PsiMethod patternMethod, @NotNull PsiElement container) {
+  private static boolean checkContainer(final @NotNull PsiMethod patternMethod, @NotNull PsiElement container) {
     final String name = patternMethod.getName();
 
     Map<String, Boolean> cached = CachedValuesManager.getCachedValue(container, () -> Result.create(
-      ContainerUtil.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT
+      (ConcurrentMap<String, Boolean>)new ConcurrentHashMap<String, Boolean>(), PsiModificationTracker.MODIFICATION_COUNT
     ));
     Boolean cachedResult = cached.get(name);
     if (cachedResult != null) {
@@ -140,8 +141,7 @@ public class GrUnresolvedAccessChecker {
     return true;
   }
 
-  @Nullable
-  private static PsiMethod findPatternMethod(@NotNull GrReferenceExpression ref) {
+  private static @Nullable PsiMethod findPatternMethod(@NotNull GrReferenceExpression ref) {
     PsiClass groovyObject = JavaPsiFacade.getInstance(ref.getProject()).findClass(GroovyCommonClassNames.GROOVY_OBJECT,
                                                                                               ref.getResolveScope());
     if (groovyObject == null) return null;

@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -99,8 +100,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     multicaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent event) {
-        if (!Registry.is("editor.new.mouse.hover.popups")) return;
-
         Editor editor = event.getEditor();
         if (editor == SoftReference.dereference(myCurrentEditor)) {
           DocumentationManager.getInstance(Objects.requireNonNull(editor.getProject())).setAllowContentUpdateFromContext(true);
@@ -108,10 +107,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       }
     }, this);
     multicaster.addVisibleAreaListener(e -> {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
-
       Rectangle oldRectangle = e.getOldRectangle();
       if (e.getEditor() == SoftReference.dereference(myCurrentEditor) &&
           oldRectangle != null && !oldRectangle.getLocation().equals(e.getNewRectangle().getLocation())) {
@@ -120,23 +115,17 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }, this);
 
     EditorMouseHoverPopupControl.getInstance().addListener(() -> {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
-
       Editor editor = SoftReference.dereference(myCurrentEditor);
       if (editor != null && EditorMouseHoverPopupControl.arePopupsDisabled(editor)) {
         closeHint();
       }
     });
     LaterInvocator.addModalityStateListener(entering -> {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
-
       cancelProcessingAndCloseHint();
     }, this);
-    IdeEventQueue.getInstance().addActivityListener(this::onActivity, this);
+    IdeEventQueue.getInstance().addActivityListener(() -> {
+      cancelCurrentProcessing();
+    }, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyActionListener());
   }
 
@@ -243,12 +232,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
     }, context.getShowingDelay());
   }
 
-  private void onActivity() {
-    if (!Registry.is("editor.new.mouse.hover.popups")) return;
-
-    cancelCurrentProcessing();
-  }
-
   private boolean ignoreEvent(EditorMouseEvent e) {
     if (mySkipNextMovement) {
       mySkipNextMovement = false;
@@ -352,15 +335,13 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
   private static int getTargetOffset(EditorMouseEvent event) {
     Editor editor = event.getEditor();
-    Point point = event.getMouseEvent().getPoint();
     if (editor instanceof EditorEx &&
         editor.getProject() != null &&
         event.getArea() == EditorMouseEventArea.EDITING_AREA &&
         event.getMouseEvent().getModifiers() == 0 &&
-        EditorUtil.isPointOverText(editor, point) &&
-        ((EditorEx)editor).getFoldingModel().getFoldingPlaceholderAt(point) == null) {
-      LogicalPosition logicalPosition = editor.xyToLogicalPosition(point);
-      return editor.logicalPositionToOffset(logicalPosition);
+        event.isOverText() &&
+        event.getCollapsedFoldRegion() == null) {
+      return event.getOffset();
     }
     return -1;
   }
@@ -626,7 +607,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       Ref<LightweightHint> mockHintRef = new Ref<>();
       HintHint hintHint = new HintHint().setAwtTooltip(true).setRequestFocus(requestFocus);
       LightweightHint hint =
-        renderer.createHint(editor, new Point(), false, EDITOR_INFO_GROUP, hintHint, true, highlightActions, false, expand -> {
+        renderer.createHint(editor, new Point(), false, EDITOR_INFO_GROUP, hintHint, highlightActions, false, expand -> {
           LineTooltipRenderer newRenderer = renderer.createRenderer(renderer.getText(), expand ? 1 : 0);
           JComponent newComponent = createHighlightInfoComponent(editor, newRenderer, highlightActions, popupBridge, requestFocus);
           AbstractPopup popup = popupBridge.getPopup();
@@ -736,6 +717,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       });
       popupBridge.performWhenAvailable(component::setHint);
       EditorUtil.disposeWithEditor(editor, component);
+      popupBridge.performOnCancel(() -> Disposer.dispose(component));
       return component;
     }
   }
@@ -874,10 +856,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
   static final class MyEditorMouseMotionEventListener implements EditorMouseMotionListener {
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
-
       getInstance().handleMouseMoved(e);
     }
   }
@@ -885,9 +863,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
   static final class MyEditorMouseEventListener implements EditorMouseListener {
     @Override
     public void mouseEntered(@NotNull EditorMouseEvent event) {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
       // we receive MOUSE_MOVED event after MOUSE_ENTERED even if mouse wasn't physically moved,
       // e.g. if a popup overlapping editor has been closed
       getInstance().skipNextMovement();
@@ -895,19 +870,11 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
     @Override
     public void mouseExited(@NotNull EditorMouseEvent event) {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
-
       getInstance().cancelCurrentProcessing();
     }
 
     @Override
     public void mousePressed(@NotNull EditorMouseEvent event) {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
-
       getInstance().cancelProcessingAndCloseHint();
     }
   }
@@ -915,9 +882,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
   private static class MyActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
       if (action instanceof HintManagerImpl.ActionToIgnore) {
         return;
       }
@@ -934,9 +898,6 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
     @Override
     public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
-      if (!Registry.is("editor.new.mouse.hover.popups")) {
-        return;
-      }
       getInstance().cancelProcessingAndCloseHint();
     }
   }

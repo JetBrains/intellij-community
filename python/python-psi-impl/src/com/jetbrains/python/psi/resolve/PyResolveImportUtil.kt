@@ -7,7 +7,6 @@ package com.jetbrains.python.psi.resolve
 import com.google.common.base.Preconditions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -271,9 +270,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
 
   when {
     context.visitAllModules -> {
-      ModuleManager.getInstance(context.project).modules.forEach {
-        RootVisitorHost.visitRoots(it, true, visitor)
-      }
+      RootVisitorHost.visitRootsInAllModules(context.project, visitor)
       when {
         sdk != null ->
           RootVisitorHost.visitSdkRoots(sdk, visitor)
@@ -406,7 +403,7 @@ private fun isInProvidedSdk(element: PsiElement): Boolean =
 
 private fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
-    val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
+    val level = LanguageLevel.forElement(element)
     val initFile = PyUtil.turnDirIntoInit(element) ?: return !level.isPython2
     val initLines = initFile.text.lineSequence()
       .filterNot { line -> line.trim().let { it.isEmpty() || it.startsWith("#") } }

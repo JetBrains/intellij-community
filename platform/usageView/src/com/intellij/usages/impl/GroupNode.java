@@ -62,7 +62,8 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @NotNull
   List<Node> getSwingChildren() {
-    //noinspection unchecked
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    List<Node> children = (List)this.children;
     return ObjectUtils.notNull(children, Collections.emptyList());
   }
 
@@ -188,7 +189,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     for (MutableTreeNode node : nodes) {
       ordering.put(node, parent.getIndex(node));
     }
-    Collections.sort(nodes, Comparator.comparingInt(ordering::get)); // need ascending order
+    nodes.sort(Comparator.comparingInt(ordering::get)); // need ascending order
     int[] indices = ordering.getValues();
     Arrays.sort(indices);
     for (int i = count - 1; i >= 0; i--) {

@@ -38,7 +38,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   }
 
   public static PaletteToolWindowManager getInstance(Project project) {
-    return project.getComponent(PaletteToolWindowManager.class);
+    return project.getService(PaletteToolWindowManager.class);
   }
 
   @Override

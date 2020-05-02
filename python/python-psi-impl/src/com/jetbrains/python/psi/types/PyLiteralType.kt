@@ -9,13 +9,11 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import org.jetbrains.annotations.ApiStatus
 
 
 /**
  * Represents literal type introduced in PEP 586.
  */
-@ApiStatus.NonExtendable
 class PyLiteralType private constructor(cls: PyClass, val expression: PyExpression) : PyClassTypeImpl(cls, false) {
 
   override fun getName(): String = "Literal[${expression.text}]"

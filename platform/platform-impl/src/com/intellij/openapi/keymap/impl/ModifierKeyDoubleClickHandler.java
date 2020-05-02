@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -47,7 +47,7 @@ public final class ModifierKeyDoubleClickHandler {
     KEY_CODE_TO_MODIFIER_MAP.put(KeyEvent.VK_SHIFT, InputEvent.SHIFT_MASK);
   }
 
-  private final ConcurrentMap<String, MyDispatcher> myDispatchers = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<String, MyDispatcher> myDispatchers = new ConcurrentHashMap<>();
   private boolean myIsRunningAction;
 
   public ModifierKeyDoubleClickHandler() {
@@ -272,8 +272,7 @@ public final class ModifierKeyDoubleClickHandler {
       }
     }
 
-    @NotNull
-    private DataContext calculateContext() {
+    private @NotNull DataContext calculateContext() {
       IdeFocusManager focusManager = IdeFocusManager.findInstance();
       Component focusedComponent = focusManager.getFocusOwner();
       Window ideWindow = focusManager.getLastFocusedIdeWindow();

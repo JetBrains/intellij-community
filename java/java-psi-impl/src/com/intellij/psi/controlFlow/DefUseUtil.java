@@ -405,7 +405,7 @@ public class DefUseUtil {
           elem += 1;
         }
 
-        final Set<PsiElement> res = new THashSet<>();
+        final Set<@NotNull PsiElement> res = new THashSet<>();
         class Inner {
           private void traverse(int index) {
             if (visited[index]) {
@@ -425,7 +425,10 @@ public class DefUseUtil {
 
               // hack: ControlFlow doesn't contains parameters initialization
               if (index == 0 && def instanceof PsiParameter) {
-                res.add(def.getNameIdentifier());
+                PsiIdentifier identifier = def.getNameIdentifier();
+                if (identifier != null) {
+                  res.add(identifier);
+                }
               }
             }
 

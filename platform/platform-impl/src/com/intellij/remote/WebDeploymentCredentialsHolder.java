@@ -13,7 +13,7 @@ public class WebDeploymentCredentialsHolder {
   public static final String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
 
 
-  private String myCredentialsId;
+  private @NotNull String myCredentialsId = "";
   private @NotNull String myWebServerConfigId = "";
   private String myWebServerConfigName;
 
@@ -27,7 +27,7 @@ public class WebDeploymentCredentialsHolder {
     myCredentialsId = constructSftpCredentialsFullPath(remoteCredentials);
   }
 
-  public String getCredentialsId() {
+  public @NotNull String getCredentialsId() {
     return myCredentialsId;
   }
 

@@ -11,6 +11,8 @@ import java.util.Collection;
 
 /**
  * Allows a plugin to modify the structure of a project as displayed in the project view.
+ *
+ * @see ProjectViewNodeDecorator
  */
 public interface TreeStructureProvider {
   ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");

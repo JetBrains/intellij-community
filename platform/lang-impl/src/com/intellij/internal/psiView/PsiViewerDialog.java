@@ -8,7 +8,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,6 +57,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -83,7 +83,7 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * @author Konstantin Bulenkov
  */
-public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disposable {
+public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private static final String REFS_CACHE = "References Resolve Cache";
   public static final Color BOX_COLOR = new JBColor(new Color(0xFC6C00), new Color(0xDE6C01));
   public static final Logger LOG = Logger.getInstance(PsiViewerDialog.class);
@@ -103,7 +103,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private JSplitPane myTreeSplit;
   private Tree myPsiTree;
   private ViewerTreeBuilder myPsiTreeBuilder;
-  private final JList myRefs;
+  private final JList<String> myRefs;
 
   private TitledSeparator myTextSeparator;
   private TitledSeparator myPsiTreeSeparator;
@@ -122,7 +122,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
   private String myLastParsedText = null;
   private int myLastParsedTextHashCode = 17;
   private int myNewDocumentHashCode = 11;
-
 
   private final boolean myExternalDocument;
 
@@ -154,7 +153,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     myProject = project;
     myExternalDocument = selectedEditor != null;
     myTabs = createTabPanel(project);
-    myRefs = new JBList(new DefaultListModel());
+    myRefs = new JBList<>(new DefaultListModel<>());
     ViewerPsiBasedTree.PsiTreeUpdater psiTreeUpdater = new ViewerPsiBasedTree.PsiTreeUpdater() {
 
       private final TextAttributes myAttributes;
@@ -187,6 +186,8 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     };
     myStubTree = new StubViewerPsiBasedTree(project, psiTreeUpdater);
     myBlockTree = new BlockViewerPsiBasedTree(project, psiTreeUpdater);
+    Disposer.register(getDisposable(), myStubTree);
+    Disposer.register(getDisposable(), myBlockTree);
 
     setOKButtonText("&Build PSI Tree");
     setCancelButtonText("&Close");
@@ -223,7 +224,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     tabs.getPresentation().setAlphabeticalMode(false).setSupportsCompression(false);
     return tabs;
   }
-
 
   @Override
   protected void init() {
@@ -309,15 +309,19 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     });
 
     myEditor.getSettings().setFoldingOutlineShown(false);
-    myEditor.getDocument().addDocumentListener(myEditorListener);
+    myEditor.getDocument().addDocumentListener(myEditorListener, getDisposable());
     myEditor.getSelectionModel().addSelectionListener(myEditorListener);
     myEditor.getCaretModel().addCaretListener(myEditorListener);
 
+    FocusTraversalPolicy oldPolicy = getPeer().getWindow().getFocusTraversalPolicy();
     getPeer().getWindow().setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
       @Override
       public Component getInitialComponent(@NotNull Window window) {
         return myEditor.getComponent();
       }
+    });
+    Disposer.register(getDisposable(), () -> {
+      getPeer().getWindow().setFocusTraversalPolicy(oldPolicy);
     });
     VirtualFile file = myExternalDocument ? FileDocumentManager.getInstance().getFile(myEditor.getDocument()) : null;
     Language curLanguage = LanguageUtil.getLanguageForPsi(myProject, file);
@@ -538,10 +542,10 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     ArrayList<Language> items = new ArrayList<>();
     if (source instanceof LanguageFileType) {
       final Language baseLang = ((LanguageFileType)source).getLanguage();
-      items.add(baseLang);
-      List<Language> dialects = new ArrayList<>(baseLang.getDialects());
-      Collections.sort(dialects, LanguageUtil.LANGUAGE_COMPARATOR);
-      items.addAll(dialects);
+      JBTreeTraverser.from(Language::getDialects).withRoot(baseLang)
+        .preOrderDfsTraversal()
+        .addAllTo(items);
+      items.subList(1, items.size()).sort(LanguageUtil.LANGUAGE_COMPARATOR);
     }
     myDialectComboBox.setModel(new CollectionComboBoxModel<>(items));
 
@@ -552,7 +556,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       VirtualFile file = myExternalDocument ? FileDocumentManager.getInstance().getFile(myEditor.getDocument()) : null;
       Language curLanguage = LanguageUtil.getLanguageForPsi(myProject, file);
       int idx = items.indexOf(curLanguage);
-      myDialectComboBox.setSelectedIndex(idx >= 0 ? idx : 0);
+      myDialectComboBox.setSelectedIndex(Math.max(idx, 0));
     }
   }
 
@@ -562,7 +566,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
       List<String> extensions = getAllExtensions((LanguageFileType)source);
       if (extensions.size() > 1) {
         ExtensionComparator comp = new ExtensionComparator(extensions.get(0));
-        Collections.sort(extensions, comp);
+        extensions.sort(comp);
         SortedComboBoxModel<String> model = new SortedComboBoxModel<>(comp);
         model.setAll(extensions);
         myExtensionComboBox.setModel(model);
@@ -715,10 +719,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         }
       }
       else if (myRefs.hasFocus()) {
-        final Object value = myRefs.getSelectedValue();
-        if (value instanceof String) {
-          fqn = (String)value;
-        }
+        fqn = myRefs.getSelectedValue();
       }
       if (fqn != null) {
         return getContainingFileForClass(fqn);
@@ -782,11 +783,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
 
   public void updateReferences(PsiElement element) {
-    final DefaultListModel model = (DefaultListModel)myRefs.getModel();
+    final DefaultListModel<String> model = (DefaultListModel<String>)myRefs.getModel();
     model.clear();
     final Object cache = myRefs.getClientProperty(REFS_CACHE);
     if (cache instanceof Map) {
-      ((Map)cache).clear();
+      ((Map<?, ?>)cache).clear();
     }
     else {
       myRefs.putClientProperty(REFS_CACHE, new HashMap());
@@ -824,13 +825,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   @Override
   public void dispose() {
-    Disposer.dispose(myPsiTreeBuilder);
-
     if (!myEditor.isDisposed()) {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }
-    Disposer.dispose(myBlockTree);
-    Disposer.dispose(myStubTree);
     super.dispose();
   }
 
@@ -895,16 +892,11 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private class GoToListener implements KeyListener, MouseListener, ListSelectionListener {
     private RangeHighlighter myListenerHighlighter;
-    private final TextAttributes myAttributes =
-      new TextAttributes(JBColor.RED, null, null, null, Font.PLAIN);
 
     private void navigate() {
-      final Object value = myRefs.getSelectedValue();
-      if (value instanceof String) {
-        final String fqn = (String)value;
-        final PsiFile file = getContainingFileForClass(fqn);
-        if (file != null) file.navigate(true);
-      }
+      final String fqn = myRefs.getSelectedValue();
+      final PsiFile file = getContainingFileForClass(fqn);
+      if (file != null) file.navigate(true);
     }
 
     @Override

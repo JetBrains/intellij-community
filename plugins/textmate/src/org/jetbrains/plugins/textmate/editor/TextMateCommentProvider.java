@@ -10,8 +10,8 @@ import com.intellij.psi.templateLanguages.MultipleLangCommentProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
+import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.TextMateService;
-import org.jetbrains.plugins.textmate.language.TextMateFileType;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
 
 import java.util.Objects;

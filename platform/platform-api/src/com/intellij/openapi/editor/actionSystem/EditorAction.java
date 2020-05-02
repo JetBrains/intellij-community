@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.List;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
@@ -26,7 +25,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
   private static final Logger LOG = Logger.getInstance(EditorAction.class);
 
   private EditorActionHandler myHandler;
-  private boolean myHandlersLoaded;
+  private DynamicEditorActionHandler myDynamicHandler;
 
   protected EditorAction(EditorActionHandler defaultHandler) {
     myHandler = defaultHandler;
@@ -39,25 +38,14 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
     return tmp;
   }
 
-  protected void doSetupHandler(@NotNull EditorActionHandler newHandler) {
+  private void doSetupHandler(@NotNull EditorActionHandler newHandler) {
     myHandler = newHandler;
     myHandler.setWorksInInjected(isInInjectedContext());
   }
 
-  public synchronized EditorActionHandler getHandler() {
-    if (!myHandlersLoaded) {
-      myHandlersLoaded = true;
-      final String id = ActionManager.getInstance().getId(this);
-      List<EditorActionHandlerBean> extensions = EditorActionHandlerBean.EP_NAME.getExtensionList();
-      for (int i = extensions.size() - 1; i >= 0; i--) {
-        final EditorActionHandlerBean handlerBean = extensions.get(i);
-        if (handlerBean.action.equals(id)) {
-          EditorActionHandler handler = handlerBean.getHandler(myHandler);
-          if (handler != null) {
-            doSetupHandler(handler);
-          }
-        }
-      }
+  public final synchronized EditorActionHandler getHandler() {
+    if (myDynamicHandler == null && myHandler != null) {
+      doSetupHandler(myDynamicHandler = new DynamicEditorActionHandler(this, myHandler));
     }
     return myHandler;
   }
@@ -176,5 +164,22 @@ public abstract class EditorAction extends AnAction implements DumbAware, Update
       }
       return original.getData(dataId);
     };
+  }
+
+  public synchronized void clearDynamicHandlersCache() {
+    if (myDynamicHandler != null) myDynamicHandler.clearCache();
+  }
+
+  public synchronized <T> @Nullable T getHandlerOfType(@NotNull Class<T> type) {
+    EditorActionHandler handler = getHandler();
+    if (handler != null) {
+      T result = handler.getHandlerOfType(type);
+      if (result != null) return result;
+    }
+    EditorActionHandler dynamicHandler = myDynamicHandler;
+    if (dynamicHandler != null && dynamicHandler != handler) {
+      return dynamicHandler.getHandlerOfType(type);
+    }
+    return null;
   }
 }

@@ -30,7 +30,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
@@ -61,11 +60,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.font.TextAttribute;
-import java.text.AttributedCharacterIterator;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
+
+import static com.intellij.util.FontUtil.enableKerning;
 
 @State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
@@ -399,7 +398,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     for (UIManager.LookAndFeelInfo l : myLaFs.getValue()) {
-      if (!(l instanceof UIThemeBasedLookAndFeelInfo) && Comparing.equal(l.getClassName(), className)) {
+      if (!(l instanceof UIThemeBasedLookAndFeelInfo) && Objects.equals(l.getClassName(), className)) {
         return l;
       }
     }
@@ -629,8 +628,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (SystemInfo.isMacOSElCapitan) {
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
-      Map<AttributedCharacterIterator.Attribute, Integer> attributes = Collections.singletonMap(TextAttribute.KERNING, TextAttribute.KERNING_ON);
-      Font font = new Font(SystemInfo.isMacOSCatalina ? ".AppleSystemUIFont" : ".SF NS Text", style, size).deriveFont(attributes);
+      Font font = enableKerning(new Font(SystemInfo.isMacOSCatalina ? ".AppleSystemUIFont" : ".SF NS Text", style, size));
       if (!StartupUiUtil.isDialogFont(font)) {
         return new FontUIResource(font);
       }
@@ -983,7 +981,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
       if (isHeavyWeightPopup && ((RootPaneContainer)window).getRootPane().getClientProperty(cleanupKey) == null) {
         final JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
-        rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, true));
+        rootPane.setGlassPane(new IdeGlassPaneImpl(rootPane, false));
         rootPane.putClientProperty(WINDOW_ALPHA, 1.0f);
         rootPane.putClientProperty(cleanupKey, cleanupKey);
         window.addWindowListener(new WindowAdapter() {

@@ -17,6 +17,8 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +28,10 @@ import com.jetbrains.python.psi.PyTypedElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -48,8 +53,6 @@ public class TypeEvalContext {
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<>();
   private final Map<PyCallable, PyType> myEvaluatedReturn = new HashMap<>();
-  private final ThreadLocal<Set<PyTypedElement>> myEvaluating = ThreadLocal.withInitial(HashSet::new);
-  private final ThreadLocal<Set<PyCallable>> myEvaluatingReturn = ThreadLocal.withInitial(HashSet::new);
 
   private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
     myConstraints = new TypeEvalConstraints(allowDataFlow, allowStubToAST, allowCallContext, origin);
@@ -177,56 +180,48 @@ public class TypeEvalContext {
 
   @Nullable
   public PyType getType(@NotNull final PyTypedElement element) {
-    final Set<PyTypedElement> evaluating = myEvaluating.get();
-    if (evaluating.contains(element)) {
-      return null;
-    }
-    evaluating.add(element);
-    try {
-      synchronized (myEvaluated) {
-        if (myEvaluated.containsKey(element)) {
-          final PyType type = myEvaluated.get(element);
-          assertValid(type, element);
-          return type;
+    return RecursionManager.doPreventingRecursion(
+      Pair.create(element, this),
+      false,
+      () -> {
+        synchronized (myEvaluated) {
+          if (myEvaluated.containsKey(element)) {
+            final PyType type = myEvaluated.get(element);
+            assertValid(type, element);
+            return type;
+          }
         }
+        final PyType type = element.getType(this, Key.INSTANCE);
+        assertValid(type, element);
+        synchronized (myEvaluated) {
+          myEvaluated.put(element, type);
+        }
+        return type;
       }
-      final PyType type = element.getType(this, Key.INSTANCE);
-      assertValid(type, element);
-      synchronized (myEvaluated) {
-        myEvaluated.put(element, type);
-      }
-      return type;
-    }
-    finally {
-      evaluating.remove(element);
-    }
+    );
   }
 
   @Nullable
   public PyType getReturnType(@NotNull final PyCallable callable) {
-    final Set<PyCallable> evaluating = myEvaluatingReturn.get();
-    if (evaluating.contains(callable)) {
-      return null;
-    }
-    evaluating.add(callable);
-    try {
-      synchronized (myEvaluatedReturn) {
-        if (myEvaluatedReturn.containsKey(callable)) {
-          final PyType type = myEvaluatedReturn.get(callable);
-          assertValid(type, callable);
-          return type;
+    return RecursionManager.doPreventingRecursion(
+      Pair.create(callable, this),
+      false,
+      () -> {
+        synchronized (myEvaluatedReturn) {
+          if (myEvaluatedReturn.containsKey(callable)) {
+            final PyType type = myEvaluatedReturn.get(callable);
+            assertValid(type, callable);
+            return type;
+          }
         }
+        final PyType type = callable.getReturnType(this, Key.INSTANCE);
+        assertValid(type, callable);
+        synchronized (myEvaluatedReturn) {
+          myEvaluatedReturn.put(callable, type);
+        }
+        return type;
       }
-      final PyType type = callable.getReturnType(this, Key.INSTANCE);
-      assertValid(type, callable);
-      synchronized (myEvaluatedReturn) {
-        myEvaluatedReturn.put(callable, type);
-      }
-      return type;
-    }
-    finally {
-      evaluating.remove(callable);
-    }
+    );
   }
 
   private static void assertValid(@Nullable PyType result, @NotNull PyTypedElement element) {

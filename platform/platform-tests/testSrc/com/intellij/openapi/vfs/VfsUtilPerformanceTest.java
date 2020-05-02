@@ -53,7 +53,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFindChildByNamePerformance() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -85,7 +85,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testFindRootPerformance() throws IOException {
+  public void testFindRootPerformance() {
     File tempJar = IoTestUtil.createTestJar(myTempDir.newFile("test.jar"));
     VirtualFile jar = LocalFileSystem.getInstance().findFileByIoFile(tempJar);
     assertNotNull(jar);
@@ -109,7 +109,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
 
   @Test
   public void testGetParentPerformance() throws IOException {
-    File tempDir = myTempDir.newFolder();
+    File tempDir = myTempDir.newDirectory();
     VirtualFile vDir = LocalFileSystem.getInstance().findFileByIoFile(tempDir);
     assertNotNull(vDir);
     assertTrue(vDir.isDirectory());
@@ -149,7 +149,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
       for (int i = 0; i < 13; i++) {  /*13 is max length with THashMap capacity of 17, we get plenty collisions then*/
         dir1.createChildData(this, "a" + i + ".txt").move(this, dir2);
       }
-      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).attempts(10).assertTiming();
+      PlatformTestUtil.startPerformanceTest("getParent after movement", time, checkPerformance).reattemptUntilJitSettlesDown().assertTiming();
     });
   }
 
@@ -203,7 +203,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   private void doAsyncRefreshTest() throws Exception {
     byte[] xxx = "xxx".getBytes(StandardCharsets.UTF_8);
 
-    File temp = myTempDir.newFolder();
+    File temp = myTempDir.newDirectory();
     LocalFileSystem fs = LocalFileSystem.getInstance();
     VirtualFile vTemp = fs.findFileByIoFile(temp);
     assertNotNull(vTemp);

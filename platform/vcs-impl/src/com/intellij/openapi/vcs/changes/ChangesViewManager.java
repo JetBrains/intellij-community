@@ -28,10 +28,14 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -107,7 +111,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public ChangesViewManager(@NotNull Project project) {
     myProject = project;
-    ChangesViewModifier.KEY.addExtensionPointListener(project, () -> refreshImmediately(), this);
+    ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
   }
 
   public static class ContentPreloader implements ChangesViewContentProvider.Preloader {
@@ -272,7 +276,7 @@ public class ChangesViewManager implements ChangesViewEx,
       return;
     }
 
-    ChangesViewPreview diffPreview = myToolWindowPanel.myDiffPreview;
+    DiffPreview diffPreview = myToolWindowPanel.myDiffPreview;
     if (diffPreview instanceof EditorTabPreview) {
       ((EditorTabPreview)diffPreview).closePreview();
     }
@@ -302,7 +306,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
     @NotNull private final ChangesViewCommitPanelSplitter myCommitPanelSplitter;
     private ChangesViewDiffPreviewProcessor myChangeProcessor;
-    private ChangesViewPreview myDiffPreview;
+    private DiffPreview myDiffPreview;
     @NotNull private final Wrapper myProgressLabel = new Wrapper();
 
     @Nullable private ChangesViewCommitPanel myCommitPanel;
@@ -416,6 +420,9 @@ public class ChangesViewManager implements ChangesViewEx,
         }
       });
       busConnection.subscribe(ChangeListListener.TOPIC, new MyChangeListListener());
+      busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, () -> {
+        if (myChangeProcessor != null) myChangeProcessor.fireDiffSettingsChanged();
+      });
 
       scheduleRefresh();
       myDiffPreview.updatePreview(false);
@@ -553,10 +560,6 @@ public class ChangesViewManager implements ChangesViewEx,
           Disposer.register(this, myCommitPanel);
           myCommitPanelSplitter.setSecondComponent(myCommitPanel);
 
-          ChangesViewCommitStatusPanel commitStatusPanel = new ChangesViewCommitStatusPanel(myView, myCommitPanel);
-          myChangesPanel.setStatusComponent(commitStatusPanel);
-          Disposer.register(myCommitPanel, () -> myChangesPanel.setStatusComponent(null));
-
           configurePreview();
           myCommitWorkflowHandler.addActivityListener(() -> configurePreview(), myCommitWorkflowHandler);
         }
@@ -580,7 +583,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private void configurePreview() {
-      myDiffPreview.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
+      myChangeProcessor.setAllowExcludeFromCommit(isAllowExcludeFromCommit());
     }
 
     private void setCommitSplitOrientation() {
@@ -623,7 +626,8 @@ public class ChangesViewManager implements ChangesViewEx,
       actions.add(Separator.getInstance());
       actions.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-      DefaultActionGroup viewOptionsGroup = DefaultActionGroup.createPopupGroup(() -> "View Options");
+      DefaultActionGroup viewOptionsGroup =
+        DefaultActionGroup.createPopupGroup(() -> VcsBundle.message("action.ChangesViewToolWindowPanel.text"));
       viewOptionsGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
       viewOptionsGroup.add(new ToggleShowIgnoredAction());
       viewOptionsGroup.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"));
@@ -680,7 +684,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
-        if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
         List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
@@ -698,14 +701,15 @@ public class ChangesViewManager implements ChangesViewEx,
         if (myChangesViewManager.myState.myShowIgnored) {
           treeModelBuilder.setIgnored(changeListManager.getIgnoredFilePaths(), changeListManager.isIgnoredInUpdateMode());
         }
-        for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
-          extension.modifyTreeModelBuilder(treeModelBuilder);
-        }
-        DefaultTreeModel newModel = treeModelBuilder.build();
 
         invokeLaterIfNeeded(() -> {
           if (myDisposed) return;
           indicator.checkCanceled();
+
+          for (ChangesViewModifier extension : ChangesViewModifier.KEY.getExtensions(myProject)) {
+            extension.modifyTreeModelBuilder(treeModelBuilder);
+          }
+          DefaultTreeModel newModel = treeModelBuilder.build();
 
           myModelUpdateInProgress = true;
           try {

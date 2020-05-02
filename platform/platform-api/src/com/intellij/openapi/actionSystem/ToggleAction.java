@@ -15,12 +15,11 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * An action which has a selected state, and which toggles its selected state when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
  */
-@SuppressWarnings("StaticInheritance")
 public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
   }
 
-  public ToggleAction(@Nullable @Nls @ActionText final String text) {
+  public ToggleAction(@Nullable @ActionText final String text) {
     super(() -> text);
   }
 
@@ -28,8 +27,8 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text);
   }
 
-  public ToggleAction(@Nullable @Nls @ActionText final String text,
-                      @Nullable @Nls @ActionDescription final String description,
+  public ToggleAction(@Nullable @ActionText final String text,
+                      @Nullable @ActionDescription final String description,
                       @Nullable final Icon icon) {
     super(text, description, icon);
   }

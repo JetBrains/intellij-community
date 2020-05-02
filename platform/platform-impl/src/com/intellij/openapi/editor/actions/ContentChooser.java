@@ -25,10 +25,9 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.nls.NlsContexts;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +59,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   private Icon myListEntryIcon = AllIcons.FileTypes.Text;
   private boolean myUseNumbering = true;
 
-  public ContentChooser(Project project, @Nls @NlsContexts.DialogTitle String title, boolean useIdeaEditor) {
+  public ContentChooser(Project project, @NlsContexts.DialogTitle String title, boolean useIdeaEditor) {
     this(project, title, useIdeaEditor, false);
   }
 
-  public ContentChooser(Project project, @Nls @NlsContexts.DialogTitle String title, boolean useIdeaEditor, boolean allowMultipleSelections) {
+  public ContentChooser(Project project, @NlsContexts.DialogTitle String title, boolean useIdeaEditor, boolean allowMultipleSelections) {
     super(project, true);
     myProject = project;
     myUseIdeaEditor = useIdeaEditor;

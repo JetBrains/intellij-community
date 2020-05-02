@@ -1,27 +1,44 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyCallable;
+import com.jetbrains.python.psi.PyElement;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameter;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PySubscriptionExpression;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyKeywordArgumentProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.*;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-
-import static com.jetbrains.python.psi.PyUtil.as;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 
 public class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
@@ -201,7 +218,7 @@ public class KeywordArgumentCompletionUtil {
         for (PyExpression e : node.getArguments()) {
           if (e instanceof PyStarArgument) {
             PyStarArgument kw = (PyStarArgument)e;
-            if (Comparing.equal(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
+            if (Objects.equals(myKwArgs.getName(), kw.getFirstChild().getNextSibling().getText())) {
               kwArgsTransit = true;
               break;
             }
@@ -212,7 +229,7 @@ public class KeywordArgumentCompletionUtil {
     }
 
     private void processGet(String operandName, PyExpression argument) {
-      if (Comparing.equal(myKwArgs.getName(), operandName) &&
+      if (Objects.equals(myKwArgs.getName(), operandName) &&
           argument instanceof PyStringLiteralExpression) {
         String name = ((PyStringLiteralExpression)argument).getStringValue();
         if (PyNames.isIdentifier(name)) {

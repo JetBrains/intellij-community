@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -456,7 +455,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
       filters = TARGET_FILTERS.get(myAllOptions);
     }
     for (TargetFilter targetFilter : filters) {
-      if (Comparing.equal(targetName, targetFilter.getTargetName())) {
+      if (Objects.equals(targetName, targetFilter.getTargetName())) {
         return targetFilter;
       }
     }

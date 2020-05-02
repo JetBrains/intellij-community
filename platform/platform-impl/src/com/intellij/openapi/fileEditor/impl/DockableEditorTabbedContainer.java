@@ -72,27 +72,23 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     }
   }
 
-  @NotNull
   @Override
-  public RelativeRectangle getAcceptArea() {
+  public @NotNull RelativeRectangle getAcceptArea() {
     return new RelativeRectangle(mySplitters);
   }
 
-  @NotNull
   @Override
-  public RelativeRectangle getAcceptAreaFallback() {
+  public @NotNull RelativeRectangle getAcceptAreaFallback() {
     JRootPane root = mySplitters.getRootPane();
     return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
   }
 
-  @NotNull
   @Override
-  public ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
+  public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
     return getTabsAt(content, point) != null ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
   }
 
-  @Nullable
-  private JBTabs getTabsAt(DockableContent<?> content, RelativePoint point) {
+  private @Nullable JBTabs getTabsAt(DockableContent<?> content, RelativePoint point) {
     if (!(content instanceof EditorTabbedContainer.DockableEditor)) {
       return null;
     }
@@ -102,17 +98,14 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       return targetTabs;
     }
     else {
-      EditorWindow wnd = mySplitters.getCurrentWindow();
-      if (wnd != null) {
-        EditorTabbedContainer tabs = wnd.getTabbedPane();
-        if (tabs != null) {
-          return tabs.getTabs();
-        }
+      EditorWindow window = mySplitters.getCurrentWindow();
+      if (window != null) {
+        return window.getTabbedPane().getTabs();
       }
       else {
         EditorWindow[] windows = mySplitters.getWindows();
         for (EditorWindow each : windows) {
-          if (each.getTabbedPane() != null && each.getTabbedPane().getTabs() != null) {
+          if (each.getTabbedPane().getTabs() != null) {
             return each.getTabbedPane().getTabs();
           }
         }
@@ -229,9 +222,5 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       myWasEverShown = true;
       getSplitters().openFiles();
     }
-  }
-
-  @Override
-  public void hideNotify() {
   }
 }

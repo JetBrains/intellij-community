@@ -12,7 +12,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
@@ -216,7 +215,8 @@ public abstract class UsefulTestCase extends TestCase {
           }
         }
       },
-      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS)
+      () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
+      () -> clearFields(this)
     ).run(ObjectUtils.notNull(mySuppressedExceptions, Collections.emptyList()));
   }
 
@@ -426,18 +426,18 @@ public abstract class UsefulTestCase extends TestCase {
     System.out.println("Setup costs");
     long totalSetup = 0;
     for (Map.Entry<String, Long> entry : TOTAL_SETUP_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalSetup += entry.getValue();
     }
     System.out.println("Teardown costs");
     long totalTeardown = 0;
     for (Map.Entry<String, Long> entry : TOTAL_TEARDOWN_COST_MILLIS.entrySet()) {
-      System.out.println(String.format("  %s: %d ms", entry.getKey(), entry.getValue()));
+      System.out.printf("  %s: %d ms%n", entry.getKey(), entry.getValue());
       totalTeardown += entry.getValue();
     }
-    System.out.println(String.format("Total overhead: setup %d ms, teardown %d ms", totalSetup, totalTeardown));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']", totalSetup));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']", totalTeardown));
+    System.out.printf("Total overhead: setup %d ms, teardown %d ms%n", totalSetup, totalTeardown);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalSetupMs' value='%d']%n", totalSetup);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTeardownMs' value='%d']%n", totalTeardown);
   }
 
   @Override
@@ -874,7 +874,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
-    if (!Comparing.equal(expected, actual)) {
+    if (!Objects.equals(expected, actual)) {
       throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
@@ -1046,8 +1046,7 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        final String errorMessage = exceptionCase.getAssertionErrorMessage();
-        assertEquals(errorMessage, exceptionCase.getExpectedExceptionClass(), cause.getClass());
+        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
         if (expectedErrorMsgPart != null) {
           assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }
@@ -1068,7 +1067,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     finally {
       if (shouldOccur && !wasThrown) {
-        fail(exceptionCase.getAssertionErrorMessage());
+        fail(exceptionCase.getExpectedExceptionClass().getName() + " must be thrown.");
       }
     }
   }

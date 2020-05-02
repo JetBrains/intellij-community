@@ -4,6 +4,8 @@ package com.intellij.util.indexing.caches;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -18,18 +20,18 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
+import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.progress.SubTaskProgressIndicator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @ApiStatus.Internal
 public final class IndexUpdateRunner {
@@ -48,17 +51,26 @@ public final class IndexUpdateRunner {
 
   private final FileBasedIndexImpl myFileBasedIndex;
 
+  private final ExecutorService myIndexingExecutor;
+
+  private final int myNumberOfIndexingThreads;
+
   private static final CachedFileLoadLimiter LOAD_LIMITER_FOR_USUAL_FILES = new MaxTotalSizeCachedFileLoadLimiter(16 * 1024 * 1024);
 
   private static final CachedFileLoadLimiter LOAD_LIMITER_FOR_LARGE_FILES = new UnlimitedSingleCachedFileLoadLimiter();
 
-  public IndexUpdateRunner(@NotNull FileBasedIndexImpl fileBasedIndex) {
+  public IndexUpdateRunner(@NotNull FileBasedIndexImpl fileBasedIndex,
+                           @NotNull ExecutorService indexingExecutor,
+                           int numberOfIndexingThreads) {
     myFileBasedIndex = fileBasedIndex;
+    myIndexingExecutor = indexingExecutor;
+    myNumberOfIndexingThreads = numberOfIndexingThreads;
   }
 
-  public void indexFiles(@NotNull Project project,
-                         @NotNull Collection<VirtualFile> files,
-                         @NotNull ProgressIndicator indicator) {
+  @NotNull
+  public IndexingJobStatistics indexFiles(@NotNull Project project,
+                                          @NotNull Collection<VirtualFile> files,
+                                          @NotNull ProgressIndicator indicator) {
     indicator.checkCanceled();
     indicator.setIndeterminate(false);
 
@@ -70,23 +82,13 @@ public final class IndexUpdateRunner {
     IndexingJob indexingJob = new IndexingJob(project, queue, queueOfLargeFiles, indicator, new AtomicInteger(), files.size());
     ourIndexingJobs.add(indexingJob);
 
-    int numberOfIndexingThreads = ApplicationManager.getApplication().isWriteAccessAllowed()
-                                  ? 1 : UnindexedFilesUpdater.getNumberOfIndexingThreads();
-    ExecutorService indexingExecutor;
-    if (numberOfIndexingThreads == 1) {
-      indexingExecutor = ConcurrencyUtil.newSameThreadExecutorService();
-    }
-    else {
-      indexingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-        "Indexing",
-        UnindexedFilesUpdater.getNumberOfIndexingThreads(),
-        true
-      );
-    }
-
     try {
-      while (!project.isDisposed() && !indexingJob.myIsFinished.get() && !indicator.isCanceled()) {
-        processIndexJobsWhileUserIsInactive(numberOfIndexingThreads, indexingExecutor, indicator);
+      while (!indexingJob.isOutdated()) {
+        processIndexJobsWhileUserIsInactive(indicator);
+        if (!indexingJob.isOutdated() &&
+            !ApplicationManager.getApplication().isDispatchThread()) { // damn tests with totally different threading
+          ProgressIndicatorUtils.yieldToPendingWriteActions();
+        }
       }
     }
     finally {
@@ -98,19 +100,24 @@ public final class IndexUpdateRunner {
     }
 
     indicator.checkCanceled();
+
+    return indexingJob.myStatistics;
   }
 
-  private void processIndexJobsWhileUserIsInactive(int numberOfWorkers,
-                                                   @NotNull ExecutorService executorService,
-                                                   @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+  private void processIndexJobsWhileUserIsInactive(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     Runnable indexingWorker = () -> indexFilesOfJobsOneByOneWhileUserIsInactive();
 
-    List<Future<?>> futures = new ArrayList<>(numberOfWorkers);
-    for (int i = 0; i < numberOfWorkers; i++) {
-      futures.add(executorService.submit(indexingWorker));
-    }
-    for (Future<?> future : futures) {
-      ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      //If the current thread has acquired the write lock, we can't grant it to worker threads, so we must do the work in the current thread.
+      indexingWorker.run();
+    } else {
+      List<Future<?>> futures = new ArrayList<>(myNumberOfIndexingThreads);
+      for (int i = 0; i < myNumberOfIndexingThreads; i++) {
+        futures.add(myIndexingExecutor.submit(indexingWorker));
+      }
+      for (Future<?> future : futures) {
+        ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
+      }
     }
   }
 
@@ -121,7 +128,7 @@ public final class IndexUpdateRunner {
     try {
       while (!ourIndexingJobs.isEmpty()) {
         for (IndexingJob job : ourIndexingJobs) {
-          if (job.myProject.isDisposed() || job.myIsFinished.get() || job.myIndicator.isCanceled()) {
+          if (job.isOutdated()) {
             ourIndexingJobs.remove(job);
             return;
           }
@@ -131,7 +138,7 @@ public final class IndexUpdateRunner {
           catch (ProcessCanceledException e) {
             return;
           }
-          if (job.myProject.isDisposed() || job.myIsFinished.get() || job.myIndicator.isCanceled()) {
+          if (job.isOutdated()) {
             ourIndexingJobs.remove(job);
             return;
           }
@@ -145,6 +152,7 @@ public final class IndexUpdateRunner {
 
   private void indexOneFileOfJobIfUserIsInactive(@NotNull IndexingJob indexingJob,
                                                  @NotNull ProgressIndicator writeActionIndicator) throws ProcessCanceledException {
+    long contentLoadingStartTime = System.nanoTime();
     CachedFileContentToken token;
     try {
       token = loadNextContent(indexingJob, writeActionIndicator);
@@ -159,6 +167,9 @@ public final class IndexUpdateRunner {
       logFailedToLoadContentException(e);
       return;
     }
+    finally {
+      indexingJob.myStatistics.addContentLoadingTime(System.nanoTime() - contentLoadingStartTime);
+    }
 
     if (token == null) {
       indexingJob.myIsFinished.set(true);
@@ -167,7 +178,12 @@ public final class IndexUpdateRunner {
 
     try {
       CachedFileContent fileContent = token.getContent();
-      indexOneFileOfJobIfUserIsInactive(indexingJob, writeActionIndicator, fileContent);
+      long indexingStartTime = System.nanoTime();
+      try {
+        indexOneFileOfJobIfUserIsInactive(indexingJob, writeActionIndicator, fileContent);
+      } finally {
+        indexingJob.myStatistics.addIndexingTime(System.nanoTime() - indexingStartTime);
+      }
       token.release();
       indexingJob.oneMoreFileProcessed();
     }
@@ -236,14 +252,21 @@ public final class IndexUpdateRunner {
     indexingJob.setLocationBeingIndexed(fileContent.getVirtualFile());
     if (!fileContent.isDirectory() && !Boolean.TRUE.equals(fileContent.getUserData(FAILED_TO_INDEX))) {
       try {
+        AtomicReference<FileIndexingStatistics> fileStatistics = new AtomicReference<>();
         Runnable readAction = () -> {
           if (project.isDisposed() || writeActionIndicator.isCanceled()) {
             throw new ProcessCanceledException();
           }
-          ProgressManager.getInstance().runProcess(() -> myFileBasedIndex.indexFileContent(project, fileContent), writeActionIndicator);
+          FileIndexingStatistics statistics = ProgressManager.getInstance().runProcess(
+            () -> myFileBasedIndex.indexFileContent(project, fileContent), writeActionIndicator
+          );
+          fileStatistics.set(statistics);
         };
         if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(readAction)) {
           throw new ProcessCanceledException();
+        }
+        if (fileStatistics.get() != null) {
+          indexingJob.myStatistics.addFileStatistics(fileStatistics.get(), getFileType(fileContent));
         }
       }
       catch (ProcessCanceledException e) {
@@ -255,6 +278,23 @@ public final class IndexUpdateRunner {
                                      "To reindex this file IDEA has to be restarted", e);
       }
     }
+  }
+
+  private static FileType getFileType(@NotNull CachedFileContent fileContent) {
+    // TODO consider CachedFileType
+    VirtualFile virtualFile = fileContent.getVirtualFile();
+    byte[] fileBytes;
+    try {
+      fileBytes = fileContent.getBytes();
+    }
+    catch (IOException e) {
+      // Must not happen but let's play safe.
+      FileBasedIndexImpl.LOG.warn("Failed to record statistics for file " + virtualFile.getUrl() + ". " +
+                                  "Its content wasn't loaded " + e.getMessage());
+      return FileTypeManager.getInstance().getFileTypeByFile(fileContent.getVirtualFile());
+    }
+
+    return FileTypeManager.getInstance().getFileTypeByFile(virtualFile, fileBytes);
   }
 
   @NotNull
@@ -286,20 +326,21 @@ public final class IndexUpdateRunner {
   }
 
   private static class IndexingJob {
-    public final Project myProject;
-    public final CachedFileContentQueue myFileContentQueue;
-    public final LimitedCachedFileContentQueue myQueueOfLargeFiles;
-    public final ProgressIndicator myIndicator;
-    public final AtomicInteger myNumberOfFilesProcessed;
-    public final int myTotalFiles;
-    public final AtomicBoolean myIsFinished = new AtomicBoolean();
+    final Project myProject;
+    final CachedFileContentQueue myFileContentQueue;
+    final LimitedCachedFileContentQueue myQueueOfLargeFiles;
+    final ProgressIndicator myIndicator;
+    final AtomicInteger myNumberOfFilesProcessed;
+    final int myTotalFiles;
+    final AtomicBoolean myIsFinished = new AtomicBoolean();
+    final IndexingJobStatistics myStatistics = new IndexingJobStatistics();
 
-    private IndexingJob(@NotNull Project project,
-                        @NotNull CachedFileContentQueue queue,
-                        @NotNull LimitedCachedFileContentQueue queueOfLargeFiles,
-                        @NotNull ProgressIndicator indicator,
-                        @NotNull AtomicInteger numberOfFilesProcessed,
-                        int totalFiles) {
+    IndexingJob(@NotNull Project project,
+                @NotNull CachedFileContentQueue queue,
+                @NotNull LimitedCachedFileContentQueue queueOfLargeFiles,
+                @NotNull ProgressIndicator indicator,
+                @NotNull AtomicInteger numberOfFilesProcessed,
+                int totalFiles) {
       myProject = project;
       myFileContentQueue = queue;
       myIndicator = indicator;
@@ -326,6 +367,10 @@ public final class IndexUpdateRunner {
       else {
         myIndicator.setText2(presentableLocation);
       }
+    }
+
+    private boolean isOutdated() {
+      return myProject.isDisposed() || myIsFinished.get() || myIndicator.isCanceled();
     }
   }
 }

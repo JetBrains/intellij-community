@@ -73,30 +73,24 @@ def _internal_set_trace(tracing_func):
 
 def SetTrace(tracing_func):
     if TracingFunctionHolder._original_tracing is None:
-        #This may happen before replace_sys_set_trace_func is called.
+        # This may happen before replace_sys_set_trace_func is called.
         sys.settrace(tracing_func)
-        return
-
-    current_thread = threading.currentThread()
-    do_not_trace_before = getattr(current_thread, 'pydev_do_not_trace', None)
-    if do_not_trace_before:
         return
 
     try:
         TracingFunctionHolder._lock.acquire()
-        current_thread.pydev_do_not_trace = True  # avoid settrace reentering
         TracingFunctionHolder._warn = False
         _internal_set_trace(tracing_func)
         TracingFunctionHolder._warn = True
     finally:
         TracingFunctionHolder._lock.release()
-        current_thread.pydev_do_not_trace = do_not_trace_before
 
 
 def replace_sys_set_trace_func():
     if TracingFunctionHolder._original_tracing is None:
         TracingFunctionHolder._original_tracing = sys.settrace
         sys.settrace = _internal_set_trace
+
 
 def restore_sys_set_trace_func():
     if TracingFunctionHolder._original_tracing is not None:

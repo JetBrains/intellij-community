@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -49,6 +50,20 @@ public interface ApplicationEx extends Application {
    * @see #runWriteAction(Runnable)
    */
   boolean isWriteActionPending();
+
+  /**
+   * Acquires IW lock if it's not acquired by the current thread.
+   *
+   * @param invokedClassFqn fully qualified name of the class requiring the write intent lock.
+   */
+  @ApiStatus.Internal
+  default void acquireWriteIntentLock(@NotNull String invokedClassFqn) { }
+
+  /**
+   * Releases IW lock.
+   */
+  @ApiStatus.Internal
+  default void releaseWriteIntentLock() {}
 
   boolean isSaveAllowed();
 
@@ -183,9 +198,36 @@ public interface ApplicationEx extends Application {
     throw new UnsupportedOperationException();
   }
 
-  /** DO NOT USE */
+  /**
+   * DO NOT USE
+   */
   @ApiStatus.Internal
   default boolean isInImpatientReader() {
     return false;
+  }
+
+  /**
+   * Runs the specified action, releasing Write Intent lock if it is acquired at the moment of the call.
+   * <p>
+   * This method is used to implement higher-level API, please do not use it directly.
+   */
+  @ApiStatus.Internal
+  default <T, E extends Throwable> T runUnlockingIntendedWrite(@NotNull ThrowableComputable<T, E> action) throws E {
+    return action.compute();
+  }
+
+  /**
+   * Runs the specified action under Write Intent lock. Can be called from any thread. The action is executed immediately
+   * if no write intent action is currently running, or blocked until the currently running write intent action completes.
+   * <p>
+   * This method is used to implement higher-level API, please do not use it directly.
+   * Use {@link #invokeLaterOnWriteThread}, {@link com.intellij.openapi.application.WriteThread} or {@link com.intellij.openapi.application.AppUIExecutor#onWriteThread()} to
+   * run code under Write Intent lock asynchronously.
+   *
+   * @param action the action to run
+   */
+  @ApiStatus.Internal
+  default void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
+    action.run();
   }
 }

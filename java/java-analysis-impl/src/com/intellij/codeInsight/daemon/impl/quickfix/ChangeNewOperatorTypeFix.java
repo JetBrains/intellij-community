@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ChangeNewOperatorTypeFix implements IntentionAction {
+public final class ChangeNewOperatorTypeFix implements IntentionAction {
   private final PsiType myType;
   private final PsiNewExpression myExpression;
 
@@ -197,5 +198,10 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     }
 
     return inheritorSubstitutor;
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new ChangeNewOperatorTypeFix(myType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

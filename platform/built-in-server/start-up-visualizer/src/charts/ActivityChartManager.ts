@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as am4charts from "@amcharts/amcharts4/charts"
 import * as am4core from "@amcharts/amcharts4/core"
 import {LegendItem, XYChartManager} from "@/charts/ChartManager"
 import {DataManager} from "@/state/DataManager"
-import {CommonItem, Item} from "@/state/data"
+import {CommonItem, ItemV0} from "@/state/data"
 import {ActivityChartDescriptor} from "@/charts/ActivityChartDescriptor"
 
 export class ActivityChartManager extends XYChartManager {
@@ -119,7 +119,7 @@ export class ActivityChartManager extends XYChartManager {
   render(dataManager: DataManager): void {
     let sourceNames = this.sourceNames
 
-    let getItemListBySourceName: (name: string) => Array<Item> | null | undefined = name => {
+    let getItemListBySourceName: (name: string) => Array<ItemV0> | null | undefined = name => {
       // @ts-ignore
       return dataManager.data[name]
     }
@@ -137,7 +137,7 @@ export class ActivityChartManager extends XYChartManager {
         sourceNames = []
       }
       else {
-        const threadToItems = new Map<string, Array<Item>>()
+        const threadToItems = new Map<string, Array<ItemV0>>()
         for (const item of items) {
           const thread = item.thread
           let list = threadToItems.get(thread)
@@ -161,7 +161,7 @@ export class ActivityChartManager extends XYChartManager {
   }
 
   private doRenderData(sourceNames: Array<string>,
-                         getItemListBySourceName: (name: string) => Array<Item> | null | undefined,
+                         getItemListBySourceName: (name: string) => Array<ItemV0> | null | undefined,
                          sourceNameToLegendName: (sourceName: string, itemCount: number) => string,
                          data: DataManager) {
     let colorIndex = 0
@@ -262,7 +262,7 @@ export interface ActivityLegendItem extends LegendItem {
   readonly sourceName: string
 }
 
-export interface ClassItem extends Item {
+export interface ClassItem extends ItemV0 {
   readonly shortName: string
   readonly chartConfig: ClassItemChartConfig | null
 

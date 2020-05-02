@@ -51,7 +51,7 @@ public class RefactoringUtil {
         block.accept(visitor);
 
         final List<XPathVariableReference> list = new ArrayList<>(visitor.getMatches());
-        Collections.sort(list, XsltCodeInsightUtil.POSITION_COMPARATOR);
+        list.sort(XsltCodeInsightUtil.POSITION_COMPARATOR);
         return list;
     }
 

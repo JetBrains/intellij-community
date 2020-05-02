@@ -26,12 +26,7 @@ inline fun <reified T : PsiElement> T.toPointer(): PsiPointer<T> = SmartPointerM
 fun PsiElement.parents(): Sequence<PsiElement> = generateSequence(this) { it.parent }
 
 fun PsiElement.isInjectedFragment(): Boolean {
-  val host = this.parents().filter { it is PsiLanguageInjectionHost }.firstOrNull() as? PsiLanguageInjectionHost ?: return false
-  var isInjected = false
-  InjectedLanguageManager.getInstance(project).enumerate(host) { _, _ ->
-    isInjected = true
-  }
-  return isInjected
+  return InjectedLanguageManager.getInstance(this.project).isInjectedFragment(this.containingFile)
 }
 
 fun PsiElementProcessor<in PsiElement>.processElements(element: PsiElement?) {

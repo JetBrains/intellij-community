@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ class ExtractGeneratedClassUtil {
     //false, false);
     generatedFile.setPackageName(GENERATED_CLASS_PACKAGE);
     extractedClass = PsiTreeUtil.findChildOfType(generatedFile, PsiClass.class);
+    copyImports(generatedInnerClass, generatedFile);
     assert extractedClass != null;
     PsiElement codeBlock = PsiTreeUtil.findFirstParent(anchor, false, element -> element instanceof PsiCodeBlock);
     if (codeBlock == null) {
@@ -45,7 +47,22 @@ class ExtractGeneratedClassUtil {
     }
 
     addGeneratedClassInfo(codeBlock, generatedInnerClass, extractedClass);
+    JavaCodeStyleManager.getInstance(project).optimizeImports(generatedFile);
     return extractedClass;
+  }
+
+  private static void copyImports(@NotNull PsiElement from, @NotNull PsiJavaFile destFile) {
+    PsiJavaFile fromFile = PsiTreeUtil.getParentOfType(from, PsiJavaFile.class);
+    if (fromFile != null) {
+      PsiImportList sourceImportList = fromFile.getImportList();
+      if (sourceImportList != null) {
+        PsiImportList destImportList = destFile.getImportList();
+        LOG.assertTrue(destImportList != null, "import list of destination file should not be null");
+        for (PsiImportStatementBase importStatement : sourceImportList.getAllImportStatements()) {
+          destImportList.add(importStatement);
+        }
+      }
+    }
   }
 
   private static void addGeneratedClassInfo(@NotNull PsiElement element,

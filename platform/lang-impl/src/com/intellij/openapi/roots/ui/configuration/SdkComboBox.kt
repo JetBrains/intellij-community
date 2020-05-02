@@ -34,12 +34,20 @@ class SdkComboBox(model: SdkComboBoxModel) : SdkComboBoxBase<SdkListItem>(model.
     super.setSelectedItem(anObject)
   }
 
-  fun setSelectedSdk(sdk: Sdk?) {
+  fun setSelectedSdk(sdk: Sdk) {
     reloadModel()
-    val sdkItem = sdk?.let { model.listModel.findSdkItem(sdk) }
-    selectedItem = when {
-      sdk == null -> showNoneSdkItem()
-      sdkItem == null -> showInvalidSdkItem(sdk.name)
+    val sdkItem = model.listModel.findSdkItem(sdk)
+    selectedItem = when (sdkItem) {
+      null -> showInvalidSdkItem(sdk.name)
+      else -> sdkItem
+    }
+  }
+
+  fun setSelectedSdk(sdkName: String) {
+    reloadModel()
+    val sdkItem = model.listModel.findSdkItem(sdkName)
+    selectedItem = when (sdkItem) {
+      null -> showInvalidSdkItem(sdkName)
       else -> sdkItem
     }
   }

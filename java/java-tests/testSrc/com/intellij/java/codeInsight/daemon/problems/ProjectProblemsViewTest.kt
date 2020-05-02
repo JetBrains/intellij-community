@@ -2,12 +2,9 @@
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils.ReportedChange
 import com.intellij.codeInsight.hints.BlockInlayRenderer
-import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
-import com.intellij.codeInsight.hints.presentation.OnClickPresentation
-import com.intellij.codeInsight.hints.presentation.OnHoverPresentation
-import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresentation
+import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.*
@@ -30,7 +27,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
   }
 
   protected fun getProblems(psiFile: PsiFile): List<PsiElement> {
-    val reportedChanges: Map<SmartPsiElementPointer<PsiMember>, ReportedChange> = ProjectProblemPassUtils.getReportedChanges(psiFile)
+    val reportedChanges: MutableMap<PsiMember, Inlay<*>> = ProjectProblemPassUtils.getInlays(myFixture.editor)
     val targetFile = psiFile.virtualFile
     val problems: MutableList<PsiElement> = mutableListOf()
 
@@ -38,14 +35,16 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     val editorManager = FileEditorManager.getInstance(project)
     val clickEvent = MouseEvent(JPanel(), 0, 0, 0, 0, 0, 0, true, MouseEvent.BUTTON1)
     val point = Point(0, 0)
-    for (reportedChange in reportedChanges.values) {
-      val inlay = reportedChange.inlay ?: continue
+    for (inlay in reportedChanges.values) {
       val renderer = inlay.renderer as BlockInlayRenderer
       val presentation = renderer.getConstrainedPresentations()[0]
       val rootPresentation = presentation.root as RecursivelyUpdatingRootPresentation
       val hoverPresentation = rootPresentation.content as OnHoverPresentation
       hoverPresentation.mouseMoved(clickEvent, point)
-      val delegatePresentation = hoverPresentation.presentation as DynamicDelegatePresentation
+      val usagesSequencePresentation = (hoverPresentation.presentation as SequencePresentation).presentations[0] as SequencePresentation
+      val usagesHoverPresentation = usagesSequencePresentation.presentations[1] as OnHoverPresentation
+      usagesHoverPresentation.mouseMoved(clickEvent, point)
+      val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
       val onClickPresentation = delegatePresentation.delegate as OnClickPresentation
       onClickPresentation.mouseClicked(clickEvent, point)
       val editor = editorManager.selectedTextEditor!!

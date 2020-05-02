@@ -119,4 +119,8 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   protected Sdk getTestProjectJdk() {
     return IdeaTestUtil.getMockJdk18();
   }
+
+  public void testMustIgnoreJavadocReferences() throws Exception {
+    doJavaCallTypeHierarchyTest("p.X", "persist", "X.java");
+  }
 }

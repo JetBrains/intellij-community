@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
@@ -52,7 +53,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
   @NotNull
   @Override
-  protected CheckinHandler createVcsHandler(final CheckinProjectPanel panel) {
+  protected CheckinHandler createVcsHandler(@NotNull CheckinProjectPanel panel, @NotNull CommitContext commitContext) {
     return new MyCheckinHandler(panel);
   }
 

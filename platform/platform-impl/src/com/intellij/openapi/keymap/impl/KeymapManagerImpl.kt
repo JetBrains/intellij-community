@@ -57,7 +57,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
       override fun onCurrentSchemeSwitched(oldScheme: Keymap?,
                                            newScheme: Keymap?,
                                            processChangeSynchronously: Boolean) {
-        fireActiveKeymapChanged(newScheme)
+        fireActiveKeymapChanged(newScheme, activeKeymap)
       }
 
       override fun reloaded(schemeManager: SchemeManager<Keymap>, schemes: Collection<Keymap>) {
@@ -93,10 +93,12 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         fireKeymapRemoved(keymap)
       }
       DefaultKeymap.instance.removeKeymap(keymapName)
-      if (isCurrent && !schemeManager.isEmpty) {
-        val newActiveKeymap = activeKeymap
-        schemeManager.setCurrent(activeKeymap, true, true)
-        fireActiveKeymapChanged(newActiveKeymap)
+      if (isCurrent) {
+        val activeKeymap = schemeManager.activeScheme
+                           ?: schemeManager.findSchemeByName(DefaultKeymap.instance.defaultKeymapName)
+                           ?: schemeManager.findSchemeByName(KeymapManager.DEFAULT_IDEA_KEYMAP)
+        schemeManager.setCurrent(activeKeymap, notify = true, processChangeSynchronously = true)
+        fireActiveKeymapChanged(activeKeymap, activeKeymap)
       }
     }
 
@@ -137,7 +139,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     }
   }
 
-  private fun fireActiveKeymapChanged(newScheme: Keymap?) {
+  private fun fireActiveKeymapChanged(newScheme: Keymap?, activeKeymap: Keymap?) {
     ApplicationManager.getApplication().messageBus.syncPublisher(KeymapManagerListener.TOPIC).activeKeymapChanged(activeKeymap)
     for (listener in listeners) {
       listener.activeKeymapChanged(newScheme)
@@ -193,7 +195,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
 
   fun setKeymaps(keymaps: List<Keymap>, active: Keymap?, removeCondition: Predicate<Keymap>?) {
     schemeManager.setSchemes(keymaps, active, removeCondition)
-    fireActiveKeymapChanged(active)
+    fireActiveKeymapChanged(active, activeKeymap)
   }
 
   override fun getState(): Element {

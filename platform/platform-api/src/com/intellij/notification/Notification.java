@@ -9,12 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.NlsUI;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.util.nls.NlsContexts.*;
+import static com.intellij.openapi.util.NlsContexts.*;
 
 /**
  * Notification bean class contains <b>title:</b>subtitle, content (plain text or HTML) and actions.
@@ -54,6 +52,12 @@ public class Notification {
   private static final DataKey<Notification> KEY = DataKey.create("Notification");
 
   public final String id;
+
+  /**
+   * Unique ID for usage statistics.
+   */
+  @Nullable
+  public final String displayId;
 
   private final String myGroupId;
   private Icon myIcon;
@@ -89,9 +93,9 @@ public class Notification {
    */
   public Notification(@NotNull @NonNls String groupId,
                       @Nullable Icon icon,
-                      @Nullable @Nls @NotificationTitle String title,
-                      @Nullable @Nls @NotificationSubtitle String subtitle,
-                      @Nullable @Nls @NotificationContent String content,
+                      @Nullable @NotificationTitle String title,
+                      @Nullable @NotificationSubtitle String subtitle,
+                      @Nullable @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupId;
@@ -104,14 +108,15 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
+    this.displayId = null;
     id = calculateId(this);
   }
 
   public Notification(@NotNull @NonNls String groupId,
-                      @NotNull @Nls @NotificationTitle String title,
-                      @NotNull @Nls @NotificationContent String content,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
                       @NotNull NotificationType type) {
-    this(groupId, title, content, type, null);
+    this(groupId, null, title, content, type, null);
   }
 
   /**
@@ -122,8 +127,17 @@ public class Notification {
    * @param listener       notification lifecycle listener
    */
   public Notification(@NotNull @NonNls String groupId,
-                      @NotNull @Nls @NotificationTitle String title,
-                      @NotNull @Nls @NotificationContent String content,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
+                      @NotNull NotificationType type,
+                      @Nullable NotificationListener listener) {
+    this(groupId, null, title, content, type, listener);
+  }
+
+  public Notification(@NotNull @NonNls String groupId,
+                      @Nullable @NonNls String displayId,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
     myGroupId = groupId;
@@ -133,6 +147,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
+    this.displayId = displayId;
     id = calculateId(this);
   }
 
@@ -169,14 +184,14 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls @NotificationTitle String title) {
+  public Notification setTitle(@Nullable @NotificationTitle String title) {
     myTitle = StringUtil.notNullize(title);
     return this;
   }
 
   @NotNull
-  public Notification setTitle(@Nullable @Nls @NotificationTitle String title,
-                               @Nullable @Nls @NotificationSubtitle String subtitle) {
+  public Notification setTitle(@Nullable @NotificationTitle String title,
+                               @Nullable @NotificationSubtitle String subtitle) {
     return setTitle(title).setSubtitle(subtitle);
   }
 
@@ -260,7 +275,7 @@ public class Notification {
    * @param dropDownText text for popup when all actions collapsed (when all actions width more notification width)
    */
   @NotNull
-  public Notification setDropDownText(@NotNull @Nls @NlsUI.LinkLabel String dropDownText) {
+  public Notification setDropDownText(@NotNull @LinkLabel String dropDownText) {
     myDropDownText = dropDownText;
     return this;
   }

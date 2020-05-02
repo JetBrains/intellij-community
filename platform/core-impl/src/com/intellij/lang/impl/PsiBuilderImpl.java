@@ -1,14 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.impl;
 
-import com.intellij.lang.*;
+import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
+
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.ForeignLeafType;
+import com.intellij.lang.ITokenTypeRemapper;
+import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.lang.LighterLazyParseableNode;
+import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.TokenWrapper;
+import com.intellij.lang.WhitespaceSkippedCallback;
+import com.intellij.lang.WhitespacesAndCommentsBinder;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UnprotectedUserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
@@ -18,10 +35,26 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
+import com.intellij.psi.impl.source.tree.LazyParseableElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.text.BlockSupport;
-import com.intellij.psi.tree.*;
+import com.intellij.psi.tree.CustomLanguageASTComparator;
+import com.intellij.psi.tree.ICustomParsingType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.tree.ILazyParseableElementType;
+import com.intellij.psi.tree.ILazyParseableElementTypeBase;
+import com.intellij.psi.tree.ILeafElementType;
+import com.intellij.psi.tree.ILightLazyParseableElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.ThreeState;
 import com.intellij.util.TripleFunction;
@@ -33,15 +66,12 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.AbstractList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-
-import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuilder {
   private static final Logger LOG = Logger.getInstance(PsiBuilderImpl.class);
@@ -1333,7 +1363,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       if (oldIsErrorElement != newIsErrorElement) return ThreeState.NO;
       if (oldIsErrorElement) {
         final PsiErrorElement e1 = (PsiErrorElement)oldNode;
-        return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
+        return Objects.equals(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
 
       final ThreeState customResult = customCompare(oldNode, newNode);
@@ -1441,7 +1471,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
       if (n1 instanceof PsiErrorElement && n2.getTokenType() == TokenType.ERROR_ELEMENT) {
         final PsiErrorElement e1 = (PsiErrorElement)n1;
-        if (!Comparing.equal(e1.getErrorDescription(), getErrorMessage(n2))) return false;
+        if (!Objects.equals(e1.getErrorDescription(), getErrorMessage(n2))) return false;
       }
 
       return ((Node)n2).tokenTextMatches(n1.getChars());

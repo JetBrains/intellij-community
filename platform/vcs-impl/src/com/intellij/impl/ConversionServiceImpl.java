@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.impl;
 
 import com.intellij.conversion.*;
@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectLongHashMap;
@@ -229,7 +230,7 @@ public final class ConversionServiceImpl extends ConversionService {
       LOG.error("cyclic dependencies between converters: " + pair.getFirst().getId() + " and " + pair.getSecond().getId());
     }
     final Comparator<ConverterProvider> comparator = builder.comparator();
-    Collections.sort(runners, (o1, o2) -> comparator.compare(o1.getProvider(), o2.getProvider()));
+    runners.sort((o1, o2) -> comparator.compare(o1.getProvider(), o2.getProvider()));
     return runners;
   }
 
@@ -357,7 +358,8 @@ public final class ConversionServiceImpl extends ConversionService {
     }
     catch (CannotConvertException e) {
       LOG.info(e);
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()), "Cannot Convert Module");
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.load.project", e.getMessage()),
+                               VcsBundle.message("dialog.title.cannot.convert.module"));
       return ConversionResultImpl.ERROR_OCCURRED;
     }
     catch (IOException e) {

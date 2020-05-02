@@ -7,6 +7,10 @@ import com.intellij.openapi.vcs.FilePath
 internal class DirtBuilder {
   private val scopesByVcs: MutableMap<AbstractVcs, VcsDirtyScopeImpl> = mutableMapOf()
   var isEverythingDirty: Boolean = false
+    set(value) {
+      field = value
+      if (value) scopesByVcs.clear()
+    }
 
   fun getScopes(): List<VcsDirtyScopeImpl> = scopesByVcs.values.toList()
   fun isEmpty(): Boolean = scopesByVcs.isEmpty()

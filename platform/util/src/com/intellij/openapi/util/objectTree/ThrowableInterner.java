@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,10 +9,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
-import org.jetbrains.annotations.NotNull;
-
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Objects;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Please don't look, there's nothing interesting here.
@@ -38,7 +38,7 @@ public class ThrowableInterner {
       if (o1 == null || o2 == null) return false;
 
       if (!Comparing.equal(o1.getClass(), o2.getClass())) return false;
-      if (!Comparing.equal(o1.getMessage(), o2.getMessage())) return false;
+      if (!Objects.equals(o1.getMessage(), o2.getMessage())) return false;
       if (!equals(o1.getCause(), o2.getCause())) return false;
       Object[] backtrace1 = getBacktrace(o1);
       Object[] backtrace2 = getBacktrace(o2);

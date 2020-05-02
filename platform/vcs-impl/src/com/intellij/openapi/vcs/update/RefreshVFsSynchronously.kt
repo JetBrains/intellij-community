@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
@@ -17,6 +18,15 @@ interface FilePathChange {
 }
 
 object RefreshVFsSynchronously {
+  private val TRACE_LOG = Logger.getInstance("#trace.RefreshVFsSynchronously")
+
+  @JvmStatic
+  fun trace(message: String) {
+    if (TRACE_LOG.isDebugEnabled) {
+      TRACE_LOG.debug("RefreshVFsSynchronously: $message")
+    }
+  }
+
   @JvmStatic
   fun updateAllChanged(updatedFiles: UpdatedFiles) {
     val collector = FilesCollector()
@@ -27,11 +37,28 @@ object RefreshVFsSynchronously {
 
   @JvmStatic
   fun refreshFiles(files: Collection<File>) {
+    if (files.isEmpty()) return
+    if (TRACE_LOG.isDebugEnabled) {
+      TRACE_LOG.debug("RefreshVFsSynchronously#refreshFiles: $files", Throwable())
+    }
     val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it) }
     markDirtyAndRefresh(false, false, false, *toRefresh.toTypedArray())
   }
 
+  @JvmStatic
+  fun refreshVirtualFiles(files: Collection<VirtualFile>) {
+    if (files.isEmpty()) return
+    if (TRACE_LOG.isDebugEnabled) {
+      TRACE_LOG.debug("RefreshVFsSynchronously#refreshVirtualFiles: $files", Throwable())
+    }
+    markDirtyAndRefresh(false, false, false, *files.toTypedArray())
+  }
+
   private fun refreshDeletedFiles(files: Collection<File>) {
+    if (files.isEmpty()) return
+    if (TRACE_LOG.isDebugEnabled) {
+      TRACE_LOG.debug("RefreshVFsSynchronously#refreshDeletedFiles: $files", Throwable())
+    }
     val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it.parentFile) }
     markDirtyAndRefresh(false, true, false, *toRefresh.toTypedArray())
   }

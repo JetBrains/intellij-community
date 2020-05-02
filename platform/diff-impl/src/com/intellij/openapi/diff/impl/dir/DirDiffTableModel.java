@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.TableUtil;
@@ -254,7 +253,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         }
         catch (IOException e) {
           LOG.warn(e);
-          reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
+          reportException(DiffBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
         }
         finally {
           if (myTree != null) {
@@ -283,7 +282,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
     catch (final IOException e) {
       LOG.warn(e);
-      reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
+      reportException(DiffBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
     }
     finally {
       myTree.setSource(mySource);

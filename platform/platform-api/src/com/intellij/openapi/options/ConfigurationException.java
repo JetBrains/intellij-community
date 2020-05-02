@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.options;
 
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 
 /**
  * Thrown to indicate that a configurable component cannot {@link UnnamedConfigurable#apply() apply} entered values.
@@ -29,7 +28,7 @@ public class ConfigurationException extends Exception {
   /**
    * @param message the detail message describing the problem
    */
-  public ConfigurationException(@Nls @NlsContexts.ConfigurationErrorMessage String message) {
+  public ConfigurationException(@NlsContexts.DialogMessage String message) {
     super(message);
   }
 
@@ -37,15 +36,15 @@ public class ConfigurationException extends Exception {
    * @param message the detailed message describing the problem
    * @param title   the title describing the problem in short
    */
-  public ConfigurationException(@Nls @NlsContexts.ConfigurationErrorMessage String message,
-                                @Nls @NlsContexts.ConfigurationErrorTitle String title) {
+  public ConfigurationException(@NlsContexts.DialogMessage String message,
+                                @NlsContexts.DialogTitle String title) {
     super(message);
     myTitle = title;
   }
 
-  public ConfigurationException(@Nls @NlsContexts.ConfigurationErrorMessage String message,
+  public ConfigurationException(@NlsContexts.DialogMessage String message,
                                 Throwable cause,
-                                @Nls @NlsContexts.ConfigurationErrorTitle String title) {
+                                @NlsContexts.DialogTitle String title) {
     super(message, cause);
     myTitle = title;
   }

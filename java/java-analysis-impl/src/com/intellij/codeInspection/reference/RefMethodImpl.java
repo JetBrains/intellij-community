@@ -4,7 +4,6 @@ package com.intellij.codeInspection.reference;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -550,7 +549,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) {
           myReturnValueTemplate = newTemplate;
         }
-        else if (!Comparing.equal(myReturnValueTemplate, newTemplate)) {
+        else if (!Objects.equals(myReturnValueTemplate, newTemplate)) {
           myReturnValueTemplate = null;
         }
       }

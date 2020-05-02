@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Project level extension point.
@@ -10,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
  * Allows to set custom storage class using providing custom storage specs.
  * Or set custom stream provider for default storage (XmlElementStorage).
  */
+@ApiStatus.Internal
 interface StreamProviderFactory {
   companion object {
     val EP_NAME: ExtensionPointName<StreamProviderFactory> = ExtensionPointName.create<StreamProviderFactory>("com.intellij.streamProviderFactory")
@@ -22,4 +24,6 @@ interface StreamProviderFactory {
    * @return null if not applicable
    */
   fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? = null
+
+  fun getOrCreateStorageSpec(fileSpec: String, inProjectStateSpec: State? = null): Storage
 }

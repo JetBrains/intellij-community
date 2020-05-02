@@ -135,7 +135,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           }
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile == null) return;
-          final Editor editor = PythonUiService.getInstance().openTextEditor(file);
+          final Editor editor = PythonUiService.getInstance().openTextEditor(file.getProject(), virtualFile);
           if (editor == null) return;
           builder.run(editor, false);
         }

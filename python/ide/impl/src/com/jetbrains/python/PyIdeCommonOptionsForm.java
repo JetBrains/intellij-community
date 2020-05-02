@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.google.common.collect.Lists;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
@@ -65,7 +64,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private List<Sdk> myPythonSdks;
   private boolean myInterpreterRemote;
 
-  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
+  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
@@ -115,23 +114,24 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     updateRemoteInterpreterMode();
 
-    final HideableDecorator decorator = new HideableDecorator(myHideablePanel, "Environment", false) {
-      @Override
-      protected void on() {
-        super.on();
-        storeState();
-      }
+    final HideableDecorator decorator =
+      new HideableDecorator(myHideablePanel, PyBundle.message("python.sdk.common.options.environment"), false) {
+        @Override
+        protected void on() {
+          super.on();
+          storeState();
+        }
 
-      @Override
-      protected void off() {
-        super.off();
-        storeState();
-      }
+        @Override
+        protected void off() {
+          super.off();
+          storeState();
+        }
 
-      private void storeState() {
-        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
-      }
-    };
+        private void storeState() {
+          PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
+        }
+      };
     decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
     decorator.setContentComponent(myMainPanel);
 
@@ -220,7 +220,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private void updateDefaultInterpreter(Module module) {
     final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     myInterpreterComboBox.setRenderer(
-      sdk == null ? new PySdkListCellRenderer(null) : new PySdkListCellRenderer(null, "Project Default (" + sdk.getName() + ")", sdk)
+      sdk == null
+      ? new PySdkListCellRenderer(null)
+      : new PySdkListCellRenderer(null, PyBundle.message("python.sdk.rendering.project.default.0", sdk.getName()), sdk)
     );
   }
 

@@ -114,6 +114,17 @@ class RecursionManagerTest extends TestCase {
     }
   }
 
+  void "test memoize when the we run into the same prevention via different route"() {
+    prevent("foo") {
+      prevent("foo") { fail() }
+      assert "x" == prevent("bar") {
+        prevent("foo") { fail() }
+        return "x"
+      }
+      assert "x" == prevent("bar") { fail() }
+    }
+  }
+
   void testMayCache() {
     RecursionManager.disableMissedCacheAssertions(myDisposable)
     def doo1 = RecursionManager.markStack()
@@ -175,7 +186,9 @@ class RecursionManagerTest extends TestCase {
       assert "2-return" == prevent("2") { fail() }
       assert !stamp.mayCacheNow()
 
-      assert "3-another-return" == prevent("3") { "3-another-return" } // call to 3 doesn't depend on 2 now, so recalculate
+      stamp = RecursionManager.markStack()
+      assert "3-return" == prevent("3") { fail() }
+      assert !stamp.mayCacheNow()
 
       return "1-return"
     }
@@ -206,6 +219,28 @@ class RecursionManagerTest extends TestCase {
     assert "zoo" == cl()
 
     assert System.currentTimeMillis() - start < 10000
+  }
+
+  private class FullGraphCorrectness {
+    Set<String> a() {
+      return (prevent("a") { a() + b() + ["a"] } ?: []) as Set
+    }
+
+    Set<String> b() {
+      return (prevent("b") { a() + b() + ["b"] } ?: []) as Set
+    }
+
+    void ensureSymmetric() {
+      assert a() == ["a", "b"] as Set
+      assert b() == ["a", "b"] as Set
+    }
+  }
+
+  void "test full graph correctness"() {
+    new FullGraphCorrectness().ensureSymmetric()
+    prevent("unrelated") {
+      new FullGraphCorrectness().ensureSymmetric()
+    }
   }
 
   void "test changing hash code doesn't crash RecursionManager"() {

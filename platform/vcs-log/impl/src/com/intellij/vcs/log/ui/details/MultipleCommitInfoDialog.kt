@@ -111,7 +111,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   }
 
   private fun installSpeedSearch() {
-    ListSpeedSearch<VcsCommitMetadata>(commitsList) { it.subject }
+    ListSpeedSearch(commitsList) { it.subject }
   }
 
   override fun createActions() = arrayOf(okAction)

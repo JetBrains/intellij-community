@@ -6,14 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -21,17 +25,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
-
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -39,6 +32,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import javax.swing.JTree;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeModel;
+import javax.swing.tree.TreePath;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 /**
  * @see #createOn(JTree)
@@ -96,8 +99,8 @@ public class TreeState implements JDOMExternalizable {
     private Match getMatchTo(Object object) {
       Object userObject = TreeUtil.getUserObject(object);
       if (this.userObject != null && this.userObject.equals(userObject)) return Match.OBJECT;
-      return Comparing.equal(id, calcId(userObject)) &&
-             Comparing.equal(type, calcType(userObject)) ? Match.ID_TYPE : null;
+      return Objects.equals(id, calcId(userObject)) &&
+             Objects.equals(type, calcType(userObject)) ? Match.ID_TYPE : null;
     }
   }
 

@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -575,7 +577,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   static {
     //noinspection SpellCheckingInspection
     List<String> roots = StringUtil.split(System.getProperty("idea.persistentfs.roots", ""), File.pathSeparator);
-    Collections.sort(roots, (o1, o2) -> o2.length() - o1.length());  // longest first
+    roots.sort((o1, o2) -> o2.length() - o1.length());  // longest first
     ourRootPaths = ArrayUtil.toStringArray(roots);
   }
 

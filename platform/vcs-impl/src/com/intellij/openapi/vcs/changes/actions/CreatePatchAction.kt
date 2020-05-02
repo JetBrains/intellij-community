@@ -7,5 +7,5 @@ import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 
 class CreatePatchAction : AbstractCommitChangesAction() {
-  override fun getExecutor(project: Project): CommitExecutor? = CreatePatchCommitExecutor.getInstance(project)
+  override fun getExecutor(project: Project): CommitExecutor? = CreatePatchCommitExecutor(project)
 }

@@ -66,7 +66,6 @@ public class DuringChangeListManagerUpdateTestScheme {
     if (test.getException() != null) {
       test.getException().printStackTrace();
     }
-    //noinspection ThrowableNotThrown
     assert test.get() : (test.getException() == null ? null : test.getException().getMessage());
   }
 
@@ -128,7 +127,7 @@ public class DuringChangeListManagerUpdateTestScheme {
           break;
         }
       }
-      assert found == true  : debugRealListContent(list);
+      assert found : debugRealListContent(list);
     }
   }
 
@@ -148,7 +147,7 @@ public class DuringChangeListManagerUpdateTestScheme {
           break;
         }
       }
-      assert found == true  : debugRealListContent(list);
+      assert found : debugRealListContent(list);
     }
   }
 

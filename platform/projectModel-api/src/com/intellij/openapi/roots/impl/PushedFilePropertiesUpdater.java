@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -23,9 +24,9 @@ public abstract class PushedFilePropertiesUpdater {
    * @deprecated Use {@link #filePropertiesChanged(VirtualFile, Condition)}
    */
   @Deprecated
-  public abstract void filePropertiesChanged(@NotNull final VirtualFile file);
+  public abstract void filePropertiesChanged(@NotNull VirtualFile file);
   public abstract void pushAllPropertiesNow();
-  public abstract <T> void findAndUpdateValue(final VirtualFile fileOrDir, final FilePropertyPusher<T> pusher, final T moduleValue);
+  public abstract <T> void findAndUpdateValue(@NotNull VirtualFile fileOrDir, @NotNull FilePropertyPusher<T> pusher, @Nullable T moduleValue);
 
   /**
    * Invalidates indices and other caches for the given file or its immediate children (in case it's a directory).

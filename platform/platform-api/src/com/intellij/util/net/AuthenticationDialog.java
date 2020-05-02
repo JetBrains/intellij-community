@@ -17,8 +17,7 @@ package com.intellij.util.net;
 
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +28,8 @@ public class AuthenticationDialog extends DialogWrapper {
   private final AuthenticationPanel panel;
 
   public AuthenticationDialog(@NotNull Component component,
-                              @Nls @NlsContexts.DialogTitle String title,
-                              String description,
+                              @NlsContexts.DialogTitle String title,
+                              @NlsContexts.DialogMessage String description,
                               final String login,
                               final String password,
                               final boolean rememberPassword) {

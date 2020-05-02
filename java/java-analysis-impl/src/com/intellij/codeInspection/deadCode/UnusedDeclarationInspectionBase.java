@@ -689,7 +689,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         LOG.error(e);
       }
     }
-    Collections.sort(deadCodeAddIns, (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
+    deadCodeAddIns.sort((o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName()));
     return deadCodeAddIns;
   }
 

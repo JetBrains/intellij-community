@@ -1,23 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class PsiLiteralUtil {
   @NonNls public static final String HEX_PREFIX = "0x";
   @NonNls public static final String BIN_PREFIX = "0b";
   @NonNls public static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
   @NonNls public static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+
+  private static final String QUOT = "&quot;";
 
   @Nullable
   public static Integer parseInteger(String text) {
@@ -138,6 +139,31 @@ public class PsiLiteralUtil {
       return '\"' + charLiteral.substring(1, charLiteral.length() - 1) +
              '\"';
     }
+  }
+
+  /**
+   * Convert a string that contains a character (e.g. ""\n"" or ""\\"", etc.) to a string (e.g. "'\n'" or "'\\'", etc.)
+   *
+   * @param text a string to convert
+   * @return the converted string
+   */
+  @NotNull
+  public static String charLiteralForCharString(@NotNull final String text) {
+    final int length = text.length();
+    if (length <= 1) return text;
+
+    final String character = text.substring(1, length - 1);
+    final String charLiteral;
+    if ("'".equals(character)) {
+      charLiteral = "'\\''";
+    }
+    else if ("\\\"".equals(character)) {
+      charLiteral = "'\"'";
+    }
+    else {
+      charLiteral = '\'' + character + '\'';
+    }
+    return charLiteral;
   }
 
   /**
@@ -354,21 +380,52 @@ public class PsiLiteralUtil {
   }
 
   /**
+   * Returns the lines of text inside the quotes of a text block. No further processing is performed.
+   * Any escaped characters will remain escaped. Indent is not stripped.
+   *
+   * @param expression  a text block expression
+   * @return the lines of the expression, or null if the expression is not a text block.
+   */
+  public static String @Nullable [] getTextBlockLines(PsiLiteralExpression expression) {
+    if (!expression.isTextBlock()) return null;
+    String rawText = expression.getText();
+    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
+    int start = 3;
+    while (true) {
+      char c = rawText.charAt(start++);
+      if (c == '\n') break;
+      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+    }
+    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+  }
+
+  /**
    * Determines how many whitespaces would be excluded at the beginning of each line of text block content.
    * See JEP 368 for more details.
    *
-   * @param lines text block content
+   * @see #getTextBlockIndent(String[], boolean, boolean)
+   * @param expression a text block literal expression
+   * @return the indent of the text block counted in characters, where a tab is also counted as 1.
+   */
+  public static int getTextBlockIndent(PsiLiteralExpression expression) {
+    String[] lines = getTextBlockLines(expression);
+    if (lines == null) return -1;
+    return getTextBlockIndent(lines);
+  }
+
+  /**
+   * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines) {
     return getTextBlockIndent(lines, false, false);
   }
 
   /**
-   * @see #getTextBlockIndent(String[])
+   * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
     int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length; i++) {
+    for (int i = 0; i < lines.length && prefix != 0; i++) {
       String line = lines[i];
       int indent = 0;
       while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
@@ -378,6 +435,61 @@ public class PsiLiteralUtil {
       else if (indent < prefix) prefix = indent;
     }
     return prefix;
+  }
+
+  /**
+   * Returns the text inside the quotes of a regular string literal. No further processing is performed.
+   * Any escaped characters will remain escaped.
+   *
+   * @param expression  regular string literal.
+   * @return the text inside the quotes, or null if the expression is not a string literal.
+   */
+  @Nullable
+  public static String getStringLiteralContent(PsiLiteralExpression expression) {
+    String text = expression.getText();
+    int textLength = text.length();
+    if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
+      return text.substring(1, textLength - 1);
+    }
+    if (textLength > QUOT.length() && text.startsWith(QUOT) && text.endsWith(QUOT)) {
+      return text.substring(QUOT.length(), textLength - QUOT.length());
+    }
+    return null;
+  }
+
+  /**
+   * Return the text of the specified text block without indent and trailing whitespace.
+   * Any escaped character will remain escaped.
+   *
+   * @param expression  a text block expression
+   * @return the text of the text block, or null if the expression is not a text block.
+   */
+  @Nullable
+  public static String getTextBlockText(PsiLiteralExpression expression) {
+    String[] lines = getTextBlockLines(expression);
+    if (lines == null) return null;
+
+    int prefix = getTextBlockIndent(lines);
+
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < lines.length; i++) {
+      String line = lines[i];
+      if (line.length() > 0) {
+        sb.append(trimTrailingWhitespace(line.substring(prefix)));
+      }
+      if (i < lines.length - 1) {
+        sb.append('\n');
+      }
+    }
+    return sb.toString();
+  }
+
+  @NotNull
+  private static String trimTrailingWhitespace(@NotNull String line) {
+    int index = line.length() - 1;
+    while (index >= 0 && Character.isWhitespace(line.charAt(index))) index--;
+    if (index >= 0 && index < line.length() - 1 && line.charAt(index) == '\\') index++;
+    return line.substring(0, index + 1);
   }
 
   /**
@@ -507,7 +619,7 @@ public class PsiLiteralUtil {
     private static int findLineSuffixLength(@NotNull String line, boolean isLastLine) {
       if (isLastLine) return 0;
       int lastIdx = line.length() - 1;
-      for (int i = lastIdx; i >= 0; i--) if (line.charAt(i) != ' ') return lastIdx - i;
+      for (int i = lastIdx; i >= 0; i--) if (!Character.isWhitespace(line.charAt(i))) return lastIdx - i;
       return 0;
     }
 
@@ -526,5 +638,45 @@ public class PsiLiteralUtil {
       if (lineBreakIdx == -1) return -1;
       return lineBreakIdx + 1;
     }
+  }
+
+  /**
+   * This method appends a suffix to a {@link PsiLiteralExpression} and returns a new
+   * {@link PsiLiteralExpression} that contains the resulting content leaving the original
+   * {@link PsiLiteralExpression} unchanged.
+   *
+   * @param expression the expression to append a string to
+   * @param suffix the suffix to add to the expression
+   * @return a new instance of {@link PsiLiteralExpression} that contains the concatenated
+   * value of the original {@link PsiLiteralExpression} and the suffix.
+   */
+  @Nullable
+  @Contract(value = "null, _ -> null; _, null -> param1; !null, _ -> !null", pure = true)
+  public static PsiLiteralExpression append(@Nullable final PsiLiteralExpression expression, @Nullable final String suffix) {
+    if (expression == null) return null;
+    if (StringUtil.isEmpty(suffix)) return expression;
+
+    final Object value = expression.getValue();
+    if (value == null) return expression;
+
+    final StringBuilder newExpression = new StringBuilder();
+
+    final String leftText = value.toString();
+    if (expression.isTextBlock()) {
+      final String indent = StringUtil.repeat(" ", getTextBlockIndent(expression));
+      newExpression.append("\"\"\"").append('\n').append(indent);
+      newExpression.append(leftText.replaceAll("\n", "\n" + indent));
+      newExpression.append(StringUtil.escapeStringCharacters(suffix));
+      newExpression.append("\"\"\"");
+    }
+    else {
+      newExpression.append('"');
+      newExpression.append(StringUtil.escapeStringCharacters(leftText));
+      newExpression.append(StringUtil.escapeStringCharacters(suffix));
+      newExpression.append('"');
+    }
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    return (PsiLiteralExpression)factory.createExpressionFromText(newExpression.toString(), null);
   }
 }

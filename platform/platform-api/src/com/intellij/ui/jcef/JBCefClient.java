@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.hash.LinkedHashMap;
@@ -11,10 +12,7 @@ import org.cef.browser.CefFrame;
 import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
-import org.cef.misc.StringRef;
 import org.cef.network.CefRequest;
-import org.cef.network.CefResponse;
-import org.cef.network.CefURLRequest;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +33,8 @@ import java.util.*;
 @SuppressWarnings({"unused", "UnusedReturnValue"}) // [tav] todo: remove it ( or add*Handler methods not yet used)
 @ApiStatus.Experimental
 public class JBCefClient implements JBCefDisposable {
+  private static final Logger LOG = Logger.getInstance(JBCefClient.class);
+
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
@@ -62,7 +62,14 @@ public class JBCefClient implements JBCefDisposable {
 
   @Override
   public void dispose() {
-    myDisposeHelper.dispose(() -> myCefClient.dispose());
+    myDisposeHelper.dispose(() -> {
+      try {
+        myCefClient.dispose();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
+    });
   }
 
   @Override
@@ -410,56 +417,31 @@ public class JBCefClient implements JBCefDisposable {
         }
 
         @Override
-        public boolean onBeforeResourceLoad(CefBrowser browser, CefFrame frame, CefRequest request) {
+        public CefResourceRequestHandler getResourceRequestHandler(CefBrowser browser,
+                                                                   CefFrame frame,
+                                                                   CefRequest request,
+                                                                   boolean isNavigation,
+                                                                   boolean isDownload,
+                                                                   String requestInitiator,
+                                                                   BoolRef disableDefaultHandling)
+        {
           return myRequestHandler.handleNotNull(browser, handler -> {
-            return handler.onBeforeResourceLoad(browser, frame, request);
-          });
-        }
-
-        @Override
-        public CefResourceHandler getResourceHandler(CefBrowser browser, CefFrame frame, CefRequest request) {
-          return myRequestHandler.handle(browser, handler -> {
-            return handler.getResourceHandler(browser, frame, request);
-          });
-        }
-
-        @Override
-        public void onResourceRedirect(CefBrowser browser, CefFrame frame, CefRequest request, CefResponse response, StringRef new_url) {
-          myRequestHandler.handle(browser, handler -> {
-            handler.onResourceRedirect(browser, frame, request, response, new_url);
-          });
-        }
-
-        @Override
-        public boolean onResourceResponse(CefBrowser browser, CefFrame frame, CefRequest request, CefResponse response) {
-          return myRequestHandler.handleNotNull(browser, handler -> {
-            return handler.onResourceResponse(browser, frame, request, response);
-          });
-        }
-
-        @Override
-        public void onResourceLoadComplete(CefBrowser browser,
-                                           CefFrame frame,
-                                           CefRequest request,
-                                           CefResponse response,
-                                           CefURLRequest.Status status,
-                                           long receivedContentLength) {
-          myRequestHandler.handle(browser, handler -> {
-            handler.onResourceLoadComplete(browser, frame, request, response, status, receivedContentLength);
+            return handler.getResourceRequestHandler(browser, frame, request, isNavigation, isDownload, requestInitiator, disableDefaultHandling);
           });
         }
 
         @Override
         public boolean getAuthCredentials(CefBrowser browser,
-                                          CefFrame frame,
+                                          String origin_url,
                                           boolean isProxy,
                                           String host,
                                           int port,
                                           String realm,
                                           String scheme,
-                                          CefAuthCallback callback) {
+                                          CefAuthCallback callback)
+        {
           return myRequestHandler.handleNotNull(browser, handler -> {
-            return handler.getAuthCredentials(browser, frame, isProxy, host, port, realm, scheme, callback);
+            return handler.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
           });
         }
 
@@ -467,13 +449,6 @@ public class JBCefClient implements JBCefDisposable {
         public boolean onQuotaRequest(CefBrowser browser, String origin_url, long new_size, CefRequestCallback callback) {
           return myRequestHandler.handleNotNull(browser, handler -> {
             return handler.onQuotaRequest(browser, origin_url, new_size, callback);
-          });
-        }
-
-        @Override
-        public void onProtocolExecution(CefBrowser browser, String url, BoolRef allow_os_execution) {
-          myRequestHandler.handle(browser, handler -> {
-            handler.onProtocolExecution(browser, url, allow_os_execution);
           });
         }
 

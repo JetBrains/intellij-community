@@ -241,10 +241,7 @@ public class BuildMain {
           }
 
           case CONSTANT_SEARCH_RESULT: {
-            final BuildSession session = mySession;
-            if (session != null) {
-              session.processConstantSearchResult(controllerMessage.getConstantSearchResult());
-            }
+            // ignored, functionality deprecated
             return;
           }
 

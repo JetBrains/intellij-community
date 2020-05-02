@@ -1,8 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -95,7 +94,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private final Map<String, XBreakpoint<? extends ExceptionBreakpointProperties>> myRegisteredExceptionBreakpoints =
     new ConcurrentHashMap<>();
 
-  private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(Lists.newArrayList());
+  private final List<PyThreadInfo> mySuspendedThreads = Collections.synchronizedList(new ArrayList<PyThreadInfo>());
   private final Map<String, XValueChildrenList> myStackFrameCache = Maps.newConcurrentMap();
   private final Object myFrameCacheObject = new Object();
   private final Map<String, PyDebugValue> myNewVariableValue = Maps.newHashMap();
@@ -1053,7 +1052,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final PyStackFrame frame = currentFrame();
       return myDebugger.getCompletions(frame.getThreadId(), frame.getFrameId(), prefix);
     }
-    return Lists.newArrayList();
+    return new ArrayList<>();
   }
 
   @NotNull

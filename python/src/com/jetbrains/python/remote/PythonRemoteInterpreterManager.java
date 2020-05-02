@@ -17,6 +17,7 @@ import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.extensions.python.ProgressManagerExtKt;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyConsoleProcessHandler;
@@ -45,12 +46,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   @Nullable
   public static PythonRemoteInterpreterManager getInstance() {
-    if (EP_NAME.getExtensions().length > 0) {
-      return EP_NAME.getExtensions()[0];
-    }
-    else {
-      return null;
-    }
+    return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
   }
 
   public static void addUnbuffered(@NotNull ParamsGroup exeGroup) {

@@ -24,6 +24,8 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public interface DfaMemoryState {
   @NotNull
   DfaMemoryState createCopy();
@@ -125,6 +127,8 @@ public interface DfaMemoryState {
    */
   @Nullable
   PsiType getPsiType(@NotNull DfaValue value);
+
+  void flushFieldsQualifiedBy(@NotNull Set<DfaValue> qualifiers);
 
   void flushFields();
 

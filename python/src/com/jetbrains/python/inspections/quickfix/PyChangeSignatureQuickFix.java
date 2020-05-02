@@ -208,7 +208,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   private PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
     return new PyMethodDescriptor(function) {
       @Override
-      public List<PyParameterInfo> getParameters() {
+      public @NotNull List<PyParameterInfo> getParameters() {
         final List<PyParameterInfo> result = new ArrayList<>();
         final List<PyParameterInfo> originalParams = super.getParameters();
         final PeekingIterator<Pair<Integer, PyParameterInfo>> extra = Iterators.peekingIterator(myExtraParameters.iterator());

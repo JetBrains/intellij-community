@@ -35,8 +35,8 @@ import static com.intellij.openapi.util.NlsActions.ActionDescription;
 public class RefreshAction extends AnAction implements DumbAware {
   public RefreshAction() { }
 
-  public RefreshAction(@Nls @ActionText @Nullable String text,
-                       @Nls @ActionDescription @Nullable String description,
+  public RefreshAction(@ActionText @Nullable String text,
+                       @ActionDescription @Nullable String description,
                        @Nullable Icon icon) {
     super(text, description, icon);
   }

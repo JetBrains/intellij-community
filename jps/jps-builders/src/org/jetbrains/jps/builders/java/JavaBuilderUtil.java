@@ -45,6 +45,10 @@ import java.io.IOException;
 import java.util.*;
 
 public class JavaBuilderUtil {
+  /**
+   * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
+   */
+  @Deprecated
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private static final Logger LOG = Logger.getInstance(Builder.class);
@@ -196,8 +200,7 @@ public class JavaBuilderUtil {
 
           final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
           final boolean incremental = globalMappings.differentiateOnIncrementalMake(
-            delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
-            CONSTANT_SEARCH_SERVICE.get(context)
+            delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter
           );
 
           if (LOG.isDebugEnabled()) {

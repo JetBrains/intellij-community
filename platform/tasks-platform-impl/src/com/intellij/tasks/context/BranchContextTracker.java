@@ -63,7 +63,7 @@ public class BranchContextTracker implements BranchChangeListener {
     contextManager.loadContext(contextName);
 
     Notification notification =
-      NOTIFICATION.createNotification("Workspace associated with branch '" + branchName + "' has been restored", NotificationType.INFORMATION);
+      NOTIFICATION.createNotification(TaskBundle.message("workspace.associated.with.branch.has.been.restored", branchName), NotificationType.INFORMATION);
     if (myLastBranch != null && contextManager.hasContext(getContextName(myLastBranch))) {
       notification.addAction(new NotificationAction(TaskBundle.messagePointer("action.Anonymous.text.rollback")) {
         @Override
@@ -89,7 +89,7 @@ public class BranchContextTracker implements BranchChangeListener {
 
   @NotNull
   private static String getContextName(String branchName) {
-    return "__branch_context_" + branchName;
+    return "__branch_context_" + branchName; //NON-NLS
   }
 
 }

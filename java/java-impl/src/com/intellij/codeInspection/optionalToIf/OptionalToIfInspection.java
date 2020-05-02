@@ -29,7 +29,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
-    "get", "orElse", "ifPresent", "orElse", "orElseGet", "ifPresentOrElse", "ifPresent", "isPresent", "isEmpty", "stream", "orElseThrow");
+    "get", "orElse", "ifPresent", "orElseGet", "ifPresentOrElse", "isPresent", "isEmpty", "stream", "orElseThrow");
 
   @NotNull
   @Override
@@ -109,7 +109,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
         context.addBeforeStep(outVar.getDeclaration("null"));
         context.setElseBranch(null);
         List<OperationRecord> rest = records.subList(0, i);
-        String beforeCode = wrapCode(context, rest, outVar.getName() + " = " + inVar.getName() + ";");
+        String beforeCode = wrapCode(context, rest, outVar.getName() + "=" + inVar.getName() + ";");
         if (beforeCode == null) return null;
         return beforeCode + code;
       }
@@ -144,7 +144,7 @@ public class OptionalToIfInspection extends AbstractBaseJavaLocalInspectionTool 
   private static PsiStatement @NotNull [] addStatements(@NotNull PsiElementFactory factory,
                                                         @NotNull PsiStatement chainStatement,
                                                         @NotNull String code) {
-    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(factory.createStatementFromText("{" + code + "}", chainStatement));
+    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(factory.createStatementFromText("{\n" + code + "\n}", chainStatement));
     PsiElement parent = chainStatement.getParent();
     return ContainerUtil.map(statements, s -> (PsiStatement)parent.addBefore(s, chainStatement), PsiStatement.EMPTY_ARRAY);
   }

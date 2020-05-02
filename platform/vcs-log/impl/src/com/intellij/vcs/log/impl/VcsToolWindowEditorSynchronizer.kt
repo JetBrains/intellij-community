@@ -2,57 +2,19 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.diff.editor.VCSContentVirtualFile
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.TOOLWINDOW_ID
-import com.intellij.openapi.wm.ToolWindow
-import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.content.ContentManagerListener
 
+@Deprecated("Unused, to be removed")
 internal class VcsToolWindowEditorSynchronizer {
-  companion object {
-    fun getInstance(project: Project): VcsToolWindowEditorSynchronizer = project.service()
-  }
-
-  private fun addContentManagerListener(window: ToolWindow, listener: ContentManagerListener) {
-    window.contentManager.addContentManagerListener(listener)
-    Disposer.register(window.contentManager, Disposable {
-      if (!window.isDisposed) {
-        window.contentManager.removeContentManagerListener(listener)
-      }
-    })
-  }
-
   private class MyFileEditorListener : FileEditorManagerListener {
     override fun selectionChanged(e: FileEditorManagerEvent) {
-      if (!Registry.`is`("show.log.as.editor.tab")) {
-        return
-      }
-
       val file = e.newFile
       if (file is VCSContentVirtualFile) {
         val tabSelector = file.getUserData(VCSContentVirtualFile.TabSelector)
         if (tabSelector != null) {
           tabSelector()
         }
-      }
-    }
-  }
-
-  internal class MyToolwindowListener(private val project: Project) : ToolWindowManagerListener {
-    override fun toolWindowRegistered(id: String) {
-      if (!Registry.`is`("show.log.as.editor.tab")) return
-      if (id != TOOLWINDOW_ID) return
-
-      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(id)
-      if (toolwindow != null) {
-        getInstance(project).addContentManagerListener(toolwindow, VcsLogEditorTabSelector(project))
       }
     }
   }

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -30,6 +29,7 @@ import com.jetbrains.python.inspections.PyDictCreationInspection;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -91,7 +91,7 @@ public class DictCreationQuickFix implements LocalQuickFix {
           statement = nextStatement;
         }
       }
-      List<String> statements = Lists.newArrayList();
+      List<String> statements = new ArrayList<>();
       for (Map.Entry<String, String> entry : statementsMap.entrySet()) {
         statements.add(entry.getKey() + ": " + entry.getValue());
       }

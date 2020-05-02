@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.config;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
@@ -62,7 +48,7 @@ public class ConfigFilesTreeBuilder {
     for (Map.Entry<VirtualFile, Collection<PsiFile>> entry : virtualFiles.entrySet()) {
       DefaultMutableTreeNode node = createFileNode(entry.getKey());
       List<PsiFile> list = new ArrayList<>(entry.getValue());
-      Collections.sort(list, FILE_COMPARATOR);
+      list.sort(FILE_COMPARATOR);
       for (PsiFile file : list) {
         node.add(createFileNode(file));
       }
@@ -89,7 +75,7 @@ public class ConfigFilesTreeBuilder {
 
     final HashSet<PsiFile> psiFiles = new HashSet<>();
     final List<Module> modules = new ArrayList<>(files.keySet());
-    Collections.sort(modules, ModulesAlphaComparator.INSTANCE);
+    modules.sort(ModulesAlphaComparator.INSTANCE);
     for (Module module : modules) {
       DefaultMutableTreeNode moduleNode = createFileNode(module);
       root.add(moduleNode);
@@ -114,7 +100,7 @@ public class ConfigFilesTreeBuilder {
     }
 
     List<VirtualFile> sortedJars = new ArrayList<>(jars.keySet());
-    Collections.sort(sortedJars, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
+    sortedJars.sort((o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));
     for (VirtualFile file : sortedJars) {
       if (!file.isValid()) continue;
       final List<PsiFile> list = new ArrayList<>(jars.get(file));
@@ -122,7 +108,7 @@ public class ConfigFilesTreeBuilder {
       if (jar != null) {
         final DefaultMutableTreeNode jarNode = createFileNode(jar);
         root.add(jarNode);
-        Collections.sort(list, FILE_COMPARATOR);
+        list.sort(FILE_COMPARATOR);
         for (PsiFile psiFile : list) {
           jarNode.add(createFileNode(psiFile));
           psiFiles.add(psiFile);
@@ -143,7 +129,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   private void addChildrenFiles(@NotNull Set<? super PsiFile> psiFiles, DefaultMutableTreeNode parentNode, @NotNull List<? extends PsiFile> moduleFiles) {
-    Collections.sort(moduleFiles, FILE_COMPARATOR);
+    moduleFiles.sort(FILE_COMPARATOR);
     for (PsiFile file : moduleFiles) {
       final DefaultMutableTreeNode fileNode = createFileNode(file);
       parentNode.add(fileNode);

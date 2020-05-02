@@ -7,7 +7,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
@@ -18,6 +17,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -69,7 +69,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   private void showImports() {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
-    if (!application.isHeadlessEnvironment() && !myEditor.getContentComponent().hasFocus()) return;
+    if (!EditorActivityManager.getInstance().isFocused(myEditor)) return;
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
@@ -105,10 +105,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
         if (action.isAvailable(myProject, myEditor, myFile) && action.fixSilently(myEditor)) {
           break;
         }
-      }
-      for (ReferenceImporter importer: ReferenceImporter.EP_NAME.getExtensionList()) {
-        //noinspection deprecation
-        if (importer.autoImportReferenceAt(myEditor, myFile, info.getActualStartOffset())) break;
       }
     }
   }

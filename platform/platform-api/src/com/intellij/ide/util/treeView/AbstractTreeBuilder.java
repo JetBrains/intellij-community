@@ -422,7 +422,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   protected void sortChildren(Comparator<? super TreeNode> nodeComparator, DefaultMutableTreeNode node, List<? extends TreeNode> children) {
-    Collections.sort(children, nodeComparator);
+    children.sort(nodeComparator);
   }
 
   public void setPassthroughMode(boolean passthrough) {

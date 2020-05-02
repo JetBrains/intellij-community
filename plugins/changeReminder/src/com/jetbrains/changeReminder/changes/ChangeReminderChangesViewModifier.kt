@@ -18,7 +18,7 @@ class ChangeReminderChangesViewModifier(private val project: Project) : ChangesV
       val prediction = predictionService.predictionDataToDisplay
       if (prediction.predictionToDisplay.isNotEmpty()) {
         val node = ChangeReminderBrowserNode(prediction, predictionService)
-        builder.insertChangeNode(node)
+        builder.insertSubtreeRoot(node)
         builder.insertFilesIntoNode(prediction.predictionToDisplay, node)
       }
     }

@@ -27,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author anna
@@ -125,6 +126,12 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
 
   public LanguageLevel getCurrentLevel() {
     return myCurrentLevel;
+  }
+
+  @TestOnly
+  public void resetDefaults() {
+    myLanguageLevel = null;
+    setDefault(null);
   }
 
   public static class MyProjectExtension extends ProjectExtension {

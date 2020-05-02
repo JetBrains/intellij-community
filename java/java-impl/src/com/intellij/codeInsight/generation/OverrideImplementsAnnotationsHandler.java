@@ -78,6 +78,6 @@ public interface OverrideImplementsAnnotationsHandler {
     assert modifierList != null : target;
     PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(source, annotation);
     PsiNameValuePair[] valuePairs = srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() : PsiNameValuePair.EMPTY_ARRAY;
-    AddAnnotationPsiFix.addPhysicalAnnotation(annotation, valuePairs, modifierList);
+    AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, valuePairs, modifierList);
   }
 }

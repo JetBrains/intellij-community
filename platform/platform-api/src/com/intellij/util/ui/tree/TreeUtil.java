@@ -402,7 +402,7 @@ public final class TreeUtil {
   public static <T extends MutableTreeNode> void sortChildren(@NotNull T node, @Nullable Comparator<? super T> comparator) {
     //noinspection unchecked
     final List<T> children = (List)listChildren(node);
-    Collections.sort(children, comparator);
+    children.sort(comparator);
     for (int i = node.getChildCount() - 1; i >= 0; i--) {
       node.remove(i);
     }

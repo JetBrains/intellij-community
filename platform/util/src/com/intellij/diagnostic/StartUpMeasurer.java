@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
-  final static AtomicReference<LoadingState> currentState = new AtomicReference<>(LoadingState.BOOTSTRAP);
+  static final AtomicReference<LoadingState> currentState = new AtomicReference<>(LoadingState.BOOTSTRAP);
 
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
@@ -90,23 +90,19 @@ public final class StartUpMeasurer {
     addActivity(activity);
   }
 
-  @NotNull
-  public static Activity startActivity(@NonNls @NotNull String name) {
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name) {
     return startActivity(name, ActivityCategory.APP_INIT);
   }
 
-  @NotNull
-  public static Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
     return startActivity(name, category, null);
   }
 
-  @NotNull
-  public static Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
+  public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category, @Nullable String pluginId) {
     return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
   }
 
-  @NotNull
-  public static Activity startMainActivity(@NonNls @NotNull String name) {
+  public static @NotNull Activity startMainActivity(@NonNls @NotNull String name) {
     return new ActivityImpl(name, getCurrentTime(), null, null);
   }
 
@@ -158,7 +154,7 @@ public final class StartUpMeasurer {
 
   public static void setCurrentState(@NotNull LoadingState state) {
     LoadingState old = currentState.getAndSet(state);
-    if (old.ordinal() > state.ordinal()) {
+    if (old.compareTo(state)>0) {
       LoadingState.getLogger().error("New state " + state + " cannot precede old " + old);
     }
     stateSet(state);

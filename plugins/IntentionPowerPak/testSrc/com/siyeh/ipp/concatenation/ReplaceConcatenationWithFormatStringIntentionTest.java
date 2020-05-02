@@ -15,6 +15,8 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
@@ -33,6 +35,19 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
            );
   }
 
+  public void testNarrowingCastTextBlock() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14_PREVIEW, () -> {
+      doTest("class X {" +
+             "  String s = (byte)321 +/*_Replace '+' with 'formatted()'*/ \" parsecs\";" +
+             "}",
+
+             "class X {" +
+             "  String s = \"%s parsecs\".formatted((byte) 321);" +
+             "}"
+      );
+    });
+  }
+
   public void testWideningCast() {
     doTest("class X {" +
            "  String s = (long)42 /*_Replace '+' with 'String.format()'*/+ \" the answer to life, the universe and everything\";" +
@@ -45,13 +60,13 @@ public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCa
 
   public void testCastToChar() {
     doTest("class X {" +
-           "  String deepThought(byte b) {" +
+           "  static String deepThought(byte b) {" +
            "    return (char)b/*_Replace '+' with 'String.format()'*/ + \" the answer to life, the universe and everything\";" +
            "  }" +
            "}",
 
            "class X {" +
-           "  String deepThought(byte b) {" +
+           "  static String deepThought(byte b) {" +
            "    return String.format(\"%s the answer to life, the universe and everything\", (char) b);" +
            "  }" +
            "}");

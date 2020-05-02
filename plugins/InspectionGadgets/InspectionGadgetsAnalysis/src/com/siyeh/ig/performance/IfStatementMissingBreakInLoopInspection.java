@@ -192,7 +192,6 @@ public class IfStatementMissingBreakInLoopInspection extends BaseInspection {
       }
     }
 
-    @Contract("null -> new")
     private static PsiStatement @NotNull [] getStatements(@NotNull PsiStatement statement) {
       if (statement instanceof PsiBlockStatement) return ((PsiBlockStatement)statement).getCodeBlock().getStatements();
       return new PsiStatement[]{statement};

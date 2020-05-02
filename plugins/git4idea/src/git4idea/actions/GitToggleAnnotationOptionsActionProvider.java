@@ -18,6 +18,7 @@ import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final FileAnnotation myAnnotation;
 
     MyGroup(@NotNull FileAnnotation annotation) {
-      super("Options", true);
+      super(GitBundle.message("annotations.options.group"), true);
       myAnnotation = annotation;
     }
 
@@ -82,7 +83,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleIgnoreWhitespaces(@NotNull Project project) {
-      super("Ignore Whitespaces");
+      super(GitBundle.message("annotations.options.ignore.whitespaces"));
       myProject = project;
     }
 
@@ -102,7 +103,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleInnerMovementsWhitespaces(@NotNull Project project) {
-      super("Detect Movements Within File");
+      super(GitBundle.message("annotations.options.detect.movements.within.file"));
       myProject = project;
     }
 
@@ -128,7 +129,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @NotNull private final Project myProject;
 
     ToggleOuterMovementsWhitespaces(@NotNull Project project) {
-      super("Detect Movements Across Files");
+      super(GitBundle.message("annotations.options.detect.movements.across.files"));
       myProject = project;
     }
 

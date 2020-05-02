@@ -53,9 +53,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val annotations = unstableApiAnnotations.toList()
-    val psiFacade = JavaPsiFacade.getInstance(holder.project)
-    val resolveScope = holder.file.resolveScope
-    return if (annotations.any { psiFacade.findClass(it, resolveScope) != null }) {
+    return if (annotations.any { AnnotatedApiUsageUtil.canAnnotationBeUsedInFile(it, holder.file) }) {
       ApiUsageUastVisitor.createPsiElementVisitor(
         UnstableApiUsageProcessor(
           holder,

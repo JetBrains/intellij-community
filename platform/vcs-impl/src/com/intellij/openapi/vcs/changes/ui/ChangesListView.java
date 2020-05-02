@@ -112,8 +112,9 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-    //noinspection unchecked
-    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.<ChangesBrowserNode<?>>iterate(root.children());
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    Enumeration<ChangesBrowserNode<?>> children = (Enumeration)root.children();
+    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.iterate(children);
     return ContainerUtil.find(nodes, node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
@@ -195,8 +196,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   public Stream<FilePath> getUnversionedFiles() {
-    //noinspection unchecked
-    Enumeration<ChangesBrowserNode<?>> nodes = getRoot().children();
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    Enumeration<ChangesBrowserNode<?>> nodes = (Enumeration)getRoot().children();
     ChangesBrowserUnversionedFilesNode node = ContainerUtil.findInstance(ContainerUtil.iterate(nodes),
                                                                          ChangesBrowserUnversionedFilesNode.class);
     if (node == null) return Stream.empty();
@@ -204,8 +205,13 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   }
 
   @NotNull
+  static Stream<FilePath> getSelectedUnversionedFiles(@NotNull JTree tree) {
+    return getSelectedFilePaths(tree, UNVERSIONED_FILES_TAG);
+  }
+
+  @NotNull
   public Stream<FilePath> getSelectedUnversionedFiles() {
-    return getSelectedFilePaths(UNVERSIONED_FILES_TAG);
+    return getSelectedUnversionedFiles(this);
   }
 
   @NotNull
@@ -220,14 +226,19 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
-    return getSelectionNodesStream(tag)
+    return getSelectionNodesStream(this, tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
       .distinct();
   }
 
   @NotNull
   protected Stream<FilePath> getSelectedFilePaths(@Nullable Object tag) {
-    return getSelectionNodesStream(tag)
+    return getSelectedFilePaths(this, tag);
+  }
+
+  @NotNull
+  private static Stream<FilePath> getSelectedFilePaths(@NotNull JTree tree, @Nullable Object tag) {
+    return getSelectionNodesStream(tree, tag)
       .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
       .distinct();
   }
@@ -245,12 +256,12 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   private Stream<ChangesBrowserNode<?>> getSelectionNodesStream() {
-    return getSelectionNodesStream(null);
+    return getSelectionNodesStream(this, null);
   }
 
   @NotNull
-  private Stream<ChangesBrowserNode<?>> getSelectionNodesStream(@Nullable Object tag) {
-    return stream(getSelectionPaths())
+  private static Stream<ChangesBrowserNode<?>> getSelectionNodesStream(@NotNull JTree tree, @Nullable Object tag) {
+    return stream(tree.getSelectionPaths())
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node));
@@ -318,7 +329,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @NotNull
   private Stream<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
-    return getSelectionNodesStream(LOCALLY_DELETED_NODE_TAG)
+    return getSelectionNodesStream(this, LOCALLY_DELETED_NODE_TAG)
       .flatMap(node -> node.getObjectsUnderStream(LocallyDeletedChange.class))
       .distinct();
   }

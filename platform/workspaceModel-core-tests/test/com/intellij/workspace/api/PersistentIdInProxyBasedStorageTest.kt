@@ -92,7 +92,7 @@ class PersistentIdInProxyBasedStorageTest {
   @Test
   fun `rename persistent Id reference as root field`() {
     val newName = "ant"
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val maven = builder.addEntityWithPersistentId("maven")
     val originSecondEntity = builder.addEntityWithIdAsField(maven.persistentId(), "gradle")
     builder.checkConsistency()
@@ -108,7 +108,7 @@ class PersistentIdInProxyBasedStorageTest {
   @Test
   fun `rename persistent Id reference as field in inner class`() {
     val newName = "ant"
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val maven = builder.addEntityWithPersistentId("maven")
     val originThirdEntity = builder.addEntityWithIdAsFieldInInnerClass(IdAsFieldClass(maven.persistentId()), "gradle")
     builder.checkConsistency()
@@ -124,7 +124,7 @@ class PersistentIdInProxyBasedStorageTest {
   @Test
   fun `rename persistent Id reference as list`() {
     val newName = "ant"
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val maven = builder.addEntityWithPersistentId("maven")
     val gradle = builder.addEntityWithPersistentId("gradle")
     val originList = mutableListOf(maven.persistentId(), gradle.persistentId())
@@ -142,7 +142,7 @@ class PersistentIdInProxyBasedStorageTest {
   @Test
   fun `rename persistent Id reference in all entities`() {
     val newName = "gant"
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
     val ant = builder.addEntityWithPersistentId("ant")
     val maven = builder.addEntityWithPersistentId("maven")
     val gradle = builder.addEntityWithPersistentId("gradle")
@@ -168,7 +168,7 @@ class PersistentIdInProxyBasedStorageTest {
   fun `replace property and rename persistent Id reference in all entities`() {
     val gantName = "gant"
     val bazelName = "bazel"
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
 
     val ant = builder.addEntityWithPersistentId("ant")
     val maven = builder.addEntityWithPersistentId("maven")
@@ -205,7 +205,7 @@ class PersistentIdInProxyBasedStorageTest {
   @Test
   fun `remove id from list and rename persistent Id reference in all entities`() {
     val newName = "gant"
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
 
     val ant = builder.addEntityWithPersistentId("ant")
     val maven = builder.addEntityWithPersistentId("maven")
@@ -237,7 +237,7 @@ class PersistentIdInProxyBasedStorageTest {
 
   @Test
   fun `remove id from list and check consistency`() {
-    val builder = TypedEntityStorageBuilder.create()
+    val builder = TypedEntityStorageBuilder.createProxy()
 
     val ant = builder.addEntityWithPersistentId("ant")
     val maven = builder.addEntityWithPersistentId("maven")

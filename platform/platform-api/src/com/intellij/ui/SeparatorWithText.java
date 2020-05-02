@@ -16,11 +16,10 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.util.NlsUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.Accessible;
@@ -140,7 +139,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 
-  public void setCaption(@Nls @NlsUI.SeparatorText String captionAboveOf) {
+  public void setCaption(@NlsContexts.Separator String captionAboveOf) {
     myCaption = captionAboveOf;
   }
 

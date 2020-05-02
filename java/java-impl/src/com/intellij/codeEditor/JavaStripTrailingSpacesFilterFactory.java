@@ -6,9 +6,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.PsiBasedStripTrailingSpacesFilter;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.JavaRecursiveElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingSpacesFilter.Factory {
@@ -35,9 +35,8 @@ public class JavaStripTrailingSpacesFilterFactory extends PsiBasedStripTrailingS
       psiFile.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitLiteralExpression(PsiLiteralExpression expression) {
-          PsiLiteralExpressionImpl literal = ObjectUtils.tryCast(expression, PsiLiteralExpressionImpl.class);
-          if (literal != null && literal.getLiteralElementType() == JavaTokenType.TEXT_BLOCK_LITERAL) {
-            disableRange(literal.getTextRange(), false);
+          if (expression.isTextBlock()) {
+            disableRange(expression.getTextRange(), false);
           }
         }
       });

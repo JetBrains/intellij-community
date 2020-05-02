@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -12,8 +12,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -50,6 +49,7 @@ public class SimpleEditorPreview implements PreviewPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
   private final HighlightsExtractor myHighlightsExtractor;
+  private final ColorSettingsPage.PreviewCustomizer myCustomizer;
 
   public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page) {
     this(options, page, true);
@@ -58,7 +58,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   public SimpleEditorPreview(final ColorAndFontOptions options, final ColorSettingsPage page, final boolean navigatable) {
     myOptions = options;
     myPage = page;
-
+    myCustomizer = page.getPreviewEditorCustomizer();
     myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(),
                                                     page.getAdditionalInlineElementToDescriptorMap(),
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
@@ -75,10 +75,26 @@ public class SimpleEditorPreview implements PreviewPanel {
       myEditor.getContentComponent().addMouseMotionListener(new MouseMotionAdapter() {
         @Override
         public void mouseMoved(MouseEvent e) {
+          if (myCustomizer != null) {
+            if (myCustomizer.getCustomizationAt(myEditor, e.getPoint()) != null) {
+              setCursor(true);
+              return;
+            }
+          }
           navigate(false, myEditor.xyToLogicalPosition(new Point(e.getX(), e.getY())));
         }
       });
-
+      myEditor.addEditorMouseListener(new EditorMouseListener() {
+        @Override
+        public void mouseClicked(@NotNull EditorMouseEvent event) {
+          if (event.getArea() == EditorMouseEventArea.EDITING_AREA && myCustomizer != null) {
+            String customization = myCustomizer.getCustomizationAt(myEditor, event.getMouseEvent().getPoint());
+            if (customization != null) {
+              myDispatcher.getMulticaster().selectionInPreviewChanged(customization);
+            }
+          }
+        }
+      });
       myEditor.getCaretModel().addCaretListener(new CaretListener() {
         @Override
         public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -172,18 +188,24 @@ public class SimpleEditorPreview implements PreviewPanel {
   private void updateHighlighters() {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myEditor.isDisposed()) return;
-      removeDecorations(myEditor);
+      removeDecorations();
       final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
       for (final HighlightData data : myHighlightData) {
         data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
       }
+      if (myCustomizer != null) {
+        myCustomizer.addCustomizations(myEditor, null);
+      }
     });
   }
 
-  private static void removeDecorations(Editor editor) {
-    editor.getMarkupModel().removeAllHighlighters();
-    for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength())) {
+  private void removeDecorations() {
+    myEditor.getMarkupModel().removeAllHighlighters();
+    for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myEditor.getDocument().getTextLength())) {
       Disposer.dispose(inlay);
+    }
+    if (myCustomizer != null) {
+      myCustomizer.removeCustomizations(myEditor);
     }
   }
 
@@ -240,7 +262,7 @@ public class SimpleEditorPreview implements PreviewPanel {
                                                       final int count,
                                                       final ColorSettingsPage page) {
     if (show && count <= 0) return Collections.emptyList();
-    removeDecorations(editor);
+    removeDecorations();
     boolean found = false;
     List<HighlightData> highlights = new ArrayList<>();
     List<HighlightData> matchingHighlights = new ArrayList<>();
@@ -276,7 +298,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(page);
 
     // sort highlights to avoid overlappings
-    Collections.sort(highlights, Comparator.comparingInt(HighlightData::getStartOffset));
+    highlights.sort(Comparator.comparingInt(HighlightData::getStartOffset));
     for (int i = highlights.size() - 1; i >= 0; i--) {
       HighlightData highlightData = highlights.get(i);
       int startOffset = highlightData.getStartOffset();
@@ -288,6 +310,12 @@ public class SimpleEditorPreview implements PreviewPanel {
       }
       else {
         highlightData.addHighlToView(editor, myOptions.getSelectedScheme(), displayText);
+      }
+    }
+    if (myCustomizer != null) {
+      TextRange range = myCustomizer.addCustomizations(myEditor, show ? attrKey : null);
+      if (range != null) {
+        matchingHighlights.add(new HighlightData(range.getStartOffset(), range.getEndOffset(), null));
       }
     }
     alarm.cancelAllRequests();

@@ -508,7 +508,7 @@ public class ControlFlowUtils {
     }
     if (applicable.isEmpty()) return null;
 
-    Collections.sort(applicable, (o1, o2) -> {
+    applicable.sort((o1, o2) -> {
       PsiElement e1 = o1.getElement();
       PsiElement e2 = o2.getElement();
       LOG.assertTrue(e1 != null);
@@ -648,7 +648,7 @@ public class ControlFlowUtils {
       visited[last.num()] = true;
       return visitAllExitPointsInner(((AfterCallInstruction)last).myCall, first, visited, visitor);
     }
-    
+
     if (last instanceof MaybeReturnInstruction) {
       return visitor.visitExitPoint(last, (GrExpression)last.getElement());
     }

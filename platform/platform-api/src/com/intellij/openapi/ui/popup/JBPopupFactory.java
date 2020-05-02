@@ -11,9 +11,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.nls.NlsContexts;
-import com.intellij.util.nls.NlsContexts.PopupTitle;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +114,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createConfirmation(String title, Runnable onYes, int defaultOptionIndex);
+  public abstract ListPopup createConfirmation(@PopupTitle String title, Runnable onYes, int defaultOptionIndex);
 
   /**
    * Creates a popup allowing to choose one of two specified options and execute code when one of them is selected.
@@ -128,7 +127,11 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createConfirmation(@Nls @PopupTitle String title, String yesText, String noText, Runnable onYes, int defaultOptionIndex);
+  public abstract ListPopup createConfirmation(@PopupTitle String title,
+                                               @NlsContexts.Label String yesText,
+                                               @NlsContexts.Label String noText,
+                                               Runnable onYes,
+                                               int defaultOptionIndex);
 
   /**
    * Creates a popup allowing to choose one of two specified options and execute code when either of them is selected.
@@ -142,9 +145,9 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public abstract ListPopup createConfirmation(@Nls @PopupTitle String title,
-                                               String yesText,
-                                               String noText,
+  public abstract ListPopup createConfirmation(@PopupTitle String title,
+                                               @NlsContexts.Label String yesText,
+                                               @NlsContexts.Label String noText,
                                                Runnable onYes,
                                                Runnable onNo,
                                                int defaultOptionIndex);
@@ -158,7 +161,7 @@ public abstract class JBPopupFactory {
                                          @NotNull DataContext dataContext,
                                          boolean showNumbers,
                                          boolean showDisabledActions,
-                                         @Nls @PopupTitle String title,
+                                         @PopupTitle String title,
                                          Component component,
                                          boolean honorActionMnemonics) {
     return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
@@ -173,7 +176,7 @@ public abstract class JBPopupFactory {
                                          @NotNull DataContext dataContext,
                                          boolean showNumbers,
                                          boolean showDisabledActions,
-                                         @Nls @PopupTitle String title,
+                                         @PopupTitle String title,
                                          Component component,
                                          boolean honorActionMnemonics,
                                          int defaultOptionIndex,
@@ -187,7 +190,7 @@ public abstract class JBPopupFactory {
                                                   @Nullable String actionPlace,
                                                   boolean showNumbers,
                                                   boolean showDisabledActions,
-                                                  @Nls @PopupTitle String title,
+                                                  @PopupTitle String title,
                                                   Component component,
                                                   boolean honorActionMnemonics,
                                                   int defaultOptionIndex,
@@ -251,7 +254,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public ListPopup createActionGroupPopup(@Nullable @Nls @PopupTitle String title,
+  public ListPopup createActionGroupPopup(@Nullable @PopupTitle String title,
                                           @NotNull ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
@@ -279,7 +282,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public ListPopup createActionGroupPopup(@PopupTitle String title,
                                           @NotNull ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
@@ -302,7 +305,7 @@ public abstract class JBPopupFactory {
    * @return the popup instance.
    */
   @NotNull
-  public ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public ListPopup createActionGroupPopup(@PopupTitle String title,
                                           @NotNull ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
                                           ActionSelectionAid selectionAidMethod,
@@ -313,7 +316,7 @@ public abstract class JBPopupFactory {
   }
 
   @NotNull
-  public ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public ListPopup createActionGroupPopup(@PopupTitle String title,
                                           @NotNull ActionGroup actionGroup,
                                           @NotNull DataContext dataContext,
                                           boolean showDisabledActions,
@@ -323,7 +326,7 @@ public abstract class JBPopupFactory {
   }
 
   @NotNull
-  public abstract ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public abstract ListPopup createActionGroupPopup(@PopupTitle String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    boolean showNumbers,
@@ -334,7 +337,7 @@ public abstract class JBPopupFactory {
                                                    @Nullable Condition<? super AnAction> preselectActionCondition);
 
   @NotNull
-  public abstract ListPopup createActionGroupPopup(@Nls @PopupTitle String title,
+  public abstract ListPopup createActionGroupPopup(@PopupTitle String title,
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    ActionSelectionAid aid,
@@ -412,21 +415,21 @@ public abstract class JBPopupFactory {
   public abstract BalloonBuilder createBalloonBuilder(@NotNull JComponent content);
 
   @NotNull
-  public abstract BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @Nls @PopupTitle String title);
+  public abstract BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, @PopupTitle String title);
 
   @NotNull
-  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @Nls @NlsContexts.PopupContent String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener) {
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @NlsContexts.PopupContent String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener) {
     return createHtmlTextBalloonBuilder(htmlContent, icon, null, fillColor, listener);
   }
 
   @NotNull
-  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @Nls @NlsContexts.PopupContent String htmlContent, @Nullable Icon icon, Color textColor, Color fillColor, @Nullable HyperlinkListener listener);
+  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @NlsContexts.PopupContent String htmlContent, @Nullable Icon icon, Color textColor, Color fillColor, @Nullable HyperlinkListener listener);
 
   @NotNull
-  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @Nls @NlsContexts.PopupContent String htmlContent, MessageType messageType, @Nullable HyperlinkListener listener);
+  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull @NlsContexts.PopupContent String htmlContent, MessageType messageType, @Nullable HyperlinkListener listener);
 
   @NotNull
-  public abstract JBPopup createMessage(@Nls @NlsContexts.PopupContent String text);
+  public abstract JBPopup createMessage(@NlsContexts.PopupContent String text);
 
   @Nullable
   public abstract Balloon getParentBalloonFor(@Nullable Component c);

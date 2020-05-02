@@ -17,8 +17,7 @@ import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.nls.NlsContexts;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,7 +50,7 @@ public class VcsMappingConfigurationDialog extends DialogWrapper {
   private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final Map<String, VcsDescriptor> myVcses;
 
-  public VcsMappingConfigurationDialog(@NotNull Project project, @Nls @NlsContexts.DialogTitle String title) {
+  public VcsMappingConfigurationDialog(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project, false);
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);

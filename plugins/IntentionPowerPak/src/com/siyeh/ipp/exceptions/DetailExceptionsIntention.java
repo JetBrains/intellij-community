@@ -81,7 +81,7 @@ public class DetailExceptionsIntention extends Intention {
         if (commonSuperType != null) {
           exceptionsToExpand = Collections.singletonList(commonSuperType);
         } else {
-          Collections.sort(exceptionsToExpand, comparator);
+          exceptionsToExpand.sort(comparator);
         }
         for (PsiClassType thrownType : exceptionsToExpand) {
           newTryStatement.append("catch(").append(thrownType.getCanonicalText()).append(' ').append(parameter.getName()).append(')');

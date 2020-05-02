@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.ide.DataManager;
@@ -31,7 +31,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -143,7 +142,7 @@ public final class KeyChooserDialog extends DialogWrapper{
         myPairs.add(Couple.of(key, value != null ? value : NULL));
       }
     }
-    Collections.sort(myPairs, new MyPairComparator());
+    myPairs.sort(new MyPairComparator());
   }
 
   private void selectKey(final String keyToPreselect) {
