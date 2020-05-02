@@ -20,5 +20,6 @@ interface MemoryAgentNames {
     String FIND_GC_ROOTS = "gcRoots";
     String GET_SHALLOW_SIZE_BY_CLASSES = "getShallowSizeByClasses";
     String GET_RETAINED_SIZE_BY_CLASSES = "getRetainedSizeByClasses";
+    String GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES = "getShallowAndRetainedSizeByClasses";
   }
 }

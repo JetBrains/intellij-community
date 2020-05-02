@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -41,6 +42,9 @@ public interface MemoryAgent {
     throws EvaluateException;
 
   long[] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException;
+
+  Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
     throws EvaluateException;
 
   @NotNull

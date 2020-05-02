@@ -37,6 +37,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.ClassPrepareRequest;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -390,12 +391,11 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
           MemoryAgent agent = MemoryAgent.get(suspendContext.getDebugProcess());
           try {
             EvaluationContextImpl context = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
-            long[] shallowSizes = agent.getShallowSizeByClasses(context, classes);
-            long[] retainedSizes = agent.getRetainedSizeByClasses(context, classes);
+            Pair<long[], long[]> sizes = agent.getShallowAndRetainedSizeByClasses(context, classes);
             ApplicationManager.getApplication().invokeLater(() -> table.updateContent(
               counts,
-              convert2TypeInfo2Long(classes, shallowSizes),
-              convert2TypeInfo2Long(classes, retainedSizes)
+              convert2TypeInfo2Long(classes, sizes.getKey()),
+              convert2TypeInfo2Long(classes, sizes.getValue())
             ));
           }
           catch (EvaluateException ex) {

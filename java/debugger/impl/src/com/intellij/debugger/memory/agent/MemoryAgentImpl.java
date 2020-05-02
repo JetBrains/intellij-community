@@ -5,6 +5,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -54,6 +55,16 @@ class MemoryAgentImpl implements MemoryAgent {
     }
 
     return MemoryAgentOperations.getRetainedSizeByClasses(evaluationContext, classes);
+  }
+
+  @Override
+  public Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    if (!myCapabilities.canGetRetainedSizeByClasses() || !myCapabilities.canGetShallowSizeByClasses()) {
+      throw new UnsupportedOperationException("Memory agent can't get shallow and retained size by classes");
+    }
+
+    return MemoryAgentOperations.getShallowAndRetainedSizeByClasses(evaluationContext, classes);
   }
 
   @NotNull

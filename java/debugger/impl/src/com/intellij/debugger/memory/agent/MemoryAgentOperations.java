@@ -9,14 +9,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
-import com.intellij.debugger.memory.agent.parsers.BooleanParser;
-import com.intellij.debugger.memory.agent.parsers.GcRootsPathsParser;
-import com.intellij.debugger.memory.agent.parsers.LongArrayParser;
-import com.intellij.debugger.memory.agent.parsers.LongValueParser;
+import com.intellij.debugger.memory.agent.parsers.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +51,16 @@ class MemoryAgentOperations {
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
     Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
     return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  @NotNull
+  static Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
+    Pair<List<Long>, List<Long>> pair = ShallowAndRetainedSizeParser.INSTANCE.parse(result);
+    return new Pair<>(pair.getKey().stream().mapToLong(Long::longValue).toArray(),
+                      pair.getValue().stream().mapToLong(Long::longValue).toArray());
   }
 
   @NotNull
