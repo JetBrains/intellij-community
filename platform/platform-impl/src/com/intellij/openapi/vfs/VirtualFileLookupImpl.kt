@@ -6,13 +6,17 @@ import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
+private fun realLocalFileSystem() = VirtualFileManager
+  .getInstance()
+  .getFileSystem(LocalFileSystem.PROTOCOL) as LocalFileSystem
+
 internal data class VirtualFileLookupImpl(
   val withRefresh: Boolean = false
 ): VirtualFileLookup {
   override fun withRefresh() = copy(withRefresh = true)
 
   override fun fromIoFile(file: File): VirtualFile? {
-    val fs = LocalFileSystem.getInstance()
+    val fs = realLocalFileSystem()
     return when {
       withRefresh -> fs.refreshAndFindFileByIoFile(file)
       else -> fs.findFileByIoFile(file)
@@ -20,7 +24,7 @@ internal data class VirtualFileLookupImpl(
   }
 
   override fun fromPath(path: String): VirtualFile? {
-    return findWithFilesSystem(LocalFileSystem.getInstance(), FileUtil.toSystemDependentName(path))
+    return findWithFilesSystem(realLocalFileSystem(), FileUtil.toSystemDependentName(path))
   }
 
   override fun fromNioPath(path: Path): VirtualFile? {
