@@ -1,15 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-private fun realLocalFileSystem() = VirtualFileManager
-  .getInstance()
-  .getFileSystem(LocalFileSystem.PROTOCOL) as LocalFileSystem
+private fun realLocalFileSystem() = ApplicationManager
+  .getApplication()
+  .getService(LocalFileSystemImpl::class.java)
 
 internal data class VirtualFileLookupImpl(
   val withRefresh: Boolean = false,

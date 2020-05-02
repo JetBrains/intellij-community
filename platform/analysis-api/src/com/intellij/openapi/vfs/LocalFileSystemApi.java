@@ -29,16 +29,15 @@ import java.util.Set;
  * It throws exceptions when {@link VirtualFile} specific APIs are called
  * directly. This class must not be used with {@link VfsImplUtil} or any other
  * vfs-impl classes.
+ * <br />
+ * @implNote Calling base methods that are not overridden here will likely
+ * throw an Non-Implemented exception as we keep only API methods here,
+ * where as all {@link VirtualFile} implementation related methods are
+ * not listed
  */
-public class LocalFileSystemApi extends LocalFileSystem {
-  private static class LocalFileSystemHolder {
-    private static final LocalFileSystem ourRealInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
-  }
-
+public abstract class LocalFileSystemApi extends LocalFileSystem {
   @NotNull
-  private static LocalFileSystem getRealInstance() {
-    return LocalFileSystemHolder.ourRealInstance;
-  }
+  protected abstract LocalFileSystem getRealInstance();
 
   @Nullable
   @Override
@@ -108,127 +107,20 @@ public class LocalFileSystemApi extends LocalFileSystem {
     getRealInstance().unregisterAuxiliaryFileOperationsHandler(handler);
   }
 
-  @NotNull
-  @Override
-  protected String extractRootPath(@NotNull String normalizedPath) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  @Nullable
-  public String normalize(@NotNull String path) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
   @Override
   public int getRank() {
     return getRealInstance().getRank();
   }
 
+  @NotNull
   @Override
-  public @NotNull VirtualFile copyFile(Object requestor,
-                                       @NotNull VirtualFile file,
-                                       @NotNull VirtualFile newParent,
-                                       @NotNull String copyName) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public @NotNull String getProtocol() {
+  public String getProtocol() {
     return getRealInstance().getProtocol();
   }
 
   @Override
   public void refresh(boolean asynchronous) {
     getRealInstance().refresh(asynchronous);
-  }
-
-  @Override
-  public boolean exists(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public String @NotNull [] list(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public boolean isDirectory(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public long getTimeStamp(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public void setTimeStamp(@NotNull VirtualFile file, long timeStamp) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public boolean isWritable(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public @NotNull InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public @NotNull OutputStream getOutputStream(@NotNull VirtualFile file,
-                                               Object requestor,
-                                               long modStamp,
-                                               long timeStamp) throws IOException {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public long getLength(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
   }
 
   @Override
@@ -242,50 +134,7 @@ public class LocalFileSystemApi extends LocalFileSystem {
   }
 
   @Override
-  public boolean isSymLink(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public String resolveSymLink(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public boolean markNewFilesAsDirty() {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  @NotNull
-  public String getCanonicallyCasedName(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  public boolean hasChildren(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  @NotNull
-  public String extractPresentableUrl(@NotNull String path) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
   public boolean isCaseSensitive() {
     return getRealInstance().isCaseSensitive();
-  }
-
-  @Override
-  public boolean isValidName(@NotNull String name) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
-  }
-
-  @Override
-  @Nullable
-  public Path getNioPath(@NotNull VirtualFile file) {
-    throw new RuntimeException("Must not be called on " + getClass().getName());
   }
 }
