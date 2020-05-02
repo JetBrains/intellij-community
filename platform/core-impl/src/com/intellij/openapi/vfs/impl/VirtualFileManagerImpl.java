@@ -158,25 +158,6 @@ public class VirtualFileManagerImpl extends VirtualFileManagerEx implements Disp
   }
 
   @Override
-  public VirtualFile findFileByUrl(@NotNull String url) {
-    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
-    if (fileSystem == null) return null;
-    return fileSystem.findFileByPath(extractPath(url));
-  }
-
-  @Override
-  public VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
-    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
-    if (fileSystem == null) return null;
-    return fileSystem.refreshAndFindFileByPath(extractPath(url));
-  }
-
-  private @Nullable VirtualFileSystem getFileSystemForUrl(@NotNull String url) {
-    String protocol = extractProtocol(url);
-    return protocol == null ? null : getFileSystem(protocol);
-  }
-
-  @Override
   public void addVirtualFileListener(@NotNull VirtualFileListener listener) {
     myVirtualFileListenerMulticaster.addListener(listener);
   }

@@ -10,7 +10,8 @@ import java.nio.file.Path
  */
 interface VirtualFileLookup {
   /**
-   * Refreshes only the part of the file system needed for searching the file and finds file.
+   * Enables refresh operation only for the part of the file system needed
+   * for searching the file and finds file.
    *
    * This method is useful when the file was created externally and you need to find
    * [VirtualFile] corresponding to it.
