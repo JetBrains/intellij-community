@@ -4,6 +4,7 @@ package com.intellij.workspace.api.pstorage
 import com.intellij.openapi.util.Ref
 import com.intellij.workspace.api.*
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Test
 
 internal class PSampleEntityData : PEntityData<PSampleEntity>() {
@@ -11,6 +12,9 @@ internal class PSampleEntityData : PEntityData<PSampleEntity>() {
   lateinit var stringProperty: String
   lateinit var stringListProperty: List<String>
   lateinit var fileProperty: VirtualFileUrl
+  override fun createEntity(snapshot: TypedEntityStorage): PSampleEntity {
+    return PSampleEntity(booleanProperty, stringProperty, stringListProperty.toList(), fileProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PSampleEntity(
@@ -31,7 +35,8 @@ internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
                                                         source: EntitySource = PSampleEntitySource("test"),
                                                         booleanProperty: Boolean = false,
                                                         stringListProperty: MutableList<String> = ArrayList(),
-                                                        fileProperty: VirtualFileUrl = VirtualFileUrlManager.fromUrl(
+                                                        virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager(),
+                                                        fileProperty: VirtualFileUrl = virtualFileManager.fromUrl(
                                                           "file:///tmp")): PSampleEntity {
   return addEntity(ModifiablePSampleEntity::class.java, source) {
     this.booleanProperty = booleanProperty
@@ -46,6 +51,12 @@ internal fun TypedEntityStorage.singlePSampleEntity() = entities(PSampleEntity::
 internal data class PSampleEntitySource(val name: String) : EntitySource
 
 class PSimplePropertiesInProxyBasedStorageTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManager()
+  }
+
   @Test
   fun `add entity`() {
     val builder = PEntityStorageBuilder.create()
@@ -74,7 +85,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
       stringProperty = "foo"
       stringListProperty.add("first")
       booleanProperty = true
-      fileProperty = VirtualFileUrlManager.fromUrl("file:///xxx")
+      fileProperty = virtualFileManager.fromUrl("file:///xxx")
     }
     assertEquals("hello", original.stringProperty)
     assertEquals(emptyList<String>(), original.stringListProperty)
@@ -124,9 +135,9 @@ class PSimplePropertiesInProxyBasedStorageTest {
   @Test
   fun `different entities with same properties`() {
     val builder = PEntityStorageBuilder.create()
-    val foo1 = builder.addPSampleEntity("foo1")
-    val foo2 = builder.addPSampleEntity("foo1")
-    val bar = builder.addPSampleEntity("bar")
+    val foo1 = builder.addPSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    val foo2 = builder.addPSampleEntity("foo1", virtualFileManager = virtualFileManager)
+    val bar = builder.addPSampleEntity("bar", virtualFileManager = virtualFileManager)
     assertFalse(foo1 == foo2)
     assertTrue(foo1.hasEqualProperties(foo1))
     assertTrue(foo1.hasEqualProperties(foo2))

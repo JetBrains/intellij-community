@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeUtils
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
@@ -72,7 +73,7 @@ object MergeConflictResolveUtil {
           request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER,
                               listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
         }
-        MergeUtil.putRevisionInfos(request, mergeData)
+        MergeUtils.putRevisionInfos(request, mergeData)
         MergeCallback.register(request, MyMergeCallback(resolver))
         return request
       }

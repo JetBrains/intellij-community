@@ -26,8 +26,12 @@ import java.util.function.Consumer;
 public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
   private final @NotNull TObjectHashingStrategy<K> strategy;
   private final Object @NotNull [] data;
-  private final @Nullable K k1, k2, k3;
-  private final @Nullable V v1, v2, v3;
+  private final K k1;
+  private final K k2;
+  private final K k3;
+  private final V v1;
+  private final V v2;
+  private final V v3;
   private final int size;
   private Set<K> keySet;
   private Collection<V> values; 
@@ -40,8 +44,7 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @see TObjectHashingStrategy#CANONICAL
    */
   public static @NotNull <K, V> UnmodifiableHashMap<K, V> empty() {
-    //noinspection unchecked
-    return empty(TObjectHashingStrategy.CANONICAL);
+    return empty(ContainerUtil.canonicalStrategy());
   }
 
   /**
@@ -63,9 +66,8 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
    * @return a pre-populated {@code UnmodifiableHashMap}. Map return the supplied map if
    * it's already an {@code UnmodifiableHashMap} which uses the same equals/hashCode strategy.
    */
-  public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull Map<K, V> map) {
-    //noinspection unchecked
-    return fromMap(TObjectHashingStrategy.CANONICAL, map);
+  public static @NotNull <K, V> UnmodifiableHashMap<K, V> fromMap(@NotNull Map<? extends K, ? extends V> map) {
+    return fromMap(ContainerUtil.canonicalStrategy(), map);
   }
 
   /**
@@ -85,8 +87,12 @@ public final class UnmodifiableHashMap<K, V> implements Map<K, V> {
       return (UnmodifiableHashMap<K, V>)map;
     }
     if (map.size() <= 3) {
-      K k1 = null, k2 = null, k3 = null;
-      V v1 = null, v2 = null, v3 = null;
+      K k1 = null;
+      K k2 = null;
+      K k3 = null;
+      V v1 = null;
+      V v2 = null;
+      V v3 = null;
       Iterator<? extends Entry<? extends K, ? extends V>> iterator = map.entrySet().iterator();
       if (iterator.hasNext()) {
         Entry<? extends K, ? extends V> e = iterator.next();

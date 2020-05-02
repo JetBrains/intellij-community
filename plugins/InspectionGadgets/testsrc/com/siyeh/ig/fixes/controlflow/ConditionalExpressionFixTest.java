@@ -56,6 +56,7 @@ public class ConditionalExpressionFixTest extends IGQuickFixesTestCase {
   }
   
   public void testSwitchExpressionInside() { doTest(); }
+  public void testNullType() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) {

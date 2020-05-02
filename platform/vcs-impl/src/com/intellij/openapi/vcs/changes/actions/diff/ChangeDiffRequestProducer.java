@@ -14,7 +14,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.impl.DiffViewerWrapper;
-import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
@@ -47,6 +46,8 @@ import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequ
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.diff.DiffVcsDataKeys;
+import com.intellij.openapi.vcs.merge.MergeUtils;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -327,7 +328,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
                                                  contentFactory.createFromBytes(project, mergeData.LAST, file));
 
       SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
-      MergeUtil.putRevisionInfos(request, mergeData);
+      MergeUtils.putRevisionInfos(request, mergeData);
 
       return request;
     }
@@ -441,7 +442,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
         content = contentFactory.create(project, revisionContent, filePath);
       }
 
-      content.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(revision.getFile(), revision.getRevisionNumber()));
+      content.putUserData(DiffVcsDataKeys.REVISION_INFO, Pair.create(revision.getFile(), revision.getRevisionNumber()));
 
       return content;
     }

@@ -15,6 +15,7 @@
  */
 package com.intellij.build.events;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +24,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface Warning {
   @NotNull
+  @BuildEventsNls.Title
   String getMessage();
 
   @Nullable
+  @BuildEventsNls.Description
   String getDescription();
 }

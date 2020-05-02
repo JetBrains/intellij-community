@@ -663,6 +663,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
                                                                 "../additionalModuleDir/AdditionalModuleClass.java")
     def mainModuleClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleClass.java",
                                                       "MainModuleClass.java")
+    def mainModuleBeanClass = myFixture.copyFileToProject("registrationCheck/module/MainModuleBeanClass.java",
+                                                          "MainModuleBeanClass.java")
     def mainModulePlugin = myFixture.copyFileToProject("registrationCheck/module/MainModulePlugin.xml",
                                                        "META-INF/MainModulePlugin.xml")
 
@@ -676,6 +678,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.configureFromExistingVirtualFile(dependencyModulePlugin)
     myFixture.configureFromExistingVirtualFile(additionalModuleClass)
     myFixture.configureFromExistingVirtualFile(mainModuleClass)
+    myFixture.configureFromExistingVirtualFile(mainModuleBeanClass)
     myFixture.configureFromExistingVirtualFile(mainModulePlugin)
 
     myFixture.allowTreeAccessForAllFiles()

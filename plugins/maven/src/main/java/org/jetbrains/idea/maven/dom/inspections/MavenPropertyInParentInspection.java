@@ -3,9 +3,9 @@ package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -97,7 +97,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
         String finalResolvedValue = resolvedValue;
         fix = new LocalQuickFix() {
           @Override
-          public @NlsContexts.ListItem @NotNull String getFamilyName() {
+          public @IntentionFamilyName @NotNull String getFamilyName() {
             return MavenDomBundle.message("refactoring.inline.property");
           }
 

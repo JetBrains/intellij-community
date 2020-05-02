@@ -39,6 +39,12 @@ public class NlsContexts {
   public @interface PopupContent {
   }
 
+  @NlsContext(prefix = "popup.advertisement")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface PopupAdvertisement {
+  }
+
   /**
    * Notifications
    */
@@ -81,7 +87,13 @@ public class NlsContexts {
   @NlsContext(prefix = "parsing.error")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public static @interface ParsingError {
+  public @interface ParsingError {
+  }
+
+  @NlsContext(prefix = "status.bar.text")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface StatusBarText {
   }
 
   /**
@@ -91,7 +103,7 @@ public class NlsContexts {
   @NlsContext(prefix = "system.notification.title")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public static @interface SystemNotificationTitle {
+  public @interface SystemNotificationTitle {
   }
 
   /**
@@ -101,13 +113,34 @@ public class NlsContexts {
   @NlsContext(prefix = "system.notification.text")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
-  public static @interface SystemNotificationText {
+  public @interface SystemNotificationText {
   }
 
   @NlsContext(prefix = "command.name")
   @Nls(capitalization = Nls.Capitalization.Title)
   @Target(ElementType.TYPE_USE)
-  public static @interface Command {
+  public @interface Command {
+  }
+
+  @NlsContext(prefix = "tab.title")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface TabTitle {
+  }
+
+  /**
+   * Annotate by {@code #AttributeDescriptor} text attribute keys, see {@link com.intellij.openapi.options.colors.AttributesDescriptor}
+   */
+  @NlsContext(prefix = "attribute.descriptor")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface AttributeDescriptor {
+  }
+
+  @NlsContext(prefix = "column.name")
+  @Nls(capitalization = Nls.Capitalization.Title)
+  @Target(ElementType.TYPE_USE)
+  public @interface ColumnName {
   }
 
   /**
@@ -129,6 +162,12 @@ public class NlsContexts {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target(ElementType.TYPE_USE)
   public @interface Checkbox {
+  }
+
+  @NlsContext(prefix = "radio")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  @Target(ElementType.TYPE_USE)
+  public @interface RadioButton {
   }
 
   @NlsContext(prefix = "border.title")

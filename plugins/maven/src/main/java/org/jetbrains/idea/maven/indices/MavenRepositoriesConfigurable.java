@@ -32,8 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final MavenProjectIndicesManager myManager;
 
+
+  private final Project myProject;
   private JPanel myMainPanel;
   private JBTable myIndicesTable;
   private JButton myUpdateButton;
@@ -44,7 +45,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   private ActionListener myTimerListener;
 
   public MavenRepositoriesConfigurable(Project project) {
-    myManager = MavenProjectIndicesManager.getInstance(project);
+    myProject = project;
     configControls();
 
     myBorderPanel.setBorder(
@@ -111,7 +112,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
   }
 
   private void doUpdateIndex() {
-    myManager.scheduleUpdate(getSelectedIndices());
+    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdate(getSelectedIndices());
   }
 
   private List<MavenIndex> getSelectedIndices() {
@@ -154,7 +155,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
 
   @Override
   public void reset() {
-    myIndicesTable.setModel(new MyTableModel(myManager.getIndices()));
+    myIndicesTable.setModel(new MyTableModel(MavenProjectIndicesManager.getInstance(myProject).getIndices()));
     myIndicesTable.getColumnModel().getColumn(0).setPreferredWidth(400);
     myIndicesTable.getColumnModel().getColumn(1).setPreferredWidth(50);
     myIndicesTable.getColumnModel().getColumn(2).setPreferredWidth(50);
@@ -235,7 +236,7 @@ public class MavenRepositoriesConfigurable implements SearchableConfigurable, Co
           if (timestamp == -1) return IndicesBundle.message("maven.index.updated.never");
           return DateFormatUtil.formatDate(timestamp);
         case 3:
-          return myManager.getUpdatingState(i);
+          return MavenProjectIndicesManager.getInstance(myProject).getUpdatingState(i);
       }
       throw new RuntimeException();
     }

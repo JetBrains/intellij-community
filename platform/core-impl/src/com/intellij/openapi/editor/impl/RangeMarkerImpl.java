@@ -157,7 +157,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
 
-  void setStickingToRight(boolean value) {
+  public void setStickingToRight(boolean value) {
     if (!isValid() || value == isStickingToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
   }
@@ -174,7 +174,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isGreedyToRight();
   }
 
-  boolean isStickingToRight() {
+  public boolean isStickingToRight() {
     RangeMarkerTree.RMNode<?> node = myNode;
     return node != null && node.isStickingToRight();
   }
@@ -183,23 +183,25 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   public final void documentChanged(@NotNull DocumentEvent e) {
     int oldStart = intervalStart();
     int oldEnd = intervalEnd();
-    int docLength = getDocument().getTextLength();
+    int docLength = e.getDocument().getTextLength();
     if (!isValid()) {
       LOG.error("Invalid range marker "+ (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 ". Event = " + e + ". Doc length=" + docLength + "; "+getClass());
       return;
     }
-    if (intervalStart() > intervalEnd() || intervalStart() < 0 || intervalEnd() > docLength - e.getNewLength() + e.getOldLength()) {
+    if (oldStart > oldEnd || oldStart < 0 || oldEnd > docLength - e.getNewLength() + e.getOldLength()) {
       LOG.error("RangeMarker" + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " is invalid before update. Event = " + e + ". Doc length=" + docLength + "; "+getClass());
       invalidate(e);
       return;
     }
     changedUpdateImpl(e);
-    if (isValid() && (intervalStart() > intervalEnd() || intervalStart() < 0 || intervalEnd() > docLength)) {
+    int newStart;
+    int newEnd;
+    if (isValid() && ((newStart=intervalStart()) > (newEnd=intervalEnd()) || newStart < 0 || newEnd > docLength)) {
       LOG.error("Update failed. Event = " + e + ". " +
-                "old doc length=" + docLength + "; real doc length = "+getDocument().getTextLength()+
-                "; "+getClass()+"." +
+                "Doc length=" + docLength +
+                "; "+getClass()+". Before update: " + (isGreedyToLeft() ? "[" : "(") + oldStart + ", " + oldEnd + (isGreedyToRight() ? "]" : ")") +
                 " After update: '"+this+"'");
       invalidate(e);
     }

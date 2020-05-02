@@ -14,6 +14,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -120,7 +121,7 @@ public class HgCompareWithBranchAction extends DvcsCompareWithBranchAction<HgRep
                                                          @NotNull String branchName) throws VcsException {
     Hash refHashToCompare = detectActiveHashByName(repository, branchName);
     if (refHashToCompare == null) {
-      throw new VcsException(String.format("Couldn't detect commit related to %s name for %s.", branchName, repository.getRoot()));
+      throw new VcsException(HgBundle.message("action.hg4idea.CompareWithBranch.cannot.detect.commit", branchName, repository.getRoot()));
     }
     return HgRevisionNumber.getInstance(branchName, refHashToCompare.toString());
   }

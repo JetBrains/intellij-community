@@ -13,9 +13,11 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +32,12 @@ public class IdTableBuilding {
   }
 
   public static boolean isIdIndexerRegistered(@NotNull FileType fileType) {
-    return IdIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
+    return getIndexer(fileType) != null || fileType instanceof InternalFileType;
   }
-
 
   @Nullable
   public static IdIndexer getFileTypeIndexer(FileType fileType) {
-    final IdIndexer extIndexer = IdIndexers.INSTANCE.forFileType(fileType);
+    final IdIndexer extIndexer = getIndexer(fileType);
     if (extIndexer != null) {
       return extIndexer;
     }
@@ -65,6 +66,11 @@ public class IdTableBuilding {
     }
 
     return null;
+  }
+
+  private static IdIndexer getIndexer(@NotNull FileType fileType) {
+    if (fileType == PlainTextFileType.INSTANCE && FileBasedIndex.IGNORE_PLAIN_TEXT_FILES) return null;
+    return IdIndexers.INSTANCE.forFileType(fileType);
   }
 
   @Contract(value = "_ -> new", pure = true)

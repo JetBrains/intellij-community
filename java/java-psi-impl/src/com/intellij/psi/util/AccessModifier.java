@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
@@ -96,12 +95,13 @@ public enum AccessModifier {
   }
 
   public boolean isWeaker(@NotNull AccessModifier other) {
-    return ordinal() < other.ordinal();
+    return compareTo(other) < 0;
   }
 
   @Override
   public String toString() {
-    return JavaPsiBundle.visibilityPresentation(toPsiModifier());
+    String psiModifier = toPsiModifier();
+    return psiModifier.equals(PACKAGE_LOCAL.myModifier) ? "package-private" : psiModifier;
   }
 
   @NotNull
@@ -122,7 +122,7 @@ public enum AccessModifier {
         return Collections.singletonList(PUBLIC);
       }
       if (containingClass.isInterface()) {
-        if (PsiUtil.isLanguageLevel9OrHigher(member)) {
+        if (method.getBody() != null && PsiUtil.isLanguageLevel9OrHigher(member)) {
           return PUBLIC_PRIVATE;
         }
         return Collections.singletonList(PUBLIC);

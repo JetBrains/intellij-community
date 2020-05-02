@@ -20,11 +20,11 @@ import org.jdom.Element
 import java.io.StringReader
 
 internal class LibraryViaTypedEntity(val libraryImpl: LegacyBridgeLibraryImpl,
-                            val libraryEntity: LibraryEntity,
-                            internal val filePointerProvider: LegacyBridgeFilePointerProvider,
-                            val storage: TypedEntityStorage,
-                            val libraryTable: LibraryTable,
-                            private val modifiableModelFactory: (LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LibraryEx.ModifiableModelEx) : LegacyBridgeLibrary, RootProvider {
+                                     val libraryEntity: LibraryEntity,
+                                     internal val filePointerProvider: LegacyBridgeFilePointerProvider,
+                                     val storage: TypedEntityStorage,
+                                     val libraryTable: LibraryTable,
+                                     private val modifiableModelFactory: (LibraryViaTypedEntity, TypedEntityStorageBuilder) -> LibraryEx.ModifiableModelEx) : LegacyBridgeLibrary, RootProvider {
 
   override fun getModule(): Module? = (libraryTable as? LegacyBridgeModuleLibraryTable)?.module
 

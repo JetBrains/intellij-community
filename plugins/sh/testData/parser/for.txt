@@ -449,7 +449,7 @@ SHELL_SCRIPT
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION
           PsiElement({)('{')
-          PsiElement(parameter_expansion_body)('BASH_VERSION')
+          PsiElement(word)('BASH_VERSION')
           PsiElement(})('}')
         PsiElement(STRING_CONTENT)('...')
         PsiElement(CLOSE_QUOTE)('"')

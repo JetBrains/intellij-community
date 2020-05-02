@@ -23,7 +23,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,12 +30,12 @@ import javax.swing.*;
 /**
  * @author peter
  */
-public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>{
+public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
 
   @Override
-  public void renderElement(final LookupItem item, final LookupElementPresentation presentation) {
-    presentation.setIcon(getRawIcon(item, presentation.isReal()));
+  public void renderElement(LookupItem<?> item, LookupElementPresentation presentation) {
+    presentation.setIcon(getRawIcon(item));
 
     presentation.setItemText(getName(item));
     presentation.setItemTextBold(item.getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null);
@@ -44,9 +43,19 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     presentation.setTypeText(getText3(item), null);
   }
 
+  /**
+   * @deprecated use {@link #getRawIcon(LookupElement)}
+   */
+  @SuppressWarnings("unused")
   @Nullable
+  @Deprecated
   public static Icon getRawIcon(final LookupElement item, boolean real) {
-    Icon icon = _getRawIcon(item, real);
+    return getRawIcon(item);
+  }
+
+  @Nullable
+  public static Icon getRawIcon(final LookupElement item) {
+    Icon icon = _getRawIcon(item);
     if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
     if (icon != null && icon.getIconHeight() > PlatformIcons.CLASS_ICON.getIconHeight()) {
       return new SizedIcon(icon, icon.getIconWidth(), PlatformIcons.CLASS_ICON.getIconHeight());
@@ -55,37 +64,29 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
   }
 
   @Nullable
-  private static Icon _getRawIcon(LookupElement item, boolean real) {
+  private static Icon _getRawIcon(LookupElement item) {
     if (item instanceof LookupItem) {
-      Icon icon = (Icon)((LookupItem)item).getAttribute(LookupItem.ICON_ATTR);
+      Icon icon = (Icon)((LookupItem<?>)item).getAttribute(LookupItem.ICON_ATTR);
       if (icon != null) return icon;
     }
 
     Object o = item.getObject();
 
-    if (!real) {
-      if (item.getObject() instanceof String) {
-        return EmptyIcon.ICON_0;
-      }
-
-      int count = Registry.is("ide.completion.show.visibility.icon") ? 2 : 1;
-      return EmptyIcon.create(PlatformIcons.CLASS_ICON.getIconWidth() * count, PlatformIcons.CLASS_ICON.getIconHeight());
-    }
-
     if (o instanceof Iconable && !(o instanceof PsiElement)) {
-      return ((Iconable)o).getIcon(Iconable.ICON_FLAG_VISIBILITY);
+      return ((Iconable)o).getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
     }
 
     final PsiElement element = item.getPsiElement();
     if (element != null && element.isValid()) {
-      return element.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+      return element.getIcon(Registry.is("ide.completion.show.visibility.icon") ? Iconable.ICON_FLAG_VISIBILITY : 0);
     }
     return null;
   }
 
 
+  @SuppressWarnings("deprecation")
   @Nullable
-  private static String getText3(final LookupItem item) {
+  private static String getText3(LookupItem<?> item) {
     Object o = item.getObject();
     String text;
     if (o instanceof LookupValueWithUIHint) {
@@ -97,11 +98,12 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
     return text;
   }
 
-  private static String getText2(final LookupItem item) {
+  private static String getText2(LookupItem<?> item) {
     return (String)item.getAttribute(LookupItem.TAIL_TEXT_ATTR);
   }
 
-  private static String getName(final LookupItem item){
+  @SuppressWarnings("deprecation")
+  private static String getName(LookupItem<?> item){
     final String presentableText = item.getPresentableText();
     if (presentableText != null) return presentableText;
     final Object o = item.getObject();

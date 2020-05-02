@@ -25,7 +25,7 @@ internal class SvnOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
   }
 
   override fun getOptions(project: Project): Collection<OptionDescription> {
-    if (isEnabled(project, SvnVcs.getInstance(project))) {
+    if (isEnabled(project, SvnVcs.getKey())) {
       return listOf(
         cdCheckMergeInfo(project),
         cdShowMergeSource(project),

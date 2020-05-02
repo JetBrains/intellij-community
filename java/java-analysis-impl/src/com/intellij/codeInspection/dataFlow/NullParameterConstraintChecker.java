@@ -121,8 +121,8 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     protected MyDfaMemoryState(DfaValueFactory factory) {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
-        setVariableState(getFactory().getVarFactory().createVariableValue(parameter),
-                         new DfaVariableState(DfaNullability.NULLABLE.asDfType()));
+        recordVariableType(getFactory().getVarFactory().createVariableValue(parameter),
+                           DfaNullability.NULLABLE.asDfType());
       }
     }
 

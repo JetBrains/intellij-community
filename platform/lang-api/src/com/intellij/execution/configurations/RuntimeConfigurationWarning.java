@@ -2,15 +2,15 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
 public class RuntimeConfigurationWarning extends RuntimeConfigurationException {
-  public RuntimeConfigurationWarning(@Nls(capitalization = Nls.Capitalization.Sentence) final String message) {
+  public RuntimeConfigurationWarning(@DialogMessage String message) {
     this(message, null);
   }
 
-  public RuntimeConfigurationWarning(@Nls(capitalization = Nls.Capitalization.Sentence) final String message, final Runnable quickFix) {
+  public RuntimeConfigurationWarning(@DialogMessage String message, final Runnable quickFix) {
     super(message, ExecutionBundle.message("warning.common.title"));
     setQuickFix(quickFix);
   }

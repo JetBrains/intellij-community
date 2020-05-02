@@ -2,7 +2,10 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.Producer;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +72,14 @@ public abstract class PyTestTask {
     return myScriptParameters;
   }
 
+
+ public static<T> T getUnderEdt(@NotNull Producer<T> producer) {
+    final Ref<T> ref = new Ref<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      ref.set(producer.produce());
+    });
+    return ref.get();
+  }
 
   /**
    * @return tags this task needs to exist on interpreter to run

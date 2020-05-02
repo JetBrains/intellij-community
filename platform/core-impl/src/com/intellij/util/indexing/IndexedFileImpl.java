@@ -12,8 +12,9 @@ import org.jetbrains.annotations.NotNull;
 public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   protected final VirtualFile myFile;
   protected final String myFileName;
-  protected final FileType myFileType;
   private volatile Project myProject;
+  private FileType mySubstituteFileType;
+  private final @NotNull FileType myType;
 
   public IndexedFileImpl(@NotNull VirtualFile file, Project project) {
     this(file, file.getFileType(), project);
@@ -22,14 +23,17 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   public IndexedFileImpl(@NotNull VirtualFile file, @NotNull FileType type, Project project) {
     myFile = file;
     myFileName = file.getName();
-    myFileType = type;
     myProject = project;
+    myType = type;
   }
 
   @NotNull
   @Override
   public FileType getFileType() {
-    return SubstitutedFileType.substituteFileType(myFile, myFileType, getProject());
+    if (mySubstituteFileType == null) {
+      mySubstituteFileType = SubstitutedFileType.substituteFileType(myFile, myType, getProject());
+    }
+    return mySubstituteFileType;
   }
 
   @NotNull

@@ -1329,14 +1329,28 @@ print <weak_warning descr="Cannot infer argument types">testConfig.foo<warning d
 
   void testGStringInjectionLFs() {
     testHighlighting('''\
-print "<error descr="GString injection must not contain line feeds">${
-}</error>"
+print "${<error descr="GString injection must not contain line feeds">
+</error>}"
 
 print """${
 }"""
 
-print "<error descr="GString injection must not contain line feeds">${ """
-"""}</error>"
+print "${ """
+""" }"
+
+print "${"\\
+hi"}"
+
+print "${<error descr="GString injection must not contain line feeds">
+  </error>1 + 2
+}"
+
+print "${1 + <error descr="GString injection must not contain line feeds">
+  </error>2
+}"
+
+print "${1 + 2<error descr="GString injection must not contain line feeds">
+</error>}"
 ''')
   }
 

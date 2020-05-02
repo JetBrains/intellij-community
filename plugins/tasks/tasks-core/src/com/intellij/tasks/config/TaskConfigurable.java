@@ -30,17 +30,15 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -138,7 +136,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     }
     TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO = myAlwaysDisplayTaskCombo.isSelected();
     int oldConnectionTimeout = TaskSettings.getInstance().CONNECTION_TIMEOUT;
-    Integer connectionTimeout = Integer.valueOf(myConnectionTimeout.getText());
+    int connectionTimeout = Integer.parseInt(myConnectionTimeout.getText());
     TaskSettings.getInstance().CONNECTION_TIMEOUT = connectionTimeout;
     TaskSettings.getInstance().LOWER_CASE_BRANCH = myLowerCase.isSelected();
     TaskSettings.getInstance().REPLACE_SPACES = myReplaceSpaces.getText();

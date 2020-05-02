@@ -17,6 +17,12 @@ public final class GotoDeclarationUtil {
 
   public static @NotNull PsiElement @Nullable [] findTargetElementsFromProviders(@NotNull Editor editor, int offset, PsiFile file) {
     PsiElement elementAt = file.findElementAt(TargetElementUtilBase.adjustOffset(file, editor.getDocument(), offset));
+    return findTargetElementsFromProviders(elementAt, offset, editor);
+  }
+
+  public static @NotNull PsiElement @Nullable [] findTargetElementsFromProviders(@Nullable PsiElement elementAt,
+                                                                                 int offset,
+                                                                                 @NotNull Editor editor) {
     for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
       PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
       if (result != null && result.length > 0) {

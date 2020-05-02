@@ -56,12 +56,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
 import com.intellij.psi.search.*
-import com.intellij.psi.stubs.ObjectStubTree
-import com.intellij.psi.stubs.SerializedStubTree
-import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.stubs.StubIndexImpl
-import com.intellij.psi.stubs.StubTreeLoader
-import com.intellij.psi.stubs.StubUpdatingIndex
+import com.intellij.psi.stubs.*
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -1332,7 +1327,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       found = fileBasedIndex.getContainingFiles(IdIndex.NAME, wordHash, scope).contains(file)
     }
     if (inDumbMode) {
-      fileBasedIndex.ignoreDumbMode(runnable, project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
+      fileBasedIndex.ignoreDumbMode(runnable, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
     } else {
       runnable.run()
     }

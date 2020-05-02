@@ -86,11 +86,11 @@ public class CollectClassMembersUtil {
 
   @NotNull
   private static ClassMembers buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
-    return CachedValuesManager.getManager(aClass.getProject()).getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
+    return CachedValuesManager.getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
       ClassMembers result = new ClassMembers();
       processClass(aClass, result.fields, result.methods, result.innerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-    }, false);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
+    });
   }
 
   @NotNull

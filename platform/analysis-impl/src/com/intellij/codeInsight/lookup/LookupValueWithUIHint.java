@@ -18,19 +18,12 @@ package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
-
 /**
  * @author maxim
- * @deprecated use InsertHandler
+ * @deprecated use {@link LookupElement#renderElement}
  */
 @Deprecated
 public interface LookupValueWithUIHint extends PresentableLookupValue {
   @Nullable
   String getTypeHint();
-
-  @Nullable
-  Color getColorHint();
-
-  boolean isBold();
 }

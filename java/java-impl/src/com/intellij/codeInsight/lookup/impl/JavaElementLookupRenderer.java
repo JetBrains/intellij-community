@@ -38,7 +38,7 @@ public class JavaElementLookupRenderer implements ElementLookupRenderer {
 
   @Override
   public void renderElement(final LookupItem item, final Object element, final LookupElementPresentation presentation) {
-    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item, presentation.isReal()));
+    presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item));
 
     presentation.setItemText(PsiUtilCore.getName((PsiElement)element));
     presentation.setStrikeout(isToStrikeout(item));

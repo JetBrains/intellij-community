@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -110,7 +112,8 @@ public class BraceHighlightingHandler {
 
   private static boolean isValidEditor(@NotNull Editor editor) {
     Project editorProject = editor.getProject();
-    return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() && editor.getComponent().isShowing();
+    return editorProject != null && !editorProject.isDisposed() && !editor.isDisposed() &&
+           EditorActivityManager.getInstance().isVisible(editor);
   }
 
   @NotNull
@@ -306,9 +309,8 @@ public class BraceHighlightingHandler {
     }
 
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject); // null in default project
-    if (fileEditorManager == null || !myEditor.equals(fileEditorManager.getSelectedTextEditor())) {
-      return;
-    }
+    if (fileEditorManager == null) return;
+    if (Arrays.stream(fileEditorManager.getSelectedTextEditorWithRemotes()).noneMatch(e -> e.equals(myEditor))) return;
 
     if (lBrace != null && rBrace !=null) {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;

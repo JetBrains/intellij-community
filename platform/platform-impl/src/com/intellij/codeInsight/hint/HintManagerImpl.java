@@ -2,6 +2,8 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -112,6 +114,7 @@ public class HintManagerImpl extends HintManager {
     MessageBusConnection busConnection = ApplicationManager.getApplication().getMessageBus().connect();
     busConnection.subscribe(ProjectManager.TOPIC, projectManagerListener);
     busConnection.subscribe(AnActionListener.TOPIC, new MyAnActionListener());
+    busConnection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginListener());
 
     myEditorMouseListener = new EditorMouseListener() {
       @Override
@@ -917,6 +920,13 @@ public class HintManagerImpl extends HintManager {
     }
   }
 
+
+  private final class MyDynamicPluginListener implements DynamicPluginListener {
+    @Override
+    public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      cleanup();
+    }
+  }
   /**
    * We have to spy for all opened projects to register MyEditorManagerListener into
    * all opened projects.

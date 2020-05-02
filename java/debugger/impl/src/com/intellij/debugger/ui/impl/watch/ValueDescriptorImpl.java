@@ -231,7 +231,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     throws EvaluateException {
     Method method = DebuggerUtils.findMethod(exceptionObj.referenceType(), "getStackTrace", "()[Ljava/lang/StackTraceElement;");
     if (method != null) {
-      return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+      return evaluationContext.getDebugProcess().invokeInstanceMethod(
+        evaluationContext, exceptionObj, method, Collections.emptyList(), 0, true);
     }
     return null;
   }

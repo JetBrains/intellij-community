@@ -18,6 +18,7 @@ package com.intellij.codeInsight.runner;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.Contract;
 
 /**
  * @author ilyas
@@ -26,10 +27,13 @@ public interface JavaMainMethodProvider {
 
   ExtensionPointName<JavaMainMethodProvider> EP_NAME = ExtensionPointName.create("com.intellij.javaMainMethodProvider");
 
+  @Contract(pure = true)
   boolean isApplicable(final PsiClass clazz);
 
+  @Contract(pure = true)
   boolean hasMainMethod(final PsiClass clazz);
 
+  @Contract(pure = true)
   PsiMethod findMainInClass(final PsiClass clazz);
 
 }

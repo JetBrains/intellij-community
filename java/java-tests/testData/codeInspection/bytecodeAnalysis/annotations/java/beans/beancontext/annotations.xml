@@ -58,6 +58,16 @@
             <val val="&quot;-&gt;new&quot;"/>
         </annotation>
     </item>
+    <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef void addRef(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef void releaseRef(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceRef BCSSCServiceRef(java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -68,9 +78,19 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceRef int release()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
+    </item>
     <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceRef java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef getServiceClassRef()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceRef void addRef()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
         </annotation>
     </item>
 </root>

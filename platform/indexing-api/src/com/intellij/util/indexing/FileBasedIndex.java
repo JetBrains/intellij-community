@@ -30,7 +30,7 @@ import java.util.Set;
  * @author dmitrylomov
  */
 public abstract class FileBasedIndex {
-  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, ProgressIndicator indicator);
+  public abstract void iterateIndexableFiles(@NotNull ContentIterator processor, @NotNull Project project, @Nullable ProgressIndicator indicator);
 
   /**
    * @return the file which the current thread is indexing right now, or {@code null} if current thread isn't indexing.
@@ -121,7 +121,7 @@ public abstract class FileBasedIndex {
   @ApiStatus.Internal
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
-  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable);
+  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
@@ -138,15 +138,11 @@ public abstract class FileBasedIndex {
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
    * <p> In smart mode, the behavior is similar to direct command execution
-   *
    * @param command - a command to execute
-   * @param project - project where dumb mode will be ignored
    * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
-   *                           or any data from index is fine (even outdated and not yet updated)?
    */
   @ApiStatus.Experimental
   public void ignoreDumbMode(@NotNull Runnable command,
-                             @NotNull Project project,
                              @NotNull DumbModeAccessType dumbModeAccessType) {
     throw new UnsupportedOperationException();
   }
@@ -220,7 +216,7 @@ public abstract class FileBasedIndex {
    * @see DefaultFileTypeSpecificInputFilter
    */
   public interface FileTypeSpecificInputFilter extends InputFilter {
-    void registerFileTypesUsedForIndexing(@NotNull Consumer<FileType> fileTypeSink);
+    void registerFileTypesUsedForIndexing(@NotNull Consumer<? super FileType> fileTypeSink);
   }
 
   /** @deprecated inline true */
@@ -236,5 +232,9 @@ public abstract class FileBasedIndex {
   }
   private static final boolean ourDisableIndexAccessDuringDumbMode = SystemProperties.getBooleanProperty("idea.disable.index.access.during.dumb.mode", false);
 
+  @ApiStatus.Internal
   public static final boolean USE_IN_MEMORY_INDEX = SystemProperties.is("idea.use.in.memory.file.based.index");
+
+  @ApiStatus.Internal
+  public static final boolean IGNORE_PLAIN_TEXT_FILES = SystemProperties.is("idea.ignore.plain.text.indexing");
 }

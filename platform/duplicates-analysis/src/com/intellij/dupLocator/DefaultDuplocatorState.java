@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class DefaultDuplocatorState implements ExternalizableDuplocatorState {
+public final class DefaultDuplocatorState implements ExternalizableDuplocatorState {
   private static final Logger LOG = Logger.getInstance(DefaultDuplocatorState.class);
 
   public boolean DISTINGUISH_VARIABLES = false;
@@ -19,8 +19,6 @@ public class DefaultDuplocatorState implements ExternalizableDuplocatorState {
   public boolean distinguishRole(@NotNull PsiElementRole role) {
     switch (role) {
       case VARIABLE_NAME:
-        return DISTINGUISH_VARIABLES;
-
       case FIELD_NAME:
         return DISTINGUISH_VARIABLES;
 

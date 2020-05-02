@@ -3,9 +3,7 @@ package com.intellij.serviceContainer
 
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 
@@ -41,7 +39,7 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
 
       componentManager.initializeComponent(instance, serviceDescriptor = null, pluginId = pluginId)
       @Suppress("DEPRECATION")
-      if (instance is BaseComponent) {
+      if (instance is com.intellij.openapi.components.BaseComponent) {
         @Suppress("DEPRECATION")
         instance.initComponent()
         if (instance !is Disposable) {
@@ -58,11 +56,8 @@ internal class MyComponentAdapter(private val componentKey: Class<*>,
       componentManager.componentCreated(indicator)
       return instance
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (t: Throwable) {
-      componentManager.handleInitComponentError(t, getComponentKey().name, pluginId)
+      componentManager.handleInitComponentError(t, componentKey.name, pluginId)
       throw t
     }
   }

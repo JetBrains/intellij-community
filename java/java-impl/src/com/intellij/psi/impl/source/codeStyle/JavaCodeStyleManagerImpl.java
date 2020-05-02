@@ -106,7 +106,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       if (newList != null) {
         final PsiImportList importList = ((PsiJavaFile)file).getImportList();
         if (importList != null) {
-          importList.replace(newList);
+          importList.getParent().addRangeAfter(newList.getParent().getFirstChild(), newList.getParent().getLastChild(), importList);
+          importList.delete();
         }
       }
     }
@@ -370,8 +371,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         case "float":
           return "v";
         case "short": return "i";
-        case "java.lang.Object": return "o";
-        case "java.lang.String": return "s";
+        case CommonClassNames.JAVA_LANG_OBJECT: return "o";
+        case CommonClassNames.JAVA_LANG_STRING: return "s";
+        case CommonClassNames.JAVA_LANG_VOID: return "unused";
       }
     }
     return null;

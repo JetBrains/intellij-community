@@ -3,16 +3,9 @@ package com.intellij.workspace.api.pstorage
 
 import com.intellij.workspace.api.TypedEntity
 
-internal open class EntitiesBarrel internal constructor(
-  override val entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
-) : AbstractEntitiesBarrel() {
-
-  constructor() : this(emptyMap())
-
-  fun copy(): EntitiesBarrel = EntitiesBarrel(HashMap(this.entities))
-
-  fun join(other: EntitiesBarrel): EntitiesBarrel = EntitiesBarrel(entities + other.entities)
-
+internal open class ImmutableEntitiesBarrel internal constructor(
+  override val entities: Map<Class<out TypedEntity>, ImmutableEntityFamily<out TypedEntity>>
+) : EntitiesBarrel() {
   fun assertConsistency() {
     entities.forEach { (clazz, family) ->
       family.assertConsistency { entityData ->
@@ -26,13 +19,15 @@ internal open class EntitiesBarrel internal constructor(
       }
     }
   }
+
+  companion object {
+    val EMPTY = ImmutableEntitiesBarrel(emptyMap())
+  }
 }
 
 internal class MutableEntitiesBarrel(
-  override val entities: MutableMap<Class<out TypedEntity>, AbstractEntityFamily<out TypedEntity>>
-) : AbstractEntitiesBarrel() {
-
-  constructor() : this(HashMap())
+  override var entities: MutableMap<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
+) : EntitiesBarrel() {
 
   fun clear() = entities.clear()
 
@@ -62,22 +57,23 @@ internal class MutableEntitiesBarrel(
 
   fun <T : TypedEntity> replaceById(newEntity: PEntityData<T>, clazz: Class<T>) {
     val family = getMutableEntityFamily(clazz)
-    if (!family.exists(newEntity.id)) error("Nothing to replace")  // TODO: 25.03.2020 Or just call "add"?
+    if (!family.exists(newEntity.id)) error("Nothing to replace")
     family.replaceById(newEntity)
   }
 
-  fun toImmutable(): EntitiesBarrel {
+  fun toImmutable(): ImmutableEntitiesBarrel {
+    entities
     val friezedEntities = entities.mapValues { (_, family) ->
       when (family) {
         is MutableEntityFamily<*> -> family.toImmutable()
-        is EntityFamily<*> -> family
+        is ImmutableEntityFamily<*> -> family
       }
     }
-    return EntitiesBarrel(friezedEntities)
+    return ImmutableEntitiesBarrel(friezedEntities)
   }
 
   private fun <T : TypedEntity> getMutableEntityFamily(unmodifiableEntityClass: Class<T>): MutableEntityFamily<T> {
-    val entityFamily = entities[unmodifiableEntityClass] as AbstractEntityFamily<T>?
+    val entityFamily = entities[unmodifiableEntityClass] as EntityFamily<T>?
     if (entityFamily == null) {
       val newMutable = MutableEntityFamily.createEmptyMutable<T>()
       entities[unmodifiableEntityClass] = newMutable
@@ -86,8 +82,8 @@ internal class MutableEntitiesBarrel(
     else {
       return when (entityFamily) {
         is MutableEntityFamily<T> -> entityFamily
-        is EntityFamily<T> -> {
-          val newMutable = entityFamily.copyToMutable()
+        is ImmutableEntityFamily<T> -> {
+          val newMutable = entityFamily.toMutable()
           entities[unmodifiableEntityClass] = newMutable
           newMutable
         }
@@ -96,18 +92,19 @@ internal class MutableEntitiesBarrel(
   }
 
   companion object {
-    fun from(original: EntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(HashMap(original.all()))
+    fun from(original: ImmutableEntitiesBarrel): MutableEntitiesBarrel = MutableEntitiesBarrel(HashMap(original.all()))
   }
 }
 
-internal sealed class AbstractEntitiesBarrel : Iterable<Map.Entry<Class<out TypedEntity>, AbstractEntityFamily<out TypedEntity>>> {
+internal sealed class EntitiesBarrel : Iterable<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> {
 
-  protected abstract val entities: Map<Class<out TypedEntity>, AbstractEntityFamily<out TypedEntity>>
+  protected abstract val entities: Map<Class<out TypedEntity>, EntityFamily<out TypedEntity>>
 
   @Suppress("UNCHECKED_CAST")
-  open operator fun <T : TypedEntity> get(clazz: Class<T>): AbstractEntityFamily<T>? = entities[clazz] as AbstractEntityFamily<T>?
+  open operator fun <T : TypedEntity> get(clazz: Class<T>): EntityFamily<T>? = entities[clazz] as EntityFamily<T>?
 
-  fun all() = entities
+  @Deprecated("This class is iterable")
+  internal fun all() = entities
 
-  override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, AbstractEntityFamily<out TypedEntity>>> = entities.iterator()
+  override fun iterator(): Iterator<Map.Entry<Class<out TypedEntity>, EntityFamily<out TypedEntity>>> = entities.iterator()
 }

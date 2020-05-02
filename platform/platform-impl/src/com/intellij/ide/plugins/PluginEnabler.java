@@ -10,12 +10,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
  * @author yole
  */
-public class PluginEnabler {
+public final class PluginEnabler {
   private static final Logger LOG = Logger.getInstance(PluginEnabler.class);
 
   public static boolean enablePlugins(Collection<IdeaPluginDescriptor> plugins, boolean enable) {
@@ -50,8 +52,8 @@ public class PluginEnabler {
       LOG.error(e);
     }
 
-    if (ContainerUtil.all(pluginDescriptorsToDisable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) &&
-        ContainerUtil.all(pluginDescriptorsToEnable, (plugin) -> DynamicPlugins.allowLoadUnloadWithoutRestart(plugin))) {
+    if (ContainerUtil.all(pluginDescriptorsToDisable, DynamicPlugins::allowLoadUnloadWithoutRestart) &&
+        ContainerUtil.all(pluginDescriptorsToEnable, DynamicPlugins::allowLoadUnloadWithoutRestart)) {
       boolean needRestart = false;
       for (IdeaPluginDescriptorImpl descriptor : pluginDescriptorsToDisable) {
         if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, descriptor, true)) {
@@ -62,7 +64,7 @@ public class PluginEnabler {
 
       if (!needRestart) {
         for (IdeaPluginDescriptor descriptor : pluginDescriptorsToEnable) {
-          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor, true);
+          DynamicPlugins.loadPlugin((IdeaPluginDescriptorImpl)descriptor);
         }
         return true;
       }
@@ -81,17 +83,33 @@ public class PluginEnabler {
     return result;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
-    return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled());
+  public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
+    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
+    return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
   }
 
-  @NotNull
-  public static IdeaPluginDescriptorImpl loadFullDescriptor(IdeaPluginDescriptorImpl descriptor) {
+  static @NotNull PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                                     @Nullable DescriptorLoadingContext context) {
+    if (PluginManagerCore.isRunningFromSources() &&
+        descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
+        descriptor.getPluginPath().toString().contains("out/classes")) {
+      return new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
+    }
+
+    if (context != null) {
+      PathBasedJdomXIncluder.PathResolver<Path> resolver = PluginManagerCore.createPluginJarsPathResolver(descriptor.getPluginPath(), context);
+      if (resolver != null) {
+        return resolver;
+      }
+    }
+    return PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
+  }
+
+  public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
     if (fullDescriptor == null) {
-      LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
+      LOG.error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
       fullDescriptor = descriptor;
     }
     return fullDescriptor;

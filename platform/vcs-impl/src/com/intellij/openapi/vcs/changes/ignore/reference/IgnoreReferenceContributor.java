@@ -50,6 +50,12 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
   }
 
   private static class IgnoreReferenceProvider extends PsiReferenceProvider {
+
+    @Override
+    public boolean acceptsTarget(@NotNull PsiElement target) {
+      return target instanceof PsiFileSystemItem;
+    }
+
     /**
      * Returns references for given @{link PsiElement}.
      *

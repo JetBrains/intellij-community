@@ -72,15 +72,19 @@ public class MavenImportingSettings implements Cloneable {
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public enum GeneratedSourcesFolder {
-    IGNORE("Don't detect"),
-    AUTODETECT("Detect automatically"),
-    GENERATED_SOURCE_FOLDER("target/generated-sources"),
-    SUBFOLDER("subdirectories of \"target/generated-sources\"");
+    IGNORE("maven.settings.generated.folder.ignore"),
+    AUTODETECT("maven.settings.generated.folder.autodetect"),
+    GENERATED_SOURCE_FOLDER("maven.settings.generated.folder.targerdir"),
+    SUBFOLDER("maven.settings.generated.folder.targersubdir");
 
-    public final String title;
+    public final String myMessageKey;
 
-    GeneratedSourcesFolder(String title) {
-      this.title = title;
+    GeneratedSourcesFolder(String messageKey) {
+      myMessageKey = messageKey;
+    }
+
+    public String getTitle() {
+      return MavenConfigurableBundle.message(myMessageKey);
     }
   }
 
@@ -270,7 +274,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (autoDetectCompiler != that.autoDetectCompiler) return false;
-    if (lookForNested != that.lookForNested) return false;
+    //if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
@@ -291,8 +295,8 @@ public class MavenImportingSettings implements Cloneable {
   public int hashCode() {
     int result = 0;
 
-    if (lookForNested) result++;
-    result <<= 1;
+    //if (lookForNested) result++;
+    //result <<= 1;
     if (createModulesForAggregators) result++;
     result <<= 1;
     if (createModuleGroups) result++;

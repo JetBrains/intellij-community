@@ -41,7 +41,7 @@ public class PythonConsoleToolWindow {
   }
 
   public static PythonConsoleToolWindow getInstance(@NotNull Project project) {
-    return project.getComponent(PythonConsoleToolWindow.class);
+    return project.getService(PythonConsoleToolWindow.class);
   }
 
   public List<RunContentDescriptor> getConsoleContentDescriptors() {

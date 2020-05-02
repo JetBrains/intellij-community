@@ -107,11 +107,14 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     final PsiFile containingFile = aClass.getContainingFile();
     final boolean defaultPackage = StringUtil.isEmptyOrSpaces(containingFile instanceof PsiClassOwner ? ((PsiClassOwner)containingFile).getPackageName() : "");
     if (aClass.isEnum() || aClass.hasModifierProperty(PsiModifier.FINAL) || defaultPackage) {
-      if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("push.down.delete.warning.text",
-                                                                aClass.isEnum() ? JavaRefactoringBundle.message("push.down.enum.no.constants.warning.text")
-                                                                                : JavaRefactoringBundle.message(defaultPackage ? "push.down.no.inheritors.class.warning.text"
-                                                                                                                           : "push.down.no.inheritors.final.class.warning.text", aClass.getQualifiedName())),
-                                      conflictDialogTitle, Messages.getWarningIcon()) != Messages.OK) {
+      String message = JavaRefactoringBundle.message(defaultPackage
+                                                     ? "push.down.no.inheritors.class.warning.text"
+                                                     : "push.down.no.inheritors.final.class.warning.text",
+                                                     aClass.getQualifiedName());
+      String text =
+        aClass.isEnum() ? JavaRefactoringBundle.message("push.down.enum.no.constants.warning.text", aClass.getQualifiedName()) : message;
+      if (Messages.showOkCancelDialog(JavaRefactoringBundle.message("push.down.delete.warning.text", text), conflictDialogTitle,
+                                      Messages.getWarningIcon()) != Messages.OK) {
         return NewSubClassData.ABORT_REFACTORING;
       }
     } else {

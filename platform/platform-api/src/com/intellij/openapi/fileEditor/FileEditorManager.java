@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +77,17 @@ public abstract class FileEditorManager {
   public abstract Editor getSelectedTextEditor();
 
   /**
+   * @return currently selected TEXT editors including ones which were opened by guests during a collaborative development session
+   * The method returns an empty array in case there are no selected editors or none of them is a text one.
+   * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   */
+  @ApiStatus.Experimental
+  public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
+    Editor editor = getSelectedTextEditor();
+    return editor != null ? new Editor[]{editor} : Editor.EMPTY_ARRAY;
+  }
+
+  /**
    * @return {@code true} if {@code file} is opened, {@code false} otherwise
    */
   public abstract boolean isFileOpen(@NotNull VirtualFile file);
@@ -99,6 +111,15 @@ public abstract class FileEditorManager {
    * @return editors currently selected. The method returns empty array if no editors are open.
    */
   public abstract FileEditor @NotNull [] getSelectedEditors();
+
+  /**
+   * @return editors currently selected including ones which were opened by guests during a collaborative development session
+   * The method returns an empty array if no editors are open.
+   */
+  @ApiStatus.Experimental
+  public FileEditor @NotNull [] getSelectedEditorWithRemotes() {
+    return getSelectedEditors();
+  }
 
   /**
    * @return currently selected file editor or {@code null} if there is no selected editor at all.

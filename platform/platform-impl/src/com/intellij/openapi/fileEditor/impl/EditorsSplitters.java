@@ -253,6 +253,28 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     return new Ref<>(component);
   }
 
+  void addSelectedEditorsTo(@NotNull Collection<? super FileEditor> result) {
+    for (EditorWindow window : myWindows) {
+      EditorWithProviderComposite composite = window.getSelectedEditor();
+      if (composite != null) {
+        FileEditor editor = composite.getSelectedEditor();
+        if (!result.contains(editor)) {
+          result.add(editor);
+        }
+      }
+    }
+    EditorWindow currentWindow = getCurrentWindow();
+    if (currentWindow != null && !myWindows.contains(currentWindow)) {
+      EditorWithProviderComposite composite = currentWindow.getSelectedEditor();
+      if (composite != null) {
+        FileEditor editor = composite.getSelectedEditor();
+        if (!result.contains(editor)) {
+          result.add(editor);
+        }
+      }
+    }
+  }
+
   public static void stopOpenFilesActivity(@NotNull Project project) {
     Activity activity = project.getUserData(OPEN_FILES_ACTIVITY);
     if (activity != null) {
@@ -345,7 +367,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         editors.add(composite.getSelectedEditor());
       }
     }
-    return editors.toArray(new FileEditor[0]);
+    return editors.toArray(FileEditor.EMPTY_ARRAY);
   }
 
   public void updateFileIcon(@NotNull VirtualFile file) {
@@ -580,7 +602,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       if (myCurrentWindow != null) {
         EditorWithProviderComposite selectedEditor = myCurrentWindow.getSelectedEditor();
         if (selectedEditor != null) {
-          return IdeFocusTraversalPolicy.getPreferredFocusedComponent(selectedEditor.getComponent(), this);
+          return IdeFocusTraversalPolicy.getPreferredFocusedComponent(selectedEditor.getFocusComponent(), this);
         }
       }
       return IdeFocusTraversalPolicy.getPreferredFocusedComponent(EditorsSplitters.this, this);

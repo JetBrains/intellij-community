@@ -23,7 +23,7 @@ internal class CvsOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
   }
 
   override fun getOptions(project: Project): Collection<OptionDescription> {
-    if (isEnabled(project, CvsVcs2.getInstance(project))) {
+    if (isEnabled(project, CvsVcs2.getKey())) {
       return listOf(
         cdUseReadOnlyFlag(project),
         cdShowServerOutput(project)

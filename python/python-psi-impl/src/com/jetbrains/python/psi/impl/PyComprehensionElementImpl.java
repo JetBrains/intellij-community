@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.tree.IElementType;
@@ -31,7 +30,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
   @Override
   @Nullable
   public PyExpression getResultExpression() {
-    ASTNode[] exprs = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    ASTNode[] exprs = getNode().getChildren(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens());
     return exprs.length == 0 ? null : (PyExpression)exprs[0].getPsi();
   }
 
@@ -133,7 +132,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
     do {
       node = node.getTreeNext();
     }
-    while (node != null && !PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(node.getElementType()));
+    while (node != null && !PythonDialectsTokenSetProvider.getInstance().getExpressionTokens().contains(node.getElementType()));
     return node;
   }
 
@@ -149,7 +148,7 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
       i += 1;
     }
     final List<PyExpression> expressions = PyUtil.flattenedParensAndLists(for_targets);
-    final List<PsiNamedElement> results = Lists.newArrayList();
+    final List<PsiNamedElement> results = new ArrayList<>();
     for (PyExpression expression : expressions) {
       if (expression instanceof PsiNamedElement) {
         results.add((PsiNamedElement)expression);

@@ -15,6 +15,7 @@
  */
 package com.intellij.indentation;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
@@ -117,7 +118,7 @@ public abstract class AbstractIndentParser implements PsiParser {
   }
 
   protected boolean expect(@NotNull final IElementType elementType) {
-    return expect(elementType, "Expected: " + elementType);
+    return expect(elementType, CoreBundle.message("parsing.error.expected.element", elementType));
   }
 
   protected boolean expect(@NotNull final IElementType elementType, @NotNull @NlsContexts.ParsingError String expectedMessage) {
@@ -178,12 +179,12 @@ public abstract class AbstractIndentParser implements PsiParser {
     while (!eof()) {
       advance();
     }
-    errorMarker.error("Unexpected token");
+    errorMarker.error(CoreBundle.message("parsing.error.unexpected.token"));
   }
 
   protected void expectEolOrEof() {
     if (!isNewLine() && !eof()) {
-      errorUntilEol("End of line expected");
+      errorUntilEol(CoreBundle.message("parsing.error.end.of.line.expected"));
     }
   }
 

@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /**
@@ -64,7 +63,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
     this(extension,
          storage,
-         hasSnapshotMapping(extension) ? new SnapshotInputMappings<>(extension) : null);
+         hasSnapshotMapping(extension) ? new SnapshotInputMappings<>(extension, getForwardIndexAccessor(extension)) : null);
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
@@ -75,7 +74,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
                                 @Nullable SnapshotInputMappings<Key, Value> snapshotInputMappings) throws IOException {
     this(extension,
          storage,
-         snapshotInputMappings != null ? new IntMapForwardIndex(extension, snapshotInputMappings.getInputIndexStorageFile(), true)
+         snapshotInputMappings != null ? new IntMapForwardIndex(snapshotInputMappings.getInputIndexStorageFile(), true)
                                        : getForwardIndexMap(extension),
          snapshotInputMappings != null ? snapshotInputMappings.getForwardIndexAccessor() : getForwardIndexAccessor(extension),
          snapshotInputMappings, null);
@@ -121,7 +120,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     return indexer instanceof CompositeDataIndexer && !FileBasedIndex.USE_IN_MEMORY_INDEX;
   }
 
-  static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
+  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
     return indexExtension instanceof FileBasedIndexExtension &&
            ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
            FileBasedIndex.ourSnapshotMappingsEnabled &&
@@ -133,7 +132,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   protected InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
-    if (mySnapshotInputMappings != null && content != null) {
+    boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();
+    if (mySnapshotInputMappings != null && isPhysical) {
       try {
         data = mySnapshotInputMappings.readData(content);
         if (data != null) {
@@ -147,7 +147,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       }
     }
     data = super.mapInput(inputId, content);
-    if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
+    if (!containsSnapshotData) {
       try {
         return ((UpdatableSnapshotInputMappingIndex<Key, Value, FileContent>)mySnapshotInputMappings).putData(content, data);
       }
@@ -168,7 +168,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       synchronized (myInMemoryKeysAndValues) {
         Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
         if (keysAndValues != null) {
-          return getKeysDiffBuilderInMemoryMode(inputId, keysAndValues);
+          return getKeysDiffBuilder(inputId, keysAndValues);
         }
       }
     }
@@ -176,9 +176,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   }
 
   @NotNull
-  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilderInMemoryMode(int inputId, @NotNull Map<Key, Value> keysAndValues) {
-    return mySingleEntryIndex ? new SingleEntryIndexForwardIndexAccessor.SingleValueDiffBuilder(inputId, keysAndValues)
-                              : new MapInputDataDiffBuilder<>(inputId, keysAndValues);
+  public InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId, @NotNull Map<Key, Value> keysAndValues) throws IOException {
+    return ((AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor()).createDiffBuilderByMap(inputId, keysAndValues);
   }
 
   @Override
@@ -237,8 +236,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @Override
   public void removeTransientDataForFile(int inputId) {
-    Lock lock = getWriteLock();
-    lock.lock();
+    getLock().writeLock().lock();
     try {
       Map<Key, Value> keyValueMap;
       synchronized (myInMemoryKeysAndValues) {
@@ -255,7 +253,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
         throw new RuntimeException(throwable);
       }
     } finally {
-      lock.unlock();
+      getLock().writeLock().unlock();
     }
   }
 
@@ -286,7 +284,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @Override
   public void cleanupMemoryStorage() {
     TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
-    ConcurrencyUtil.withLock(getWriteLock(), () -> {
+    ConcurrencyUtil.withLock(getLock().writeLock(), () -> {
       if (memStorage.clearMemoryMap()) {
         myModificationStamp.incrementAndGet();
       }
@@ -298,25 +296,20 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @Override
   public void cleanupForNextTest() {
     TransientChangesIndexStorage<Key, Value> memStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
-    ConcurrencyUtil.withLock(getReadLock(), () -> memStorage.clearCaches());
+    ConcurrencyUtil.withLock(getLock().readLock(), () -> memStorage.clearCaches());
   }
 
   @Override
   public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
-    final Lock lock = getReadLock();
-    lock.lock();
-    try {
-      return ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter);
-    }
-    finally {
-      lock.unlock();
-    }
+    return ConcurrencyUtil.withLock(getLock().readLock(), () ->
+      ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter)
+    );
   }
 
   @NotNull
   @Override
   public Map<Key, Value> getIndexedFileData(int fileId) throws StorageException {
-    return ConcurrencyUtil.withLock(getReadLock(), () -> {
+    return ConcurrencyUtil.withLock(getLock().readLock(), () -> {
       try {
         return Collections.unmodifiableMap(ContainerUtil.notNullize(getNullableIndexedData(fileId)));
       }
@@ -332,21 +325,24 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       Map<Key, Value> map = myInMemoryKeysAndValues.get(fileId);
       if (map != null) return map;
     }
-    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
-      ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
-      AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
-      return forwardIndexAccessor.convertToInputDataMap(serializedInputData);
-    }
     // in future we will get rid of forward index for SingleEntryFileBasedIndexExtension
     if (mySingleEntryIndex) {
       Key key = (Key)(Object)fileId;
       final Map<Key, Value>[] result = new Map[]{Collections.emptyMap()};
       ValueContainer<Value> container = getData(key);
       container.forEach((id, value) -> {
-        result[0] = Collections.singletonMap(key, value);
+        boolean acceptNullValues = ((SingleEntryIndexer<?>)myIndexer).isAcceptNullValues();
+        if (value != null || acceptNullValues) {
+          result[0] = Collections.singletonMap(key, value);
+        }
         return false;
       });
       return result[0];
+    }
+    if (getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor) {
+      ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
+      AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor = (AbstractMapForwardIndexAccessor<Key, Value, ?>)getForwardIndexAccessor();
+      return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
     LOG.error("Can't fetch indexed data for index " + myIndexId.getName());
     return null;
@@ -410,9 +406,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     }
   }
 
-  @Nullable
-  private static <Key, Value> ForwardIndexAccessor<Key, Value> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
-    if (!shouldCreateForwardIndex(indexExtension)) return null;
+  @ApiStatus.Internal
+  @NotNull
+  public static <Key, Value> AbstractMapForwardIndexAccessor<Key, Value, ?> getForwardIndexAccessor(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
     if (!(indexExtension instanceof SingleEntryFileBasedIndexExtension) || FileBasedIndex.USE_IN_MEMORY_INDEX) {
       return new MapForwardIndexAccessor<>(new InputMapExternalizer<>(indexExtension));
     }

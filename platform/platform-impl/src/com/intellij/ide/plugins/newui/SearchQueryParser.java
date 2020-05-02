@@ -156,6 +156,13 @@ public abstract class SearchQueryParser {
         url.append("tags=").append(URLUtil.encodeURIComponent(tag));
       }
 
+      for (String vendor : vendors) {
+        if (url.length() > 0) {
+          url.append("&");
+        }
+        url.append("organization=").append(URLUtil.encodeURIComponent(vendor));
+      }
+
       if (searchQuery != null) {
         if (url.length() > 0) {
           url.append("&");

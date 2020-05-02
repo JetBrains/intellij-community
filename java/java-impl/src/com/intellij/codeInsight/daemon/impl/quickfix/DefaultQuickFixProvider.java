@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
@@ -50,11 +50,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
 
       registrar.register(fixRange, new RenameWrongRefFix(refExpr), null);
       PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
-      if (qualifier == null) {
-        registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);
-      }
-      else {
+      if (qualifier != null) {
         AddTypeCastFix.registerFix(registrar, qualifier, ref, fixRange);
+      }
+      BringVariableIntoScopeFix bringToScope = BringVariableIntoScopeFix.fromReference(refExpr);
+      if (bringToScope != null) {
+        registrar.register(fixRange, bringToScope, null);
       }
 
       for (IntentionAction action : createVariableActions(refExpr)) {

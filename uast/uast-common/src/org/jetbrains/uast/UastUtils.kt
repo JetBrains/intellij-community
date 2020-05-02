@@ -29,7 +29,7 @@ import java.io.File
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
 
 @JvmOverloads
-fun <T : UElement> UElement.getParentOfType(parentClass: Class<out UElement>, strict: Boolean = true): T? {
+fun <T : UElement> UElement.getParentOfType(parentClass: Class<out T>, strict: Boolean = true): T? {
   var element = (if (strict) uastParent else this) ?: return null
   while (true) {
     if (parentClass.isInstance(element)) {
@@ -52,7 +52,7 @@ fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out U
 
 @SafeVarargs
 fun <T : UElement> UElement.getParentOfType(
-  parentClass: Class<out UElement>,
+  parentClass: Class<out T>,
   strict: Boolean = true,
   vararg terminators: Class<out UElement>
 ): T? {

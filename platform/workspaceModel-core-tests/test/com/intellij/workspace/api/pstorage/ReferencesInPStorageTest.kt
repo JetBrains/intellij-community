@@ -7,83 +7,100 @@ import com.intellij.workspace.api.pstorage.references.MutableManyToOne
 import com.intellij.workspace.api.pstorage.references.OneToMany
 import org.junit.Assert
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 
 internal class PChildEntityData : PEntityData<PChildEntity>() {
   lateinit var childProperty: String
   var dataClass: PDataClass? = null
+  override fun createEntity(snapshot: TypedEntityStorage): PChildEntity {
+    return PChildEntity(childProperty, dataClass).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PChildEntity(
   val childProperty: String,
   val dataClass: PDataClass?
 ) : PTypedEntity() {
-  val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
+  val parent: PParentEntity by ManyToOne.NotNull(PParentEntity::class)
 }
 
 internal class PNoDataChildEntityData : PEntityData<PNoDataChildEntity>() {
   lateinit var childProperty: String
+  override fun createEntity(snapshot: TypedEntityStorage): PNoDataChildEntity {
+    return PNoDataChildEntity(childProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PNoDataChildEntity(
   val childProperty: String
 ) : PTypedEntity() {
-  val parent: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
+  val parent: PParentEntity by ManyToOne.NotNull(PParentEntity::class)
 }
 
-internal class PChildChildEntityData : PEntityData<PChildChildEntity>()
+internal class PChildChildEntityData : PEntityData<PChildChildEntity>() {
+  override fun createEntity(snapshot: TypedEntityStorage): PChildChildEntity {
+    return PChildChildEntity().also { addMetaData(it, snapshot) }
+  }
+}
 
 internal class PChildChildEntity : PTypedEntity() {
-  val parent1: PParentEntity by ManyToOne.HardRef.NotNull(PParentEntity::class)
-  val parent2: PChildEntity by ManyToOne.HardRef.NotNull(PChildEntity::class)
+  val parent1: PParentEntity by ManyToOne.NotNull(PParentEntity::class)
+  val parent2: PChildEntity by ManyToOne.NotNull(PChildEntity::class)
 }
 
 internal class PParentEntityData : PEntityData<PParentEntity>() {
   lateinit var parentProperty: String
+  override fun createEntity(snapshot: TypedEntityStorage): PParentEntity {
+    return PParentEntity(parentProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PParentEntity(
   val parentProperty: String
 ) : PTypedEntity() {
 
-  val children: Sequence<PChildEntity> by OneToMany.HardRef(PChildEntity::class)
+  val children: Sequence<PChildEntity> by OneToMany(PChildEntity::class, false)
 
-  val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany.HardRef(PNoDataChildEntity::class)
+  val noDataChildren: Sequence<PNoDataChildEntity> by OneToMany(PNoDataChildEntity::class, false)
 
-  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany.HardRef(PChildWithOptionalParentEntity::class)
+  val optionalChildren: Sequence<PChildWithOptionalParentEntity> by OneToMany(PChildWithOptionalParentEntity::class, true)
 }
 
 internal data class PDataClass(val stringProperty: String, val parent: EntityReference<PParentEntity>)
 
 internal class PChildWithOptionalParentEntityData : PEntityData<PChildWithOptionalParentEntity>() {
   lateinit var childProperty: String
+  override fun createEntity(snapshot: TypedEntityStorage): PChildWithOptionalParentEntity {
+    return PChildWithOptionalParentEntity(childProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class PChildWithOptionalParentEntity(
   val childProperty: String
 ) : PTypedEntity() {
-  val optionalParent: PParentEntity? by ManyToOne.HardRef.Nullable(PParentEntity::class)
+  val optionalParent: PParentEntity? by ManyToOne.Nullable(PParentEntity::class)
 }
 
 private class ModifiablePChildWithOptionalParentEntity : PModifiableTypedEntity<PChildWithOptionalParentEntity>() {
-  var optionalParent: PParentEntity? by MutableManyToOne.HardRef.Nullable(PChildWithOptionalParentEntity::class, PParentEntity::class)
+  var optionalParent: PParentEntity? by MutableManyToOne.Nullable(PChildWithOptionalParentEntity::class, PParentEntity::class)
   var childProperty: String by EntityDataDelegation()
 }
 
 private class ModifiablePChildEntity : PModifiableTypedEntity<PChildEntity>() {
   var childProperty: String by EntityDataDelegation()
   var dataClass: PDataClass? by EntityDataDelegation()
-  var parent: PParentEntity by MutableManyToOne.HardRef.NotNull(PChildEntity::class, PParentEntity::class)
+  var parent: PParentEntity by MutableManyToOne.NotNull(PChildEntity::class, PParentEntity::class)
 }
 
 private class ModifiablePNoDataChildEntity : PModifiableTypedEntity<PNoDataChildEntity>() {
   var childProperty: String by EntityDataDelegation()
-  var parent: PParentEntity by MutableManyToOne.HardRef.NotNull(PNoDataChildEntity::class, PParentEntity::class)
+  var parent: PParentEntity by MutableManyToOne.NotNull(PNoDataChildEntity::class, PParentEntity::class)
 }
 
 private class ModifiablePChildChildEntity : PModifiableTypedEntity<PChildChildEntity>() {
-  var parent1: PParentEntity by MutableManyToOne.HardRef.NotNull(PChildChildEntity::class, PParentEntity::class)
-  var parent2: PChildEntity by MutableManyToOne.HardRef.NotNull(PChildChildEntity::class, PChildEntity::class)
+  var parent1: PParentEntity by MutableManyToOne.NotNull(PChildChildEntity::class, PParentEntity::class)
+  var parent2: PChildEntity by MutableManyToOne.NotNull(PChildChildEntity::class, PChildEntity::class)
 }
 
 private class ModifiablePParentEntity : PModifiableTypedEntity<PParentEntity>() {
@@ -133,6 +150,12 @@ private fun TypedEntityStorage.singlePParent() = entities(PParentEntity::class.j
 private fun TypedEntityStorage.singlePChild() = entities(PChildEntity::class.java).single()
 
 class ReferencesInPStorageTest {
+  private lateinit var virtualFileManager: VirtualFileUrlManager
+  @Before
+  fun setUp() {
+    virtualFileManager = VirtualFileUrlManager()
+  }
+
   @Test
   fun `add entity`() {
     val builder = PEntityStorageBuilder.create()
@@ -229,6 +252,8 @@ class ReferencesInPStorageTest {
     assertEquals(emptyList<PParentEntity>(), builder.entities(PParentEntity::class.java).toList())
   }
 
+  // UNSUPPORTED
+/*
   @Test
   fun `remove parent entity referenced via data class`() {
     val builder = PEntityStorageBuilder.create()
@@ -241,6 +266,7 @@ class ReferencesInPStorageTest {
     assertEquals(listOf(parent1), builder.entities(PParentEntity::class.java).toList())
     assertEquals(emptyList<PChildEntity>(), parent1.children.toList())
   }
+*/
 
   @Test
   fun `remove parent entity referenced via two paths`() {

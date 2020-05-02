@@ -11,10 +11,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
-import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
@@ -82,7 +82,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected String getEmptySelectionString() {
     final String typeNames = StringUtil.join(getDisplayedServerTypes(),
-                                             type -> type.getPresentableName(), ", ");
+                                             ServerType::getPresentableName, ", ");
 
     if (typeNames.length() > 0) {
       return CloudBundle.message("clouds.configure.empty.selection.string", typeNames);

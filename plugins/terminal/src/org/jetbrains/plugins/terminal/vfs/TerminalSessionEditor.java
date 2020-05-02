@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.vfs;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -22,10 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collections;
 import java.util.List;
 
-public class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
-
+public final class TerminalSessionEditor extends UserDataHolderBase implements FileEditor {
   private final Project myProject;
   private final TerminalSessionVirtualFileImpl myFile;
   private final TtyConnectorWaitFor myWaitFor;
@@ -39,7 +38,7 @@ public class TerminalSessionEditor extends UserDataHolderBase implements FileEdi
     myFile.getTerminalWidget().setNextProvider(new TerminalActionProviderBase() {
       @Override
       public List<TerminalAction> getActions() {
-        return Lists.newArrayList(
+        return Collections.singletonList(
           new TerminalAction(settings.getCloseSessionActionPresentation(), input -> {
             handleCloseSession();
             return true;

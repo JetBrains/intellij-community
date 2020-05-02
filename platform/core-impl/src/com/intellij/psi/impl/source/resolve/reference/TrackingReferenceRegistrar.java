@@ -2,13 +2,11 @@
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.PsiReferenceRegistrar;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 class TrackingReferenceRegistrar extends PsiReferenceRegistrar {
   private final PsiReferenceRegistrarImpl myDelegate;
@@ -17,16 +15,6 @@ class TrackingReferenceRegistrar extends PsiReferenceRegistrar {
   TrackingReferenceRegistrar(@NotNull PsiReferenceRegistrarImpl delegate, @NotNull Disposable disposable) {
     myDelegate = delegate;
     myDisposable = disposable;
-  }
-
-  @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
-    return myDelegate.getUserData(key);
-  }
-
-  @Override
-  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    myDelegate.putUserData(key, value);
   }
 
   @Override

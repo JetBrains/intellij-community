@@ -98,6 +98,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
   public void testResolveTypeParamConflict() { doTest(false); }
   public void testRawInheritance() { doTest(false); }
   public void testRawInheritanceWithMethodTypeParameters() { doTest(false); }
+  public void testVoidNameSuggestion() { doTest(false); }
 
   public void testLongFinalParameterList() {
     CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject());

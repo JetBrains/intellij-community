@@ -152,13 +152,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
                                                             new DefaultHighlightInfoProcessor(), true);
         return new HighlightingPass[]{ghp, lip};
       }
-
-      @Override
-      public HighlightingPass @NotNull [] createPassesForVisibleArea() {
-        return createPassesForEditor();
-      }
     };
-
   }
 
   @Override

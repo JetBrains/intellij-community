@@ -43,7 +43,8 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
     String failReason = Pair.getSecond(check);
     Charset charset = ObjectUtils.notNull(Pair.getFirst(check), file.getCharset());
     String charsetName = ObjectUtils.notNull(charset.displayName(), "n/a");
-    String toolTipText = failReason == null ? "File Encoding: " + charsetName : StringUtil.capitalize(failReason) + ".";
+    String toolTipText = failReason == null ? IdeBundle.message("status.bar.text.file.encoding", charsetName)
+                                            : StringUtil.capitalize(failReason) + ".";
     return new WidgetState(toolTipText, charsetName, failReason == null);
   }
 

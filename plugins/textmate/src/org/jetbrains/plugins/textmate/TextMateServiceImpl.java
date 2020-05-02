@@ -4,13 +4,14 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -31,15 +32,12 @@ import org.jetbrains.plugins.textmate.bundles.BundleFactory;
 import org.jetbrains.plugins.textmate.configuration.BundleConfigBean;
 import org.jetbrains.plugins.textmate.configuration.TextMateSettings;
 import org.jetbrains.plugins.textmate.editor.TextMateEditorUtils;
-import org.jetbrains.plugins.textmate.editor.TextMateSnippet;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
-import org.jetbrains.plugins.textmate.language.SnippetsRegistry;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
-import org.jetbrains.plugins.textmate.language.preferences.PreferencesRegistry;
-import org.jetbrains.plugins.textmate.language.preferences.ShellVariablesRegistry;
-import org.jetbrains.plugins.textmate.language.preferences.TextMateShellVariable;
+import org.jetbrains.plugins.textmate.language.preferences.*;
 import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
-import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateCustomTextAttributes;
+import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils;
 import org.jetbrains.plugins.textmate.plist.CompositePlistReader;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
@@ -53,11 +51,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TextMateServiceImpl extends TextMateService {
-  private static boolean ourBuiltinBundlesDisabled;
+  private boolean ourBuiltinBundlesDisabled;
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false); 
   
-  private final THashMap<CharSequence, TextMateCustomTextAttributes> myCustomHighlightingColors = new THashMap<>();
+  private final THashMap<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
   private final THashMap<String, CharSequence> myExtensionsMapping = new THashMap<>();
 
   private final PlistReader myPlistReader = new CompositePlistReader();
@@ -71,6 +69,12 @@ public class TextMateServiceImpl extends TextMateService {
   @NonNls public static final String INSTALLED_BUNDLES_PATH =
     FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
   private final Interner<CharSequence> myInterner = new WeakInterner<>();
+
+  public TextMateServiceImpl() {
+    Application application = ApplicationManager.getApplication();
+    Runnable checkCancelled = application != null && !application.isUnitTestMode() ? ProgressManager::checkCanceled : null;
+    SyntaxMatchUtils.setCheckCancelledCallback(checkCancelled);
+  }
 
   @Override
   public void reloadEnabledBundles() {
@@ -164,15 +168,9 @@ public class TextMateServiceImpl extends TextMateService {
     myShellVariablesRegistry.clear();
   }
 
-  @Override
-  @NotNull
-  public PlistReader getPlistReader() {
-    return myPlistReader;
-  }
-
   @NotNull
   @Override
-  public Map<CharSequence, TextMateCustomTextAttributes> getCustomHighlightingColors() {
+  public Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors() {
     ensureInitialized();
     return myCustomHighlightingColors;
   }
@@ -226,7 +224,13 @@ public class TextMateServiceImpl extends TextMateService {
     if (directory != null && directory.isInLocalFileSystem()) {
       final String path = directory.getCanonicalPath();
       if (path != null) {
-        return myBundleFactory.fromDirectory(new File(path));
+        try {
+          return myBundleFactory.fromDirectory(new File(path));
+        }
+        catch (IOException e) {
+          LOG.debug("Couldn't load bundle from " + path, e);
+          return null;
+        }
       }
     }
     return null;
@@ -266,7 +270,7 @@ public class TextMateServiceImpl extends TextMateService {
   private void registerPreferences(@NotNull Bundle bundle) {
     for (File preferenceFile : bundle.getPreferenceFiles()) {
       try {
-        for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile)) {
+        for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(preferenceFile, myPlistReader)) {
           if (settingsPair != null) {
             CharSequence scopeName = myInterner.intern(settingsPair.first);
             myPreferencesRegistry.fillFromPList(scopeName, settingsPair.second);
@@ -282,11 +286,9 @@ public class TextMateServiceImpl extends TextMateService {
   }
 
   private void readCustomHighlightingColors(@NotNull CharSequence scopeName, @NotNull Plist preferencesPList) {
-    final TextAttributes textAttributes = new TextAttributes();
-    final boolean hasHighlightingSettings = PreferencesReadUtil.fillTextAttributes(textAttributes, preferencesPList, null);
-    if (hasHighlightingSettings) {
-      final double backgroundAlpha = PreferencesReadUtil.getBackgroundAlpha(preferencesPList);
-      myCustomHighlightingColors.put(scopeName, new TextMateCustomTextAttributes(textAttributes, backgroundAlpha));
+    TextMateTextAttributes textAttributes = TextMateTextAttributes.fromPlist(preferencesPList);
+    if (textAttributes != null) {
+      myCustomHighlightingColors.put(scopeName, new TextMateTextAttributesAdapter(scopeName, textAttributes));
     }
   }
 
@@ -307,12 +309,14 @@ public class TextMateServiceImpl extends TextMateService {
   }
 
   @TestOnly
-  public static void disableBuiltinBundles(Disposable disposable) {
+  public void disableBuiltinBundles(Disposable disposable) {
     ourBuiltinBundlesDisabled = true;
     TextMateService.getInstance().reloadEnabledBundles();
+    myInitialized.set(true);
     Disposer.register(disposable, () -> {
       ourBuiltinBundlesDisabled = false;
-      TextMateService.getInstance().reloadEnabledBundles();
+      unregisterAllBundles();
+      myInitialized.set(false);
     });
   }
 }

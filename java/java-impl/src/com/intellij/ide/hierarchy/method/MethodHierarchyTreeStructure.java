@@ -36,7 +36,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     setBaseElement(myBaseDescriptor); //to set myRoot
   }
 
-  private HierarchyNodeDescriptor buildHierarchyElement(final Project project, final PsiMethod method) {
+  private @NotNull HierarchyNodeDescriptor buildHierarchyElement(final Project project, final PsiMethod method) {
     List<PsiClass> superClasses = buildSuperChain(method);
     PsiClass containingClass = method.getContainingClass();
     assert containingClass != null;
@@ -56,7 +56,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return newDescriptor;
   }
 
-  private static List<PsiClass> buildSuperChain(PsiMethod method) {
+  private static @NotNull List<PsiClass> buildSuperChain(@NotNull PsiMethod method) {
     List<PsiClass> superClasses = new ArrayList<>();
     while (true) {
       PsiMethod superMethod = Stream.of(method.findSuperMethods()).min(SUPER_METHOD_COMPARATOR).orElse(null);
@@ -149,7 +149,7 @@ public final class MethodHierarchyTreeStructure extends HierarchyTreeStructure {
     return false;
   }
 
-  private static boolean isAbstract(final PsiModifierListOwner owner) {
+  private static boolean isAbstract(final @NotNull PsiModifierListOwner owner) {
     return owner.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 

@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
  */
 public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
-  private Surrounder[] mySurrounders;
 
   private static final Surrounder[] SURROUNDERS = {
     new JavaWithParenthesesSurrounder(),
@@ -45,13 +45,11 @@ public class JavaExpressionSurroundDescriptor implements SurroundDescriptor {
 
   @Override
   public Surrounder @NotNull [] getSurrounders() {
-    if (mySurrounders == null) {
-      final ArrayList<Surrounder> list = new ArrayList<>();
-      Collections.addAll(list, SURROUNDERS);
-      list.addAll(JavaExpressionSurrounder.EP_NAME.getExtensionList());
-      mySurrounders = list.toArray(Surrounder.EMPTY_ARRAY);
-    }
-    return mySurrounders;
+    List<JavaExpressionSurrounder> extensionList = JavaExpressionSurrounder.EP_NAME.getExtensionList();
+    final ArrayList<Surrounder> list = new ArrayList<>(SURROUNDERS.length + extensionList.size());
+    Collections.addAll(list, SURROUNDERS);
+    list.addAll(extensionList);
+    return list.toArray(Surrounder.EMPTY_ARRAY);
   }
 
   @Override

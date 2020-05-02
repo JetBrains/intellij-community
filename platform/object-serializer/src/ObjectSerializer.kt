@@ -6,9 +6,9 @@ import com.amazon.ion.IonWriter
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.ParameterizedTypeImpl
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.TIntObjectHashMap
-import gnu.trove.TObjectHashingStrategy
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Reader
@@ -81,6 +81,10 @@ class ObjectSerializer {
   fun <T> readList(itemClass: Class<T>, input: InputStream, configuration: ReadConfiguration = defaultReadConfiguration): List<T> {
     return serializer.readList(itemClass, readerBuilder.build(input), configuration)
   }
+
+  fun clearBindingCache() {
+    serializer.clearBindingCache()
+  }
 }
 
 interface SerializationFilter {
@@ -110,7 +114,7 @@ object SkipNullAndEmptySerializationFilter : SerializationFilter {
 }
 
 class ObjectIdWriter {
-  private val map: ObjectIntHashMap<Any> = ObjectIntHashMap(TObjectHashingStrategy.IDENTITY)
+  private val map: ObjectIntHashMap<Any> = ObjectIntHashMap(ContainerUtil.identityStrategy())
   private var counter = 0
 
   fun getId(obj: Any) = map.get(obj)

@@ -31,10 +31,6 @@ public class PyRuntimeDocstringFormatter {
   public static String runExternalTool(@NotNull final Module module,
                                 @NotNull final DocStringFormat format,
                                 @NotNull final String docstring) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return "Unittest placeholder";
-    }
-
     final Sdk sdk;
     final String missingInterpreterMessage;
     if (format == DocStringFormat.EPYTEXT) {

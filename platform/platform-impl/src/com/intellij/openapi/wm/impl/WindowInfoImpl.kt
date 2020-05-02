@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.facet.ui.FacetDependentToolWindow
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
@@ -148,7 +150,11 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
 }
 
 private fun canActivateOnStart(id: String): Boolean {
-  for (ep in ToolWindowEP.EP_NAME.extensionList) {
+  for (ep in listOf(
+    ToolWindowEP.EP_NAME.extensionList,
+    FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList,
+    LibraryDependentToolWindow.EXTENSION_POINT_NAME.extensionList).flatten()
+  ) {
     if (id == ep.id) {
       return !ep.isDoNotActivateOnStart
     }

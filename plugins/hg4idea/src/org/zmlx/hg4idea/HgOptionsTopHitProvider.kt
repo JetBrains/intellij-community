@@ -21,7 +21,7 @@ internal class HgOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
   }
 
   override fun getOptions(project: Project): Collection<OptionDescription> {
-    if (isEnabled(project, HgVcs.getInstance(project))) {
+    if (isEnabled(project, HgVcs.getKey())) {
       return listOf(
         cdCheckIncomingOutgoing(project),
         cdIgnoreWhitespacesInAnnotations(project)

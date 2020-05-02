@@ -4,6 +4,9 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons.Ide.Shadow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -98,17 +101,18 @@ public final class NotificationBalloonShadowBorderProvider implements BalloonImp
     }
 
     if (calcLength < length) {
-      ImageIcon imageIcon = (ImageIcon)IconLoader.getIconSnapshot(icon);
+      Icon iconSnapshot = IconLoader.getIconSnapshot(icon);
+      Image image = IconUtil.toImage(iconSnapshot, ScaleContext.create(component));
       if (horizontal) {
-        StartupUiUtil.drawImage(g, imageIcon.getImage(),
-                                new Rectangle(lastValue, start2, length - calcLength, imageIcon.getIconHeight()),
-                                new Rectangle(0, 0, length - calcLength, imageIcon.getIconHeight()),
+        StartupUiUtil.drawImage(g, image,
+                                new Rectangle(lastValue, start2, length - calcLength, iconSnapshot.getIconHeight()),
+                                new Rectangle(0, 0, length - calcLength, iconSnapshot.getIconHeight()),
                                 component);
       }
       else {
-        UIUtil.drawImage(g, imageIcon.getImage(),
-                         new Rectangle(start2, lastValue, imageIcon.getIconWidth(), length - calcLength),
-                         new Rectangle(0, 0, imageIcon.getIconWidth(), length - calcLength),
+        UIUtil.drawImage(g, image,
+                         new Rectangle(start2, lastValue, iconSnapshot.getIconWidth(), length - calcLength),
+                         new Rectangle(0, 0, iconSnapshot.getIconWidth(), length - calcLength),
                          component);
       }
     }

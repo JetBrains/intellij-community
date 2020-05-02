@@ -8,12 +8,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class XDebuggerWatchesManager {
-  private final Map<String, List<XExpression>> watches = ContainerUtil.newConcurrentMap();
+  private final Map<String, List<XExpression>> watches = new ConcurrentHashMap<>();
 
-  @NotNull
-  public List<XExpression> getWatches(String confName) {
+  public @NotNull List<XExpression> getWatches(String confName) {
     return ContainerUtil.notNullize(watches.get(confName));
   }
 
@@ -26,8 +26,7 @@ public final class XDebuggerWatchesManager {
     }
   }
 
-  @NotNull
-  public WatchesManagerState saveState(@NotNull WatchesManagerState state) {
+  public @NotNull WatchesManagerState saveState(@NotNull WatchesManagerState state) {
     List<ConfigurationState> expressions = state.getExpressions();
     expressions.clear();
     watches.forEach((key, value) -> expressions.add(new ConfigurationState(key, value)));

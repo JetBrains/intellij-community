@@ -12,6 +12,6 @@ SHELL_SCRIPT
             PsiElement($)('$')
             SHELL_PARAMETER_EXPANSION
               PsiElement({)('{')
-              PsiElement(parameter_expansion_body)('num')
+              PsiElement(word)('num')
               PsiElement(})('}')
         PsiElement(ARITH_SQUARE_RIGHT)(']')

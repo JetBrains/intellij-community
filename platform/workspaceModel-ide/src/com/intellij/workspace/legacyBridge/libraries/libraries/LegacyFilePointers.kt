@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import kotlin.reflect.KClass
 
@@ -14,12 +15,13 @@ import kotlin.reflect.KClass
  * All legacy file pointers are collected in a single container to perform project model update in a single change
  */
 class LegacyModelRootsFilePointers(val project: Project) {
+  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
   private val pointers = listOf(
     // Library roots
     TypedEntityFileWatcher(
       LibraryEntity::class, ModifiableLibraryEntity::class, containerToUrl = { it.url.url },
       urlToContainer = { oldContainer, newUrl ->
-        LibraryRoot(VirtualFileUrlManager.fromUrl(newUrl), oldContainer.type, oldContainer.inclusionOptions)
+        LibraryRoot(virtualFileManager.fromUrl(newUrl), oldContainer.type, oldContainer.inclusionOptions)
       },
       containerListGetter = { roots }, modificator = { oldRoot, newRoot ->
       roots = roots - oldRoot
@@ -32,12 +34,14 @@ class LegacyModelRootsFilePointers(val project: Project) {
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
         excludedRoots = excludedRoots - oldVirtualFileUrl
         excludedRoots = excludedRoots + newVirtualFileUrl
-      }
+      },
+      virtualFileManager = virtualFileManager
     ),
     // Content root urls
     TypedEntityWithVfuFileWatcher(
       ContentRootEntity::class, ModifiableContentRootEntity::class, containerGetter = { url },
-      modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
+      modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl },
+      virtualFileManager = virtualFileManager
     ),
     // Content root excluded urls
     TypedEntityWithVfuFileWatcher(
@@ -45,26 +49,31 @@ class LegacyModelRootsFilePointers(val project: Project) {
       modificator = { oldVirtualFileUrl, newVirtualFileUrl ->
         excludedUrls = excludedUrls - oldVirtualFileUrl
         excludedUrls = excludedUrls + newVirtualFileUrl
-      }
+      },
+      virtualFileManager = virtualFileManager
     ),
     // Source roots
     TypedEntityWithVfuFileWatcher(
       SourceRootEntity::class, ModifiableSourceRootEntity::class, containerGetter = { url },
-      modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl }
+      modificator = { _, newVirtualFileUrl -> url = newVirtualFileUrl },
+      virtualFileManager = virtualFileManager
     ),
     // Java module settings entity compiler output
     TypedEntityWithVfuFileWatcher(
       JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class, containerGetter = { compilerOutput },
-      modificator = { _, newVirtualFileUrl -> compilerOutput = newVirtualFileUrl }
+      modificator = { _, newVirtualFileUrl -> compilerOutput = newVirtualFileUrl },
+      virtualFileManager = virtualFileManager
     ),
     // Java module settings entity compiler output for tests
     TypedEntityWithVfuFileWatcher(
       JavaModuleSettingsEntity::class, ModifiableJavaModuleSettingsEntity::class, containerGetter = { compilerOutputForTests },
-      modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl }
+      modificator = { _, newVirtualFileUrl -> compilerOutputForTests = newVirtualFileUrl },
+      virtualFileManager = virtualFileManager
     ),
-    EntitySourceFileWatcher(JpsFileEntitySource.ExactFile::class, { it.file.url }, { source, file -> source.copy(file = file) }),
+    EntitySourceFileWatcher(JpsFileEntitySource.ExactFile::class, { it.file.url }, { source, file -> source.copy(file = file) },
+                            virtualFileManager),
     EntitySourceFileWatcher(JpsFileEntitySource.FileInDirectory::class, { it.directory.url },
-                            { source, file -> source.copy(directory = file) })
+                            { source, file -> source.copy(directory = file) }, virtualFileManager)
   )
 
   fun onVfsChange(oldUrl: String, newUrl: String) {
@@ -91,7 +100,8 @@ private interface LegacyFileWatcher<E : TypedEntity> {
 private class EntitySourceFileWatcher<T : EntitySource>(
   val entitySource: KClass<T>,
   val containerToUrl: (T) -> String,
-  val createNewSource: (T, VirtualFileUrl) -> T
+  val createNewSource: (T, VirtualFileUrl) -> T,
+  val virtualFileManager: VirtualFileUrlManager
 ) : LegacyFileWatcher<TypedEntity> {
   override fun onVfsChange(oldUrl: String, newUrl: String, diff: TypedEntityStorageBuilder) {
     val entities = diff.entitiesBySource { it::class == entitySource }
@@ -100,7 +110,7 @@ private class EntitySourceFileWatcher<T : EntitySource>(
       val urlFromContainer = containerToUrl(entitySource as T)
       if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
 
-      val newVfurl = VirtualFileUrlManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
+      val newVfurl = virtualFileManager.fromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
       val newEntitySource = createNewSource(entitySource, newVfurl)
 
       mapOfEntities.values.flatten().forEach { diff.changeSource(it, newEntitySource) }
@@ -120,10 +130,11 @@ private class TypedEntityWithVfuFileWatcher<E : TypedEntity, M : ModifiableTyped
   modifiableEntityClass: KClass<M>,
   containerGetter: E.() -> VirtualFileUrl? = { null },
   containerListGetter: E.() -> List<VirtualFileUrl> = { this.containerGetter()?.let { listOf(it) } ?: listOf() },
-  modificator: M.(VirtualFileUrl, VirtualFileUrl) -> Unit
+  modificator: M.(VirtualFileUrl, VirtualFileUrl) -> Unit,
+  val virtualFileManager: VirtualFileUrlManager
 ) : TypedEntityFileWatcher<VirtualFileUrl, E, M>(
   entityClass, modifiableEntityClass,
-  { it.url }, { _, newUrl -> VirtualFileUrlManager.fromUrl(newUrl) },
+  { it.url }, { _, newUrl -> virtualFileManager.fromUrl(newUrl) },
   containerListGetter, modificator
 )
 

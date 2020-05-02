@@ -84,7 +84,7 @@ class LibraryPropertiesTest {
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       moduleModel.commit()
       module
     }

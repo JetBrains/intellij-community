@@ -8,14 +8,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
+
 public abstract class VcsOptionsTopHitProviderBase implements OptionsSearchTopHitProvider.ProjectLevelProvider {
-  protected boolean isEnabled(@NotNull Project project, @Nullable AbstractVcs vcs) {
+  protected boolean isEnabled(@NotNull Project project, @Nullable VcsKey vcsKey) {
     if (project.isDefault()) return true;
-    return vcs != null && ArrayUtil.contains(vcs, ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
+    if (vcsKey == null) return false;
+    List<AbstractVcs> activeVcses = Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss());
+    return ContainerUtil.exists(activeVcses, it -> vcsKey.equals(it.getKeyInstanceMethod()));
   }
 
   public static class InitMappingsListenerActivity implements ProjectManagerListener {

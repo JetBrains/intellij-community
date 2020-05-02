@@ -138,7 +138,8 @@ public class TriggerAdditionOrDeletion {
               myVcsFileListenerContextHelper.ignoreDeleted(filePath);
             }
           }
-          myPreparedDeletion.put(vcs, toBeDeleted);
+          List<FilePath> paths = myPreparedDeletion.computeIfAbsent(vcs, key -> new ArrayList<>());
+          paths.addAll(toBeDeleted);
         }
       }
     }
@@ -182,7 +183,8 @@ public class TriggerAdditionOrDeletion {
               myVcsFileListenerContextHelper.ignoreAdded(filePath.getVirtualFile());
             }
           }
-          myPreparedAddition.put(vcs, toBeAdded);
+          List<FilePath> paths = myPreparedAddition.computeIfAbsent(vcs, key -> new ArrayList<>());
+          paths.addAll(toBeAdded);
         }
       }
     }

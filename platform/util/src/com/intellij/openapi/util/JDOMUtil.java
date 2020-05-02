@@ -25,6 +25,7 @@ import java.awt.*;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.ClosedFileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -328,7 +329,12 @@ public final class JDOMUtil {
   }
 
   public static @NotNull Element load(@NotNull Path file) throws JDOMException, IOException {
-    return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), null);
+    try {
+      return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), null);
+    }
+    catch (ClosedFileSystemException e) {
+      throw new IOException("Cannot read file from closed file system: " + file, e);
+    }
   }
 
   /**
@@ -341,7 +347,12 @@ public final class JDOMUtil {
 
   @ApiStatus.Internal
   public static @NotNull Element load(@NotNull Path file, @Nullable SafeJdomFactory factory) throws JDOMException, IOException {
-    return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), factory);
+    try {
+      return loadUsingStaX(new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(file))), StandardCharsets.UTF_8), factory);
+    }
+    catch (ClosedFileSystemException e) {
+      throw new IOException("Cannot read file from closed file system: " + file, e);
+    }
   }
 
   /**

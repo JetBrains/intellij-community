@@ -8,8 +8,10 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenCompilerExtension
+import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.compiler.CompilerOptions
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompiler
 import org.jetbrains.plugins.groovy.compiler.GreclipseIdeaCompilerSettings
@@ -32,11 +34,11 @@ class MavenCompilerGrEclipseExtension : MavenCompilerExtension {
     val eclipseBatchId = mavenProject.plugins.filter { it.artifactId == "maven-compiler-plugin" && it.groupId == "org.apache.maven.plugins" }
       .flatMap { it.dependencies }
       .find { it.groupId == "org.codehaus.groovy" && it.artifactId == "groovy-eclipse-batch" }
-    val batchLib = mavenProject.dependencies.find { it.mavenId == eclipseBatchId }
 
-    if (batchLib != null) {
-      GreclipseIdeaCompilerSettings.setGrEclipsePath(module.project, batchLib.file.absolutePath);
-      GreclipseIdeaCompilerSettings.setGrCmdParams(module.project, compilerArgs.joinToString(" "));
+    val pathToBatch = getPathToBatchJar(eclipseBatchId, mavenProject, module.project)
+    if (pathToBatch != null) {
+      GreclipseIdeaCompilerSettings.setGrCmdParams(module.project, compilerArgs.joinToString(" "))
+      GreclipseIdeaCompilerSettings.setGrEclipsePath(module.project, pathToBatch)
     }
     else {
       MavenProjectsManager.getInstance(module.project).syncConsole.addWarning(
@@ -44,6 +46,22 @@ class MavenCompilerGrEclipseExtension : MavenCompilerExtension {
         SyncBundle.message("maven.sync.warnings.eclipse.batch.compiler.no.dependency.desc")
       )
     }
+  }
 
+  private fun getPathToBatchJar(eclipseBatchId: MavenId?,
+                                mavenProject: MavenProject,
+                                project: Project): String? {
+    if (eclipseBatchId == null) return null
+
+    if (eclipseBatchId.version == null) {
+      val batchLib = mavenProject.dependencies.find { it.mavenId == eclipseBatchId }
+      return batchLib?.file?.absolutePath
+    }
+
+    val repositoryFile = MavenUtil.getRepositoryFile(project, eclipseBatchId, "jar", null)
+    if (repositoryFile != null && repositoryFile.exists()) {
+      return repositoryFile.path
+    }
+    return null
   }
 }

@@ -4,10 +4,13 @@ package com.intellij.build
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.NlsContext
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
@@ -33,7 +36,7 @@ fun install(filterable: Filterable<ExecutionNode>) {
 }
 
 @ApiStatus.Experimental
-open class FilterToggleAction constructor(text: String,
+open class FilterToggleAction constructor(text: @NlsContexts.Command String,
                                           private val stateKey: String?,
                                           private val filterable: Filterable<ExecutionNode>,
                                           private val filter: Predicate<ExecutionNode>,
@@ -82,7 +85,7 @@ open class FilterToggleAction constructor(text: String,
 
 @ApiStatus.Experimental
 class SuccessfulStepsToggleAction(filterable: Filterable<ExecutionNode>) :
-  FilterToggleAction("Show Successful Steps", STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, false), DumbAware {
+  FilterToggleAction(LangBundle.message("build.tree.filters.show.succesful"), STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, false), DumbAware {
   companion object {
     private const val STATE_KEY = "build.toolwindow.show.successful.steps.selection.state"
     fun install(filterable: Filterable<ExecutionNode>) {
@@ -93,7 +96,7 @@ class SuccessfulStepsToggleAction(filterable: Filterable<ExecutionNode>) :
 
 @ApiStatus.Experimental
 class WarningsToggleAction(filterable: Filterable<ExecutionNode>) :
-  FilterToggleAction("Show Warnings", STATE_KEY, filterable, WARNINGS_FILTER, true), DumbAware {
+  FilterToggleAction(LangBundle.message("build.tree.filters.show.warnings"), STATE_KEY, filterable, WARNINGS_FILTER, true), DumbAware {
   companion object {
     private const val STATE_KEY = "build.toolwindow.show.warnings.selection.state"
     fun install(filterable: Filterable<ExecutionNode>) {

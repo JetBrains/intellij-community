@@ -69,13 +69,14 @@ class MavenSyncConsole(private val myProject: Project) {
     hasErrors = false
     hasUnresolved = false
     mySyncId = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
-    val descriptor = DefaultBuildDescriptor(mySyncId, "Sync", myProject.basePath!!, System.currentTimeMillis())
+    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
+                                            System.currentTimeMillis())
     mySyncView = syncView
-    val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, "Sync")
+    val runDescr = BuildContentDescriptor(null, null, object : JComponent() {}, SyncBundle.message("maven.sync.title"))
     runDescr.isActivateToolWindowWhenFailed = true
     runDescr.isActivateToolWindowWhenAdded = false
     mySyncView.onEvent(mySyncId,
-                       StartBuildEventImpl(descriptor, "Sync ${myProject.name}")
+                       StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name))
                          .withContentDescriptorSupplier
                          {
                            runDescr
@@ -99,7 +100,9 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String) = doIfImportInProcess {
-    mySyncView.onEvent(mySyncId, MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, "Compiler", text, description))
+    mySyncView.onEvent(mySyncId,
+                       MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
+                                        description))
   }
 
   @Synchronized
@@ -112,10 +115,10 @@ class MavenSyncConsole(private val myProject: Project) {
   fun terminated(exitCode: Int) = doIfImportInProcess {
     val tasks = myStartedSet.toList().asReversed()
     debugLog("Tasks $tasks are not completed! Force complete")
-    tasks.forEach { completeTask(it.first, it.second, FailureResultImpl("Terminated with exit code = $exitCode")) }
+    tasks.forEach { completeTask(it.first, it.second, FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))) }
 
     mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
-                                                      FailureResultImpl("Terminated with exit code = $exitCode")))
+                                                      FailureResultImpl(SyncBundle.message("maven.sync.failure.terminated", exitCode))))
     finished = true
     started = false
 
@@ -125,9 +128,10 @@ class MavenSyncConsole(private val myProject: Project) {
   fun notifyReadingProblems(file: VirtualFile) = doIfImportInProcess {
     debugLog("reading problems in $file")
     hasErrors = true
-    mySyncView.onEvent(mySyncId, FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, "Error", "Error reading ${file.path}",
-                                                      "Error reading ${file.path}",
-                                                      FilePosition(File(file.path), -1, -1)))
+    val desc = SyncBundle.message("maven.sync.failure.error.reading.file", file.path)
+    mySyncView.onEvent(mySyncId,
+                       FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("maven.sync.group.error"), desc, desc,
+                                            FilePosition(File(file.path), -1, -1)))
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
@@ -229,7 +233,7 @@ class MavenSyncConsole(private val myProject: Project) {
         }
 
         override fun getDetails(): String? {
-          return "$dependency not found"
+          return SyncBundle.message("maven.sync.failure.dependency.not.found", dependency)
         }
       })
 
@@ -249,10 +253,12 @@ class MavenSyncConsole(private val myProject: Project) {
   fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
     val bundledVersion = MavenServerManager.getInstance().getMavenVersion(MavenServerManager.BUNDLED_MAVEN_3)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-      override val title = "Maven version issue"
+      override val title = SyncBundle.message("maven.sync.version.issue.title")
       override val description: String = "${message}\n" +
-                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">Open Settings</a>\n" +
-                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">Use Bundled (${bundledVersion})</a>\n"
+                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">" +
+                                         SyncBundle.message("maven.sync.version.open.settings") + "</a>\n" +
+                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">" +
+                                         SyncBundle.message("maven.sync.version.use.bundled", bundledVersion) + "</a>\n"
 
       override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix(), UseBundledMavenQuickFix())
       override fun getNavigatable(project: Project): Navigatable? = null

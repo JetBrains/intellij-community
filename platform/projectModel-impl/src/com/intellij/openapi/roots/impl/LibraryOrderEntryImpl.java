@@ -105,6 +105,7 @@ final class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
 
   @Override
   public void setExported(boolean exported) {
+    getRootModel().assertWritable();
     myExported = exported;
   }
 
@@ -116,6 +117,7 @@ final class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements L
 
   @Override
   public void setScope(@NotNull DependencyScope scope) {
+    getRootModel().assertWritable();
     myScope = scope;
   }
 

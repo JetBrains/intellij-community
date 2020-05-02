@@ -154,7 +154,7 @@ public final class StartUpMeasurer {
 
   public static void setCurrentState(@NotNull LoadingState state) {
     LoadingState old = currentState.getAndSet(state);
-    if (old.ordinal() > state.ordinal()) {
+    if (old.compareTo(state)>0) {
       LoadingState.getLogger().error("New state " + state + " cannot precede old " + old);
     }
     stateSet(state);

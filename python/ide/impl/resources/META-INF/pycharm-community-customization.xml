@@ -2,11 +2,9 @@
 <idea-plugin>
   <resource-bundle>messages.PyBundle</resource-bundle>
 
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.python.PyModuleListener</implementation-class>
-    </component>
-  </project-components>
+  <projectListeners>
+    <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"

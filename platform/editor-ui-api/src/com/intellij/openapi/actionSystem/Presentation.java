@@ -117,6 +117,10 @@ public final class Presentation implements Cloneable {
     myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(text);
   }
 
+  public Presentation(@NotNull Supplier<@ActionText String> dynamicText) {
+    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(dynamicText.get());
+  }
+
   public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
     PropertyChangeSupport support = myChangeSupport;
     if (support == null) {

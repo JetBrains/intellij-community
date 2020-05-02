@@ -7,20 +7,22 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.UrlClassLoader
 import org.languagetool.language.Language
 import org.languagetool.language.Languages
-import java.io.File
 import java.io.InputStream
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 internal object GrazieDynamic {
   private val myDynClassLoaders by lazy {
-    for (file in dynamicFolder.walk().filter { file -> file.isFile && Lang.values().all { it.remote.file != file } }) {
+    for (file in dynamicFolder.toFile().walk().filter { file -> file.isFile && Lang.values().all { it.remote.file != file } }) {
       file.delete()
     }
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
-        .urls(GrazieRemote.allAvailableLocally().map { it.remote.file.toURI().toURL() }).get()
+        .urls(GrazieRemote.allAvailableLocally().map { it.remote.file.toUri().toURL() }).get()
     )
   }
 
@@ -29,10 +31,11 @@ internal object GrazieDynamic {
   private val dynClassLoaders: Set<ClassLoader>
     get() = myDynClassLoaders.toSet()
 
-
-  val dynamicFolder: File
-    get() = File(PathManager.getSystemPath(), "grazie").apply {
-      mkdir()
+  val dynamicFolder: Path
+    get() {
+      val result = Paths.get(PathManager.getSystemPath(), "grazie")
+      Files.createDirectories(result)
+      return result
     }
 
   fun loadLang(lang: Lang): Language? {

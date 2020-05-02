@@ -89,8 +89,7 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
     if (dataFile == null) return null;
 
     PsiElement tlElement = dataFile.findElementAt(offset);
-    while(true) {
-      if (tlElement == null || tlElement.getTextRange().getStartOffset() != offset) break;
+    while (tlElement != null && tlElement.getTextRange().getStartOffset() == offset) {
       if (tlElement instanceof Navigatable) {
         return (Navigatable)tlElement;
       }

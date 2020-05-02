@@ -264,7 +264,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
             final MySelectionListener selectionListener = new MySelectionListener();
             BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant> step =
-              new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
+              new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>(XDebuggerBundle.message("popup.title.set.breakpoint"), variants) {
                 @NotNull
                 @Override
                 public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {

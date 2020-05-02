@@ -22,10 +22,7 @@ import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -45,7 +42,6 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1325,7 +1321,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @NotNull
     @Override
-    @Nls
+    @NlsContexts.ConfigurableName
     public String getDisplayName() {
       return myFactory.getPanelDisplayName();
     }

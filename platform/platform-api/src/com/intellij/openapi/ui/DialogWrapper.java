@@ -39,12 +39,14 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -1051,6 +1053,14 @@ public abstract class DialogWrapper {
   }
 
   /**
+   * Calls doOKAction. This is intended for internal use.
+   */
+  @ApiStatus.Internal
+  public final void performOKAction() {
+    doOKAction();
+  }
+
+  /**
    * This method is invoked by default implementation of "OK" action. It just closes dialog
    * with {@code OK_EXIT_CODE}. This is convenient place to override functionality of "OK" action.
    * Note that the method does nothing if "OK" action isn't enabled.
@@ -1528,7 +1538,7 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
   }
 
-  protected final void setOKButtonTooltip(@Nls String text) {
+  protected final void setOKButtonTooltip(@NlsContexts.Tooltip String text) {
     myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
@@ -1935,11 +1945,11 @@ public abstract class DialogWrapper {
    * <code>{@link #setErrorText(String, JComponent)}</code> method.
    * @param text the error text to display
    */
-  protected void setErrorText(@Nls @Nullable final String text) {
+  protected void setErrorText(@NlsContexts.DialogMessage @Nullable final String text) {
     setErrorText(text, null);
   }
 
-  protected void setErrorText(@Nls @Nullable final String text, @Nullable final JComponent component) {
+  protected void setErrorText(@NlsContexts.DialogMessage @Nullable final String text, @Nullable final JComponent component) {
     setErrorInfoAll(text == null ?
                     Collections.emptyList() :
                     Collections.singletonList(new ValidationInfo(text, component)));

@@ -22,7 +22,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
       Arrays.asList(
         option(messageIde("option.show.tips.on.startup"), "isShowTipsOnStartup", "setShowTipsOnStartup"),
         option(messageIde("checkbox.support.screen.readers"), "isSupportScreenReaders", "setSupportScreenReaders"),
-        option("Start search in background", "isSearchInBackground", "setSearchInBackground")
+        option(messageIde("label.start.search.in.background"), "isSearchInBackground", "setSearchInBackground")
       )
     ));
 

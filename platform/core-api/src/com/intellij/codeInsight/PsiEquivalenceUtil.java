@@ -155,8 +155,7 @@ public class PsiEquivalenceUtil {
       if (child != first) {
         int j = i;
         PsiElement next = first;
-        do {
-          if (!areElementsEquivalent(children[j], next)) break;
+        while (areElementsEquivalent(children[j], next)) {
           j++;
           if (next == last) {
             result.consume(child, children[j - 1]);
@@ -165,7 +164,6 @@ public class PsiEquivalenceUtil {
           }
           next = PsiTreeUtil.skipWhitespacesForward(next);
         }
-        while (true);
 
         if (i == j) {
           addRangeDuplicates(child, first, last, result);

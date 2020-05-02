@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -164,6 +165,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return (CollectionListModel<LookupElement>)myList.getModel();
   }
 
+  @SuppressWarnings("unused") // used plugins
+  public LookupArranger getArranger() {
+    return myArranger;
+  }
+
   public void setArranger(LookupArranger arranger) {
     myArranger = arranger;
   }
@@ -256,14 +262,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public boolean addItem(LookupElement item, PrefixMatcher matcher) {
-    LookupElementPresentation presentation = renderItemApproximately(item);
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(item);
     if (containsDummyIdentifier(presentation.getItemText()) ||
         containsDummyIdentifier(presentation.getTailText()) ||
         containsDummyIdentifier(presentation.getTypeText())) {
       return false;
     }
 
-    myCellRenderer.updateLookupWidth(item, presentation);
+    myCellRenderer.itemAdded(item, presentation);
     LookupArranger arranger = myArranger;
     arranger.registerMatcher(item, matcher);
     arranger.addElement(item, presentation);
@@ -282,7 +288,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void updateLookupWidth(LookupElement item) {
-    myCellRenderer.updateLookupWidth(item, renderItemApproximately(item));
+    myCellRenderer.updateLookupWidth(item, LookupElementPresentation.renderElement(item));
   }
 
   public void requestResize() {
@@ -470,14 +476,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     LookupElement item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     model.add(item);
 
-    updateLookupWidth(item);
+    myCellRenderer.itemAdded(item, LookupElementPresentation.renderElement(item));
     requestResize();
-  }
-
-  private static LookupElementPresentation renderItemApproximately(LookupElement item) {
-    final LookupElementPresentation p = new LookupElementPresentation();
-    item.renderElement(p);
-    return p;
   }
 
   @NotNull
@@ -659,7 +659,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
 
-    if (!myEditor.getContentComponent().isShowing()) {
+    if (!EditorActivityManager.getInstance().isVisible(myEditor)) {
       hideLookup(false);
       return false;
     }
@@ -1133,7 +1133,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     requestResize();
   }
 
-  public void addAdvertisement(@NotNull String text, @Nullable Icon icon) {
+  public void addAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String text, @Nullable Icon icon) {
     if (!containsDummyIdentifier(text)) {
       myAdComponent.addAdvertisement(text, icon);
       requestResize();

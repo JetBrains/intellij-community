@@ -127,21 +127,29 @@ class LegacyBridgeProjectLibraryTest {
   fun `test project libraries name swapping in one transaction`() = WriteCommandAction.runWriteCommandAction(project) {
     val antLibraryName = "ant-lib"
     val mavenLibraryName = "maven-lib"
+    val groovyLibraryName = "groovy-lib"
 
     val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     projectLibraryTable.modifiableModel.let { projectLibTableModel ->
-      val antLibraryModel = projectLibTableModel.createLibrary(antLibraryName).modifiableModel
-      val mavenLibraryModel = projectLibTableModel.createLibrary(mavenLibraryName).modifiableModel
+      val antLibrary = projectLibTableModel.createLibrary(antLibraryName)
+      val mavenLibrary = projectLibTableModel.createLibrary(mavenLibraryName)
 
+      var antLibraryModel = antLibrary.modifiableModel
       antLibraryModel.addRoot(File(project.basePath, "$antLibraryName.jar").path, OrderRootType.CLASSES)
       antLibraryModel.addRoot(File(project.basePath, "$antLibraryName-sources.jar").path, OrderRootType.SOURCES)
+      antLibraryModel.name = groovyLibraryName
+      antLibraryModel.commit()
+
+      val mavenLibraryModel = mavenLibrary.modifiableModel
       mavenLibraryModel.addRoot(File(project.basePath, "$mavenLibraryName.jar").path, OrderRootType.CLASSES)
       mavenLibraryModel.addRoot(File(project.basePath, "$mavenLibraryName-sources.jar").path, OrderRootType.SOURCES)
-      antLibraryModel.name = mavenLibraryName
       mavenLibraryModel.name = antLibraryName
-
-      antLibraryModel.commit()
       mavenLibraryModel.commit()
+
+      antLibraryModel = antLibrary.modifiableModel
+      antLibraryModel.name = mavenLibraryName
+      antLibraryModel.commit()
+
       projectLibTableModel.commit()
     }
 
@@ -230,7 +238,7 @@ class LegacyBridgeProjectLibraryTest {
     assertTrue(iprFile.readText().contains(antLibraryName))
 
     val module = ModuleManager.getInstance(project).modifiableModel.let {
-      val module = it.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = it.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       it.commit()
       module
     }
@@ -270,7 +278,7 @@ class LegacyBridgeProjectLibraryTest {
     val library = createProjectLibrary(antLibraryName, withRoots = false)
     val moduleFile = File(project.basePath, "$moduleName.iml")
     val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
-      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id, null) as LegacyBridgeModule
+      val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as LegacyBridgeModule
       moduleModel.commit()
       module
     }

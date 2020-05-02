@@ -159,7 +159,7 @@ public final class URLUtil {
       }
     }
 
-    return Pair.create(jarPath, resourcePath);
+    return new Pair<>(jarPath, resourcePath);
   }
 
   public static @NotNull File urlToFile(@NotNull URL url) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import org.cef.OS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,8 @@ public class KeyboardSettingsExternalizable implements PersistentStateComponent<
         return true;
       }
     }
-    return false;
+    // linux have poor support of locales so lets show this option every on linux system
+    return OS.isLinux();
   }
 
   @Nullable

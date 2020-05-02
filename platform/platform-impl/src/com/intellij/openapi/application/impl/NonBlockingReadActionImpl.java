@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -386,7 +387,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
       if (myCoalesceEquality != null) {
         acquire();
       }
-      backendExecutor.execute(() -> {
+      backendExecutor.execute(ClientId.decorateRunnable(() -> {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Running in background " + this);
         }
@@ -400,7 +401,7 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
             release();
           }
         }
-      });
+      }));
     }
 
     T executeSynchronously() {

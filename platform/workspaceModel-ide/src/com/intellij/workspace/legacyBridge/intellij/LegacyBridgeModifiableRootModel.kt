@@ -1,5 +1,6 @@
 package com.intellij.workspace.legacyBridge.intellij
 
+import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +21,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
@@ -45,6 +47,8 @@ class LegacyBridgeModifiableRootModel(
   override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
+
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
 
   private val extensionsDelegate = lazy {
     RootModelViaTypedEntityImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
@@ -96,7 +100,7 @@ class LegacyBridgeModifiableRootModel(
         module = moduleEntity,
         excludedUrls = emptyList(),
         excludedPatterns = emptyList(),
-        url = VirtualFileUrlManager.fromUrl(url),
+        url = virtualFileManager.fromUrl(url),
         source = moduleEntity.entitySource
     )
 
@@ -323,12 +327,14 @@ class LegacyBridgeModifiableRootModel(
           customImlDataEntity == null && !element.isEmpty() -> diff.addModuleCustomImlDataEntity(
             module = moduleEntity,
             rootManagerTagCustomData = elementAsString,
+            customModuleOptions = emptyMap(),
             source = moduleEntity.entitySource
           )
 
           customImlDataEntity == null && element.isEmpty() -> Unit
 
-          customImlDataEntity != null && element.isEmpty() -> diff.removeEntity(customImlDataEntity)
+          customImlDataEntity != null && customImlDataEntity.customModuleOptions.isEmpty() && element.isEmpty() ->
+            diff.removeEntity(customImlDataEntity)
 
           customImlDataEntity != null && !element.isEmpty() -> diff.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java,
             customImlDataEntity) {
@@ -540,11 +546,7 @@ class LegacyBridgeModifiableRootModel(
     override fun commit() {
       librariesToAdd.forEach { library ->
         val componentAsString = modifiableModel.serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
-        library.libraryEntity?.getCustomProperties()?.let { property ->
-          modifiableModel.diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
-            propertiesXmlTag = componentAsString
-          }
-        }
+        library.updatePropertyEntities(modifiableModel.diff, componentAsString)
       }
     }
 
@@ -612,8 +614,9 @@ class LegacyBridgeModifiableRootModel(
           originalLibrary = libraryImpl,
           originalLibrarySnapshot = librarySnapshot,
           diff = diff,
-          committer = { _, diffBuilder ->
+          committer = { modifiableLib, diffBuilder ->
             modifiableModel.diff.addDiff(diffBuilder)
+            runAsWriteActionIfNeeded { libraryImpl.entityId = modifiableLib.entityId }
           }
         )
       }

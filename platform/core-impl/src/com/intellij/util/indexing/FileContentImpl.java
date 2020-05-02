@@ -19,6 +19,7 @@ import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   private CharSequence myContentAsText;
   private final long myStamp;
   private byte[] myFileContentHash;
-  private byte[] myDocumentHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
@@ -146,9 +146,11 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return content;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public FileType getFileTypeWithoutSubstitution() {
-    return myFileType;
+    FileType fileType = getFileType();
+    return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }
 
   @NotNull
@@ -192,8 +194,9 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   @NotNull
   @Override
   public CharSequence getContentAsText() {
-    if (myFileType.isBinary()) {
-      throw new IllegalDataException("Cannot obtain text for binary file type : " + myFileType.getDescription());
+    FileType unsubstitutedFileType = getFileTypeWithoutSubstitution();
+    if (unsubstitutedFileType.isBinary()) {
+      throw new IllegalDataException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
     final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
     if (content != null) {
@@ -212,13 +215,15 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
     return myFileName;
   }
 
-  public byte @Nullable [] getHash(boolean fromDocument) {
-    return fromDocument ? myDocumentHash : myFileContentHash;
+  public byte @Nullable [] getHash() {
+    if (!myPhysicalContent) {
+      throw new IllegalStateException("Hashes are allowed only while physical changes indexing");
+    }
+    return myFileContentHash;
   }
 
-  public void setHashes(byte @NotNull [] fileContentHash, byte @NotNull [] documentHash) {
+  public void setHashes(byte @NotNull [] fileContentHash) {
     myFileContentHash = fileContentHash;
-    myDocumentHash = documentHash;
   }
 
   /**

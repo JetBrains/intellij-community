@@ -2,20 +2,17 @@
 package com.intellij.filePrediction.history
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 
 class FilePredictionHistory(project: Project) {
   companion object {
     private const val RECENT_FILES_LIMIT = 50
 
-    internal fun getInstanceIfCreated(project: Project): FilePredictionHistory? {
-      return ServiceManager.getServiceIfCreated(project, FilePredictionHistory::class.java)
-    }
+    internal fun getInstanceIfCreated(project: Project) = project.serviceIfCreated<FilePredictionHistory>()
 
-    fun getInstance(project: Project): FilePredictionHistory {
-      return ServiceManager.getService(project, FilePredictionHistory::class.java)
-    }
+    fun getInstance(project: Project) = project.service<FilePredictionHistory>()
   }
 
   private var manager: FileHistoryManager
@@ -32,9 +29,9 @@ class FilePredictionHistory(project: Project) {
 
   fun onFileOpened(fileUrl: String) = manager.onFileOpened(fileUrl)
 
-  fun calcHistoryFeatures(fileUrl: String): FileHistoryFeatures = manager.calcHistoryFeatures(fileUrl)
+  fun calcHistoryFeatures(fileUrl: String) = manager.calcHistoryFeatures(fileUrl)
 
-  fun size(): Int = manager.size()
+  fun size() = manager.size()
 
   fun cleanup() = manager.cleanup()
 }

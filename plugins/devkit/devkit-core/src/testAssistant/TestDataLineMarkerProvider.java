@@ -10,15 +10,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.UAnnotation;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 
 import java.util.Collections;
 
@@ -32,32 +32,32 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
 
   @Override
   public Info getInfo(@NotNull PsiElement e) {
-
-    PsiElement element = e.getParent();
-    if (!(e instanceof PsiIdentifier) ||
-        !(element instanceof PsiMethod) &&
-        !(element instanceof PsiClass)) {
+    UElement uElement = UastUtils.getUParentForIdentifier(e);
+    if (!(uElement instanceof UMethod) &&
+        !(uElement instanceof UClass)) {
       return null;
     }
 
-    if (DumbService.isDumb(element.getProject()) || !PsiUtil.isPluginProject(element.getProject())) {
+    final Project project = e.getProject();
+    if (DumbService.isDumb(project) || !PsiUtil.isPluginProject(project)) {
       return null;
     }
 
-    final VirtualFile file = PsiUtilCore.getVirtualFile(element);
-    if (file == null || !ProjectFileIndex.SERVICE.getInstance(element.getProject()).isInTestSourceContent(file)) {
+    final VirtualFile file = PsiUtilCore.getVirtualFile(e);
+    if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInTestSourceContent(file)) {
       return null;
     }
-    if (element instanceof PsiMethod) {
+
+    if (uElement instanceof UMethod) {
       return new Info(ActionManager.getInstance().getAction("TestData.Navigate"));
-    } else {
-      final PsiClass psiClass = (PsiClass)element;
-      final String basePath = getTestDataBasePath(psiClass);
-      if (basePath != null) {
-        return new Info(new GotoTestDataAction(basePath, psiClass.getProject(), AllIcons.Nodes.Folder));
-      }
     }
-    return null;
+    
+    final PsiClass psiClass = ((UClass)uElement).getJavaPsi();
+    final String testDataBasePath = getTestDataBasePath(psiClass);
+    if (testDataBasePath == null) {
+      return null;
+    }
+    return new Info(new GotoTestDataAction(testDataBasePath, psiClass.getProject(), AllIcons.Nodes.Folder));
   }
 
   @Nullable
@@ -65,14 +65,16 @@ public class TestDataLineMarkerProvider extends RunLineMarkerContributor {
     if (psiClass == null) return null;
 
     final UAnnotation annotation =
-      UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)), UAnnotation.class);
+      UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(psiClass,
+                                                                        Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME)),
+                               UAnnotation.class);
     if (annotation != null) {
       UExpression value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value != null) {
         final Project project = psiClass.getProject();
         final Object constantValue = value.evaluate();
         if (constantValue instanceof String) {
-          String path = (String) constantValue;
+          String path = (String)constantValue;
           if (path.contains(CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = psiClass.getContainingFile().getVirtualFile();

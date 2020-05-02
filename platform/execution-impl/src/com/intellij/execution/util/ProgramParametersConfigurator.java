@@ -2,6 +2,7 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
@@ -184,11 +185,12 @@ public class ProgramParametersConfigurator {
                                          @Nullable Module module) throws RuntimeConfigurationWarning {
     String workingDir = getWorkingDir(configuration, project, module);
     if (workingDir == null) {
-      throw new RuntimeConfigurationWarning("Working directory is null for project '" + project.getName() + "' (" + project.getBasePath() + ")," +
-                                            " module " + (module == null ? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
+      throw new RuntimeConfigurationWarning(
+        ExecutionBundle.message("dialog.message.working.directory.null.for.project.module", project.getName(), project.getBasePath(),
+                                module == null ? "null" : "'" + module.getName() + "' (" + module.getModuleFilePath() + ")"));
     }
     if (!new File(workingDir).exists()) {
-      throw new RuntimeConfigurationWarning("Working directory '" + workingDir + "' doesn't exist");
+      throw new RuntimeConfigurationWarning(ExecutionBundle.message("dialog.message.working.directory.doesn.t.exist", workingDir));
     }
   }
 

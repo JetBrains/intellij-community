@@ -242,6 +242,13 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
     return getClassName();
   }
 
+  /**
+   * @return PsiElement at which given type is defined (e.g. {@link PsiJavaCodeReferenceElement}). Returns null if not applicable.
+   */
+  public @Nullable PsiElement getPsiContext() {
+    return null;
+  }
+  
   @Nullable
   @Override
   public JvmTypeResolveResult resolveType() {

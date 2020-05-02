@@ -11,23 +11,29 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
+import junit.framework.TestCase
 
 class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
   fun `test unload and load facet`() {
     val facetManager = FacetManager.getInstance(module)
-    runWithRegisteredFacetTypes(MockFacetType()) {
+    val addedFacet = runWithRegisteredFacetTypes(MockFacetType()) {
       runWriteAction {
         val configuration = MockFacetConfiguration().apply {
           data = "my data"
         }
         val model = facetManager.createModifiableModel()
-        model.addFacet(MockFacet(module, "mock", configuration))
+        val facet = MockFacet(module, "mock", configuration)
+        model.addFacet(facet)
         model.commit()
+        assertTrue(facet.isInitialized)
+        assertFalse(facet.isDisposed)
+        assertEquals("mock", facetManager.getFacetsByType(MockFacetType.ID).single().name)
+        return@runWriteAction facet
       }
-      assertEquals("mock", facetManager.getFacetsByType(MockFacetType.ID).single().name)
     }
 
     assertTrue(facetManager.getFacetsByType(MockFacetType.ID).isEmpty())
+    assertTrue(addedFacet.isDisposed)
     val invalidFacet = InvalidFacetManager.getInstance(myProject).invalidFacets.single()
     assertEquals("mock", invalidFacet.name)
     assertEquals("<configuration data=\"my data\" />", JDOMUtil.write(invalidFacet.configuration.facetState.configuration))
@@ -37,6 +43,8 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     val mockFacet = facetManager.getFacetsByType(MockFacetType.ID).single()
     assertEquals("mock", mockFacet.name)
     assertEquals("my data", mockFacet.configuration.data)
+    assertTrue(mockFacet.isInitialized)
+    assertFalse(mockFacet.isDisposed)
   }
 
   fun `test unload and load facet with sub facets`() {
@@ -100,14 +108,14 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     assertSame(mockFacet, mockSubFacet.underlyingFacet)
   }
 
-  private inline fun runWithRegisteredFacetTypes(vararg types: FacetType<*, *>, action: () -> Unit) {
+  private inline fun <T> runWithRegisteredFacetTypes(vararg types: FacetType<*, *>, action: () -> T): T {
     val disposable = Disposer.newDisposable()
     for (type in types) {
       registerFacetType(type, disposable)
     }
 
     try {
-      action()
+      return action()
     }
     finally {
       Disposer.dispose(disposable)

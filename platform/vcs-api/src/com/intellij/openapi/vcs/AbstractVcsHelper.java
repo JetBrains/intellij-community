@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -42,9 +43,9 @@ public abstract class AbstractVcsHelper {
     return ServiceManager.getService(project, AbstractVcsHelper.class);
   }
 
-  public abstract void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull String tabDisplayName);
+  public abstract void showErrors(List<? extends VcsException> abstractVcsExceptions, @NotNull @TabTitle String tabDisplayName);
 
-  public abstract void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull String tabDisplayName);
+  public abstract void showErrors(Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull @TabTitle String tabDisplayName);
 
   /**
    * Runs the runnable inside the vcs transaction (if needed), collects all exceptions, commits/rollbacks transaction
@@ -52,7 +53,7 @@ public abstract class AbstractVcsHelper {
    */
   public abstract List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters);
 
-  public void showError(final VcsException e, final String tabDisplayName) {
+  public void showError(final VcsException e, @TabTitle String tabDisplayName) {
     showErrors(Collections.singletonList(e), tabDisplayName);
   }
 
@@ -123,7 +124,7 @@ public abstract class AbstractVcsHelper {
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
                                                                @NlsContexts.DialogTitle String title,
-                                                               @Nullable String prompt,
+                                                               @NlsContexts.Label @Nullable String prompt,
                                                                @Nullable String singleFileTitle,
                                                                @Nullable String singleFilePromptTemplate,
                                                                @NotNull VcsShowConfirmationOption confirmationOption);
@@ -131,7 +132,7 @@ public abstract class AbstractVcsHelper {
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                                 @NlsContexts.DialogTitle String title,
-                                                                @Nullable String prompt,
+                                                                @NlsContexts.Label @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,
                                                                 @NotNull VcsShowConfirmationOption confirmationOption);
@@ -139,7 +140,7 @@ public abstract class AbstractVcsHelper {
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                                 @NlsContexts.DialogTitle String title,
-                                                                @Nullable String prompt,
+                                                                @NlsContexts.Label @Nullable String prompt,
                                                                 @Nullable String singleFileTitle,
                                                                 @Nullable String singleFilePromptTemplate,
                                                                 @NotNull VcsShowConfirmationOption confirmationOption,

@@ -65,7 +65,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
 
   private static class DefaultsHolder {
-    private static final CodeStyleSettings myDefaults = new CodeStyleSettings();
+    private static final CodeStyleSettings myDefaults = new CodeStyleSettings(true, false);
   }
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
@@ -78,11 +78,31 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
+  /**
+   * @deprecated Use {@link CodeStyleSettingsManager#createSettings()}or {@link CodeStyleSettingsManager#createTemporarySettings()}.
+   * <p>
+   * For test purposes use {@code CodeStyle.createTestSettings()}
+   */
+  @Deprecated
   public CodeStyleSettings() {
     this(true);
   }
 
+  /**
+   * @param loadExtensions
+   * @deprecated See {@link #CodeStyleSettings()}
+   */
+  @Deprecated
   public CodeStyleSettings(boolean loadExtensions) {
+    this(loadExtensions, true);
+  }
+
+  /**
+   * @param loadExtensions    Loading custom extensions {@link CustomCodeStyleSettings} is needed.
+   * @param needsRegistration Created settings need to be registered to avoid memory leaks when a plugin with custom
+   *                          code style extensions is unloaded. Can be {@code false} for temporarily created settings.
+   */
+  protected CodeStyleSettings(boolean loadExtensions, boolean needsRegistration) {
     initImportsByDefault();
 
     if (loadExtensions) {
@@ -92,6 +112,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
         addCustomSettings(provider.createCustomSettings(this));
       }
+    }
+
+    if (needsRegistration) {
+      CodeStyleSettingsManager.registerSettings(this);
     }
   }
 
@@ -134,9 +158,14 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  @Override
+  /**
+   * @deprecated
+   * For short-lived temporary settings use {@code CodeStyle.doWithTemporarySettings(project,baseSettings,modifier,runnable},
+   * for permanently created settings use {@link CodeStyleSettingsManager#cloneSettings(CodeStyleSettings)}
+   */
+  @Deprecated
   public CodeStyleSettings clone() {
-    CodeStyleSettings clone = new CodeStyleSettings();
+    CodeStyleSettings clone = new CodeStyleSettings(true, true);
     clone.copyFrom(this);
     return clone;
   }
@@ -740,7 +769,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     setVersion(element, myVersion);
-    CodeStyleSettings parentSettings = new CodeStyleSettings();
+    CodeStyleSettings parentSettings = new CodeStyleSettings(true, false);
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
     mySoftMargins.serializeInto(element);
     myExcludedFiles.serializeInto(element);
@@ -1010,7 +1039,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   @TestOnly
   public void clearCodeStyleSettings() {
-    CodeStyleSettings cleanSettings = new CodeStyleSettings();
+    CodeStyleSettings cleanSettings = new CodeStyleSettings(true, false);
     copyFrom(cleanSettings);
     myAdditionalIndentOptions.clear(); //hack
     myLoadedAdditionalIndentOptions = false;

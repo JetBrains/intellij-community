@@ -1,5 +1,6 @@
 package com.intellij.workspace.legacyBridge.libraries.libraries
 
+import com.intellij.configurationStore.runAsWriteActionIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl
@@ -64,9 +65,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
       tableId = LibraryTableId.ProjectLibraryTableId,
       name = name,
       excludedRoots = emptyList(),
-      source = externalSource?.toEntitySource() ?:
-               project.storagePlace?.let { JpsProjectEntitiesLoader.createJpsEntitySourceForLibrary(it) } ?:
-               NonPersistentEntitySource
+      source = JpsProjectEntitiesLoader.createEntitySourceForProjectLibrary(project, externalSource)
     )
 
     if (type != null) {
@@ -90,8 +89,9 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
           originalLibrary = libraryImpl,
           originalLibrarySnapshot = librarySnapshot,
           diff = diff,
-          committer = { _, diffBuilder ->
+          committer = { modifiableLib, diffBuilder ->
             this.diff.addDiff(diffBuilder)
+            runAsWriteActionIfNeeded { libraryImpl.entityId = modifiableLib.entityId }
           }
         )
       }
@@ -123,11 +123,7 @@ internal class LegacyBridgeProjectModifiableLibraryTableImpl(
 
     myLibrariesToAdd.forEach { library ->
       val componentAsString = serializeComponentAsString(LibraryImpl.PROPERTIES_ELEMENT, library.properties) ?: return@forEach
-      library.libraryEntity?.getCustomProperties()?.let { property ->
-        diff.modifyEntity(ModifiableLibraryPropertiesEntity::class.java, property) {
-          propertiesXmlTag = componentAsString
-        }
-      }
+      library.updatePropertyEntities(diff, componentAsString)
     }
 
     libraryTable.setNewLibraryInstances(myLibrariesToAdd)

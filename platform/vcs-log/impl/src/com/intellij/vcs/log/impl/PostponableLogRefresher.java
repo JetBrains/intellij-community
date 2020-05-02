@@ -20,7 +20,7 @@ import java.util.Set;
 
 public final class PostponableLogRefresher implements VcsLogRefresher {
   private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
-  protected final @NotNull VcsLogData myLogData;
+  private final @NotNull VcsLogData myLogData;
   private final @NotNull Set<VirtualFile> myRootsToRefresh = new HashSet<>();
   private final @NotNull Set<VcsLogWindow> myLogWindows = new HashSet<>();
 
@@ -50,7 +50,7 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
     return Registry.is("vcs.log.keep.up.to.date") && !PowerSaveMode.isEnabled();
   }
 
-  protected boolean canRefreshNow() {
+  private boolean canRefreshNow() {
     if (keepUpToDate()) return true;
     return isLogVisible();
   }
@@ -90,7 +90,7 @@ public final class PostponableLogRefresher implements VcsLogRefresher {
     }, ModalityState.any());
   }
 
-  protected void refreshPostponedRoots() {
+  private void refreshPostponedRoots() {
     Set<VirtualFile> toRefresh = new HashSet<>(myRootsToRefresh);
     myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
     myLogData.refresh(toRefresh);

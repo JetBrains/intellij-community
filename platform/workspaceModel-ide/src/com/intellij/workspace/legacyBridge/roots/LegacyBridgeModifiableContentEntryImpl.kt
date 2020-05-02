@@ -10,11 +10,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.workspace.api.*
+import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
 import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.SourceFolderViaTypedEntity
-import com.intellij.workspace.virtualFileUrl
+import com.intellij.workspace.toVirtualFileUrl
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -32,6 +33,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
   private val LOG = Logger.getInstance(javaClass)
+  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(modifiableRootModel.project)
 
   private val currentContentEntry = CachedValueImpl<ContentEntryViaTypedEntity> {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryViaTypedEntity
@@ -151,8 +153,8 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     } ?: error("Exclude folder $excludeUrl must be present after adding it to content entry $contentEntryUrl")
   }
 
-  override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.virtualFileUrl)
-  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(VirtualFileUrlManager.fromUrl(url))
+  override fun addExcludeFolder(file: VirtualFile): ExcludeFolder = addExcludeFolder(file.toVirtualFileUrl(virtualFileManager))
+  override fun addExcludeFolder(url: String): ExcludeFolder = addExcludeFolder(virtualFileManager.fromUrl(url))
 
   override fun removeExcludeFolder(excludeFolder: ExcludeFolder) {
     val virtualFileUrl = (excludeFolder as ExcludeFolderViaTypedEntity).excludeFolderUrl
@@ -171,7 +173,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   }
 
   override fun removeExcludeFolder(url: String): Boolean {
-    val virtualFileUrl = VirtualFileUrlManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.fromUrl(url)
 
     val excludedUrls = currentContentEntry.value.entity.excludedUrls
     if (!excludedUrls.contains(virtualFileUrl)) return false
@@ -222,10 +224,10 @@ internal class LegacyBridgeModifiableContentEntryImpl(
     addSourceFolder(url, type, type.createDefaultProperties())
 
   override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
-    addSourceFolder(file.virtualFileUrl, type, properties)
+    addSourceFolder(file.toVirtualFileUrl(virtualFileManager), type, properties)
 
   override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder =
-    addSourceFolder(VirtualFileUrlManager.fromUrl(url), type, properties)
+    addSourceFolder(virtualFileManager.fromUrl(url), type, properties)
 
   override fun getFile(): VirtualFile? = currentContentEntry.value.file
   override fun getUrl(): String = contentEntryUrl.url

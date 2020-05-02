@@ -31,10 +31,10 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private final int myTimeoutInMillis;
 
   private final RemoteDebugger myMainDebugger;
-  private final List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
+  private final List<RemoteDebugger> myOtherDebuggers = new ArrayList<>();
   private ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
-  private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = Lists.newArrayList();
+  private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = new ArrayList<>();
 
   private final ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
@@ -290,7 +290,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   private List<PyThreadInfo> collectAllThreads() {
-    List<PyThreadInfo> result = Lists.newArrayList();
+    List<PyThreadInfo> result = new ArrayList<>();
 
     result.addAll(myMainDebugger.getThreads());
 
@@ -321,7 +321,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       }
     }
     if (!allConnected) {
-      List<RemoteDebugger> newList = Lists.newArrayList();
+      List<RemoteDebugger> newList = new ArrayList<>();
       for (RemoteDebugger d : debuggers) {
         if (d.isConnected()) {
           newList.add(d);

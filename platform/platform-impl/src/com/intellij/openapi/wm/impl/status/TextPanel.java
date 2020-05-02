@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -62,11 +63,6 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     String s = getText();
     int panelWidth = getWidth();
     int panelHeight = getHeight();
-    Color background = getBackground();
-    if (background != null && background.equals(JBUI.CurrentTheme.StatusBar.hoverBackground())) {
-      g.setColor(background);
-      g.fillRect(0, 0, panelWidth, panelHeight);
-    }
     if (s == null) return;
 
     Graphics2D g2 = (Graphics2D)g;
@@ -117,7 +113,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     myAlignment = alignment;
   }
 
-  public final void setText(@Nullable String text) {
+  public final void setText(@Nullable @StatusBarText String text) {
     text = StringUtil.notNullize(text);
     if (text.equals(myText)) {
       return;

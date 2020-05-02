@@ -523,7 +523,7 @@ public class SrcFileAnnotator implements Disposable {
               myLabel.setText(message);
             }
           };
-          panel.createActionLabel("Close", () -> fileEditorManager.removeTopComponent(editor, panel));
+          panel.createActionLabel(CoverageBundle.message("link.label.close"), () -> fileEditorManager.removeTopComponent(editor, panel));
           map.put(editor, panel);
           fileEditorManager.addTopComponent(editor, panel);
           break;

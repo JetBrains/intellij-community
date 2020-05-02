@@ -8,6 +8,9 @@ import org.junit.Test
 
 internal class SecondSampleEntityData : PEntityData<SecondSampleEntity>() {
   var intProperty: Int = -1
+  override fun createEntity(snapshot: TypedEntityStorage): SecondSampleEntity {
+    return SecondSampleEntity(intProperty).also { addMetaData(it, snapshot) }
+  }
 }
 
 internal class SecondSampleEntity(

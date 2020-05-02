@@ -138,6 +138,18 @@ public class VisibilityUtil  {
 
   public static void setVisibility(@NotNull PsiModifierList modifierList, @PsiModifier.ModifierConstant @NotNull String newVisibility) throws IncorrectOperationException {
     modifierList.setModifierProperty(newVisibility, true);
+    if (newVisibility.equals(PsiModifier.PRIVATE)) {
+      modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+    }
+    else if (newVisibility.equals(PsiModifier.PUBLIC) && !modifierList.hasExplicitModifier(PsiModifier.STATIC)) {
+      PsiMethod method = ObjectUtils.tryCast(modifierList.getParent(), PsiMethod.class);
+      if (method != null) {
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && containingClass.isInterface()) {
+          modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+        }
+      }
+    }
   }
 
   public static void fixVisibility(PsiExpression[] expressions, PsiMember member, String newVisibility) {

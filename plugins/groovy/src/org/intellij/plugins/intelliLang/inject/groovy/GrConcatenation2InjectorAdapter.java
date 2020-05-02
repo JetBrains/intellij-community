@@ -38,7 +38,7 @@ public class GrConcatenation2InjectorAdapter extends ConcatenationInjectorManage
     PsiElement element = context;
     PsiElement parent = context.getParent();
     while (parent instanceof GrBinaryExpression && ((GrBinaryExpression)parent).getOperationTokenType() == GroovyTokenTypes.mPLUS
-           || parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getOperationToken() == GroovyTokenTypes.mPLUS_ASSIGN
+           || parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getOperationTokenType() == GroovyTokenTypes.mPLUS_ASSIGN
            || parent instanceof GrConditionalExpression && ((GrConditionalExpression)parent).getCondition() != element
            || parent instanceof GrTypeCastExpression
            || parent instanceof GrSafeCastExpression

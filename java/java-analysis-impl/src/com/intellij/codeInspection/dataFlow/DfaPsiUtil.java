@@ -104,7 +104,7 @@ public class DfaPsiUtil {
     }
 
     if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
-      return Nullability.UNKNOWN;
+      return getTypeNullability(resultType) == Nullability.NULLABLE ? Nullability.NULLABLE : Nullability.UNKNOWN;
     }
 
     Nullability fromType = getTypeNullability(resultType);
@@ -211,6 +211,12 @@ public class DfaPsiUtil {
       }
       if (nnn.getNotNulls().contains(qualifiedName)) {
         return new NullabilityAnnotationInfo(annotation, Nullability.NOT_NULL, false);
+      }
+    }
+    if (eachType instanceof PsiClassType) {
+      PsiElement context = ((PsiClassType)eachType).getPsiContext();
+      if (context != null) {
+        return NullableNotNullManager.getInstance(context.getProject()).findDefaultTypeUseNullability(context);
       }
     }
     return null;

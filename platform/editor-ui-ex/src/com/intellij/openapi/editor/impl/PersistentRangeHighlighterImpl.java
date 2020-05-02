@@ -31,12 +31,12 @@ import org.jetbrains.annotations.Nullable;
  */
 class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   private int myLine; // for PersistentRangeHighlighterImpl only
-  static PersistentRangeHighlighterImpl create(@NotNull MarkupModelImpl model,
-                                               int offset,
-                                               int layer,
-                                               @NotNull HighlighterTargetArea target,
-                                               @Nullable TextAttributes textAttributes,
-                                               boolean normalizeStartOffset) {
+  static @NotNull PersistentRangeHighlighterImpl create(@NotNull MarkupModelImpl model,
+                                                        int offset,
+                                                        int layer,
+                                                        @NotNull HighlighterTargetArea target,
+                                                        @Nullable TextAttributes textAttributes,
+                                                        boolean normalizeStartOffset) {
     int line = model.getDocument().getLineNumber(offset);
     int startOffset = normalizeStartOffset ? model.getDocument().getLineStartOffset(line) : offset;
     return new PersistentRangeHighlighterImpl(model, startOffset, line, layer, target, textAttributes);
@@ -51,6 +51,11 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
     super(model, startOffset, model.getDocument().getLineEndOffset(line), layer, target, textAttributes, false, false);
 
     myLine = line;
+  }
+
+  @Override
+  public boolean isPersistent() {
+    return true;
   }
 
   @Override
@@ -78,7 +83,7 @@ class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
     }
   }
 
-  private boolean translatedViaDiff(DocumentEvent e, DocumentEventImpl event) {
+  private boolean translatedViaDiff(@NotNull DocumentEvent e, @NotNull DocumentEventImpl event) {
     try {
       myLine = event.translateLineViaDiff(myLine);
     }

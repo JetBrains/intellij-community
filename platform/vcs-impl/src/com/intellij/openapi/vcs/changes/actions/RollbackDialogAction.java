@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
@@ -42,7 +43,7 @@ public class RollbackDialogAction extends AnAction implements DumbAware {
     if (enabled) {
       String operationName = RollbackUtil.getRollbackOperationName(project);
       e.getPresentation().setText(operationName + "...");
-      e.getPresentation().setDescription(operationName + " selected changes");
+      e.getPresentation().setDescription(VcsBundle.message("action.message.use.selected.changes.description", operationName));
     }
 
   }

@@ -94,7 +94,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
               boolean changed = false;
 
               if (value instanceof Color) {
-                Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)value, true, null, true);
+                Color newColor = ColorPicker.showDialog(this, IdeBundle.message("dialog.title.choose.color"), (Color)value, true, null, true);
                 if (newColor != null) {
                   final ColorUIResource colorUIResource = new ColorUIResource(newColor);
 

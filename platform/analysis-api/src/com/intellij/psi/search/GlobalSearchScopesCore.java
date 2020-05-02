@@ -57,7 +57,7 @@ public class GlobalSearchScopesCore {
                                 withSubdirectories ? dirSet : Collections.emptySet());
   }
 
-  public static GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
+  public static @NotNull GlobalSearchScope filterScope(@NotNull Project project, @NotNull NamedScope set) {
     return new FilterScopeAdapter(project, set);
   }
 
@@ -121,9 +121,7 @@ public class GlobalSearchScopesCore {
       FilterScopeAdapter adapter = (FilterScopeAdapter)o;
 
       if (!mySet.equals(adapter.mySet)) return false;
-      if (!myManager.equals(adapter.myManager)) return false;
-
-      return true;
+      return myManager.equals(adapter.myManager);
     }
 
     @Override
@@ -132,6 +130,11 @@ public class GlobalSearchScopesCore {
       result = 31 * result + mySet.hashCode();
       result = 31 * result + myManager.hashCode();
       return result;
+    }
+
+    @Override
+    public String toString() {
+      return "FilterScope adapted from "+mySet;
     }
   }
 

@@ -41,5 +41,4 @@ val VirtualFileUrl.virtualFile
   get() = VirtualFileManager.getInstance().findFileByUrl(url)
 
 // TODO: use segment names from virtualFiles?
-val VirtualFile.virtualFileUrl
-  get() = VirtualFileUrlManager.fromUrl(this.url)
+fun VirtualFile.toVirtualFileUrl(virtualFileManager: VirtualFileUrlManager) = virtualFileManager.fromUrl(this.url)

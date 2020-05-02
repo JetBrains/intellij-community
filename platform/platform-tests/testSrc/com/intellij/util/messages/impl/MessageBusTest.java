@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -6,33 +6,38 @@
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.messages.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.messages.ListenerDescriptor;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.MessageBusOwner;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.testFramework.ServiceContainerUtil.createSimpleMessageBusOwner;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public class MessageBusTest extends LightPlatformTestCase implements MessageBusOwner {
+public class MessageBusTest implements MessageBusOwner {
   private MessageBusImpl myBus;
-  private List<String> myLog;
+  private final List<String> myLog = new ArrayList<>();
   private Disposable myParentDisposable = Disposer.newDisposable();
 
-  @NotNull
   @Override
-  public Object createListener(@NotNull ListenerDescriptor descriptor) {
+  public @NotNull Object createListener(@NotNull ListenerDescriptor descriptor) {
     throw new UnsupportedOperationException();
   }
 
@@ -55,7 +60,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
   private static final Topic<T2Listener> TOPIC2 = new Topic<>("T2", T2Listener.class);
   private static final Topic<Runnable> RUNNABLE_TOPIC = new Topic<>("runnableTopic", Runnable.class);
 
-  private class T1Handler implements T1Listener {
+  private final class T1Handler implements T1Listener {
     private final String id;
 
     T1Handler(final String id) {
@@ -72,7 +77,8 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
       myLog.add(id + ":" + "t12");
     }
   }
-  private class T2Handler implements T2Listener {
+
+  private final class T2Handler implements T2Listener {
     private final String id;
 
     T2Handler(final String id) {
@@ -90,34 +96,30 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     }
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myBus = (MessageBusImpl)MessageBusFactory.newMessageBus(this);
+  @Before
+  public void setUp() throws Exception {
+    myBus = new MessageBusImpl.RootBus(this);
     Disposer.register(myParentDisposable, myBus);
-    myLog = new ArrayList<>();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @After
+  public void tearDown() throws Exception {
     try {
       Disposer.dispose(myParentDisposable);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
     }
     finally {
       myBus = null;
       myParentDisposable = null;
-      super.tearDown();
     }
   }
 
+  @Test
   public void testNoListenersSubscribed() {
     myBus.syncPublisher(TOPIC1).t11();
     assertEvents();
   }
 
+  @Test
   public void testSingleMessage() {
     final MessageBusConnection connection = myBus.connect();
     connection.subscribe(TOPIC1, new T1Handler("c"));
@@ -125,6 +127,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("c:t11");
   }
 
+  @Test
   public void testSingleMessageToTwoConnections() {
     final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(TOPIC1, new T1Handler("c1"));
@@ -136,6 +139,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("c1:t11", "c2:t11");
   }
 
+  @Test
   public void testSameTopicInOneConnection() {
     MessageBusConnection connection = myBus.connect();
     connection.subscribe(TOPIC1, new T1Handler("c1"));
@@ -145,15 +149,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("c1:t11", "c2:t11");
   }
 
-  public void testSameTopicInOneConnectionForList() {
-    MessageBusConnectionImpl connection = myBus.connect();
-    connection.subscribe(TOPIC1, new T1Handler("c1"));
-    connection.subscribe(TOPIC1, Arrays.asList(new T1Handler("c2"), new T1Handler("c3")));
-
-    myBus.syncPublisher(TOPIC1).t11();
-    assertEvents("c1:t11", "c2:t11", "c3:t11");
-  }
-
+  @Test
   public void testTwoMessagesWithSingleSubscription() {
     final MessageBusConnection connection = myBus.connect();
     connection.subscribe(TOPIC1, new T1Handler("c"));
@@ -163,6 +159,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("c:t11", "c:t12");
   }
 
+  @Test
   public void testTwoMessagesWithDoubleSubscription() {
     final MessageBusConnection c1 = myBus.connect();
     c1.subscribe(TOPIC1, new T1Handler("c1"));
@@ -176,6 +173,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("c1:t11", "c2:t11", "c1:t12", "c2:t12");
   }
 
+  @Test
   public void testEventFiresAnotherEvent() {
     myBus.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
@@ -207,6 +205,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
                  "inside:t11:done");
   }
 
+  @Test
   public void testConnectionTerminatedInDispatch() {
     final MessageBusConnection conn1 = myBus.connect();
     conn1.subscribe(TOPIC1, new T1Listener() {
@@ -243,6 +242,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
                  "C2T1Handler:t12");
   }
 
+  @Test
   public void testMessageDeliveredDespitePCE() {
     final MessageBusConnection conn1 = myBus.connect();
     conn1.subscribe(TOPIC1, new T1Listener() {
@@ -270,6 +270,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("pce", "handler2:t11");
   }
 
+  @Test
   public void testPostingPerformanceWithLowListenerDensityInHierarchy() {
     //simulating million fileWithNoDocumentChanged events on refresh in a thousand-module project
     MessageBusImpl childBus = new MessageBusImpl(this, myBus);
@@ -294,6 +295,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     });
   }
 
+  @Test
   public void testManyChildrenCreationDeletionPerformance() {
     PlatformTestUtil.startPerformanceTest("Child bus creation/deletion", 1_000, () -> {
       List<MessageBusImpl> children = new ArrayList<>();
@@ -308,32 +310,33 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     }).assertTiming();
   }
 
+  @Test
   public void testStress() throws Throwable {
     final int threadsNumber = 10;
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
-    MessageBusImpl parentBus = (MessageBusImpl)MessageBusFactory.newMessageBus(createSimpleMessageBusOwner("parent"));
+    MessageBusImpl parentBus = new MessageBusImpl.RootBus(createSimpleMessageBusOwner("parent"));
     Disposer.register(myParentDisposable, parentBus);
     List<Future<?>> threads = new ArrayList<>();
     final int iterationsNumber = 100;
     for (int i = 0; i < threadsNumber; i++) {
-      Future<?> thread = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          try {
-            int remains = iterationsNumber;
-            while (remains-- > 0) {
-              if (exception.get() != null) {
-                break;
-              }
-              new MessageBusImpl(createSimpleMessageBusOwner(String.format("child-%s-%s", Thread.currentThread().getName(), remains)), parentBus);
+      Future<?> thread = AppExecutorUtil.getAppScheduledExecutorService().submit(() -> {
+        try {
+          int remains = iterationsNumber;
+          while (remains-- > 0) {
+            if (exception.get() != null) {
+              break;
             }
+            new MessageBusImpl(createSimpleMessageBusOwner(String.format("child-%s-%s", Thread.currentThread().getName(), remains)), parentBus);
           }
-          catch (Throwable e) {
-            exception.set(e);
-          }
-          finally {
-            latch.countDown();
-          }
-        });
+        }
+        catch (Throwable e) {
+          exception.set(e);
+        }
+        finally {
+          latch.countDown();
+        }
+      });
       threads.add(thread);
     }
     latch.await();
@@ -346,21 +349,18 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     }
   }
 
-
   private void assertEvents(String... expected) {
-    String joinExpected = StringUtil.join(expected, "\n");
-    String joinActual = StringUtil.join(myLog, "\n");
-
-    assertEquals("events mismatch", joinExpected, joinActual);
+    assertThat(String.join("\n", myLog)).isEqualTo(String.join("\n", expected));
   }
 
+  @Test
   public void testHasUndeliveredEvents() {
     assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC));
     assertFalse(myBus.hasUndeliveredEvents(TOPIC2));
 
     myBus.connect().subscribe(RUNNABLE_TOPIC, () -> {
-      assertTrue(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC));
-      assertFalse(myBus.hasUndeliveredEvents(TOPIC2));
+      assertThat(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)).isTrue();
+      assertThat(myBus.hasUndeliveredEvents(TOPIC2)).isFalse();
     });
     myBus.connect().subscribe(RUNNABLE_TOPIC, () -> {
       assertFalse(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC));
@@ -369,6 +369,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
   }
 
+  @Test
   public void testHasUndeliveredEventsInChildBys() {
     MessageBusImpl childBus = new MessageBusImpl(this, myBus);
     myBus.connect().subscribe(RUNNABLE_TOPIC, () -> assertTrue(myBus.hasUndeliveredEvents(RUNNABLE_TOPIC)));
@@ -376,6 +377,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
   }
 
+  @Test
   public void testDisposingBusInsideEvent() {
     MessageBusImpl child = new MessageBusImpl(this, myBus);
     myBus.connect().subscribe(TOPIC1, new T1Listener() {
@@ -406,6 +408,7 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     assertEvents("root 11", "child 11", "root 12", "child 12");
   }
 
+  @Test
   public void testTwoHandlersBothDisconnecting() {
     Disposable disposable = Disposer.newDisposable();
     for (int i = 0; i < 2; i++) {
@@ -413,18 +416,5 @@ public class MessageBusTest extends LightPlatformTestCase implements MessageBusO
     }
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertTrue(Disposer.isDisposed(disposable));
-  }
-
-  public void testMessageBusOwnerIsCorrect() {
-    checkLevel(ApplicationManager.getApplication(), "Application");
-    checkLevel(getProject(), "Project");
-    checkLevel(getModule(), "Module");
-  }
-
-  private static void checkLevel(ComponentManager component, String level) {
-    MessageBusImpl bus = (MessageBusImpl)component.getPicoContainer().getComponentInstanceOfType(MessageBus.class);
-    assertTrue(bus.getOwner().contains(level));
-    MessageBusImpl bus1 = (MessageBusImpl)component.getMessageBus();
-    assertSame(bus, bus1);
   }
 }

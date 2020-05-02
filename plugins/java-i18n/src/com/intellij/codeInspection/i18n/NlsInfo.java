@@ -12,6 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nls.Capitalization;
 import org.jetbrains.annotations.NonNls;
@@ -154,7 +155,10 @@ public abstract class NlsInfo {
    */
   public static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
     NlsInfo info = fromMethodReturn(expression);
-    return info != Unspecified.UNKNOWN ? info : fromArgument(expression);
+    if (info != Unspecified.UNKNOWN) return info;
+    info = fromInitializer(expression);
+    if (info != Unspecified.UNKNOWN) return info;
+    return fromArgument(expression);
   }
 
   public static @NotNull NlsInfo forModifierListOwner(@NotNull PsiModifierListOwner owner) {
@@ -180,6 +184,40 @@ public abstract class NlsInfo {
       return ((Localized)info).getCapitalization();
     }
     return Capitalization.NotSpecified;
+  }
+
+  private static NlsInfo fromInitializer(UExpression expression) {
+    UElement parent;
+    PsiElement var = null;
+    while (true) {
+      parent = expression.getUastParent();
+      if (!(parent instanceof UParenthesizedExpression || parent instanceof UIfExpression ||
+            (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS))) {
+        break;
+      }
+      expression = (UExpression)parent;
+    }
+    if (parent instanceof UBinaryExpression) {
+      UBinaryExpression binOp = (UBinaryExpression)parent;
+      UastBinaryOperator operator = binOp.getOperator();
+      if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
+          expression.equals(binOp.getRightOperand())) {
+        UReferenceExpression lValue = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), 
+                                                          UReferenceExpression.class);
+        if (lValue != null) {
+          var = lValue.resolve();
+        }
+      }
+    }
+    else if (parent instanceof UVariable) {
+      var = parent.getJavaPsi();
+    }
+    if (var instanceof PsiVariable) {
+      NlsInfo info = fromAnnotationOwner(((PsiVariable)var).getModifierList());
+      if (info != Unspecified.UNKNOWN) return info;
+      return fromType(((PsiVariable)var).getType());
+    }
+    return Unspecified.UNKNOWN;
   }
 
   private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
@@ -247,12 +285,12 @@ public abstract class NlsInfo {
         parent = parent.getUastParent();
       }
       if (parent == null) return Unspecified.UNKNOWN;
-      final UElement returnStmt =
+      final UReturnExpression returnStmt =
         UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
-      if (!(returnStmt instanceof UReturnExpression)) {
+      if (returnStmt == null) {
         return Unspecified.UNKNOWN;
       }
-      UElement jumpTarget = ((UReturnExpression)returnStmt).getJumpTarget();
+      UElement jumpTarget = returnStmt.getJumpTarget();
       if (jumpTarget instanceof UMethod) {
         method = ((UMethod)jumpTarget).getJavaPsi();
       }
@@ -370,8 +408,19 @@ public abstract class NlsInfo {
     }
     if (annotation.hasQualifiedName(AnnotationUtil.NLS)) {
       PsiAnnotationMemberValue value = annotation.findAttributeValue("capitalization");
+      String name = null;
       if (value instanceof PsiReferenceExpression) {
-        String name = ((PsiReferenceExpression)value).getReferenceName();
+        // Java plugin returns reference for enum constant in annotation value
+        name = ((PsiReferenceExpression)value).getReferenceName();
+      }
+      else if (value instanceof PsiLiteralExpression) {
+        // But Kotlin plugin returns kotlin.Pair (enumClass : ClassId, constantName : Name) for enum constant in annotation value!
+        Pair<?, ?> pair = ObjectUtils.tryCast(((PsiLiteralExpression)value).getValue(), Pair.class);
+        if (pair != null && pair.getSecond() != null) {
+          name = pair.getSecond().toString();
+        }
+      }
+      if (name != null) {
         if (Capitalization.Title.name().equals(name)) {
           return Localized.NLS_TITLE;
         }
@@ -437,7 +486,15 @@ public abstract class NlsInfo {
       String packageName = ((PsiClassOwner)containingFile).getPackageName();
       PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
       if (aPackage != null) {
-        return fromAnnotationOwner(aPackage.getAnnotationList());
+        NlsInfo info = fromAnnotationOwner(aPackage.getAnnotationList());
+        if (info != Unspecified.UNKNOWN) {
+          return info;
+        }
+
+        PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, ANNOTATION_NAMES, false);
+        if (annotation != null) {
+          return fromAnnotation(annotation);
+        }
       }
     }
     return Unspecified.UNKNOWN;

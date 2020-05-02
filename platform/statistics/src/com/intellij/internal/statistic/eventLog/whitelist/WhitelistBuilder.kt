@@ -45,6 +45,9 @@ private fun valueSchema(field: EventField<*>): List<String> = when(field) {
   EventFields.CurrentFile ->
     listOf("{util#current_file}")
 
+  EventFields.Version ->
+    listOf("{regexp#version}")
+
   else -> {
     emptyList()
   }

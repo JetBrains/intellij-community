@@ -72,7 +72,7 @@ public class ObjectLinkedOpenHashSet<K> extends AbstractSet<K> implements Set<K>
   /**
    * The default object hashing strategy
    */
-  private static final TObjectHashingStrategy DEFAULT_HASHING_STRATEGY = TObjectHashingStrategy.CANONICAL;
+  private static final TObjectHashingStrategy DEFAULT_HASHING_STRATEGY = ContainerUtil.canonicalStrategy();
   /**
    * The array of keys.
    */

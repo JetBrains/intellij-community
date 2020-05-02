@@ -14,7 +14,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -86,7 +85,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return true;
     };
     if (restrictToFile != null) {
-      processValuesInOneFile(indexId, dataKey, restrictToFile, processor, filter);
+      processValuesInOneFile(indexId, dataKey, restrictToFile, filter, processor);
     }
     else {
       processValuesInScope(indexId, dataKey, true, filter, null, processor);
@@ -121,7 +120,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (idFilter == null) {
         idFilter = projectIndexableFiles(scope.getProject());
       }
-      return index.processAllKeys(processor, scope, idFilter);
+      @Nullable IdFilter finalIdFilter = idFilter;
+      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, finalIdFilter));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -181,7 +181,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                       @NotNull GlobalSearchScope filter,
                                       @Nullable IdFilter idFilter) {
     return inFile != null
-           ? processValuesInOneFile(indexId, dataKey, inFile, processor, filter)
+           ? processValuesInOneFile(indexId, dataKey, inFile, filter, processor)
            : processValuesInScope(indexId, dataKey, false, filter, idFilter, processor);
   }
 
@@ -211,7 +211,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         return null;
       }
 
-      return myAccessValidator.validate(indexId, ()-> ConcurrencyUtil.withLock(index.getReadLock(), ()->computable.convert(index)));
+      return myAccessValidator.validate(indexId, () -> ConcurrencyUtil.withLock(index.getLock().readLock(), ()->computable.convert(index)));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -231,7 +231,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private <K, V> boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
                                                 @NotNull K dataKey,
                                                 @NotNull VirtualFile restrictToFile,
-                                                @NotNull ValueProcessor<? super V> processor, @NotNull GlobalSearchScope scope) {
+                                                @NotNull GlobalSearchScope scope,
+                                                @NotNull ValueProcessor<? super V> processor) {
     if (!(restrictToFile instanceof VirtualFileWithId)) return true;
 
     int restrictedFileId = getFileId(restrictToFile);
@@ -256,7 +257,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter,
                                               @NotNull ValueProcessor<? super V> processor) {
-    PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+    PersistentFS fs = PersistentFS.getInstance();
     IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(scope.getProject());
 
@@ -420,14 +421,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                              @Nullable final Condition<? super V> valueChecker,
                                                              @Nullable final ProjectIndexableFilesFilter projectFilesFilter) {
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
+    ValueContainer.IntPredicate idChecker = projectFilesFilter == null ? accessibleFileFilter::test : id ->
+      projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id);
+    Condition<? super K> keyChecker = __ -> {
+      ProgressManager.checkCanceled();
+      return true;
+    };
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
-      index -> InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, __ -> {
-                                                                    ProgressManager.checkCanceled();
-                                                                    return true;
-                                                                  }, valueChecker,
-                                                                  projectFilesFilter == null ? accessibleFileFilter::test : id -> {
-                                                                    return projectFilesFilter.containsFileId(id) && accessibleFileFilter.test(id);
-                                                                  });
+      index -> InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, keyChecker, valueChecker, idChecker);
 
     return processExceptions(indexId, null, filter, convertor);
   }
@@ -435,7 +436,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private static boolean processVirtualFiles(@NotNull TIntHashSet ids,
                                              @NotNull final GlobalSearchScope filter,
                                              @NotNull final Processor<? super VirtualFile> processor) {
-    final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
+    final PersistentFS fs = PersistentFS.getInstance();
     return ids.forEach(id -> {
       ProgressManager.checkCanceled();
       VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);

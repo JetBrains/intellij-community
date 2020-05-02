@@ -4,11 +4,13 @@ package com.intellij.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AllowedApiFilterExtension {
   public static final ExtensionPointName<AllowedApiFilterExtension> EP_NAME = ExtensionPointName.create("com.intellij.allowedApiFilter");
 
+  @Contract(pure = true)
   public abstract boolean isClassForbidden(@NotNull String fqn, @NotNull PsiElement place);
 
   public static boolean isClassAllowed(@NotNull String fqn, @NotNull PsiElement place) {

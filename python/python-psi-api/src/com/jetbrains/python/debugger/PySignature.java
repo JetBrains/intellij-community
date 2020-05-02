@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PySignature {
@@ -15,7 +16,7 @@ public class PySignature {
 
   private NamedParameter myReturnType = null;
 
-  private final List<NamedParameter> myArgs = Lists.newArrayList();
+  private final List<NamedParameter> myArgs = new ArrayList<>();
 
   public PySignature(@NotNull String file, @NotNull String name) {
     myFile = file;

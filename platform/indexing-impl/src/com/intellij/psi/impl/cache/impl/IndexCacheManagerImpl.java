@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -57,7 +56,7 @@ public class IndexCacheManagerImpl implements CacheManager{
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     FileBasedIndex.getInstance().ignoreDumbMode(() -> {
       collectVirtualFilesWithWord(word, occurenceMask, scope, caseSensitively, processor);
-    }, myProject, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
+    }, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE);
     return result.isEmpty() ? VirtualFile.EMPTY_ARRAY : result.toArray(VirtualFile.EMPTY_ARRAY);
   }
 

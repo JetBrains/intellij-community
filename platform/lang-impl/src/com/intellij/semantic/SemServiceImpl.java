@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.semantic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -27,10 +28,11 @@ import java.util.*;
 /**
  * @author peter
  */
-@SuppressWarnings({"unchecked"})
+@SuppressWarnings("unchecked")
 public final class SemServiceImpl extends SemService {
   private static final Logger LOG = Logger.getInstance(SemServiceImpl.class);
 
+  private final Object myLock = ObjectUtils.sentinel(getClass().getName());
   private volatile MultiMap<SemKey<?>, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
   private final Project myProject;
   private final CachedValuesManager myCVManager;
@@ -38,7 +40,7 @@ public final class SemServiceImpl extends SemService {
   public SemServiceImpl(Project project) {
     myProject = project;
     myCVManager = CachedValuesManager.getManager(myProject);
-    SemContributor.EP_NAME.addExtensionPointListener(() -> myProducers = null, project);
+    SemContributor.EP_NAME.addChangeListener(() -> myProducers = null, project);
   }
 
   private MultiMap<SemKey<?>, NullableFunction<PsiElement, Collection<? extends SemElement>>> collectProducers() {
@@ -126,7 +128,11 @@ public final class SemServiceImpl extends SemService {
 
   private void ensureInitialized() {
     if (myProducers == null) {
-      myProducers = collectProducers();
+      synchronized (myLock) {
+        if (myProducers == null) {
+          myProducers = collectProducers();
+        }
+      }
     }
   }
 

@@ -1,11 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.fields.ExtendableTextComponent
@@ -14,17 +12,18 @@ import com.intellij.ui.components.panels.Wrapper
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils
 import org.jetbrains.plugins.github.ui.util.Validator
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.submitBackgroundTask
+import org.jetbrains.plugins.github.util.completionOnEdt
+import org.jetbrains.plugins.github.util.errorOnEdt
+import org.jetbrains.plugins.github.util.submitIOTask
 import java.awt.event.ActionListener
 import java.util.concurrent.CompletableFuture
 import javax.swing.JTextField
 
 class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
                        isAccountUnique: (name: String, server: GithubServerPath) -> Boolean,
-                       val project: Project?,
                        isDialogMode: Boolean = true) : Wrapper() {
   private var clientName: String = GHSecurityUtil.DEFAULT_CLIENT_NAME
   private val serverTextField = ExtendableTextField(GithubServerPath.DEFAULT_HOST, 0)
@@ -62,7 +61,7 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
   fun doValidateAll(): List<ValidationInfo> {
     return listOf(DialogValidationUtils.chain(
       DialogValidationUtils.chain(
-        { DialogValidationUtils.notBlank(serverTextField, "Server cannot be empty") },
+        { DialogValidationUtils.notBlank(serverTextField, GithubBundle.message("credentials.server.cannot.be.empty")) },
         serverPathValidator(serverTextField)),
       currentUi.getValidator()),
                   { tokenAcquisitionError })
@@ -77,7 +76,7 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
         null
       }
       catch (e: Exception) {
-        ValidationInfo("$text is not a valid server path:\n${e.message}", textField)
+        ValidationInfo(GithubBundle.message("credentials.server.path.invalid", text, e.message.orEmpty()), textField)
       }
     }
   }
@@ -101,17 +100,13 @@ class GithubLoginPanel(executorFactory: GithubApiRequestExecutor.Factory,
     val server = getServer()
     val executor = currentUi.createExecutor()
 
-    return service<ProgressManager>()
-      .submitBackgroundTask(project, "Not Visible", true, progressIndicator) {
-        currentUi.acquireLoginAndToken(server, executor, it)
-      }.whenComplete { _, throwable ->
-        runInEdt {
-          setBusy(false)
-          if (throwable != null && !GithubAsyncUtil.isCancellation(throwable)) {
-            tokenAcquisitionError = currentUi.handleAcquireError(throwable)
-          }
-        }
-      }
+    return service<ProgressManager>().submitIOTask(progressIndicator) {
+      currentUi.acquireLoginAndToken(server, executor, it)
+    }.completionOnEdt(progressIndicator.modalityState) {
+      setBusy(false)
+    }.errorOnEdt(progressIndicator.modalityState) {
+      tokenAcquisitionError = currentUi.handleAcquireError(it)
+    }
   }
 
   fun getServer(): GithubServerPath = GithubServerPath.from(

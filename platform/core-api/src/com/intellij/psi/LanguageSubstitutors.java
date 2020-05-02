@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -12,12 +12,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,10 +35,9 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
   private static final Logger LOG = Logger.getInstance(LanguageSubstitutors.class);
   private static final Key<Key<String>> PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY = Key.create("PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY");
   private static final AtomicBoolean REQUESTS_DRAIN_NEEDED = new AtomicBoolean(true);
-  private static final ConcurrentMap<VirtualFile, SubstitutionInfo> ourReparsingRequests = ContainerUtil.newConcurrentMap();
+  private static final ConcurrentMap<VirtualFile, SubstitutionInfo> ourReparsingRequests = new ConcurrentHashMap<>();
 
-  @NotNull
-  public static LanguageSubstitutors getInstance() {
+  public static @NotNull LanguageSubstitutors getInstance() {
     return ApplicationManager.getApplication().getService(LanguageSubstitutors.class);
   }
 
@@ -50,8 +49,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
    * Queries all applicable language substitutors and returns the substituted language, or {@code lang} argument if
    * no substitutor has returned anything.
    */
-  @NotNull
-  public Language substituteLanguage(@NotNull Language originalLang, @NotNull VirtualFile file, @NotNull Project project) {
+  public @NotNull Language substituteLanguage(@NotNull Language originalLang, @NotNull VirtualFile file, @NotNull Project project) {
     for (LanguageSubstitutor substitutor : forKey(originalLang)) {
       Language substitutedLang = substitutor.getLanguage(file, project);
       if (substitutedLang != null) {
@@ -69,9 +67,9 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     return originalLang;
   }
 
-  private static void processLanguageSubstitution(@NotNull final VirtualFile file,
+  private static void processLanguageSubstitution(final @NotNull VirtualFile file,
                                                   @NotNull Language originalLang,
-                                                  @NotNull final Language substitutedLang,
+                                                  final @NotNull Language substitutedLang,
                                                   @NotNull Project project) {
     if (file instanceof VirtualFileWindow) {
       // Injected files are created with substituted language, no need to reparse:
@@ -94,8 +92,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     }
   }
 
-  @NotNull
-  private static Key<String> getOrCreateProjectKey(@NotNull Project project) {
+  private static @NotNull Key<String> getOrCreateProjectKey(@NotNull Project project) {
     Key<String> key = PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY.get(project);
     if (key == null) {
       synchronized (PROJECT_KEY_FOR_SUBSTITUTED_LANG_KEY) {

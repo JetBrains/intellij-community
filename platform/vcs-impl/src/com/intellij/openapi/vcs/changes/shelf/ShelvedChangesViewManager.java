@@ -16,7 +16,6 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,6 +51,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
+import com.intellij.util.ListSelection;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
@@ -69,7 +69,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellEditor;
+import javax.swing.tree.TreeCellEditor;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -203,7 +206,7 @@ public class ShelvedChangesViewManager implements Disposable {
       createShelvedListsWithChangesNode(shelvedLists, createTagNode(VcsBundle.message("shelve.recently.deleted.node")));
     }
 
-    private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull MutableTreeNode parentNode) {
+    private void createShelvedListsWithChangesNode(@NotNull List<? extends ShelvedChangeList> shelvedLists, @NotNull ChangesBrowserNode<?> parentNode) {
       shelvedLists.forEach(changeList -> {
         List<ShelvedWrapper> shelvedChanges = new ArrayList<>();
         requireNonNull(changeList.getChanges()).stream().map(ShelvedWrapper::new).forEach(shelvedChanges::add);
@@ -212,7 +215,7 @@ public class ShelvedChangesViewManager implements Disposable {
         shelvedChanges.sort(comparing(s -> s.getChange(myProject), CHANGE_COMPARATOR));
 
         ShelvedListNode shelvedListNode = new ShelvedListNode(changeList);
-        myModel.insertNodeInto(shelvedListNode, parentNode, parentNode.getChildCount());
+        insertSubtreeRoot(shelvedListNode, parentNode);
         for (ShelvedWrapper shelved : shelvedChanges) {
           Change change = shelved.getChange(myProject);
           FilePath filePath = ChangesUtil.getFilePath(change);

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.textmate.language.TextMateLanguage;
+import org.jetbrains.plugins.textmate.TextMateLanguage;
 
 public class TextMateParserDefinition implements ParserDefinition {
   private final static IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("TextMate", TextMateLanguage.LANGUAGE);

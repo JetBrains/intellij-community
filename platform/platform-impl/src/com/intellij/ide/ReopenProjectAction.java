@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.PathUtil;
@@ -47,7 +48,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     if (!Files.exists(file)) {
       if (Messages.showDialog(project, IdeBundle
                                 .message("message.the.path.0.does.not.exist.maybe.on.remote", PathUtil.toSystemDependentName(myProjectPath)),
-                              "Reopen Project", new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
+                              IdeBundle.message("dialog.title.reopen.project"), new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
         myIsRemoved = true;
         RecentProjectsManager.getInstance().removePath(myProjectPath);
       }
@@ -79,9 +80,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     return myProjectName;
   }
 
+  @NlsActions.ActionText
   @Nullable
   @Override
   public String getTemplateText() {
-    return "Reopen Project";
+    return IdeBundle.message("action.ReopenProject.reopen.project.text");
   }
 }

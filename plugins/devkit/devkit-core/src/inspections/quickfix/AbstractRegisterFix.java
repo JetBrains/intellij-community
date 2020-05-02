@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
@@ -27,8 +28,8 @@ abstract class AbstractRegisterFix implements LocalQuickFix, DescriptorUtil.Patc
   protected final SmartPsiElementPointer<PsiClass> myPointer;
   protected static final Logger LOG = Logger.getInstance(AbstractRegisterFix.class);
 
-  protected AbstractRegisterFix(@NotNull SmartPsiElementPointer<PsiClass> klass) {
-    myPointer = klass;
+  protected AbstractRegisterFix(@NotNull PsiClass psiClass) {
+    myPointer = SmartPointerManager.createPointer(psiClass);
   }
 
   @Override

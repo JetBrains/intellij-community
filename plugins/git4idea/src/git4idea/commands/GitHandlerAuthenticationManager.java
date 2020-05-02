@@ -91,7 +91,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_PORT_ENV, Integer.toString(port));
-    LOG.debug(String.format("myHandler=%s, port=%s", myHttpHandler, port));
 
     myHandler.addLineListener(new GitLineHandlerListener() {
       @Override
@@ -159,7 +158,6 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     addHandlerPathToEnvironment(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service);
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
-    LOG.debug(String.format("myHandler=%s, port=%s", myNativeSshHandler, port));
 
     // SSH_ASKPASS is ignored if DISPLAY variable is not set
     String displayEnv = StringUtil.nullize(System.getenv(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV));

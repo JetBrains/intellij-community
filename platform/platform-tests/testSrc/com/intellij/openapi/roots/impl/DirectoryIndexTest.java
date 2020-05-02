@@ -999,7 +999,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(getProject());
     PlatformTestUtil.startPerformanceTest("dir creation must not lead to dirindex rebuild", 30_000, ()->{
-      for (int i=0; i<5_000; i++) {
+      for (int i=0; i<2_000; i++) {
         VirtualFile xxx = createChildDirectory(root, "xxx");
         assertFalse(fileIndex.isInSource(xxx));
         delete(xxx);

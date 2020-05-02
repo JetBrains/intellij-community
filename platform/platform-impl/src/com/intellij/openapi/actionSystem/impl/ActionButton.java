@@ -619,5 +619,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   // Contains actions IDs which descriptions are permitted for displaying in the ActionButton tooltip
-  private static final Set<String> WHITE_LIST = ContainerUtil.immutableSet("ProjectRefreshAction");
+  private static final Set<String> WHITE_LIST = ContainerUtil.immutableSet(
+    "ExternalSystem.ProjectRefreshAction",
+    "ExternalSystem.ToggleAutoReload"
+  );
 }

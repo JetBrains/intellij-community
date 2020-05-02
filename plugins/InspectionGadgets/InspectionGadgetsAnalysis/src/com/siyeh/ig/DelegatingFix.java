@@ -67,7 +67,7 @@ public class DelegatingFix extends InspectionGadgetsFix implements Iconable, Pri
     LocalQuickFix fix = ObjectUtils.tryCast(delegate.getFileModifierForPreview(target), LocalQuickFix.class);
     if (fix == null) return null;
     if (fix == delegate) return this;
-    DelegatingFix newFix = new DelegatingFix(delegate);
+    DelegatingFix newFix = new DelegatingFix(fix);
     newFix.setOnTheFly(isOnTheFly());
     return newFix;
   }

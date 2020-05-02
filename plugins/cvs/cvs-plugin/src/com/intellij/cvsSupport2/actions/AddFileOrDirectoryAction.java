@@ -126,12 +126,10 @@ public class AddFileOrDirectoryAction extends ActionOnSelectedElement {
     for (VirtualFile file : files) {
       final List<VirtualFile> parentsToAdd = new ArrayList<>();
       VirtualFile parent = file.getParent();
-      do {
-        if (parent == null || CvsUtil.fileExistsInCvs(parent) || result.contains(parent)) break;
+      while (parent != null && !CvsUtil.fileExistsInCvs(parent) && !result.contains(parent)) {
         parentsToAdd.add(parent);
         parent = parent.getParent();
       }
-      while (true);
 
       if (parent != null) {
         result.addAll(parentsToAdd);

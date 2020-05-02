@@ -26,7 +26,7 @@ import java.awt.*;
 * @author Konstantin Bulenkov
 */
 public class RatesPanel extends JPanel {
-  public static int MAX_RATE = 5;
+  public static final int MAX_RATE = 5;
 
   private static final Icon STAR = AllIcons.Ide.Rating;
 
@@ -43,7 +43,7 @@ public class RatesPanel extends JPanel {
     setOpaque(false);
     GridBagConstraints gc =
       new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 0, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                             new Insets(0, 0, 0, 0), 0, 0);
+                             JBUI.emptyInsets(), 0, 0);
     for (int i = 0, myLabelsLength = myLabels.length; i < myLabelsLength; i++) {
       myLabels[i] = new JLabel();
       myLabels[i].setOpaque(false);
@@ -52,15 +52,15 @@ public class RatesPanel extends JPanel {
   }
 
   public void setRate(String rating) {
-    Double dblRating = 0d;
+    double dblRating = 0d;
     if (rating != null) {
       try {
-        dblRating = Double.valueOf(rating);
+        dblRating = Double.parseDouble(rating);
       }
       catch (NumberFormatException ignore) { }
     }
 
-    final int intRating = dblRating.intValue();
+    final int intRating = (int)dblRating;
 
     for (int i = 0; i < intRating; i++) {
       myLabels[i].setIcon(STAR);

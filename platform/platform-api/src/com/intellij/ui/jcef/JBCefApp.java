@@ -3,12 +3,12 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.cef.JCefAppConfig;
 import org.cef.CefApp;
 import org.cef.CefSettings;
 import org.cef.CefSettings.LogSeverity;
@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -43,8 +41,9 @@ import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
  * @author tav
  */
 @ApiStatus.Experimental
-public abstract class JBCefApp {
-  private static JBCefApp INSTANCE;
+public final class JBCefApp {
+  private static final Logger LOG = Logger.getInstance(JBCefApp.class);
+
   @NotNull private final CefApp myCefApp;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
@@ -55,21 +54,21 @@ public abstract class JBCefApp {
   };
 
   private static final AtomicBoolean ourInitialized = new AtomicBoolean(false);
-  private static final List<JBCefSchemeHandlerFactory> ourSchemeHandlerFactoryList = Collections.synchronizedList(new ArrayList<>());
+  private static final List<JBCefCustomSchemeHandlerFactory> ourCustomSchemeHandlerFactoryList =
+    Collections.synchronizedList(new ArrayList<>());
 
-  private JBCefApp() {
-    CefApp.startup();
-    //noinspection AbstractMethodCallInConstructor
-    CefAppConfig config = getCefAppConfig();
-    config.mySettings.windowless_rendering_enabled = false;
-    config.mySettings.log_severity = getLogLevel();
+  private JBCefApp(@NotNull JCefAppConfig config) {
+    CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+    CefSettings settings = config.getCefSettings();
+    settings.windowless_rendering_enabled = false;
+    settings.log_severity = getLogLevel();
     Color bg = JBColor.background();
-    config.mySettings.background_color = config.mySettings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
+    settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     if (ApplicationManager.getApplication().isInternal()) {
-      config.mySettings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
+      settings.remote_debugging_port = Registry.intValue("ide.browser.jcef.debug.port");
     }
-    CefApp.addAppHandler(new MyCefAppHandler(config.myAppArgs));
-    myCefApp = CefApp.getInstance(config.mySettings);
+    CefApp.addAppHandler(new MyCefAppHandler(config.getAppArgs()));
+    myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
 
@@ -110,21 +109,25 @@ public abstract class JBCefApp {
     if (!isEnabled()) {
       throw new IllegalStateException("JCEF is disabled");
     }
-    if (!ourInitialized.getAndSet(true)) {
-      if (SystemInfo.isMac) {
-        INSTANCE = new JBCefAppMac();
-      }
-      else if (SystemInfo.isLinux) {
-        INSTANCE = new JBCefAppLinux();
-      }
-      else if (SystemInfo.isWindows) {
-        INSTANCE = new JBCefAppWindows();
-      }
-      else {
-        throw new IllegalStateException("JCEF is initialized on unsupported platform");
-      }
+    if (Holder.INSTANCE == null) {
+      throw new IllegalStateException("JCEF is not available or failed to initialize");
     }
-    return INSTANCE;
+    return Holder.INSTANCE;
+  }
+
+  private static class Holder {
+    @Nullable static final JBCefApp INSTANCE;
+
+    static {
+      ourInitialized.set(true);
+      JCefAppConfig config = null;
+      try {
+        config = JCefAppConfig.getInstance();
+      } catch (Exception e) {
+        LOG.error(e);
+      }
+      INSTANCE = config != null ? new JBCefApp(config) : null;
+    }
   }
 
   /**
@@ -137,105 +140,32 @@ public abstract class JBCefApp {
     return Registry.is("ide.browser.jcef.enabled");
   }
 
-  public static class CefAppConfig {
-    public final @NotNull CefSettings mySettings;
-    /**
-     * {@link org.cef.handler.CefAppHandler} args.
-     */
-    public final String @NotNull[] myAppArgs;
-
-    public CefAppConfig(@NotNull CefSettings settings, String @NotNull[] appArgs) {
-      this.mySettings = settings;
-      this.myAppArgs = appArgs;
-    }
-  }
-
-  @NotNull
-  protected abstract CefAppConfig getCefAppConfig();
-
-  private static class JBCefAppMac extends JBCefApp {
-    @NotNull
-    @Override
-    protected CefAppConfig getCefAppConfig() {
-      String ALT_CEF_FRAMEWORK_DIR = System.getenv("ALT_CEF_FRAMEWORK_DIR");
-      String ALT_CEF_BROWSER_SUBPROCESS = System.getenv("ALT_CEF_BROWSER_SUBPROCESS");
-      if (ALT_CEF_FRAMEWORK_DIR == null || ALT_CEF_BROWSER_SUBPROCESS == null) {
-        String CONTENTS_PATH = System.getProperty("java.home") + "/..";
-        if (ALT_CEF_FRAMEWORK_DIR == null) {
-          ALT_CEF_FRAMEWORK_DIR = CONTENTS_PATH + "/Frameworks/Chromium Embedded Framework.framework";
-        }
-        if (ALT_CEF_BROWSER_SUBPROCESS == null) {
-          ALT_CEF_BROWSER_SUBPROCESS = CONTENTS_PATH + "/Helpers/jcef Helper.app/Contents/MacOS/jcef Helper";
-        }
-      }
-      return new CefAppConfig(new CefSettings(), new String[] {
-        "--framework-dir-path=" + normalize(ALT_CEF_FRAMEWORK_DIR),
-        "--browser-subprocess-path=" + normalize(ALT_CEF_BROWSER_SUBPROCESS),
-        "--disable-in-process-stack-traces"
-      });
-    }
-
-    // CEF does not accept ".." in path
-    private static String normalize(String path) {
-      try {
-        return new File(path).getCanonicalPath();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static class JBCefAppWindows extends JBCefApp {
-    @NotNull
-    @Override
-    protected CefAppConfig getCefAppConfig() {
-      String JCEF_PATH = System.getProperty("java.home") + "/bin";
-      CefSettings settings = new CefSettings();
-      settings.resources_dir_path = JCEF_PATH;
-      settings.locales_dir_path = JCEF_PATH + "/locales";
-      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
-      return new CefAppConfig(settings, ArrayUtil.EMPTY_STRING_ARRAY);
-    }
-  }
-
-  private static class JBCefAppLinux extends JBCefApp {
-    @NotNull
-    @Override
-    protected CefAppConfig getCefAppConfig() {
-      String JCEF_PATH = System.getProperty("java.home") + "/lib";
-      CefSettings settings = new CefSettings();
-      settings.resources_dir_path = JCEF_PATH;
-      settings.locales_dir_path = JCEF_PATH + "/locales";
-      settings.browser_subprocess_path = JCEF_PATH + "/jcef_helper";
-      double scale = JBUIScale.sysScale();
-      System.setProperty("jcef.forceDeviceScaleFactor", Double.toString(scale));
-      return new CefAppConfig(settings, new String[] {
-        "--force-device-scale-factor=" + scale
-      });
-    }
-  }
-
   @NotNull
   public JBCefClient createClient() {
     return new JBCefClient(myCefApp.createClient());
   }
 
   /**
-   * Adds a scheme handler factory. The method should be called prior to {@code JBCefApp} initialization
+   * Adds a custom scheme handler factory.
+   * <p>
+   * The method must be called prior to {@code JBCefApp} initialization
    * (performed by {@link #getInstance()}). For instance, via the IDE application service.
+   * <p>
+   * The method should not be called for built-in schemes ("html", "file", etc).
    *
    * @throws IllegalStateException if the method is called after {@code JBCefApp} initialization
    */
-  public static void addCefSchemeHandlerFactory(@NotNull JBCefSchemeHandlerFactory factory) {
+  @SuppressWarnings("unused")
+  /*public*/ static void addCefCustomSchemeHandlerFactory(@NotNull JBCefApp.JBCefCustomSchemeHandlerFactory factory) {
     if (ourInitialized.get()) {
       throw new IllegalStateException("JBCefApp has already been initialized!");
     }
-    ourSchemeHandlerFactoryList.add(factory);
+    ourCustomSchemeHandlerFactoryList.add(factory);
   }
 
-  public interface JBCefSchemeHandlerFactory extends CefSchemeHandlerFactory {
+  public interface JBCefCustomSchemeHandlerFactory extends CefSchemeHandlerFactory {
     /**
-     * A callback to register the scheme handler via calling:
+     * A callback to register the custom scheme handler via calling:
      * {@link CefSchemeRegistrar#addCustomScheme(String, boolean, boolean, boolean, boolean, boolean, boolean, boolean)}.
      */
     void registerCustomScheme(@NotNull CefSchemeRegistrar registrar);
@@ -259,17 +189,17 @@ public abstract class JBCefApp {
 
     @Override
     public void onRegisterCustomSchemes(CefSchemeRegistrar registrar) {
-      for (JBCefSchemeHandlerFactory f : ourSchemeHandlerFactoryList) {
+      for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         f.registerCustomScheme(registrar);
       }
     }
 
     @Override
     public void onContextInitialized() {
-      for (JBCefSchemeHandlerFactory f : ourSchemeHandlerFactoryList) {
+      for (JBCefCustomSchemeHandlerFactory f : ourCustomSchemeHandlerFactoryList) {
         getInstance().myCefApp.registerSchemeHandlerFactory(f.getSchemeName(), f.getDomainName(), f);
       }
-      ourSchemeHandlerFactoryList.clear(); // no longer needed
+      ourCustomSchemeHandlerFactoryList.clear(); // no longer needed
 
       getInstance().myCefApp.registerSchemeHandlerFactory(FILE_SCHEME_NAME, "", new CefSchemeHandlerFactory() {
         @Override

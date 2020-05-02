@@ -2,13 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
-import com.intellij.openapi.Disposable
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.wm.ToolWindowManager
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -27,9 +30,24 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
   private val gitHelper = GithubGitHelper.getInstance()
   private val settings = GithubPullRequestsProjectUISettings.getInstance(project)
 
-  internal var contentManager: GHPRToolWindowTabsContentManager? by observable<GHPRToolWindowTabsContentManager?>(null) { _, _, _ ->
-    updateTabs()
+  private val tabDisposalListener = object : GHPRToolWindowTabsContentManager.TabDisposalListener {
+
+    var muted = false
+
+    override fun tabDisposed(remoteUrl: GitRemoteUrlCoordinates) {
+      if (!muted) {
+        if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(remoteUrl)) settings.addHiddenUrl(remoteUrl.url)
+        updateTabs()
+      }
+    }
   }
+
+  internal var contentManager: GHPRToolWindowTabsContentManager?
+    by observable<GHPRToolWindowTabsContentManager?>(null) { _, oldManager, newManager ->
+      oldManager?.removeTabDisposalEventListener(tabDisposalListener)
+      newManager?.addTabDisposalEventListener(tabDisposalListener)
+      updateTabs()
+    }
 
   @CalledInAwt
   fun isAvailable(): Boolean = getRemoteUrls().isNotEmpty()
@@ -56,11 +74,7 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
           contentManager.removeTab(item)
         }
         for (item in delta.newItems) {
-          contentManager.addTab(item, Disposable {
-            //means that tab was closed by user
-            if (gitHelper.getPossibleRemoteUrlCoordinates(project).contains(item)) settings.addHiddenUrl(item.url)
-            ApplicationManager.getApplication().invokeLater({ updateTabs() }) { project.isDisposed }
-          })
+          contentManager.addTab(item)
         }
       }
       afterUpdate?.invoke()
@@ -91,6 +105,18 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
     }
   }
 
+  class BeforePluginUnloadListener(private val project: Project) : DynamicPluginListener {
+    override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+      if (pluginDescriptor.pluginId == PluginManager.getInstance().getPluginOrPlatformByClassName(this::class.java.name)) {
+        muteTabDisposalListener(project)
+      }
+    }
+  }
+
+  class BeforeProjectCloseListener : ProjectManagerListener {
+    override fun projectClosing(project: Project) = muteTabDisposalListener(project)
+  }
+
   companion object {
     private inline fun runInEdt(project: Project, crossinline runnable: () -> Unit) {
       val application = ApplicationManager.getApplication()
@@ -99,5 +125,9 @@ internal class GHPRToolWindowTabsManager(private val project: Project) {
     }
 
     private fun updateRemotes(project: Project) = project.service<GHPRToolWindowTabsManager>().updateTabs()
+
+    private fun muteTabDisposalListener(project: Project) {
+      project.service<GHPRToolWindowTabsManager>().tabDisposalListener.muted = true
+    }
   }
 }

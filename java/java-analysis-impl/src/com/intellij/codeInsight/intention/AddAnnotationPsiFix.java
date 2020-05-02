@@ -36,8 +36,9 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final String myAnnotation;
-  private final String[] myAnnotationsToRemove;
-  private final PsiNameValuePair[] myPairs; // not used when registering local quick fix
+  final String[] myAnnotationsToRemove;
+  @SafeFieldForPreview
+  final PsiNameValuePair[] myPairs; // not used when registering local quick fix
   protected final String myText;
   private final ExternalAnnotationsManager.AnnotationPlace myAnnotationPlace;
 
@@ -174,12 +175,19 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
         break;
       case IN_CODE:
         final PsiFile containingFile = myModifierListOwner.getContainingFile();
-        WriteCommandAction.runWriteCommandAction(project, null, null, () -> {
+        Runnable command = () -> {
           removePhysicalAnnotations(myModifierListOwner, myAnnotationsToRemove);
 
           PsiAnnotation inserted = addPhysicalAnnotationTo(myAnnotation, myPairs, target);
           JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
-        }, containingFile);
+        };
+
+        if (!containingFile.isPhysical()) {
+          command.run();
+        }
+        else {
+          WriteCommandAction.runWriteCommandAction(project, null, null, command, containingFile);
+        } 
 
         if (containingFile != file) {
           UndoUtil.markPsiFileForUndo(file);

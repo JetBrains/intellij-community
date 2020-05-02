@@ -207,11 +207,12 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
       options: {
         callback: () => {
           const configuration = rison.encode({
+            chartSettings: this.chartSettings,
             metrics: this.metrics,
             order: this.order,
             dataRequest: this.dataRequest,
           })
-          window.open("/#/aggregatedStats/line-chart/" + configuration, "_blank")
+          window.open("/#/line-chart/" + configuration, "_blank")
         }
       }
     })

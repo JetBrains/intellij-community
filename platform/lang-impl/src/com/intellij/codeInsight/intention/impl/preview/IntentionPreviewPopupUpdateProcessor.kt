@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ESCAPE
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
@@ -19,20 +20,20 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
 import com.intellij.ui.popup.PopupUpdateProcessor
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import kotlin.math.min
 
-internal class IntentionPreviewPopupUpdateProcessor(private val project: Project,
-                                                    private val originalFile: PsiFile,
-                                                    private val originalEditor: Editor) : PopupUpdateProcessor(project) {
+class IntentionPreviewPopupUpdateProcessor(private val project: Project,
+                                           private val originalFile: PsiFile,
+                                           private val originalEditor: Editor) : PopupUpdateProcessor(project) {
   private var index: Int = LOADING_PREVIEW
-  private var show = Registry.`is`("editor.intention.action.auto.preview")
+  private var show = Experiments.getInstance().isFeatureEnabled("editor.intention.action.auto.preview")
   private val editorsToRelease = mutableListOf<EditorEx>()
 
   private lateinit var popup: JBPopup
@@ -63,7 +64,7 @@ internal class IntentionPreviewPopupUpdateProcessor(private val project: Project
     }
 
     val action = intentionAction as IntentionAction
-    if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile) !== originalFile) {
+    if (!action.startInWriteAction() || action.getElementToMakeWritable(originalFile)?.containingFile !== originalFile) {
       select(NO_PREVIEW)
       return
     }
@@ -146,6 +147,15 @@ internal class IntentionPreviewPopupUpdateProcessor(private val project: Project
 
     fun getShortcutText(): String = KeymapUtil.getPreferredShortcutText(getShortcutSet().shortcuts)
     fun getShortcutSet(): ShortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)
+
+    @TestOnly
+    fun getPreviewText(project: Project,
+                       action: IntentionAction,
+                       originalFile: PsiFile,
+                       originalEditor: Editor): String? {
+      val preview = IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview()
+      return preview?.psiFile?.text
+    }
   }
 
   internal class IntentionPreviewPopupKey

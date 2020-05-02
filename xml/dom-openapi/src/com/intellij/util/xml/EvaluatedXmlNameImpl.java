@@ -6,20 +6,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
@@ -27,20 +24,19 @@ import org.jetbrains.annotations.Nullable;
 public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   private static final Key<CachedValue<Map<String,List<String>>>> NAMESPACE_PROVIDER_KEY = Key.create("NamespaceProvider");
   private static final Map<EvaluatedXmlNameImpl, EvaluatedXmlNameImpl> ourInterned =
-    ContainerUtil.newConcurrentMap();
+    new ConcurrentHashMap<>();
 
   private final XmlName myXmlName;
   private final String myNamespaceKey;
   private final boolean myEqualToParent;
 
-  private EvaluatedXmlNameImpl(@NotNull final XmlName xmlName, @Nullable final String namespaceKey, final boolean equalToParent) {
+  private EvaluatedXmlNameImpl(final @NotNull XmlName xmlName, final @Nullable String namespaceKey, final boolean equalToParent) {
     myXmlName = xmlName;
     myNamespaceKey = namespaceKey;
     myEqualToParent = equalToParent;
   }
 
-  @NotNull
-  public final String getLocalName() {
+  public final @NotNull String getLocalName() {
     return myXmlName.getLocalName();
   }
 
@@ -50,7 +46,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   @Override
-  public final EvaluatedXmlName evaluateChildName(@NotNull final XmlName name) {
+  public final EvaluatedXmlName evaluateChildName(final @NotNull XmlName name) {
     String namespaceKey = name.getNamespaceKey();
     final boolean equalToParent = Objects.equals(namespaceKey, myNamespaceKey);
     if (namespaceKey == null) {
@@ -91,8 +87,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return isNamespaceAllowed(namespace, getAllowedNamespaces(file));
   }
 
-  @NotNull
-  private List<String> getAllowedNamespaces(final XmlFile file) {
+  private @NotNull List<String> getAllowedNamespaces(final XmlFile file) {
     CachedValue<Map<String, List<String>>> value = file.getUserData(NAMESPACE_PROVIDER_KEY);
     if (value == null) {
       file.putUserData(NAMESPACE_PROVIDER_KEY, value = CachedValuesManager.getManager(file.getProject()).createCachedValue(() -> {
@@ -122,8 +117,8 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   }
 
   @Override
-  @NotNull @NonNls
-  public final String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
+  @NonNls
+  public final @NotNull String getNamespace(@NotNull XmlElement parentElement, final XmlFile file) {
     final String xmlElementNamespace = getXmlElementNamespace(parentElement);
     if (myNamespaceKey != null && !myEqualToParent) {
       final List<String> strings = getAllowedNamespaces(file);
@@ -158,7 +153,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
     return getAllowedNamespaces(file);
   }
 
-  public static EvaluatedXmlNameImpl createEvaluatedXmlName(@NotNull final XmlName xmlName, @Nullable final String namespaceKey, boolean equalToParent) {
+  public static EvaluatedXmlNameImpl createEvaluatedXmlName(final @NotNull XmlName xmlName, final @Nullable String namespaceKey, boolean equalToParent) {
     final EvaluatedXmlNameImpl name = new EvaluatedXmlNameImpl(xmlName, namespaceKey, equalToParent);
     final EvaluatedXmlNameImpl interned = ourInterned.get(name);
     if (interned != null) {

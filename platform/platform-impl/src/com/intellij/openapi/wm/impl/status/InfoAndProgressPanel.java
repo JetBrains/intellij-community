@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -527,7 +528,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     myRefreshIcon.setToolTipText(tooltip);
   }
 
-  public BalloonHandler notifyByBalloon(MessageType type, String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener) {
+  public BalloonHandler notifyByBalloon(MessageType type, @PopupContent String htmlBody, @Nullable Icon icon, @Nullable HyperlinkListener listener) {
     final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(
       htmlBody.replace("\n", "<br>"),
       icon != null ? icon : type.getDefaultIcon(),

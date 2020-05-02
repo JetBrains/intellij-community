@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
@@ -14,6 +14,7 @@ import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.InMemoryDataEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@ApiStatus.Internal
 public final class SerializationManagerImpl extends SerializationManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
@@ -58,7 +60,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
       ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
     }
 
-    StubElementTypeHolderEP.EP_NAME.addExtensionPointListener(this::dropSerializerData, this);
+    StubElementTypeHolderEP.EP_NAME.addChangeListener(this::dropSerializerData, this);
   }
 
   @NotNull
@@ -130,10 +132,11 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     if (!myShutdownPerformed.compareAndSet(false, true)) {
       return; // already shut down
     }
-    LOG.info("START StubSerializationManager SHUTDOWN");
+    String name = myFile != null ? myFile.toString() : "in-memory storage";
+    LOG.info("Start shutting down " + name);
     try {
       closeNameStorage();
-      LOG.info("END StubSerializationManager SHUTDOWN");
+      LOG.info("Finished shutting down " + name);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -218,7 +221,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  private void dropSerializerData() {
+  public void dropSerializerData() {
     //noinspection SynchronizeOnThis
     synchronized (this) {
       IStubElementType.dropRegisteredTypes();

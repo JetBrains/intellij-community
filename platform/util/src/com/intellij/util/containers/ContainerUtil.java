@@ -19,7 +19,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.IntFunction;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public class ContainerUtil extends ContainerUtilRt {
+@ApiStatus.NonExtendable
+// cannot be final because of https://plugins.jetbrains.com/plugin/7831-illuminated-cloud
+public class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
   @SafeVarargs
@@ -136,15 +138,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashMap<>(strategy);
   }
 
-  /**
-   * @deprecated Use {@link EnumMap#EnumMap(Class)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  public static @NotNull <K extends Enum<K>, V> EnumMap<K, V> newEnumMap(@NotNull Class<K> keyType) {
-    return new EnumMap<>(keyType);
-  }
-
   @Contract(pure = true)
   public static @NotNull <T> TObjectHashingStrategy<T> canonicalStrategy() {
     //noinspection unchecked
@@ -157,7 +150,11 @@ public class ContainerUtil extends ContainerUtilRt {
     return TObjectHashingStrategy.IDENTITY;
   }
 
-  @Contract(pure = true)
+  /**
+   * @deprecated Use {@link IdentityHashMap#IdentityHashMap()}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static @NotNull <K, V> IdentityHashMap<K, V> newIdentityHashMap() {
     return new IdentityHashMap<>();
   }
@@ -378,7 +375,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
-    return copy(new LinkedHashSet<>(), elements);
+    return ContainerUtilRt.copy(new LinkedHashSet<>(), elements);
   }
 
   /**
@@ -422,6 +419,9 @@ public class ContainerUtil extends ContainerUtilRt {
     return new THashSet<>(Arrays.asList(elements));
   }
 
+  /**
+   * @deprecated Use {@link THashSet#THashSet(Collection, TObjectHashingStrategy)}
+   */
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet(@NotNull TObjectHashingStrategy<T> strategy, T @NotNull ... elements) {
@@ -481,9 +481,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure = true)
   public static @NotNull <T> Set<T> newConcurrentSet() {
-    return Collections.newSetFromMap(newConcurrentMap());
+    return Collections.newSetFromMap(new ConcurrentHashMap<T, Boolean>());
   }
 
+  /**
+   * @deprecated Use {@link ConcurrentHashMap#ConcurrentHashMap()}
+   */
+  @Deprecated
   @Contract(pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> newConcurrentMap() {
     return new ConcurrentHashMap<>();
@@ -646,9 +650,14 @@ public class ContainerUtil extends ContainerUtilRt {
     public int size() {
       return myStore.size();
     }
+
+    @Override
+    public void forEach(java.util.function.Consumer<? super E> action) {
+      myStore.forEach(action);
+    }
   }
 
-  private static class ImmutableListBackedByArray<E> extends ImmutableList<E> {
+  private static final class ImmutableListBackedByArray<E> extends ImmutableList<E> {
     private final E[] myStore;
 
     private ImmutableListBackedByArray(E @NotNull [] array) {
@@ -675,6 +684,14 @@ public class ContainerUtil extends ContainerUtilRt {
         result[size] = null;
       }
       return result;
+    }
+
+    @Override
+    public void forEach(java.util.function.Consumer<? super E> action) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int i = 0, length = myStore.length; i < length; i++) {
+        action.accept(myStore[i]);
+      }
     }
   }
 
@@ -1524,13 +1541,12 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @SafeVarargs
   @Contract(pure = true)
-  public static @NotNull <T> Iterable<T> concat(final T[] @NotNull ... iterables) {
+  public static @NotNull <T> Iterable<T> concat(final T[] @NotNull ... arrays) {
     return () -> {
       //noinspection unchecked
-      Iterator<T>[] iterators = new Iterator[iterables.length];
-      for (int i = 0; i < iterables.length; i++) {
-        T[] iterable = iterables[i];
-        iterators[i] = iterate(iterable);
+      Iterator<T>[] iterators = new Iterator[arrays.length];
+      for (int i = 0; i < arrays.length; i++) {
+        iterators[i] = iterate(arrays[i]);
       }
       return concatIterators(iterators);
     };
@@ -2311,7 +2327,7 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @Contract(pure = true)
   public static @NotNull <T> Set<T> singleton(final T o, final @NotNull TObjectHashingStrategy<T> strategy) {
-    return strategy == TObjectHashingStrategy.CANONICAL ? new SingletonSet<>(o) : SingletonSet.withCustomStrategy(o, strategy);
+    return strategy == canonicalStrategy() ? new SingletonSet<>(o) : SingletonSet.withCustomStrategy(o, strategy);
   }
 
   /**
@@ -2909,7 +2925,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return sb.toString();
   }
 
-  public static class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
+  public static final class KeyOrderedMultiMap<K extends Comparable<? super K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
     }
 

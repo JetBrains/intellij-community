@@ -35,11 +35,11 @@ final class MessageViewImpl implements MessageView {
 
   @Override
   public void runWhenInitialized(@NotNull Runnable runnable) {
-    if (myToolWindow != null) {
-      runnable.run();
+    if (myToolWindow == null) {
+      myPostponedRunnables.add(runnable);
     }
     else {
-      myPostponedRunnables.add(runnable);
+      runnable.run();
     }
   }
 }

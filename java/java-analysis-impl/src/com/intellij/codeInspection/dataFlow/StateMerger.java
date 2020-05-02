@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -22,8 +22,8 @@ import java.util.*;
  */
 class StateMerger {
   private static final int COMPLEXITY_LIMIT = 250000;
-  private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
-  private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
+  private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = new IdentityHashMap<>();
+  private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = new IdentityHashMap<>();
 
   @Nullable
   List<DfaMemoryStateImpl> mergeByFacts(@NotNull List<DfaMemoryStateImpl> states) {
@@ -164,8 +164,7 @@ class StateMerger {
     Map<DfaVariableValue, Set<LongRangeSet>> ranges = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      state.forVariableStates((varValue, varState) -> {
-        DfType dfType = varState.myDfType;
+      state.forRecordedVariableTypes((varValue, dfType) -> {
         if (dfType instanceof DfIntegralType) {
           ranges.computeIfAbsent(varValue, k -> new HashSet<>()).add(((DfIntegralType)dfType).getRange());
         }
@@ -178,8 +177,8 @@ class StateMerger {
     ProgressManager.checkCanceled();
     Map<DfaMemoryStateImpl, List<DfaMemoryStateImpl>> merged = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
-      DfaVariableState variableState = state.getVariableState(var);
-      if (!(variableState.myDfType instanceof DfIntegralType)) return null;
+      DfType type = state.getDfType(var);
+      if (!(type instanceof DfIntegralType)) return null;
       merged.computeIfAbsent(copyWithoutVar(state, var), k -> new ArrayList<>()).add(state);
     }
     if (merged.size() == states.size()) return null;
@@ -191,11 +190,11 @@ class StateMerger {
   }
 
   private @NotNull DfaMemoryStateImpl copyWithoutVar(@NotNull DfaMemoryStateImpl state, @NotNull DfaVariableValue var) {
-    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> ContainerUtil.newIdentityHashMap());
+    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.computeIfAbsent(state, k -> new IdentityHashMap<>());
     DfaMemoryStateImpl copy = map.get(var);
     if (copy == null) {
       copy = state.createCopy();
-      copy.setVariableState(var, copy.createVariableState(var));
+      copy.recordVariableType(var, var.getInherentType());
       copy.flushVariable(var);
       map.put(var, copy);
     }
@@ -232,11 +231,10 @@ class StateMerger {
     }
 
     DfaValueFactory factory = state.getFactory();
-    state.forVariableStates((var, varState) -> {
-      TypeConstraint typeConstraint = varState.getTypeConstraint();
+    state.forRecordedVariableTypes((var, dfType) -> {
+      TypeConstraint typeConstraint = TypeConstraint.fromDfType(dfType);
       typeConstraint.instanceOfTypes().map(type -> new InstanceofFact(var, true, factory.fromDfType(type.asDfType()))).into(result);
       typeConstraint.notInstanceOfTypes().map(type -> new InstanceofFact(var, false, factory.fromDfType(type.asDfType()))).into(result);
-      DfType dfType = varState.myDfType;
       if (dfType instanceof DfConstantType) {
         result.add(new EqualityFact(var, true, var.getFactory().fromDfType(dfType)));
       }
@@ -397,7 +395,7 @@ class StateMerger {
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
       DfType dfType = state.getDfType(myVar);
-      if (dfType instanceof DfConstantType || 
+      if (dfType instanceof DfConstantType ||
           dfType instanceof DfAntiConstantType && ((DfAntiConstantType<?>)dfType).getNotValues().size() == 1) {
         state.flushVariable(myVar);
         if (myArg.getDfType() == DfTypes.NULL) {
@@ -451,8 +449,10 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      DfaVariableState varState = state.getVariableState(myVar);
-      state.setVariableState(myVar, varState.withoutType(TypeConstraint.fromDfType(myType.getDfType())));
+      DfType type = state.getDfType(myVar);
+      if (type instanceof DfReferenceType) {
+        state.recordVariableType(myVar, ((DfReferenceType)type).withoutType(TypeConstraint.fromDfType(myType.getDfType())));
+      }
     }
   }
 

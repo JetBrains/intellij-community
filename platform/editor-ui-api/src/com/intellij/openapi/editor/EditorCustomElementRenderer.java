@@ -39,18 +39,7 @@ public interface EditorCustomElementRenderer {
    * {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} method. For inline and after-line-end elements it should always be
    * a positive value.
    */
-  default int calcWidthInPixels(@NotNull Inlay inlay) {
-    return calcWidthInPixels(inlay.getEditor());
-  }
-
-  /**
-   * @deprecated Override/use {@link #calcWidthInPixels(Inlay)} instead. This method will be removed.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  default int calcWidthInPixels(@NotNull Editor editor) {
-    throw new RuntimeException("Method not implemented");
-  }
+  int calcWidthInPixels(@NotNull Inlay inlay);
 
   /**
    * Block element's renderer implementation can override this method to defines the height of element (in pixels). If not overridden,
@@ -70,18 +59,7 @@ public interface EditorCustomElementRenderer {
    *                     and {@link #calcHeightInPixels(Inlay)})
    * @param textAttributes attributes of surrounding text
    */
-  default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
-    paint(inlay.getEditor(), g, targetRegion, textAttributes);
-  }
-
-  /**
-   * @deprecated Override/use {@link #paint(Inlay, Graphics, Rectangle, TextAttributes)} instead. This method will be removed.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  default void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {
-    throw new RuntimeException("Method not implemented");
-  }
+  void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes);
 
   /**
    * Returns a registered id of action group, which is to be used for displaying context menu for the given custom element.
@@ -90,7 +68,7 @@ public interface EditorCustomElementRenderer {
    */
   @Nullable
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
-    return getContextMenuGroupId();
+    return null;
   }
 
   /**
@@ -104,15 +82,6 @@ public interface EditorCustomElementRenderer {
   @ApiStatus.Experimental
   @Nullable
   default ActionGroup getContextMenuGroup(@NotNull Inlay inlay) {
-    return null;
-  }
-
-  /**
-   * @deprecated Override/use {@link #getContextMenuGroupId(Inlay)} instead. This method will be removed.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  @Deprecated
-  default String getContextMenuGroupId() {
     return null;
   }
 

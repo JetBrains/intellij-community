@@ -26,8 +26,8 @@ public class CertificateWarningDialog extends DialogWrapper {
 
   public static CertificateWarningDialog createUntrustedCertificateWarning(@NotNull X509Certificate certificate) {
     return new CertificateWarningDialog(certificate,
-                                        "Untrusted Server's Certificate",
-                                        "Server's certificate is not trusted");
+                                        IdeBundle.message("dialog.title.untrusted.server.s.certificate"),
+                                        IdeBundle.message("text.server.s.certificate.trusted"));
   }
 
   public static CertificateWarningDialog createExpiredCertificateWarning(@NotNull X509Certificate certificate) {

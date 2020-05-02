@@ -178,7 +178,7 @@ public class ContainerUtilTest extends TestCase {
           list.add(ints.get(i));
         }
       }
-    }).attempts(10).assertTiming();
+    }).reattemptUntilJitSettlesDown().assertTiming();
     for (int i = 0; i < list.size(); i++) {
       assertEquals(i, list.get(i));
     }

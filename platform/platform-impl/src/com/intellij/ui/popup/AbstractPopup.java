@@ -365,7 +365,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myDimensionServiceKey = dimensionServiceKey;
   }
 
-  public void setAdText(final @NotNull String s) {
+  public void setAdText(@NotNull @NlsContexts.PopupAdvertisement String s) {
     setAdText(s, SwingConstants.LEFT);
   }
 

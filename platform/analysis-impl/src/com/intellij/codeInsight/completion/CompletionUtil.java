@@ -259,7 +259,9 @@ public class CompletionUtil {
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset);
     offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, idEndOffset);
 
-    return new CompletionAssertions.WatchingInsertionContext(offsetMap, psiFile, completionChar, lookupItems, editor);
+    List<LookupElement> items = lookupItems == null ? Collections.emptyList() : lookupItems;
+
+    return new CompletionAssertions.WatchingInsertionContext(offsetMap, psiFile, completionChar, items, editor);
   }
 
   @ApiStatus.Internal

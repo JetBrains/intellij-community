@@ -55,11 +55,11 @@ public interface MessagesService {
                                     Icon icon,
                                     PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc);
 
-  String showPasswordDialog(Project project,
-                            @DialogMessage String message,
-                            @DialogTitle String title,
-                            Icon icon,
-                            InputValidator validator);
+  @Nullable String showPasswordDialog(@Nullable Project project,
+                                      @DialogMessage String message,
+                                      @DialogTitle String title,
+                                      Icon icon,
+                                      InputValidator validator);
 
   char @Nullable [] showPasswordDialog(@NotNull Component parentComponent,
                                        @DialogMessage String message,
@@ -67,31 +67,31 @@ public interface MessagesService {
                                        Icon icon,
                                        @Nullable InputValidator validator);
 
-  String showInputDialog(@Nullable Project project,
-                         @Nullable Component parentComponent,
-                         @DialogMessage String message,
-                         @DialogTitle String title,
-                         @Nullable Icon icon,
-                         @Nullable String initialValue,
-                         @Nullable InputValidator validator,
-                         @Nullable TextRange selection,
-                         @Nullable @DetailedDescription String comment);
+  @Nullable String showInputDialog(@Nullable Project project,
+                                   @Nullable Component parentComponent,
+                                   @DialogMessage String message,
+                                   @DialogTitle String title,
+                                   @Nullable Icon icon,
+                                   @Nullable String initialValue,
+                                   @Nullable InputValidator validator,
+                                   @Nullable TextRange selection,
+                                   @Nullable @DetailedDescription String comment);
 
-  String showMultilineInputDialog(Project project,
-                                  @DialogMessage String message,
-                                  @DialogTitle String title,
-                                  String initialValue,
-                                  Icon icon,
-                                  @Nullable InputValidator validator);
+  @Nullable String showMultilineInputDialog(Project project,
+                                            @DialogMessage String message,
+                                            @DialogTitle String title,
+                                            String initialValue,
+                                            Icon icon,
+                                            @Nullable InputValidator validator);
 
-  Pair<String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
-                                                    @DialogTitle String title,
-                                                    @NlsContexts.Checkbox String checkboxText,
-                                                    boolean checked,
-                                                    boolean checkboxEnabled,
-                                                    Icon icon,
-                                                    String initialValue,
-                                                    InputValidator validator);
+  @NotNull Pair<@Nullable String, Boolean> showInputDialogWithCheckBox(@DialogMessage String message,
+                                                                       @DialogTitle String title,
+                                                                       @NlsContexts.Checkbox String checkboxText,
+                                                                       boolean checked,
+                                                                       boolean checkboxEnabled,
+                                                                       Icon icon,
+                                                                       String initialValue,
+                                                                       InputValidator validator);
 
   String showEditableChooseDialog(@DialogMessage String message,
                                   @DialogTitle String title,

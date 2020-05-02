@@ -105,7 +105,7 @@ public class PyPep8NamingInspection extends PyInspection {
 
   protected LocalQuickFix[] createRenameAndIngoreErrorQuickFixes(@Nullable PsiElement node,
                                                                  String errorCode) {
-    List<LocalQuickFix> fixes = Lists.newArrayList();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (node != null) {
       LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(node);
       if (qf != null) {
@@ -252,7 +252,7 @@ public class PyPep8NamingInspection extends PyInspection {
       if (!LOWERCASE_REGEX.matcher(name).matches()) {
         final ASTNode nameNode = function.getNameNode();
         if (nameNode != null) {
-          final List<LocalQuickFix> quickFixes = Lists.newArrayList();
+          final List<LocalQuickFix> quickFixes = new ArrayList<>();
           addFunctionQuickFixes(getHolder(), containingClass, nameNode, quickFixes, myTypeEvalContext);
           final String errorCode = "N802";
           if (!ignoredErrors.contains(errorCode)) {

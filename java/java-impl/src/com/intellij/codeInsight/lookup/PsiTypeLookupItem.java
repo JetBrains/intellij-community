@@ -269,7 +269,7 @@ public class PsiTypeLookupItem extends LookupItem implements TypedLookupItem {
       assert object instanceof PsiType;
 
       if (!(object instanceof PsiPrimitiveType)) {
-        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this, presentation.isReal()));
+        presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(this));
       }
 
       presentation.setItemText(((PsiType)object).getCanonicalText());

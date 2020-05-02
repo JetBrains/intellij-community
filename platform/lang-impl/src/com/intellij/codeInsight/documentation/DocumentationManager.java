@@ -42,7 +42,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -57,7 +57,6 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
-import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
@@ -196,15 +195,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  /**
-   * @return {@code true} if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
-   * the user presses a key);
-   * {@code false} otherwise
-   */
-  boolean isCloseOnSneeze() {
-    return myCloseOnSneeze;
-  }
-
   @Override
   protected void installComponentActions(@NotNull ToolWindow toolWindow, DocumentationComponent component) {
     ((ToolWindowEx)toolWindow).setTitleActions(component.getActions());
@@ -225,15 +215,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   public static DocumentationManager getInstance(@NotNull Project project) {
     return project.getService(DocumentationManager.class);
-  }
-
-  /**
-   * @deprecated Use {@link #DocumentationManager(Project)}
-   */
-  @NonInjectable
-  @Deprecated
-  public DocumentationManager(Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
-   this(project);
   }
 
   public DocumentationManager(@NotNull Project project) {
@@ -613,12 +594,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }, component);
   }
 
-  static String getTitle(@NotNull PsiElement element, boolean isShort) {
-    String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return isShort ? title != null ? title : element.getText()
-                   : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
-  }
-
   public static void storeOriginalElement(Project project, PsiElement originalElement, PsiElement element) {
     if (element == null) return;
     try {
@@ -788,7 +763,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   void updateToolWindowTabName(@NotNull PsiElement element) {
     if (myToolWindow != null) {
       Content content = myToolWindow.getContentManager().getSelectedContent();
-      if (content != null) content.setDisplayName(getTitle(element, true));
+      if (content != null) content.setDisplayName(getTitle(element));
     }
   }
 
@@ -1130,7 +1105,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected String getTitle(PsiElement element) {
-    return getTitle(element, true);
+    String title = SymbolPresentationUtil.getSymbolPresentableText(element);
+    return title != null ? title : element.getText();
   }
 
   @Nullable
@@ -1308,7 +1284,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @NotNull
   private static String getVcsStatus(Project project, VirtualFile file) {
-    FileStatus status = ChangeListManager.getInstance(project).getStatus(file);
+    FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
     return status != FileStatus.NOT_CHANGED ?
            "<p><span class='grayed'>VCS Status:</span> <span color='" + ColorUtil.toHex(status.getColor()) + "'>" + status.getText() + "</span>" :
            "";

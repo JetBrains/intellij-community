@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.legacyBridge.intellij
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.InheritedJdkOrderEntry
-import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
@@ -183,6 +183,7 @@ class LegacyBridgeProjectRootManager(project: Project) : ProjectRootManagerCompo
 
     private fun getLibraryIdentifier(library: Library) = "${library.table.tableLevel}$LIBRARY_NAME_DELIMITER${library.name}"
     private fun getLibraryIdentifier(libraryTable: LibraryTable, libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
-    internal fun clear() = librariesPerModuleMap.clear()
+
+    fun clear() = librariesPerModuleMap.clear()
   }
 }

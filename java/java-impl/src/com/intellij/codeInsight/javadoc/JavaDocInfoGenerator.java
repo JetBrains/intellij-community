@@ -364,7 +364,7 @@ public class JavaDocInfoGenerator {
       generatePackageJavaDoc(buffer, (PsiPackage)myElement, generatePrologue);
     }
     else if (myElement instanceof PsiJavaModule) {
-      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, generatePrologue);
+      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, generatePrologue, false);
     }
     else {
       return false;
@@ -427,6 +427,12 @@ public class JavaDocInfoGenerator {
     else if (myElement instanceof PsiField) {
       generateFieldJavaDoc(buffer, (PsiField)myElement, true, true);
     }
+    else if (myElement instanceof PsiJavaModule) {
+      generateModuleJavaDoc(buffer, (PsiJavaModule)myElement, true, true);
+    }
+    else if (myElement instanceof PsiDocComment) { // package-info case
+      generatePackageJavaDoc(buffer, (PsiDocComment)myElement, true);
+    }
     else {
       return null;
     }
@@ -483,6 +489,7 @@ public class JavaDocInfoGenerator {
       if (rendered) {
         generateAuthorAndVersionSections(buffer, comment);
       }
+      generateRecordParametersSection(buffer, aClass, comment);
       generateTypeParametersSection(buffer, aClass, rendered);
     }
     else {
@@ -495,12 +502,27 @@ public class JavaDocInfoGenerator {
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
+  private void generateRecordParametersSection(StringBuilder buffer, PsiClass recordClass, PsiDocComment comment) {
+    if (!recordClass.isRecord() || comment == null) return;
+    PsiDocTag[] localTags = comment.findTagsByName("param");
+    List<ParamInfo> collectedTags = new ArrayList<>();
+    for (PsiRecordComponent component : recordClass.getRecordComponents()) {
+      PsiDocTag localTag = getTagByName(localTags, component.getName());
+      if (localTag != null) {
+        collectedTags.add(new ParamInfo(component.getName(), localTag, ourEmptyProvider));
+      }
+    }
+    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.parameters"), collectedTags);
+  }
+
+
   private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
     buffer.append(JavaBundle.message(aClass.isInterface() ? "java.terms.interface"
-                                                          : aClass.isEnum() ? "java.terms.enum" : "java.terms.class"));
+                                                          : aClass.isEnum() ? "java.terms.enum" 
+                                                                            : aClass.isRecord() ? "java.terms.record" : "java.terms.class"));
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {
@@ -694,9 +716,7 @@ public class JavaDocInfoGenerator {
         if (node != null) {
           ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
-            if (generatePrologue) generatePrologue(buffer);
-            generateCommonSection(buffer, (PsiDocComment)docCommentNode.getPsi());
-            buffer.append(DocumentationMarkup.SECTIONS_END);
+            generatePackageJavaDoc(buffer, (PsiDocComment)docCommentNode.getPsi(), generatePrologue);
             break;
           }
         }
@@ -709,13 +729,21 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue) {
+  private void generatePackageJavaDoc(StringBuilder buffer, PsiDocComment comment, boolean generatePrologue) {
+    if (generatePrologue) generatePrologue(buffer);
+    generateCommonSection(buffer, comment);
+    buffer.append(DocumentationMarkup.SECTIONS_END);
+  }
+
+  private void generateModuleJavaDoc(StringBuilder buffer, PsiJavaModule module, boolean generatePrologue, boolean rendered) {
     if (generatePrologue) generatePrologue(buffer);
 
-    buffer.append(DocumentationMarkup.DEFINITION_START);
-    generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
-    buffer.append("module <b>").append(module.getName()).append("</b>");
-    buffer.append(DocumentationMarkup.DEFINITION_END);
+    if (!rendered) {
+      buffer.append(DocumentationMarkup.DEFINITION_START);
+      generateAnnotations(buffer, module, SignaturePlace.Javadoc, true);
+      buffer.append("module <b>").append(module.getName()).append("</b>");
+      buffer.append(DocumentationMarkup.DEFINITION_END);
+    }
 
     PsiDocComment comment = getDocComment(module);
     if (comment != null) {

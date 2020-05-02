@@ -16,7 +16,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,8 +40,8 @@ public class SSRSerializationTest extends LightPlatformTestCase {
     final InspectionToolsSupplier supplier = new InspectionToolsSupplier() {
 
       @Override
-      public @NotNull List<InspectionToolWrapper> createTools() {
-        return Arrays.asList(new LocalInspectionToolWrapper(myInspection));
+      public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
+        return Collections.singletonList(new LocalInspectionToolWrapper(myInspection));
       }
     };
     myProfile = new InspectionProfileImpl("test", supplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
@@ -71,8 +71,8 @@ public class SSRSerializationTest extends LightPlatformTestCase {
   }
 
   public void testSimple() {
-    final InspectionToolWrapper[] tools = myProfile.getInspectionTools(null);
-    assertEquals("SSBasedInspection and 1 child tool should be available", 2, tools.length);
+    List<InspectionToolWrapper<?, ?>> tools = myProfile.getInspectionTools(null);
+    assertEquals("SSBasedInspection and 1 child tool should be available", 2, tools.size());
   }
 
   public void testDefaultToolsNotWritten() {

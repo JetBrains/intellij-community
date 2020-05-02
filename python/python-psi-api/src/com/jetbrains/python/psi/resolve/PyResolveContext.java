@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +81,8 @@ public class PyResolveContext {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
   public static PyResolveContext noImplicits() {
+    Logger.getInstance(PyResolveContext.class).warn("Deprecated method used: 'noImplicits'. This method will be dropped soon." +
+                                                    "Consider migrate to the new one");
     return defaultContext();
   }
 

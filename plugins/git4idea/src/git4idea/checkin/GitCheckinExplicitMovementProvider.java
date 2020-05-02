@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -38,6 +38,9 @@ public abstract class GitCheckinExplicitMovementProvider {
   public abstract String getCommitMessage(@NotNull String originalCommitMessage);
 
   /**
+   * This method could be called several times per commit operation. For instance, to update commit options UI so that it reflects current
+   * local changes state. Use {@link #afterMovementsCommitted(Project, List)} to perform after-commit cleanup if necessary.
+   *
    * @return file movements, that should be committed explicitly
    */
   @NotNull

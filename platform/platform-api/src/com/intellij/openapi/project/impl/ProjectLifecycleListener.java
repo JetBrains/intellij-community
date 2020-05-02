@@ -20,6 +20,10 @@ public interface ProjectLifecycleListener {
   default void projectComponentsInitialized(@NotNull Project project) {
   }
 
+  /**
+   * @deprecated Deprecated for performance and stability reasons. Please find another solution.
+   */
+  @Deprecated
   default void beforeProjectLoaded(@NotNull Project project) {
   }
 

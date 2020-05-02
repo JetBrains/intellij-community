@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.Collection;
@@ -26,9 +27,9 @@ public class HgMergeDialog extends HgCommonDialogWithChoices {
                        @NotNull Collection<HgRepository> repositories,
                        @Nullable HgRepository selectedRepo) {
     super(project, repositories, selectedRepo);
-    hgRepositorySelectorComponent.setTitle("Select repository to merge");
-    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder("Merge with"));
-    setTitle("Merge");
+    hgRepositorySelectorComponent.setTitle(HgBundle.message("action.hg4idea.merge.select.repo"));
+    myBranchesBorderPanel.setBorder(IdeBorderFactory.createTitledBorder(HgBundle.message("action.hg4idea.merge.with")));
+    setTitle(HgBundle.message("action.hg4idea.Merge"));
   }
 
   @Override

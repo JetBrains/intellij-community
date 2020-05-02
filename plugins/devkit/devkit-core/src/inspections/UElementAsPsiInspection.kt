@@ -22,7 +22,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val NOT_UELEMENT = -2
 private const val NOT_PSI_ELEMENT = -1
 
-class UElementAsPsiInspection : DevKitUastInspectionBase() {
+class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val sourcePsiElement = method.sourcePsiElement ?: return null

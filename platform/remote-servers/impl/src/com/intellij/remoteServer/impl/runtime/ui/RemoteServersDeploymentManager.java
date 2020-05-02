@@ -113,8 +113,8 @@ public class RemoteServersDeploymentManager {
         if (contributor != null) {
           myProject.getMessageBus().syncPublisher(ServiceEventListener.TOPIC)
             .handle(ServiceEventListener.ServiceEvent.createResetEvent(contributor.getClass()));
-          myServerToContent.remove(server);
         }
+        myServerToContent.remove(server);
       }
     });
   }

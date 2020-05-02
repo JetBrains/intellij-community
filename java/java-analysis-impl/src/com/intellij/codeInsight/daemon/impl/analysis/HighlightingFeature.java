@@ -31,6 +31,7 @@ public enum HighlightingFeature {
   REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
+  VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   ENHANCED_SWITCH(LanguageLevel.JDK_13_PREVIEW, "feature.enhanced.switch"){
     @Override
     boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {

@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
@@ -25,10 +26,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * @author Konstantin Kolosovsky.
- */
-public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
+public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
   private JBRadioButton myPasswordChoice;
   private JBRadioButton myPrivateKeyChoice;
   private JBRadioButton mySubversionConfigChoice;
@@ -145,6 +143,10 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     return myMainPanel;
   }
 
+  @Override
+  public void dispose() {
+  }
+
   private void setConnectionChoice(@NotNull SvnConfiguration.SshConnectionType value) {
     setSelected(myPasswordChoice, value);
     setSelected(myPrivateKeyChoice, value);
@@ -202,6 +204,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   private void createUIComponents() {
     myExecutablePathTextField = new JBTextField();
-    myExecutablePathField = new TextFieldWithBrowseButton(myExecutablePathTextField);
+    myExecutablePathField = new TextFieldWithBrowseButton(myExecutablePathTextField, null, this);
+    myPrivateKeyPathField = new TextFieldWithBrowseButton(null, this);
   }
 }

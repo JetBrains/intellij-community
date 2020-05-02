@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -15,7 +16,6 @@ import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -257,31 +257,31 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   }
 
   @NotNull
-  public ToolbarDecorator setAddActionName(@Nls String name) {
+  public ToolbarDecorator setAddActionName(@ActionText String name) {
     myAddName = name;
     return this;
   }
 
   @NotNull
-  public ToolbarDecorator setEditActionName(@Nls String name) {
+  public ToolbarDecorator setEditActionName(@ActionText String name) {
     myEditName = name;
     return this;
   }
 
   @NotNull
-  public ToolbarDecorator setRemoveActionName(@Nls String name) {
+  public ToolbarDecorator setRemoveActionName(@ActionText String name) {
     myRemoveName = name;
     return this;
   }
 
   @NotNull
-  public ToolbarDecorator setMoveUpActionName(@Nls String name) {
+  public ToolbarDecorator setMoveUpActionName(@ActionText String name) {
     myMoveUpName = name;
     return this;
   }
 
   @NotNull
-  public ToolbarDecorator setMoveDownActionName(@Nls String name) {
+  public ToolbarDecorator setMoveDownActionName(@ActionText String name) {
     myMoveDownName = name;
     return this;
   }

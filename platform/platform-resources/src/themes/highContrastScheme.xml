@@ -1,10 +1,10 @@
-<scheme name="High сontrast" version="142" parent_scheme="Darcula">
+<scheme name="High contrast" version="142" parent_scheme="Darcula">
   <metaInfo>
     <property name="created">2018-11-06T13:11:44</property>
     <property name="ide">idea</property>
     <property name="ideVersion">2019.1.0.0</property>
     <property name="modified">2018-11-06T13:11:49</property>
-    <property name="originalScheme">_@user_High сontrast</property>
+    <property name="originalScheme">_@user_High contrast</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="9924" />

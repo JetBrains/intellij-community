@@ -51,7 +51,7 @@ final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl {
     FileEditorWithProvider data = getSelectedEditorWithProvider(file);
     return data != null
            ? Pair.create(new FileEditor[]{data.getFileEditor()}, new FileEditorProvider[]{data.getProvider()})
-           : Pair.create(new FileEditor[0], new FileEditorProvider[0]);
+           : Pair.create(FileEditor.EMPTY_ARRAY, new FileEditorProvider[0]);
   }
 
   @Override

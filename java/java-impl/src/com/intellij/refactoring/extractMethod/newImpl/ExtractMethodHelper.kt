@@ -75,8 +75,9 @@ object ExtractMethodHelper {
       Nullability.NULLABLE -> nullabilityManager.defaultNullable
       else -> return
     }
-    val modifierList = owner.modifierList ?: return
-    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList)
+    val target: PsiAnnotationOwner? = if (owner is PsiParameter) owner.typeElement else owner.modifierList
+    if (target == null) return
+    val annotationElement = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(annotation, PsiNameValuePair.EMPTY_ARRAY, target)
     if (annotationElement != null) {
       JavaCodeStyleManager.getInstance(owner.project).shortenClassReferences(annotationElement)
     }
@@ -128,6 +129,7 @@ object ExtractMethodHelper {
     val declaration = factory.createVariableDeclarationStatement(requireNotNull(variable.name), variable.type, null)
     val declaredVariable = declaration.declaredElements.first() as PsiVariable
     PsiUtil.setModifierProperty(declaredVariable, PsiModifier.FINAL, variable.hasModifierProperty(PsiModifier.FINAL))
+    variable.annotations.forEach { annotation -> declaredVariable.modifierList?.add(annotation) }
     return declaration
   }
 
@@ -172,5 +174,20 @@ object ExtractMethodHelper {
       is ExpressionOutput -> copy(type = boxedTypeOf(type, returnExpressions.first()))
       ArtificialBooleanOutput, is EmptyOutput -> this
     }
+  }
+
+  fun areSemanticallySame(statements: List<PsiStatement>): Boolean {
+    if (statements.isEmpty()) return true
+    if (! areSame(statements)) return false
+    val returnExpressions = statements.mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
+    return returnExpressions.all { expression -> PsiUtil.isConstantExpression(expression) || expression.type == PsiType.NULL }
+  }
+
+  fun haveReferenceToScope(elements: List<PsiElement>, scope: List<PsiElement>): Boolean {
+    val scopeRange = TextRange(scope.first().textRange.startOffset, scope.last().textRange.endOffset)
+    return elements.asSequence()
+      .flatMap { PsiTreeUtil.findChildrenOfAnyType(it, false, PsiJavaCodeReferenceElement::class.java).asSequence() }
+      .mapNotNull { reference -> reference.resolve() }
+      .any{ referencedElement -> referencedElement.textRange in scopeRange }
   }
 }

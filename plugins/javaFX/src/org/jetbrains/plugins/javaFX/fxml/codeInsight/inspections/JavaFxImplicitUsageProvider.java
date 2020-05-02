@@ -49,9 +49,7 @@ public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {
     if (name == null) return false;
     final Project project = member.getProject();
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
-    final PsiSearchHelper.SearchCostResult searchCost = RefResolveService.getInstance(project).isUpToDate()
-                                                        ? PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
-                                                        : searchHelper.isCheapEnoughToSearch(name, scope, null, null);
+    final PsiSearchHelper.SearchCostResult searchCost = searchHelper.isCheapEnoughToSearch(name, scope, null, null);
     if (searchCost == PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
       final Query<PsiReference> query = ReferencesSearch.search(member, scope);
       return query.findFirst() != null;

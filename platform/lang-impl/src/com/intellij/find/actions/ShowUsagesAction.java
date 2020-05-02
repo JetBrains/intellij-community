@@ -11,12 +11,13 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.find.usages.SearchTarget;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
-import com.intellij.model.Symbol;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -69,6 +70,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,6 +87,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
+import static com.intellij.find.actions.ResolverKt.handlePsiOrSymbol;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationTitle;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 
@@ -183,20 +186,47 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static void showSymbolUsages(@NotNull Project project, @NotNull DataContext dataContext) {
-    findShowUsages(project, dataContext, FindBundle.message("show.usages.ambiguous.title"), new UsageVariantHandler() {
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    findShowUsages(
+      project, dataContext, FindBundle.message("show.usages.ambiguous.title"),
+      createVariantHandler(project, editor, popupPosition, searchScope)
+    );
+  }
+
+  @NotNull
+  private static UsageVariantHandler createVariantHandler(@NotNull Project project,
+                                                          @Nullable Editor editor,
+                                                          @NotNull RelativePoint popupPosition,
+                                                          @NotNull SearchScope searchScope) {
+    return new UsageVariantHandler() {
 
       @Override
-      public void handleSymbol(@NotNull Symbol symbol) {
-        ShowTargetUsagesActionHandler.showUsages(project, dataContext, symbol);
+      public void handleTarget(@NotNull SearchTarget target) {
+        ShowTargetUsagesActionHandler.showUsages(
+          project, searchScope, target,
+          ShowUsagesParameters.initial(project, editor, popupPosition)
+        );
       }
 
       @Override
       public void handlePsi(@NotNull PsiElement element) {
-        Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-        RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
         startFindUsages(element, popupPosition, editor);
       }
-    });
+    };
+  }
+
+  /**
+   * Shows Usage popup for a single search target without disambiguation via Choose Target popup.
+   */
+  @ApiStatus.Internal
+  public static void showUsages(@NotNull Project project, @NotNull DataContext dataContext, @NotNull SearchTarget target) {
+    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+    RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
+    SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
+    UsageVariantHandler variantHandler = createVariantHandler(project, editor, popupPosition, searchScope);
+    handlePsiOrSymbol(variantHandler, target);
   }
 
   private static void showPsiUsages(@NotNull Project project, @NotNull AnActionEvent e, @NotNull RelativePoint popupPosition) {
@@ -570,7 +600,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static @Nullable FindUsagesOptions showDialog(@NotNull FindUsagesHandlerBase handler) {
-    FUCounterUsageLogger.getInstance().logEvent("toolbar", "ShowUsagesPopup.showSettings");
+    UIEventLogger.logUIEvent(UIEventId.ShowUsagesPopupShowSettings);
     AbstractFindUsagesDialog dialog;
     if (handler instanceof FindUsagesHandlerUi) {
       dialog = ((FindUsagesHandlerUi)handler).getFindUsagesDialog(false, false, false);
@@ -998,12 +1028,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     }
     else {
       //opening editor is performing in invokeLater
-      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() ->
-                                                                    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-                                                                      // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
-                                                                      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-                                                                        () -> AsyncEditorLoader.performWhenLoaded(editor, runnable));
-                                                                    })
+      IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+        () -> editor.getScrollingModel().runActionOnScrollingFinished(
+          () -> {
+            // after new editor created, some editor resizing events are still bubbling. To prevent hiding hint, invokeLater this
+            IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+              () -> AsyncEditorLoader.performWhenLoaded(editor, runnable)
+            );
+          })
       );
     }
   }

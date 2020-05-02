@@ -76,7 +76,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myProject = project;
     myTemporaryEntryPoints = new HashSet<>();
     myPersistentEntryPoints = new LinkedHashMap<>(); // To keep the order between readExternal to writeExternal
-    DEAD_CODE_EP_NAME.addExtensionPointListener(() -> {
+    DEAD_CODE_EP_NAME.addChangeListener(() -> {
       if (ADDITIONAL_ANNOS != null) {
         ADDITIONAL_ANNOS = null;
       }

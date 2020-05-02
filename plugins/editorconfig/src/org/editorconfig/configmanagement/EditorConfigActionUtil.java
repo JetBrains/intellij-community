@@ -33,7 +33,10 @@ public class EditorConfigActionUtil {
 
   public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
     EditorConfigNavigationActionsFactory navigationActionsFactory =
-      EditorConfigNavigationActionsFactory.getInstance(file.getVirtualFile());
+      EditorConfigNavigationActionsFactory.getInstance(file);
+    if (navigationActionsFactory == null) {
+      return AnAction.EMPTY_ARRAY;
+    }
     List<AnAction> actions = new ArrayList<>(navigationActionsFactory.getNavigationActions(file.getProject(), file.getVirtualFile()));
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }

@@ -38,18 +38,18 @@ public abstract class InconvertibleTypesChecker {
                            Map<PsiType, PsiType> checked,
                            boolean warnIfNoMutualSubclassFound,
                            boolean onTheFly) {
+    if (leftType instanceof PsiCapturedWildcardType) {
+      leftType = ((PsiCapturedWildcardType)leftType).getUpperBound();
+    }
+    if (rightType instanceof PsiCapturedWildcardType) {
+      rightType = ((PsiCapturedWildcardType)rightType).getUpperBound();
+    }
     PsiType checkedRight = checked.putIfAbsent(leftType, rightType);
     if (checkedRight != null) {
       if (!checkedRight.equals(rightType)) {
         registerEqualsError(highlightLocation, leftType, rightType, false);
       }
       return;
-    }
-    if (leftType instanceof PsiCapturedWildcardType) {
-      leftType = ((PsiCapturedWildcardType)leftType).getUpperBound();
-    }
-    if (rightType instanceof PsiCapturedWildcardType) {
-      rightType = ((PsiCapturedWildcardType)rightType).getUpperBound();
     }
     if (leftType.isAssignableFrom(rightType) || rightType.isAssignableFrom(leftType)) return;
     PsiClass leftClass = PsiUtil.resolveClassInClassTypeOnly(leftType);

@@ -2,6 +2,7 @@ package com.intellij.remoteServer.impl.runtime;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
+import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
@@ -49,7 +50,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
     return myConnections.get(server);
   }
 
-  public void removeConnection(RemoteServer<?> server) {
+  void removeConnection(RemoteServer<?> server) {
     ApplicationManager.getApplication().assertIsWriteThread();
     myConnections.remove(server);
   }
@@ -63,5 +64,21 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
   public Collection<ServerConnection> getConnections() {
     ApplicationManager.getApplication().assertIsWriteThread();
     return Collections.unmodifiableCollection(myConnections.values());
+  }
+
+  public static class DisconnectFromRemovedServer implements RemoteServerListener {
+    @Override
+    public void serverRemoved(@NotNull RemoteServer<?> server) {
+      ServerConnectionManagerImpl impl = (ServerConnectionManagerImpl)ServerConnectionManager.getInstance();
+      ServerConnection<?> connection = impl.getConnection(server);
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+
+    @Override
+    public void serverAdded(@NotNull RemoteServer<?> server) {
+      //
+    }
   }
 }

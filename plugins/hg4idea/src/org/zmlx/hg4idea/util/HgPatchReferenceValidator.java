@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.util;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 public class HgPatchReferenceValidator extends HgReferenceValidator {
@@ -35,7 +36,7 @@ public class HgPatchReferenceValidator extends HgReferenceValidator {
   @Override
   protected boolean hasConflictsWithAnotherNames(@Nullable String name) {
     myErrorText = myRepository.getAllPatchNames().contains(name)
-                  ? String.format("A patch with the \'%s\' name already exists", name) : null;
+                  ? HgBundle.message("action.hg4idea.mq.duplicated.name", name) : null;
     return myErrorText != null;
   }
 }

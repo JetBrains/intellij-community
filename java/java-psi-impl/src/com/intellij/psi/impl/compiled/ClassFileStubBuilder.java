@@ -12,7 +12,6 @@ import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -55,9 +54,10 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
       VirtualFile file = fileContent.getFile();
       try {
         if (decompiler instanceof Full) {
-          return ((Full) decompiler).getStubBuilder().buildFileStub(fileContent);
+          return ((Full)decompiler).getStubBuilder().buildFileStub(fileContent);
         }
-      } catch (ClsFormatException e) {
+      }
+      catch (ClsFormatException e) {
         if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
         else LOG.info(file.getPath() + ": " + e.getMessage());
       }
@@ -68,7 +68,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
           LOG.info("No stub built for the file " + fileContent);
         }
         return stub;
-      } catch (ClsFormatException e) {
+      }
+      catch (ClsFormatException e) {
         if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
         else LOG.info(file.getPath() + ": " + e.getMessage());
       }
@@ -77,11 +78,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
     });
   }
 
-  private static final Comparator<Object> CLASS_NAME_COMPARATOR = Comparator.comparing(o -> o.getClass().getName());
-
   @Override
   public int getStubVersion() {
-    // composite indexer
     return STUB_VERSION;
   }
 
@@ -89,7 +87,8 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
     try {
       content.getFile().setPreloadedContentHint(content.getContent());
       return computation.get();
-    } finally {
+    }
+    finally {
       content.getFile().setPreloadedContentHint(null);
     }
   }

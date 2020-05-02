@@ -81,7 +81,7 @@ public class XSLTReportConverter implements InspectionsReportConverter {
           continue;
         }
         final String fileNameWithoutExt = FileUtilRt.getNameWithoutExtension(inspectionData.getName());
-        if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt)) {
+        if (InspectionsResultUtil.DESCRIPTIONS.equals(fileNameWithoutExt) || fileNameWithoutExt.endsWith(InspectionsResultUtil.AGGREGATE)) {
           continue;
         }
 

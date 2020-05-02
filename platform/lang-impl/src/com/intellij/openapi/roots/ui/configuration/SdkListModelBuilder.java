@@ -1,10 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -18,12 +21,14 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Arrays;
 import java.util.EventListener;
 import java.util.Map;
@@ -114,16 +119,12 @@ public final class SdkListModelBuilder {
   }
 
   public void removeSdkReferenceItem(@NotNull SdkReferenceItem item) {
-    boolean hasMatch = false;
     ImmutableList.Builder<SdkReferenceItem> builder = ImmutableList.builder();
     for (SdkReferenceItem element : myReferenceItems) {
       if (Objects.equals(element, item)) continue;
 
       builder.add(element);
-      hasMatch = true;
     }
-
-    if (!hasMatch) return;
 
     myReferenceItems = builder.build();
     syncModel();
@@ -270,7 +271,22 @@ public final class SdkListModelBuilder {
 
     if (item instanceof SuggestedItem) {
       SuggestedItem suggestedItem = (SuggestedItem)item;
-      mySdkModel.addSdk(suggestedItem.getSdkType(), suggestedItem.getHomePath(), onNewSdkAdded);
+      String homePath = suggestedItem.getHomePath();
+
+      ProgressManager.getInstance().run(new Task.Modal(myProject,
+                                                       ProjectBundle.message("progress.title.jdk.combo.box.resolving.jdk.home"),
+                                                       true) {
+
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setText(ProjectBundle.message("progress.text.jdk.combo.box.resolving.jdk.home", StringUtil.trimMiddle(homePath, 50)));
+          // IDEA-237709
+          // make sure VFS has the right image of our SDK to avoid empty SDK from being created
+          VfsUtil.markDirtyAndRefresh(false, true, true, new File(homePath));
+        }
+      });
+
+      mySdkModel.addSdk(suggestedItem.getSdkType(), homePath, onNewSdkAdded);
       return true;
     }
 

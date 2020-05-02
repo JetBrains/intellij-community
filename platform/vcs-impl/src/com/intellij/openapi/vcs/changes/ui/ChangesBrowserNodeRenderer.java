@@ -97,12 +97,10 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
       setIcon(PlatformIcons.FOLDER_ICON);
       return;
     }
-    for (FilePathIconProvider provider : FilePathIconProvider.EP_NAME.getExtensionList()) {
-      Icon icon = provider.getIcon(filePath, myProject);
-      if (icon != null) {
-        setIcon(icon);
-        return;
-      }
+    Icon icon = FilePathIconProvider.EP_NAME.computeSafeIfAny(provider -> provider.getIcon(filePath, myProject));
+    if (icon != null) {
+      setIcon(icon);
+      return;
     }
     setIcon(filePath.getFileType().getIcon());
   }

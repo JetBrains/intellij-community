@@ -1,20 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.pico.DefaultPicoContainer;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Test;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
@@ -34,9 +31,9 @@ public class ExtensionsImplTest {
   @Test
   public void testCreateAndAccess() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.getExtensionPoints().length;
+    int numEP = extensionsArea.getExtensionPoints().size();
     registerInterfaceExtension(extensionsArea);
-    assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().length);
+    assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().size());
     assertThat(extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1)).withFailMessage("EP by name available").isNotNull();
   }
 
@@ -55,7 +52,7 @@ public class ExtensionsImplTest {
   @Test
   public void testUnregisterEP() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.getExtensionPoints().length;
+    int numEP = extensionsArea.getExtensionPoints().size();
     registerInterfaceExtension(extensionsArea);
 
     final boolean[] removed = {true};
@@ -71,61 +68,10 @@ public class ExtensionsImplTest {
         removed[0] = true;
       }
     }, false, null);
-    point.registerExtension(new Integer(123));
+    point.registerExtension(123);
     extensionsArea.unregisterExtensionPoint(EXTENSION_POINT_NAME_1);
-    assertThat(extensionsArea.getExtensionPoints().length).withFailMessage("Extension point should be removed").isEqualTo(numEP);
+    assertThat(extensionsArea.getExtensionPoints().size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
     assertThat(removed[0]).withFailMessage("Extension point disposed").isTrue();
-  }
-
-  @Test
-  public void testTryPicoContainer() {
-    DefaultPicoContainer rootContainer = new DefaultPicoContainer();
-    rootContainer.registerComponentInstance("plugin1", new DefaultPicoContainer(rootContainer));
-    rootContainer.registerComponentInstance("plugin2", new DefaultPicoContainer(rootContainer));
-    MutablePicoContainer container1 = (MutablePicoContainer)rootContainer.getComponentInstance("plugin1");
-    MutablePicoContainer container2 = (MutablePicoContainer)rootContainer.getComponentInstance("plugin2");
-    container1.registerComponentImplementation("component1", MyComponent1.class);
-    container1.registerComponentImplementation("component1.1", MyComponent1.class);
-    container2.registerComponentImplementation("component2", MyComponent2.class);
-    MyInterface1 testInstance = () -> { };
-    rootContainer.registerComponentInstance(testInstance);
-    MyComponent1 component1 = (MyComponent1)container1.getComponentInstance("component1");
-    assertEquals(testInstance, component1.testObject);
-    rootContainer.registerComponentInstance("component1", component1);
-    MyComponent1 component11 = (MyComponent1)container1.getComponentInstance("component1.1");
-    rootContainer.registerComponentInstance("component11", component11);
-    MyComponent2 component2 = (MyComponent2)container2.getComponentInstance("component2");
-    assertEquals(testInstance, component2.testObject);
-    assertTrue(Arrays.asList(component2.comp1).contains(component1));
-    assertTrue(Arrays.asList(component2.comp1).contains(component11));
-    rootContainer.registerComponentInstance("component2", component2);
-    rootContainer.registerComponentImplementation(MyTestComponent.class);
-    MyTestComponent testComponent = (MyTestComponent)rootContainer.getComponentInstance(MyTestComponent.class);
-    assertTrue(Arrays.asList(testComponent.comp1).contains(component1));
-    assertTrue(Arrays.asList(testComponent.comp1).contains(component11));
-    assertEquals(component2, testComponent.comp2);
-  }
-
-  @Test
-  public void testTryPicoContainer2() {
-    DefaultPicoContainer rootContainer = new DefaultPicoContainer();
-    rootContainer.registerComponentImplementation("component1", MyComponent1.class);
-    rootContainer.registerComponentImplementation("component1.1", MyComponent1.class);
-    rootContainer.registerComponentImplementation("component2", MyComponent2.class);
-    rootContainer.registerComponentImplementation(MyTestComponent.class);
-    MyInterface1 testInstance = () -> { };
-    rootContainer.registerComponentInstance(testInstance);
-    MyTestComponent testComponent = (MyTestComponent)rootContainer.getComponentInstance(MyTestComponent.class);
-    MyComponent2 component2 = (MyComponent2)rootContainer.getComponentInstance("component2");
-    MyComponent1 component11 = (MyComponent1)rootContainer.getComponentInstance("component1.1");
-    MyComponent1 component1 = (MyComponent1)rootContainer.getComponentInstance("component1");
-    assertEquals(testInstance, component1.testObject);
-    assertEquals(testInstance, component2.testObject);
-    assertTrue(Arrays.asList(component2.comp1).contains(component1));
-    assertTrue(Arrays.asList(component2.comp1).contains(component11));
-    assertTrue(Arrays.asList(testComponent.comp1).contains(component1));
-    assertTrue(Arrays.asList(testComponent.comp1).contains(component11));
-    assertEquals(component2, testComponent.comp2);
   }
 
   @Test
@@ -204,51 +150,5 @@ public class ExtensionsImplTest {
 
   public static void registerExtension(ExtensionsAreaImpl area, @NotNull final String pluginName, @NotNull final Element extensionElement) {
     area.registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement, null);
-  }
-
-  public interface MyInterface1 extends Runnable {
-  }
-
-  public interface MyInterface2 {
-  }
-
-  public interface MyInterface3 extends Runnable {
-  }
-
-  public interface MyInterface4 extends MyInterface1, MyInterface2, MyInterface3 {
-  }
-
-  public static class MyClass implements MyInterface4 {
-    @Override
-    public void run() {
-    }
-  }
-
-  public static class MyComponent1 {
-    public MyInterface1 testObject;
-
-    public MyComponent1(MyInterface1 testObject) {
-      this.testObject = testObject;
-    }
-  }
-
-  public static class MyComponent2 {
-    public MyInterface1 testObject;
-    public MyComponent1[] comp1;
-
-    public MyComponent2(MyComponent1[] comp1, MyInterface1 testObject) {
-      this.comp1 = comp1;
-      this.testObject = testObject;
-    }
-  }
-
-  public static class MyTestComponent {
-    public MyComponent1[] comp1;
-    public MyComponent2 comp2;
-
-    public MyTestComponent(MyComponent1[] comp1, MyComponent2 comp2) {
-      this.comp1 = comp1;
-      this.comp2 = comp2;
-    }
   }
 }

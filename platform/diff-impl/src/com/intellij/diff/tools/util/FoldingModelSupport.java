@@ -142,22 +142,22 @@ public class FoldingModelSupport {
     updateLineNumbers(true);
   }
 
+  protected static int[] countLines(EditorEx @NotNull [] editors) {
+    return ReadAction.compute(() -> {
+      int[] lineCount = new int[editors.length];
+      for (int i = 0; i < editors.length; i++) {
+        lineCount[i] = getLineCount(editors[i].getDocument());
+      }
+      return lineCount;
+    });
+  }
+
   private static class FoldingBuilder extends FoldingBuilderBase {
     private final EditorEx @NotNull [] myEditors;
 
     private FoldingBuilder(EditorEx @NotNull [] editors, @NotNull Settings settings) {
       super(countLines(editors), settings);
       myEditors = editors;
-    }
-
-    private static int[] countLines(EditorEx @NotNull [] editors) {
-      return ReadAction.compute(() -> {
-        int[] lineCount = new int[editors.length];
-        for (int i = 0; i < editors.length; i++) {
-          lineCount[i] = getLineCount(editors[i].getDocument());
-        }
-        return lineCount;
-      });
     }
 
     @Nullable
@@ -280,7 +280,7 @@ public class FoldingModelSupport {
     int offset = document.getLineStartOffset(lineNumber);
 
     FileBreadcrumbsCollector collector = FileBreadcrumbsCollector.findBreadcrumbsCollector(project, virtualFile);
-    List<Crumb> crumbs = ContainerUtil.newArrayList(collector.computeCrumbs(virtualFile, document, offset, null));
+    List<Crumb> crumbs = ContainerUtil.newArrayList(collector.computeCrumbs(virtualFile, document, offset, true));
     if (crumbs.isEmpty()) return null;
 
     String description = StringUtil.join(crumbs, it -> it.getText(), " > ");

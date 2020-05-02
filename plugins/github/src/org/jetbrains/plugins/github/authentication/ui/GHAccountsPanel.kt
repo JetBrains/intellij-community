@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -29,6 +28,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
@@ -63,8 +63,8 @@ internal class GHAccountsPanel(private val project: Project,
 
     selectionMode = ListSelectionModel.SINGLE_SELECTION
     emptyText.apply {
-      appendText(IdeBundle.message("github.accounts.added"))
-      appendSecondaryText(IdeBundle.message("github.accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, { addAccount() })
+      appendText(GithubBundle.message("accounts.none.added"))
+      appendSecondaryText(GithubBundle.message("accounts.add"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, { addAccount() })
       appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
     }
   }
@@ -79,7 +79,7 @@ internal class GHAccountsPanel(private val project: Project,
     addToCenter(ToolbarDecorator.createDecorator(accountList)
                   .disableUpDownActions()
                   .setAddAction { addAccount() }
-                  .addExtraAction(object : ToolbarDecorator.ElementActionButton("Set default",
+                  .addExtraAction(object : ToolbarDecorator.ElementActionButton(GithubBundle.message("accounts.set.default"),
                                                                                 AllIcons.Actions.Checked) {
                     override fun actionPerformed(e: AnActionEvent) {
                       if (accountList.selectedValue.projectDefault) return
@@ -218,7 +218,7 @@ internal class GHAccountsPanel(private val project: Project,
     val token = newTokensMap[account] ?: currentTokensMap[account]
     if (token == null) {
       accountListModel.contentsChanged(accountData.apply {
-        errorText = "Missing access token"
+        errorText = GithubBundle.message("account.token.missing")
         showReLoginLink = true
       })
       return
@@ -355,7 +355,7 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
       value.errorText?.let {
         append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
         append(" ")
-        if (value.showReLoginLink) append("Re-Login",
+        if (value.showReLoginLink) append(GithubBundle.message("accounts.relogin"),
                                           if (value.errorLinkPointedAt)
                                             SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
                                           else

@@ -17,16 +17,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -163,12 +159,11 @@ public final class CtrlMouseHandler {
 
       Editor editor = e.getEditor();
       if (!(editor instanceof EditorEx) || editor.getProject() != null && editor.getProject() != myProject) return;
-      Point point = new Point(mouseEvent.getPoint());
-      if (!EditorUtil.isPointOverText(editor, point)) {
+      if (!e.isOverText()) {
         disposeHighlighter();
         return;
       }
-      myTooltipProvider = new TooltipProvider((EditorEx)editor, editor.xyToLogicalPosition(point), ctrlMouseAction);
+      myTooltipProvider = new TooltipProvider((EditorEx)editor, e.getLogicalPosition(), ctrlMouseAction);
       myTooltipProvider.execute();
     }
   };
@@ -419,7 +414,7 @@ public final class CtrlMouseHandler {
 
     private boolean isTaskOutdated(@NotNull Editor editor) {
       return myDisposed || myProject.isDisposed() || editor.isDisposed() ||
-             !ApplicationManager.getApplication().isUnitTestMode() && !editor.getComponent().isShowing();
+             !ApplicationManager.getApplication().isUnitTestMode() && !EditorActivityManager.getInstance().isVisible(editor);
     }
 
     private int getOffset(@NotNull Editor editor) {

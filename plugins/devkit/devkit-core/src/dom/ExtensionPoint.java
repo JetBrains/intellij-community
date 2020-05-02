@@ -12,7 +12,7 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-@Presentation(typeName = "Extension Point")
+@Presentation(typeName = DevkitDomPresentationConstants.EXTENSION_POINT)
 public interface ExtensionPoint extends DomElement {
   enum Area {
     IDEA_PROJECT,

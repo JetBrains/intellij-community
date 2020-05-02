@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
@@ -143,4 +144,6 @@ public interface PsiTreeChangeListener extends EventListener {
    * @param event the event object describing the change.
    */
   void propertyChanged(@NotNull PsiTreeChangeEvent event);
+
+  ProjectExtensionPointName<PsiTreeChangeListener> EP = new ProjectExtensionPointName<>("com.intellij.psi.treeChangeListener");
 }

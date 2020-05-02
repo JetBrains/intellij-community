@@ -5,8 +5,14 @@ package org.jetbrains.plugins.github.pullrequest.action
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.RefreshAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import java.util.function.Supplier
 
-class GHPRReloadCommentsAction : RefreshAction("Refresh Pull Request Comments", null, AllIcons.Actions.Refresh) {
+class GHPRReloadCommentsAction
+  : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.comments.action"),
+                  Supplier<String?> { null },
+                  AllIcons.Actions.Refresh) {
+
   override fun update(e: AnActionEvent) {
     val selection = e.getData(GHPRActionKeys.ACTION_DATA_CONTEXT)?.pullRequestDataProvider
     e.presentation.isEnabled = selection != null

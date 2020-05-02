@@ -9,10 +9,4 @@ public interface SearchEverywhereContributorFactory<Item> {
 
   @NotNull
   SearchEverywhereContributor<Item> createContributor(@NotNull AnActionEvent initEvent);
-
-  @Nullable
-  default KeyboardShortcut getShortcut() {
-    return null;
-  }
-
 }

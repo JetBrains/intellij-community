@@ -62,7 +62,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiFile file) {
-    if (!myElement.isValid()) {
+    if (!myElement.isValid() || !myRef.getElement().isValid()) {
       return false;
     }
 

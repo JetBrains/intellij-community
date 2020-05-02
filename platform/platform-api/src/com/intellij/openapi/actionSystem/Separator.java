@@ -17,8 +17,8 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public final class Separator extends AnAction implements DumbAware, LightEditCom
   }
 
   @NotNull
-  public static Separator create(@Nullable @Nls String text) {
+  public static Separator create(@Nullable @NlsContexts.Separator String text) {
     return StringUtil.isEmptyOrSpaces(text)? ourInstance : new Separator(text);
   }
 
@@ -52,11 +52,11 @@ public final class Separator extends AnAction implements DumbAware, LightEditCom
     myDynamicText = () -> null;
   }
 
-  public Separator(@Nullable String text) {
+  public Separator(@Nullable @NlsContexts.Separator String text) {
     myDynamicText = () -> text;
   }
 
-  public Separator(@NotNull Supplier<String> dynamicText) {
+  public Separator(@NotNull Supplier<@NlsContexts.Separator String> dynamicText) {
     myDynamicText = dynamicText;
   }
 

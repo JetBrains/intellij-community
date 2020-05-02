@@ -163,6 +163,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
       smartTabsChecked && !smartTabsValid ? ApplicationBundle.message("tooltip.indent.must.be.multiple.of.tab.size.for.smart.tabs.to.operate") : null);
 
     myContinuationOption.setEnabled(enabled);
+    myCbKeepIndentsOnEmptyLines.setEnabled(enabled);
   }
 
   private static boolean isSmartTabValid(int indent, int tabSize) {

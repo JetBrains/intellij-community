@@ -46,7 +46,7 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
   @NotNull
   @Override
   public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Nullable

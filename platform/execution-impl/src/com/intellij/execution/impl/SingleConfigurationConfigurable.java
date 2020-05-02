@@ -2,16 +2,8 @@
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.RunOnTargetComboBox;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.LocatableConfigurationBase;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
@@ -20,12 +12,7 @@ import com.intellij.execution.target.TargetEnvironmentsManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,8 +32,6 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
@@ -64,9 +49,14 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import org.jetbrains.annotations.*;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.PlainDocument;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -74,22 +64,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.PlainDocument;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
 
 public final class SingleConfigurationConfigurable<Config extends RunConfiguration> extends BaseRCSettingsConfigurable {
   private static final LayeredIcon GEAR_WITH_DROPDOWN_ICON = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
@@ -510,15 +484,17 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       return;
     }
 
+
     // 3. If the project is not under VCS, keep using .idea/runConfigurations
-    if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+    RunConfigurationVcsSupport vcsSupport = myProject.getService(RunConfigurationVcsSupport.class);
+    if (!vcsSupport.hasActiveVcss(myProject)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
     }
 
     // 4. If .idea/runConfigurations is not excluded from VCS (e.g. not in .gitignore), then use it
-    if (!isDotIdeaStorageVcsIgnored()) {
+    if (!isDotIdeaStorageVcsIgnored(vcsSupport)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
@@ -548,9 +524,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myFolderPathIfStoredInArbitraryFile = baseDir.getPath() + "/.run";
   }
 
-  private boolean isDotIdeaStorageVcsIgnored() {
+  private boolean isDotIdeaStorageVcsIgnored(RunConfigurationVcsSupport vcsSupport) {
     if (myDotIdeaStorageVcsIgnored == null) {
-      myDotIdeaStorageVcsIgnored = VcsIgnoreManager.getInstance(myProject).isDirectoryVcsIgnored(getDotIdeaStoragePath(myProject));
+      myDotIdeaStorageVcsIgnored = vcsSupport.isDirectoryVcsIgnored(myProject, getDotIdeaStoragePath(myProject));
     }
     return myDotIdeaStorageVcsIgnored.booleanValue();
   }
@@ -589,6 +565,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JPanel myRunOnPanelInner;
 
     private Runnable myQuickFix = null;
+    private boolean myWindowResizedOnce = false;
 
     MyValidatableComponent() {
       myNameLabel.setLabelFor(myNameText);
@@ -698,7 +675,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myIsAllowRunningInParallel = configuration.isAllowRunningInParallel();
       myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
       myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
-      myIsAllowRunningInParallelCheckBox.setVisible(settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
+      myIsAllowRunningInParallelCheckBox.setVisible(!((ConfigurationSettingsEditorWrapper)getEditor()).isFragmented() &&
+                                                    settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
     private void resetRunOnComboBox(@Nullable String targetNameToChoose) {
@@ -736,6 +714,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           myQuickFix = quickFix;
         }
         myValidationPanel.setVisible(true);
+        Window window = UIUtil.getWindow(myWholePanel);
+        if (!myWindowResizedOnce && window != null && window.isShowing()) {
+          Dimension size = window.getSize();
+          window.setSize(size.width, size.height + myValidationPanel.getPreferredSize().height);
+          myWindowResizedOnce = true;
+        }
       }
       else {
         mySeparator.setVisible(false);

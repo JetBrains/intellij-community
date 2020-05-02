@@ -18,9 +18,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.mq.HgQDeleteCommand;
@@ -76,7 +78,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     });
     myPatchTable.setShowColumns(true);
     myPatchTable.setFillsViewportHeight(true);
-    myPatchTable.getEmptyText().setText("Nothing to show");
+    myPatchTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myPatchTable.setDragEnabled(true);
     new TableSpeedSearch(myPatchTable);
@@ -115,7 +117,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   public void updatePatchSeriesInBackground(@Nullable final Runnable runAfterUpdate) {
     final String newContent = myNeedToUpdateFileContent ? getContentFromModel() : null;
     myNeedToUpdateFileContent = false;
-    new Task.Backgroundable(myProject, "Updating patch series for " + myRepository.getPresentableUrl()) {
+    new Task.Backgroundable(myProject, HgBundle.message("action.hg4idea.mq.updating", myRepository.getPresentableUrl())) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (newContent != null) {
@@ -231,12 +233,11 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
       final List<String> names = getSelectedPatchNames();
       if (names.isEmpty()) return;
 
-      if (Messages.showOkCancelDialog(myRepository.getProject(), String
-                                        .format("You are going to delete selected %s. Would you like to continue?",
-                                                StringUtil.pluralize("patch", names.size())),
-                                      "Delete Confirmation", Messages.getWarningIcon()) == Messages.OK) {
+      if (Messages.showOkCancelDialog(myRepository.getProject(),
+                                      HgBundle.message("action.hg4idea.mq.delete.confirmation", names.size()),
+                                      HgBundle.message("delete.confirmation.title"), Messages.getWarningIcon()) == Messages.OK) {
         Runnable deleteTask = () -> {
-          ProgressManager.getInstance().getProgressIndicator().setText("Deleting patches...");
+          ProgressManager.getInstance().getProgressIndicator().setText(HgBundle.message("action.hg4idea.mq.delete.progress"));
           new HgQDeleteCommand(myRepository).executeInCurrentThread(names);
         };
         updatePatchSeriesInBackground(deleteTask);

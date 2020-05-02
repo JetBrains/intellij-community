@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.command.HgMergeCommand;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -89,7 +90,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     MergeAction(@NotNull Project project,
                        @NotNull List<HgRepository> repositories,
                        @NotNull String branchName) {
-      super(project, "Merge", repositories, branchName);
+      super(project, HgBundle.message("action.hg4idea.Merge"), repositories, branchName);
     }
 
     @Override
@@ -107,7 +108,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     UpdateAction(@NotNull Project project,
                         @NotNull List<HgRepository> repositories,
                         @NotNull String branchName) {
-      super(project, "Update", repositories, branchName);
+      super(project, HgBundle.message("action.hg4idea.Update"), repositories, branchName);
     }
 
     @Override
@@ -120,7 +121,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     CompareAction(@NotNull Project project,
                          @NotNull List<HgRepository> repositories,
                          @NotNull String branchName) {
-      super(project, "Compare", repositories, branchName);
+      super(project, HgBundle.message("action.hg4idea.Compare"), repositories, branchName);
     }
 
     @Override

@@ -41,7 +41,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
   private final MergingUpdateQueue myUpdateQueue;
 
   public static MavenProjectIndicesManager getInstance(Project p) {
-    return p.getComponent(MavenProjectIndicesManager.class);
+    return p.getService(MavenProjectIndicesManager.class);
   }
 
   public MavenProjectIndicesManager(Project project) {
@@ -60,7 +60,7 @@ public final class MavenProjectIndicesManager extends MavenSimpleProjectComponen
       scheduleUpdateIndicesList();
     }
 
-    MavenRepositoryProvider.EP_NAME.addExtensionPointListener(this::scheduleUpdateIndicesList, myProject);
+    MavenRepositoryProvider.EP_NAME.addChangeListener(this::scheduleUpdateIndicesList, myProject);
 
     getMavenProjectManager().addManagerListener(new MavenProjectsManager.Listener() {
       @Override

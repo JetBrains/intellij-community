@@ -333,7 +333,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
-        .nonNull().flatArray(PsiExpressionList::getExpressions).allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
+        .nonNull().flatArray(PsiExpressionList::getExpressions)
+        .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiExpression.class)).skip(1))
+        .allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
         continue;
       }
       coveredSwitches.add(statement);

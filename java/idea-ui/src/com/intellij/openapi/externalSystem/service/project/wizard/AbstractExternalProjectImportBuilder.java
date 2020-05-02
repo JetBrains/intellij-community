@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -40,7 +40,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,7 +160,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final boolean isFromUI = model != null;
 
     final List<Module> modules = new SmartList<>();
-    final Map<ModifiableRootModel, Module> moduleMap = ContainerUtil.newIdentityHashMap();
+    final Map<ModifiableRootModel, Module> moduleMap = new IdentityHashMap<>();
     final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
       project, model, (ModulesConfigurator)modulesProvider, artifactModel) {
 

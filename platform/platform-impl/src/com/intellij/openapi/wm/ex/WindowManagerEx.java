@@ -28,6 +28,7 @@ public abstract class WindowManagerEx extends WindowManager {
   }
 
   @Override
+  @ApiStatus.Internal
   public abstract @Nullable IdeFrameImpl getFrame(@Nullable Project project);
 
   @Override

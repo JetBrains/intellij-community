@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 
 public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
@@ -228,10 +228,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   public static SdkType @NotNull [] getAllTypes() {
-    //noinspection deprecation
-    SdkType[] components = ApplicationManager.getApplication().getComponents(SdkType.class);
-    List<SdkType> list1 = components.length == 0 ? Collections.emptyList() : Arrays.asList(components);
-    return ContainerUtil.concat(list1, EP_NAME.getExtensionList()).toArray(new SdkType[0]);
+    return EP_NAME.getExtensions();
   }
 
   @Nullable

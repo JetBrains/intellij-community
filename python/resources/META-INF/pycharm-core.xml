@@ -41,7 +41,7 @@
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
-    <group>
+    <group id="PyCharm.MarkRootGroup">
       <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>
       <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
       <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>

@@ -22,8 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPLIED;
-import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.SUCCESS;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.*;
 
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance(GenericPatchApplier.class);
@@ -111,21 +110,21 @@ public class GenericPatchApplier {
 
   public ApplyPatchStatus getStatus() {
     if (! myNotExact.isEmpty()) {
-      return ApplyPatchStatus.FAILURE;
+      return FAILURE;
     } else {
       if (myTransformations.isEmpty() && myHadAlreadyAppliedMet) return ALREADY_APPLIED;
       boolean haveAlreadyApplied = myHadAlreadyAppliedMet;
       boolean haveTrue = false;
       for (MyAppliedData data : myTransformations.values()) {
         if (data.isHaveAlreadyApplied()) {
-          haveAlreadyApplied |= true;
+          haveAlreadyApplied = true;
         } else {
           haveTrue = true;
         }
       }
-      if (haveAlreadyApplied && ! haveTrue) return ALREADY_APPLIED;
-      if (haveAlreadyApplied) return ApplyPatchStatus.PARTIAL;
-      return ApplyPatchStatus.SUCCESS;
+      if (haveAlreadyApplied && !haveTrue) return ALREADY_APPLIED;
+      if (haveAlreadyApplied) return PARTIAL;
+      return SUCCESS;
     }
   }
 
@@ -588,7 +587,7 @@ public class GenericPatchApplier {
           // deletion
           final UnfairTextRange textRange = new UnfairTextRange(j, i + (cntStart - endSize));
           myTransformations.put(textRange, new MyAppliedData(Collections.emptyList(), value.isHaveAlreadyApplied(),
-                                                             value.isPlaceCoinside(), value.isChangedCoinside(), value.myChangeType));
+                                                             value.isPlaceCoincide(), value.isChangedCoincide(), value.myChangeType));
           processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
         }
       }
@@ -599,16 +598,16 @@ public class GenericPatchApplier {
           assert cntStart > 0;
           final MyAppliedData newData =
             new MyAppliedData(new ArrayList<>(list.subList(cntStart - (j - i), endSize)), value.isHaveAlreadyApplied(),
-                              value.isPlaceCoinside(),
-                              value.isChangedCoinside(), value.myChangeType);
+                              value.isPlaceCoincide(),
+                              value.isChangedCoincide(), value.myChangeType);
           final TextRange newRange = new TextRange(i, i);
           myTransformations.put(newRange, newData);
           processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
           return;
         }
         final MyAppliedData newData =
-          new MyAppliedData(new ArrayList<>(list.subList(cntStart, endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoinside(),
-                            value.isChangedCoinside(), value.myChangeType);
+          new MyAppliedData(new ArrayList<>(list.subList(cntStart, endSize)), value.isHaveAlreadyApplied(), value.isPlaceCoincide(),
+                            value.isChangedCoincide(), value.myChangeType);
         final TextRange newRange = new TextRange(j, i);
         myTransformations.put(newRange, newData);
         processAppliedInfo(splitHunk, range, contextOffsetInPatchSteps, AppliedTextPatch.HunkStatus.EXACTLY_APPLIED);
@@ -1024,7 +1023,7 @@ public class GenericPatchApplier {
           return beforePair;
         }
 
-        // take longer coinsiding
+        // take longer coinciding
         final int beforeCommon = myBeforeAfter.getBefore().size() - beforeCheckResult;
         final int afterCommon = myBeforeAfter.getAfter().size() - afterCheckResult;
         if (beforeCommon > 0 && afterCommon > 0) {
@@ -1082,9 +1081,9 @@ public class GenericPatchApplier {
       linesToSb(sb, hunk.getAfterAll(), true);
     }
     iterateTransformations(range -> {
-      List<String> baseLineslist = myLines.subList(range.getStartOffset(), range.getEndOffset() + 1);
+      List<String> baseLinesList = myLines.subList(range.getStartOffset(), range.getEndOffset() + 1);
       boolean withLineBreak = !containsLastLine(range) || myBaseFileEndsWithNewLine;
-      linesToSb(sb, baseLineslist, withLineBreak);
+      linesToSb(sb, baseLinesList, withLineBreak);
     }, range -> {
       final MyAppliedData appliedData = myTransformations.get(range);
       List<String> list = appliedData.getList();
@@ -1297,19 +1296,19 @@ public class GenericPatchApplier {
   public static class MyAppliedData {
     private List<String> myList;
     private final boolean myHaveAlreadyApplied;
-    private final boolean myPlaceCoinside;
-    private final boolean myChangedCoinside;
+    private final boolean myPlaceCoincide;
+    private final boolean myChangedCoincide;
     private final ChangeType myChangeType;
 
     public MyAppliedData(List<String> list,
                          boolean alreadyApplied,
-                         boolean placeCoinside,
-                         boolean changedCoinside,
+                         boolean placeCoincide,
+                         boolean changedCoincide,
                          ChangeType changeType) {
       myList = list;
       myHaveAlreadyApplied = alreadyApplied;
-      myPlaceCoinside = placeCoinside;
-      myChangedCoinside = changedCoinside;
+      myPlaceCoincide = placeCoincide;
+      myChangedCoincide = changedCoincide;
       myChangeType = changeType;
     }
 
@@ -1326,12 +1325,12 @@ public class GenericPatchApplier {
       return myHaveAlreadyApplied;
     }
 
-    public boolean isPlaceCoinside() {
-      return myPlaceCoinside;
+    public boolean isPlaceCoincide() {
+      return myPlaceCoincide;
     }
 
-    public boolean isChangedCoinside() {
-      return myChangedCoinside;
+    public boolean isChangedCoincide() {
+      return myChangedCoincide;
     }
   }
 

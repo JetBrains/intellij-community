@@ -19,6 +19,7 @@ import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -49,7 +50,7 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public List<GrParameterInfo> getAllMethodParameters(GrMethod sourceMethod) {
+  public List<GrParameterInfo> getAllMethodParameters(@NotNull GrMethod sourceMethod) {
     return new GrMethodDescriptor(sourceMethod).getParameters();
   }
 
@@ -95,7 +96,7 @@ public class GroovyIntroduceParameterObjectDelegate
   }
 
   @Override
-  public ChangeInfo createChangeSignatureInfo(GrMethod method, List<GrParameterInfo> newParameterInfos, boolean delegate) {
+  public ChangeInfo createChangeSignatureInfo(GrMethod method, List<? extends GrParameterInfo> newParameterInfos, boolean delegate) {
     final PsiType returnType = method.getReturnType();
     return new GrChangeInfoImpl(method,
                                 VisibilityUtil.getVisibilityModifier(method.getModifierList()),

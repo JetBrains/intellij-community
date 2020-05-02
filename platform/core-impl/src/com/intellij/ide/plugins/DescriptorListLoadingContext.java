@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SafeJdomFactory;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
@@ -26,8 +28,9 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
-  static final int SKIP_DISABLED_PLUGINS = 4;
-  static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 4;
+  static final int IGNORE_MISSING_SUB_DESCRIPTOR = 4;
+  static final int SKIP_DISABLED_PLUGINS = 8;
+  static final int CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS = 16;
 
   private static final Logger LOG = PluginManagerCore.getLogger();
 
@@ -47,26 +50,27 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   private volatile String defaultVersion;
 
   final boolean ignoreMissingInclude;
+  final boolean ignoreMissingSubDescriptor;
   final boolean skipDisabledPlugins;
-
-  // enable when unit tests will be added
-  @SuppressWarnings("FieldMayBeStatic")
-  final boolean readConditionalConfigDirectlyIfPossible = false;
 
   boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
 
   private final Map<String, PluginId> optionalConfigNames;
 
+  String bundledPluginsPath = PathManager.getPreInstalledPluginsPath();
+  boolean loadBundledPlugins = !PluginManagerCore.isUnitTestMode;
+
   public static @NotNull DescriptorListLoadingContext createSingleDescriptorContext(@NotNull Set<PluginId> disabledPlugins) {
-    return new DescriptorListLoadingContext(0, disabledPlugins, new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber()));
+    return new DescriptorListLoadingContext(IGNORE_MISSING_SUB_DESCRIPTOR, disabledPlugins, PluginManagerCore.createLoadingResult(null));
   }
 
   DescriptorListLoadingContext(int flags, @NotNull Set<PluginId> disabledPlugins, @NotNull PluginLoadingResult result) {
     this.result = result;
     this.disabledPlugins = disabledPlugins;
     ignoreMissingInclude = (flags & IGNORE_MISSING_INCLUDE) == IGNORE_MISSING_INCLUDE;
+    ignoreMissingSubDescriptor = (flags & IGNORE_MISSING_SUB_DESCRIPTOR) == IGNORE_MISSING_SUB_DESCRIPTOR;
     skipDisabledPlugins = (flags & SKIP_DISABLED_PLUGINS) == SKIP_DISABLED_PLUGINS;
-    optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? ContainerUtil.newConcurrentMap() : null;
+    optionalConfigNames = (flags & CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS) == CHECK_OPTIONAL_CONFIG_NAME_UNIQUENESS ? new ConcurrentHashMap<>() : null;
 
     maxThreads = (flags & IS_PARALLEL) == IS_PARALLEL ? (Runtime.getRuntime().availableProcessors() - 1) : 1;
     if (maxThreads > 1) {
@@ -131,7 +135,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
   public @NotNull String getDefaultVersion() {
     String result = defaultVersion;
     if (result == null) {
-      result = this.result.productBuildNumber.asStringWithoutProductCode();
+      result = this.result.productBuildNumber.get().asStringWithoutProductCode();
       defaultVersion = result;
     }
     return result;
@@ -188,9 +192,11 @@ final class PluginXmlFactory extends SafeJdomFactory.BaseSafeJdomFactory {
   final Interner<String> stringInterner = new HashSetInterner<String>(ContainerUtil.concat(CLASS_NAME_LIST,
                                                                                            Arrays.asList("id",
                                                                                                          PluginManagerCore.VENDOR_JETBRAINS,
-                                                                                                         IdeaPluginDescriptorImpl.APPLICATION_SERVICE,
-                                                                                                         IdeaPluginDescriptorImpl.PROJECT_SERVICE,
-                                                                                                         IdeaPluginDescriptorImpl.MODULE_SERVICE))) {
+                                                                                                         XmlReader.APPLICATION_SERVICE,
+                                                                                                         XmlReader.PROJECT_SERVICE,
+                                                                                                         XmlReader.MODULE_SERVICE))) {
+
+
     @Override
     public @NotNull String intern(@NotNull String name) {
       // doesn't make any sense to intern long texts (JdomInternFactory doesn't intern CDATA, but plugin description can be simply Text)

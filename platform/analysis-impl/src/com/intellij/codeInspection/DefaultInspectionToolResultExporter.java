@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.google.common.collect.Lists;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -11,6 +10,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
@@ -33,6 +33,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -179,9 +180,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
+    final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
     try {
-      final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
-
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
       problemClassElement.addContent(myToolWrapper.getDisplayName());
@@ -219,11 +219,11 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       @NonNls String problemText = StringUtil
         .replace(StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : ""), " #loc ", " ");
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
-      descriptionElement.addContent(problemText);
+      descriptionElement.addContent(sanitizeIllegalXmlChars(problemText));
       element.addContent(descriptionElement);
 
       Element highLightedElement = new Element("highlighted_element");
-      highLightedElement.addContent(highlightedText);
+      highLightedElement.addContent(sanitizeIllegalXmlChars(highlightedText));
       element.addContent(highLightedElement);
 
       if (descriptor instanceof ProblemDescriptorBase) {
@@ -237,9 +237,19 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
     }
     catch (RuntimeException e) {
-      e.printStackTrace();
-      LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName() + ", problem descriptor " + descriptor);
+      String message = "Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " +
+                       myToolWrapper.getShortName() + ", problem descriptor " + descriptor;
+      if (psiElement != null) {
+        message += ", element class: " + psiElement.getClass() + ", containing file: " + psiElement.getContainingFile();
+      }
+      LOG.error(message, e);
     }
+  }
+
+  private static String sanitizeIllegalXmlChars(String text) {
+    if (Verifier.checkCharacterData(text) == null) return text;
+    return text.codePoints().map(cp -> Verifier.isXMLCharacter(cp) ? cp : '?')
+      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
   }
 
   protected String getSeverityDelegateName() {
@@ -252,7 +262,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
 
-  static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
+  private static @NotNull SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
     return new SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>() {
       @NotNull
       @Override
@@ -273,7 +283,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         final Tools tools = context.getTools().get(shortName);
         if (tools != null) {
           for (ScopeToolState state : tools.getTools()) {
-            InspectionToolWrapper toolWrapper = state.getTool();
+            InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
             if (toolWrapper == getToolWrapper()) {
               return context.getCurrentProfile().getErrorLevel(HighlightDisplayKey.find(shortName), psiElement).getSeverity();
             }
@@ -396,7 +406,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     checkFromSameFile(refElement, descriptors);
     if (filterSuppressed) {
-      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)) {
+      if (myContext.getOutputPath() == null || !(myToolWrapper instanceof LocalInspectionToolWrapper)
+          || this instanceof AggregateResultsExporter) {
         myProblemElements.put(refElement, descriptors);
       }
       else {
@@ -419,7 +430,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     if (pointer == null) return;
     VirtualFile entityFile = ensureNotInjectedFile(pointer.getVirtualFile());
     if (entityFile == null) return;
-    Lists.newArrayList(descriptors).forEach(d -> {
+    for (CommonProblemDescriptor d : descriptors) {
       if (d instanceof ProblemDescriptorBase) {
         VirtualFile file = ((ProblemDescriptorBase)d).getContainingFile();
         if (file != null) {
@@ -427,7 +438,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
                          "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
         }
       }
-    });
+    }
   }
 
   @Contract("null -> null")

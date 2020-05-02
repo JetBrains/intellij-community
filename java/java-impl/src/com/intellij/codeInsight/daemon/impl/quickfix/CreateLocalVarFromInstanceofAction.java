@@ -19,19 +19,22 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author cdr
@@ -193,14 +196,23 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       if (decl == null) return;
       decl = (PsiDeclarationStatement)CodeStyleManager.getInstance(project).reformat(decl);
       decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
+      if (decl == null) return;
 
       PsiLocalVariable localVariable = (PsiLocalVariable)decl.getDeclaredElements()[0];
+      PsiExpression initializer = Objects.requireNonNull(localVariable.getInitializer());
+      List<String> names = new VariableNameGenerator(initializer, VariableKind.LOCAL_VARIABLE).byExpression(initializer)
+        .byType(localVariable.getType()).generateAll(true);
+      PsiIdentifier identifier = Objects.requireNonNull(localVariable.getNameIdentifier());
+      if (!file.isPhysical()) {
+        identifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier(names.get(0)));
+        return;
+      }
+      
       TemplateBuilderImpl builder = new TemplateBuilderImpl(localVariable);
       builder.setEndVariableAfter(localVariable.getNameIdentifier());
 
-      Template template = generateTemplate(project, localVariable.getInitializer(), localVariable.getType());
-
-      Editor newEditor = CreateFromUsageBaseFix.positionCursor(project, file, localVariable.getNameIdentifier());
+      Template template = generateTemplate(project, names);
+      Editor newEditor = CreateFromUsageBaseFix.positionCursor(project, file, identifier);
       if (newEditor == null) return;
       TextRange range = localVariable.getNameIdentifier().getTextRange();
       newEditor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
@@ -305,8 +317,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(a)b", instanceOfExpression);
     PsiType castType = instanceOfExpression.getCheckType().getType();
-    cast.getCastType().replace(factory.createTypeElement(castType));
-    cast.getOperand().replace(instanceOfExpression.getOperand());
+    Objects.requireNonNull(cast.getCastType()).replace(factory.createTypeElement(castType));
+    Objects.requireNonNull(cast.getOperand()).replace(instanceOfExpression.getOperand());
     PsiDeclarationStatement decl = factory.createVariableDeclarationStatement("xxx", castType, cast);
     final Boolean createFinals = JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_FINALS;
     if (createFinals != null) {
@@ -444,15 +456,15 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     return element instanceof PsiPrefixExpression && ((PsiPrefixExpression)element).getOperationTokenType() == JavaTokenType.EXCL;
   }
 
-  private static Template generateTemplate(Project project, PsiExpression initializer, PsiType type) {
+  private static Template generateTemplate(Project project, List<String> names) {
     final TemplateManager templateManager = TemplateManager.getInstance(project);
     final Template template = templateManager.createTemplate("", "");
     template.setToReformat(true);
 
-    final SuggestedNameInfo suggestedNameInfo = IntroduceVariableBase.getSuggestedName(type, initializer, initializer);
-    final Result result = suggestedNameInfo.names.length == 0 ? null : new TextResult(suggestedNameInfo.names[0]);
+    final Result result = new TextResult(names.get(0));
 
-    Expression expr = new ConstantNode(result).withLookupStrings(suggestedNameInfo.names.length > 1 ? suggestedNameInfo.names : ArrayUtilRt.EMPTY_STRING_ARRAY);
+    Expression expr = new ConstantNode(result).withLookupStrings(
+      names.size() > 1 ? ArrayUtil.toStringArray(names) : ArrayUtilRt.EMPTY_STRING_ARRAY);
     template.addVariable("", expr, expr, true);
 
     return template;

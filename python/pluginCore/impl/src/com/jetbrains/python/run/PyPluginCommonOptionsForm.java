@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
-import com.google.common.collect.Lists;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
@@ -58,7 +57,7 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private JBCheckBox myAddSourceRootsCheckbox;
   private JComponent labelAnchor;
 
-  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
+  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
   public PyPluginCommonOptionsForm(PyCommonOptionsFormData data) {
     // setting modules

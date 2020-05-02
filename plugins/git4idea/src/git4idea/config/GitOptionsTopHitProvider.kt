@@ -12,7 +12,7 @@ internal class GitOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
   }
 
   override fun getOptions(project: Project): Collection<OptionDescription> {
-    if (isEnabled(project, GitVcs.getInstance(project))) {
+    if (isEnabled(project, GitVcs.getKey())) {
       return gitOptionDescriptors(project)
     }
     return emptyList()

@@ -52,7 +52,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
             HighlightInfo fullInfo = ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project))
               .findHighlightByOffset(editor.getDocument(), editor.getCaretModel().getOffset(), false);
             DaemonTooltipUtil.showInfoTooltip(fullInfo != null ? fullInfo : infoToGo,
-                                              editor, editor.getCaretModel().getOffset(), 0, false, true);
+                                              editor, editor.getCaretModel().getOffset(), false, true);
           }
         });
         return;
@@ -139,7 +139,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     );
 
     IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-    InspectionProblemsView.getInstance(project).selectProblem(info);
+    InspectionProblemsView.selectProblemIfVisible(project, info);
   }
 
   private static int getNavigationPositionFor(HighlightInfo info, Document document) {

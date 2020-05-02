@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -21,7 +22,7 @@ import javax.swing.JLabel
 internal class GHPRDirectionPanel : NonOpaquePanel() {
   private val from = createLabel()
   private val to = createLabel()
-  private val checkoutLink = LinkLabel<Any>("Checkout", null) { _, _ ->
+  private val checkoutLink = LinkLabel<Any>(VcsBundle.message("vcs.command.name.checkout"), null) { _, _ ->
     val action = ActionManager.getInstance().getAction("Github.PullRequest.Branch.Create")
     ActionUtil.invokeAction(action, this, ActionPlaces.UNKNOWN, null, null)
   }.apply {

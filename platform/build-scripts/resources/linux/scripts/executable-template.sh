@@ -54,6 +54,8 @@ IDE_BIN_HOME=$(pwd)
 IDE_HOME=$("$DIRNAME" "$IDE_BIN_HOME")
 cd "${OLDPWD}" || exit 2
 
+PATHS_SELECTOR="__system_selector__"
+
 # ---------------------------------------------------------------------
 # Locate a JDK installation directory command -v will be used to run the IDE.
 # Try (in order): $__product_uc___JDK, .../__vm_options__.jdk, .../jbr, .../jre64, $JDK_HOME, $JAVA_HOME, "java" in $PATH.
@@ -63,8 +65,8 @@ if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
   JDK="$__product_uc___JDK"
 fi
 
-if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
-  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__.jdk")
+if [ -z "$JDK" ] && [ -s "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
+  USER_JRE=$("$CAT" "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__.jdk")
   if [ ! -d "$USER_JRE" ]; then
     USER_JRE="$IDE_HOME/$USER_JRE"
   fi
@@ -168,9 +170,9 @@ if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; t
 elif [ -r "$IDE_HOME.vmoptions" ]; then
   # Toolbox
   VM_OPTIONS_FILE="$IDE_HOME.vmoptions"
-elif [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__$BITS.vmoptions" ]; then
+elif [ -r "${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions" ]; then
   # user-overridden
-  VM_OPTIONS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/__system_selector__/__vm_options__$BITS.vmoptions"
+  VM_OPTIONS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/__product_vendor__/${PATHS_SELECTOR}/__vm_options__$BITS.vmoptions"
 elif [ -r "$IDE_BIN_HOME/__vm_options__$BITS.vmoptions" ]; then
   # default, standard installation
   VM_OPTIONS_FILE="$IDE_BIN_HOME/__vm_options__$BITS.vmoptions"
@@ -210,7 +212,7 @@ IFS="$(printf '\n\t')"
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___product_uc___%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in___product_uc__.hprof" \
-  -Didea.paths.selector=__system_selector__ \
+  -Didea.paths.selector=${PATHS_SELECTOR} \
   "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \

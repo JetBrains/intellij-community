@@ -184,11 +184,6 @@ public class TestNGFramework extends JavaTestFramework {
   }
 
   @Override
-  public char getMnemonic() {
-    return 'N';
-  }
-
-  @Override
   public FileTemplateDescriptor getTestClassFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Class.java");
   }

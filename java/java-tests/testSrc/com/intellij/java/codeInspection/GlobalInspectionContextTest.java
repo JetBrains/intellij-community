@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -39,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
@@ -91,9 +77,9 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
 
   public void testRunInspectionContext() {
     InspectionProfile profile = new InspectionProfileImpl("foo");
-    InspectionToolWrapper[] tools = profile.getInspectionTools(null);
+    List<InspectionToolWrapper<?, ?>> tools = profile.getInspectionTools(null);
     PsiFile file = createDummyFile("xx.txt", "xxx");
-    for (InspectionToolWrapper toolWrapper : tools) {
+    for (InspectionToolWrapper<?, ?> toolWrapper : tools) {
       if (!toolWrapper.isEnabledByDefault()) {
         InspectionManagerEx instance = (InspectionManagerEx)InspectionManager.getInstance(myProject);
         GlobalInspectionContextImpl context = RunInspectionIntention.createContext(toolWrapper, instance, file);
@@ -102,7 +88,7 @@ public class GlobalInspectionContextTest extends JavaCodeInsightTestCase {
         return;
       }
     }
-    fail("No disabled tools found: " + Arrays.asList(tools));
+    fail("No disabled tools found: " + tools);
   }
 
   public void testJavaMethodExternalization() throws Exception {

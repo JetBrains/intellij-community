@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -27,7 +27,6 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.ArrayUtil
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
@@ -36,6 +35,7 @@ import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.jar.Manifest
 
@@ -69,7 +69,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private val myLogger = lazy { IdeaLogger() }
   private val myOptions = lazy { getOptions() }
-  private val myFutures = ContainerUtil.newConcurrentMap<VirtualFile, Future<CharSequence>>()
+  private val myFutures = ConcurrentHashMap<VirtualFile, Future<CharSequence>>()
   @Volatile private var myLegalNoticeAccepted = false
 
   init {

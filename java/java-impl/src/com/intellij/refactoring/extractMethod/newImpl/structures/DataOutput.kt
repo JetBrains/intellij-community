@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.structures
 
 import com.intellij.codeInsight.Nullability
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiVariable
@@ -9,22 +10,27 @@ import com.intellij.psi.PsiVariable
 sealed class DataOutput {
   abstract val type: PsiType
   abstract val nullability: Nullability
+  abstract val annotations: List<PsiAnnotation>
 
   data class VariableOutput(override val type: PsiType, val variable: PsiVariable, val declareType: Boolean,
-                            override val nullability: Nullability = Nullability.UNKNOWN) : DataOutput() {
+                            override val nullability: Nullability = Nullability.UNKNOWN,
+                            override val annotations: List<PsiAnnotation> = emptyList()) : DataOutput() {
     val name: String = requireNotNull(variable.name)
   }
 
   data class ExpressionOutput(override val type: PsiType, val name: String?, val returnExpressions: List<PsiExpression>,
-                              override val nullability: Nullability = Nullability.UNKNOWN) : DataOutput()
+                              override val nullability: Nullability = Nullability.UNKNOWN,
+                              override val annotations: List<PsiAnnotation> = emptyList()) : DataOutput()
 
   object ArtificialBooleanOutput : DataOutput() {
     override val type: PsiType = PsiType.BOOLEAN
     override val nullability: Nullability = Nullability.UNKNOWN
+    override val annotations: List<PsiAnnotation> = emptyList()
   }
 
   data class EmptyOutput(override val type: PsiType = PsiType.VOID) : DataOutput(){
     override val nullability: Nullability = Nullability.UNKNOWN
+    override val annotations: List<PsiAnnotation> = emptyList()
   }
 
   fun withType(type: PsiType): DataOutput {

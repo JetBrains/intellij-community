@@ -10,10 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.LimitedPool;
 import com.intellij.util.containers.SLRUCache;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -40,7 +37,7 @@ import java.util.List;
  Also for certain Value types it is possible to avoid random reads at all: e.g. in case Value is non-negative integer the value can be stored
  directly in storage used for offset and in case of btree enumerator directly in btree leaf.
  **/
-public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements PersistentMap<Key, Value> {
+public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<Key> implements AppendablePersistentMap<Key, Value> {
 
   private static final Logger LOG = Logger.getInstance(PersistentHashMap.class);
   private static final boolean myDoTrace = SystemProperties.getBooleanProperty("idea.trace.persistent.map", false);
@@ -203,7 +200,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     if (myDoTrace) LOG.info("Opened " + file);
     try {
       myValueExternalizer = valueExternalizer;
-      myValueStorage = PersistentHashMapValueStorage.create(getDataFile(file), options);
+      myValueStorage = new PersistentHashMapValueStorage(getDataFile(file), options);
       myLiveAndGarbageKeysCounter = myEnumerator.getMetaData();
       long data2 = myEnumerator.getMetaData2();
       myLargeIndexWatermarkId = (int)(data2 & DEAD_KEY_NUMBER_MASK);
@@ -465,6 +462,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @ApiStatus.Experimental
   public interface ValueDataAppender {
     void append(DataOutput out) throws IOException;
   }
@@ -476,6 +474,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    * E.g. Value can be Set of String and individual Strings can be appended with this method for particular key, when {@link #get(Object)} will
    * be eventually called for the key, deserializer will read all bytes retrieving Strings and collecting them into Set
    */
+  @Override
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
@@ -616,7 +615,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
       valueRead = myValueExternalizer.read(input);
     }
 
-    if (myValueStorage.performChunksCompaction(readResult.chunksCount, readResult.buffer.length)) {
+    if (myValueStorage.performChunksCompaction(readResult.chunksCount)) {
       long newValueOffset = myValueStorage.compactChunks(new ValueDataAppender() {
         @Override
         public void append(DataOutput out) throws IOException {
@@ -811,7 +810,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
 
       final Path newPath = oldDataFile.resolveSibling(oldDataFile.getFileName() + ".new");
       PersistentHashMapValueStorage.CreationTimeOptions options = myValueStorage.getOptions();
-      final PersistentHashMapValueStorage newStorage = PersistentHashMapValueStorage.create(newPath, options);
+      final PersistentHashMapValueStorage newStorage = new PersistentHashMapValueStorage(newPath, options);
       myValueStorage.switchToCompactionMode();
       myEnumerator.markDirty(true);
       long sizeBefore = myValueStorage.getSize();
@@ -862,7 +861,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
         FileUtil.rename(f, new File(parentFile, nameAfterRename));
       }
 
-      myValueStorage = PersistentHashMapValueStorage.create(oldDataFile, options);
+      myValueStorage = new PersistentHashMapValueStorage(oldDataFile, options);
       LOG.info("Compacted " + myEnumerator.myFile + ":" + sizeBefore + " bytes into " +
                newSize + " bytes in " + (System.currentTimeMillis() - now) + "ms.");
       myEnumerator.putMetaData(myLiveAndGarbageKeysCounter);

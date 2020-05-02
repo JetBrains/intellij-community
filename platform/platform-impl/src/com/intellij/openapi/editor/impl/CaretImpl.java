@@ -750,14 +750,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     updateVisualPosition();
   }
 
-  int getWordAtCaretStart() {
+  int getWordAtCaretStart(boolean camel) {
     Document document = myEditor.getDocument();
     int offset = getOffset();
     if (offset == 0) return 0;
     int lineNumber = getLogicalPosition().line;
     int newOffset = offset - 1;
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
-    boolean camel = myEditor.getSettings().isCamelWords();
     for (; newOffset > minOffset; newOffset--) {
       if (EditorActionUtil.isWordOrLexemeStart(myEditor, newOffset, camel)) break;
     }
@@ -765,7 +764,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return newOffset;
   }
 
-  int getWordAtCaretEnd() {
+  int getWordAtCaretEnd(boolean camel) {
     Document document = myEditor.getDocument();
     int offset = getOffset();
 
@@ -779,7 +778,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       if (lineNumber + 1 >= document.getLineCount()) return offset;
       maxOffset = document.getLineEndOffset(lineNumber + 1);
     }
-    boolean camel = myEditor.getSettings().isCamelWords();
     for (; newOffset < maxOffset; newOffset++) {
       if (EditorActionUtil.isWordOrLexemeEnd(myEditor, newOffset, camel)) break;
     }

@@ -234,10 +234,8 @@ public class HgCommandExecutor {
   protected void showError(Exception e) {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
-    String message =
-      HgBundle.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
-      "\nOriginal Error:\n" +
-      e.getMessage();
+    String message = HgBundle.message("hg4idea.command.executor.error", HgExecutableManager.getInstance().getHgExecutable(myProject),
+                                      e.getMessage());
     VcsImplUtil.showErrorMessage(myProject, message, HgBundle.message("hg4idea.error"));
   }
 }

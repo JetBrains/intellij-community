@@ -18,9 +18,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -120,15 +120,9 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
   public @Nullable IntentionAction getFileModifierForPreview(@NotNull PsiFile target) {
     LocalQuickFix result = ObjectUtils.tryCast(myFix.getFileModifierForPreview(target), LocalQuickFix.class);
     if (result == null) return null;
-    PsiElement start, end, psi;
-    try {
-      start = findSameElementInCopy(myDescriptor.getStartElement(), target);
-      end = findSameElementInCopy(myDescriptor.getEndElement(), target);
-      psi = findSameElementInCopy(myDescriptor.getPsiElement(), target);
-    }
-    catch (IllegalStateException e) {
-      return null;
-    }
+    PsiElement start = PsiTreeUtil.findSameElementInCopy(myDescriptor.getStartElement(), target);
+    PsiElement end = PsiTreeUtil.findSameElementInCopy(myDescriptor.getEndElement(), target);
+    PsiElement psi = PsiTreeUtil.findSameElementInCopy(myDescriptor.getPsiElement(), target);
     ProblemDescriptor descriptor = new ProblemDescriptor() {
       //@formatter:off
       @Override public PsiElement getPsiElement() { return psi;}
@@ -147,30 +141,5 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
       //@formatter:on
     };
     return new QuickFixWrapper(descriptor, result);
-  }
-
-  /**
-   * Returns the same element in the file copy.
-   * 
-   * @param element an element to find
-   * @param copy file that must be a copy of {@code element.getContainingFile()}
-   * @return found element; null if input element is null
-   * @throws IllegalStateException if it's detected that the supplied file is not exact copy of original file. 
-   * The exception is thrown on a best-effort basis, so you cannot rely on it. 
-   */
-  @Contract("null, _ -> null; !null, _ -> !null")
-  public static PsiElement findSameElementInCopy(@Nullable PsiElement element, @NotNull PsiFile copy) throws IllegalStateException {
-    if (element == null) return null;
-    TextRange range = element.getTextRange();
-    PsiElement newElement = copy.findElementAt(range.getStartOffset());
-    while (newElement != null) {
-      TextRange newRange = newElement.getTextRange();
-      if (newRange.equals(range) && newElement.getClass().equals(element.getClass())) {
-        return newElement;
-      }
-      if (newRange.getStartOffset() < range.getStartOffset() || newRange.getEndOffset() > range.getEndOffset()) break;
-      newElement = newElement.getParent();
-    }
-    throw new IllegalStateException("Cannot find element in copy file");
   }
 }

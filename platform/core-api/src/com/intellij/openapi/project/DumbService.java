@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
@@ -295,14 +296,14 @@ public abstract class DumbService {
   /**
    * Show a notification when given action is not available during dumb mode.
    */
-  public abstract void showDumbModeNotification(@NotNull @Nls String message);
+  public abstract void showDumbModeNotification(@NotNull @PopupContent String message);
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param balloonText
    * @param runWhenSmartAndBalloonStillShowing — will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
-  public abstract void showDumbModeActionBalloon(@NotNull String balloonText,
+  public abstract void showDumbModeActionBalloon(@NotNull @PopupContent String balloonText,
                                                  @NotNull Runnable runWhenSmartAndBalloonStillShowing);
 
   public abstract Project getProject();

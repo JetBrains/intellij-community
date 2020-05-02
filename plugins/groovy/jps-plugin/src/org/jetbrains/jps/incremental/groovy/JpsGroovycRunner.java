@@ -38,6 +38,7 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
@@ -127,11 +128,10 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   protected abstract Map<T, String> getCanonicalOutputs(CompileContext context, ModuleChunk chunk, Builder builder);
 
-  @NotNull
-  private GroovycOutputParser runGroovycOrContinuation(CompileContext context,
-                                                       ModuleChunk chunk,
-                                                       Map<T, String> finalOutputs,
-                                                       String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
+  private @NotNull GroovycOutputParser runGroovycOrContinuation(CompileContext context,
+                                                                ModuleChunk chunk,
+                                                                Map<T, String> finalOutputs,
+                                                                String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
     if (myForStubs) {
       clearContinuation(context, chunk);
     }
@@ -182,8 +182,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     return parser;
   }
 
-  @Nullable
-  static String getBytecodeTarget(CompileContext context, ModuleChunk chunk) {
+  static @Nullable String getBytecodeTarget(CompileContext context, ModuleChunk chunk) {
     String explicit = System.getProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE);
     if (explicit != null) {
       return explicit;
@@ -212,8 +211,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     }
   }
 
-  @Nullable
-  private static GroovycContinuation takeContinuation(CompileContext context, ModuleChunk chunk) {
+  private static @Nullable GroovycContinuation takeContinuation(CompileContext context, ModuleChunk chunk) {
     Map<ModuleChunk, GroovycContinuation> map = CONTINUATIONS.get(context);
     return map == null ? null : map.remove(chunk);
   }
@@ -226,7 +224,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       }
 
       Map<ModuleChunk, GroovycContinuation> map = CONTINUATIONS.get(context);
-      if (map == null) CONTINUATIONS.set(context, map = ContainerUtil.newConcurrentMap());
+      if (map == null) CONTINUATIONS.set(context, map = new ConcurrentHashMap<>());
       map.put(chunk, continuation);
     }
   }
@@ -347,13 +345,11 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     return toCompile;
   }
 
-  @NotNull
-  static JpsGroovySettings getGroovyCompilerSettings(CompileContext context) {
+  static @NotNull JpsGroovySettings getGroovyCompilerSettings(CompileContext context) {
     return JpsGroovySettings.getSettings(context.getProjectDescriptor().getProject());
   }
 
-  @NotNull
-  static JpsJavaCompilerConfiguration getJavaCompilerSettings(CompileContext context) {
+  static @NotNull JpsJavaCompilerConfiguration getJavaCompilerSettings(CompileContext context) {
     return Objects.requireNonNull(JpsJavaExtensionService.getInstance().getCompilerConfiguration(context.getProjectDescriptor().getProject()));
   }
 

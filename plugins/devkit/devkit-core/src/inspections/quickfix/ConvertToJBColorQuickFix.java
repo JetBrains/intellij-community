@@ -3,9 +3,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertToJBColorQuickFix implements LocalQuickFix {
   @Override
-  public @NlsContexts.ListItem @NotNull String getFamilyName() {
+  public @IntentionFamilyName @NotNull String getFamilyName() {
     return "Convert to JBColor";
   }
 

@@ -117,28 +117,4 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
             element.setAttribute("fileSizeVisible", "false");
         }
     }
-
-    public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof EditorOptions)) {
-            return false;
-        }
-        EditorOptions otherOptions = (EditorOptions)obj;
-        GridOptions gridOptions = otherOptions.getGridOptions();
-        TransparencyChessboardOptions chessboardOptions = otherOptions.getTransparencyChessboardOptions();
-        ZoomOptions zoomOptions = otherOptions.getZoomOptions();
-        return gridOptions != null && gridOptions.equals(getGridOptions()) &&
-            chessboardOptions != null && chessboardOptions.equals(getTransparencyChessboardOptions()) &&
-            zoomOptions != null && zoomOptions.equals(getZoomOptions());
-    }
-
-    public int hashCode() {
-        int result;
-        result = (gridOptions != null ? gridOptions.hashCode() : 0);
-        result = 29 * result + (transparencyChessboardOptions != null ? transparencyChessboardOptions.hashCode() : 0);
-        result = 29 * result + (zoomOptions != null ? zoomOptions.hashCode() : 0);
-        return result;
-    }
 }

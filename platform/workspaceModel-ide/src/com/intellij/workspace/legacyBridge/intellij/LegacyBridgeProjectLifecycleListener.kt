@@ -4,6 +4,8 @@ package com.intellij.workspace.legacyBridge.intellij
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ExternalModuleListStorage
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectServiceContainerCustomizer
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -17,18 +19,22 @@ import com.intellij.workspace.ide.WorkspaceModelImpl
 import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
+import com.intellij.workspace.legacyBridge.externalSystem.ExternalStorageConfigurationManagerForWorkspaceModel
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
 import org.jetbrains.annotations.ApiStatus
+import org.picocontainer.MutablePicoContainer
 
 @ApiStatus.Internal
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
     const val ENABLED_REGISTRY_KEY = "ide.new.project.model"
+    const val ENABLED_CACHE_KEY = "ide.new.project.model.cache"
 
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
 
     fun enabled(project: Project) = ModuleManager.getInstance(project) is LegacyBridgeModuleManagerComponent
+    val cacheEnabled = Registry.`is`(ENABLED_CACHE_KEY)
   }
 
   override fun serviceRegistered(project: Project) {
@@ -50,10 +56,12 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerComponent(LegacyBridgeRootsWatcher::class.java, LegacyBridgeRootsWatcher::class.java, pluginDescriptor, false)
     container.registerComponent(ModuleManager::class.java, LegacyBridgeModuleManagerComponent::class.java, pluginDescriptor, true)
     container.registerComponent(ProjectRootManager::class.java, LegacyBridgeProjectRootManager::class.java, pluginDescriptor, true)
+    (container.picoContainer as MutablePicoContainer).unregisterComponent(ExternalModuleListStorage::class.java)
 
     container.registerService(LegacyBridgeFilePointerProvider::class.java, LegacyBridgeFilePointerProviderImpl::class.java, pluginDescriptor, false)
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, LegacyBridgeProjectLibraryTableImpl::class.java, pluginDescriptor, true)
+    container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerForWorkspaceModel::class.java, pluginDescriptor, true)
     container.registerService(ModifiableModelCommitterService::class.java, LegacyBridgeModifiableModelCommitterService::class.java, pluginDescriptor, true)
     container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
   }

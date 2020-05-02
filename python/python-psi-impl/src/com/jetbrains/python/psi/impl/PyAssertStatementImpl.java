@@ -22,6 +22,6 @@ public class PyAssertStatementImpl extends PyElementImpl implements PyAssertStat
 
   @Override
   public PyExpression[] getArguments() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 }

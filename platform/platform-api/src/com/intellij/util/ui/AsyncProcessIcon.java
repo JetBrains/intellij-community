@@ -72,6 +72,21 @@ public class AsyncProcessIcon extends AnimatedIcon {
     }
   }
 
+  public static class BigCentered extends Big {
+    public BigCentered(@NonNls final String name) {
+      super(name);
+    }
+
+    @NotNull
+    @Override
+    protected Rectangle calculateBounds(@NotNull JComponent container) {
+      Dimension size = container.getSize();
+      Dimension iconSize = getPreferredSize();
+      return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);
+    }
+  }
+
+
   public boolean isDisposed() {
     return myAnimator.isDisposed();
   }

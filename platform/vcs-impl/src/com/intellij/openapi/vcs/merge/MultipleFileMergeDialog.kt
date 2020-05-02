@@ -38,7 +38,6 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
@@ -428,7 +427,7 @@ open class MultipleFileMergeDialog(
           request = requestFactory.createMergeRequest(project, file, byteContents, title, contentTitles, callback)
         }
 
-        MergeUtil.putRevisionInfos(request, mergeData)
+        MergeUtils.putRevisionInfos(request, mergeData)
       }
       catch (e: InvalidDiffRequestException) {
         if (e.cause is FileTooBigException) {

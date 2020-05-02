@@ -62,12 +62,11 @@ public class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuil
           if (!Comparing.equal(e.getValue(), newValue) || (newValue == null && !newData.containsKey(key))) {
             if (!newData.containsKey(key)) {
               removeProcessor.process(key, myInputId);
-              removed++;
             } else {
               updateProcessor.process(key, newValue, myInputId);
               added++;
-              removed++;
             }
+            removed++;
           }
         }
 

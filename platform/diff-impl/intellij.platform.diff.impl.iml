@@ -11,8 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.core" />
-    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="miglayout-swing" level="project" />

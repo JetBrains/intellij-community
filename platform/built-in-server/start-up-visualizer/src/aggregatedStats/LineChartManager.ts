@@ -61,8 +61,7 @@ export class LineChartManager implements StatChartManager {
     chart.cursor = cursor
 
     // const dateAxis = chart.xAxes.push(new am4charts.DateAxis())
-    // @ts-ignore
-    const xAxis = configurator.configureXAxis(chart)
+    configurator.configureXAxis(chart)
     // xAxis.groupData = true
     // DurationAxis doesn't work due to some unclear bug
     const valueAxis = chart.yAxes.push(new am4charts.ValueAxis())
@@ -81,10 +80,6 @@ export class LineChartManager implements StatChartManager {
 
     // prevent Vue reactivity
     Object.seal(this)
-  }
-
-  get dateFormatter(): am4core.DateFormatter {
-    return this.chart.dateFormatter
   }
 
   private configureScrollbarXWithPreview(): am4charts.XYChartScrollbar {

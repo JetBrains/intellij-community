@@ -538,7 +538,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
                                                   int targetOffset) {
     if (contextElement != null) {
       final IElementType elementType = contextElement.getNode().getElementType();
-      if (PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens().contains(elementType)) {
+      if (PythonDialectsTokenSetProvider.getInstance().getKeywordTokens().contains(elementType)) {
         return contextElement;
       }
       final PsiElement parent = contextElement.getParent();

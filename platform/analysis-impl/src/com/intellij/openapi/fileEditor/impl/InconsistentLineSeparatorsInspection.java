@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeStyle.AbstractConvertLineSeparatorsAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -50,8 +52,8 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
           String presentableSeparators = StringUtil.join(allSorted, sep->StringUtil.escapeStringCharacters(sep), ", ");
           holder.registerProblem(
             file,
-            "Line separators in the current file (" + presentableSeparators + ") " +
-            "differ from the project defaults (" + StringUtil.escapeStringCharacters(projectLineSeparator) + ")",
+            AnalysisBundle.message("inspection.message.line.separators.in.current.file.differ.from.project.defaults", presentableSeparators,
+                                   StringUtil.escapeStringCharacters(projectLineSeparator)),
             new ChangeLineSeparatorFix());
         }
       }
@@ -60,9 +62,10 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
 
   private static class ChangeLineSeparatorFix implements LocalQuickFix {
     @NotNull
+    @IntentionFamilyName
     @Override
     public String getFamilyName() {
-      return "Convert to project line separators";
+      return AnalysisBundle.message("intention.family.name.convert.to.project.line.separators");
     }
 
     @Override

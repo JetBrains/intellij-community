@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.google.common.collect.Lists;
 import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.util.PathMappingsComponent;
@@ -65,7 +64,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private List<Sdk> myPythonSdks;
   private boolean myInterpreterRemote;
 
-  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = Lists.newArrayList();
+  private final List<Consumer<Boolean>> myRemoteInterpreterModeListeners = new ArrayList<>();
 
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {

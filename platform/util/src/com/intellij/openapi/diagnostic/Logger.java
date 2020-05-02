@@ -30,10 +30,9 @@ public abstract class Logger {
     Logger getLoggerInstance(@NotNull String category);
   }
 
-  private static class DefaultFactory implements Factory {
-    @NotNull
+  private static final class DefaultFactory implements Factory {
     @Override
-    public Logger getLoggerInstance(@NotNull String category) {
+    public @NotNull Logger getLoggerInstance(@NotNull String category) {
       return new DefaultLogger(category);
     }
   }
@@ -62,7 +61,7 @@ public abstract class Logger {
     }
   }
 
-  public static void setFactory(Factory factory) {
+  public static void setFactory(@NotNull Factory factory) {
     if (isInitialized()) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
@@ -79,14 +78,12 @@ public abstract class Logger {
     return !(ourFactory instanceof DefaultFactory);
   }
 
-  @NotNull
-  public static Logger getInstance(@NotNull String category) {
+  public static @NotNull Logger getInstance(@NotNull String category) {
     return ourFactory.getLoggerInstance(category);
   }
 
-  @NotNull
-  public static Logger getInstance(@NotNull Class cl) {
-    return getInstance("#" + cl.getName());
+  public static @NotNull Logger getInstance(@NotNull Class<?> cl) {
+    return ourFactory.getLoggerInstance("#" + cl.getName());
   }
 
   public abstract boolean isDebugEnabled();

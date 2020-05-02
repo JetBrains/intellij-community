@@ -270,8 +270,8 @@ public class ResolveImportUtil {
                                                                  @Nullable PsiFile containingFile, boolean fileOnly,
                                                                  boolean checkForPackage, boolean withoutStubs, boolean withoutForeign) {
     final List<RatedResolveResult> moduleMembers = resolveModuleMember(parent, referencedName);
-    final List<RatedResolveResult> resolvedInModule = Lists.newArrayList();
-    final List<RatedResolveResult> results = Lists.newArrayList();
+    final List<RatedResolveResult> resolvedInModule = new ArrayList<>();
+    final List<RatedResolveResult> results = new ArrayList<>();
     for (RatedResolveResult member : moduleMembers) {
       final PsiElement moduleMember = member.getElement();
       if (!fileOnly || PsiTreeUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {

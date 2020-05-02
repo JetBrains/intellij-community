@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 
@@ -55,8 +56,8 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     if (!myIgnoreAuthorizationRequest && HgErrorUtil.isAuthorizationError(result)) {
       if (HgErrorUtil.hasAuthorizationInDestinationPath(myDestination)) {
         new HgCommandResultNotifier(myProject)
-          .notifyError(result, "Authorization failed", "Your hgrc file settings have wrong username or password in [paths].\n" +
-                                                       "Please, update your .hg/hgrc file.");
+          .notifyError(result, HgBundle.message("hg4idea.command.executor.remote.auth.failed"),
+                       HgBundle.message("hg4idea.command.executor.remote.auth.failed.msg"));
         return null;
       }
       result = executeRemoteCommandInCurrentThread(repo, operation, arguments, true);

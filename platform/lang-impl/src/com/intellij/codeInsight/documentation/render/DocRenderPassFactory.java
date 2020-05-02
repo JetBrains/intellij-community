@@ -10,13 +10,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
-public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory {
+public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
   private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
@@ -53,7 +52,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     editor.putUserData(MODIFICATION_STAMP, null);
   }
 
-  private static class DocRenderPass extends EditorBoundHighlightingPass {
+  private static class DocRenderPass extends EditorBoundHighlightingPass implements DumbAware {
     private Items items;
 
     DocRenderPass(@NotNull Editor editor, @NotNull PsiFile psiFile) {
@@ -62,7 +61,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
     @Override
     public void doCollectInformation(@NotNull ProgressIndicator progress) {
-      items = calculateItemsToRender(Objects.requireNonNull(myDocument), myFile);
+      items = calculateItemsToRender(myDocument, myFile);
     }
 
     @Override
@@ -87,13 +86,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
   static @NotNull String calcText(@Nullable PsiDocCommentBase comment) {
     try {
-      String text = null;
-      if (comment != null) {
-        PsiElement owner = comment.getOwner();
-        if (owner != null) {
-          text = DocumentationManager.getProviderFromElement(owner).generateRenderedDoc(owner);
-        }
-      }
+      String text = comment == null ? null : DocumentationManager.getProviderFromElement(comment).generateRenderedDoc(comment);
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
     }
     catch (IndexNotReadyException e) {

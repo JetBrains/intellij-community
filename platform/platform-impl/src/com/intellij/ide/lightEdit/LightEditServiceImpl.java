@@ -12,6 +12,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -236,12 +237,30 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   private boolean canClose() {
+    final FileDocumentManager documentManager = FileDocumentManager.getInstance();
     return !myEditorManager.containsUnsavedDocuments() ||
            autosaveDocuments() ||
            LightEditUtil.confirmClose(
              ApplicationBundle.message("light.edit.exit.message"),
              ApplicationBundle.message("light.edit.exit.title"),
-             () -> FileDocumentManager.getInstance().saveAllDocuments()
+             new LightEditSaveConfirmationHandler() {
+
+               @Override
+               public void onSave() {
+                 documentManager.saveAllDocuments();
+               }
+
+               @Override
+               public void onDiscard() {
+                 myEditorManager.getUnsavedEditors().forEach(editorInfo -> {
+                   VirtualFile file = editorInfo.getFile();
+                   Document document = documentManager.getDocument(file);
+                   if (document != null) {
+                     documentManager.reloadFromDisk(document);
+                   }
+                 });
+               }
+             }
            );
   }
 

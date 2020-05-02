@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.JobSchedulerImpl;
-import com.intellij.openapi.util.SystemInfo;
 
 /**
  * @author peter
@@ -33,13 +32,7 @@ public class Timings {
   public static final long REFERENCE_IO_TIMING = 100;
 
   static {
-    long cpuTiming = CpuTimings.calcStableCpuTiming();
-    if (SystemInfo.isJavaVersionAtLeast(11, 0, 0)) {
-      // on JBR 11, the code for CPU timings executes much faster, while most tests take roughly the same time
-      // so we correct for the difference until we have a more robust timing calculation
-      cpuTiming = cpuTiming * 54 / 31;
-    }
-    CPU_TIMING = cpuTiming;
+    CPU_TIMING = CpuTimings.calcStableCpuTiming();
     IO_TIMING = IoTimings.calcIoTiming();
   }
 

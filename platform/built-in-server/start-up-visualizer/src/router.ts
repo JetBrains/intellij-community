@@ -9,33 +9,42 @@ Vue.use(Router)
 const routes: Array<RouteConfig> = [
   {
     path: "/",
-    redirect: "/report"
+    redirect: "/report",
+    component: () => import("@/App.vue"),
+    children: [
+      {
+        path: "/report",
+        name: "Report Analyzer",
+        component: () => import("@/report/Report.vue"),
+      },
+      {
+        path: "/aggregatedStats",
+        name: "Aggregated Stats",
+        component: () => import("@/aggregatedStats/AggregatedStatsPage.vue"),
+      },
+      {
+        path: "/report/timeline",
+        name: "Timeline",
+        component: () => import("@/timeline/TimelineChart.vue"),
+      },
+      {
+        path: "/report/serviceTimeline",
+        name: "Service Timeline",
+        component: () => import("@/timeline/ServiceTimelineChart.vue"),
+      },
+    ]
   },
   {
-    path: "/report",
-    name: "Report Analyzer",
-    component: () => import("@/report/Report.vue"),
-  },
-  {
-    path: "/aggregatedStats",
-    name: "Aggregated Stats",
-    component: () => import("@/aggregatedStats/AggregatedStatsPage.vue"),
-  },
-  {
-    path: "/aggregatedStats/line-chart/*",
+    path: "/line-chart/*",
     name: "Aggregated Stats - Line Chart",
-    component: () => import("@/aggregatedStats/AggregatedStatsSingleChartPage.vue"),
+    component: () => import("@/aggregatedStats/SingleLineChartPage.vue"),
     props: true,
   },
   {
-    path: "/report/timeline",
-    name: "Timeline",
-    component: () => import("@/timeline/TimelineChart.vue"),
-  },
-  {
-    path: "/report/serviceTimeline",
-    name: "Service Timeline",
-    component: () => import("@/timeline/ServiceTimelineChart.vue"),
+    path: "/clustered-chart/*",
+    name: "Aggregated Stats - Clustered Chart",
+    component: () => import("@/aggregatedStats/SingleClusteredChartPage.vue"),
+    props: true,
   },
   {
     path: "*",

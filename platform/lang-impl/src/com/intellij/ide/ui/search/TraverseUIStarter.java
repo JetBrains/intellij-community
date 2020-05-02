@@ -70,11 +70,11 @@ public final class TraverseUIStarter implements ApplicationStarter {
   @Override
   public void premain(@NotNull List<String> args) {
     OUTPUT_PATH = args.get(1);
-    SPLIT_BY_RESOURCE_PATH = args.size() > 2 && Boolean.valueOf(args.get(2));
+    SPLIT_BY_RESOURCE_PATH = args.size() > 2 && Boolean.parseBoolean(args.get(2));
   }
 
   @Override
-  public void main(String @NotNull [] args) {
+  public void main(@NotNull List<String> args) {
     System.out.println("Starting searchable options index builder");
     try {
       startup(OUTPUT_PATH, SPLIT_BY_RESOURCE_PATH);
@@ -301,7 +301,7 @@ public final class TraverseUIStarter implements ApplicationStarter {
     if (id != null) {
       final IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(id);
       if (plugin != null && !plugin.getName().equals("IDEA CORE")) {
-        return PathUtil.getFileName(plugin.getPath().getPath());
+        return PathUtil.getFileName(plugin.getPluginPath().toString());
       }
     }
     return ROOT_ACTION_MODULE;

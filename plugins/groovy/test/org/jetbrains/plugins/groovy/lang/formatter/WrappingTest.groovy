@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -64,11 +64,21 @@ foo().
   void testWrappingInsideGString4() {
     groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
     checkFormatting('''\
+"""text with ${foooo}"""
+''', '''\
+"""text with ${
+  foooo
+}"""
+''')
+  }
+
+  void testWrappingInsideGString5() {
+    groovySettings.KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE = false
+    checkFormatting('''\
 """text with ${foo}"""
 ''', '''\
 """text with ${
-  foo
-}"""
+  foo}"""
 ''')
   }
 

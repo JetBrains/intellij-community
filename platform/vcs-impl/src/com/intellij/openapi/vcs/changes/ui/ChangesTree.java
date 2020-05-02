@@ -28,6 +28,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
@@ -379,7 +380,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       return;
     }
 
-    TreeUtil.expandAll(this);
+    expandDefaults();
 
     int selectedTreeRow = -1;
 
@@ -527,6 +528,16 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     TreeUtil.expandAll(this);
   }
 
+  public void expandDefaults() {
+    TreeUtil.promiseExpand(this, path -> {
+      Object node = path.getLastPathComponent();
+      if (node instanceof ChangesBrowserNode && !((ChangesBrowserNode<?>)node).shouldExpandByDefault()) {
+        return TreeVisitor.Action.SKIP_CHILDREN;
+      }
+      return TreeVisitor.Action.CONTINUE;
+    });
+  }
+
   @NotNull
   public TreeExpander getTreeExpander() {
     return myTreeExpander;
@@ -661,6 +672,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     });
     setSelectionPaths(toTreePathArray(treeSelection));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
+  }
+
+  public boolean isKeepTreeState() {
+    return myKeepTreeState;
   }
 
   public void setKeepTreeState(boolean keepTreeState) {

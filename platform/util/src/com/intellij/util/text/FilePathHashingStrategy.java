@@ -15,7 +15,11 @@ public class FilePathHashingStrategy {
   }
   @NotNull
   public static TObjectHashingStrategy<CharSequence> createForCharSequence() {
-    return SystemInfo.isFileSystemCaseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
+    return createForCharSequence(SystemInfo.isFileSystemCaseSensitive);
+  }
+  @NotNull
+  public static TObjectHashingStrategy<CharSequence> createForCharSequence(boolean caseSensitive) {
+    return caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
   }
 
   @NotNull

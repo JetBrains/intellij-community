@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -13,6 +12,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
@@ -93,11 +93,6 @@ public class SurroundWithTryCatchFix implements IntentionAction {
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    try {
-      return new SurroundWithTryCatchFix(QuickFixWrapper.findSameElementInCopy(myElement, target));
-    }
-    catch (IllegalStateException e) {
-      return null;
-    }
+    return new SurroundWithTryCatchFix(PsiTreeUtil.findSameElementInCopy(myElement, target));
   }
 }

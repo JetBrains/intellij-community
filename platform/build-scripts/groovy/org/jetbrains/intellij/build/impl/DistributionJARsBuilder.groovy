@@ -136,6 +136,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.util.classLoader", "util.jar")
       withModule("intellij.platform.util.ui")
       withModule("intellij.platform.util.ex")
+      withModule("intellij.platform.rd.community")
 
       withModule("intellij.platform.diagnostic")
       withModule("intellij.platform.ide.util.io")
@@ -773,7 +774,7 @@ class DistributionJARsBuilder {
     pluginsToInclude.each { plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars.values(), plugin.moduleExcludes)
+        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes)
         patchPluginXml(layoutBuilder, plugin)
       }
       List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
@@ -818,7 +819,7 @@ class DistributionJARsBuilder {
     def pluginVersion = buildContext.buildNumber.endsWith(".SNAPSHOT") ? buildContext.buildNumber + ".${new Date().format('yyyyMMdd')}"
             : buildContext.buildNumber
 
-    setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, buildContext.buildNumber, compatibleBuildRange)
+    setPluginVersionAndSince(patchedPluginXmlPath, pluginVersion, compatibleBuildRange)
     layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
   }
 
@@ -848,8 +849,14 @@ class DistributionJARsBuilder {
     new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
-  private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiMap<String, String> moduleExcludes) {
-    def modulesWithPluginXml = moduleNames.findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
+  private void checkOutputOfPluginModules(String mainPluginModule, MultiMap<String, String> moduleJars, MultiMap<String, String> moduleExcludes) {
+    // Don't check modules which are not direct children of lib/ directory
+    List<String> moduleNamesInLib = moduleJars.entrySet()
+      .findAll { !it.key.contains("/") }
+      .collect { it.value }
+      .flatten() as List<String>
+    def modulesWithPluginXml = moduleNamesInLib
+      .findAll { containsFileInOutput(it, "META-INF/plugin.xml", moduleExcludes.get(it)) }
     if (modulesWithPluginXml.size() > 1) {
       buildContext.messages.error("Multiple modules (${modulesWithPluginXml.join(", ")}) from '$mainPluginModule' plugin contain plugin.xml files so the plugin won't work properly")
     }
@@ -857,7 +864,7 @@ class DistributionJARsBuilder {
       buildContext.messages.error("No module from '$mainPluginModule' plugin contains plugin.xml")
     }
 
-    moduleNames.each {
+    moduleJars.values().each {
       if (it != "intellij.java.guiForms.rt" && containsFileInOutput(it, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(it))) {
         buildContext.messages.error("Runtime classes of GUI designer must not be packaged to '$it' module in '$mainPluginModule' plugin, because they are included into a platform JAR. " +
                                     "Make sure that 'Automatically copy form runtime classes to the output directory' is disabled in Settings | Editor | GUI Designer.")
@@ -1076,45 +1083,22 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber,
-                                        CompatibleBuildRange compatibleBuildRange) {
-    def sinceBuild
-    def untilBuild
-    if (compatibleBuildRange != CompatibleBuildRange.EXACT && buildNumber.matches(/(\d+\.)+\d+/)) {
-      if (compatibleBuildRange == CompatibleBuildRange.ANY_WITH_SAME_BASELINE) {
-        sinceBuild = buildNumber.substring(0, buildNumber.indexOf('.'))
-        untilBuild = buildNumber.substring(0, buildNumber.indexOf('.')) + ".*"
-      }
-      else {
-        if (buildNumber.matches(/\d+\.\d+/)) {
-          sinceBuild = buildNumber
-        }
-        else {
-          sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
-        }
-        int end = compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE ? buildNumber.lastIndexOf('.') :
-                  buildNumber.indexOf('.')
-        untilBuild = buildNumber.substring(0, end) + ".*"
-      }
-    }
-    else {
-      sinceBuild = buildNumber
-      untilBuild = buildNumber
-    }
+  private void setPluginVersionAndSince(String pluginXmlPath, String pluginVersion, CompatibleBuildRange compatibleBuildRange) {
+    Pair<String, String> sinceUntil = getCompatiblePlatformVersionRange(compatibleBuildRange, buildContext.buildNumber)
     def file = new File(pluginXmlPath)
     def text = file.text
             .replaceFirst(
                     "<version>[\\d.]*</version>",
-                    "<version>${version}</version>")
+                    "<version>${pluginVersion}</version>")
             .replaceFirst(
                     "<idea-version\\s+since-build=\"\\d+\\.\\d+\"\\s+until-build=\"\\d+\\.\\d+\"",
-                    "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
+                    "<idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"")
             .replaceFirst(
                     "<idea-version\\s+since-build=\"\\d+\\.\\d+\"",
-                    "<idea-version since-build=\"${sinceBuild}\"")
+                    "<idea-version since-build=\"${sinceUntil.first}\"")
             .replaceFirst(
                     "<change-notes>\\s+<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
-                    "<change-notes>\n<![CDATA[\nPlugin version: ${version}")
+                    "<change-notes>\n<![CDATA[\nPlugin version: ${pluginVersion}")
 
     if (text.contains("<product-descriptor ")) {
       def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
@@ -1127,12 +1111,38 @@ class DistributionJARsBuilder {
 
     def anchor = text.contains("</id>") ? "</id>" : "</name>"
     if (!text.contains("<version>")) {
-      text = text.replace(anchor, "${anchor}\n  <version>${version}</version>")
+      text = text.replace(anchor, "${anchor}\n  <version>${pluginVersion}</version>")
     }
     if (!text.contains("<idea-version since-build")) {
-      text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
+      text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceUntil.first}\" until-build=\"${sinceUntil.second}\"/>")
     }
     file.text = text
+  }
+
+  static Pair<String, String> getCompatiblePlatformVersionRange(CompatibleBuildRange compatibleBuildRange, String buildNumber) {
+    String sinceBuild
+    String untilBuild
+    if (compatibleBuildRange != CompatibleBuildRange.EXACT && buildNumber.matches(/(\d+\.)+\d+/)) {
+      if (compatibleBuildRange == CompatibleBuildRange.ANY_WITH_SAME_BASELINE) {
+        sinceBuild = buildNumber.substring(0, buildNumber.indexOf('.'))
+        untilBuild = buildNumber.substring(0, buildNumber.indexOf('.')) + ".*"
+      }
+      else {
+        if (buildNumber.matches(/\d+\.\d+/)) {
+          sinceBuild = buildNumber
+        }
+        else {
+          sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+        }
+        int end = compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE ? buildNumber.lastIndexOf('.') : buildNumber.indexOf('.')
+        untilBuild = buildNumber.substring(0, end) + ".*"
+      }
+    }
+    else {
+      sinceBuild = buildNumber
+      untilBuild = buildNumber
+    }
+    Pair.create(sinceBuild, untilBuild);
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {

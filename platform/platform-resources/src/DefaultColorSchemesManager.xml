@@ -288,6 +288,12 @@
           <option name="FONT_TYPE" value="1"/>
         </value>
       </option>
+      <option name="DEFAULT_HIGHLIGHTED_REFERENCE">
+        <value>/>
+          <option name="EFFECT_COLOR" value="808080"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
 
       <option name="LINE_FULL_COVERAGE">
         <value>
@@ -1690,6 +1696,12 @@
         </value>
       </option>
       <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="DEFAULT_HIGHLIGHTED_REFERENCE">
         <value>
           <option name="EFFECT_COLOR" value="707d95" />
           <option name="EFFECT_TYPE" value="1" />

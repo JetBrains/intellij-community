@@ -22,6 +22,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +92,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     return getCache(scope).getDirectoriesByPackageName("");
   }
 
+  @Contract(pure = true)
   public List<VirtualFile> getClassRoots() {
     return getClassRoots(ALL_SCOPE);
   }

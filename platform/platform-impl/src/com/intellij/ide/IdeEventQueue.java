@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -1364,6 +1365,16 @@ public final class IdeEventQueue extends EventQueue {
       if (listener.consumePostedEvent(event)) return false;
     }
 
+    if (event instanceof InvocationEvent && !ClientId.isCurrentlyUnderLocalId() && ClientId.Companion.getPropagateAcrossThreads()) {
+      // only do wrapping trickery with non-local events to preserve correct behaviour - local events will get dispatched under local ID anyways
+      ClientId clientId = ClientId.getCurrent();
+      super.postEvent(new InvocationEvent(event.getSource(), () -> ClientId.withClientId(clientId, () -> {
+        dispatchEvent(event);
+      })));
+
+      return true;
+    }
+
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
       if (ourActionAwareTypeaheadEnabled && delayKeyEvents.get()) {
@@ -1503,7 +1514,7 @@ public final class IdeEventQueue extends EventQueue {
       return false;
     }
 
-    ActionManager actionManager = ServiceManager.getServiceIfCreated(ActionManager.class);
+    ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     return actionManager instanceof ActionManagerImpl &&
            !((ActionManagerImpl)actionManager).isActionPopupStackEmpty() &&
            !((ActionManagerImpl)actionManager).isToolWindowContextMenuVisible();

@@ -117,8 +117,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun getProjectFrameHelpers() = projectToFrame.values.toList()
 
-  override fun findVisibleFrame(): JFrame {
-    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as JFrame
+  override fun findVisibleFrame(): JFrame? {
+    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
   override fun findFirstVisibleFrameHelper() = projectToFrame.values.firstOrNull()
@@ -247,11 +247,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun findFrameFor(project: Project?): IdeFrame? {
-    if (project == null) {
-      return ProjectFrameHelper.getFrameHelper(mostRecentFocusedWindow) ?: tryToFindTheOnlyFrame()
-    }
-    else {
-      return if (project.isDefault) WelcomeFrame.getInstance() else getFrameHelper(project) ?: getFrameHelper(null)
+    return when {
+      project == null -> ProjectFrameHelper.getFrameHelper(mostRecentFocusedWindow) ?: tryToFindTheOnlyFrame()
+      project.isDefault -> WelcomeFrame.getInstance()
+      else -> getFrameHelper(project) ?: getFrameHelper(null)
     }
   }
 

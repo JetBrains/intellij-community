@@ -87,8 +87,9 @@ public class MethodSourceReference extends PsiReferenceBase<PsiLiteral> {
       final PsiMethod current = PsiTreeUtil.getParentOfType(getElement(), PsiMethod.class);
       final PsiMethod[] methods = topLevelClass.getAllMethods();
       for (PsiMethod method : methods) {
-        if (method.getContainingClass() == null) continue;
-        if (JAVA_LANG_OBJECT.equals(method.getContainingClass().getQualifiedName())) continue;
+        PsiClass aClass = method.getContainingClass();
+        if (aClass == null) continue;
+        if (JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
         if (current != null && method.getName().equals(current.getName())) continue;
         if (!staticOrOneInstancePerClassNoParams(method, topLevelClass)) continue;
         final LookupElementBuilder builder = LookupElementBuilder.create(method);

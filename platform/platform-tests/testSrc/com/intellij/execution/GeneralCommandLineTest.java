@@ -176,7 +176,7 @@ public class GeneralCommandLineTest {
     assumeTrue(uni != null);
     assumeTrue(SystemInfo.isWindows || Objects.equals(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
-    File dir = tempDir.newFolder("spaces 'and quotes' and " + uni);
+    File dir = tempDir.newDirectory("spaces 'and quotes' and " + uni);
     Pair<GeneralCommandLine, File> command = makeHelperCommand(dir, CommandTestHelper.ARG, "test");
     String output = execHelper(command);
     assertEquals("test\n", StringUtil.convertLineSeparators(output));

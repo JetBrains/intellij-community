@@ -81,6 +81,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     String inheritanceText = style + "<a href=\"" + languageDefaultPageID + "\">" + rainbowOptionsID + "</a><br>" +
                              "(" + languageDefaultPageID + ")";
 
+    //noinspection HardCodedStringLiteral
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);
     myInheritanceLabel.setText(checkRightArrow(inheritanceText));
     myInheritanceLabel.setToolTipText(checkRightArrow(inheritanceTooltip));

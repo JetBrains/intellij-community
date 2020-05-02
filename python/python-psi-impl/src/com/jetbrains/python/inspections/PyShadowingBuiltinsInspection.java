@@ -16,7 +16,6 @@
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
@@ -51,7 +50,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
   @NotNull
   protected LocalQuickFix[] createQuickFixes(String name, PsiElement problemElement) {
-    List<LocalQuickFix> fixes = Lists.newArrayList();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     LocalQuickFix qf = PythonUiService.getInstance().createPyRenameElementQuickFix(problemElement);
     if (qf != null) {
       fixes.add(qf);

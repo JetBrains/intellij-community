@@ -102,7 +102,7 @@ public class PackageSearchService implements DependencySearchProvider {
     return url + "?query=" + encode(coord.trim());
   }
 
-  private String createUrlSuggestPrefix(@NotNull String groupId, @NotNull String artifactId) {
+  private String createUrlSuggestPrefix(@Nullable String groupId, @Nullable String artifactId) {
     String url = myPackageServiceConfig.getSuggestUrl();
     if (url == null) {
       return null;

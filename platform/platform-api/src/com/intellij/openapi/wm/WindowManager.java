@@ -83,7 +83,7 @@ public abstract class WindowManager {
 
   public abstract @NotNull IdeFrame @NotNull [] getAllProjectFrames();
 
-  public abstract JFrame findVisibleFrame();
+  public abstract @Nullable JFrame findVisibleFrame();
 
   public abstract void addListener(@NotNull WindowManagerListener listener);
 

@@ -66,8 +66,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.LabelUI;
 import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.awt.event.*;
@@ -82,6 +85,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 
 public final class EditorMarkupModelImpl extends MarkupModelImpl
       implements EditorMarkupModel, CaretListener, BulkAwareDocumentListener.Simple, VisibleAreaListener {
@@ -154,6 +158,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private Rectangle cachedToolbarBounds = new Rectangle();
   private final JLabel smallIconLabel;
   private AnalyzerStatus analyzerStatus;
+  private boolean hasAnalyzed;
+  private boolean isAnalyzing;
+  private boolean showNavigation;
   private InspectionPopupManager myPopupManager = new InspectionPopupManager();
   private final Disposable resourcesDisposable = Disposer.newDisposable();
 
@@ -166,12 +173,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
     trafficLightVisible = true;
 
-    AnAction nextErrorAction = findAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatches);
-    AnAction prevErrorAction = findAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatches);
+    AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
+    AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
     DefaultActionGroup navigateGroup = new DefaultActionGroup(nextErrorAction, prevErrorAction) {
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(analyzerStatus != null && analyzerStatus.getShowNavigation());
+        e.getPresentation().setEnabledAndVisible(showNavigation);
       }
     };
 
@@ -206,7 +213,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
           @Override
           public Insets getInsets() {
-            return myAction == nextErrorAction ? JBUI.insets(2, 2, 2, 1) :
+            return myAction == nextErrorAction ? JBUI.insets(2, 1) :
                    myAction == prevErrorAction ? JBUI.insets(2, 1, 2, 2) :
                    JBUI.insets(2);
           }
@@ -366,13 +373,28 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static AnAction findAction(@NotNull String id, @NotNull Icon icon) {
-    ActionManager am = ActionManager.getInstance();
-    AnAction action = am.getAction(id);
+  private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
+    return new DumbAwareAction(icon) {
+      final AnAction delegate = ActionManager.getInstance().getAction(id);
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
 
-    action.getTemplatePresentation().setIcon(icon);
-    action.getTemplatePresentation().setDisabledIcon(IconLoader.getDisabledIcon(icon));
-    return action;
+        if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
+          focusManager.requestFocus(myEditor.getContentComponent(), true).
+            doWhenDone(() -> {
+              AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(delegate,
+                                                                             e.getInputEvent(),
+                                                                             ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                             myEditor.getDataContext());
+              delegate.actionPerformed(delegateEvent);
+            });
+        }
+        else {
+          delegate.actionPerformed(e);
+        }
+      }
+    };
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
@@ -437,6 +459,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       updateTrafficLightVisibility();
     }
 
+    boolean analyzing = analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE;
+    hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
+    isAnalyzing = analyzing;
+
+    if (analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+      showNavigation = analyzerStatus.getShowNavigation();
+    }
+
     myPopupManager.updateVisiblePopup();
     ActivityTracker.getInstance().inc();
   }
@@ -476,9 +506,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
                                               e.isPopupTrigger());
 
-    boolean newLook = Registry.is("editor.new.mouse.hover.popups");
     LightweightHint currentHint = getCurrentHint();
-    if (newLook && currentHint != null) {
+    if (currentHint != null) {
       if (myKeepHint || myMouseMovementTracker.isMovingTowards(e, getBoundsOnScreen(currentHint))) {
         return true;
       }
@@ -504,12 +533,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         int eachEndY = range.getEndOffset();
         y = eachStartY + (eachEndY - eachStartY) / 2;
       }
-      if (newLook && currentHint != null && y == myCurrentHintAnchorY) return true;
+      if (currentHint != null && y == myCurrentHintAnchorY) return true;
       me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), me.getX(), y + 1, e.getClickCount(),
                           e.isPopupTrigger());
       TooltipRenderer bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {
-        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(newLook));
+        LightweightHint hint = showTooltip(bigRenderer, createHint(me).setForcePopup(true));
         myCurrentHint = new WeakReference<>(hint);
         myCurrentHintAnchorY = y;
         myKeepHint = false;
@@ -1175,15 +1204,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void mouseExited(@NotNull MouseEvent e) {
-      if (Registry.is("editor.new.mouse.hover.popups")) {
-        hideMyEditorPreviewHint();
-        LightweightHint currentHint = getCurrentHint();
-        if (currentHint != null && !myKeepHint) {
-          closeHintOnMovingMouseAway(currentHint);
-        }
-      }
-      else {
-        cancelMyToolTips(e, true);
+      hideMyEditorPreviewHint();
+      LightweightHint currentHint = getCurrentHint();
+      if (currentHint != null && !myKeepHint) {
+        closeHintOnMovingMouseAway(currentHint);
       }
     }
 
@@ -1228,9 +1252,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private LightweightHint showTooltip(final TooltipRenderer tooltipObject, @NotNull HintHint hintHint) {
-    if (Registry.is("editor.new.mouse.hover.popups")) {
-      hideMyEditorPreviewHint();
-    }
+    hideMyEditorPreviewHint();
     return TooltipController.getInstance().showTooltipByMouseMove(myEditor, hintHint.getTargetPoint(), tooltipObject,
                                                                   myEditor.getVerticalScrollbarOrientation() ==
                                                                   EditorEx.VERTICAL_SCROLLBAR_RIGHT, ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
@@ -1664,12 +1686,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private static final int DELTA_Y = 6;
 
   private class StatusAction extends DumbAwareAction implements CustomComponentAction {
-    private boolean hasAnalyzed;
-    private boolean isAnalyzing;
-
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      return new StatusButton(this, presentation, new EditorToolbarButtonLook(), place, myEditor.getColorsScheme());
+      return new StatusButton(this, presentation, new EditorToolbarButtonLook(),
+                              place, myEditor.getColorsScheme(),
+                              () -> showNavigation);
     }
 
     @Override
@@ -1684,11 +1705,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         List<StatusItem> newStatus = analyzerStatus.getExpandedStatus();
         Icon newIcon = analyzerStatus.getIcon();
 
-        boolean analyzing = analyzerStatus.getStandardStatus() == StandardStatus.ANALYZING;
-        hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
-        isAnalyzing = analyzing;
-
-        if (!(hasAnalyzed && isAnalyzing)) {
+        if (!hasAnalyzed || analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
           if (newStatus.isEmpty()) {
             newStatus = Collections.singletonList(new StatusItem("", newIcon));
             presentation.putClientProperty(EXPANDED_STATUS, newStatus);
@@ -1697,9 +1714,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           if (!Objects.equals(presentation.getClientProperty(EXPANDED_STATUS), newStatus)) {
             presentation.putClientProperty(EXPANDED_STATUS, newStatus);
           }
-          else {
-            presentation.putClientProperty(TRANSLUCENT_STATE, false);
-          }
+
+          presentation.putClientProperty(TRANSLUCENT_STATE, analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE);
         }
         else {
           presentation.putClientProperty(TRANSLUCENT_STATE, true);
@@ -1726,7 +1742,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     private StatusButton(@NotNull AnAction action, @NotNull Presentation presentation,
                          @NotNull ActionButtonLook buttonLook, @NotNull String place,
-                         @NotNull EditorColorsScheme colorsScheme) {
+                         @NotNull EditorColorsScheme colorsScheme,
+                         @NotNull BooleanSupplier hasNavButtons) {
       setLayout(new GridBagLayout());
       setOpaque(false);
 
@@ -1805,7 +1822,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         updateContents(newStatus);
       }
 
-      setBorder(JBUI.Borders.empty(2));
+      setBorder(new Border() {
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {}
+
+        @Override
+        public boolean isBorderOpaque() {
+          return false;
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+          return hasNavButtons.getAsBoolean() ? JBUI.insets(2, 2, 2, 0) : JBUI.insets(2);
+        }
+      });
     }
 
     @Override
@@ -1869,14 +1899,22 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             g2.dispose();
           }
         }
+
+        @Override
+        public void setUI(LabelUI ui) {
+          super.setUI(ui);
+
+          if (!SystemInfo.isWindows) {
+            Font font = getFont();
+            font = new FontUIResource(font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2))); // Allow to reset the font by UI
+            setFont(font);
+          }
+        }
       };
 
       label.setForeground(colorsScheme.getColor(ICON_TEXT_COLOR));
       label.setIconTextGap(JBUIScale.scale(1));
 
-      Font font = label.getFont();
-      font = font.deriveFont(font.getStyle(), font.getSize() - JBUIScale.scale(2));
-      label.setFont(font);
       return label;
     }
 
@@ -2114,13 +2152,23 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
       myContent.removeAll();
 
-      GridBag gc = new GridBag();
-      myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())),
-                       gc.nextLine().next().
-                         anchor(GridBagConstraints.LINE_START).
-                         weightx(1).
-                         fillCellHorizontally().
-                         insets(10, 10, 10, 0));
+      GridBag gc = new GridBag().nextLine().next().
+        anchor(GridBagConstraints.LINE_START).
+        weightx(1).
+        fillCellHorizontally().
+        insets(10, 10, 10, 0);
+
+      boolean hasTitle = StringUtil.isNotEmpty(analyzerStatus.getTitle());
+
+      if (hasTitle) {
+        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getTitle())), gc);
+      }
+      else if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
+      }
+      else if (analyzerStatus.getExpandedStatus().size() > 0 && analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+        myContent.add(createDetailsPanel(), gc);
+      }
 
       Presentation presentation = new Presentation();
       presentation.setIcon(AllIcons.Actions.More);
@@ -2151,11 +2199,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
       myContent.add(myProgressPanel, gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1));
 
-      if (!analyzerStatus.getDetails().isEmpty()) {
+      if (hasTitle) {
         int topIndent = !myProgressBarMap.isEmpty() ? 10 : 0;
-        myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())),
-                      gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().
-                        coverLine().weightx(1).insets(topIndent, 10, 10, 6));
+        gc.nextLine().next().anchor(GridBagConstraints.LINE_START).fillCellHorizontally().coverLine().weightx(1).insets(topIndent, 10, 10, 6);
+
+        if (StringUtil.isNotEmpty(analyzerStatus.getDetails())) {
+          myContent.add(new JLabel(XmlStringUtil.wrapInHtml(analyzerStatus.getDetails())), gc);
+        }
+        else if (analyzerStatus.getExpandedStatus().size() > 0 && analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
+          myContent.add(createDetailsPanel(), gc);
+        }
       }
 
       JLabel openProblemsViewLabel = new TrackableLinkLabel(EditorBundle.message("iw.open.problems.view"), () -> {
@@ -2177,6 +2230,24 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         size.width = Math.max(size.width, JBUIScale.scale(296));
         myPopup.setSize(size);
       }
+    }
+
+    private @NotNull JComponent createDetailsPanel() {
+      StringBuilder text = new StringBuilder();
+      for (int i = 0; i < analyzerStatus.getExpandedStatus().size(); i++) {
+        boolean last = i == analyzerStatus.getExpandedStatus().size() - 1;
+        StatusItem item = analyzerStatus.getExpandedStatus().get(i);
+
+        text.append(item.getText()).append(" ").append(item.getType());
+        if (!last) {
+          text.append(", ");
+        }
+        else if (analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE) {
+          text.append(" ").append(EditorBundle.message("iw.found.so.far.suffix"));
+        }
+      }
+
+      return new JLabel(text.toString());
     }
 
     private @NotNull JPanel createLowerPanel(@NotNull UIController controller) {
@@ -2202,7 +2273,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
         else if (levels.size() > 1) {
           for(LanguageHighlightLevel level: levels) {
-            JLabel highlightLabel = new JLabel(level.getLanguage().getDisplayName() + ": ");
+            JLabel highlightLabel = new JLabel(level.getLangID() + ": ");
             highlightLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
 
             panel.add(highlightLabel, gc.next().anchor(GridBagConstraints.LINE_START).gridx > 0 ? gc.insetLeft(8) : gc);
@@ -2224,7 +2295,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       return new DropDownLink<>(level.getLevel(),
                                 controller.getAvailableLevels(),
                                 inspectionsLevel -> {
-                                  controller.setHighLightLevel(level.copy(level.getLanguage(), inspectionsLevel));
+                                  controller.setHighLightLevel(level.copy(level.getLangID(), inspectionsLevel));
                                   myContent.revalidate();
 
                                   Dimension size = myContent.getPreferredSize();
@@ -2234,10 +2305,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                   // Update statistics
                                   FeatureUsageData data = new FeatureUsageData().
                                     addProject(myEditor.getProject()).
-                                    addLanguage(level.getLanguage()).
+                                    addLanguage(level.getLangID()).
                                     addData("level", inspectionsLevel.toString());
 
-                                  FUCounterUsageLogger.getInstance().logEvent("actions", "highlight.level.changed", data);
+                                  FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                                 }, true);
     }
   }
@@ -2246,16 +2317,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private MenuAction(@NotNull List<? extends AnAction> actions) {
       setPopup(true);
       addAll(actions);
-      add(new ToggleAction(EditorBundle.message("iw.show.toolbar")) {
+      add(new ToggleAction(EditorBundle.message("iw.compact.view")) {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
-          return showToolbar;
+          return !showToolbar;
         }
 
         @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
-          showToolbar = state;
-          EditorSettingsExternalizable.getInstance().setShowInspectionWidget(state);
+          showToolbar = !state;
+          EditorSettingsExternalizable.getInstance().setShowInspectionWidget(showToolbar);
           updateTrafficLightVisibility();
           ActionsCollector.getInstance().record(e.getProject(), this, e, null);
         }

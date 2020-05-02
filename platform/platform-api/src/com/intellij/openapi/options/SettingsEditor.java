@@ -99,6 +99,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
 
   @Override
   public final void dispose() {
+    myListeners.clear();
   }
 
   protected void uninstallWatcher() {

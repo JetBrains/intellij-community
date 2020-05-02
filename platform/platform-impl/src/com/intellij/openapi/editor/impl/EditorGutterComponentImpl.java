@@ -165,6 +165,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private boolean myRightFreePaintersAreaShown;
   boolean myForceLeftFreePaintersAreaShown;
   boolean myForceRightFreePaintersAreaShown;
+  private short myForcedLeftFreePaintersAreaWidth = -1;
+  private short myForcedRightFreePaintersAreaWidth = -1;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
   @Nullable private AccessibleGutterLine myAccessibleGutterLine;
@@ -207,9 +209,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private void installDnD() {
     DnDSupport.createBuilder(this)
       .setBeanProvider(info -> {
-        final GutterMark renderer = getGutterRenderer(info.getPoint());
-        if (renderer instanceof GutterIconRenderer &&
-            ((GutterIconRenderer)renderer).getDraggableObject() != null &&
+        final GutterIconRenderer renderer = getGutterRenderer(info.getPoint());
+        if (renderer != null &&
+            renderer.getDraggableObject() != null &&
             (info.isCopy() || info.isMove())) {
           myDnDInProgress = true;
           return new DnDDragStartBean(renderer);
@@ -467,7 +469,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-          int logLine = visLinesIterator.getStartLogicalLine();
+          int logLine = visLinesIterator.getDisplayedLogicalLine();
           int y = visLinesIterator.getY();
           paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
 
@@ -598,7 +600,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
         if (!visLinesIterator.startsWithSoftWrap()) {
-          int logicalLine = visLinesIterator.getStartLogicalLine();
+          int logicalLine = visLinesIterator.getDisplayedLogicalLine();
           Integer lineToDisplay = converter.convert(myEditor, logicalLine + 1);
           if (lineToDisplay != null) {
             int startY = visLinesIterator.getY();
@@ -900,7 +902,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myHasInlaysWithGutterIcons = false;
     myEditor.getInlayModel().getBlockElementsInRange(0, myEditor.getDocument().getTextLength()).forEach(inlay -> {
       GutterIconRenderer iconRenderer = inlay.getGutterIconRenderer();
-      if (iconRenderer != null && checkDumbAware(iconRenderer) && !myEditor.getFoldingModel().isOffsetCollapsed(inlay.getOffset())) {
+      if (iconRenderer != null && checkDumbAware(iconRenderer) && !EditorUtil.isInlayFolded(inlay)) {
         Icon icon = scaleIcon(iconRenderer.getIcon());
         if (icon.getIconHeight() <= inlay.getHeightInPixels()) {
           myHasInlaysWithGutterIcons = true;
@@ -1589,11 +1591,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private int getLeftFreePaintersAreaWidth() {
-    return myLeftFreePaintersAreaShown ? FREE_PAINTERS_LEFT_AREA_WIDTH.get() : 0;
+    return myLeftFreePaintersAreaShown ? myForcedLeftFreePaintersAreaWidth < 0 ? FREE_PAINTERS_LEFT_AREA_WIDTH.get()
+                                                                               : myForcedLeftFreePaintersAreaWidth
+                                       : 0;
   }
 
   private int getRightFreePaintersAreaWidth() {
-    return myRightFreePaintersAreaShown ? FREE_PAINTERS_RIGHT_AREA_WIDTH.get() : 0;
+    return myRightFreePaintersAreaShown ? myForcedRightFreePaintersAreaWidth < 0 ? FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
+                                                                                 : myForcedRightFreePaintersAreaWidth
+                                        : 0;
   }
 
   @Override
@@ -2058,6 +2064,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
+  public void setLeftFreePaintersAreaWidth(int widthInPixels) {
+    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    myForcedLeftFreePaintersAreaWidth = (short)widthInPixels;
+  }
+
+  @Override
+  public void setRightFreePaintersAreaWidth(int widthInPixels) {
+    if (widthInPixels < 0 || widthInPixels > Short.MAX_VALUE) throw new IllegalArgumentException();
+    myForcedRightFreePaintersAreaWidth = (short)widthInPixels;
+  }
+
+  @Override
   public void setInitialIconAreaWidth(int width) {
     myStartIconAreaWidth = width;
   }
@@ -2151,7 +2169,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   @Nullable
-  public GutterMark getGutterRenderer(final Point p) {
+  public GutterIconRenderer getGutterRenderer(final Point p) {
     PointInfo info = getPointInfo(p);
     return info == null ? null : info.renderer;
   }

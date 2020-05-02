@@ -1322,29 +1322,74 @@
     <item name='org.apache.commons.lang.ArrayUtils short[] toPrimitive(java.lang.Short[], short) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(boolean[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(boolean[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(byte[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(byte[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(char[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(char[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(double[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(double[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(float[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(float[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(int[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(int[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(java.lang.Object[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(long[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(long[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.ArrayUtils void reverse(short[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param1&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.ArrayUtils void reverse(short[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -2241,6 +2286,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.commons.lang.Entities.ArrayEntityMap void ensureCapacity(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;this&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.Entities.BinaryEntityMap BinaryEntityMap()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -3593,7 +3643,8 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -3602,7 +3653,8 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String join(java.util.Iterator, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="mutates" val="&quot;param1&quot;"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>

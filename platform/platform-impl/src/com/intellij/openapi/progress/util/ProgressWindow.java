@@ -16,6 +16,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ProgressDetails;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -64,7 +67,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     void progressWindowCreated(@NotNull ProgressWindow pw);
   }
 
-  public static final Topic<Listener> TOPIC = Topic.create("progress window", Listener.class);
+  public static final Topic<Listener> TOPIC = new Topic<>("progress window", Listener.class, Topic.BroadcastDirection.NONE);
 
   public ProgressWindow(boolean shouldShowCancel, @Nullable Project project) {
     this(shouldShowCancel, false, project);
@@ -166,7 +169,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
         if (isRunning()) {
           showDialog();
         }
-        else {
+        else if (isPopupWasShown()) {
           Disposer.dispose(this);
           final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
           focusManager.doWhenFocusSettlesDown(() -> focusManager.requestDefaultFocus(true), ModalityState.defaultModalityState());
@@ -295,7 +298,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@ProgressText String text) {
     if (!Objects.equals(text, getText())) {
       super.setText(text);
       update();
@@ -311,7 +314,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  public void setText2(String text) {
+  public void setText2(@ProgressDetails String text) {
     if (!Objects.equals(text, getText2())) {
       super.setText2(text);
       update();
@@ -324,7 +327,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@ProgressTitle String title) {
     if (!Objects.equals(title, myTitle)) {
       myTitle = title;
       update();
@@ -364,8 +367,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   private void enableCancelButton(boolean enable) {
-    if (myDialog != null) {
-      myDialog.enableCancelButtonIfNeeded(enable);
+    ProgressDialog dialog = myDialog;
+    if (dialog != null) {
+      dialog.enableCancelButtonIfNeeded(enable);
     }
   }
 
@@ -379,8 +383,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     @Override
     public void cancel() {
       super.cancel();
-      if (myDialog != null) {
-        myDialog.cancel();
+      ProgressDialog dialog = myDialog;
+      if (dialog != null) {
+        dialog.cancel();
       }
     }
 
