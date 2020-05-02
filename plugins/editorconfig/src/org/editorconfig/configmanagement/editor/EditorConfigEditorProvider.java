@@ -84,7 +84,8 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
         final EditorConfigPreviewFile previewFile = new EditorConfigPreviewFile(myProject, contextFile, document);
         FileEditor previewEditor = createPreviewEditor(document, previewFile);
         TextEditor ecTextEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myFile);
-        final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(ecTextEditor, previewEditor);
+        final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(
+          myFile, myProject, ecTextEditor, previewEditor);
         Disposer.register(splitEditor, previewFile);
         return splitEditor;
       }
