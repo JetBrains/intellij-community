@@ -232,26 +232,20 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     }
 
     private static PsiMethodCallExpression[] getTestCaseCalls(PsiMethod method) {
-      PsiElement[] methodCalls = PsiTreeUtil.collectElements(method, element -> {
-        if (!(element instanceof PsiMethodCallExpression)) return false;
-        final PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
-        final PsiMethod method1 = methodCall.resolveMethod();
-        if (method1 != null) {
-          final PsiClass containingClass = method1.getContainingClass();
-          if (containingClass != null) {
-            final String qualifiedName = containingClass.getQualifiedName();
-            if ("junit.framework.Assert".equals(qualifiedName) ||
-                "org.junit.Assert".equals(qualifiedName) ||
-                "junit.framework.TestCase".equals(qualifiedName)) {
-              return true;
+      return SyntaxTraverser.psiTraverser(method).filter(PsiMethodCallExpression.class)
+        .filter(methodCall -> {
+          final PsiMethod method1 = methodCall.resolveMethod();
+          if (method1 != null) {
+            final PsiClass containingClass = method1.getContainingClass();
+            if (containingClass != null) {
+              final String qualifiedName = containingClass.getQualifiedName();
+              return "junit.framework.Assert".equals(qualifiedName) ||
+                     "org.junit.Assert".equals(qualifiedName) ||
+                     "junit.framework.TestCase".equals(qualifiedName);
             }
           }
-        }
-        return false;
-      });
-      PsiMethodCallExpression[] expressions = new PsiMethodCallExpression[methodCalls.length];
-      System.arraycopy(methodCalls, 0, expressions, 0, methodCalls.length);
-      return expressions;
+          return false;
+        }).toArray(new PsiMethodCallExpression[0]);
     }
 
     private static void addMethodJavadoc(PsiElementFactory factory, PsiMethod method) throws IncorrectOperationException {
