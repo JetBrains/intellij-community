@@ -112,7 +112,7 @@ public class NoButtonGroupInspection extends BaseFormInspection {
       for(int i=index-1; i >= 0; i--) {
         expectCell = FormEditingUtil.adjustForGap(parent, expectCell-1, myVerticalGroup, -1);
         if (buttonsToGroup.get(i).getConstraints().getCell(myVerticalGroup) != expectCell) {
-          removeRange(buttonsToGroup, 0, i);
+          buttonsToGroup.subList(0, i + 1).clear();
           break;
         }
       }
@@ -120,19 +120,13 @@ public class NoButtonGroupInspection extends BaseFormInspection {
       for(int i=index+1; i<buttonsToGroup.size(); i++) {
         expectCell = FormEditingUtil.adjustForGap(parent, expectCell+1, myVerticalGroup, 1);
         if (buttonsToGroup.get(i).getConstraints().getCell(myVerticalGroup) != expectCell) {
-          removeRange(buttonsToGroup, i, buttonsToGroup.size()-1);
+          buttonsToGroup.subList(i, buttonsToGroup.size()).clear();
           break;
         }
       }
 
       LOG.assertTrue(buttonsToGroup.size() > 1);
       GroupButtonsAction.groupButtons(myEditor, buttonsToGroup);
-    }
-
-    private static void removeRange(final ArrayList<RadComponent> buttonsToGroup, final int minIndex, final int maxIndex) {
-      for(int index=maxIndex; index >= minIndex; index--) {
-        buttonsToGroup.remove(index);
-      }
     }
   }
 
