@@ -18,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 
@@ -66,6 +68,9 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
 
 
   override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
+    if (element.findElementAt(offsetInElement)?.parentOfType<GrLiteral>() != null) {
+      return true
+    }
     val enclosingClosure: GrFunctionalExpression? = element.parentOfType<GrFunctionalExpression>()
     val call: GrMethodCall? = enclosingClosure?.parentOfType<GrMethodCall>()
     val arguments: List<GrExpression>? = call?.closureArguments?.asList()?.plus(call.expressionArguments.asList())
