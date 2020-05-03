@@ -4,6 +4,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.platform.util",
     srcs = ["src"],
+    bundle_data = ["//tools/idea/bin"],  # Used by NativeLibraryLoader et al.
     iml_files = ["intellij.platform.util.iml"],
     javacopts = [
         "-Xep:ComplexBooleanConstant:WARN",
