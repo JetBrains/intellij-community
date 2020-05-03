@@ -148,17 +148,17 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static void reportTestExecutionStatistics() {
     System.out.println("----- TEST STATISTICS -----");
     UsefulTestCase.logSetupTeardownCosts();
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']",
-                                     MockApplication.INSTANCES_CREATED));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']",
-                                     ProjectManagerImpl.TEST_PROJECTS_CREATED));
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']%n",
+                      MockApplication.INSTANCES_CREATED);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']%n",
+                      ProjectManagerImpl.TEST_PROJECTS_CREATED);
     long totalGcTime = 0;
     for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
       totalGcTime += mxBean.getCollectionTime();
     }
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']", totalGcTime));
-    System.out.println(String.format("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']",
-                                     ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount()));
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.gcTimeMs' value='%d']%n", totalGcTime);
+    System.out.printf("##teamcity[buildStatisticValue key='ideaTests.classesLoaded' value='%d']%n",
+                      ManagementFactory.getClassLoadingMXBean().getTotalLoadedClassCount());
   }
 
   protected void resetAllFields() {
