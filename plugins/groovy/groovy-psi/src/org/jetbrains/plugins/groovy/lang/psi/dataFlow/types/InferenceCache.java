@@ -86,7 +86,7 @@ class InferenceCache {
     if (!cache.containsVariable(descriptor)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       DFAFlowInfo flowInfo = collectRequiredInstructions(definitionMaps, instruction, descriptor, initialState, mixinPredicate);
-      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo, descriptor);
+      List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo);
       if (dfaResult == null) {
         myTooComplexInstructions.addAll(flowInfo.getInterestingInstructions());
       }
@@ -103,9 +103,8 @@ class InferenceCache {
   @Nullable
   private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
                                             Instruction @NotNull [] flow,
-                                            @NotNull DFAFlowInfo flowInfo,
-                                            @NotNull VariableDescriptor descriptor) {
-    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, new InitialTypeProvider(owner, flowInfo), descriptor);
+                                            @NotNull DFAFlowInfo flowInfo) {
+    final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, new InitialTypeProvider(owner, flowInfo));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
   }
@@ -143,7 +142,15 @@ class InferenceCache {
       .filter(predicate)
       .collect(Collectors.toSet());
     Map<VariableDescriptor, List<GrControlFlowOwner>> usageInFlowMap = FunctionalExpressionFlowUtil.getUsagesMap(myScope);
-    return new DFAFlowInfo(initialState, interestingInstructions, acyclicInstructions, dependentOnSharedVariables, usageInFlowMap);
+    Set<VariableDescriptor> interestingDescriptors = interesting.keySet().stream()
+      .map(it -> it.getSecond())
+      .collect(Collectors.toSet());
+    return new DFAFlowInfo(initialState,
+                           interestingInstructions,
+                           acyclicInstructions,
+                           interestingDescriptors,
+                           dependentOnSharedVariables,
+                           usageInFlowMap);
   }
 
   @NotNull

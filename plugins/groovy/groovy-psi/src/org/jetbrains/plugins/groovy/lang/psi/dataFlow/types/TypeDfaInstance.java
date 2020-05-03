@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toSet;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.findNearestVariableDescriptor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableDescriptors;
 
@@ -36,22 +35,16 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private final DFAFlowInfo myFlowInfo;
   private final InferenceCache myCache;
   private final InitialTypeProvider myInitialTypeProvider;
-  private final Set<VariableDescriptor> interestingDescriptors;
   private final int lastInterestingInstruction;
 
   TypeDfaInstance(Instruction @NotNull [] flow,
                   @NotNull DFAFlowInfo flowInfo,
                   @NotNull InferenceCache cache,
-                  @NotNull InitialTypeProvider initialTypeProvider,
-                  @NotNull VariableDescriptor initialDescriptor) {
+                  @NotNull InitialTypeProvider initialTypeProvider) {
     myFlow = flow;
     myFlowInfo = flowInfo;
     myCache = cache;
     myInitialTypeProvider = initialTypeProvider;
-    Stream<VariableDescriptor> dependentDescriptors = flowInfo.getInterestingInstructions().stream()
-      .filter(instruction -> instruction instanceof ReadWriteVariableInstruction)
-      .map(instruction -> ((ReadWriteVariableInstruction)instruction).getDescriptor());
-    interestingDescriptors = Stream.concat(dependentDescriptors, Stream.of(initialDescriptor)).collect(toSet());
     lastInterestingInstruction = flowInfo.getInterestingInstructions().stream().mapToInt(Instruction::num).max().orElse(0);
   }
 
@@ -110,7 +103,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     else {
       DFAType type = state.getVariableType(descriptor);
-      if (type == null && myFlowInfo.getInterestingInstructions().contains(instruction)) {
+      if (type == null &&
+          myFlowInfo.getInterestingInstructions().contains(instruction) &&
+          myFlowInfo.getInterestingDescriptors().contains(descriptor)) {
         PsiType initialType = myInitialTypeProvider.initialType(descriptor);
         if (initialType != null) {
           updateVariableType(state, instruction, descriptor, () -> DFAType.create(initialType));
@@ -201,7 +196,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     Set<VariableDescriptor> foreignIdentifiers = getForeignVariableDescriptors(blockFlowOwner, kind, ReadWriteVariableInstruction::isWrite);
-    if (interestingDescriptors.stream().noneMatch(foreignIdentifiers::contains)) {
+    if (myFlowInfo.getInterestingDescriptors().stream().noneMatch(foreignIdentifiers::contains)) {
       return;
     }
     switch (kind) {
@@ -233,7 +228,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     Map<VariableDescriptor, DFAType> initialTypesForNestedFlow = new LinkedHashMap<>(myFlowInfo.getInitialTypes());
     initialTypesForNestedFlow.putAll(state.getVarTypes());
     Instruction lastBlockInstruction = blockFlow[blockFlow.length - 1];
-    for (VariableDescriptor outerDescriptor : interestingDescriptors) {
+    for (VariableDescriptor outerDescriptor : myFlowInfo.getInterestingDescriptors()) {
       VariableDescriptor innerDescriptor = findNearestVariableDescriptor(blockFlow[0], outerDescriptor.getName(), true, true);
       if (innerDescriptor == null) {
         continue;
