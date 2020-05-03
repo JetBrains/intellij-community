@@ -13,10 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
-import org.jetbrains.uast.toUElement
 import org.jetbrains.uast.toUElementOfExpectedTypes
 import java.util.*
-import kotlin.reflect.KClass
 
 /**
  * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
@@ -69,9 +67,9 @@ internal fun getOrCreateCachedElement(element: PsiElement,
   if (supportedUElementTypes.size == 1) {
     val requiredType = supportedUElementTypes[0]
     if (requiredType == UInjectionHost::class.java) {
-      return getCachedUElement(context, element, UInjectionHost::class, CACHED_UAST_INJECTION_HOST)
+      return getCachedUElement(context, element, UInjectionHost::class.java, CACHED_UAST_INJECTION_HOST)
     } else if (requiredType == UExpression::class.java) {
-      return getCachedUElement(context, element, UExpression::class, CACHED_UAST_EXPRESSION)
+      return getCachedUElement(context, element, UExpression::class.java, CACHED_UAST_EXPRESSION)
     }
   }
 
@@ -80,14 +78,14 @@ internal fun getOrCreateCachedElement(element: PsiElement,
 
 private fun <T : UElement> getCachedUElement(context: ProcessingContext,
                                              element: PsiElement,
-                                             clazz: KClass<T>,
+                                             clazz: Class<T>,
                                              cacheKey: Key<Optional<T>>): T? {
   val sharedContext = context.sharedContext
 
   val uElementRef = sharedContext.get(cacheKey)
   if (uElementRef != null) return uElementRef.orElse(null)
 
-  val newUElement = element.toUElement(clazz.java)
+  val newUElement = element.toUElementOfExpectedTypes(clazz)
   sharedContext.put(cacheKey, Optional.ofNullable(newUElement))
   return newUElement
 }
