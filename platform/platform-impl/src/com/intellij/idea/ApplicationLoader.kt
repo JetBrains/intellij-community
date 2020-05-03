@@ -77,6 +77,9 @@ private fun executeInitAppInEdt(args: List<String>,
           starter is IdeStarter -> ""
           commandName != null -> ", for command: $commandName"
           else -> ", for starter: " + starter.javaClass.name
+        } + when {
+          args.isNotEmpty() -> " (commandline: ${args.joinToString(" ")})"
+          else -> ""
         }
         Main.showMessage("Startup Error", message, true)
         exitProcess(Main.NO_GRAPHICS)
