@@ -4,6 +4,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.platform.testFramework",
     srcs = ["src"],
+    bundle_data = ["//tools/idea:test-log.xml"],  # Used by TestLoggerFactory.
     iml_files = ["intellij.platform.testFramework.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [

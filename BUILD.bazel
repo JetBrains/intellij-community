@@ -1,5 +1,7 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module", "iml_project")
 
+exports_files(["test-log.xml"])
+
 # managed by go/iml_to_build
 iml_project(
     name = "android-studio",
