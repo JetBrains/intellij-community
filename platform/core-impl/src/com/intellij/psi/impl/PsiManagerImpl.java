@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.PsiBuilderFactory;
@@ -50,8 +50,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
-  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC =
-    Topic.create("ANY_PSI_CHANGE_TOPIC", AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
+  public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(@NotNull Project project) {
     // we need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform

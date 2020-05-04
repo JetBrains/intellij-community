@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.util.Pair;
@@ -11,9 +11,9 @@ import java.util.EventListener;
 /**
  * Listener for {@link FileEditorManager} events. All methods are invoked in EDT.
  */
-public interface FileEditorManagerListener extends EventListener{
-  Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER =
-    new Topic<>("file editor events", FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
+public interface FileEditorManagerListener extends EventListener {
+  // project level
+  Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER = new Topic<>(FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   /**
    * This method is called synchronously (in the same EDT event), as the creation of FileEditor(s).
@@ -40,8 +40,10 @@ public interface FileEditorManagerListener extends EventListener{
   }
 
   interface Before extends EventListener {
-    Topic<Before> FILE_EDITOR_MANAGER =
-      new Topic<>("file editor before events", Before.class, Topic.BroadcastDirection.TO_PARENT);
+    /**
+     * file editor before events
+     */
+    Topic<Before> FILE_EDITOR_MANAGER = new Topic<>(Before.class, Topic.BroadcastDirection.TO_PARENT);
 
     default void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     }

@@ -20,22 +20,20 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
 
-public class EventDispatcher<T extends EventListener> {
+public final class EventDispatcher<T extends EventListener> {
   private static final Logger LOG = Logger.getInstance(EventDispatcher.class);
 
   private T myMulticaster;
 
   private final DisposableWrapperList<T> myListeners = new DisposableWrapperList<>();
-  @NotNull private final Class<T> myListenerClass;
-  @Nullable private final Map<String, Object> myMethodReturnValues;
+  private final @NotNull Class<T> myListenerClass;
+  private final @Nullable Map<String, Object> myMethodReturnValues;
 
-  @NotNull
-  public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass) {
     return new EventDispatcher<>(listenerClass, null);
   }
 
-  @NotNull
-  public static <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
     assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
     return new EventDispatcher<>(listenerClass, methodReturnValues);
   }
@@ -72,10 +70,9 @@ public class EventDispatcher<T extends EventListener> {
     return createMulticaster(listenerClass, null, listeners);
   }
 
-  @NotNull
-  static <T> T createMulticaster(@NotNull Class<T> listenerClass,
-                                 @Nullable Map<String, Object> methodReturnValues,
-                                 @NotNull Getter<? extends Iterable<T>> listeners) {
+  static @NotNull <T> T createMulticaster(@NotNull Class<T> listenerClass,
+                                          @Nullable Map<String, Object> methodReturnValues,
+                                          @NotNull Getter<? extends Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
     InvocationHandler handler = new InvocationHandler() {
       @Override
@@ -99,8 +96,7 @@ public class EventDispatcher<T extends EventListener> {
     return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
   }
 
-  @Nullable
-  public static Object handleObjectMethod(Object proxy, Object[] args, String methodName) {
+  public static @Nullable Object handleObjectMethod(Object proxy, Object[] args, String methodName) {
     if (methodName.equals("toString")) {
       return "Multicaster";
     }
@@ -116,8 +112,7 @@ public class EventDispatcher<T extends EventListener> {
     }
   }
 
-  @NotNull
-  public T getMulticaster() {
+  public @NotNull T getMulticaster() {
     T multicaster = myMulticaster;
     if (multicaster == null) {
       // benign race
@@ -164,8 +159,7 @@ public class EventDispatcher<T extends EventListener> {
     return !myListeners.isEmpty();
   }
 
-  @NotNull
-  public List<T> getListeners() {
+  public @NotNull List<T> getListeners() {
     return myListeners;
   }
 

@@ -15,7 +15,6 @@ import javax.swing.*;
 import java.util.List;
 
 public abstract class FileEditorManager {
-
   public static final Key<Boolean> USE_CURRENT_WINDOW = Key.create("OpenFile.searchForOpen");
 
   public static FileEditorManager getInstance(@NotNull Project project) {
@@ -57,8 +56,7 @@ public abstract class FileEditorManager {
    *
    * @return opened text editor. The method returns {@code null} in case if text editor wasn't opened.
    */
-  @Nullable
-  public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
+  public abstract @Nullable Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
    * @deprecated use {@link #openTextEditor(OpenFileDescriptor, boolean)}
@@ -73,8 +71,7 @@ public abstract class FileEditorManager {
    * there is no selected editor at all or selected editor is not a text one.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
-  @Nullable
-  public abstract Editor getSelectedTextEditor();
+  public abstract @Nullable Editor getSelectedTextEditor();
 
   /**
    * @return currently selected TEXT editors including ones which were opened by guests during a collaborative development session
@@ -124,8 +121,7 @@ public abstract class FileEditorManager {
   /**
    * @return currently selected file editor or {@code null} if there is no selected editor at all.
    */
-  @Nullable
-  public FileEditor getSelectedEditor() {
+  public @Nullable FileEditor getSelectedEditor() {
     VirtualFile[] files = getSelectedFiles();
     return files.length == 0 ? null : getSelectedEditor(files[0]);
   }
@@ -134,8 +130,7 @@ public abstract class FileEditorManager {
    * @return editor which is currently selected for given file.
    * The method returns {@code null} if {@code file} is not opened.
    */
-  @Nullable
-  public abstract FileEditor getSelectedEditor(@NotNull VirtualFile file);
+  public abstract @Nullable FileEditor getSelectedEditor(@NotNull VirtualFile file);
 
   /**
    * @return current editors for the specified {@code file}
@@ -164,9 +159,9 @@ public abstract class FileEditorManager {
    * To change an order of components the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
-  public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void addTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
-  public abstract void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void removeTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   /**
    * Adds the specified component below the editor and paints a separator line above it.
@@ -180,9 +175,9 @@ public abstract class FileEditorManager {
    * To change an order of components the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
-  public abstract void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void addBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
-  public abstract void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  public abstract void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
 
@@ -218,16 +213,14 @@ public abstract class FileEditorManager {
    *
    * @return opened file editors
    */
-  @NotNull
-  public abstract List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
+  public abstract @NotNull List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
    * Returns the project with which the file editor manager is associated.
    *
    * @return the project instance.
    */
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
 
@@ -235,8 +228,7 @@ public abstract class FileEditorManager {
    * Returns data associated with given editor/caret context. Data providers are registered via
    * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
    */
-  @Nullable
-  public abstract Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
+  public abstract @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**
    * Selects a specified file editor tab for the specified editor.
