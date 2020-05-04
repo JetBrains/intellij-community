@@ -241,13 +241,13 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testAutoImportCaretLocation2() {
-    String text = "class X { <caret>ArrayList c = new ArrayList(); }";
+    String text = "class X { <caret>ArrayList c = null; }";
     configureByText(text);
     CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     type(" ");
     backspace();
 
-    assertEquals(2, highlightErrors().size());
+    assertEquals(1, highlightErrors().size());
     UIUtil.dispatchAllInvocationEvents();
 
     int offset = getEditor().getCaretModel().getOffset();
@@ -269,7 +269,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     doHighlighting();
     //caret is too close
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
 
     type(" ");
 
@@ -279,7 +279,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
 
-    assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertOneImportAdded("java.util.ArrayList");
   }
 
   public void testAutoImportAfterUncomment() {
@@ -292,7 +292,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     doHighlighting();
 
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
 
     EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
@@ -301,7 +301,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     assertEmpty(highlightErrors());
 
-    assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertEquals(2, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
   }
 
   public void testEnsureOptimizeImportsWhenInspectionReportsErrors() {
@@ -337,12 +337,12 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     //error corresponding to too short class name
     assertEquals(1, errs.size());
 
-    assertEquals(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertOneImportAdded("java.util.List");
 
     type("/* */");
     doHighlighting();
     UIUtil.dispatchAllInvocationEvents();
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
   }
 
   public void testAutoImportWorks() {
@@ -375,13 +375,22 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
     doHighlighting();
     //caret is too close
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
 
     caretRight();
 
     doHighlighting();
 
-    assertNotSame(0, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements().length);
+    assertOneImportAdded("java.util.ArrayList");
+  }
+
+  private void assertOneImportAdded(String s) {
+    PsiImportStatementBase importStatement = assertOneElement(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertTrue(importStatement.resolve() instanceof PsiClass);
+    assertEquals(s, ((PsiClass)importStatement.resolve()).getQualifiedName());
+  }
+  private void assertNoImportsAdded() {
+    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
   }
 
   public void testAutoOptimizeUnresolvedImports() {
@@ -402,7 +411,32 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     doHighlighting();
     UIUtil.dispatchAllInvocationEvents();
 
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
+  }
+
+  public void testUnambiguousImportMustBeInsertedEvenWhenShowImportPopupIsOff() {
+    @Language("JAVA")
+    @NonNls String text = "package p;\n" +
+                          "class S { ArrayList l; }  ";
+    configureByText(text);
+    type(" ");
+    backspace();
+
+    boolean importHintEnabled = DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled();
+    try {
+      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(false);
+      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+
+      List<HighlightInfo> errs = highlightErrors();
+      UIUtil.dispatchAllInvocationEvents();
+
+      assertEmpty(errs);
+
+      assertOneImportAdded("java.util.ArrayList");
+    }
+    finally {
+      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(importHintEnabled);
+    }
   }
 
   public void testAutoOptimizeDoesntSuddenlyRemoveImportsDuringTyping() {
@@ -422,8 +456,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     errs = highlightErrors();
     assertNotEmpty(errs);
-    PsiImportStatementBase imp = assertOneElement(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-    assertEquals("java.util.ArrayList", imp.getImportReference().getQualifiedName());
+    assertOneImportAdded("java.util.ArrayList");
     UIUtil.dispatchAllInvocationEvents();
 
     type(" */ ");
@@ -432,8 +465,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertEmpty(errs);
     UIUtil.dispatchAllInvocationEvents();
 
-    imp = assertOneElement(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
-    assertEquals("java.util.ArrayList", imp.getImportReference().getQualifiedName());
+    assertOneImportAdded("java.util.ArrayList");
   }
 
   public void testAutoInsertImportForInnerClass() {
@@ -445,11 +477,11 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     List<HighlightInfo> errs = highlightErrors();
     assertEquals(1, errs.size());
 
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
     type("/* */");
     doHighlighting();
     UIUtil.dispatchAllInvocationEvents();
-    assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertNoImportsAdded();
   }
 
   public void testAutoInsertImportForInnerClassAllowInnerClassImports() {
@@ -465,7 +497,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     List<HighlightInfo> errs = highlightErrors();
     assertEmpty(errs);
 
-    assertSize(1, ((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
+    assertOneImportAdded("java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock");
   }
 
   public void testAutoImportSkipsClassReferenceInMethodPosition() {
@@ -479,7 +511,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertTrue(errs.size() > 1);
 
     PsiJavaFile javaFile = (PsiJavaFile)getFile();
-    assertEquals(1, javaFile.getImportList().getAllImportStatements().length);
+    assertOneImportAdded("java.util.HashMap");
 
     PsiReference ref = javaFile.findReferenceAt(getEditor().getCaretModel().getOffset());
     ImportClassFix fix = new ImportClassFix((PsiJavaCodeReferenceElement)ref);
