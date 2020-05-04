@@ -383,7 +383,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   override fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
     if (!partialChangeListsEnabled) return false
-    if (getTrackingMode() == LocalLineStatusTracker.Mode.SILENT) return false
+    if (!getTrackingMode().isVisible) return false
 
     val vcs = VcsUtil.getVcsFor(project, virtualFile)
     return vcs != null && vcs.arePartialChangelistsSupported()
@@ -467,9 +467,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   private fun getTrackingMode(): LocalLineStatusTracker.Mode {
     val settings = VcsApplicationSettings.getInstance()
-    if (!settings.SHOW_LST_GUTTER_MARKERS) return LocalLineStatusTracker.Mode.SILENT
-    if (settings.SHOW_WHITESPACES_IN_LST) return LocalLineStatusTracker.Mode.SMART
-    return LocalLineStatusTracker.Mode.DEFAULT
+    return LocalLineStatusTracker.Mode(settings.SHOW_LST_GUTTER_MARKERS,
+                                       settings.SHOW_LST_ERROR_STRIPE_MARKERS,
+                                       settings.SHOW_WHITESPACES_IN_LST)
   }
 
   @CalledInAwt

@@ -19,9 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
-import java.awt.Graphics
 import java.awt.Point
-import java.awt.event.MouseEvent
 import java.util.*
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
@@ -41,9 +39,9 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
                                                              override val virtualFile: VirtualFile,
                                                              mode: Mode
 ) : LineStatusTrackerBase<R>(project, document), LineStatusTracker<R> {
-  enum class Mode {
-    DEFAULT, SMART, SILENT
-  }
+  class Mode(val isVisible: Boolean,
+             val showErrorStripeMarkers: Boolean,
+             val detectWhitespaceChangedLines: Boolean)
 
   abstract override val renderer: LocalLineStatusMarkerRenderer
 
@@ -51,17 +49,18 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     set(value) {
       if (value == mode) return
       field = value
-      updateInnerRanges()
+      resetInnerRanges()
+      updateHighlighters()
     }
 
 
   @CalledInAwt
   override fun isAvailableAt(editor: Editor): Boolean {
-    return mode != Mode.SILENT && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
+    return mode.isVisible && editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
   @CalledInAwt
-  override fun isDetectWhitespaceChangedLines(): Boolean = mode == Mode.SMART
+  override fun isDetectWhitespaceChangedLines(): Boolean = mode.isVisible && mode.detectWhitespaceChangedLines
 
   @CalledInAwt
   override fun fireFileUnchanged() {
@@ -92,14 +91,12 @@ abstract class LocalLineStatusTracker<R : Range> constructor(override val projec
     : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
-    override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean {
-      if (tracker.mode == Mode.SILENT) return false
-      return super.canDoAction(editor, ranges, e)
+    override fun shouldPaintGutter(): Boolean {
+      return tracker.mode.isVisible
     }
 
-    override fun paint(editor: Editor, g: Graphics) {
-      if (tracker.mode == Mode.SILENT) return
-      super.paint(editor, g)
+    override fun shouldPaintErrorStripeMarkers(): Boolean {
+      return tracker.mode.isVisible && tracker.mode.showErrorStripeMarkers
     }
 
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {

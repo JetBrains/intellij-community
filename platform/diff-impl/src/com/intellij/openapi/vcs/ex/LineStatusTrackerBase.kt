@@ -224,7 +224,7 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
   }
 
   @CalledInAwt
-  protected fun updateInnerRanges() {
+  protected fun resetInnerRanges() {
     LOCK.write {
       if (isDetectWhitespaceChangedLines()) {
         for (block in blocks) {
@@ -236,8 +236,6 @@ abstract class LineStatusTrackerBase<R : Range> : LineStatusTrackerI<R> {
           block.ourData.innerRanges = null
         }
       }
-
-      updateHighlighters()
     }
   }
 

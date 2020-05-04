@@ -90,18 +90,20 @@ public abstract class LineStatusMarkerRenderer {
   private void updateHighlighters() {
     if (myDisposed) return;
 
-    for (RangeHighlighter highlighter: myTooltipHighlighters) {
+    for (RangeHighlighter highlighter : myTooltipHighlighters) {
       disposeHighlighter(highlighter);
     }
     myTooltipHighlighters.clear();
 
-    List<? extends Range> ranges = myTracker.getRanges();
-    if (ranges != null) {
-      MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
-      for (Range range: ranges) {
-        RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
-        if (myEditorFilter != null) highlighter.setEditorFilter(myEditorFilter);
-        myTooltipHighlighters.add(highlighter);
+    if (shouldPaintErrorStripeMarkers()) {
+      List<? extends Range> ranges = myTracker.getRanges();
+      if (ranges != null) {
+        MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
+        for (Range range : ranges) {
+          RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
+          if (myEditorFilter != null) highlighter.setEditorFilter(myEditorFilter);
+          myTooltipHighlighters.add(highlighter);
+        }
       }
     }
   }
@@ -272,6 +274,14 @@ public abstract class LineStatusMarkerRenderer {
     int y = editor.visualLineToY(startLine);
     int endY = editor.visualLineToY(endLine);
     return new Rectangle(area.val1, y, area.val2 - area.val1, endY - y);
+  }
+
+  protected boolean shouldPaintGutter() {
+    return true;
+  }
+
+  protected boolean shouldPaintErrorStripeMarkers() {
+    return shouldPaintGutter();
   }
 
   protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
@@ -706,22 +716,28 @@ public abstract class LineStatusMarkerRenderer {
   private class MyActiveGutterRenderer implements ActiveGutterRenderer {
     @Override
     public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      LineStatusMarkerRenderer.this.paint(editor, g);
+      if (shouldPaintGutter()) {
+        LineStatusMarkerRenderer.this.paint(editor, g);
+      }
     }
 
     @Override
     public boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-      return LineStatusMarkerRenderer.this.canDoAction(editor, e);
+      return shouldPaintGutter() &&
+             LineStatusMarkerRenderer.this.canDoAction(editor, e);
     }
 
     @Override
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
-      LineStatusMarkerRenderer.this.doAction(editor, e);
+      if (shouldPaintGutter()) {
+        LineStatusMarkerRenderer.this.doAction(editor, e);
+      }
     }
 
     @Nullable
     @Override
     public Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
+      if (!shouldPaintGutter()) return new Rectangle(-1, -1, 0, 0);
       return LineStatusMarkerRenderer.this.calcBounds(editor, lineNum, preferredBounds);
     }
 
