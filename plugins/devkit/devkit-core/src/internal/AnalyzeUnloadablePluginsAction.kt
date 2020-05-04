@@ -196,7 +196,9 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
         continue
       }
       for (nestedDependency in depIdeaPlugin.dependencies) {
-        analysisErrors.add("Unsupported nested dependency on " + nestedDependency.value?.id + " in " + configFileName)
+        if (nestedDependency.configFile.stringValue != null) {
+          analysisErrors.add("Unsupported nested dependency on " + nestedDependency.value?.id + " in " + configFileName)
+        }
       }
       componentCount += analyzePluginFile(depIdeaPlugin, analysisErrors, nonDynamicEPs, unspecifiedDynamicEPs, serviceOverrides, extensionPointOwners, true)
     }
