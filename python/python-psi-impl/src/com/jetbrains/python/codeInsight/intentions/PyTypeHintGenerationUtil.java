@@ -245,7 +245,6 @@ public class PyTypeHintGenerationUtil {
         openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
       }
     });
-
   }
 
   private static void openEditorAndAddTemplateForTypeComment(@NotNull PsiComment insertedComment,
@@ -381,6 +380,10 @@ public class PyTypeHintGenerationUtil {
       throw new Pep484IncompatibleTypeException(
         PyPsiBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type.getName()));
     }
+  }
+
+  public static boolean isTypeHintComment(PsiElement element) {
+    return element instanceof PsiComment && element.getText().startsWith(TYPE_COMMENT_PREFIX);
   }
 
   public static final class Pep484IncompatibleTypeException extends RuntimeException {
