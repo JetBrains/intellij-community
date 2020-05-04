@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.NonUrgentExecutor
 
 internal object FileUsagePredictor {
@@ -37,7 +36,9 @@ internal object FileUsagePredictor {
     val start = System.currentTimeMillis()
     val result = FilePredictionFeaturesHelper.calculateExternalReferences(project, prevFile)
     val refsComputation = System.currentTimeMillis() - start
-    FileNavigationLogger.logEvent(project, newFile, prevFile, "file.opened", refsComputation, result.contains(newFile))
+
+    val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result, prevFile)
+    FileNavigationLogger.logEvent(project, "file.opened", features, refsComputation)
   }
 
   private fun predictNextFile(project: Project, file: VirtualFile) {
@@ -47,8 +48,8 @@ internal object FileUsagePredictor {
 
     val candidates = CompositeCandidateProvider.provideCandidates(project, file, result.references, MAX_CANDIDATE)
     for (candidate in candidates) {
-      val isInRef: ThreeState = result.contains(candidate)
-      FileNavigationLogger.logEvent(project, candidate, file, "candidate.calculated", refsComputation, isInRef)
+      val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, candidate, result, file)
+      FileNavigationLogger.logEvent(project, "candidate.calculated", features, refsComputation)
     }
   }
 }

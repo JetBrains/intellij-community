@@ -19,6 +19,7 @@
     <statistics.counterUsagesCollector groupId="file.prediction" version="3"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionGeneralFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionFileTypeFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
 
     <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>

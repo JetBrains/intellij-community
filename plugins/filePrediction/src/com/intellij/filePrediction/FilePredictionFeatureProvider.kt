@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 
 internal object FilePredictionFeaturesHelper {
@@ -33,21 +34,30 @@ internal object FilePredictionFeaturesHelper {
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
-                            prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
+                            refs: ExternalReferencesResult,
+                            prevFile: VirtualFile?): FileFeaturesResult {
+    val start = System.currentTimeMillis()
     val result = HashMap<String, FilePredictionFeature>()
+    val isInRef = refs.contains(newFile)
+    if (isInRef != ThreeState.UNSURE) {
+      result["in_ref"] = FilePredictionFeature.binary(isInRef == ThreeState.YES)
+    }
+
     val providers = EP_NAME.extensionList
     for (provider in providers) {
       val prefix = if (provider.getName().isNotEmpty()) provider.getName() + "_" else ""
       val features = provider.calculateFileFeatures(project, newFile, prevFile).mapKeys { prefix + it.key }
       result.putAll(features)
     }
-    return result
+    return FileFeaturesResult(result, System.currentTimeMillis() - start)
   }
 
   private fun getReferencesProvider(file: PsiFile): ExternalReferencesResult {
     return EXTERNAL_REFERENCES_EP_NAME.extensions.mapNotNull { it.externalReferences(file) }.firstOrNull() ?: FAILED_COMPUTATION
   }
 }
+
+data class FileFeaturesResult(val features: Map<String, FilePredictionFeature>, val computation: Long)
 
 @ApiStatus.Internal
 internal interface FileExternalReferencesProvider {
