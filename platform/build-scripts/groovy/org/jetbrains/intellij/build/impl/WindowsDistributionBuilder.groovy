@@ -200,7 +200,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     // Copy the profiler launcher executable.
     buildContext.ant.copy(todir: "$winDistPath/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/../vendor/google/game-tools/native/GameToolsWinLauncher/x64/Release")
+      fileset(dir: "$buildContext.paths.communityHome/../../prebuilts/tools/windows/game-tools/GameToolsWinLauncher")
     }
     buildContext.ant.move(file: "$winDistPath/bin/ProfilerWinLauncher.exe", tofile: "$winDistPath/bin/profiler.exe")
   }
