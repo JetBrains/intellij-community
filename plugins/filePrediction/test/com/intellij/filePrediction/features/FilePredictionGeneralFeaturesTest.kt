@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.filePrediction
+package com.intellij.filePrediction.features
 
+import com.intellij.filePrediction.FilePredictionFeature
+import com.intellij.filePrediction.FilePredictionGeneralFeatures
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -18,7 +20,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.junit.Test
 import java.io.File
 
-class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
+class FilePredictionGeneralFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuilder<ModuleFixture>>() {
 
   private fun doTestGeneralFeatures(prevPath: String, newPath: String, featuresProvider: FileFeaturesProducer) {
     val prevFile = myFixture.addFileToProject(prevPath, "PREVIOUS FILE")
