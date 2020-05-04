@@ -41,7 +41,10 @@ class PyWelcomeConfigurator : DirectoryProjectConfigurator {
     if (newProject) return
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(
-      DumbAwareRunnable { PyWelcome.welcomeUser(project, baseDir) }
+      DumbAwareRunnable {
+        PyWelcomeCollector.logWelcomeScriptForOpenedProject()
+        PyWelcome.welcomeUser(project, baseDir)
+      }
     )
   }
 }
@@ -58,7 +61,10 @@ object PyWelcomeGenerator {
     )
   }
 
-  fun welcomeUser(project: Project, baseDir: VirtualFile) = PyWelcome.welcomeUser(project, baseDir)
+  fun welcomeUser(project: Project, baseDir: VirtualFile) {
+    PyWelcomeCollector.logWelcomeScriptForNewProject()
+    PyWelcome.welcomeUser(project, baseDir)
+  }
 }
 
 private object PyWelcome {
