@@ -9,8 +9,6 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
-private val CANCELED = CancellationException()
-
 open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
                                                addExceptionHandler: Boolean) : CancellablePromise<T>, CompletablePromise<T> {
@@ -58,7 +56,7 @@ open class AsyncPromise<T> private constructor(f: CompletableFuture<T>,
   override fun isCancelled(): Boolean = f.isCancelled
 
   // because of the unorthodox contract: "double cancel must return false"
-  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CANCELED)
+  override fun cancel(mayInterruptIfRunning: Boolean): Boolean = !isCancelled && f.completeExceptionally(CancellationException())
 
   override fun cancel() {
     cancel(true)
