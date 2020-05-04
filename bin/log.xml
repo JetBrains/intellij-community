@@ -1,6 +1,12 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 
+<!--
+  Since 2019.3, this file is no longer loaded by default. Consider using Help | Diagnostic Tools | Debug Log Settings;
+  if that's not enough, copy this file somewhere and specify a path to it by adding `idea.log.config.file = /path/to/log.xml`
+  to Help | Edit Custom Properties.
+-->
+
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
   <appender name="CONSOLE-WARN" class="org.apache.log4j.ConsoleAppender">
     <param name="target" value="System.err"/>
