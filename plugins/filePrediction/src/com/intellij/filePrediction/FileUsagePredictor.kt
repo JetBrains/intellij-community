@@ -75,7 +75,7 @@ internal object FileUsagePredictor {
     }
   }
 
-  private fun selectFileCandidates(project: Project, currentFile: VirtualFile, refs: Set<VirtualFile>): List<VirtualFile> {
+  fun selectFileCandidates(project: Project, currentFile: VirtualFile, refs: Set<VirtualFile>): List<VirtualFile> {
     return ApplicationManager.getApplication().runReadAction(Computable {
       val result = ArrayList<VirtualFile>()
       addWithLimit(refs.iterator(), result, currentFile, MAX_CANDIDATE / 2)
