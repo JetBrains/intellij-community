@@ -67,10 +67,15 @@ public class EventDispatcher<T extends EventListener> {
     myMethodReturnValues = methodReturnValues;
   }
 
+  public static <T> T createMulticaster(@NotNull Class<T> listenerClass,
+                                        @NotNull Getter<? extends Iterable<T>> listeners) {
+    return createMulticaster(listenerClass, null, listeners);
+  }
+
   @NotNull
   static <T> T createMulticaster(@NotNull Class<T> listenerClass,
-                                 @Nullable final Map<String, Object> methodReturnValues,
-                                 final Getter<? extends Iterable<T>> listeners) {
+                                 @Nullable Map<String, Object> methodReturnValues,
+                                 @NotNull Getter<? extends Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
     InvocationHandler handler = new InvocationHandler() {
       @Override
