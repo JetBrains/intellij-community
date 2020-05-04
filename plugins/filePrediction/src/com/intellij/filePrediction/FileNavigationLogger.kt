@@ -9,15 +9,15 @@ internal object FileNavigationLogger {
 
   fun logEvent(project: Project,
                event: String,
-               features: FileFeaturesResult,
+               features: FileFeaturesComputationResult,
                filePath: String,
                refsComputation: Long) {
     val data = FeatureUsageData().
       addAnonymizedPath(filePath).
       addData("refs_computation", refsComputation).
-      addData("features_computation", features.computation)
+      addData("features_computation", features.duration)
 
-    for (feature in features.features) {
+    for (feature in features.value) {
       feature.value.addToEventData(feature.key, data)
     }
     FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, event, data)

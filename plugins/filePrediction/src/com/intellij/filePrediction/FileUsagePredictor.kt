@@ -33,23 +33,19 @@ internal object FileUsagePredictor {
   }
 
   private fun logOpenedFile(project: Project, newFile: VirtualFile, prevFile: VirtualFile?) {
-    val start = System.currentTimeMillis()
     val result = FilePredictionFeaturesHelper.calculateExternalReferences(project, prevFile)
-    val refsComputation = System.currentTimeMillis() - start
 
-    val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result, prevFile)
-    FileNavigationLogger.logEvent(project, "file.opened", features, newFile.path, refsComputation)
+    val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result.value, prevFile)
+    FileNavigationLogger.logEvent(project, "file.opened", features, newFile.path, result.duration)
   }
 
   private fun predictNextFile(project: Project, file: VirtualFile) {
-    val start = System.currentTimeMillis()
     val result = FilePredictionFeaturesHelper.calculateExternalReferences(project, file)
-    val refsComputation = System.currentTimeMillis() - start
 
-    val candidates = CompositeCandidateProvider.provideCandidates(project, file, result.references, MAX_CANDIDATE)
+    val candidates = CompositeCandidateProvider.provideCandidates(project, file, result.value.references, MAX_CANDIDATE)
     for (candidate in candidates) {
-      val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, candidate, result, file)
-      FileNavigationLogger.logEvent(project, "candidate.calculated", features, candidate.path, refsComputation)
+      val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, candidate, result.value, file)
+      FileNavigationLogger.logEvent(project, "candidate.calculated", features, candidate.path, result.duration)
     }
   }
 }

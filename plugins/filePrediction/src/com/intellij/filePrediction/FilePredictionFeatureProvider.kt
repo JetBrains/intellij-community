@@ -18,8 +18,9 @@ internal object FilePredictionFeaturesHelper {
   private val EP_NAME = ExtensionPointName<FilePredictionFeatureProvider>("com.intellij.filePrediction.featureProvider")
   private val EXTERNAL_REFERENCES_EP_NAME = ExtensionPointName<FileExternalReferencesProvider>("com.intellij.filePrediction.referencesProvider")
 
-  fun calculateExternalReferences(project: Project, file: VirtualFile?): ExternalReferencesResult {
-    return ApplicationManager.getApplication().runReadAction(Computable {
+  fun calculateExternalReferences(project: Project, file: VirtualFile?): FileReferencesComputationResult {
+    val start = System.currentTimeMillis()
+    val result = ApplicationManager.getApplication().runReadAction(Computable {
       if (file?.isValid == false) {
         return@Computable FAILED_COMPUTATION
       }
@@ -30,12 +31,13 @@ internal object FilePredictionFeaturesHelper {
       }
       psiFile?.let { getReferencesProvider(it) } ?: NO_REFERENCES
     })
+    return FileReferencesComputationResult(result, start)
   }
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
                             refs: ExternalReferencesResult,
-                            prevFile: VirtualFile?): FileFeaturesResult {
+                            prevFile: VirtualFile?): FileFeaturesComputationResult {
     val start = System.currentTimeMillis()
     val result = HashMap<String, FilePredictionFeature>()
     val isInRef = refs.contains(newFile)
@@ -49,15 +51,13 @@ internal object FilePredictionFeaturesHelper {
       val features = provider.calculateFileFeatures(project, newFile, prevFile).mapKeys { prefix + it.key }
       result.putAll(features)
     }
-    return FileFeaturesResult(result, System.currentTimeMillis() - start)
+    return FileFeaturesComputationResult(result, start)
   }
 
   private fun getReferencesProvider(file: PsiFile): ExternalReferencesResult {
     return EXTERNAL_REFERENCES_EP_NAME.extensions.mapNotNull { it.externalReferences(file) }.firstOrNull() ?: FAILED_COMPUTATION
   }
 }
-
-data class FileFeaturesResult(val features: Map<String, FilePredictionFeature>, val computation: Long)
 
 @ApiStatus.Internal
 internal interface FileExternalReferencesProvider {

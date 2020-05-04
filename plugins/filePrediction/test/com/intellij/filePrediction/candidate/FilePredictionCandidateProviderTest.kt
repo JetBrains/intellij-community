@@ -30,7 +30,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     val file = FilePredictionTestDataHelper.findChildRecursively(root)
     assertNotNull("Cannot find file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", file)
 
-    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, file!!)
+    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, file!!).value
     val candidates = CompositeCandidateProvider.provideCandidates(myFixture.project, file, result.references, 10)
 
     val actual = candidates.map { FileUtil.getRelativePath(root.path, it.path, '/') }.toSet()

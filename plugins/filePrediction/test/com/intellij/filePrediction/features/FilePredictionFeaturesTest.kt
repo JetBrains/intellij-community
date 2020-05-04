@@ -15,11 +15,11 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val prevFile = myFixture.addFileToProject("prevFile.txt", "PREVIOUS FILE").virtualFile
     val candidate = myFixture.addFileToProject("candidate.txt", "CANDIDATE").virtualFile
 
-    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, prevFile)
+    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, prevFile).value
     val actual = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidate, result, prevFile)
-    assertNotEmpty(actual.features.keys)
+    assertNotEmpty(actual.value.keys)
 
-    val features = actual.features.keys
+    val features = actual.value.keys
     for (expected in expectedFeatures) {
       assertTrue(features.contains(expected))
     }
