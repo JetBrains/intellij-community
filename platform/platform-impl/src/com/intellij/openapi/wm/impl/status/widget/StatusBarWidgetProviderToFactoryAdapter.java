@@ -62,6 +62,11 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
   }
 
   @Override
+  public boolean isConfigurable() {
+    return !getDisplayName().isEmpty();
+  }
+
+  @Override
   public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
     return true;
   }
