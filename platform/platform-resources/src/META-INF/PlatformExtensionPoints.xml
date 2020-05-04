@@ -231,7 +231,7 @@
     <extensionPoint name="classpathStorageProvider" interface="com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider"/>
     <extensionPoint name="fileTypeOverrider" interface="com.intellij.openapi.fileTypes.impl.FileTypeOverrider" dynamic="true"/>
 
-    <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor"/>
+    <extensionPoint name="projectAttachProcessor" interface="com.intellij.projectImport.ProjectAttachProcessor" dynamic="true"/>
 
     <extensionPoint name="pathMacroFilter" interface="com.intellij.openapi.application.PathMacroFilter" dynamic="true"/>
     <extensionPoint name="pathMacroExpandableProtocol" beanClass="com.intellij.application.options.PathMacroExpandableProtocolBean" dynamic="true"/>
