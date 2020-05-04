@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -431,23 +430,7 @@ public class MessageBusImpl implements MessageBus {
       }
     }
 
-    if (exceptions != null) {
-      throwExceptions(exceptions);
-    }
-  }
-
-  private static void throwExceptions(@NotNull List<Throwable> exceptions) {
-    if (exceptions.size() == 1) {
-      ExceptionUtil.rethrow(exceptions.get(0));
-    }
-    else {
-      for (Throwable exception : exceptions) {
-        if (exception instanceof ProcessCanceledException) {
-          throw (ProcessCanceledException)exception;
-        }
-      }
-      throw new CompoundRuntimeException(exceptions);
-    }
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
   }
 
   private @Nullable List<Throwable> deliverMessage(@NotNull Message job,
@@ -611,9 +594,7 @@ public class MessageBusImpl implements MessageBus {
       exceptions = deliverMessage(job, jobQueue, myMessageDeliveryListener, exceptions);
     }
 
-    if (exceptions != null) {
-      throwExceptions(exceptions);
-    }
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
   }
 
   public final void setMessageDeliveryListener(@Nullable MessageDeliveryListener listener) {

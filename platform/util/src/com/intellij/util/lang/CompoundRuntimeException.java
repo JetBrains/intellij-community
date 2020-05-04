@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.ExceptionUtil;
@@ -106,6 +107,11 @@ public final class CompoundRuntimeException extends RuntimeException {
       ExceptionUtil.rethrow(throwables.get(0));
     }
     else {
+      for (Throwable th : throwables) {
+        if (th instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)th;
+        }
+      }
       throw new CompoundRuntimeException(throwables);
     }
   }
