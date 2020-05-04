@@ -8,12 +8,14 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -120,28 +122,25 @@ public class EventDispatcher<T extends EventListener> {
   }
 
   private static <T> void dispatchVoidMethod(@NotNull Iterable<? extends T> listeners, @NotNull Method method, Object[] args) {
+    List<Throwable> exceptions = null;
     method.setAccessible(true);
 
     for (T listener : listeners) {
       try {
         method.invoke(listener, args);
       }
-      catch (AbstractMethodError ignored) {
-        // Do nothing. This listener just does not implement something newly added yet.
+      catch (Throwable e) {
+        //noinspection InstanceofCatchParameter
+        Throwable cause = e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+        // Do nothing for AbstractMethodError. This listener just does not implement something newly added yet.
         // AbstractMethodError is normally wrapped in InvocationTargetException,
         // but some Java versions didn't do it in some cases (see http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6531596)
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        final Throwable cause = e.getCause();
-        ExceptionUtil.rethrowUnchecked(cause);
-        if (!(cause instanceof AbstractMethodError)) { // AbstractMethodError means this listener doesn't implement some new method in interface
-          LOG.error(cause);
-        }
+        if (cause instanceof AbstractMethodError) continue;
+        if (exceptions == null) exceptions = new SmartList<>();
+        exceptions.add(cause);
       }
     }
+    CompoundRuntimeException.throwIfNotEmpty(exceptions);
   }
 
   public void addListener(@NotNull T listener) {

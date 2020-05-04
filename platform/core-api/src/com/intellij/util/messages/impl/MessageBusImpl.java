@@ -449,21 +449,15 @@ public class MessageBusImpl implements MessageBus {
       try {
         invokeListener(job, handlers.get(index), messageDeliveryListener);
       }
-      catch (AbstractMethodError ignore) {
-        // Do nothing. This listener just does not implement something newly added yet.
-      }
-      catch (InvocationTargetException e) {
-        if (exceptions == null) {
-          exceptions = new ArrayList<>();
-        }
-        Throwable cause = e.getCause();
-        exceptions.add(cause == null ? e : cause);
-      }
       catch (Throwable e) {
-        if (exceptions == null) {
-          exceptions = new ArrayList<>();
-        }
-        exceptions.add(e);
+        //noinspection InstanceofCatchParameter
+        Throwable cause = e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
+        // Do nothing for AbstractMethodError. This listener just does not implement something newly added yet.
+        // AbstractMethodError is normally wrapped in InvocationTargetException,
+        // but some Java versions didn't do it in some cases (see http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6531596)
+        if (cause instanceof AbstractMethodError) continue;
+        if (exceptions == null) exceptions = new SmartList<>();
+        exceptions.add(cause);
       }
 
       if (++index != job.currentHandlerIndex) {
