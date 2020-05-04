@@ -326,14 +326,7 @@ public class Runner {
         File destDir = dest.toFile();
         preparationResult = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
 
-        List<ValidationResult> problems = preparationResult.validationResults;
-        Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
-        if (! resolutions.isEmpty()) {
-          logger().warn("Some conflicts were found: ");
-          for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
-            logger().warn("  " + entry.getKey());
-          }
-        }
+        Map<String, ValidationResult.Option> resolutions = askForResolutions(preparationResult.validationResults, ui);
 
         if (doBackup) {
           backupDir = Utils.getTempFile("backup");
@@ -459,14 +452,7 @@ public class Runner {
         for (File patchFile : patchFiles) {
           PatchFileCreator.PreparationResult preparationResult = PatchFileCreator.prepareAndValidate(patchFile, destDir, ui);
 
-          List<ValidationResult> problems = preparationResult.validationResults;
-          Map<String, ValidationResult.Option> resolutions = problems.isEmpty() ? Collections.emptyMap() : ui.askUser(problems);
-          if (! resolutions.isEmpty()) {
-            logger().warn("Some conflicts were found: ");
-            for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
-              logger().warn("  " + entry.getKey());
-            }
-          }
+          Map<String, ValidationResult.Option> resolutions = askForResolutions(preparationResult.validationResults, ui);
 
           PatchFileCreator.ApplicationResult applicationResult = PatchFileCreator.apply(preparationResult, resolutions, null, ui);
           needRestore |= !applicationResult.appliedActions.isEmpty();
@@ -541,6 +527,22 @@ public class Runner {
         logger().warn("cleanup failed", t);
       }
     }
+  }
+
+  private static Map<String, ValidationResult.Option> askForResolutions(
+    List<ValidationResult> problems, UpdaterUI ui
+  ) throws OperationCancelledException {
+    if (problems.isEmpty()) return Collections.emptyMap();
+    logger().warn("conflicts:");
+    for (ValidationResult problem : problems) {
+      logger().warn("  " + problem.action.name() + " @ " + problem.path + ": " + problem.message);
+    }
+    Map<String, ValidationResult.Option> resolutions = ui.askUser(problems);
+    logger().warn("resolutions:");
+    for (Map.Entry<String, ValidationResult.Option> entry : resolutions.entrySet()) {
+      logger().warn("  " + entry.getKey() + ": " + entry.getValue());
+    }
+    return resolutions;
   }
 
   private static void refreshApplicationIcon(String destPath) {
