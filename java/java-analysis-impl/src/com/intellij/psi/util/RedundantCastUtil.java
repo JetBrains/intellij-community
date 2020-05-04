@@ -721,7 +721,7 @@ public class RedundantCastUtil {
           PsiExpression lOperand = ((PsiBinaryExpression)parent).getLOperand();
           PsiExpression rOperand = ((PsiBinaryExpression)parent).getROperand();
           PsiType oppositeType = lOperand == typeCast ? rOperand != null ? rOperand.getType() : null : lOperand.getType();
-          if (oppositeType != null && TypeConversionUtil.areTypesConvertible(opType, oppositeType)) {
+          if (oppositeType != null && TypeConversionUtil.isBinaryOperatorApplicable(((PsiBinaryExpression)parent).getOperationTokenType(), opType, oppositeType, false)) {
             addToResults(typeCast);
           }
         }
