@@ -67,7 +67,8 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
                    "property.parameterized=Hello {0}\n" +
                    "property.choice.title=Hello {0,choice,0#World|1#Universe}\n" +
                    "property.choice.mixed=Hello {0,choice,0#World|1#universe}\n" +
-                   "property.choice.lower=Hello {0,choice,0#world|1#universe}\n";
+                   "property.choice.lower=Hello {0,choice,0#world|1#universe}\n" + 
+                   "property.sentence.with.quote='return' is not allowed here";
     myFixture.addFileToProject("MyBundle.properties", props);
     doTest(false);
   }
