@@ -2,6 +2,7 @@
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
@@ -11,6 +12,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -25,6 +27,7 @@ import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
@@ -358,5 +361,14 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();
+  }
+
+  @Override
+  protected @NotNull File findSequentNonExistingUntitled() {
+    return Optional
+      .ofNullable(PyUtil.as(myProjectGenerator, PythonProjectGenerator.class))
+      .map(PythonProjectGenerator::getNewProjectPrefix)
+      .map(it -> FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), it, ""))
+      .orElseGet(() -> super.findSequentNonExistingUntitled());
   }
 }

@@ -81,4 +81,9 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
     }*/
     return ValidationResult.OK;
   }
+
+  @Override
+  public @NotNull String getNewProjectPrefix() {
+    return "pythonProject";
+  }
 }

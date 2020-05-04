@@ -409,6 +409,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     return null;
   }
 
+  @Nullable
+  public String getNewProjectPrefix() {
+    return null;
+  }
+
   /**
    * To be thrown if project can't be created on this sdk
    *
