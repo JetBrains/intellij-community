@@ -517,7 +517,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
       VirtualFile file = each.getFile();
       if (file == null) {
         Document document = each.getDocument();
-        if (document != null && EditorFactory.getInstance().getEditors(document, myProject).length > 0) {
+        if (document != null && EditorFactory.getInstance().editors(document, myProject).findFirst().isPresent()) {
           openDocs.add(each);
         }
       }

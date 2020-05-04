@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public final class XmlTagNameSynchronizer implements EditorFactoryListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
@@ -85,11 +86,13 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     }
   }
 
-  private static TagNameSynchronizer @NotNull [] findSynchronizers(final Document document) {
-    if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
-    final Editor[] editors = EditorFactory.getInstance().getEditors(document);
-
-    return ContainerUtil.mapNotNull(editors, editor -> editor.getUserData(SYNCHRONIZER_KEY), TagNameSynchronizer.EMPTY);
+  private static @NotNull Stream<TagNameSynchronizer> findSynchronizers(@Nullable Document document) {
+    if (document == null || !WebEditorOptions.getInstance().isSyncTagEditing()) {
+      return Stream.empty();
+    }
+    return EditorFactory.getInstance().editors(document, null)
+      .map(editor -> editor.getUserData(SYNCHRONIZER_KEY))
+      .filter(Objects::nonNull);
   }
 
   private static Language findXmlLikeLanguage(Project project, VirtualFile file) {
@@ -122,13 +125,10 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     }
   }
 
-  public static class MyCommandListener implements CommandListener {
+  static final class MyCommandListener implements CommandListener {
     @Override
     public void beforeCommandFinished(@NotNull CommandEvent event) {
-      final TagNameSynchronizer[] synchronizers = findSynchronizers(event.getDocument());
-      for (TagNameSynchronizer synchronizer : synchronizers) {
-        synchronizer.beforeCommandFinished();
-      }
+      findSynchronizers(event.getDocument()).forEach(synchronizer -> synchronizer.beforeCommandFinished());
     }
   }
 
@@ -144,9 +144,8 @@ public final class XmlTagNameSynchronizer implements EditorFactoryListener {
     }
   }
 
-  private static class TagNameSynchronizer implements DocumentListener, Disposable {
+  private static final class TagNameSynchronizer implements DocumentListener, Disposable {
     private static final Key<Couple<RangeMarker>> MARKERS_KEY = Key.create("tag.name.synchronizer.markers");
-    private static final TagNameSynchronizer[] EMPTY = new TagNameSynchronizer[0];
     private final PsiDocumentManagerBase myDocumentManager;
     private final Language myLanguage;
     private final EditorImpl myEditor;

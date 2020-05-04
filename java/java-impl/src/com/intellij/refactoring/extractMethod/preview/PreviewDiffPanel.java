@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.diff.DiffContentFactory;
@@ -56,7 +56,7 @@ import java.util.*;
 /**
  * @author Pavel.Dolgov
  */
-class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewTreeListener {
+final class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewTreeListener {
   private final Project myProject;
   private final PreviewTree myTree;
   private final List<SmartPsiElementPointer<PsiElement>> myPattern;
@@ -299,8 +299,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
                      getLineNumberAfter(refactoredDocument, refactoredRange));
   }
 
-  @NotNull
-  private static TextRange getLinesRange(@NotNull TextRange textRange, @NotNull Document document) {
+  private static @NotNull TextRange getLinesRange(@NotNull TextRange textRange, @NotNull Document document) {
     int startLine = document.getLineNumber(textRange.getStartOffset());
     int endLine = document.getLineNumber(Math.min(textRange.getEndOffset(), document.getTextLength()));
     return new TextRange(document.getLineStartOffset(startLine), document.getLineEndOffset(endLine));
@@ -352,18 +351,16 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     }
   }
 
-  @NotNull
-  private static Map<DuplicateNode, Match> findSelectedDuplicates(@NotNull ExtractMethodProcessor processor,
-                                                                  @NotNull List<? extends DuplicateNode> selectedNodes) {
+  private static @NotNull Map<DuplicateNode, Match> findSelectedDuplicates(@NotNull ExtractMethodProcessor processor,
+                                                                           @NotNull List<? extends DuplicateNode> selectedNodes) {
     Set<TextRange> textRanges = ContainerUtil.map2SetNotNull(selectedNodes, FragmentNode::getTextRange);
     processor.previewRefactoring(textRanges);
     List<Match> duplicates = processor.getAnyDuplicates();
     return filterSelectedDuplicates(selectedNodes, duplicates);
   }
 
-  @NotNull
-  private static Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<? extends DuplicateNode> selectedNodes,
-                                                                    @Nullable List<Match> allDuplicates) {
+  private static @NotNull Map<DuplicateNode, Match> filterSelectedDuplicates(@NotNull Collection<? extends DuplicateNode> selectedNodes,
+                                                                             @Nullable List<Match> allDuplicates) {
     if (ContainerUtil.isEmpty(allDuplicates)) {
       return Collections.emptyMap();
     }
@@ -385,8 +382,7 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return selectedDuplicates;
   }
 
-  @NotNull
-  private static DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
+  private static @NotNull DiffUserDataKeysEx.DiffComputer getDiffComputer(@NotNull Collection<? extends Range> ranges) {
     return (text1, text2, policy, innerChanges, indicator) -> {
       InnerFragmentsPolicy fragmentsPolicy = innerChanges ? InnerFragmentsPolicy.WORDS : InnerFragmentsPolicy.NONE;
       LineOffsets offsets1 = LineOffsetsUtil.create(text1);
@@ -431,20 +427,17 @@ class PreviewDiffPanel extends BorderLayoutPanel implements Disposable, PreviewT
     return elements;
   }
 
-  @Nullable
-  private static Editor getEditor(@NotNull PsiFile psiFile, boolean canCreate) {
+  private static @Nullable Editor getEditor(@NotNull PsiFile psiFile, boolean canCreate) {
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     Document document = FileDocumentManager.getInstance().getDocument(vFile);
     if (document == null) {
       return null;
     }
-    EditorFactory factory = EditorFactory.getInstance();
+
     Project project = psiFile.getProject();
-    Editor[] editors = factory.getEditors(document, project);
-    if (editors.length != 0) {
-      return editors[0];
-    }
-    return canCreate ? EditorFactory.getInstance().createEditor(document, project) : null;
+    return EditorFactory.getInstance().editors(document, project)
+      .findFirst()
+      .orElseGet(() -> canCreate ? EditorFactory.getInstance().createEditor(document, project) : null);
   }
 
   boolean isModified() {

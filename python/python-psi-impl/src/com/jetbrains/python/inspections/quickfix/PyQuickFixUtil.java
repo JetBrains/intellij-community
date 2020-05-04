@@ -11,25 +11,20 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyQuickFixUtil {
-  @Nullable
-  public static Editor getEditor(@NotNull  PsiElement element) {
+public final class PyQuickFixUtil {
+  public static @Nullable Editor getEditor(@NotNull  PsiElement element) {
     Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-    if (document != null) {
-      final EditorFactory instance = EditorFactory.getInstance();
-      if (instance == null) return null;
-      Editor[] editors = instance.getEditors(document);
-      if (editors.length > 0) {
-        return editors[0];
-      }
+    if (document == null) {
+      return null;
     }
-    return null;
+
+    EditorFactory instance = EditorFactory.getInstance();
+    return instance == null ? null : instance.editors(document).findFirst().orElse(null);
   }
 
-  @Nullable
-  public static PsiElement dereference(PsiElement element) {
+  public static @Nullable PsiElement dereference(PsiElement element) {
     if (element instanceof PyReferenceExpression) {
-      final PsiReference reference = element.getReference();
+      PsiReference reference = element.getReference();
       return reference != null ? reference.resolve() : null;
     }
     return element;
