@@ -57,6 +57,9 @@ internal class UnknownSdkStartupChecker : StartupActivity.DumbAware {
     if (project.isDisposed || project.isDefault) return
     //TODO: workaround for tests, right not it can happen that project.earlyDisposable is null with @NotNull annotation
     if (project is ProjectImpl && kotlin.runCatching { project.earlyDisposable }.isFailure) return
+
+    // Android Studio: workaround for tests, project.earlyDisposable is null while project is closing
+    if (project is ProjectImpl && project.earlyDisposable == null) return
     UnknownSdkTracker.getInstance(project).updateUnknownSdks()
   }
 }
