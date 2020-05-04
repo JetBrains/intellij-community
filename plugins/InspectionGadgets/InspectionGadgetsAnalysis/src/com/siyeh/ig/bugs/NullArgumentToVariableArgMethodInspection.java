@@ -73,6 +73,16 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
     return new NullArgumentToVariableArgVisitor();
   }
 
+  /**
+   * Checks if it's unclear from the first glance if a method is called as varargs or not
+   * 
+   * @return true iff {@code call} is varargs method call and {@code lastArgumentType} is {@code null} type or array type, 
+   *              which is assignable from vararg parameter component type
+   */
+  public static boolean isSuspiciousVararg(PsiCall call, PsiType lastArgumentType) {
+    return NullArgumentToVariableArgVisitor.getSuspiciousVarargType(call, lastArgumentType) != null;
+  }
+
   private static class NullArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -87,6 +97,50 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       visitCall(call);
     }
 
+    private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type) {
+      final boolean checkArray;
+      if (PsiType.NULL.equals(type)) {
+        checkArray = false;
+      }
+      else if (type instanceof PsiArrayType) {
+        checkArray = true;
+      }
+      else {
+        return null;
+      }
+      final PsiMethod method = call.resolveMethod();
+      if (method == null) {
+        return null;
+      }
+      final PsiParameterList parameterList = method.getParameterList();
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList == null || parameterList.getParametersCount() != argumentList.getExpressionCount()) {
+        return null;
+      }
+      final PsiParameter[] parameters = parameterList.getParameters();
+      final PsiParameter lastParameter = parameters[parameters.length - 1];
+      if (!lastParameter.isVarArgs()) {
+        return null;
+      }
+      final PsiType type1 = lastParameter.getType();
+      if (!(type1 instanceof PsiEllipsisType)) {
+        return null;
+      }
+
+      final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
+      final PsiArrayType arrayType = (PsiArrayType)ellipsisType.toArrayType();
+      final PsiType componentType = arrayType.getComponentType();
+      if (checkArray) {
+        if (!componentType.equals(TypeUtils.getObjectType(call))) {
+          return null;
+        }
+        if (type.isAssignableFrom(arrayType) || !arrayType.isAssignableFrom(type)) {
+          return null;
+        }
+      }
+      return arrayType;
+    }
+
     private void visitCall(PsiCall call) {
       final PsiExpressionList argumentList = call.getArgumentList();
       if (argumentList == null) {
@@ -98,45 +152,12 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       }
       final PsiExpression lastArgument = arguments[arguments.length - 1];
       final PsiType type = lastArgument.getType();
-      final boolean checkArray;
-      if (PsiType.NULL.equals(type)) {
-        checkArray = false;
-      }
-      else if (type instanceof PsiArrayType) {
-        checkArray = true;
-      }
-      else {
+
+      PsiArrayType arrayType = getSuspiciousVarargType(call, type);
+      if (arrayType == null) {
         return;
       }
-      final PsiMethod method = call.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != arguments.length) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (!lastParameter.isVarArgs()) {
-        return;
-      }
-      final PsiType type1 = lastParameter.getType();
-      if (!(type1 instanceof PsiEllipsisType)) {
-        return;
-      }
-      final PsiEllipsisType ellipsisType = (PsiEllipsisType)type1;
-      final PsiType arrayType = ellipsisType.toArrayType();
-      final PsiType componentType = ellipsisType.getComponentType();
-      if (checkArray) {
-        if (!componentType.equals(TypeUtils.getObjectType(call))) {
-          return;
-        }
-        if (type.isAssignableFrom(arrayType) || !arrayType.isAssignableFrom(type)) {
-          return;
-        }
-      }
-      registerError(lastArgument, lastArgument, componentType, arrayType);
+      registerError(lastArgument, lastArgument, arrayType.getComponentType(), arrayType);
     }
   }
 }

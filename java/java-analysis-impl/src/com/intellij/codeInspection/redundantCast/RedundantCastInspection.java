@@ -7,12 +7,12 @@ import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import org.jdom.Element;
+import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   @NonNls private static final String SHORT_NAME = "RedundantCast";
 
   public boolean IGNORE_SUSPICIOUS_METHOD_CALLS;
-
+  public boolean IGNORE_SUSPICIOUS_VARARG_METHOD_CALLS = true;
 
   public RedundantCastInspection() {
     myQuickFixAction = new AcceptSuggested();
@@ -53,16 +53,10 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   }
 
   @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (IGNORE_SUSPICIOUS_METHOD_CALLS) {
-      super.writeSettings(node);
-    }
-  }
-
-  @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
+    optionsPanel.addCheckbox(JavaAnalysisBundle.message("ignore.casts.in.suspicious.varargs.method.calls"), "IGNORE_SUSPICIOUS_VARARG_METHOD_CALLS");
     return optionsPanel;
   }
 
@@ -78,6 +72,14 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
         final String message = SuspiciousMethodCallUtil
           .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand, operand.getType(), true, new ArrayList<>(), 0);
         if (message != null) {
+          return null;
+        }
+      }
+      
+      if (gParent instanceof PsiCallExpression && IGNORE_SUSPICIOUS_VARARG_METHOD_CALLS) {
+        PsiExpressionList expressionList = (PsiExpressionList)parent;
+        if (PsiTreeUtil.isAncestor(expressionList.getExpressions()[expressionList.getExpressionCount() - 1], operand, true) &&
+            NullArgumentToVariableArgMethodInspection.isSuspiciousVararg((PsiCallExpression)gParent, operand.getType())) {
           return null;
         }
       }
