@@ -39,13 +39,13 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
 
   private static final Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 
-  private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = Topic.create("STANDARD_SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_CHILDREN);
+  private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = new Topic<>("standard severities changed", Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   @NonNls private static final String INFO_TAG = "info";
   @NonNls private static final String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<>();
   private final Map<String, Color> myRendererColors = new ConcurrentHashMap<>();
-  static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = Topic.create("SEVERITIES_CHANGED_TOPIC", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
+  static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = new Topic<>("severities changed", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
   private final @NotNull MessageBus myMessageBus;
 
   private volatile OrderMap myOrderMap;
@@ -57,7 +57,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
 
   public SeverityRegistrar(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
-    messageBus.connect().subscribe(STANDARD_SEVERITIES_CHANGED_TOPIC, () -> myOrderMap = null);
+    messageBus.simpleConnect().subscribe(STANDARD_SEVERITIES_CHANGED_TOPIC, () -> myOrderMap = null);
   }
 
   static {

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
  * <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_listeners.html">Plugin Listeners</a>.
  */
 public interface MessageBus extends Disposable {
-
   /**
    * Message buses can be organised into hierarchies. That allows facilities {@link Topic#getBroadcastDirection() broadcasting}.
    * <p/>
@@ -28,26 +28,26 @@ public interface MessageBus extends Disposable {
    *
    * @return parent bus (if defined)
    */
-  @Nullable
-  MessageBus getParent();
+  @Nullable MessageBus getParent();
 
   /**
-   * Allows to create new connection that is not bound to any {@link Disposable}.
-   *
-   * @return newly created connection
+   * Create a new {@link Disposable} connection that is disconnected on message bus dispose, or on explicit dispose.
    */
-  @NotNull
-  MessageBusConnection connect();
+  @NotNull MessageBusConnection connect();
+
+  /**
+   * Create a new connection that is disconnected on message bus dispose, or on explicit {@link SimpleMessageBusConnection#disconnect()}.
+   */
+  @ApiStatus.Experimental
+  @NotNull SimpleMessageBusConnection simpleConnect();
 
   /**
    * Allows to create new connection that is bound to the given {@link Disposable}. That means that returned connection
    * will be automatically {@link MessageBusConnection#dispose() released} if given {@link Disposable disposable parent} is collected.
    *
    * @param parentDisposable target parent disposable to which life cycle newly created connection shall be bound
-   * @return newly created connection which life cycle is bound to the given disposable parent
    */
-  @NotNull
-  MessageBusConnection connect(@NotNull Disposable parentDisposable);
+  @NotNull MessageBusConnection connect(@NotNull Disposable parentDisposable);
 
   /**
    * Allows to retrieve an interface for publishing messages to the target topic.
@@ -105,8 +105,7 @@ public interface MessageBus extends Disposable {
    * @param <L>   {@link Topic#getListenerClass() business interface} of the target topic
    * @return publisher for target topic
    */
-  @NotNull
-  <L> L syncPublisher(@NotNull Topic<L> topic);
+  @NotNull <L> L syncPublisher(@NotNull Topic<L> topic);
 
   /**
    * Disposes current bus, i.e. drops all queued but not delivered messages (if any) and disallows further

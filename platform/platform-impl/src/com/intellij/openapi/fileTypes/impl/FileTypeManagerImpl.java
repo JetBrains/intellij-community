@@ -44,7 +44,6 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -109,7 +108,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private final MessageBus myMessageBus;
   private final Map<String, StandardFileType> myStandardFileTypes = new LinkedHashMap<>();
   @NonNls
   private static final String[] FILE_TYPES_WITH_PREDEFINED_EXTENSIONS = {"JSP", "JSPX", "DTD", "HTML", "Properties", "XHTML"};
@@ -118,7 +116,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   static final String FILE_SPEC = "filetypes";
 
   public FileTypeManagerImpl() {
-    myMessageBus = ApplicationManager.getApplication().getMessageBus();
     mySchemeManager = SchemeManagerFactory.getInstance().create(FILE_SPEC, new NonLazySchemeProcessor<FileType, AbstractFileType>() {
       @NotNull
       @Override
@@ -798,7 +795,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public void fireBeforeFileTypesChanged() {
     FileTypeEvent event = new FileTypeEvent(this, null, null);
-    myMessageBus.syncPublisher(TOPIC).beforeFileTypesChanged(event);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).beforeFileTypesChanged(event);
   }
 
 
@@ -809,14 +806,14 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void fireFileTypesChanged(@Nullable FileType addedFileType, @Nullable FileType removedFileType) {
     myDetectionService.clearCaches();
-    myMessageBus.syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).fileTypesChanged(new FileTypeEvent(this, addedFileType, removedFileType));
   }
 
   private final Map<FileTypeListener, MessageBusConnection> myAdapters = new HashMap<>();
 
   @Override
   public void addFileTypeListener(@NotNull FileTypeListener listener) {
-    final MessageBusConnection connection = myMessageBus.connect();
+    final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(TOPIC, listener);
     myAdapters.put(listener, connection);
   }

@@ -81,7 +81,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private fun intercept() {
     val app = ApplicationManager.getApplication()
-    val connection = app.messageBus.connect(app)
+    val connection = app.messageBus.connect()
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
         if (!myLegalNoticeAccepted && file.fileType === StdFileTypes.CLASS && ClassFileDecompilers.find(file) === this@IdeaDecompiler) {

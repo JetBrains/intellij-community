@@ -6,7 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface KeymapManagerListener {
-  Topic<KeymapManagerListener> TOPIC = new Topic<>("KeymapManagerListener", KeymapManagerListener.class, Topic.BroadcastDirection.NONE);
+  @Topic.AppLevel
+  Topic<KeymapManagerListener> TOPIC = new Topic<>(KeymapManagerListener.class, Topic.BroadcastDirection.NONE);
 
   default void keymapAdded(@NotNull Keymap keymap) {
   }

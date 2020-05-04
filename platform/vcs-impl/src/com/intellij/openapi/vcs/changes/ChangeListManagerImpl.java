@@ -72,8 +72,8 @@ import static java.util.stream.Collectors.toSet;
 public class ChangeListManagerImpl extends ChangeListManagerEx implements ChangeListOwner, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ChangeListManagerImpl.class);
 
-  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
-    new Topic<>("LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
+  @Topic.ProjectLevel
+  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<>(LocalChangeListsLoadedListener.class, Topic.BroadcastDirection.NONE);
 
   private final Project myProject;
   private final ChangesViewI myChangesViewManager;
@@ -138,7 +138,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(myProject, () -> {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, myProject);
-    VcsEP.EP_NAME.addExtensionPointListener(() -> {
+    VcsEP.EP_NAME.addChangeListener(() -> {
       resetChangedFiles();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }, myProject);
@@ -258,9 +258,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
    *
    * @return true if the changelists have to be deleted, false if not.
    */
-  public static boolean showRemoveEmptyChangeListsProposal(@NotNull Project project,
-                                                           @NotNull final VcsConfiguration config,
-                                                           @NotNull Collection<? extends ChangeList> lists) {
+  private static boolean showRemoveEmptyChangeListsProposal(@NotNull Project project,
+                                                            @NotNull final VcsConfiguration config,
+                                                            @NotNull Collection<? extends ChangeList> lists) {
     if (lists.isEmpty()) {
       return false;
     }
@@ -613,7 +613,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     return new EmptyProgressIndicator();
   }
 
-  private class DataHolder {
+  private final class DataHolder {
     private final boolean myWasEverythingDirty;
     private final FileHolderComposite myComposite;
     private final ChangeListUpdater myChangeListUpdater;
@@ -1234,9 +1234,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     myConflictTracker.loadState(element);
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = new Element("state");
     if (myProject.isDefault()) {
       return element;

@@ -55,7 +55,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -297,18 +297,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     ((JBScrollPane)myEditor.getScrollPane()).setStatusComponent(statusPanel);
 
-    MessageBus bus = ApplicationManager.getApplication().getMessageBus();
-
-    bus.connect(resourcesDisposable).subscribe(AnActionListener.TOPIC, new AnActionListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(resourcesDisposable);
+    connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
-        if (action instanceof HintManagerImpl.ActionToIgnore) return;
+        if (action instanceof HintManagerImpl.ActionToIgnore) {
+          return;
+        }
         myPopupManager.hidePopup();
       }
     });
 
-    bus.connect(resourcesDisposable).subscribe(LafManagerListener.TOPIC, source -> myPopupManager.updateUI());
-    bus.connect(resourcesDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+    connection.subscribe(LafManagerListener.TOPIC, source -> myPopupManager.updateUI());
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&

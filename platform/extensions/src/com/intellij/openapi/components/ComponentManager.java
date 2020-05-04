@@ -76,8 +76,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   /**
    * @see com.intellij.application.Topics#subscribe
    */
-  @NotNull
-  MessageBus getMessageBus();
+  @NotNull MessageBus getMessageBus();
 
   /**
    * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)

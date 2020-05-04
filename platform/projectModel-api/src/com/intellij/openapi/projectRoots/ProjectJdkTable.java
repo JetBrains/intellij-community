@@ -90,5 +90,5 @@ public abstract class ProjectJdkTable {
   public void preconfigure() {
   }
 
-  public static final Topic<Listener> JDK_TABLE_TOPIC = Topic.create("Project JDK table", Listener.class);
+  public static final Topic<Listener> JDK_TABLE_TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 }

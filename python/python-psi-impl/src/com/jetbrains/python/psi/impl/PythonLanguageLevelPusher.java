@@ -30,7 +30,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonRuntimeService;
@@ -50,11 +50,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-/**
- * @author yole
- */
-public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
+public final class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   private static final Key<String> KEY = new Key<>("python.language.level");
   /* It so happens that no single language level is compatible with more than one other.
      So a map suffices for representation*/
@@ -251,31 +247,11 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
   }
 
   private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Set<Sdk> sdks) {
-    if (sdks.isEmpty()) return;
+    if (sdks.isEmpty()) {
+      return;
+    }
 
-    final DumbService dumbService = DumbService.getInstance(project);
-    final DumbModeTask task = new DumbModeTask() {
-      @Override
-      public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        if (project.isDisposed()) return;
-        //final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-        indicator.setIndeterminate(true);
-        indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
-        PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
-        //if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
-        //                                          " SDKs");
-        //}
-      }
-    };
-    project.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        DumbService.getInstance(project).cancelTask(task);
-      }
-    });
-    dumbService.queueTask(task);
+    DumbService.getInstance(project).queueTask(new MyDumbModeTask(project, sdks));
   }
 
   private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Set<Sdk> sdks) {
@@ -432,5 +408,45 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<String> {
 
   public void flushLanguageLevelCache() {
     myModuleSdks.clear();
+  }
+
+  private final class MyDumbModeTask extends DumbModeTask {
+    private @NotNull final Project project;
+    private @NotNull final Set<Sdk> sdks;
+    private final SimpleMessageBusConnection connection;
+
+    private MyDumbModeTask(@NotNull Project project, @NotNull Set<Sdk> sdks) {
+      this.project = project;
+      this.sdks = sdks;
+      connection = project.getMessageBus().simpleConnect();
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+        @Override
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
+          DumbService.getInstance(project).cancelTask(MyDumbModeTask.this);
+        }
+      });
+    }
+
+    @Override
+    public void dispose() {
+      connection.disconnect();
+    }
+
+    @Override
+    public void performInDumbMode(@NotNull ProgressIndicator indicator) {
+      if (project.isDisposed()) {
+        return;
+      }
+
+      //final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+      indicator.setIndeterminate(true);
+      indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
+      final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, sdks));
+      PushedFilePropertiesUpdater.getInstance(project).runConcurrentlyIfPossible(tasks);
+      //if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
+      //                                          " SDKs");
+      //}
+    }
   }
 }

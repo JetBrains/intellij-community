@@ -51,7 +51,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
-import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -87,7 +87,7 @@ interface DynamicPluginListener {
   fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) { }
 
   companion object {
-    @JvmField val TOPIC = Topic.create("DynamicPluginListener", DynamicPluginListener::class.java)
+    @JvmField val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
   }
 }
 
@@ -395,7 +395,7 @@ object DynamicPlugins {
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
-          (ApplicationManager.getApplication().messageBus as MessageBusImpl).clearPublisherCache()
+          (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
 
           if (disable) {
             // update list of disabled plugins
@@ -491,7 +491,7 @@ object DynamicPlugins {
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
-    (application.messageBus as MessageBusImpl).unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
+    (application.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
     for (project in openProjects) {
       (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
@@ -499,7 +499,7 @@ object DynamicPlugins {
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
       }
-      (project.messageBus as MessageBusImpl).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
+      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
     }
   }
 

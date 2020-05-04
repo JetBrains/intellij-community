@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectStoreOwner;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -43,6 +42,11 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
       return new ProjectImpl() {
         @Override
+        public boolean isParentLazyListenersIgnored() {
+          return true;
+        }
+
+        @Override
         public boolean isDefault() {
           return true;
         }
@@ -57,9 +61,8 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
           return DefaultProject.this;
         }
 
-        @Nullable
         @Override
-        public String activityNamePrefix() {
+        public @Nullable String activityNamePrefix() {
           // exclude from measurement because default project initialization is not a sequential activity
           // (so, complicates timeline because not applicable)
           // for now we don't measure default project initialization at all, because it takes only ~10 ms
@@ -77,7 +80,7 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
           registerServiceInstance(Project.class, DefaultProject.this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
           //noinspection unchecked
-          registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), false);
+          registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins());
           createComponents(null);
           Disposer.register(DefaultProject.this, this);
         }
@@ -97,14 +100,6 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
         @Override
         public int hashCode() {
           return DEFAULT_HASH_CODE;
-        }
-
-        @NotNull
-        @Override
-        protected synchronized MessageBusImpl getOrCreateMessageBusUnderLock() {
-          MessageBusImpl messageBus = super.getOrCreateMessageBusUnderLock();
-          messageBus.setIgnoreParentLazyListeners(true);
-          return messageBus;
         }
       };
     }
@@ -172,8 +167,7 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
     Disposer.dispose(myDelegate);
   }
 
-  @NotNull
-  private ProjectEx getDelegate() {
+  private @NotNull ProjectEx getDelegate() {
     return myDelegate.get();
   }
 
@@ -183,8 +177,7 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
 
   // delegates
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return ProjectImpl.TEMPLATE_PROJECT_NAME;
   }
 
@@ -195,34 +188,27 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getBasePath() {
+  public @Nullable @SystemIndependent String getBasePath() {
     return null;
   }
 
   @Override
-  @Nullable
-  public VirtualFile getProjectFile() {
+  public @Nullable VirtualFile getProjectFile() {
     return null;
   }
 
   @Override
-  @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  public @Nullable @SystemIndependent String getProjectFilePath() {
     return null;
   }
 
   @Override
-  @Nullable
-  public VirtualFile getWorkspaceFile() {
+  public @Nullable VirtualFile getWorkspaceFile() {
     return null;
   }
 
   @Override
-  @NotNull
-  public String getLocationHash() {
+  public @NotNull String getLocationHash() {
     return getName();
   }
 
@@ -254,9 +240,8 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
   }
 
   @SuppressWarnings("deprecation")
-  @NotNull
   @Override
-  public <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
+  public @NotNull <T> List<T> getComponentInstancesOfType(@NotNull Class<T> baseClass, boolean createIfNotYet) {
     return getDelegate().getComponentInstancesOfType(baseClass, createIfNotYet);
   }
 
@@ -265,9 +250,8 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
     return getDelegate().getService(serviceClass);
   }
 
-  @Nullable
   @Override
-  public <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
+  public @Nullable <T> T getServiceIfCreated(@NotNull Class<T> serviceClass) {
     return getDelegate().getServiceIfCreated(serviceClass);
   }
 
@@ -277,20 +261,17 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
   }
 
   @Override
-  @NotNull
-  public PicoContainer getPicoContainer() {
+  public @NotNull PicoContainer getPicoContainer() {
     return getDelegate().getPicoContainer();
   }
 
-  @NotNull
   @Override
-  public ExtensionsArea getExtensionArea() {
+  public @NotNull ExtensionsArea getExtensionArea() {
     return getDelegate().getExtensionArea();
   }
 
   @Override
-  @NotNull
-  public MessageBus getMessageBus() {
+  public @NotNull MessageBus getMessageBus() {
     return getDelegate().getMessageBus();
   }
 
@@ -300,14 +281,12 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
   }
 
   @Override
-  @NotNull
-  public Condition<?> getDisposed() {
+  public @NotNull Condition<?> getDisposed() {
     return ApplicationManager.getApplication().getDisposed();
   }
 
-  @NotNull
   @Override
-  public IComponentStore getComponentStore() {
+  public @NotNull IComponentStore getComponentStore() {
     return ((ProjectStoreOwner)getDelegate()).getComponentStore();
   }
 }

@@ -1,19 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.messages.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.messages.ListenerDescriptor;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.MessageBusOwner;
-import com.intellij.util.messages.Topic;
+import com.intellij.util.messages.*;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +26,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class MessageBusTest implements MessageBusOwner {
-  private MessageBusImpl myBus;
+  private CompositeMessageBus myBus;
   private final List<String> myLog = new ArrayList<>();
   private Disposable myParentDisposable = Disposer.newDisposable();
 
@@ -46,6 +40,11 @@ public class MessageBusTest implements MessageBusOwner {
     return Disposer.isDisposed(myParentDisposable);
   }
 
+  @Override
+  public boolean isParentLazyListenersIgnored() {
+    return true;
+  }
+
   public interface T1Listener {
     void t11();
     void t12();
@@ -56,9 +55,9 @@ public class MessageBusTest implements MessageBusOwner {
     void t22();
   }
 
-  private static final Topic<T1Listener> TOPIC1 = new Topic<>("T1", T1Listener.class);
-  private static final Topic<T2Listener> TOPIC2 = new Topic<>("T2", T2Listener.class);
-  private static final Topic<Runnable> RUNNABLE_TOPIC = new Topic<>("runnableTopic", Runnable.class);
+  private static final Topic<T1Listener> TOPIC1 = new Topic<>("T1", T1Listener.class, Topic.BroadcastDirection.TO_CHILDREN);
+  private static final Topic<T2Listener> TOPIC2 = new Topic<>("T2", T2Listener.class, Topic.BroadcastDirection.TO_CHILDREN);
+  private static final Topic<Runnable> RUNNABLE_TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_CHILDREN);
 
   private final class T1Handler implements T1Listener {
     private final String id;
@@ -273,7 +272,7 @@ public class MessageBusTest implements MessageBusOwner {
   @Test
   public void testPostingPerformanceWithLowListenerDensityInHierarchy() {
     //simulating million fileWithNoDocumentChanged events on refresh in a thousand-module project
-    MessageBusImpl childBus = new MessageBusImpl(this, myBus);
+    CompositeMessageBus childBus = new CompositeMessageBus(this, myBus);
     childBus.connect().subscribe(TOPIC1, new T1Listener() {
       @Override
       public void t11() {
@@ -315,7 +314,7 @@ public class MessageBusTest implements MessageBusOwner {
     final int threadsNumber = 10;
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(threadsNumber);
-    MessageBusImpl parentBus = new MessageBusImpl.RootBus(createSimpleMessageBusOwner("parent"));
+    CompositeMessageBus parentBus = new MessageBusImpl.RootBus(createSimpleMessageBusOwner("parent"));
     Disposer.register(myParentDisposable, parentBus);
     List<Future<?>> threads = new ArrayList<>();
     final int iterationsNumber = 100;
@@ -327,7 +326,7 @@ public class MessageBusTest implements MessageBusOwner {
             if (exception.get() != null) {
               break;
             }
-            new MessageBusImpl(createSimpleMessageBusOwner(String.format("child-%s-%s", Thread.currentThread().getName(), remains)), parentBus);
+            new CompositeMessageBus(createSimpleMessageBusOwner(String.format("child-%s-%s", Thread.currentThread().getName(), remains)), parentBus);
           }
         }
         catch (Throwable e) {
@@ -416,5 +415,53 @@ public class MessageBusTest implements MessageBusOwner {
     }
     myBus.syncPublisher(RUNNABLE_TOPIC).run();
     assertTrue(Disposer.isDisposed(disposable));
+  }
+
+  @Test
+  public void subscriberCacheClearedOnChildBusDispose() {
+    // ensure that subscriber cache is cleared on child bus dispose
+    MessageBusImpl child = new MessageBusImpl(this, myBus);
+    Ref<Boolean> isDisposed = new Ref<>(false);
+    child.connect().subscribe(RUNNABLE_TOPIC, () -> {
+      if (isDisposed.get()) {
+        throw new IllegalStateException("already disposed");
+      }
+    });
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    Disposer.dispose(child);
+    isDisposed.set(true);
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+  }
+
+  private static final Topic<Runnable> TO_PARENT_TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.TO_PARENT);
+
+  @Test
+  public void subscriberCacheClearedOnConnectionToParentBusForChildBusTopic() {
+    // ensure that subscriber cache is cleared on connection to app level bus for topic that published to project level bus with TO_PARENT direction.
+    MessageBus child = new CompositeMessageBus(this, myBus);
+    // call to compute cache
+    child.syncPublisher(TO_PARENT_TOPIC).run();
+
+    Ref<Boolean> isCalled = new Ref<>(false);
+    myBus.connect().subscribe(TO_PARENT_TOPIC, () -> {
+      isCalled.set(true);
+    });
+    child.syncPublisher(TO_PARENT_TOPIC).run();
+    assertThat(isCalled.get()).isTrue();
+  }
+
+  @Test
+  public void subscriberCacheClearedOnConnectionToChildrenBusFoRootBusTopic() {
+    // child must be created before to ensure that cache is not cleared on a new child
+    MessageBus child = new CompositeMessageBus(this, myBus);
+    // call to compute cache
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+
+    Ref<Boolean> isCalled = new Ref<>(false);
+    child.connect().subscribe(RUNNABLE_TOPIC, () -> {
+      isCalled.set(true);
+    });
+    myBus.syncPublisher(RUNNABLE_TOPIC).run();
+    assertThat(isCalled.get()).isTrue();
   }
 }

@@ -11,10 +11,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 final class MessageBusConnectionImpl implements MessageBusConnection, MessageBusImpl.MessageHandlerHolder {
-  private final MessageBusImpl myBus;
+  private MessageBusImpl myBus;
 
   private MessageHandler myDefaultHandler;
   private final AtomicReference<SmartFMap<Topic<?>, Object>> mySubscriptions = new AtomicReference<>(SmartFMap.emptyMap());
@@ -25,10 +26,15 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
 
   @Override
   public <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) {
+    doSubscribe(topic, handler, mySubscriptions);
+    myBus.notifyOnSubscription(topic);
+  }
+
+  static <L> void doSubscribe(@NotNull Topic<L> topic, @NotNull L handler, @NotNull AtomicReference<SmartFMap<Topic<?>, Object>> topicToHandlers) {
     Object newHandlers;
     SmartFMap<Topic<?>, Object> map;
     do {
-      map = mySubscriptions.get();
+      map = topicToHandlers.get();
       Object currentHandler = map.get(topic);
       if (currentHandler == null) {
         newHandlers = handler;
@@ -40,9 +46,7 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
         newHandlers = new Object[]{currentHandler, handler};
       }
     }
-    while (!mySubscriptions.compareAndSet(map, map.plus(topic, newHandlers)));
-
-    myBus.notifyOnSubscription(topic);
+    while (!topicToHandlers.compareAndSet(map, map.plus(topic, newHandlers)));
   }
 
   @Override
@@ -81,7 +85,18 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
 
   @Override
   public void dispose() {
-    myBus.notifyConnectionTerminated(this);
+    MessageBusImpl bus = myBus;
+    if (bus == null) {
+      // already disposed
+      return;
+    }
+
+    // reset as bus will not remove disposed connection from list immediately
+    SmartFMap<Topic<?>, Object> oldMap = mySubscriptions.getAndSet(SmartFMap.emptyMap());
+
+    myBus = null;
+    myDefaultHandler = null;
+    bus.notifyConnectionTerminated(oldMap);
   }
 
   @Override
@@ -94,36 +109,23 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
     myBus.deliverImmediately(this);
   }
 
-  void removeMyHandlers(@NotNull Message job) {
-    List<Object> jobHandlers = job.handlers;
-    if (myDefaultHandler != null) {
-      jobHandlers.removeIf(handler -> handler == myDefaultHandler);
-    }
+  static boolean removeMyHandlers(@NotNull Message job, @NotNull Map<Topic<?>, Object> topicToHandlers) {
+    Object handlers = topicToHandlers.get(job.topic);
+    return handlers != null && removeHandlers(job, handlers);
+  }
 
-    Object handlers = mySubscriptions.get().get(job.topic);
-    if (handlers == null) {
-      return;
-    }
-
+  static boolean removeHandlers(@NotNull Message job, @NotNull Object handlers) {
     if (handlers instanceof Object[]) {
-      jobHandlers.removeIf(handler -> containsByIdentity(handler, (Object[])handlers));
+      return job.handlers.removeIf(handler -> containsByIdentity(handler, (Object[])handlers));
     }
     else {
-      jobHandlers.removeIf(handler -> handlers == handler);
+      return job.handlers.removeIf(handler -> handlers == handler);
     }
   }
 
-  boolean isEmpty() {
+  @Override
+  public boolean isEmpty() {
     return mySubscriptions.get().isEmpty();
-  }
-
-  boolean isBroadCastDisabled() {
-    for (Topic<?> topic : mySubscriptions.get().keySet()) {
-      if (topic.getBroadcastDirection() != Topic.BroadcastDirection.NONE) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
@@ -143,7 +145,7 @@ final class MessageBusConnectionImpl implements MessageBusConnection, MessageBus
     return handlers == handler || (handlers instanceof Object[] && containsByIdentity(handler, (Object[])handlers));
   }
 
-  private static boolean containsByIdentity(@NotNull Object handler, @NotNull Object[] handlers) {
+  private static boolean containsByIdentity(@NotNull Object handler, @NotNull Object @NotNull[] handlers) {
     for (Object item : handlers) {
       if (handler == item) {
         return true;

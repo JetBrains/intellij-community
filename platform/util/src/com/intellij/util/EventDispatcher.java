@@ -3,18 +3,17 @@ package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -74,26 +73,20 @@ public final class EventDispatcher<T extends EventListener> {
                                           @Nullable Map<String, Object> methodReturnValues,
                                           @NotNull Getter<? extends Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface");
-    InvocationHandler handler = new InvocationHandler() {
-      @Override
-      @NonNls
-      public Object invoke(Object proxy, final Method method, final Object[] args) {
-        @NonNls String methodName = method.getName();
-        if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
-          return handleObjectMethod(proxy, args, methodName);
-        }
-        else if (methodReturnValues != null && methodReturnValues.containsKey(methodName)) {
-          return methodReturnValues.get(methodName);
-        }
-        else {
-          dispatchVoidMethod(listeners.get(), method, args);
-          return null;
-        }
-      }
-    };
-
     //noinspection unchecked
-    return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, handler);
+    return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, (proxy, method, args) -> {
+      String methodName = method.getName();
+      if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
+        return handleObjectMethod(proxy, args, methodName);
+      }
+      else if (methodReturnValues != null && methodReturnValues.containsKey(methodName)) {
+        return methodReturnValues.get(methodName);
+      }
+      else {
+        dispatchVoidMethod(listeners.get(), method, args);
+        return null;
+      }
+    });
   }
 
   public static @Nullable Object handleObjectMethod(Object proxy, Object[] args, String methodName) {
@@ -130,17 +123,48 @@ public final class EventDispatcher<T extends EventListener> {
         method.invoke(listener, args);
       }
       catch (Throwable e) {
-        //noinspection InstanceofCatchParameter
-        Throwable cause = e instanceof InvocationTargetException && e.getCause() != null ? e.getCause() : e;
-        // Do nothing for AbstractMethodError. This listener just does not implement something newly added yet.
-        // AbstractMethodError is normally wrapped in InvocationTargetException,
-        // but some Java versions didn't do it in some cases (see http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6531596)
-        if (cause instanceof AbstractMethodError) continue;
-        if (exceptions == null) exceptions = new SmartList<>();
-        exceptions.add(cause);
+        exceptions = handleException(e, exceptions);
       }
     }
-    CompoundRuntimeException.throwIfNotEmpty(exceptions);
+
+    if (exceptions != null) {
+      throwExceptions(exceptions);
+    }
+  }
+
+  public static @Nullable List<Throwable> handleException(@NotNull Throwable e, @Nullable List<Throwable> exceptions) {
+    Throwable exception = e;
+    if (e instanceof InvocationTargetException) {
+      Throwable cause = e.getCause();
+      if (cause != null) {
+        // Do nothing for AbstractMethodError. This listener just does not implement something newly added yet.
+        if (cause instanceof AbstractMethodError) {
+          return exceptions;
+        }
+
+        exception = cause;
+      }
+    }
+
+    if (exceptions == null) {
+      exceptions = new ArrayList<>();
+    }
+    exceptions.add(exception);
+    return exceptions;
+  }
+
+  public static void throwExceptions(@NotNull List<Throwable> exceptions) {
+    if (exceptions.size() == 1) {
+      ExceptionUtil.rethrow(exceptions.get(0));
+    }
+    else {
+      for (Throwable exception : exceptions) {
+        if (exception instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)exception;
+        }
+      }
+      throw new CompoundRuntimeException(exceptions);
+    }
   }
 
   public void addListener(@NotNull T listener) {

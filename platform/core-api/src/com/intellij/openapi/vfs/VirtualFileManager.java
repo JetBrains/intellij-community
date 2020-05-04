@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.io.URLUtil;
@@ -19,10 +19,10 @@ import org.jetbrains.annotations.Nullable;
  * @see VirtualFileSystem
  */
 public abstract class VirtualFileManager implements ModificationTracker {
-  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>("NewVirtualFileSystem changes", BulkFileListener.class);
+  @Topic.AppLevel
+  public static final Topic<BulkFileListener> VFS_CHANGES = new Topic<>(BulkFileListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  @NotNull
-  public static final ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
+  public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
   private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
 
@@ -31,11 +31,10 @@ public abstract class VirtualFileManager implements ModificationTracker {
    *
    * @return {@code VirtualFileManager}
    */
-  @NotNull
-  public static VirtualFileManager getInstance() {
+  public static @NotNull VirtualFileManager getInstance() {
     VirtualFileManager result = ourInstance;
     if (result == null) {
-      ourInstance = result = ServiceManager.getService(VirtualFileManager.class);
+      ourInstance = result = ApplicationManager.getApplication().getService(VirtualFileManager.class);
     }
     return result;
   }
@@ -78,8 +77,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileSystem#findFileByPath
    * @see #refreshAndFindFileByUrl
    */
-  @Nullable
-  public abstract VirtualFile findFileByUrl(@NonNls @NotNull String url);
+  public abstract @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url);
 
   /**
    * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
@@ -95,8 +93,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @see VirtualFileSystem#findFileByPath
    * @see VirtualFileSystem#refreshAndFindFileByPath
    */
-  @Nullable
-  public abstract VirtualFile refreshAndFindFileByUrl(@NotNull String url);
+  public abstract @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url);
 
   /**
    * @deprecated Use {@link #VFS_CHANGES} message bus topic.
@@ -129,8 +126,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return URL
    * @see VirtualFile#getUrl
    */
-  @NotNull
-  public static String constructUrl(@NotNull String protocol, @NotNull String path) {
+  public static @NotNull String constructUrl(@NotNull String protocol, @NotNull String path) {
     return protocol + URLUtil.SCHEME_SEPARATOR + path;
   }
 
@@ -141,8 +137,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return protocol or {@code null} if there is no "://" in the URL
    * @see VirtualFileSystem#getProtocol
    */
-  @Nullable
-  public static String extractProtocol(@NotNull String url) {
+  public static @Nullable String extractProtocol(@NotNull String url) {
     int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     if (index < 0) return null;
     return url.substring(0, index);
@@ -155,8 +150,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @param url the URL
    * @return path
    */
-  @NotNull
-  public static String extractPath(@NotNull String url) {
+  public static @NotNull String extractPath(@NotNull String url) {
     int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
     return index >= 0 ? url.substring(index + URLUtil.SCHEME_SEPARATOR.length()) : url;
   }
@@ -195,6 +189,5 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract int storeName(@NotNull String name);
 
   @ApiStatus.Internal
-  @NotNull
-  public abstract CharSequence getVFileName(int nameId);
+  public abstract @NotNull CharSequence getVFileName(int nameId);
 }

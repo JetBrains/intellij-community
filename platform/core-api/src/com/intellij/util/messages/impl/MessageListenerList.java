@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,10 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author yole
  */
-public class MessageListenerList<T> {
+public final class MessageListenerList<T> {
   private final MessageBus myMessageBus;
   private final Topic<T> myTopic;
-  private final Map<T, MessageBusConnection> myListenerToConnectionMap = new ConcurrentHashMap<>();
+  private final Map<T, SimpleMessageBusConnection> myListenerToConnectionMap = new ConcurrentHashMap<>();
 
   public MessageListenerList(@NotNull MessageBus messageBus, @NotNull Topic<T> topic) {
     myTopic = topic;
@@ -25,25 +26,25 @@ public class MessageListenerList<T> {
   }
 
   public void add(@NotNull T listener) {
-    final MessageBusConnection connection = myMessageBus.connect();
+    SimpleMessageBusConnection connection = myMessageBus.simpleConnect();
     connection.subscribe(myTopic, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
-  public void add(final @NotNull T listener, @NotNull Disposable parentDisposable) {
+  public void add(@NotNull T listener, @NotNull Disposable parentDisposable) {
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
         myListenerToConnectionMap.remove(listener);
       }
     });
-    final MessageBusConnection connection = myMessageBus.connect(parentDisposable);
+    MessageBusConnection connection = myMessageBus.connect(parentDisposable);
     connection.subscribe(myTopic, listener);
     myListenerToConnectionMap.put(listener, connection);
   }
 
   public void remove(@NotNull T listener) {
-    final MessageBusConnection connection = myListenerToConnectionMap.remove(listener);
+    SimpleMessageBusConnection connection = myListenerToConnectionMap.remove(listener);
     if (connection != null) {
       connection.disconnect();
     }

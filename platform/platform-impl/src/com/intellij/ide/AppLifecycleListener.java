@@ -14,7 +14,8 @@ import java.util.List;
  * Listener for application lifecycle events.
  */
 public interface AppLifecycleListener {
-  Topic<AppLifecycleListener> TOPIC = new Topic<>(AppLifecycleListener.class, Topic.BroadcastDirection.NONE);
+  @Topic.AppLevel
+  Topic<AppLifecycleListener> TOPIC = new Topic<>(AppLifecycleListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /** @deprecated use {@link #appFrameCreated(List)} */
   @Deprecated

@@ -54,7 +54,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.impl.MessageBusImpl;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -308,6 +307,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
+    //noinspection deprecation
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
     activity.end();
 
@@ -622,9 +622,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (!projectImpl.isTemporarilyDisposed()) {
         projectImpl.disposeEarlyDisposable();
         projectImpl.setTemporarilyDisposed(true);
-        // light project is not disposed, so, subscriber cache contains handlers that will handle events for a temporarily disposed project,
-        // so, we clear subscriber cache. `isDisposed` for project returns `true` if `temporarilyDisposed`, so, handler will be not added.
-        ((MessageBusImpl)projectImpl.getMessageBus()).clearAllSubscriberCache();
         removeFromOpened(project);
         updateTheOnlyProjectField();
         return true;

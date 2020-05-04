@@ -37,8 +37,10 @@ public final class VcsRepositoryManager implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(VcsRepositoryManager.class);
 
-  public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED =
-    Topic.create("VCS repository mapping updated", VcsRepositoryMappingListener.class);
+  /**
+   * VCS repository mapping updated. Project level.
+   */
+  public static final Topic<VcsRepositoryMappingListener> VCS_REPOSITORY_MAPPING_UPDATED = new Topic<>(VcsRepositoryMappingListener.class, Topic.BroadcastDirection.NONE);
 
   private final @NotNull Project myProject;
   private final @NotNull ProjectLevelVcsManager myVcsManager;

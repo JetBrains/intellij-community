@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * An immutable map optimized for storing few entries with relatively rare updates.
@@ -282,6 +283,20 @@ public final class SmartFMap<K,V> implements Map<K,V> {
     return Collections.unmodifiableSet(set);
   }
 
+  @Override
+  public void forEach(@NotNull BiConsumer<? super K, ? super V> action) {
+    if (myMap instanceof Map) {
+      asMap().forEach(action);
+    }
+    else {
+      Object[] array = (Object[])myMap;
+      for (int i = 0; i < array.length; i += 2) {
+        //noinspection unchecked
+        action.accept((K)array[i], (V)array[i + 1]);
+      }
+    }
+  }
+
   // copied from AbstractMap
   @Override
   public String toString() {
@@ -304,5 +319,4 @@ public final class SmartFMap<K,V> implements Map<K,V> {
       sb.append(", ");
     }
   }
-
 }

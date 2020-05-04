@@ -12,7 +12,7 @@ import java.util.EventListener;
  * Listener for {@link FileEditorManager} events. All methods are invoked in EDT.
  */
 public interface FileEditorManagerListener extends EventListener {
-  // project level
+  @Topic.ProjectLevel
   Topic<FileEditorManagerListener> FILE_EDITOR_MANAGER = new Topic<>(FileEditorManagerListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   /**

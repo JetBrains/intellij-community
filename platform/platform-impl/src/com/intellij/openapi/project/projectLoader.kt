@@ -26,7 +26,7 @@ class ProjectLoadHelper {
       var activity = createActivity(project) { "project ${Activities.REGISTER_COMPONENTS_SUFFIX}" }
       //  at this point of time plugins are already loaded by application - no need to pass indicator to getLoadedPlugins call
       @Suppress("UNCHECKED_CAST")
-      project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>, notifyListeners = false)
+      project.registerComponents(PluginManagerCore.getLoadedPlugins() as List<IdeaPluginDescriptorImpl>)
 
       activity = activity?.endAndStart("projectComponentRegistered")
       runHandler(ProjectServiceContainerCustomizer.getEp()) {

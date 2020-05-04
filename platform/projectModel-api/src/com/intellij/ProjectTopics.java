@@ -5,9 +5,18 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.util.messages.Topic;
 
-public class ProjectTopics {
-  public static final Topic<ModuleRootListener> PROJECT_ROOTS = new Topic<>("project root changes", ModuleRootListener.class);
-  public static final Topic<ModuleListener> MODULES = new Topic<>("modules added or removed from project", ModuleListener.class);
+public final class ProjectTopics {
+  /**
+   * Project root changes.
+   */
+  @Topic.ProjectLevel
+  public static final Topic<ModuleRootListener> PROJECT_ROOTS = new Topic<>(ModuleRootListener.class);
+
+  /**
+   * Modules added or removed from project.
+   */
+  @Topic.ProjectLevel
+  public static final Topic<ModuleListener> MODULES = new Topic<>(ModuleListener.class);
 
   private ProjectTopics() {
   }

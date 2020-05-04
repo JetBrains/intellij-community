@@ -25,7 +25,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MockComponentManager extends UserDataHolderBase implements ComponentManager, MessageBusOwner {
-  private final MessageBus myMessageBus = new MessageBusFactoryImpl().createMessageBus(this);
+  private final MessageBus myMessageBus = MessageBusFactoryImpl.createRootBus(this);
   private final DefaultPicoContainer myPicoContainer;
   private final ExtensionsAreaImpl myExtensionArea;
 
