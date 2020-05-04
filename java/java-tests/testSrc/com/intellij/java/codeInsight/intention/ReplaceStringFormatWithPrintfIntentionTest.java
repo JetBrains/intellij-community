@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.siyeh.ig.performance.RedundantStringFormatCallInspection;
+import org.jetbrains.annotations.NotNull;
 
 public class ReplaceStringFormatWithPrintfIntentionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -12,7 +13,7 @@ public class ReplaceStringFormatWithPrintfIntentionTest extends LightQuickFixPar
   }
 
   @Override
-  protected LocalInspectionTool[] configureLocalInspectionTools() {
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new RedundantStringFormatCallInspection()};
   }
 }

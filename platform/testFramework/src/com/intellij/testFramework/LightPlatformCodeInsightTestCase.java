@@ -19,7 +19,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -466,8 +465,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       executeAction(IdeActions.ACTION_EDITOR_ENTER, editor,project);
     }
     else {
-      EditorActionManager actionManager = EditorActionManager.getInstance();
-      final DataContext dataContext = DataManager.getInstance().getDataContext();
+      DataContext dataContext = DataManager.getInstance().getDataContext();
       TypedAction action = TypedAction.getInstance();
       action.actionPerformed(editor, c, dataContext);
     }
