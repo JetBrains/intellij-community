@@ -219,14 +219,24 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @Override
   public final boolean update(int inputId, @Nullable Input content) {
-    final InputData<Key, Value> data = mapInput(inputId, content);
-    final UpdateData<Key, Value> updateData = new UpdateData<>(inputId,
-                                                               data.getKeyValues(),
-                                                               () -> getKeysDiffBuilder(inputId), myIndexId,
-                                                               () -> updateForwardIndex(inputId, data));
+    final InputData<Key, Value> data;
+    try {
+      data = mapInput(inputId, content);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new MapInputException("Failed to map data for input " + inputId, e);
+    }
 
     try {
-      updateWithMap(updateData);
+      updateWithMap(new UpdateData<>(
+        inputId,
+        data.getKeyValues(),
+        () -> getKeysDiffBuilder(inputId),
+        myIndexId, () -> updateForwardIndex(inputId, data))
+      );
     }
     catch (StorageException | ProcessCanceledException ex) {
       String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
@@ -240,6 +250,12 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       return false;
     }
     return true;
+  }
+
+  public static final class MapInputException extends RuntimeException {
+    public MapInputException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
