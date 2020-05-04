@@ -38,7 +38,7 @@ internal object FileUsagePredictor {
     val refsComputation = System.currentTimeMillis() - start
 
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, newFile, result, prevFile)
-    FileNavigationLogger.logEvent(project, "file.opened", features, refsComputation)
+    FileNavigationLogger.logEvent(project, "file.opened", features, newFile.path, refsComputation)
   }
 
   private fun predictNextFile(project: Project, file: VirtualFile) {
@@ -49,7 +49,7 @@ internal object FileUsagePredictor {
     val candidates = CompositeCandidateProvider.provideCandidates(project, file, result.references, MAX_CANDIDATE)
     for (candidate in candidates) {
       val features = FilePredictionFeaturesHelper.calculateFileFeatures(project, candidate, result, file)
-      FileNavigationLogger.logEvent(project, "candidate.calculated", features, refsComputation)
+      FileNavigationLogger.logEvent(project, "candidate.calculated", features, candidate.path, refsComputation)
     }
   }
 }

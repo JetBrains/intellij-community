@@ -3,7 +3,6 @@ package com.intellij.filePrediction
 
 import com.intellij.filePrediction.FilePredictionFeature.Companion.categorical
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -13,11 +12,9 @@ class FilePredictionFileTypeFeatures: FilePredictionFeatureProvider {
   override fun calculateFileFeatures(project: Project, newFile: VirtualFile, prevFile: VirtualFile?): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
     result["file_type"] = categorical(FileTypeUsagesCollector.getSafeFileTypeName(newFile.fileType))
-    result["file_path"] = categorical(EventLogConfiguration.anonymize(newFile.path))
 
     if (prevFile != null) {
       result["prev_file_type"] = categorical(FileTypeUsagesCollector.getSafeFileTypeName(prevFile.fileType))
-      result["prev_file_path"] = categorical(EventLogConfiguration.anonymize(prevFile.path))
     }
     return result
   }

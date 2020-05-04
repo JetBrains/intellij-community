@@ -28,9 +28,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
   @Test
   fun `test composite feature provider is not empty`() {
     doTestFeatures(
-      "file_path",
       "file_type",
-      "prev_file_path",
       "prev_file_type",
       "in_source",
       "in_project",

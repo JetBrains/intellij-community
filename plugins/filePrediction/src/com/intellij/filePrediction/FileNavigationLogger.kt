@@ -7,8 +7,13 @@ import com.intellij.openapi.project.Project
 internal object FileNavigationLogger {
   private const val GROUP_ID = "file.prediction"
 
-  fun logEvent(project: Project, event: String, features: FileFeaturesResult, refsComputation: Long) {
+  fun logEvent(project: Project,
+               event: String,
+               features: FileFeaturesResult,
+               filePath: String,
+               refsComputation: Long) {
     val data = FeatureUsageData().
+      addAnonymizedPath(filePath).
       addData("refs_computation", refsComputation).
       addData("features_computation", features.computation)
 
