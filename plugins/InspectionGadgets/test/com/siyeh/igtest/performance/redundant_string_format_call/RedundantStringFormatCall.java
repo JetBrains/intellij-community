@@ -7,15 +7,15 @@ import static java.lang.String.format;
 public class RedundantStringFormatCall {
 
     public static final String A = String.format("%n");
-    String b = <warning descr="Redundant call to 'String.format()'">String.format("no parameters")</warning>;
+    String b = String.<warning descr="Redundant call to 'format()'">format</warning>("no parameters");
     String c = String.format("asdf%n" +
                              "asdf%n");
     String d = String.format("asdf" + "asdf" + "asdf%n");
-    String e = <warning descr="Redundant call to 'String.format()'">format("test")</warning>;
+    String e = <warning descr="Redundant call to 'format()'">format</warning>("test");
 
     void m() {
-        System.out.println(<warning descr="Redundant call to 'String.format()'">String.format("string contains %%n%n")</warning>); // ok
-        System.out.println(<warning descr="Redundant call to 'String.format()'">String.format(Locale.ENGLISH, "string contains %%n%n")</warning>);
+        System.out.println(String.<warning descr="Redundant call to 'format()'">format</warning>("string contains %%n%n")); // ok
+        System.out.println(String.<warning descr="Redundant call to 'format()'">format</warning>(Locale.ENGLISH, "string contains %%n%n"));
         System.out.<warning descr="Redundant call to 'printf()'">printf</warning>("empty battery");
     }
 }

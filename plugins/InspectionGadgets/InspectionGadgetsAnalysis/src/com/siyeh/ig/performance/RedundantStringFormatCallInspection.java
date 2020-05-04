@@ -5,6 +5,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -72,11 +73,8 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       final PsiExpression formatValue = args.getExpressions()[0];
       if (containsNewlineToken(formatValue)) return null;
 
-      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
-      if (method == null) return null;
-
-      final TextRange textRange = new TextRange(method.getStartOffsetInParent(),
-                                                method.getStartOffsetInParent() + method.getTextLength());
+      final TextRange textRange = getMethodNameRange(call);
+      if (textRange == null) return null;
       return myManager.createProblemDescriptor(call, textRange,
                                                InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
@@ -86,8 +84,10 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
     @Nullable
     private ProblemDescriptor getRedundantStringFormatProblem(@NotNull final PsiMethodCallExpression call) {
       if (isStringFormatCallRedundant(call)) {
-        return myManager.createProblemDescriptor(call, (TextRange)null,
-                                                 InspectionGadgetsBundle.message("redundant.string.format.call.display.name"),
+        final TextRange textRange = getMethodNameRange(call);
+        if (textRange == null) return null;
+        return myManager.createProblemDescriptor(call, textRange,
+                                                 InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                  new RemoveRedundantStringFormatFix());
       }
@@ -97,10 +97,19 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         if (!PRINTSTREAM_PRINT.test(printlnCall)) return null;
 
       }
-      return myManager.createProblemDescriptor(call, (TextRange)null,
-                                               InspectionGadgetsBundle.message("redundant.string.format.call.display.name"),
+      final TextRange textRange = getMethodNameRange(call);
+      if (textRange == null) return null;
+      return myManager.createProblemDescriptor(call, textRange,
+                                               InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                new StringFormatToPrintfQuickFix(isPrintlnCall));
+    }
+
+    @Nullable
+    private static TextRange getMethodNameRange(@NotNull final PsiMethodCallExpression call) {
+      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
+      if (method == null) return null;
+      return new TextRange(method.getStartOffsetInParent(), method.getStartOffsetInParent() + method.getTextLength());
     }
 
     @Contract(pure = true)
@@ -259,13 +268,13 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         final String newLineToken = "%n";
 
         if (formatArg instanceof PsiLiteralExpression) {
-          final PsiLiteralExpression replacement = PsiLiteralUtil.append((PsiLiteralExpression)formatArg, newLineToken);
+          final PsiLiteralExpression replacement = joinWithNewlineToken((PsiLiteralExpression)formatArg);
           formatArg.replace(replacement);
         }
         else if (formatArg instanceof PsiPolyadicExpression){
           final PsiElement lastChild = formatArg.getLastChild();
           if (lastChild instanceof PsiLiteralExpression) {
-            final PsiLiteralExpression replacement = PsiLiteralUtil.append((PsiLiteralExpression)lastChild, newLineToken);
+            final PsiLiteralExpression replacement = joinWithNewlineToken((PsiLiteralExpression)lastChild);
             lastChild.replace(replacement);
           }
           else {
@@ -282,5 +291,34 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
 
     }
+  }
+
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  private static PsiLiteralExpression joinWithNewlineToken(@Nullable final PsiLiteralExpression expression) {
+    if (expression == null) return null;
+    if (StringUtil.isEmpty("%n")) return expression;
+
+    final Object value = expression.getValue();
+    if (value == null) return expression;
+
+    final StringBuilder newExpression = new StringBuilder();
+
+    final String leftText = value.toString();
+    if (expression.isTextBlock()) {
+      final String indent = StringUtil.repeat(" ", PsiLiteralUtil.getTextBlockIndent(expression));
+      newExpression.append("\"\"\"").append('\n').append(indent);
+      newExpression.append(leftText.replaceAll("\n", "\n" + indent));
+      newExpression.append("%n");
+      newExpression.append("\"\"\"");
+    }
+    else {
+      newExpression.append('"');
+      newExpression.append(StringUtil.escapeStringCharacters(leftText));
+      newExpression.append("%n");
+      newExpression.append('"');
+    }
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    return (PsiLiteralExpression)factory.createExpressionFromText(newExpression.toString(), null);
   }
 }
