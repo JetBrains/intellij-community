@@ -159,6 +159,11 @@ public interface GitBrancher {
   void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);
 
   /**
+   * Compares 2 specified branches commit-wise.
+   */
+  void compareAny(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends GitRepository> repositories);
+
+  /**
    * Compares the current working tree with its state in the selected branch.
    */
   void showDiffWithLocal(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories);

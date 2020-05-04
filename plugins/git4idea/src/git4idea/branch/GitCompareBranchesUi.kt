@@ -34,27 +34,35 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.*
 
-class GitCompareBranchesUi(private val project: Project, private val repositories: List<GitRepository>, private val branchName: String) {
+internal class GitCompareBranchesUi @JvmOverloads constructor(private val project: Project,
+                                                              private val repositories: List<GitRepository>,
+                                                              private val branchName: String,
+                                                              private val otherBranchName: String = "") {
+
 
   fun create() {
     VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
       val oneRepo = repositories.size == 1
       val firstRepo = repositories[0]
       val currentBranchName = firstRepo.currentBranchName
-      val currentRef = if (oneRepo && currentBranchName != null) currentBranchName else "HEAD"
+      val secondRef = when {
+        otherBranchName.isNotBlank() -> otherBranchName
+        oneRepo && !currentBranchName.isNullOrBlank() -> currentBranchName
+        else -> "HEAD"
+      }
 
-      val rangeFilter = fromRange(currentRef, branchName)
+      val rangeFilter = fromRange(secondRef, branchName)
       val rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
 
-      createCompareBranchesUi(logManager, rangeFilter, rootFilter, currentRef)
+      createCompareBranchesUi(logManager, rangeFilter, rootFilter, secondRef)
     }
   }
 
   private fun createCompareBranchesUi(logManager: VcsLogManager,
                                       rangeFilter: VcsLogRangeFilter,
                                       rootFilter: VcsLogRootFilter?,
-                                      currentRef: String) {
-    val tabName = getEditorTabName(branchName, currentRef)
+                                      secondRef: String) {
+    val tabName = getEditorTabName(branchName, secondRef)
 
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
