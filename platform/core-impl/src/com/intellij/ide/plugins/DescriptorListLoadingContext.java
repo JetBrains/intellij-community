@@ -24,7 +24,7 @@ import java.util.function.Supplier;
 
 final class DescriptorListLoadingContext implements AutoCloseable {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
+  private static final boolean unitTestWithBundledPlugins = Boolean.getBoolean("idea.run.tests.with.bundled.plugins");
 
   static final int IS_PARALLEL = 1;
   static final int IGNORE_MISSING_INCLUDE = 2;
@@ -51,7 +51,7 @@ final class DescriptorListLoadingContext implements AutoCloseable {
 
   final boolean ignoreMissingInclude;
   final boolean ignoreMissingSubDescriptor;
-  final boolean skipDisabledPlugins;
+  private final boolean skipDisabledPlugins;
 
   boolean usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins;
 
@@ -94,18 +94,20 @@ final class DescriptorListLoadingContext implements AutoCloseable {
     }
   }
 
+  boolean isPluginDisabled(@NotNull PluginId id) {
+    return id != PluginManagerCore.CORE_ID && disabledPlugins.contains(id);
+  }
+
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull Logger getLogger() {
     return LOG;
   }
 
-  @NotNull
-  ExecutorService getExecutorService() {
+  @NotNull ExecutorService getExecutorService() {
     return executorService;
   }
 
-  @NotNull
-  SafeJdomFactory getXmlFactory() {
+  @NotNull SafeJdomFactory getXmlFactory() {
     return xmlFactorySupplier.get();
   }
 

@@ -171,9 +171,7 @@ public final class PluginManager {
                                             @NotNull Set<PluginId> disabledPlugins) throws IOException, JDOMException {
     int flags = DescriptorListLoadingContext.IGNORE_MISSING_INCLUDE | DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR;
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(flags, disabledPlugins, PluginManagerCore.createLoadingResult(null));
-    DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, descriptor.isBundled(), /* doesn't matter */ false,
-                                                                    PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
-    descriptor.readExternal(JDOMUtil.load(file, factory), context.pathResolver, context, descriptor);
+    descriptor.readExternal(JDOMUtil.load(file, factory), PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER, parentContext, descriptor);
   }
 
   public boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {

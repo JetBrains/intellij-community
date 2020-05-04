@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 final class XmlReader {
+  @SuppressWarnings("SSBasedInspection")
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.plugins.PluginManager");
 
   static final String APPLICATION_SERVICE = "com.intellij.applicationService";
@@ -186,7 +187,7 @@ final class XmlReader {
 
   static <T> void readDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                    @NotNull IdeaPluginDescriptorImpl descriptor,
-                                   @NotNull DescriptorLoadingContext context,
+                                   @NotNull DescriptorListLoadingContext context,
                                    @NotNull PathBasedJdomXIncluder.PathResolver<T> pathResolver,
                                    @NotNull List<PluginDependency> dependencies) {
     List<String> visitedFiles = null;
@@ -202,17 +203,17 @@ final class XmlReader {
       }
 
       if (pathResolver instanceof ClassPathXmlPathResolver &&
-          context.parentContext.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
+          context.checkOptionalConfigShortName(configFile, descriptor, rootDescriptor)) {
         continue;
       }
 
       Element element;
       try {
-        element = pathResolver.resolvePath(descriptor.basePath, configFile, context.parentContext.getXmlFactory());
+        element = pathResolver.resolvePath(descriptor.basePath, configFile, context.getXmlFactory());
       }
       catch (IOException | JDOMException e) {
         String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
-        if (context.parentContext.ignoreMissingSubDescriptor) {
+        if (context.ignoreMissingSubDescriptor) {
           LOG.info(message, e);
         }
         else {
@@ -222,7 +223,7 @@ final class XmlReader {
       }
 
       if (visitedFiles == null) {
-        visitedFiles = context.parentContext.getVisitedFiles();
+        visitedFiles = context.getVisitedFiles();
       }
 
       checkCycle(rootDescriptor, configFile, visitedFiles);

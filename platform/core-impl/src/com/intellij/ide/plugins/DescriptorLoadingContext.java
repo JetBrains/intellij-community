@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.extensions.PluginId;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 final class DescriptorLoadingContext implements AutoCloseable {
-  final Map<Path, FileSystem> openedFiles = new THashMap<>();
+  private final Map<Path, FileSystem> openedFiles = new THashMap<>();
   final DescriptorListLoadingContext parentContext;
   final boolean isBundled;
   final boolean isEssential;
@@ -32,13 +31,7 @@ final class DescriptorLoadingContext implements AutoCloseable {
     this.pathResolver = pathResolver;
   }
 
-  boolean isPluginDisabled(@NotNull PluginId id) {
-    return id != PluginManagerCore.CORE_ID && parentContext.disabledPlugins.contains(id);
-  }
-
-
-  @NotNull
-  FileSystem open(@NotNull Path file) throws IOException {
+  @NotNull FileSystem open(@NotNull Path file) throws IOException {
     FileSystem result = openedFiles.get(file);
     if (result == null) {
       result = FileSystems.newFileSystem(file, null);

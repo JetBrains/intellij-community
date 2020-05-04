@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 @ApiStatus.Internal
-public class PluginDescriptorLoader {
+public final class PluginDescriptorLoader {
   @ApiStatus.Internal
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
                                                                   boolean isBundled,
@@ -53,7 +53,7 @@ public class PluginDescriptorLoader {
     try {
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, descriptorFile.getParent(), context.isBundled);
       Element element = JDOMUtil.load(descriptorFile, context.parentContext.getXmlFactory());
-      descriptor.readExternal(element, context.pathResolver, context, descriptor);
+      descriptor.readExternal(element, context.pathResolver, context.parentContext, descriptor);
       return descriptor;
     }
     catch (NoSuchFileException e) {
@@ -91,7 +91,7 @@ public class PluginDescriptorLoader {
       }
 
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath == null ? file : pluginPath, metaInf, context.isBundled);
-      if (descriptor.readExternal(element, pathResolver, context, descriptor)) {
+      if (descriptor.readExternal(element, pathResolver, context.parentContext, descriptor)) {
         descriptor.jarFiles = Collections.singletonList(descriptor.getPluginPath());
       }
       return descriptor;
@@ -112,7 +112,10 @@ public class PluginDescriptorLoader {
     return null;
   }
 
-  static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file, @NotNull String pathName, @NotNull DescriptorLoadingContext context, boolean isDirectory) {
+  static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromFileOrDir(@NotNull Path file,
+                                                                        @NotNull String pathName,
+                                                                        @NotNull DescriptorLoadingContext context,
+                                                                        boolean isDirectory) {
     if (isDirectory) {
       return loadDescriptorFromDirAndNormalize(file, pathName, context);
     }

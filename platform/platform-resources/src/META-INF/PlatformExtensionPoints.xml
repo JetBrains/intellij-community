@@ -1,6 +1,5 @@
 <idea-plugin>
   <extensionPoints>
-
     <extensionPoint name="projectStoreClassProvider" interface="com.intellij.openapi.project.impl.ProjectStoreFactory"/>
 
     <extensionPoint name="appStarter"

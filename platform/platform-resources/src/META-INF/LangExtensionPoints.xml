@@ -1,11 +1,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <extensionPoints>
-    <!--@formatter:off-->
-    <xi:include href="/META-INF/CompletionExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-    <xi:include href="/META-INF/RefactoringExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-    <xi:include href="/META-INF/FormatterExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-    <xi:include href="/META-INF/EditorExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+  <xi:include href="/META-INF/CompletionExtensionPoints.xml"/>
+  <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
+  <xi:include href="/META-INF/FormatterExtensionPoints.xml"/>
+  <xi:include href="/META-INF/EditorExtensionPoints.xml"/>
 
+  <extensionPoints>
     <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar" dynamic="true"/>
 
     <!--configurables?-->

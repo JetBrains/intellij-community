@@ -11,11 +11,11 @@
       <implementation-class>com.intellij.javaee.PsiExternalResourceNotifier</implementation-class>
     </component>
   </project-components>
-  <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/XmlActions.xml"/>
+  <xi:include href="/META-INF/DomPlugin.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/relaxng-plugin.xml">
     <xi:fallback/>
   </xi:include>
 

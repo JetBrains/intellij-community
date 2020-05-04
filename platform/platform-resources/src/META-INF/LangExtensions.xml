@@ -1254,7 +1254,6 @@
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.WolfPassFactory$MyRegistrar"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.roots.impl.libraries.LibraryKindLoader"/>
-    <applicationInitializedListener implementation="com.intellij.ide.script.IdeStartupScripts"/>
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
     <joinLinesHandler implementation="com.intellij.codeInsight.editorActions.CommentJoinLinesHandler" order="last"/>
@@ -1278,5 +1277,8 @@
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
   </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.ide.script.IdeStartupScripts" topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </applicationListeners>
 </idea-plugin>
 

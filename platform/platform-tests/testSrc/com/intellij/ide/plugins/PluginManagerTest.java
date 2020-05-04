@@ -191,26 +191,24 @@ public class PluginManagerTest {
     DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(0, Collections.emptySet(), createPluginLoadingResult(true));
 
     Element root = JDOMUtil.load(file, parentContext.getXmlFactory());
-    DescriptorLoadingContext context = new DescriptorLoadingContext(
-      parentContext, isBundled, /* doesn't matter */ false,
-      new BasePathResolver() {
-        @Override
-        public @NotNull Element resolvePath(@NotNull Path basePath,
-                                            @NotNull String relativePath,
-                                            @NotNull SafeJdomFactory jdomFactory) {
-          for (Element child : root.getChildren("config-file-idea-plugin")) {
-            String url = Objects.requireNonNull(child.getAttributeValue("url"));
-            if (url.endsWith("/" + relativePath)) return child;
-          }
-          throw new AssertionError("Unexpected: " + relativePath);
+    BasePathResolver pathResolver = new BasePathResolver() {
+      @Override
+      public @NotNull Element resolvePath(@NotNull Path basePath,
+                                          @NotNull String relativePath,
+                                          @NotNull SafeJdomFactory jdomFactory) {
+        for (Element child : root.getChildren("config-file-idea-plugin")) {
+          String url = Objects.requireNonNull(child.getAttributeValue("url"));
+          if (url.endsWith("/" + relativePath)) return child;
         }
-      });
+        throw new AssertionError("Unexpected: " + relativePath);
+      }
+    };
 
     for (Element element : root.getChildren("idea-plugin")) {
       String url = element.getAttributeValue("url");
       Path pluginPath = Paths.get(Objects.requireNonNull(url));
       IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(pluginPath, pluginPath, isBundled);
-      descriptor.readExternal(element, context.pathResolver, context, descriptor);
+      descriptor.readExternal(element, pathResolver, parentContext, descriptor);
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();

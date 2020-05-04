@@ -16,6 +16,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public enum OS {
     mac, linux, windows, unix, freebsd
@@ -117,7 +119,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   boolean readExternal(@NotNull Element element,
                        @NotNull PathBasedJdomXIncluder.PathResolver<?> pathResolver,
-                       @NotNull DescriptorLoadingContext context,
+                       @NotNull DescriptorListLoadingContext context,
                        @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
@@ -147,8 +149,8 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myDescriptionChildText = element.getChildTextTrim("description");
       myCategory = element.getChildTextTrim("category");
       myVersion = element.getChildTextTrim("version");
-      if (context.parentContext.getLogger().isDebugEnabled()) {
-        context.parentContext.getLogger().debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
+      if (context.getLogger().isDebugEnabled()) {
+        context.getLogger().debug("Skipping reading of " + myId + " from " + basePath + " (reason: disabled)");
       }
       List<Element> dependsElements = element.getChildren("depends");
       for (Element dependsElement : dependsElements) {
@@ -164,6 +166,29 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     XmlReader.readMetaInfo(this, element);
 
     pluginDependencies = null;
+    if (doRead(element, context, mainDescriptor)) {
+      return false;
+    }
+
+    if (myVersion == null) {
+      myVersion = context.getDefaultVersion();
+    }
+
+    if (pluginDependencies != null) {
+      XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
+    }
+
+    return true;
+  }
+
+  @TestOnly
+  public void readForTest(@NotNull Element element) {
+    doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this);
+  }
+
+  private boolean doRead(@NotNull Element element,
+                        @NotNull DescriptorListLoadingContext context,
+                        @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
     for (Content content : element.getContent()) {
       if (!(content instanceof Element)) {
         continue;
@@ -173,7 +198,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       Element child = (Element)content;
       switch (child.getName()) {
         case "extensions":
-          epNameToExtensionElements = XmlReader.readExtensions(this, epNameToExtensionElements, context.parentContext, child);
+          epNameToExtensionElements = XmlReader.readExtensions(this, epNameToExtensionElements, context, child);
           break;
 
         case "extensionPoints":
@@ -230,7 +255,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         case "depends":
           if (!readPluginDependency(basePath, context, child)) {
-            return false;
+            return true;
           }
           break;
 
@@ -253,7 +278,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         case "resource-bundle":
           String value = StringUtil.nullize(child.getTextTrim());
           if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
-            context.parentContext.getLogger().warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
+            context.getLogger().warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
                      "Old value: " + myResourceBundleBaseName + ", new value: " + value);
           }
           myResourceBundleBaseName = value;
@@ -273,7 +298,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           mySinceBuild = StringUtil.nullize(child.getAttributeValue("since-build"));
           myUntilBuild = StringUtil.nullize(child.getAttributeValue("until-build"));
           if (!checkCompatibility(context)) {
-            return false;
+            return true;
           }
           break;
       }
@@ -282,26 +307,17 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         child.getContent().clear();
       }
     }
-
-    if (myVersion == null) {
-      myVersion = context.parentContext.getDefaultVersion();
-    }
-
-    if (pluginDependencies != null) {
-      XmlReader.readDependencies(mainDescriptor, this, context, pathResolver, pluginDependencies);
-    }
-
-    return true;
+    return false;
   }
 
-  private void readProduct(@NotNull DescriptorLoadingContext context, @NotNull Element child) {
+  private void readProduct(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
     myProductCode = StringUtil.nullize(child.getAttributeValue("code"));
-    myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context.parentContext);
+    myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context);
     myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
     myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
   }
 
-  private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorLoadingContext context, @NotNull Element child) {
+  private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorListLoadingContext context, @NotNull Element child) {
     String dependencyIdString = child.getTextTrim();
     if (dependencyIdString.isEmpty()) {
       return true;
@@ -319,9 +335,9 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       isDisabledOrBroken = true;
     }
     else {
-      if (context.parentContext.result.isBroken(dependencyId)) {
+      if (context.result.isBroken(dependencyId)) {
         if (!isOptional) {
-          context.parentContext.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
+          context.getLogger().info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
           markAsIncomplete(context, "Non-optional dependency " + dependencyId + " is broken", null);
           return false;
         }
@@ -358,20 +374,20 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return true;
   }
 
-  private boolean checkCompatibility(@NotNull DescriptorLoadingContext context) {
+  private boolean checkCompatibility(@NotNull DescriptorListLoadingContext context) {
     String since = mySinceBuild;
     String until = myUntilBuild;
     if (isBundled() || (since == null && until == null)) {
       return true;
     }
 
-    String message = PluginManagerCore.getIncompatibleMessage(context.parentContext.result.productBuildNumber.get(), since, until);
+    String message = PluginManagerCore.getIncompatibleMessage(context.result.productBuildNumber.get(), since, until);
     if (message == null) {
       return true;
     }
 
     markAsIncomplete(context, null, null);  // error will be added by reportIncompatiblePlugin
-    context.parentContext.result.reportIncompatiblePlugin(this, message, since, until);
+    context.result.reportIncompatiblePlugin(this, message, since, until);
     return false;
   }
 
@@ -387,7 +403,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return builder.toString();
   }
 
-  private void markAsIncomplete(@NotNull DescriptorLoadingContext context, @Nullable String errorMessage, @Nullable PluginId disabledDependency) {
+  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable String errorMessage, @Nullable PluginId disabledDependency) {
     boolean wasIncomplete = incomplete;
     incomplete = true;
     setEnabled(false);
@@ -396,7 +412,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       if (pluginError != null && disabledDependency != null) {
         pluginError.setDisabledDependency(disabledDependency);
       }
-      context.parentContext.result.addIncompletePlugin(this, pluginError);
+      context.result.addIncompletePlugin(this, pluginError);
     }
   }
 
