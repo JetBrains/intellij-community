@@ -243,6 +243,8 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @Override
   public void dispose() {
+    removeAll();
+    myEditorField.getDocument().putUserData(DATA_KEY, null);
   }
 
   @CalledInAwt
