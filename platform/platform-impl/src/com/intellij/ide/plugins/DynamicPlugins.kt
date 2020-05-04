@@ -328,7 +328,13 @@ object DynamicPlugins {
 
   @JvmStatic
   @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false, save: Boolean = true): Boolean {
+  fun unloadPlugin(
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    disable: Boolean = false,
+    isUpdate: Boolean = false,
+    save: Boolean = true,
+    requireMemorySnapshot: Boolean = false
+  ): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
     // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
@@ -418,7 +424,7 @@ object DynamicPlugins {
       if (!classLoaderUnloaded) {
         InstalledPluginsState.getInstance().isRestartRequired = true
 
-        if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (((Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !ApplicationManager.getApplication().isUnitTestMode) || requireMemorySnapshot) && MemoryDumpHelper.memoryDumpAvailable()) {
           val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
