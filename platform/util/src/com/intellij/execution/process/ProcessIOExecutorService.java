@@ -4,10 +4,7 @@ import com.intellij.util.concurrency.CountingThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * A thread pool for long-running workers needed for handling child processes or network requests,
@@ -19,19 +16,26 @@ public class ProcessIOExecutorService extends ThreadPoolExecutor {
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
 
   private ProcessIOExecutorService() {
-    super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), new CountingThreadFactory() {
-      @NotNull
-      @Override
-      public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
-        return thread;
-      }
-    });
+    super(1, Integer.MAX_VALUE, 1, TimeUnit.MINUTES, new SynchronousQueue<>(), new MyCountingThreadFactory());
   }
 
   @TestOnly
   public int getThreadCounter() {
     return ((CountingThreadFactory)getThreadFactory()).getCount();
+  }
+
+  private static class MyCountingThreadFactory extends CountingThreadFactory {
+    // Ensure that we don't keep the classloader of the plugin which caused this thread to be created
+    // in Thread.inheritedAccessControlContext
+    private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
+
+    @NotNull
+    @Override
+    public Thread newThread(@NotNull final Runnable r) {
+      Thread thread = myThreadFactory.newThread(r);
+      thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
+      thread.setPriority(Thread.NORM_PRIORITY - 1);
+      return thread;
+    }
   }
 }
