@@ -1,11 +1,10 @@
 package com.intellij.filePrediction.candidate
 
+import com.intellij.filePrediction.CompositeCandidateProvider
 import com.intellij.filePrediction.FilePredictionFeaturesHelper
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
-import com.intellij.filePrediction.FileUsagePredictor
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.PsiManager
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
@@ -31,11 +30,8 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     val file = FilePredictionTestDataHelper.findChildRecursively(root)
     assertNotNull("Cannot find file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", file)
 
-    val psiFile = PsiManager.getInstance(myFixture.project).findFile(file!!)
-    assertNotNull("Cannot find psi file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", psiFile)
-
-    val result = FilePredictionFeaturesHelper.calculateExternalReferences(psiFile!!)
-    val candidates = FileUsagePredictor.selectFileCandidates(myFixture.project, file, result.references)
+    val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, file!!)
+    val candidates = CompositeCandidateProvider.provideCandidates(myFixture.project, file, result.references, 10)
 
     val actual = candidates.map { FileUtil.getRelativePath(root.path, it.path, '/') }.toSet()
     assertEquals(ContainerUtil.newHashSet(*expected), actual)
