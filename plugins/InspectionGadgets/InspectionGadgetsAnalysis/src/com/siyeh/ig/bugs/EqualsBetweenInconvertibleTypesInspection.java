@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
+import java.util.HashSet;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
@@ -92,7 +92,7 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
-      createInconvertibleTypesChecker().deepCheck(lhsType, rhsType, expression.getOperationSign(), new HashMap<>(), WARN_IF_NO_MUTUAL_SUBCLASS_FOUND, isOnTheFly());
+      createInconvertibleTypesChecker().deepCheck(lhsType, rhsType, expression.getOperationSign(), new HashSet<>(), WARN_IF_NO_MUTUAL_SUBCLASS_FOUND, isOnTheFly());
     }
 
     @Override

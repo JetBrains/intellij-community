@@ -211,9 +211,11 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
   public void testCapture() {
     doTest("class X<A, B> {\n" +
            "  static final X<?, ?> CONST = new X<>();\n" +
+           "  static final X<Integer, String> CONST2 = new X<>();\n" +
            "  \n" +
            "  void test(X<?, ?>[] data) {\n" +
            "    if (data[0] == CONST) {}\n" +
+           "    if (data[0] == CONST2) {}\n" +
            "  }\n" +
            "}");
   }

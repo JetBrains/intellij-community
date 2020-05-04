@@ -1,14 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.InheritanceUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class InconvertibleTypesChecker {
   protected abstract void registerEqualsError(PsiElement highlightLocation,
@@ -26,7 +27,7 @@ public abstract class InconvertibleTypesChecker {
       return;
     }
     if (TypeUtils.areConvertible(leftType, rightType) || TypeUtils.mayBeEqualByContract(leftType, rightType)) {
-      deepCheck(leftType, rightType, name, new HashMap<>(), warnIfNoMutualSubclassFound, onTheFly);
+      deepCheck(leftType, rightType, name, new HashSet<>(), warnIfNoMutualSubclassFound, onTheFly);
       return;
     }
     registerEqualsError(name, leftType, rightType, false);
@@ -35,7 +36,7 @@ public abstract class InconvertibleTypesChecker {
   protected void deepCheck(@NotNull PsiType leftType,
                            @NotNull PsiType rightType,
                            PsiElement highlightLocation,
-                           Map<PsiType, PsiType> checked,
+                           Set<Couple<PsiType>> checked,
                            boolean warnIfNoMutualSubclassFound,
                            boolean onTheFly) {
     if (leftType instanceof PsiCapturedWildcardType) {
@@ -44,11 +45,7 @@ public abstract class InconvertibleTypesChecker {
     if (rightType instanceof PsiCapturedWildcardType) {
       rightType = ((PsiCapturedWildcardType)rightType).getUpperBound();
     }
-    PsiType checkedRight = checked.putIfAbsent(leftType, rightType);
-    if (checkedRight != null) {
-      if (!checkedRight.equals(rightType)) {
-        registerEqualsError(highlightLocation, leftType, rightType, false);
-      }
+    if (!checked.add(Couple.of(leftType, rightType))) {
       return;
     }
     if (leftType.isAssignableFrom(rightType) || rightType.isAssignableFrom(leftType)) return;
