@@ -39,7 +39,7 @@ import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class NativeFileWatcherImpl extends PluggableFileWatcher {
+public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
