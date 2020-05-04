@@ -611,6 +611,13 @@ public class RedundantCastUtil {
           LOG.assertTrue(initializer != null, operand.getText());
           opType = initializer.getType();
 
+          if (initializer instanceof PsiMethodCallExpression) {
+            JavaResolveResult newResult = ((PsiMethodCallExpression)initializer).resolveMethodGenerics();
+            if (newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null) {
+              return;
+            }
+          }
+
           if (opType != null) {
             if (operand instanceof PsiConditionalExpression) {
               if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)operand).getThenExpression())) return;

@@ -47,4 +47,5 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testFieldInitializer() { doTest();}
   public void testDiamondWithUpperBounds() { doTest();}
   public void testBinaryConversions() { doTest();}
+  public void testInferenceIncompatibilityWithoutCast() { doTest();}
 }
