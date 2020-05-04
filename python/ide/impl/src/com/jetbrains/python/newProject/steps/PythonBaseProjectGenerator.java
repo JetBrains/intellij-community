@@ -19,10 +19,12 @@ import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.newProject.welcome.PyWelcomeGenerator;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import icons.PythonIcons;
@@ -31,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
 
 public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings> {
 
@@ -47,9 +48,10 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
   }
 
   @Override
-  @Nullable
-  public JComponent getSettingsPanel(File baseDir) throws ProcessCanceledException {
-    return null;
+  public @NotNull JPanel extendBasePanel() throws ProcessCanceledException {
+    final JPanel panel = new JPanel(new VerticalFlowLayout(3, 0));
+    panel.add(PyWelcomeGenerator.INSTANCE.createWelcomeSettingsPanel());
+    return panel;
   }
 
   @Override
@@ -69,6 +71,7 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
     // Super should be called according to its contract unless we sync project explicitly (we do not, so we call super)
     super.configureProject(project, baseDir, settings, module, synchronizer);
     PySdkExtKt.setPythonSdk(module, settings.getSdk());
+    PyWelcomeGenerator.INSTANCE.welcomeUser(project, baseDir);
   }
 
   @NotNull
