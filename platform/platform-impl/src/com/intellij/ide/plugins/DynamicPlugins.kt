@@ -389,9 +389,7 @@ object DynamicPlugins {
           @Suppress("DEPRECATION")
           com.intellij.openapi.util.DefaultJDOMExternalizer.clearFieldCache()
           application.getServiceIfCreated(TopHitCache::class.java)?.clear()
-          Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
           PresentationFactory.clearPresentationCaches()
-          IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
@@ -415,6 +413,10 @@ object DynamicPlugins {
     }
     finally {
       IdeEventQueue.getInstance().flushQueue()
+
+      // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
+      Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
+      IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
 
       if (ApplicationManager.getApplication().isUnitTestMode && loadedPluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         return true
