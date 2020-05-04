@@ -101,7 +101,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override val isDocked: Boolean
     get() = type == ToolWindowType.DOCKED
 
-  fun normalizeAfterRead() {
+  internal fun normalizeAfterRead() {
     setTypeAndCheck(type)
 
     if (isVisible && id != null && !canActivateOnStart(id!!)) {
@@ -149,14 +149,12 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
 }
 
 private fun canActivateOnStart(id: String): Boolean {
-  for (ep in listOf(
-    ToolWindowEP.EP_NAME.extensionList,
-    FacetDependentToolWindow.EXTENSION_POINT_NAME.extensionList,
-    LibraryDependentToolWindow.EXTENSION_POINT_NAME.extensionList).flatten()
-  ) {
-    if (id == ep.id) {
-      return !ep.isDoNotActivateOnStart
-    }
-  }
-  return true
+  val ep = findEp(ToolWindowEP.EP_NAME.iterable, id)
+           ?: findEp(FacetDependentToolWindow.EXTENSION_POINT_NAME.iterable, id)
+           ?: findEp(LibraryDependentToolWindow.EXTENSION_POINT_NAME.iterable, id)
+  return ep == null || !ep.isDoNotActivateOnStart
+}
+
+private fun findEp(list: Iterable<ToolWindowEP>, id: String): ToolWindowEP? {
+  return list.firstOrNull { id == it.id }
 }
