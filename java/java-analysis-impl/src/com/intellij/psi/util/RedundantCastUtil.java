@@ -384,8 +384,12 @@ public class RedundantCastUtil {
               else {
                 final boolean varargs = newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).isVarargs();
                 final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, i, varargs);
-                final PsiType newArgType = newResult.getSubstitutor().substitute(parameterType);
+                PsiType newArgType = newResult.getSubstitutor().substitute(parameterType);
 
+                if (newResult instanceof MethodCandidateInfo && PsiUtil.isRawSubstitutor(((MethodCandidateInfo)newResult).getElement(), newResult.getSubstitutor())) {
+                  newArgType = TypeConversionUtil.erasure(newArgType);
+                }
+                
                 if (Comparing.equal(castType, ((PsiFunctionalExpression)newArg).getGroundTargetType(newArgType))) {
                   addToResults(cast);
                 }
