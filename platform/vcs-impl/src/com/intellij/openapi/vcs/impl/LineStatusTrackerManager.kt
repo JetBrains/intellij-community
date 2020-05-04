@@ -383,7 +383,6 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
   override fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
     if (!partialChangeListsEnabled) return false
-    if (!getTrackingMode().isVisible) return false
 
     val vcs = VcsUtil.getVcsFor(project, virtualFile)
     return vcs != null && vcs.arePartialChangelistsSupported()
