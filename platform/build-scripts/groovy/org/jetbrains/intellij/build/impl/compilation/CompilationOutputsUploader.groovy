@@ -117,12 +117,14 @@ class CompilationOutputsUploader {
 
   private boolean uploadCompilationCache(Boolean publishTeamCityArtifacts) {
     String cachePath = "caches/$commitHash"
-    if (uploader.isExist(cachePath)) return false
+    def exists = uploader.isExist(cachePath)
 
     File dataStorageRoot = context.compilationData.dataStorageRoot
     File zipFile = new File(dataStorageRoot.parent, commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
-    uploader.upload(cachePath, zipFile)
+    if (!exists) {
+      uploader.upload(cachePath, zipFile)
+    }
 
     // Publish artifact for dependent configuration
     if (publishTeamCityArtifacts) {
@@ -133,15 +135,15 @@ class CompilationOutputsUploader {
 
     File zipCopy = new File(tmpDir, cachePath)
     FileUtil.rename(zipFile, zipCopy)
-    return true
+    return !exists
   }
 
   private void uploadMetadata() {
     String metadataPath = "metadata/$commitHash"
-    if (uploader.isExist(metadataPath)) return
-
     File sourceStateFile = sourcesStateProcessor.sourceStateFile
-    uploader.upload(metadataPath, sourceStateFile)
+    if (!uploader.isExist(metadataPath)) {
+      uploader.upload(metadataPath, sourceStateFile)
+    }
     File sourceStateFileCopy = new File(tmpDir, metadataPath)
     FileUtil.copy(sourceStateFile, sourceStateFileCopy)
   }
@@ -164,9 +166,9 @@ class CompilationOutputsUploader {
       if (!uploader.isExist(sourcePath, false)) {
         uploader.upload(sourcePath, zipFile)
         uploadedOutputsCount.incrementAndGet()
-        File zipCopy = new File(tmpDir, sourcePath)
-        FileUtil.rename(zipFile, zipCopy)
       }
+      File zipCopy = new File(tmpDir, sourcePath)
+      FileUtil.rename(zipFile, zipCopy)
     }
   }
 
