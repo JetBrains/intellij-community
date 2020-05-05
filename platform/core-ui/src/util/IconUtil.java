@@ -188,7 +188,7 @@ public class IconUtil {
     }
     FileType fileType = vFile.getFileType();
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
-      return PlatformIcons.FOLDER_ICON;
+      return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
     return fileType.getIcon();
   }

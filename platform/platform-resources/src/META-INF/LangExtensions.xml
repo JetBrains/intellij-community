@@ -1276,6 +1276,8 @@
     <codeInsight.lineMarkerProvider implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>
+
+    <iconDescriptionBundle qualifiedName="messages.IdeBundle"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.script.IdeStartupScripts" topic="com.intellij.openapi.project.ProjectManagerListener"/>

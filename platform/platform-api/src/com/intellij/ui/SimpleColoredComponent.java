@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
@@ -24,6 +25,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
@@ -1076,6 +1078,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     finally {
       myAutoInvalidate = old;
     }
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
+      String iconToolTip = ((IconWithToolTip)myIcon).getToolTip(false);
+      if (iconToolTip != null) {
+        return iconToolTip;
+      }
+    }
+    return super.getToolTipText(event);
   }
 
   @Override

@@ -281,7 +281,7 @@ public class IconUtilTest extends HeavyPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
 
       List<Icon> icons = autopsyIconsFrom(icon);
-      assertOneElement(ContainerUtil.filter(icons, ic -> ic == PlatformIcons.LOCKED_ICON));
+      assertOneElement(ContainerUtil.filter(icons, ic -> ic == IconTestUtil.unwrapRetrievableIcon(PlatformIcons.LOCKED_ICON)));
     }
     finally {
       WriteCommandAction.runWriteCommandAction(getProject(),

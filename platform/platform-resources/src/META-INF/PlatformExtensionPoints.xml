@@ -380,5 +380,6 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.options.OptionEditorProvider"/>
     </extensionPoint>
 
+    <extensionPoint name="iconDescriptionBundle" beanClass="com.intellij.ui.IconDescriptionBundleEP" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
