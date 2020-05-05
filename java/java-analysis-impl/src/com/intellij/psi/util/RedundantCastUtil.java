@@ -512,8 +512,7 @@ public class RedundantCastUtil {
             final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
             final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
             final PsiExpression opposite = thenExpression == typeCast ? elseExpression : thenExpression;
-            if (opposite == null || conditionalType instanceof PsiPrimitiveType &&
-                                    !Comparing.equal(conditionalType, opposite.getType())) return;
+            if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
           }
         }
         else if (parent instanceof PsiSynchronizedStatement &&
