@@ -6,9 +6,11 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.bugs.InconvertibleTypesChecker;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extends BaseInspection {
   protected abstract boolean checkTestNG();
@@ -56,15 +58,12 @@ public abstract class BaseAssertEqualsBetweenInconvertibleTypesInspection extend
         return;
       }
 
-      new InconvertibleTypesChecker() {
-        @Override
-        protected void registerEqualsError(PsiElement highlightLocation,
-                                           @NotNull PsiType leftType,
-                                           @NotNull PsiType rightType,
-                                           boolean convertible) {
-            AssertEqualsBetweenInconvertibleTypesVisitor.this.registerError(highlightLocation, leftType, rightType, convertible);
-          }
-        }.checkTypes(expression.getMethodExpression(), type1, type2, true, isOnTheFly());
+      InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(
+        type1, type2, isOnTheFly() ? InconvertibleTypesChecker.LookForMutualSubclass.IF_CHEAP : InconvertibleTypesChecker.LookForMutualSubclass.ALWAYS);
+      if (mismatch != null) {
+        PsiElement name = Objects.requireNonNull(expression.getMethodExpression().getReferenceNameElement());
+        registerError(name, mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+      }
     }
   }
 }
