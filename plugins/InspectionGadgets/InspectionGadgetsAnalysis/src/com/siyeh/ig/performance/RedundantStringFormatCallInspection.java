@@ -70,10 +70,13 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       final PsiExpressionList args = call.getArgumentList();
       if (args.getExpressionCount() != 1) return null;
 
+      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
+      if (method == null) return null;
+
       final PsiExpression formatValue = args.getExpressions()[0];
       if (containsNewlineToken(formatValue)) return null;
 
-      return myManager.createProblemDescriptor(call, getMethodNameRange(call),
+      return myManager.createProblemDescriptor(method, (TextRange) null,
                                                InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                new ReplaceWithPrintFix());
@@ -81,8 +84,11 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
     @Nullable
     private ProblemDescriptor getRedundantStringFormatProblem(@NotNull final PsiMethodCallExpression call) {
+      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
+      if (method == null) return null;
+
       if (isStringFormatCallRedundant(call)) {
-        return myManager.createProblemDescriptor(call, getMethodNameRange(call),
+        return myManager.createProblemDescriptor(method, (TextRange) null,
                                                  InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                  new RemoveRedundantStringFormatFix());
@@ -93,17 +99,11 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         if (!PRINTSTREAM_PRINT.test(printlnCall)) return null;
 
       }
-      return myManager.createProblemDescriptor(call, getMethodNameRange(call),
+
+      return myManager.createProblemDescriptor(method, (TextRange) null,
                                                InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
                                                new StringFormatToPrintfQuickFix(isPrintlnCall));
-    }
-
-    @Nullable
-    private static TextRange getMethodNameRange(@NotNull final PsiMethodCallExpression call) {
-      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
-      if (method == null) return null;
-      return new TextRange(method.getStartOffsetInParent(), method.getStartOffsetInParent() + method.getTextLength());
     }
 
     @Contract(pure = true)
@@ -155,10 +155,12 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiMethodCallExpression)) return;
+        final PsiElement methodName = descriptor.getPsiElement();
+        if (methodName == null) return;
 
-        final PsiMethodCallExpression printStreamPrintfCall = (PsiMethodCallExpression)element;
+        final PsiMethodCallExpression printStreamPrintfCall = PsiTreeUtil.getParentOfType(methodName, PsiMethodCallExpression.class);
+
+        if (printStreamPrintfCall == null) return;
 
         ExpressionUtils.bindCallTo(printStreamPrintfCall, "print");
       }
@@ -173,9 +175,12 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       @Override
       public void applyFix(@NotNull Project project,
                            @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiMethodCallExpression)) return;
-        final PsiMethodCallExpression stringFormat = (PsiMethodCallExpression)element;
+        final PsiElement methodName = descriptor.getPsiElement();
+        if (methodName == null) return;
+
+        final PsiMethodCallExpression stringFormat = PsiTreeUtil.getParentOfType(methodName, PsiMethodCallExpression.class);
+        if (stringFormat == null) return;
+
         final PsiElement parent = stringFormat.getParent();
         if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1 && parent.getParent() instanceof PsiMethodCallExpression){
           final PsiMethodCallExpression printCall = (PsiMethodCallExpression)parent.getParent();
@@ -208,10 +213,11 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (!(element instanceof PsiMethodCallExpression)) return;
+        final PsiElement methodName = descriptor.getPsiElement();
+        if (methodName == null) return;
 
-        final PsiMethodCallExpression stringFormatCall = (PsiMethodCallExpression)element;
+        final PsiMethodCallExpression stringFormatCall = PsiTreeUtil.getParentOfType(methodName, PsiMethodCallExpression.class);
+        if (stringFormatCall == null) return;
 
         final PsiMethodCallExpression printlnCall = PsiTreeUtil.getParentOfType(stringFormatCall, PsiMethodCallExpression.class);
         if (printlnCall == null) return;
