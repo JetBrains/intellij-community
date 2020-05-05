@@ -31,6 +31,7 @@ import java.awt.event.ActionListener
 import java.awt.event.ItemEvent
 import java.awt.event.MouseEvent
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 import kotlin.jvm.internal.CallableReference
@@ -539,11 +540,18 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
 }
 
 private fun <T> ComboBox<T>.bind(property: GraphProperty<T>) {
-  property.afterChange { if (selectedItem != it) selectedItem = it }
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      selectedItem = it
+    }
+  }
   addItemListener {
     if (it.stateChange == ItemEvent.SELECTED) {
-      @Suppress("UNCHECKED_CAST")
-      property.set(it.item as T)
+      mutex.lockOrSkip {
+        @Suppress("UNCHECKED_CAST")
+        property.set(it.item as T)
+      }
     }
   }
 }
@@ -553,14 +561,31 @@ private fun TextFieldWithBrowseButton.bind(property: GraphProperty<String>) {
 }
 
 private fun JTextField.bind(property: GraphProperty<String>) {
-  property.afterChange { if (text != it) text = it }
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      text = it
+    }
+  }
   document.addDocumentListener(
     object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        property.set(text)
+        mutex.lockOrSkip {
+          property.set(text)
+        }
       }
     }
   )
+}
+
+private fun AtomicBoolean.lockOrSkip(action: () -> Unit) {
+  if (!compareAndSet(false, true)) return
+  try {
+    action()
+  }
+  finally {
+    set(false)
+  }
 }
 
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
