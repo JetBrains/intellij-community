@@ -15,4 +15,11 @@ class Test {
     };
     
   }
+  
+  void positive() {
+    int i = switch(0) {
+      case 4 -> 2;
+      default -> throw new NullPointerException();
+    };
+  }
 }
