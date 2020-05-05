@@ -7,7 +7,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -46,31 +45,12 @@ import java.util.regex.Pattern;
  * Compiles the handlers for usability
  */
 public class PatternCompiler {
-  private static final Key<LastResult> SSR_LAST_COMPILED_PATTERN = new Key<>("SSR_LAST_COMPILED_PATTERN");
 
   private static String ourLastSearchPlan;
 
   public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
-    if (!checkForErrors) {
-      final LastResult lastResult = SSR_LAST_COMPILED_PATTERN.get(project);
-      if (lastResult != null && options.equals(lastResult.options) &&
-          (!(options.getScope() instanceof GlobalSearchScope) || options.getScope() == lastResult.options.getScope())) {
-        return lastResult.pattern;
-      }
-    }
     return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
-  }
-
-  private static class LastResult {
-
-    public final MatchOptions options;
-    public final CompiledPattern pattern;
-
-    private LastResult(MatchOptions options, CompiledPattern pattern) {
-      this.options = options;
-      this.pattern = pattern;
-    }
   }
 
   @NotNull
@@ -90,14 +70,8 @@ public class PatternCompiler {
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes, checkForErrors);
       final CompiledPattern pattern = context.getPattern();
-      try {
-        checkForUnknownVariables(pattern, elements);
-        pattern.setNodes(elements);
-        project.putUserData(SSR_LAST_COMPILED_PATTERN, new LastResult(options.copy(), result));
-      } catch (MalformedPatternException e) {
-        project.putUserData(SSR_LAST_COMPILED_PATTERN, new LastResult(options.copy(), null));
-        throw e;
-      }
+      checkForUnknownVariables(pattern, elements);
+      pattern.setNodes(elements);
       if (checkForErrors) {
         profile.checkSearchPattern(pattern);
       }
