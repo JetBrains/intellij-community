@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
@@ -112,7 +113,8 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
     public void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
       InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(leftType, rightType, getMutualSubclassMode());
       if (mismatch != null) {
-        registerError(expression, mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+        registerError(Objects.requireNonNull(expression.getReferenceNameElement()), 
+                      mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
       }
     }
   }
