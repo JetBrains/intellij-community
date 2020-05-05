@@ -524,7 +524,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
+    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm) {
       new MacGestureSupportForEditor(getComponent());
     }
 
