@@ -421,9 +421,8 @@ public final class JdkUtil {
       });
 
       Set<TargetValue<String>> classpath = new LinkedHashSet<>();
-      TargetEnvironmentRequest.Volume tempVolume = request.getDefaultVolume();
 
-      classpath.add(tempVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
+      classpath.add(classPathVolume.createUpload(PathUtil.getJarPathForClass(commandLineWrapper)));
       if (isUrlClassloader(vmParameters)) {
         if (!(request instanceof LocalTargetEnvironmentRequest)) {
           throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
@@ -452,20 +451,20 @@ public final class JdkUtil {
       Map<String, String> commandLineContent = new HashMap<>();
       commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
 
-      TargetValue<String> classPathParameter = tempVolume.createUpload(classpathFile.getAbsolutePath());
+      TargetValue<String> classPathParameter = classPathVolume.createUpload(classpathFile.getAbsolutePath());
       commandLine.addParameter(classPathParameter);
       addCommandLineContentOnResolve(commandLineContent, classpathFile, classPathParameter);
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params");
-        TargetValue<String> vmParamsParameter = tempVolume.createUpload(vmParamsFile.getAbsolutePath());
+        TargetValue<String> vmParamsParameter = classPathVolume.createUpload(vmParamsFile.getAbsolutePath());
         commandLine.addParameter(vmParamsParameter);
         addCommandLineContentOnResolve(commandLineContent, vmParamsFile, vmParamsParameter);
       }
 
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params");
-        TargetValue<String> appParamsParameter = tempVolume.createUpload(appParamsFile.getAbsolutePath());
+        TargetValue<String> appParamsParameter = classPathVolume.createUpload(appParamsFile.getAbsolutePath());
         commandLine.addParameter(appParamsParameter);
         addCommandLineContentOnResolve(commandLineContent, appParamsFile, appParamsParameter);
       }
