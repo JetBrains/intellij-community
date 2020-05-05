@@ -33,4 +33,11 @@ class CastToIncompatibleInterface {
   void x(String s) {
     List l = <error descr="Inconvertible types; cannot cast 'java.lang.String' to 'java.util.List'">(List)s</error>;
   }
+  
+  void testUnderInstanceOf() {
+    if (getC(0) instanceof B && ((B)getC(0)).acting()) {}
+    if (getC(0) instanceof B && ((<warning descr="Cast to incompatible interface 'B'">B</warning>)getC(1)).acting()) {}
+  }
+  
+  native C getC(int x);
 }
