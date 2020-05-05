@@ -289,8 +289,7 @@ public class TabLabel extends JPanel implements Accessible {
       myLabel.setIcon(hasIcons() ? myIcon : null);
 
       if (text != null) {
-        SimpleColoredText derive = myTabs.useBoldLabels() ? text.derive(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true) : text;
-        derive.appendToComponent(myLabel);
+        text.appendToComponent(myLabel);
       }
     }, false);
 
