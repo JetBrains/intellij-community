@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -133,7 +134,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
       Runnable runnable = () -> showNotification(notification, project);
       if (project == null) {
-        GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+        if (LoadingState.APP_STARTED.isOccurred()) {
+          GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+        }
+        else {
+          Logger.getInstance(NotificationsManagerImpl.class).error("Notification posted too early (no window to display)");
+        }
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
@@ -142,11 +148,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void showNotification(Notification notification, @Nullable Project project) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      ApplicationManager.getApplication().invokeLater(() -> showNotification(notification, project), ModalityState.current());
-      return;
-    }
-
     String groupId = notification.getGroupId();
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
