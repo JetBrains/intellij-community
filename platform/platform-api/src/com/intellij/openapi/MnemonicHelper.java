@@ -162,7 +162,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
    * @param component the root component of the hierarchy
    */
   public static void init(Component component) {
-    if (Registry.is("ide.mnemonic.helper.old", false) || Registry.is("ide.checkDuplicateMnemonics", false)) {
+    if (Registry.is("ide.checkDuplicateMnemonics", false)) {
       new MnemonicHelper().register(component);
     }
     else {
