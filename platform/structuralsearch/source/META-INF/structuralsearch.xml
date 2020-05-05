@@ -3,7 +3,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
-                    interface="com.intellij.structuralsearch.StructuralSearchProfile"/>
+                    interface="com.intellij.structuralsearch.StructuralSearchProfile"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
