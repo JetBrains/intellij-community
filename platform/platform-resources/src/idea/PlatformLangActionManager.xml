@@ -69,6 +69,11 @@
       <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
       <add-to-group group-id="FavoritesViewPopupMenu" anchor="after" relative-to-action="ReplaceInPath"/>
     </group>
+
+    <action id="DumpProjectPortableRootsAction"
+            class="com.intellij.util.indexing.diagnostic.dump.paths.DumpProjectPortableRootsAction" internal="true">
+      <add-to-group group-id="Internal" />
+    </action>
   </actions>
 
 </idea-plugin>
