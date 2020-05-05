@@ -60,8 +60,11 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     })
 
   fun sourcePsiFilter(filter: (PsiElement) -> Boolean): Self =
-    withSourcePsiCondition(object : PatternCondition<PsiElement>("sourcePsiFilter") {
-      override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean = filter(t)
+    this.with(object : PatternCondition<T>("sourcePsiFilter") {
+      override fun accepts(t: T, context: ProcessingContext?): Boolean {
+        val sourcePsiElement = t.sourcePsiElement ?: return false
+        return filter(sourcePsiElement)
+      }
     })
 
   fun filterWithContext(filter: (T, ProcessingContext) -> Boolean): Self =
@@ -90,8 +93,8 @@ private fun isCallExpressionParameter(argumentExpression: UExpression,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>, context: ProcessingContext): Boolean {
   val sharedContext = context.sharedContext
-  val existingResult = sharedContext.get(IS_UAST_CALL_EXPRESSION_PARAMETER, argumentExpression)
-  if (existingResult == java.lang.Boolean.FALSE) {
+  val isCallParameter = sharedContext.get(IS_UAST_CALL_EXPRESSION_PARAMETER, argumentExpression)
+  if (isCallParameter == java.lang.Boolean.FALSE) {
     return false
   }
 

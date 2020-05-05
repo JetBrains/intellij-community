@@ -22,8 +22,8 @@ import java.util.*
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  val adapter = UastReferenceProviderAdapter(provider.supportedUElementTypes, pattern, provider)
-  this.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), adapter, priority)
+  val adapter = UastReferenceProviderAdapter(provider.supportedUElementTypes, provider)
+  this.registerReferenceProvider(adaptPattern(pattern, provider.supportedUElementTypes), adapter, priority)
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
@@ -90,15 +90,16 @@ private fun <T : UElement> getCachedUElement(context: ProcessingContext,
   return newUElement
 }
 
-internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
-  val uastTypePattern = UElementTypePatternAdapter(supportedUElementTypes)
+private fun adaptPattern(pattern: (UElement, ProcessingContext) -> Boolean,
+                         supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
+  val uastPatternAdapter = UastPatternAdapter(pattern, supportedUElementTypes)
 
   // optimisation until IDEA-211738 is implemented
   if (supportedUElementTypes.size == 1 && supportedUElementTypes[0] == UInjectionHost::class.java) {
-    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastTypePattern)
+    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastPatternAdapter)
   }
 
-  return uastTypePattern
+  return uastPatternAdapter
 }
 
 /**

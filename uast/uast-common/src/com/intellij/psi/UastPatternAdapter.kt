@@ -8,24 +8,25 @@ import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.UElement
 
-internal class UElementTypePatternAdapter(private val supportedUElementTypes: List<Class<out UElement>>) : ElementPattern<PsiElement> {
+internal class UastPatternAdapter(private val pattern: (UElement, ProcessingContext) -> Boolean,
+                                  private val supportedUElementTypes: List<Class<out UElement>>) : ElementPattern<PsiElement> {
   override fun accepts(o: Any?): Boolean = accepts(o, null)
 
   override fun accepts(o: Any?, context: ProcessingContext?): Boolean {
     if (o !is PsiElement) return false
     if (context == null) {
-      logger<UElementTypePatternAdapter>().error("UElementTypePatternAdapter should not be called with null context")
+      logger<UastPatternAdapter>().error("UastPatternAdapter should not be called with null context")
       return false
     }
 
-    if (getOrCreateCachedElement(o, context, supportedUElementTypes) == null) return false
-
+    val uElement = getOrCreateCachedElement(o, context, supportedUElementTypes) ?: return false
     context.put(REQUESTED_PSI_ELEMENT, o)
-    return true
+
+    return pattern(uElement, context)
   }
 
   private val condition = ElementPatternCondition(object : InitialPatternCondition<PsiElement>(PsiElement::class.java) {
-    override fun accepts(o: Any?, context: ProcessingContext?): Boolean = this@UElementTypePatternAdapter.accepts(o, context)
+    override fun accepts(o: Any?, context: ProcessingContext?): Boolean = this@UastPatternAdapter.accepts(o, context)
   })
 
   override fun getCondition(): ElementPatternCondition<PsiElement> = condition
