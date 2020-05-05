@@ -4,13 +4,13 @@ package com.intellij.refactoring.extractMethod.newImpl
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
@@ -34,7 +34,8 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   require(elements.isNotEmpty())
   val analyzer = CodeFragmentAnalyzer(elements)
 
-  val flowOutput = findFlowOutput(analyzer) ?: throw PrepareFailedException("too many exits", elements.first())
+  val flowOutput = findFlowOutput(analyzer)
+                   ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), elements.first())
 
   val variableData = findVariableData(analyzer, analyzer.findOutputVariables())
 
@@ -49,16 +50,20 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val dataOutput = when {
     expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
     variableData is VariableOutput -> when {
-      flowOutput is ConditionalFlow && ! canExtractStatementsFromScope(flowOutput.statements, elements)
-        -> throw PrepareFailedException("Out var and different flow statements", flowOutput.statements.first())
-      variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> throw PrepareFailedException("Nullable out var and branching", variableData.variable)
+      variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> null
+      flowOutput is ConditionalFlow && ! canExtractStatementsFromScope(flowOutput.statements, elements) -> null
       flowOutput is ConditionalFlow -> variableData.copy(nullability = Nullability.NULLABLE)
       else -> variableData
     }
     else -> findFlowData(analyzer, flowOutput)
   }
+  if (dataOutput == null) {
+    val outputVariable = (variableData as? VariableOutput)?.variable
+    throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), flowOutput.statements + listOfNotNull(outputVariable))
+  }
 
-  val anchor = findClassMember(elements.first()) ?: throw PrepareFailedException("No upper class", elements.first())
+  val anchor = findClassMember(elements.first())
+                        ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.not.found"), elements.first().containingFile)
 
   var extractOptions = ExtractOptions(anchor, elements, flowOutput, dataOutput)
 
@@ -83,16 +88,14 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
   val fieldUsages = analyzer.findFieldUsages(targetClass, elements)
-  val finalFields = fieldUsages
-    .filter { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
-    .map { it.field }
-    .distinct()
+  val finalFieldsWrites = fieldUsages.filter { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
+  val finalFields = finalFieldsWrites.map { it.field }.distinct()
   val field = finalFields.singleOrNull()
   extractOptions = when {
     finalFields.isEmpty() -> extractOptions
     field != null && extractOptions.dataOutput is EmptyOutput ->
       extractOptions.copy(dataOutput = VariableOutput(field.type, field, false), requiredVariablesInside = listOf(field))
-    else -> throw PrepareFailedException("Too many final fields", finalFields.first())
+    else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.finals"), finalFieldsWrites.map { it.classMemberReference })
   }
 
   checkLocalClass(extractOptions)
@@ -104,7 +107,9 @@ private fun normalizeDataOutput(dataOutput: DataOutput, flowOutput: FlowOutput, 
   var normalizedDataOutput = dataOutput
   if (flowOutput is ConditionalFlow && dataOutput.type is PsiPrimitiveType) {
     val variableOutput = dataOutput as? VariableOutput
-    if (variableOutput?.declareType == false) throw PrepareFailedException("Too many outputs (TODO)", variableOutput.variable)
+    if (variableOutput?.declareType == false) {
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), flowOutput.statements)
+    }
     normalizedDataOutput = dataOutput.withBoxedType()
   }
   if (normalizedDataOutput is ExpressionOutput) {
@@ -147,26 +152,26 @@ private fun findOutputFromReturn(flowOutput: FlowOutput): ExpressionOutput? {
   return if (returnType != null) ExpressionOutput(returnType, variableName, returnExpressions, nullability) else null
 }
 
-private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput): DataOutput {
+private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput): DataOutput? {
   val returnOutput = findOutputFromReturn(flowOutput)
   return when (flowOutput) {
     is ConditionalFlow -> when {
       returnOutput?.nullability == Nullability.NOT_NULL && returnOutput.type != PsiType.BOOLEAN -> returnOutput.copy(nullability = Nullability.NULLABLE)
       ExtractMethodHelper.areSame(flowOutput.statements) && analyzer.findExposedLocalVariables(returnOutput?.returnExpressions.orEmpty()).isEmpty() ->
         ArtificialBooleanOutput
-      else -> throw PrepareFailedException("Nullable output and branching", analyzer.elements.first())
+      else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), analyzer.elements.first())
     }
     is UnconditionalFlow -> returnOutput ?: EmptyOutput()
     EmptyFlow -> EmptyOutput()
   }
 }
 
-//TODO correct messages in PrepareFailedException
 private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<PsiVariable>): DataOutput {
   val variable = when {
-    analyzer.elements.singleOrNull() is PsiExpression && variables.isNotEmpty() -> throw PrepareFailedException("Var in expression", variables.first())
+    analyzer.elements.singleOrNull() is PsiExpression && variables.isNotEmpty() ->
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.error.variable.in.expression"), variables)
+    variables.size > 1 -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.outputs"), variables)
     variables.isEmpty() -> return EmptyOutput()
-    variables.size > 1 -> throw PrepareFailedException("Many vars", variables[1])
     else -> variables.single()
   }
   val nullability = CodeFragmentAnalyzer.inferNullability(analyzer.elements.last() as PsiStatement, variable.name)
@@ -180,7 +185,7 @@ private fun PsiModifierListOwner?.hasNullabilityAnnotation(): Boolean {
   return AnnotationUtil.isAnnotated(this, nullabilityAnnotations, AnnotationUtil.CHECK_TYPE)
 }
 
-internal fun updateMethodAnnotations(method: PsiMethod,inputParameters: List<InputParameter>) {
+internal fun updateMethodAnnotations(method: PsiMethod, inputParameters: List<InputParameter>) {
   if (method.returnType !is PsiPrimitiveType) {
     //TODO use dataoutput.nullability instead
     val resultNullability = CodeFragmentAnalyzer.inferNullability(CodeFragmentAnalyzer.findReturnExpressionsIn(method))
@@ -196,12 +201,12 @@ internal fun updateMethodAnnotations(method: PsiMethod,inputParameters: List<Inp
     }
 }
 
-private fun checkLocalClass(options: ExtractOptions): Boolean {
+private fun checkLocalClass(options: ExtractOptions) {
   var container: PsiElement? = PsiTreeUtil.getParentOfType(options.elements.first(), PsiClass::class.java, PsiMethod::class.java)
   while (container is PsiMethod && container.containingClass !== options.anchor.parent) {
     container = PsiTreeUtil.getParentOfType(container, PsiMethod::class.java, true)
   }
-  container ?: return true
+  container ?: return
   val analyzer = CodeFragmentAnalyzer(options.elements)
   val localClasses = mutableListOf<PsiClass>()
   container.accept(object : JavaRecursiveElementWalkingVisitor() {
@@ -238,24 +243,15 @@ private fun checkLocalClass(options: ExtractOptions): Boolean {
       true
     })
     if (extractedReferences.isNotEmpty()) {
-      throw PrepareFailedException(
-        "Cannot extract method because the selected code fragment uses local classes defined outside of the fragment",
-        extractedReferences[0])
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.outside.defined"), extractedReferences)
     }
     if (remainingReferences.isNotEmpty()) {
-      throw PrepareFailedException(
-        "Cannot extract method because the selected code fragment defines local classes used outside of the fragment",
-        remainingReferences[0])
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.outside.used"), remainingReferences)
     }
     if (classExtracted) {
       analyzer.findUsedVariablesAfter()
         .filter { isExtracted(it) && PsiUtil.resolveClassInType(it.type) === localClass }
-        .forEach {
-          throw PrepareFailedException(
-            "Cannot extract method because the selected code fragment defines variable of local class type used outside of the fragment", it
-          )
-        }
+        .forEach { throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.outside.used"), it) }
     }
   }
-  return true
 }

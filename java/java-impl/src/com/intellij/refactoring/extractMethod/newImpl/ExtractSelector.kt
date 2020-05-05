@@ -6,10 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.RefactoringUtil
-import kotlin.math.exp
 
 class ExtractSelector {
 
@@ -44,9 +42,7 @@ class ExtractSelector {
 
   fun suggestElementsToExtract(editor: Editor): List<PsiElement> {
     val selectedElements = findSelectedElements(editor)
-    val alignedElements = alignElements(selectedElements)
-    if (alignedElements.isEmpty()) throw PrepareFailedException("Fail", selectedElements.first())
-    return alignedElements
+    return alignElements(selectedElements)
   }
 
   private fun alignElements(elements: List<PsiElement>): List<PsiElement> {

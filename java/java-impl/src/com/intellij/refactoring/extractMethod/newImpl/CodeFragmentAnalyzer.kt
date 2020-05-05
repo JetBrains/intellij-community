@@ -7,6 +7,7 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.value.DfaValue
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -37,15 +38,20 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   init {
     require(elements.isNotEmpty())
   }
+
   private val codeFragment = ControlFlowUtil.findCodeFragment(elements.first())
   private val flow: ControlFlow = createControlFlow(elements)
   private val flowRange = findFlowRange(flow, elements)
 
   private fun createControlFlow(elements: List<PsiElement>): ControlFlow {
-    val fragmentToAnalyze: PsiElement = codeFragment
-    val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
-    val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
-    return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
+    try {
+      val fragmentToAnalyze: PsiElement = codeFragment
+      val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
+      val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
+      return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
+    } catch (e: AnalysisCanceledException) {
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.errorElement)
+    }
   }
 
   private fun findFlowRange(flow: ControlFlow, elements: List<PsiElement>): IntRange {

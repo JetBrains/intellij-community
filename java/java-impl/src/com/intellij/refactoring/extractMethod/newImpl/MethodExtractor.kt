@@ -1,19 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.HelpID
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
@@ -32,29 +37,31 @@ class MethodExtractor {
 
   private val LOG = Logger.getInstance(MethodExtractor::class.java)
 
-  fun doExtract(editor: Editor, refactoringName: String, helpId: String): Boolean {
-    val statements = ExtractSelector().suggestElementsToExtract(editor)
-    val file = statements.first().containingFile
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return false
+  fun doExtract(editor: Editor, refactoringName: String, helpId: String) {
+    val project = editor.project ?: return
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     try {
-      val extractOptions = findExtractOptions(statements) ?: return false
-      selectTargetClass(extractOptions) { targetOptions ->
-        val withDialog = mapFromDialog(targetOptions, refactoringName, helpId) ?: return@selectTargetClass false
-        val project = withDialog.project
-        CommandProcessor.getInstance().executeCommand(
-          project,
-          {  PostprocessReformattingAspect.getInstance(project).postponeFormattingInside { doRefactoring(withDialog) } },
-          ExtractMethodHandler.getRefactoringName(), null)
-        return@selectTargetClass false
+      val statements = ExtractSelector().suggestElementsToExtract(editor)
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
+      if (statements.isEmpty()) {
+        throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
-    } catch (e: PrepareFailedException){
-      CommonRefactoringUtil.showErrorHint(statements.first().project, editor, e.message!!, refactoringName, HelpID.EXTRACT_METHOD)
+      val extractOptions = findExtractOptions(statements)
+      selectTargetClass(extractOptions) { targetOptions ->
+        val options = mapFromDialog(targetOptions, refactoringName, helpId)
+        if (options != null) {
+          fun command() = PostprocessReformattingAspect.getInstance(project).postponeFormattingInside { doRefactoring(options) }
+          CommandProcessor.getInstance().executeCommand(project, ::command, ExtractMethodHandler.getRefactoringName(), null)
+        }
+      }
     }
-
-    return true
+    catch (e: ExtractException) {
+      CommonRefactoringUtil.showErrorHint(project, editor, e.message!!, refactoringName, HelpID.EXTRACT_METHOD)
+      showError(editor, e.problems)
+    }
   }
 
-  private fun doRefactoring(options: ExtractOptions){
+  private fun doRefactoring(options: ExtractOptions) {
     try {
       val beforeData = RefactoringEventData()
       beforeData.addElements(options.elements.toTypedArray())
@@ -82,19 +89,22 @@ class MethodExtractor {
     @PsiModifier.ModifierConstant visibility: String?,
     vararg disabledParameters: Int
   ): Boolean {
+    val project = editor.project ?: return false
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
     val elements = ExtractSelector().suggestElementsToExtract(editor)
-    var options = findExtractOptions(elements) ?: throw PrepareFailedException("Fail", elements.first())
+    if (elements.isEmpty()) throw ExtractException("Nothing to extract", file)
+    var options = findExtractOptions(elements)
     val analyzer = CodeFragmentAnalyzer(elements)
 
     val candidates = ExtractMethodPipeline.findTargetCandidates(analyzer, options)
-    options = ExtractMethodPipeline.withTargetClass(analyzer, options, candidates.firstOrNull { it !is PsiAnonymousClass } ?: candidates.first() )
-              ?: throw PrepareFailedException("Fail", elements.first())
+    val defaultTargetClass = candidates.firstOrNull { it !is PsiAnonymousClass } ?: candidates.first()
+    options = ExtractMethodPipeline.withTargetClass(analyzer, options, defaultTargetClass) ?: throw ExtractException("Fail", elements.first())
     options = options.copy(methodName = "newMethod")
     if (isConstructor != options.isConstructor){
-      options = ExtractMethodPipeline.asConstructor(analyzer, options)
+      options = ExtractMethodPipeline.asConstructor(analyzer, options) ?: throw ExtractException("Fail", elements.first())
     }
     if (! options.isStatic && isStatic == true) {
-      options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw PrepareFailedException("Fail", elements.first())
+      options = ExtractMethodPipeline.withForcedStatic(analyzer, options) ?: throw ExtractException("Fail", elements.first())
     }
     if (newNameOfFirstParam != null) {
       options = options.copy(
@@ -105,7 +115,7 @@ class MethodExtractor {
       options = options.copy(dataOutput = options.dataOutput.withType(returnType))
     }
     if (targetClass != null) {
-      options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass) ?: throw PrepareFailedException("Fail", elements.first())
+      options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass) ?: options
     }
     if (disabledParameters.isNotEmpty()) {
       options = options.copy(
@@ -123,6 +133,18 @@ class MethodExtractor {
       extractMethod(options)
     }
     return true
+  }
+
+  fun showError(editor: Editor, ranges: List<TextRange>) {
+    val project = editor.project ?: return
+    if (ranges.isEmpty()) return
+    val highlightManager = HighlightManager.getInstance(project)
+    val colorsManager = EditorColorsManager.getInstance()
+    val attributes = colorsManager.globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)
+    ranges.forEach { textRange ->
+      highlightManager.addRangeHighlight(editor, textRange.startOffset, textRange.endOffset, attributes, true, null)
+    }
+    WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"))
   }
 
   fun extractMethod(extractOptions: ExtractOptions): PsiMethod {
@@ -158,7 +180,8 @@ class MethodExtractor {
       )
     method.body?.replace(codeBlock)
 
-    val methodCall = findExtractQualifier(dependencies) + "(" + dependencies.inputParameters.map { it.references.first() }.joinToString { it.text } + ")"
+    val parameters = dependencies.inputParameters.map { it.references.first() }.joinToString { it.text }
+    val methodCall = findExtractQualifier(dependencies) + "(" + parameters + ")"
 
     val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first().context)
     val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
@@ -192,7 +215,8 @@ class MethodExtractor {
 
     val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
       wrapWithCodeBlock(target)
-    } else {
+    }
+    else {
       target
     }
     normalizedTarget.reversed().forEach { statement ->
@@ -215,7 +239,8 @@ private fun findExtractQualifier(options: ExtractOptions): String {
   if (member == options.anchor) return options.methodName
   return if (callElement.resolveMethod() != null && !options.isConstructor) {
     if (options.isStatic) "$targetClassName.${options.methodName}" else "$targetClassName.this.${options.methodName}"
-  } else {
+  }
+  else {
     options.methodName
   }
 }

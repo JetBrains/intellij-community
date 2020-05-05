@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
+import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -483,11 +484,20 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testLocalClass() throws Exception {
-    doPrepareErrorTest("Cannot extract method because the selected code fragment uses local classes defined outside of the fragment");
+    try {
+      doTest();
+      fail("Should fail if local class is defined out of the selected block");
+    } catch (PrepareFailedException ignore){
+    }
   }
 
   public void testLocalClassUsage() throws Exception {
-    doPrepareErrorTest("Cannot extract method because the selected code fragment defines local classes used outside of the fragment");
+    try {
+      doTest();
+      fail("Should fail if local class is used out of the selected block");
+    } catch (PrepareFailedException ignore) {
+
+    }
   }
 
   public void testStaticImport() throws Exception {
@@ -515,7 +525,11 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testLocalClassDefinedInMethodWhichIsUsedLater() throws Exception {
-    doPrepareErrorTest("Cannot extract method because the selected code fragment defines variable of local class type used outside of the fragment");
+    try {
+      doTest();
+      fail("Should fail if local class is used out of the selected block");
+    } catch (PrepareFailedException ignored) {
+    }
   }
 
   public void testForceBraces() throws Exception {
@@ -1769,8 +1783,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     processor.setChainedConstructor(extractChainedConstructor);
 
     if (ExtractMethodHandler.canUseNewImpl(project, file, elements)) {
-      return new MethodExtractor().doTestExtract(true, editor, extractChainedConstructor, makeStatic, returnType,
-                                                 newNameOfFirstParam, targetClass, methodVisibility, disabledParams);
+      try {
+        return new MethodExtractor().doTestExtract(true, editor, extractChainedConstructor, makeStatic, returnType,
+                                                   newNameOfFirstParam, targetClass, methodVisibility, disabledParams);
+      } catch (ExtractException e) {
+        throw new PrepareFailedException(e.getMessage(), file);
+      }
     }
 
     if (!processor.prepare()) {
