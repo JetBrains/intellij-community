@@ -20,7 +20,7 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
   }
 
   @Override
-  public boolean allowed(PsiElement element) {
+  public boolean allowed(@NotNull PsiElement element) {
     if (myDfType instanceof DfConstantType && element instanceof PsiLiteralValue) {
       Object constValue = ((DfConstantType<?>)myDfType).getValue();
       if (!(constValue instanceof PsiElement)) {
@@ -34,7 +34,7 @@ public class JavaDfaSliceValueFilter implements SliceValueFilter {
   }
 
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return myDfType.toString();
   }
 }
