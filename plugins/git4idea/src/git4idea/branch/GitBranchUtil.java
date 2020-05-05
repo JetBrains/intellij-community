@@ -248,7 +248,7 @@ public class GitBranchUtil {
 
   @NotNull
   public static <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups,
-                                          @NotNull TObjectHashingStrategy<? super T> hashingStrategy) {
+                                          @NotNull TObjectHashingStrategy<T> hashingStrategy) {
     List<T> common = new ArrayList<>();
     boolean[] firstGroup = {true};
 
@@ -258,7 +258,8 @@ public class GitBranchUtil {
         common.addAll(values);
       }
       else {
-        common.retainAll(new THashSet<>(values, hashingStrategy));
+        THashSet<T> c = new THashSet<>(values, hashingStrategy);
+        common.retainAll(c);
       }
     });
 
