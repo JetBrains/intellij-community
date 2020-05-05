@@ -353,15 +353,10 @@ public class RedundantCastUtil {
               continue;
             }
 
-            final PsiAnonymousClass oldAnonymousClass = expression instanceof PsiNewExpression ? ((PsiNewExpression)expression).getAnonymousClass() : null;
-            final PsiAnonymousClass newAnonymousClass = newCall instanceof PsiNewExpression ? ((PsiNewExpression)newCall).getAnonymousClass() : null;
-
             if (oldMethod.equals(newResult.getElement()) &&
-                (!(newCall instanceof PsiCallExpression) ||
-                 oldAnonymousClass != null && newAnonymousClass != null && Comparing.equal(oldAnonymousClass.getBaseClassType(), newAnonymousClass.getBaseClassType()) ||
-                 Comparing.equal(PsiUtil.recaptureWildcards(((PsiCallExpression)newCall).getType(), expression), ((PsiCallExpression)expression).getType())) &&
                 newResult.isValidResult() &&
-                !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null)) {
+                !(newResult instanceof MethodCandidateInfo && ((MethodCandidateInfo)newResult).getInferenceErrorMessage() != null) &&
+                newResult.getSubstitutor().equals(oldResult.getSubstitutor())) {
               PsiExpression newArg = PsiUtil.deparenthesizeExpression(newArgs[i]);
               if (newArg instanceof PsiConditionalExpression && PsiPolyExpressionUtil.isPolyExpression(newArgs[i])) {
                 PsiType targetType = newArg.getType();
