@@ -5,6 +5,8 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -30,6 +33,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -43,7 +47,10 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -84,6 +91,9 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private VariableData[] myInputVariables;
   private TypeSelector mySelector;
   private final Supplier<Integer> myDuplicatesCountSupplier;
+  private boolean isReturnVisible = false;
+
+  private Map<PsiVariable, ParameterInfo> myInitialParameterInfos;
 
   protected ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
                                 PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
@@ -116,7 +126,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
     myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
     myDuplicatesCountSupplier = duplicatesCountSupplier;
-    setPreviewResults(duplicatesCountSupplier != null);
+    setPreviewResults(false);
 
     init();
   }
@@ -228,6 +238,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     }
     final JPanel returnTypePanel = createReturnTypePanel();
     if (returnTypePanel != null) {
+      isReturnVisible = true;
       visibilityAndReturnType.add(returnTypePanel, BorderLayout.EAST);
     }
 
@@ -505,6 +516,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   protected void createParametersPanel() {
+    myInitialParameterInfos = getParameterInfos(getChosenParameters());
     if (myParamTable != null) {
       myCenterPanel.remove(myParamTable);
     }
@@ -687,5 +699,86 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   @Override
   public PsiType getReturnType() {
     return mySelector != null ? mySelector.getSelectedType() : myReturnType;
+  }
+
+  @Override
+  public void show() {
+    super.show();
+    final FeatureUsageData featureUsageData = collectStatistics();
+    FUCounterUsageLogger.getInstance().logEvent("java.extract.method","action.performed", featureUsageData);
+  }
+
+  private static class ParameterInfo {
+    final int myIndex;
+    final String myName;
+    final PsiType myType;
+    final boolean myIsEnabled;
+
+    private ParameterInfo(int index, VariableData parameter) {
+      myIndex = index;
+      myName = parameter.name;
+      myType = parameter.type;
+      myIsEnabled = parameter.passAsParameter;
+    }
+  }
+
+  private static Map<PsiVariable, ParameterInfo> getParameterInfos(VariableData[] parameters){
+    final Map<PsiVariable, ParameterInfo> map = new HashMap<>();
+    for (int index=0; index<parameters.length; index++) {
+      map.put(parameters[index].variable, new ParameterInfo(index, parameters[index]));
+    }
+    return map;
+  }
+
+  private FeatureUsageData collectStatistics() {
+    final FeatureUsageData data = new FeatureUsageData();
+
+    data.addData("parameters_count", myVariableData.getInputVariables().size());
+
+    final Map<PsiVariable, ParameterInfo> resultParams = getParameterInfos(getChosenParameters());
+    final List<Pair<ParameterInfo, ParameterInfo>> parameterChanges = ContainerUtil.map(getChosenParameters(), (param) ->
+      new Pair<>(resultParams.get(param.variable), myInitialParameterInfos.get(param.variable))
+    );
+    if (! resultParams.isEmpty()) {
+      boolean renamed = ContainerUtil.exists(parameterChanges, (changePair) -> ! changePair.first.myName.equals(changePair.second.myName));
+      boolean typeChanged = ContainerUtil.exists(parameterChanges, (changePair) -> ! changePair.first.myType.equals(changePair.second.myType));
+      boolean removed = ContainerUtil.exists(parameterChanges, (changePair) -> ! changePair.first.myIsEnabled);
+      data.addData("parameters_type_changed", typeChanged);
+      data.addData("parameters_renamed", renamed);
+      data.addData("parameters_removed", removed);
+    }
+    if(resultParams.size() > 1) {
+      boolean reordered = ContainerUtil.exists(parameterChanges, (changePair) -> changePair.first.myIndex != changePair.second.myIndex);
+      data.addData("parameters_reordered", reordered);
+    }
+
+    if (myVisibilityPanel != null) {
+      data.addData("visibility_changed", !myDefaultVisibility);
+    }
+    if (isReturnVisible) {
+      data.addData("return_changed", getReturnType() != myReturnType);
+    }
+    if (myMakeStatic != null && myMakeStatic.isEnabled()) {
+      String key = myVariableData.isPassFields() ? "static_pass_fields" : "static";
+      data.addData(key, myMakeStatic.isSelected());
+    }
+    if (myMakeVarargs != null){
+      data.addData("make_varargs", myMakeVarargs.isSelected());
+    }
+    if (myFoldParameters != null && myFoldParameters.isVisible()) {
+      data.addData("folded", myFoldParameters.isSelected());
+    }
+    if (myCbChainedConstructor != null) {
+      data.addData("constructor", myCbChainedConstructor.isSelected());
+    }
+    if (myGenerateAnnotations != null) {
+      data.addData("annotated", myGenerateAnnotations.isSelected());
+    }
+    if (hasPreviewButton()) {
+      data.addData("preview_used", isPreviewUsages());
+    }
+    data.addData("finished", isOK());
+
+    return data;
   }
 }
