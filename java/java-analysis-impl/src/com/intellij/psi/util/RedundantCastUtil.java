@@ -536,10 +536,9 @@ public class RedundantCastUtil {
     }
 
     private static boolean checkResolveAfterRemoveCast(PsiElement parent) {
-      PsiElement grandPa = parent.getParent();
+      PsiElement grandPa = PsiUtil.skipParenthesizedExprUp(parent.getParent());
       if (grandPa instanceof PsiExpressionList) {
-        PsiExpression[] expressions = ((PsiExpressionList)grandPa).getExpressions();
-        int idx = ArrayUtil.find(expressions, parent);
+        int idx = LambdaUtil.getLambdaIdx((PsiExpressionList)grandPa, parent);
         PsiElement grandGrandPa = grandPa.getParent();
         if (grandGrandPa instanceof PsiCall) {
           PsiMethod resolve = ((PsiCall)grandGrandPa).resolveMethod();
@@ -548,7 +547,7 @@ public class RedundantCastUtil {
             if (expression == null) return false;
             PsiExpressionList argumentList = expression.getArgumentList();
             LOG.assertTrue(argumentList != null);
-            PsiExpression toReplace = argumentList.getExpressions()[idx];
+            PsiExpression toReplace = PsiUtil.skipParenthesizedExprDown(argumentList.getExpressions()[idx]);
             if (toReplace instanceof PsiConditionalExpression) {
               PsiExpression thenExpression = ((PsiConditionalExpression)toReplace).getThenExpression();
               PsiExpression elseExpression = ((PsiConditionalExpression)toReplace).getElseExpression();
