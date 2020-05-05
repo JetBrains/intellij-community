@@ -107,7 +107,6 @@ class PortableCompilationCache {
     else {
       def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
       def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
-      def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
       def commitHash = require("build.vcs.number", "Repository commit")
       context.messages.buildStatus(commitHash)
       def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
@@ -116,8 +115,7 @@ class PortableCompilationCache {
       Map<String, String> remotePerCommitHash = [:]
       remotePerCommitHash[remoteGitUrl] = commitHash
       new CompilationOutputsUploader(
-        context, remoteCacheUrl, remotePerCommitHash,
-        agentPersistentStorage, syncFolder, updateCommitHistory
+        context, remoteCacheUrl, remotePerCommitHash, syncFolder, updateCommitHistory
       ).upload(publishTeamCityArtifacts)
     }
   }

@@ -29,7 +29,6 @@ class CompilationOutputsUploader {
   private static final String COMMIT_HISTORY_FILE = "commit_history.json"
   private static final int COMMITS_LIMIT = 200
 
-  private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
@@ -53,9 +52,8 @@ class CompilationOutputsUploader {
     return commitHashBuilder.toString()
   }()
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage, String tmpDir, boolean updateCommitHistory) {
-    this.agentPersistentStorage = agentPersistentStorage
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash, String tmpDir,
+                             boolean updateCommitHistory) {
     this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
@@ -99,11 +97,6 @@ class CompilationOutputsUploader {
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
       messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
       messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
-
-      // Publish metadata file
-      def metadataFile = new File("$agentPersistentStorage/metadata.json")
-      FileUtil.rename(sourceStateFile, metadataFile)
-      messages.artifactBuilt(metadataFile.absolutePath)
 
       if (updateCommitHistory) {
         updateCommitHistory(uploader)
@@ -208,12 +201,9 @@ class CompilationOutputsUploader {
 
     // Upload and publish file with commits history
     def jsonAsString = new Gson().toJson(commitHistory)
-    def file = new File("$agentPersistentStorage/$COMMIT_HISTORY_FILE")
-    file.write(jsonAsString)
-    messages.artifactBuilt(file.absolutePath)
-    uploader.upload(COMMIT_HISTORY_FILE, file)
-    File commitHistoryFileCopy = new File(tmpDir, COMMIT_HISTORY_FILE)
-    FileUtil.rename(file, commitHistoryFileCopy)
+    File commitHistoryFile = new File(tmpDir, COMMIT_HISTORY_FILE)
+    commitHistoryFile.write(jsonAsString)
+    uploader.upload(COMMIT_HISTORY_FILE, commitHistoryFile)
   }
 
   @CompileStatic
