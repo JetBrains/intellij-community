@@ -164,7 +164,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     if (description != null) return description;
     try {
       InputStream descriptionStream = getDescriptionStream();
-      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
+      return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : getTool().loadDescription();
     }
     catch (IOException ignored) { }
 
