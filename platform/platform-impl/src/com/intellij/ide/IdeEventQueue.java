@@ -104,7 +104,6 @@ public final class IdeEventQueue extends EventQueue {
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
   private final IdePopupManager myPopupManager = new IdePopupManager();
-  private final ToolkitBugsProcessor myToolkitBugsProcessor = new ToolkitBugsProcessor();
 
   /**
    * Counter of processed events. It is used to assert that data context lives only inside single
@@ -692,9 +691,8 @@ public final class IdeEventQueue extends EventQueue {
     if (isTestMode()) {
       ExceptionUtil.rethrow(t);
     }
-    if (!myToolkitBugsProcessor.process(t)) {
-      StartupAbortedException.processException(t);
-    }
+
+    StartupAbortedException.processException(t);
   }
 
   @NotNull
