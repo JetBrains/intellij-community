@@ -293,7 +293,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @Override
   public boolean fixSilently(@NotNull Editor editor) {
-    return mayAutoImportNow(editor, myElement.getContainingFile()) &&
+    return mayAutoImportNow(myElement.getContainingFile()) &&
            doFix(editor, false, false) == Result.CLASS_AUTO_IMPORTED;
   }
 
@@ -332,7 +332,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     if (classes.length == 1 &&
         (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName())) &&
-        mayAutoImportNow(editor, psiFile) &&
+        mayAutoImportNow(psiFile) &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return Result.CLASS_AUTO_IMPORTED;
@@ -349,15 +349,15 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return Result.POPUP_NOT_SHOWN;
   }
 
-  private static boolean mayAutoImportNow(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+  private static boolean mayAutoImportNow(@NotNull PsiFile psiFile) {
     return isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
            (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
-           isInModelessContext(editor);
+           isInModelessContext(psiFile.getProject());
   }
 
-  private static boolean isInModelessContext(@NotNull Editor editor) {
+  private static boolean isInModelessContext(@NotNull Project project) {
     return Registry.is("ide.perProjectModality") ?
-           !LaterInvocator.isInModalContextForProject(editor.getProject()) :
+           !LaterInvocator.isInModalContextForProject(project) :
            !LaterInvocator.isInModalContext();
   }
 
