@@ -763,7 +763,7 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   @Override
   public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
-    return typeChar == ':' && JavaTokenType.COLON == position.getNode().getElementType();
+    return typeChar == ':' && JavaTokenType.COLON == PsiUtilCore.getElementType(position);
   }
 
   private static boolean shouldSuggestSmartCompletion(final PsiElement element) {
@@ -876,28 +876,26 @@ public class JavaCompletionContributor extends CompletionContributor {
       return true;
     }
 
-    if (at != null && at.getNode().getElementType() == JavaTokenType.IDENTIFIER) {
+    if (PsiUtilCore.getElementType(at) == JavaTokenType.IDENTIFIER) {
       at = PsiTreeUtil.nextLeaf(at);
     }
 
     at = skipWhitespacesAndComments(at);
 
-    if (at != null &&
-        at.getNode().getElementType() == JavaTokenType.LPARENTH &&
+    if (PsiUtilCore.getElementType(at) == JavaTokenType.LPARENTH &&
         PsiTreeUtil.getParentOfType(ref, PsiExpression.class, PsiClass.class) == null) {
       // looks like a method declaration, e.g. StringBui<caret>methodName() inside a class
       return true;
     }
 
-    if (at != null &&
-        at.getNode().getElementType() == JavaTokenType.COLON &&
+    if (PsiUtilCore.getElementType(at) == JavaTokenType.COLON &&
         PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiConditionalExpression.class, false) == null) {
       return true;
     }
 
     at = skipWhitespacesAndComments(at);
 
-    if (at == null || at.getNode().getElementType() != JavaTokenType.IDENTIFIER) {
+    if (PsiUtilCore.getElementType(at) != JavaTokenType.IDENTIFIER) {
       return false;
     }
 
@@ -910,7 +908,14 @@ public class JavaCompletionContributor extends CompletionContributor {
 
   @Nullable
   private static PsiElement skipWhitespacesAndComments(@Nullable PsiElement at) {
-    return at instanceof PsiWhiteSpace || at instanceof PsiComment ? PsiTreeUtil.skipWhitespacesAndCommentsForward(at) : at;
+    PsiElement nextLeaf = at;
+    while (nextLeaf != null && (nextLeaf instanceof PsiWhiteSpace ||
+                                nextLeaf instanceof PsiComment ||
+                                nextLeaf instanceof PsiErrorElement ||
+                                nextLeaf.getTextLength() == 0)) {
+      nextLeaf = PsiTreeUtil.nextLeaf(nextLeaf, true);
+    }
+    return nextLeaf;
   }
 
   private static void autoImport(@NotNull final PsiFile file, int offset, @NotNull final Editor editor) {
