@@ -64,7 +64,7 @@ class CompilationOutputsUploader {
     this.updateCommitHistory = updateCommitHistory
   }
 
-  def upload(Boolean publishCaches) {
+  def upload(Boolean publishTeamCityArtifacts) {
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
     NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -86,7 +86,7 @@ class CompilationOutputsUploader {
         // not to perform any further compilations.
         if (updateCommitHistory) {
         // Upload jps caches started first because of the significant size of the output
-          if (!uploadCompilationCache(publishCaches)) return
+          if (!uploadCompilationCache(publishTeamCityArtifacts)) return
         }
 
         uploadMetadata()
@@ -115,7 +115,7 @@ class CompilationOutputsUploader {
     }
   }
 
-  private boolean uploadCompilationCache(Boolean publishCaches) {
+  private boolean uploadCompilationCache(Boolean publishTeamCityArtifacts) {
     String cachePath = "caches/$commitHash"
     if (uploader.isExist(cachePath)) return false
 
@@ -125,7 +125,7 @@ class CompilationOutputsUploader {
     uploader.upload(cachePath, zipFile)
 
     // Publish artifact for dependent configuration
-    if (publishCaches) {
+    if (publishTeamCityArtifacts) {
       File zipArtifact = new File(tmpDir, "caches.zip")
       FileUtil.copy(zipFile, zipArtifact)
       context.messages.artifactBuilt(zipArtifact.absolutePath)
