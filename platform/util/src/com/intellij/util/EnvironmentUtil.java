@@ -71,7 +71,7 @@ public final class EnvironmentUtil {
       return getter;
     }
 
-    if (loadShellEnvironment && SystemInfoRt.isMac && Boolean.parseBoolean(System.getProperty("idea.fix.mac.env", "true"))) {
+    if (loadShellEnvironment && SystemInfoRt.isMac) {
       getter = CompletableFuture.supplyAsync(() -> {
         try {
           Map<String, String> env = getShellEnv();
