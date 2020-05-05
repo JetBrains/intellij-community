@@ -65,7 +65,7 @@ public abstract class AutomaticUsageRenamer<T> {
   }
 
   protected boolean isNameAlreadySuggested(String newName) {
-    return myRenames.values().contains(newName);
+    return myRenames.containsValue(newName);
   }
 
   public List<? extends T> getElements() {
