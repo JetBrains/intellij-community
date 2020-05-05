@@ -14,11 +14,14 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -188,24 +191,16 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   // used in Rider, please don't change visibility
   protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-    final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
-    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
-      @Override
-      protected void processPresentation(Presentation presentation) {
-        if (myNoIconsInPopup) {
-          presentation.setIcon(null);
-          presentation.setHoveredIcon(null);
-        }
-      }
-    });
-    popupMenu.setDataContextProvider(() -> getDataContext());
-    popupMenu.getComponent().addPopupMenuListener(myPopupState);
+
+    JBPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("", actionGroup, getDataContext(),
+      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, event.getPlace());
+    popup.addListener(myPopupState);
 
     if (event.isFromActionToolbar()) {
-      popupMenu.getComponent().show(this, 0, getHeight());
+      popup.show(new RelativePoint(this, new Point(0, getHeight())));
     }
     else {
-      popupMenu.getComponent().show(this, getWidth(), 0);
+      popup.show(new RelativePoint(this, new Point(getWidth(), 0)));
     }
   }
 
