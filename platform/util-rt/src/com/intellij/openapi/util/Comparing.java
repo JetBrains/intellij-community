@@ -48,7 +48,7 @@ public final class Comparing {
   }
 
   /**
-   * Use {@link Objects#equals(Object, Object)}
+   * @deprecated Use {@link Objects#equals(Object, Object)}
    */
   @Deprecated
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
