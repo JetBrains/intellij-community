@@ -13,7 +13,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -509,10 +508,12 @@ public class RedundantCastUtil {
               return;
             }
             if (!checkResolveAfterRemoveCast(parent)) return;
-            final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
-            final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
-            final PsiExpression opposite = thenExpression == typeCast ? elseExpression : thenExpression;
-            if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
+            if (!PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+              final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
+              final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
+              final PsiExpression opposite = thenExpression == typeCast ? elseExpression : thenExpression;
+              if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
+            }
           }
         }
         else if (parent instanceof PsiSynchronizedStatement &&
