@@ -9,10 +9,6 @@ import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-private fun realLocalFileSystem() = ApplicationManager
-  .getApplication()
-  .getService(LocalFileSystemImpl::class.java)
-
 internal data class VirtualFileLookupImpl(
   val withRefresh: Boolean = false,
   val onlyIfCached: Boolean = false
@@ -55,10 +51,15 @@ internal data class VirtualFileLookupImpl(
   private fun findWithFilesSystem(fs: VirtualFileSystem, path: String): VirtualFile? {
     return when {
       fs is NewVirtualFileSystem && onlyIfCached -> fs.findFileByPathIfCached(path)
+      onlyIfCached -> null
       withRefresh -> fs.refreshAndFindFileByPath(path)
       else -> fs.findFileByPath(path)
     }
   }
+
+  private fun realLocalFileSystem() = ApplicationManager
+    .getApplication()
+    .getService(LocalFileSystemImpl::class.java)
 }
 
 internal class VirtualFileLookupServiceImpl: VirtualFileLookupService {
