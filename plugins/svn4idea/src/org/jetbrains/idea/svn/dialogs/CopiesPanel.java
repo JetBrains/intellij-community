@@ -1,18 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
-import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.map;
-import static java.util.Collections.singletonList;
-
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsManager;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -36,41 +27,9 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import javax.swing.JComponent;
-import javax.swing.JEditorPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.NestedCopyType;
-import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopiesContent;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Depth;
@@ -84,6 +43,24 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteractionImpl;
+
+import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.List;
+import java.util.*;
+
+import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Collections.singletonList;
 
 public class CopiesPanel {
 
@@ -195,12 +172,13 @@ public class CopiesPanel {
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
       final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
 
-      final JEditorPane editorPane = new JEditorPane(UIUtil.HTML_MIME, "");
-      editorPane.setEditable(false);
-      editorPane.setFocusable(true);
-      editorPane.setBackground(UIUtil.getPanelBackground());
-      editorPane.setOpaque(false);
-      editorPane.addHyperlinkListener(new HyperlinkListener() {
+      WorkingCopyInfoPanel infoPanel = new WorkingCopyInfoPanel();
+      infoPanel.setInfo(wcInfo);
+      infoPanel.setUpgradeFormats(upgradeFormats);
+      infoPanel.setFocusable(true);
+      infoPanel.setBorder(null);
+      infoPanel.update();
+      infoPanel.addHyperlinkListener(new HyperlinkListener() {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
@@ -222,7 +200,7 @@ public class CopiesPanel {
               changeFormat(wcInfo, upgradeFormats);
             } else if (MERGE_FROM.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
-              mergeFrom(wcInfo, root, editorPane);
+              mergeFrom(wcInfo, root, infoPanel);
             } else if (CLEANUP.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Cleanup")) return;
               new CleanupWorker(myVcs, singletonList(root)).execute();
@@ -238,8 +216,6 @@ public class CopiesPanel {
           return true;
         }
       });
-      editorPane.setBorder(null);
-      editorPane.setText(formatWc(wcInfo, upgradeFormats));
 
       final JPanel copyPanel = new JPanel(new GridBagLayout());
 
@@ -256,7 +232,7 @@ public class CopiesPanel {
       contForCopy.add(copyPanel, BorderLayout.WEST);
       myPanel.add(contForCopy, gb);
 
-      copyPanel.add(editorPane, gb1);
+      copyPanel.add(infoPanel, gb1);
       gb1.insets = nullIndent;
     }
 
@@ -264,10 +240,8 @@ public class CopiesPanel {
     myPanel.repaint();
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
-  private String formatWc(@NotNull WCInfo info, @NotNull Collection<WorkingCopyFormat> upgradeFormats) {
-    final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
-      .append("</head><body><table bgColor=\"").append(ColorUtil.toHex(UIUtil.getPanelBackground())).append("\">");
+  static String formatWc(@NotNull WCInfo info, @NotNull Collection<WorkingCopyFormat> upgradeFormats) {
+    final StringBuilder sb = new StringBuilder().append("<table>");
 
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><b>").append(info.getPath()).append("</b></td></tr>");
     if (info.hasError()) {
@@ -306,7 +280,7 @@ public class CopiesPanel {
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(MERGE_FROM).append("\"><b>Merge From...</b></a></i></td></tr>");
 
-      sb.append("</table></body></html>");
+      sb.append("</table>");
     }
     return sb.toString();
   }
