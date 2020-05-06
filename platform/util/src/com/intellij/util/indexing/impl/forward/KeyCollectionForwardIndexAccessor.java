@@ -2,18 +2,16 @@
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.util.indexing.IndexExtension;
-import com.intellij.util.indexing.IndexId;
-import com.intellij.util.indexing.impl.CollectionInputDataDiffBuilder;
-import com.intellij.util.indexing.impl.InputData;
-import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 @ApiStatus.Experimental
@@ -23,16 +21,12 @@ public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwa
   }
 
   public KeyCollectionForwardIndexAccessor(@NotNull IndexExtension<Key, Value, ?> extension) {
-    this(extension.getKeyDescriptor(), extension.getName());
-  }
-
-  public KeyCollectionForwardIndexAccessor(@NotNull KeyDescriptor<Key> externalizer, @NotNull IndexId<Key, Value> indexId) {
-    super(new InputIndexDataExternalizer<>(externalizer, indexId));
+    this(new InputIndexDataExternalizer<>(extension.getKeyDescriptor(), extension.getName()));
   }
 
   @Override
   protected InputDataDiffBuilder<Key, Value> createDiffBuilder(int inputId, @Nullable Collection<Key> keys) {
-    return new CollectionInputDataDiffBuilder<>(inputId, keys);
+    return new KeyCollectionInputDataDiffBuilder<>(inputId, keys != null ? keys : Collections.emptySet());
   }
 
   @Nullable
@@ -45,5 +39,35 @@ public class KeyCollectionForwardIndexAccessor<Key, Value> extends AbstractForwa
   @Override
   protected int getBufferInitialSize(@NotNull Collection<Key> keys) {
     return 4 * keys.size();
+  }
+
+  // Marks all keys as removed and then all new key-values as added. Does not try to find keys that haven't changed.
+  private static final class KeyCollectionInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key, Value> {
+    @NotNull
+    private final Collection<Key> myKeys;
+
+    KeyCollectionInputDataDiffBuilder(int inputId, @NotNull Collection<Key> keys) {
+      super(inputId);
+      myKeys = keys;
+    }
+
+    @Override
+    public boolean differentiate(@NotNull Map<Key, Value> newData,
+                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
+                                 @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
+                                 @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
+      for (Key key : myKeys) {
+        removeProcessor.process(key, myInputId);
+      }
+      boolean anyAdded = EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, addProcessor);
+      boolean anyRemoved = !myKeys.isEmpty();
+      return anyAdded || anyRemoved;
+    }
+
+    @NotNull
+    @Override
+    public Collection<Key> getKeys() {
+      return myKeys;
+    }
   }
 }

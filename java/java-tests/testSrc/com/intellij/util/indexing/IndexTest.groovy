@@ -114,11 +114,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     try {
       // build index
-      index.update("com/ppp/a.java", "a b c d", null)
-      index.update("com/ppp/b.java", "a b g h", null)
-      index.update("com/ppp/c.java", "a z f", null)
-      index.update("com/ppp/d.java", "a a u y z", null)
-      index.update("com/ppp/e.java", "a n chj e c d", null)
+      index.update("com/ppp/a.java", "a b c d")
+      index.update("com/ppp/b.java", "a b g h")
+      index.update("com/ppp/c.java", "a z f")
+      index.update("com/ppp/d.java", "a a u y z")
+      index.update("com/ppp/e.java", "a n chj e c d")
 
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
       assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java", "com/ppp/b.java")
@@ -135,17 +135,17 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertDataEquals(index.getFilesByWord("e"), "com/ppp/e.java")
 
       // update index
-      index.update("com/ppp/d.java", "a u y z", "a a u y z")
+      index.update("com/ppp/d.java", "a u y z")
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
-      index.update("com/ppp/d.java", "u y z", "a u y z")
+      index.update("com/ppp/d.java", "u y z")
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/e.java")
-      index.update("com/ppp/d.java", "a a a u y z", "u y z")
+      index.update("com/ppp/d.java", "a a a u y z")
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/b.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
 
-      index.update("com/ppp/e.java", "a n chj e c d z", "a n chj e c d")
+      index.update("com/ppp/e.java", "a n chj e c d z")
       assertDataEquals(index.getFilesByWord("z"), "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
 
-      index.update("com/ppp/b.java", null, "a b g h")
+      index.update("com/ppp/b.java", null)
       assertDataEquals(index.getFilesByWord("a"), "com/ppp/a.java", "com/ppp/c.java", "com/ppp/d.java", "com/ppp/e.java")
       assertDataEquals(index.getFilesByWord("b"), "com/ppp/a.java")
       assertDataEquals(index.getFilesByWord("g"))
@@ -159,13 +159,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testUpdateWithCustomEqualityPolicy() {
     def index = createIndex(getTestName(false), new CaseInsensitiveEnumeratorStringDescriptor(), false)
     try {
-      index.update("a.java", "x", null)
+      index.update("a.java", "x")
       assertDataEquals(index.getFilesByWord("x"), "a.java")
       assertDataEquals(index.getFilesByWord("X"), "a.java")
 
-      index.update("b.java", "y", null)
+      index.update("b.java", "y")
       assertDataEquals(index.getFilesByWord("y"), "b.java")
-      index.update("c.java", "Y", null)
+      index.update("c.java", "Y")
       assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
     }
     finally {
@@ -915,7 +915,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
 
     try {
-      assertFalse(index.update("qwe/asd", "some_string", null))
+      assertFalse(index.update("qwe/asd", "some_string"))
       def rebuildThrowable = index.getRebuildThrowable()
       assertInstanceOf(rebuildThrowable, StorageException.class)
       def rebuildCause = rebuildThrowable.getCause()
