@@ -57,9 +57,7 @@ internal data class VirtualFileLookupImpl(
     }
   }
 
-  private fun realLocalFileSystem() = ApplicationManager
-    .getApplication()
-    .getService(LocalFileSystemImpl::class.java)
+  private fun realLocalFileSystem(): LocalFileSystemImpl = LocalFileSystemImpl.getImplInstance()
 }
 
 internal class VirtualFileLookupServiceImpl: VirtualFileLookupService {
