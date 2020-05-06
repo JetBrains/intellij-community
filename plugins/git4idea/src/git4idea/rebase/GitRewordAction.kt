@@ -38,13 +38,13 @@ class GitRewordAction : GitCommitEditingAction() {
     prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
   }
 
-  override fun actionPerformedAfterChecks(e: AnActionEvent) {
-    val commit = getSelectedCommit(e)
+  override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+    val commit = commitEditingRequirements.selectedCommit
     val project = e.project!!
     val repository = getRepository(e)
-    val details = getOrLoadDetails(project, getLogData(e), commit)
+    val details = getOrLoadDetails(project, commitEditingRequirements.logData, commit)
 
-    RewordDialog(project, getLogData(e), details, repository).show()
+    RewordDialog(project, commitEditingRequirements.logData, details, repository).show()
   }
 
   private fun getOrLoadDetails(project: Project, data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata {

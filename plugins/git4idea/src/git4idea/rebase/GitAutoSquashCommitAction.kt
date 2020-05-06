@@ -12,12 +12,12 @@ import git4idea.repo.GitRepositoryManager
 
 abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
 
-  override fun actionPerformedAfterChecks(e: AnActionEvent) {
-    val commit = getSelectedCommit(e)
+  override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+    val commit = commitEditingRequirements.selectedCommit
     val project = e.project!!
 
     val changeList = ChangeListManager.getInstance(project).defaultChangeList
-    val repository = getRepository(e)
+    val repository = commitEditingRequirements.repository
 
     val gitRepositoryManager = GitRepositoryManager.getInstance(project)
 

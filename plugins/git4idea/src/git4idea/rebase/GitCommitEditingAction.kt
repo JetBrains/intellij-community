@@ -73,7 +73,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabledAndVisible = true
-    update(e, CommitEditingRequirements(log, logDataProvider, logUi))
+    update(e, CommitEditingRequirements(repository, log, logDataProvider, logUi))
   }
 
   protected open fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
@@ -83,6 +83,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val data = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
+    val logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
 
     val commit = log.selectedShortDetails[0]
     val repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.root)!!
@@ -109,16 +110,12 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       return
     }
 
-    actionPerformedAfterChecks(e)
+    actionPerformedAfterChecks(e, CommitEditingRequirements(repository, log, data, logUi))
   }
 
-  abstract fun actionPerformedAfterChecks(e: AnActionEvent)
+  protected abstract fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements)
 
   protected fun getLog(e: AnActionEvent): VcsLog = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
-
-  protected fun getLogData(e: AnActionEvent): VcsLogData = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
-
-  protected fun getUi(e: AnActionEvent): VcsLogUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
 
   protected fun getSelectedCommit(e: AnActionEvent): VcsShortCommitDetails = getLog(e).selectedShortDetails[0]!!
 
@@ -167,5 +164,8 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     return getSelectedCommit(e).id.asString() == getRepository(e).currentRevision
   }
 
-  protected class CommitEditingRequirements(val log: VcsLog, val logDataProvider: VcsLogDataProvider, val logUi: VcsLogUi)
+  protected class CommitEditingRequirements(val repository: GitRepository, val log: VcsLog, val logData: VcsLogData, val logUi: VcsLogUi) {
+    val project = repository.project
+    val selectedCommit: VcsShortCommitDetails = log.selectedShortDetails.first()
+  }
 }

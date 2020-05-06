@@ -67,15 +67,15 @@ public class GitUncommitAction extends GitCommitEditingAction {
   }
 
   @Override
-  public void actionPerformedAfterChecks(@NotNull AnActionEvent e) {
+  public void actionPerformedAfterChecks(@NotNull AnActionEvent e, @NotNull CommitEditingRequirements commitEditingRequirements) {
     Project project = Objects.requireNonNull(e.getProject());
-    VcsShortCommitDetails commit = getSelectedCommit(e);
+    VcsShortCommitDetails commit = commitEditingRequirements.getSelectedCommit();
     ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),
                                                       null, GitBundle.message("git.undo.action.select.target.changelist.title"), commit.getSubject());
     chooser.show();
     LocalChangeList selectedList = chooser.getSelectedList();
     if (selectedList != null) {
-      resetInBackground(getLogData(e), getRepository(e), commit, selectedList);
+      resetInBackground(commitEditingRequirements.getLogData(), getRepository(e), commit, selectedList);
     }
   }
 

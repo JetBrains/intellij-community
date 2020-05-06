@@ -12,12 +12,12 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
     prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.rebase.name"))
   }
 
-  override fun actionPerformedAfterChecks(e: AnActionEvent) {
-    val commit = getSelectedCommit(e)
+  override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+    val commit = commitEditingRequirements.selectedCommit
     val repository = getRepository(e)
 
     if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
-      interactivelyRebaseUsingLog(repository, commit, getLogData(e))
+      interactivelyRebaseUsingLog(repository, commit, commitEditingRequirements.logData)
     }
     else {
       startInteractiveRebase(repository, commit)
