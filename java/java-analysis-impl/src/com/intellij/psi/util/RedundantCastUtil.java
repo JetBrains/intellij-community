@@ -650,6 +650,59 @@ public class RedundantCastUtil {
         }
       }
     }
+  
+    @Override
+    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+      PsiExpression lockExpression = deparenthesizeExpression(statement.getLockExpression());
+      if (lockExpression instanceof PsiTypeCastExpression) {
+        PsiExpression operand = deparenthesizeExpression(((PsiTypeCastExpression)lockExpression).getOperand());
+        if (operand != null) {
+          PsiType opType = operand.getType();
+          if (operand instanceof PsiFunctionalExpression || opType instanceof PsiPrimitiveType || opType == null) {
+            return;
+          }
+          addIfNarrowing((PsiTypeCastExpression)lockExpression, opType);
+        }
+      }
+      super.visitSynchronizedStatement(statement);
+    }
+
+    private void addIfNarrowing(PsiTypeCastExpression lockExpression, PsiType opType) {
+      PsiTypeElement castElement = lockExpression.getCastType();
+      if (castElement != null && TypeConversionUtil.isAssignable(castElement.getType(), opType, false)) {
+        addToResults(lockExpression);
+      }
+    }
+
+    @Override
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      visitSwitchBlock(statement);
+      super.visitSwitchStatement(statement);
+    }
+
+    @Override
+    public void visitSwitchExpression(PsiSwitchExpression expression) {
+      visitSwitchBlock(expression);
+      super.visitSwitchExpression(expression);
+    }
+
+    private void visitSwitchBlock(PsiSwitchBlock expression) {
+      PsiExpression switchVariable = deparenthesizeExpression(expression.getExpression());
+      if (switchVariable instanceof PsiTypeCastExpression) {
+        PsiExpression operand = ((PsiTypeCastExpression)switchVariable).getOperand();
+        if (operand != null) {
+          PsiType opType = operand.getType();
+          if (opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+            PsiClass aClass = ((PsiClassType)opType).resolve();
+            if (aClass != null && !aClass.isEnum()) {
+              return;
+            }
+          }
+          addIfNarrowing((PsiTypeCastExpression)switchVariable, opType);
+        } 
+      }
+    }
+
 
     private void processAlreadyHasTypeCast(PsiTypeCastExpression typeCast){
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
@@ -660,8 +713,10 @@ public class RedundantCastUtil {
       if (parent instanceof PsiForeachStatement) return;
       if (parent instanceof PsiInstanceOfExpression) return;
       if (parent instanceof PsiThrowStatement) return;
-
+      if (parent instanceof PsiSynchronizedStatement) return;
       if (parent instanceof PsiLambdaExpression) return;
+      if (parent instanceof PsiSwitchBlock) return;
+      if (parent instanceof PsiArrayAccessExpression) return;
 
       if (isTypeCastSemantic(typeCast)) return;
 
@@ -674,11 +729,6 @@ public class RedundantCastUtil {
       PsiType opType = operand.getType();
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
 
-      if (parent instanceof PsiSynchronizedStatement &&
-               (opType instanceof PsiPrimitiveType || operand instanceof PsiFunctionalExpression)) {
-        return;
-      }
-      
       if (expectedTypeByParent != null) {
         try {
           final Project project = operand.getProject();
@@ -768,22 +818,6 @@ public class RedundantCastUtil {
           }
         }
       }
-
-      if (parent instanceof PsiSwitchBlock &&
-          opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        PsiClass aClass = ((PsiClassType)opType).resolve();
-        if (aClass != null && !aClass.isEnum()) {
-          return;
-        }
-      }
-
-      if (arrayAccessAtTheLeftSideOfAssignment(parent, typeCast)) {
-        if (TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {
-          addToResults(typeCast);
-        }
-        return;
-      }
-
       
       if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
           (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
@@ -801,24 +835,34 @@ public class RedundantCastUtil {
       return true;
     }
 
-    private static boolean arrayAccessAtTheLeftSideOfAssignment(PsiElement parent, PsiElement element) {
-      PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(parent, PsiAssignmentExpression.class, false, PsiMember.class);
-      if (assignment == null) return false;
-      PsiExpression lExpression = assignment.getLExpression();
-      return lExpression instanceof PsiArrayAccessExpression &&
-             PsiTreeUtil.isAncestor(lExpression, parent, false) &&
-             !isIndexExpression(element, (PsiArrayAccessExpression)lExpression);
-    }
-
-    private static boolean isIndexExpression(PsiElement element, PsiArrayAccessExpression arrayAccessExpression) {
-      if (PsiTreeUtil.isAncestor(arrayAccessExpression.getIndexExpression(), element, false)) {
-        return true;
+    @Override
+    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+      PsiExpression arrayExpression = deparenthesizeExpression(expression.getArrayExpression());
+      if (arrayExpression instanceof PsiTypeCastExpression) {
+        PsiTypeElement castTypeElement = ((PsiTypeCastExpression)arrayExpression).getCastType();
+        PsiExpression operand = ((PsiTypeCastExpression)arrayExpression).getOperand();
+        if (castTypeElement != null && operand != null) {
+          if (PsiUtil.isAccessedForWriting(expression)) {
+            PsiType castTo = castTypeElement.getType();
+            PsiType opType = operand.getType();
+            if (opType != null && TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {
+              addToResults((PsiTypeCastExpression)arrayExpression);
+            }
+          }
+        }
       }
-      PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
-      if (arrayExpression instanceof PsiArrayAccessExpression) {
-        return isIndexExpression(element, (PsiArrayAccessExpression)arrayExpression);
+      
+      PsiExpression indexExpression = deparenthesizeExpression(expression.getIndexExpression());
+      if (indexExpression instanceof PsiTypeCastExpression) {
+        PsiExpression operand = ((PsiTypeCastExpression)indexExpression).getOperand();
+        if (operand != null) {
+          PsiType opType = operand.getType();
+          if (opType != null) {
+            addIfNarrowing((PsiTypeCastExpression) indexExpression, opType);
+          }
+        }
       }
-      return false;
+      super.visitArrayAccessExpression(expression);
     }
   }
 
@@ -856,7 +900,8 @@ public class RedundantCastUtil {
       if (opType instanceof PsiPrimitiveType) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
         if ((parent instanceof PsiReturnStatement || parent instanceof PsiExpressionList || parent instanceof PsiVariable ||
-            parent instanceof PsiAssignmentExpression) &&
+            parent instanceof PsiAssignmentExpression || 
+             parent instanceof PsiArrayAccessExpression && PsiTreeUtil.isAncestor(((PsiArrayAccessExpression)parent).getIndexExpression(), typeCast, false)) &&
             castType.equals(ExpectedTypeUtils.findExpectedType(typeCast, false))) {
           return !TypeConversionUtil.isSafeConversion(castType, opType); // let's suppose that casts losing precision are important
         } else {
