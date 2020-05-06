@@ -425,7 +425,7 @@ object DynamicPlugins {
         InstalledPluginsState.getInstance().isRestartRequired = true
 
         if (((Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !ApplicationManager.getApplication().isUnitTestMode) || requireMemorySnapshot) && MemoryDumpHelper.memoryDumpAvailable()) {
-          val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
+          val snapshotFolder = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome())
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
           MemoryDumpHelper.captureMemoryDump(snapshotPath)
