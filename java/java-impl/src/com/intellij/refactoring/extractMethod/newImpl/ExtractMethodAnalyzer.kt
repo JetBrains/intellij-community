@@ -146,7 +146,10 @@ private fun findOutputFromReturn(flowOutput: FlowOutput): ExpressionOutput? {
   val returnExpressions = flowOutput.statements
     .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
     .sortedBy { returnStatement -> returnStatement.startOffset }
-  val returnType = returnExpressions.asSequence().mapNotNull { expression -> expression.type }.firstOrNull()
+  val returnType = returnExpressions.asSequence()
+                              .mapNotNull { expression -> expression.type }
+                              .filterNot { type -> type == PsiType.NULL }
+                              .firstOrNull()
   val variableName = returnExpressions.asSequence().map { expression -> guessName(expression) }.firstOrNull() ?: "x"
   val nullability = CodeFragmentAnalyzer.inferNullability(returnExpressions)
   return if (returnType != null) ExpressionOutput(returnType, variableName, returnExpressions, nullability) else null
