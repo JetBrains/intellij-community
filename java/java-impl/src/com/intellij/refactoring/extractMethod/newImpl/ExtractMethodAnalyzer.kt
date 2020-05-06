@@ -46,7 +46,6 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
     return ExtractMethodHelper.areSemanticallySame(statements) && !haveReferenceToScope(statements, scope)
   }
 
-  //TODO use correct error messages
   val dataOutput = when {
     expression != null  -> ExpressionOutput(getExpressionType(expression), null, listOf(expression), CodeFragmentAnalyzer.inferNullability(listOf(expression)))
     variableData is VariableOutput -> when {

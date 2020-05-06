@@ -3,6 +3,7 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
@@ -56,7 +57,8 @@ class MethodExtractor {
       }
     }
     catch (e: ExtractException) {
-      CommonRefactoringUtil.showErrorHint(project, editor, e.message!!, refactoringName, HelpID.EXTRACT_METHOD)
+      val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
+      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, HelpID.EXTRACT_METHOD)
       showError(editor, e.problems)
     }
   }

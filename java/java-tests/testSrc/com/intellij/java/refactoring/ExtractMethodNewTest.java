@@ -484,20 +484,11 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testLocalClass() throws Exception {
-    try {
-      doTest();
-      fail("Should fail if local class is defined out of the selected block");
-    } catch (PrepareFailedException ignore){
-    }
+    doPrepareErrorTest("Local class is defined out of the selected block.");
   }
 
   public void testLocalClassUsage() throws Exception {
-    try {
-      doTest();
-      fail("Should fail if local class is used out of the selected block");
-    } catch (PrepareFailedException ignore) {
-
-    }
+    doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
   public void testStaticImport() throws Exception {
@@ -525,11 +516,7 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testLocalClassDefinedInMethodWhichIsUsedLater() throws Exception {
-    try {
-      doTest();
-      fail("Should fail if local class is used out of the selected block");
-    } catch (PrepareFailedException ignored) {
-    }
+    doPrepareErrorTest("Local class is used out of the selected block.");
   }
 
   public void testForceBraces() throws Exception {
