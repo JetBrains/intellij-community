@@ -218,7 +218,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     catch (Throwable t) {
       LOG.warn(t);
       try {
-        Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+        ApplicationManager.getApplication().invokeAndWait(() -> {
+          Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
+        });
       }
       catch (NoClassDefFoundError e) {
         // error icon not loaded
