@@ -18,12 +18,6 @@ class DfLongConstantType extends DfConstantType<Long> implements DfLongType {
 
   @NotNull
   @Override
-  public DfType tryNegate() {
-    return DfTypes.longRange(LongRangeSet.all().subtract(getRange()));
-  }
-
-  @NotNull
-  @Override
   public LongRangeSet getRange() {
     return LongRangeSet.point(getValue());
   }

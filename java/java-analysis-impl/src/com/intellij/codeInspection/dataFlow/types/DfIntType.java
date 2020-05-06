@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface DfIntType extends DfIntegralType {
   @Override
@@ -36,6 +37,14 @@ public interface DfIntType extends DfIntegralType {
   @Override
   default PsiPrimitiveType getPsiType() {
     return PsiType.INT;
+  }
+
+  @Nullable
+  @Override
+  default DfType tryNegate() {
+    LongRangeSet range = getRange();
+    LongRangeSet res = DfIntRangeType.FULL_RANGE.subtract(range);
+    return res.intersects(range) ? null : DfTypes.intRange(res);
   }
 
   @NotNull
