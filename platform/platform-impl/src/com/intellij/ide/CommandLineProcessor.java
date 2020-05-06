@@ -195,6 +195,7 @@ public final class CommandLineProcessor {
       if (!file.isAbsolute()) {
         file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
       }
+      file = file.normalize();
 
       if (!Files.exists(file)) {
         return CommandLineProcessorResult.createError("Cannot find file '" + file + "'");
