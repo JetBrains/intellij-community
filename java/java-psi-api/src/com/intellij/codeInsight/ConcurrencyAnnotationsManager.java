@@ -14,9 +14,13 @@ public class ConcurrencyAnnotationsManager {
     "javax.annotation.concurrent",
     "org.apache.http.annotation",
     "com.android.annotations.concurrency",
-    "androidx.annotation",
   };
-  
+
+  private static final String[] ANDROID_FRAMEWORKS = {
+    "androidx.annotation",
+    "android.support.annotation"
+  };
+
   private static final String IMMUTABLE = "Immutable";
   private static final String GUARDED_BY = "GuardedBy";
   private static final String THREAD_SAFE = "ThreadSafe";
@@ -32,6 +36,11 @@ public class ConcurrencyAnnotationsManager {
     fillDefaults(myGuardedByList, GUARDED_BY);
     fillDefaults(myThreadSafeList, THREAD_SAFE);
     fillDefaults(myNotThreadSafeList, NOT_THREAD_SAFE);
+
+    for (String framework: ANDROID_FRAMEWORKS) {
+      myGuardedByList.add(framework + ".GuardedBy");
+      myThreadSafeList.add(framework + ".AnyThread");
+    }
 
     myImmutableList.add("com.google.auto.value.AutoValue");
     myImmutableList.add("com.google.errorprone.annotations.Immutable");
