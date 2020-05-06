@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/* -*-mode:java; c-basic-offset:2; -*- */
-
-
 package com.intellij.terminal;
 
 import com.intellij.ide.GeneralSettings;
@@ -19,7 +15,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
@@ -113,44 +108,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     mySettingsProvider = settingsProvider;
 
-    registerKeymapActions(this);
-
     addFocusListener(this);
 
     mySettingsProvider.addListener(this);
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
-  }
-
-  private static void registerKeymapActions(final TerminalPanel terminalPanel) {
-
-    ActionManager actionManager = ActionManager.getInstance();
-    for (String actionId : ACTIONS_TO_SKIP) {
-      final AnAction action = actionManager.getAction(actionId);
-      if (action != null) {
-        AnAction a = DumbAwareAction.create(e -> {
-          if (e.getInputEvent() instanceof KeyEvent) {
-            AnActionEvent event =
-              new AnActionEvent(e.getInputEvent(), e.getDataContext(), e.getPlace(), new Presentation(), e.getActionManager(),
-                                e.getModifiers());
-            action.update(event);
-            if (event.getPresentation().isEnabled()) {
-              action.actionPerformed(event);
-            }
-            else {
-              terminalPanel.handleKeyEvent((KeyEvent)event.getInputEvent());
-            }
-
-            event.getInputEvent().consume();
-          }
-        });
-        for (Shortcut sc : action.getShortcutSet().getShortcuts()) {
-          if (sc.isKeyboard() && sc instanceof KeyboardShortcut) {
-            KeyboardShortcut ksc = (KeyboardShortcut)sc;
-            a.registerCustomShortcutSet(ksc.getFirstKeyStroke().getKeyCode(), ksc.getFirstKeyStroke().getModifiers(), terminalPanel);
-          }
-        }
-      }
-    }
   }
 
   private boolean skipKeyEvent(@NotNull KeyEvent e) {
