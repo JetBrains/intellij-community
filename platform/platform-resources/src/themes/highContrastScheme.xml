@@ -84,6 +84,7 @@
     <option name="ScrollBar.Mac.Transparent.hoverTrackColor" value="E6E6E65A"/>
     <option name="ScrollBar.Mac.Transparent.hoverThumbColor" value="FFFFFFBE"/>
     <option name="ScrollBar.Mac.Transparent.hoverThumbBorderColor" value="000000"/>
+    <option name="ActionButton.iconTextForeground" value="FFFFFF"/>
   </colors>
   <attributes>
     <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

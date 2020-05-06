@@ -54,6 +54,7 @@ import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -375,8 +376,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
-    return new DumbAwareAction(icon) {
-      final AnAction delegate = ActionManager.getInstance().getAction(id);
+    AnAction delegate = ActionManager.getInstance().getAction(id);
+    return new DumbAwareAction(delegate.getTemplatePresentation().getDescription(), null, icon) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
@@ -1913,7 +1914,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         }
       };
 
-      label.setForeground(colorsScheme.getColor(ICON_TEXT_COLOR));
+      label.setForeground(new JBColor(() -> ObjectUtils.notNull(colorsScheme.getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor())));
       label.setIconTextGap(JBUIScale.scale(1));
 
       return label;
