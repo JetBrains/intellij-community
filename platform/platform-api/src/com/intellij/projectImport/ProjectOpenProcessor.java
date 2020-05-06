@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.projectImport;
 
 import com.intellij.ide.IdeBundle;
@@ -10,29 +6,23 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
 
 public abstract class ProjectOpenProcessor {
   public static final ExtensionPointName<ProjectOpenProcessor> EXTENSION_POINT_NAME =
     new ExtensionPointName<>("com.intellij.projectOpenProcessor");
 
-  @NotNull
-  @Nls
-  public abstract String getName();
+  public abstract @NotNull @Nls String getName();
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
-  @Nullable
-  public Icon getIcon(@NotNull VirtualFile file) {
+  public @Nullable Icon getIcon(@NotNull VirtualFile file) {
     return getIcon();
   }
 
@@ -57,8 +47,7 @@ public abstract class ProjectOpenProcessor {
                                           Messages.getQuestionIcon());
   }
 
-  @Nullable
-  public abstract Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
+  public abstract @Nullable Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
   /**
    * Allow opening a directory directly if the project files are located in that directory.
@@ -86,8 +75,7 @@ public abstract class ProjectOpenProcessor {
   public void importProjectAfterwards(@NotNull Project project, @NotNull VirtualFile file) {
   }
 
-  @Nullable
-  public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file) {
+  public static @Nullable ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file) {
     return getImportProvider(file, false);
   }
 
@@ -95,8 +83,7 @@ public abstract class ProjectOpenProcessor {
    * @param onlyIfExistingProjectFile when true, doesn't return 'generic' providers that can open any non-project directory/text file
    *                                  (e.g. PlatformProjectOpenProcessor)
    */
-  @Nullable
-  public static ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
+  public static @Nullable ProjectOpenProcessor getImportProvider(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
     return EXTENSION_POINT_NAME.findFirstSafe(provider -> {
       return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
     });
