@@ -218,7 +218,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   public void testAutoImportCaretLocation() {
     String text = "class X { ArrayList<caret> c; }";
     configureByText(text);
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     type(" ");
     backspace();
 
@@ -228,12 +227,12 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     PsiReference ref = getFile().findReferenceAt(offset - 1);
     assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
-    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
+    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.POPUP_NOT_SHOWN, result);
     UIUtil.dispatchAllInvocationEvents();
 
     getEditor().getCaretModel().moveToOffset(offset - 1);
-    result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
+    result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
     UIUtil.dispatchAllInvocationEvents();
 
@@ -243,7 +242,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
   public void testAutoImportCaretLocation2() {
     String text = "class X { <caret>ArrayList c = null; }";
     configureByText(text);
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
     type(" ");
     backspace();
 
@@ -254,7 +252,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     PsiReference ref = getFile().findReferenceAt(offset);
     assertTrue(ref instanceof PsiJavaCodeReferenceElement);
 
-    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false);
+    ImportClassFixBase.Result result = new ImportClassFix((PsiJavaCodeReferenceElement)ref).doFix(getEditor(), true, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
     UIUtil.dispatchAllInvocationEvents();
 
@@ -265,8 +263,6 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     @NonNls String text = "class S { ArrayList<caret> }";
     configureByText(text);
 
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-
     doHighlighting();
     //caret is too close
     assertNoImportsAdded();
@@ -276,7 +272,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     PsiJavaCodeReferenceElement element =
       (PsiJavaCodeReferenceElement)getFile().findReferenceAt(getEditor().getCaretModel().getOffset() - 2);
     ImportClassFix fix = new ImportClassFix(element);
-    ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false);
+    ImportClassFixBase.Result result = fix.doFix(getEditor(), false, false, true);
     assertEquals(ImportClassFixBase.Result.CLASS_AUTO_IMPORTED, result);
 
     assertOneImportAdded("java.util.ArrayList");

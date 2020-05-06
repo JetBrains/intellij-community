@@ -944,7 +944,7 @@ public class JavaCompletionContributor extends CompletionContributor {
       element = qualifier;
     }
     if (!(element.getParent() instanceof PsiMethodCallExpression) && element.multiResolve(true).length == 0) {
-      new ImportClassFix(element).doFix(editor, false, false);
+      new ImportClassFix(element).fixSilently(editor);
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     }
   }
