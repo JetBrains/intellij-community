@@ -12,7 +12,7 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
     prohibitRebaseDuringRebase(e, commitEditingRequirements, GitBundle.getString("rebase.log.action.operation.rebase.name"))
   }
 
-  override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+  override fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit
     val repository = commitEditingRequirements.repository
 

@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Objects;
 
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.reset.GitResetMode.SOFT;
@@ -67,8 +66,8 @@ public class GitUncommitAction extends GitCommitEditingAction {
   }
 
   @Override
-  public void actionPerformedAfterChecks(@NotNull AnActionEvent e, @NotNull CommitEditingRequirements commitEditingRequirements) {
-    Project project = Objects.requireNonNull(e.getProject());
+  public void actionPerformedAfterChecks(@NotNull CommitEditingRequirements commitEditingRequirements) {
+    Project project = commitEditingRequirements.getProject();
     VcsShortCommitDetails commit = commitEditingRequirements.getSelectedCommit();
     ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),
                                                       null, GitBundle.message("git.undo.action.select.target.changelist.title"), commit.getSubject());

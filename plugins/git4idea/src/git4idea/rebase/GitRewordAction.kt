@@ -38,9 +38,9 @@ class GitRewordAction : GitCommitEditingAction() {
     prohibitRebaseDuringRebase(e, commitEditingRequirements, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
   }
 
-  override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+  override fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit
-    val project = e.project!!
+    val project = commitEditingRequirements.project
     val repository = commitEditingRequirements.repository
     val details = getOrLoadDetails(project, commitEditingRequirements.logData, commit)
 

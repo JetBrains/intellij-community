@@ -98,7 +98,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       return
     }
 
-    actionPerformedAfterChecks(e, commitEditingRequirements)
+    actionPerformedAfterChecks(commitEditingRequirements)
   }
 
   private fun createCommitEditingRequirements(e: AnActionEvent): CommitEditingRequirements? {
@@ -117,7 +117,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     return CommitEditingRequirements(repository, log, logDataProvider, logUi)
   }
 
-  protected abstract fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements)
+  protected abstract fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements)
 
   protected abstract fun getFailureTitle(): String
 

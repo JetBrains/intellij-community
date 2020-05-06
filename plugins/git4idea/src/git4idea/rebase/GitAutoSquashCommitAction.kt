@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
@@ -12,9 +11,9 @@ import git4idea.repo.GitRepositoryManager
 
 abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
 
-  override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+  override fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit
-    val project = e.project!!
+    val project = commitEditingRequirements.project
 
     val changeList = ChangeListManager.getInstance(project).defaultChangeList
     val repository = commitEditingRequirements.repository
