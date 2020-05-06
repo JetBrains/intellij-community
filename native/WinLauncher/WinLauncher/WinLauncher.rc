@@ -137,9 +137,22 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MAIN_CLASS          "com/intellij/idea/Main"
-    IDS_COMMAND_LINE_PROCESSOR_CLASS
-                            "com/intellij/ide/WindowsCommandLineProcessor"
+    IDS_MAIN_CLASS                    "com/intellij/idea/Main"
+    IDS_COMMAND_LINE_PROCESSOR_CLASS  "com/intellij/ide/WindowsCommandLineProcessor"
+
+    // placeholders to ensure table size
+    IDS_JDK_ONLY                      "-"
+    IDS_JDK_ENV_VAR                   "-"
+    IDS_APP_TITLE                     "-"
+    IDS_VM_OPTIONS_PATH               "-"
+    IDS_VM_OPTION_ERRORFILE           "-"
+    IDS_VM_OPTION_HEAPDUMPPATH        "-"
+    IDC_WINLAUNCHER                   "-"
+    IDS_PROPS_ENV_VAR                 "-"
+    IDS_VM_OPTIONS_ENV_VAR            "-"
+    IDS_ERROR_LAUNCHING_APP           "-"
+    IDS_VM_OPTIONS                    "-"
+    IDS_CLASSPATH_LIBS                "-"
 END
 
 #endif    // English (United States) resources
