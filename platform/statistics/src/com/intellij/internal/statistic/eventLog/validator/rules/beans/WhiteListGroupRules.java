@@ -86,30 +86,42 @@ public class WhiteListGroupRules {
     return prevResult != null ? prevResult : REJECTED;
   }
 
-  public ValidationResultType validateEventData(@NotNull String key,
-                                                @Nullable Object data,
-                                                @NotNull EventContext context) {
-    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
+  /**
+   * @return validated data, incorrect values are replaced with ValidationResultType#description
+   */
+  public Object validateEventData(@NotNull String key,
+                                  @Nullable Object data,
+                                  @NotNull EventContext context) {
+    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return data;
 
-    FUSRule[] rules = eventDataRules.get(key);
+    if (data == null) return REJECTED.getDescription();
 
-    if (rules == null || rules.length == 0) return UNDEFINED_RULE;
-
-    if (data == null) {
-      return REJECTED;
-    }
-    else if (data instanceof List<?>) {
-      for (Object dataPart : (List<?>) data) {
-        ValidationResultType resultType = acceptRule(dataPart.toString(), context, rules);
-        if (resultType != ACCEPTED) {
-          return resultType;
+    if (data instanceof Map<?, ?>) {
+      HashMap<Object, Object> validatedData = new HashMap<>();
+      for (Map.Entry<?, ?> entry : ((Map<?, ?>)data).entrySet()) {
+        Object entryKey = entry.getKey();
+        if (entryKey instanceof String) {
+          validatedData.put(entryKey, validateEventData(key + "." + entryKey, entry.getValue(), context));
+        }
+        else {
+          validatedData.put(entryKey, REJECTED.getDescription());
         }
       }
-      return ACCEPTED;
+      return validatedData;
     }
-    else {
-      return acceptRule(data.toString(), context, rules);
+
+    if (data instanceof List<?>) {
+      return ContainerUtil.map(((List<?>)data), value -> validateEventData(key, value, context));
     }
+
+    FUSRule[] rules = eventDataRules.get(key);
+    if (rules == null || rules.length == 0) return UNDEFINED_RULE.getDescription();
+    return validateValue(data, context, rules);
+  }
+
+  private static Object validateValue(@NotNull Object data, @NotNull EventContext context, FUSRule @NotNull [] rules) {
+    ValidationResultType resultType = acceptRule(data.toString(), context, rules);
+    return resultType == ACCEPTED ? data : resultType.getDescription();
   }
 
   private static ValidationResultType acceptRule(@NotNull String ruleData, @NotNull EventContext context, FUSRule @Nullable ... rules) {

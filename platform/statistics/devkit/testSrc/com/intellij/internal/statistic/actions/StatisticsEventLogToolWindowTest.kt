@@ -82,7 +82,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(eventId)
     action.addData("dataKey", listOf("1", "2", "3"))
 
-    doTestCountCollector("{\"dataKey\":[\"1\", \"2\", \"3\"]}", action)
+    doTestCountCollector("{\"dataKey\":[\"1\",\"2\",\"3\"]}", action)
   }
 
   @Test
