@@ -47,6 +47,10 @@ final class DefaultProject extends UserDataHolderBase implements Project, Projec
         }
 
         @Override
+        protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+        }
+
+        @Override
         public boolean isDefault() {
           return true;
         }
