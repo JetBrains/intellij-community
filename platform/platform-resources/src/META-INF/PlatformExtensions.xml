@@ -126,8 +126,7 @@
       </description>
     </experimentalFeature>
 
-    <applicationService serviceImplementation="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl"/>
-    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemApi" key="file" physical="true"/>
+    <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl" key="file" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl" key="jar" physical="true"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.ex.temp.TempFileSystem" key="temp" physical="true"/>
 

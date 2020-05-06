@@ -23,16 +23,10 @@ import static java.util.Collections.singleton;
  * filesystem itself which is needed to to implement the {@link VirtualFile}
  * and underlying services, this part is used via the {@link com.intellij.openapi.vfs.newvfs.VfsImplUtil}
  * <br />
- * <br />
  * We provide a transparent {@link VirtualFileLookupService}
- * to implement all major VirtualFile lookup needs from one hand. From
- * the other hand, we'd like to separate platform service from the
- * filesystem implementation.
- * <br />
- * This class is a fake implementation of the {@link NewVirtualFileSystem}
- * that delegates to the underlying services for most of the methods.
- * Some implementation specific methods (that are not needed outside if the implementation)
- * may throw exceptions.
+ * to implement all major VirtualFile lookup needs instead
+ *
+ * @see VirtualFileLookupService
  */
 public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;

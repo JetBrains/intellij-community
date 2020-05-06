@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 import java.io.File
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -17,16 +16,15 @@ internal data class VirtualFileLookupImpl(
   override fun onlyIfCached() = copy(onlyIfCached = true)
 
   override fun fromIoFile(file: File): VirtualFile? {
-    val fs = realLocalFileSystem()
-    return when {
-      onlyIfCached -> null
-      withRefresh -> fs.refreshAndFindFileByIoFile(file)
-      else -> fs.findFileByIoFile(file)
-    }
+    return fromPath(FileUtil.toSystemIndependentName(file.absolutePath))
   }
 
   override fun fromPath(path: String): VirtualFile? {
-    return findWithFilesSystem(realLocalFileSystem(), FileUtil.toSystemDependentName(path))
+    return when {
+      onlyIfCached -> VfsImplUtil.findFileByPathIfCached(localFileSystem(), path)
+      withRefresh -> VfsImplUtil.refreshAndFindFileByPath(localFileSystem(), path)
+      else -> VfsImplUtil.findFileByPath(localFileSystem(), path)
+    }
   }
 
   override fun fromNioPath(path: Path): VirtualFile? {
@@ -57,7 +55,7 @@ internal data class VirtualFileLookupImpl(
     }
   }
 
-  private fun realLocalFileSystem(): LocalFileSystemImpl = LocalFileSystemImpl.getImplInstance()
+  private fun localFileSystem(): LocalFileSystem = LocalFileSystem.getInstance()
 }
 
 internal class VirtualFileLookupServiceImpl: VirtualFileLookupService {
