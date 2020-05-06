@@ -11,6 +11,7 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Range;
 import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
@@ -41,8 +42,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -85,6 +85,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private InspectionProfileImpl myInspectionProfile;
 
   public boolean myErrorCodeRequired = true;
+  public String myScopePattern;
 
   public void startup() {
     if (myProjectPath == null) {
@@ -196,7 +197,19 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, null, null);
     }
     else {
-      if (mySourceDirectory == null) {
+      if (myScopePattern != null) {
+        try {
+          PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
+          NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
+          scope = new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project);
+        }
+        catch (ParsingException e) {
+          LOG.error("Error of scope parsing", e);
+          gracefulExit();
+          return;
+        }
+      }
+      else if (mySourceDirectory == null) {
         final String scopeName = System.getProperty("idea.analyze.scope");
         final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
         scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project)

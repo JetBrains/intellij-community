@@ -53,6 +53,9 @@ public class InspectionMain implements ApplicationStarter {
         else if ("-d".equals(arg)) {
           myApplication.mySourceDirectory = args.get(++i);
         }
+        else if ("-scope".equals(arg)) {
+          myApplication.myScopePattern = args.get(++i);
+        }
         else if ("-format".equals(arg)) {
           myApplication.myOutputFormat = args.get(++i);
         }
