@@ -15,7 +15,7 @@ import com.intellij.util.ui.*
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.GithubUIUtil
+import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.util.getName
 import java.awt.BorderLayout
 import java.awt.GridBagLayout
@@ -92,7 +92,7 @@ constructor(model: GHLoadingModel,
           isOpaque = false
           border = JBUI.Borders.empty(8)
 
-          add(GithubUIUtil.createHtmlErrorPanel(errorPrefix, error, errorHandler?.getActionForError(error)))
+          add(GHHtmlErrorPanel.create(errorPrefix, error, errorHandler?.getActionForError(error)))
         }
       }
 

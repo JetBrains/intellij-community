@@ -17,10 +17,10 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
+import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -140,12 +140,13 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         }
       }
 
-      private fun createErrorComponent() = GithubUIUtil.createHtmlErrorPanel("Can't load state", stateModel.mergeabilityLoadingError!!,
-                                                                             object : AbstractAction("Retry") {
-                                                                               override fun actionPerformed(e: ActionEvent?) {
-                                                                                 stateModel.reloadMergeabilityState()
-                                                                               }
-                                                                             }, JComponent.LEFT_ALIGNMENT)
+      private fun createErrorComponent() = GHHtmlErrorPanel.create(GithubBundle.message("pull.request.state.cannot.load"),
+                                                                   stateModel.mergeabilityLoadingError!!,
+                                                                   object : AbstractAction(GithubBundle.message("retry.action")) {
+                                                                     override fun actionPerformed(e: ActionEvent?) {
+                                                                       stateModel.reloadMergeabilityState()
+                                                                     }
+                                                                   }, JComponent.LEFT_ALIGNMENT)
 
       private fun createLoadedComponent(mergeabilityModel: SingleValueModel<GHPRMergeabilityState>): JComponent {
         val statusChecks = GHPRStatusChecksComponent.create(mergeabilityModel)
