@@ -206,7 +206,18 @@ public class ExceptionWorker {
     int lParenIdx = methodName.getEndOffset();
     int dotIdx = methodName.getStartOffset() - 1;
     int moduleIdx = line.indexOf('/');
-    int classNameIdx = moduleIdx > -1 && moduleIdx < dotIdx ? moduleIdx + 1 : startIdx + 1 + (startIdx >= 0 ? AT.length() : 0);
+    int classNameIdx;
+    if (moduleIdx > -1 && moduleIdx < dotIdx) {
+      classNameIdx = moduleIdx + 1;
+    }
+    else {
+      if (startIdx >= 0) {
+        // consider STANDALONE_AT here
+        classNameIdx = startIdx + 1 + AT.length() + (line.charAt(startIdx) == 'a' ? 0 : 1);
+      } else {
+        classNameIdx = 0;
+      }
+    }
 
     return ParsedLine.createFromFileAndLine(new TextRange(classNameIdx, handleSpaces(line, dotIdx, -1)),
                                             trimRange(line, methodName),
