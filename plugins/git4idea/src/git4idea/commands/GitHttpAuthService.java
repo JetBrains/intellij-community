@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.http.GitAskPassApp;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
 import org.jetbrains.git4idea.ssh.GitXmlRpcHandlerService;
-import org.jetbrains.git4idea.util.ScriptGenerator;
 
 import java.io.File;
 import java.util.Collection;
@@ -35,10 +34,6 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
 
   protected GitHttpAuthService() {
     super("intellij-git-askpass", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
-  }
-
-  @Override
-  protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
   }
 
   @NotNull

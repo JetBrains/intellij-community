@@ -6,17 +6,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassApp;
 import org.jetbrains.git4idea.nativessh.GitNativeSshAskPassXmlRpcHandler;
-import org.jetbrains.git4idea.util.ScriptGenerator;
 
 import java.util.UUID;
 
 public class GitXmlRpcNativeSshService extends GitXmlRpcHandlerService<GitNativeSshAuthenticator> {
   private GitXmlRpcNativeSshService() {
     super("intellij-ssh-askpass", GitNativeSshAskPassXmlRpcHandler.HANDLER_NAME, GitNativeSshAskPassApp.class);
-  }
-
-  @Override
-  protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
   }
 
   @NotNull

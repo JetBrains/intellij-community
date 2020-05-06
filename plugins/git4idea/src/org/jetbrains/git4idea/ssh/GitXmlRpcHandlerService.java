@@ -5,11 +5,7 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
-import org.apache.commons.codec.DecoderException;
-import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.git4idea.GitExternalApp;
@@ -71,11 +67,6 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
     return BuiltInServerManager.getInstance().waitForStart().getPort();
   }
 
-  @NotNull
-  public File getScriptPath() throws IOException {
-    return getScriptPath(SystemInfo.isWindows);
-  }
-
   /**
    * Get file to the script service
    *
@@ -85,8 +76,6 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
   @NotNull
   public File getScriptPath(boolean useBatchFile) throws IOException {
     ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
-    generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
-    customizeScriptGenerator(generator);
 
     synchronized (SCRIPT_FILE_LOCK) {
       if (useBatchFile) {
@@ -103,11 +92,6 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
       }
     }
   }
-
-  /**
-   * Adds more classes or resources to the script if needed.
-   */
-  protected abstract void customizeScriptGenerator(@NotNull ScriptGenerator generator);
 
   /**
    * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(UUID)}.

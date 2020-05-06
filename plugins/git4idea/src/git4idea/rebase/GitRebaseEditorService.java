@@ -5,8 +5,6 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
-import org.apache.commons.codec.DecoderException;
-import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
@@ -79,7 +77,6 @@ public class GitRebaseEditorService implements Disposable {
       if (myEditorCommand == null) {
         ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
         generator.addInternal(Integer.toString(BuiltInServerManager.getInstance().waitForStart().getPort()));
-        generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
         myEditorCommand = generator.commandLine();
       }
       return myEditorCommand;
