@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class ImportTestsFromFileAction extends AbstractImportTestsAction {
   public ImportTestsFromFileAction() {
-    super(null, "Import Tests from File...", 
-          "Import the results of a test execution from an XML file", 
+    super(null, SmRunnerBundle.message("sm.test.runner.import.test"),
+          SmRunnerBundle.message("sm.test.runner.import.test.description"),
           AllIcons.ToolbarDecorator.Import);
   }
 

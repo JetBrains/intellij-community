@@ -29,7 +29,7 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
 
   @Override
   protected ListTableModel createListModel() {
-    ColumnInfo local = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Local path") {
+    ColumnInfo local = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>(ExecutionBundle.message("path.mapping.column.path.local")) {
       @Override
       public String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getLocalRoot();
@@ -55,7 +55,7 @@ final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.Pa
       }
     };
 
-    ColumnInfo remote = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>("Remote path") {
+    ColumnInfo remote = new ElementsColumnInfoBase<PathMappingSettings.PathMapping>(ExecutionBundle.message("path.mapping.column.path.remote")) {
       @Override
       public String valueOf(PathMappingSettings.PathMapping pathMapping) {
         return pathMapping.getRemoteRoot();
