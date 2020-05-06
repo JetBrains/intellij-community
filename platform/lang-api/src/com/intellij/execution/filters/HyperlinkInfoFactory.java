@@ -16,15 +16,17 @@
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.ToIntFunction;
+import java.util.function.BiConsumer;
 
 public abstract class HyperlinkInfoFactory {
   @NotNull
@@ -41,14 +43,14 @@ public abstract class HyperlinkInfoFactory {
    * @param files list of files to navigate to (will be suggested to user)
    * @param line line number to navigate to
    * @param project a project
-   * @param columnFinder a function which accepts a selected file and returns a column within the specified line to navigate to
+   * @param action an action to be performed once editor is opened
    * @return newly created HyperlinkInfo which navigates to given line and column
    */
   @NotNull
   public abstract HyperlinkInfo createMultipleFilesHyperlinkInfo(@NotNull List<? extends VirtualFile> files,
                                                                  int line,
                                                                  @NotNull Project project,
-                                                                 ToIntFunction<? super PsiFile> columnFinder);
+                                                                 @Nullable BiConsumer<PsiFile, Editor> action);
 
   /**
    * Creates a hyperlink that points to elements with ability to navigate to specific element within the file

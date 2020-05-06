@@ -15,10 +15,20 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,16 +37,19 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.function.ToIntFunction;
+import java.util.Objects;
+import java.util.function.BiConsumer;
 
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
@@ -92,10 +105,10 @@ public class ExceptionWorker {
     int highlightEndOffset = textStartOffset + myInfo.fileLineRange.getEndOffset();
 
     List<VirtualFile> virtualFiles = new ArrayList<>(myClassResolveInfo.myClasses.keySet());
-    ToIntFunction<PsiFile> columnFinder =
+    BiConsumer<PsiFile, Editor> action =
       elementMatcher == null || myInfo.lineNumber <= 0 ? null : new ExceptionColumnFinder(elementMatcher, myInfo.lineNumber - 1);
-    HyperlinkInfo linkInfo =
-      HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(virtualFiles, myInfo.lineNumber - 1, myProject, columnFinder);
+    HyperlinkInfo linkInfo = HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(
+      virtualFiles, myInfo.lineNumber - 1, myProject, action);
     Filter.Result result = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, myClassResolveInfo.myInLibrary);
     if (myMethod.startsWith("access$")) {
       myLocationRefiner = elementMatcher;
@@ -359,21 +372,21 @@ public class ExceptionWorker {
     }
   }
 
-  private static class ExceptionColumnFinder implements ToIntFunction<PsiFile> {
-    private final Predicate<PsiElement> myElementMatcher;
+  private static class ExceptionColumnFinder implements BiConsumer<PsiFile, Editor> {
+    private final ExceptionLineRefiner myElementMatcher;
     private final int myLineNumber;
 
-    private ExceptionColumnFinder(@NotNull Predicate<PsiElement> elementMatcher, int lineNumber) {
+    private ExceptionColumnFinder(@NotNull ExceptionLineRefiner elementMatcher, int lineNumber) {
       myElementMatcher = elementMatcher;
       myLineNumber = lineNumber;
     }
 
     @Override
-    public int applyAsInt(PsiFile file) {
-      if (DumbService.isDumb(file.getProject())) return 0; // may need to resolve refs
+    public void accept(PsiFile file, Editor editor) {
+      if (DumbService.isDumb(file.getProject())) return; // may need to resolve refs
       Document document = FileDocumentManager.getInstance().getDocument(file.getVirtualFile());
-      if (document == null || document.getLineCount() <= myLineNumber) return 0;
-      if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return 0;
+      if (document == null || document.getLineCount() <= myLineNumber) return;
+      if (!PsiDocumentManager.getInstance(file.getProject()).isCommitted(document)) return;
       int startOffset = document.getLineStartOffset(myLineNumber);
       int endOffset = document.getLineEndOffset(myLineNumber);
       PsiElement element = file.findElementAt(startOffset);
@@ -381,14 +394,44 @@ public class ExceptionWorker {
       while (element != null && element.getTextRange().getStartOffset() < endOffset) {
         if (myElementMatcher.test(element)) {
           candidates.add(element);
-          if (candidates.size() > 1) return 0;
+          if (candidates.size() > 1) return;
         }
         element = PsiTreeUtil.nextLeaf(element);
       }
       if (candidates.size() == 1) {
-        return candidates.get(0).getTextRange().getStartOffset() - startOffset;
+        PsiElement foundElement = candidates.get(0);
+        TextRange range = foundElement.getTextRange();
+        editor.getCaretModel().moveToOffset(range.getStartOffset());
+        displayAnalysisAction(file.getProject(), foundElement, editor);
       }
-      return 0;
+    }
+
+    private void displayAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @NotNull Editor editor) {
+      ExceptionInfo info = myElementMatcher.getExceptionInfo();
+      if (info == null) return;
+      AnAction action = project.getService(ExceptionAnalysisProvider.class)
+        .getAnalysisAction(element, info.getExceptionClassName(), info.getExceptionMessage());
+      if (action == null) return;
+      String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
+      Ref<Balloon> ref = Ref.create();
+      Balloon balloon = JBPopupFactory.getInstance()
+        .createHtmlTextBalloonBuilder(String.format("<a href=\"analyze\">%s</a>", StringUtil.escapeXmlEntities(actionName)),
+                                      null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
+            @Override
+            protected void hyperlinkActivated(HyperlinkEvent e) {
+              if (e.getDescription().equals("analyze")) {
+                Balloon b = ref.get();
+                if (b != null) {
+                  Disposer.dispose(b);
+                }
+                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
+              }
+            }
+          })
+        .createBalloon();
+      ref.set(balloon);
+      RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      balloon.show(point, Balloon.Position.below);
     }
   }
 

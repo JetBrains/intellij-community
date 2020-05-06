@@ -17,8 +17,8 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-class ExceptionInfo {
-  private static final Pattern AIOOBE_MESSAGE = Pattern.compile("(?:Index )?(\\d{1,9})(?: out of bounds for length \\d+)?");
+public class ExceptionInfo {
+  private static final Pattern AIOOBE_MESSAGE = Pattern.compile("(?:Index )?(-?\\d{1,9})(?: out of bounds for length \\d+)?");
   private static final Pattern CCE_MESSAGE = Pattern.compile("(?:class )?(\\S+) cannot be cast to (?:class )?(\\S+)(?: \\(.+\\))?");
   // See JEP 358 Helpful NullPointerExceptions for details
   private static final Pattern NPE_MESSAGE = Pattern.compile("Cannot (?:invoke \"(?<invoke>.+)\\(\\)\"|" +
@@ -352,13 +352,28 @@ class ExceptionInfo {
     if (!(e instanceof PsiJavaToken && e.textMatches("[") && e.getParent() instanceof PsiArrayAccessExpression)) {
       return false;
     }
-    Matcher matcher = AIOOBE_MESSAGE.matcher(message);
-    if (matcher.matches()) {
-      Integer index = Integer.valueOf(matcher.group(1) == null ? matcher.group(2) : matcher.group(1));
+    Integer index = getArrayIndexFromMessage(message);
+    if (index != null) {
       PsiLiteralExpression next = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(e), PsiLiteralExpression.class);
       return next == null || index.equals(next.getValue());
     }
     return true;
+  }
+  
+  public static @Nullable Integer getArrayIndexFromMessage(@NotNull String message) {
+    Matcher matcher = AIOOBE_MESSAGE.matcher(message);
+    if (matcher.matches()) {
+      return Integer.valueOf(matcher.group(1) == null ? matcher.group(2) : matcher.group(1));
+    }
+    return null;
+  }
+  
+  public static @Nullable String getCastActualClassFromMessage(@NotNull String message) {
+    Matcher matcher = CCE_MESSAGE.matcher(message);
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return null;
   }
 
   @Nullable

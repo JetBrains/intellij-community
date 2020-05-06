@@ -265,6 +265,8 @@
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
                         serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
+    <projectService serviceInterface="com.intellij.execution.filters.ExceptionAnalysisProvider"
+                    serviceImplementation="com.intellij.slicer.DataflowExceptionAnalysisProvider"/>
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
