@@ -356,18 +356,21 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
-      if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
+      return e instanceof KeyEvent && dispatchKeyEvent((KeyEvent)e);
+    }
+
+    private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
+      if (!skipKeyEvent(e)) {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent((KeyEvent)e) + ", registered:" + myRegistered);
+          LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
         // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830, revert once it's fixed.
         if (SystemInfo.isJavaVersionAtLeast(8, 0, 212)) {
           // JBTerminalPanel is focused, because TerminalEventDispatcher added in focusGained and removed in focusLost
-          processKeyEvent((KeyEvent)e);
+          processKeyEvent(e);
         }
         dispatchEvent(e);
-
         return true;
       }
       return false;
