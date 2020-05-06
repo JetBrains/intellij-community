@@ -275,7 +275,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       }
     }
 
-    fun inferNullability(place: PsiStatement, probeExpression: String?): Nullability {
+    fun inferNullability(place: PsiElement, probeExpression: String?): Nullability {
       if (probeExpression == null) return Nullability.UNKNOWN
       val factory = PsiElementFactory.getInstance(place.project)
       val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN

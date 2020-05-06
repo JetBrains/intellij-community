@@ -174,7 +174,7 @@ private fun findVariableData(analyzer: CodeFragmentAnalyzer, variables: List<Psi
     variables.isEmpty() -> return EmptyOutput()
     else -> variables.single()
   }
-  val nullability = CodeFragmentAnalyzer.inferNullability(analyzer.elements.last() as PsiStatement, variable.name)
+  val nullability = CodeFragmentAnalyzer.inferNullability(analyzer.elements.last(), variable.name)
   return VariableOutput(variables.single().type, variables.single(), variables.single() in analyzer, nullability)
 }
 
