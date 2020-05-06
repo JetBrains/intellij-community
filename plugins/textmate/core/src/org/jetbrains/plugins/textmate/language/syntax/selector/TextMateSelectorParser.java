@@ -2,15 +2,15 @@ package org.jetbrains.plugins.textmate.language.syntax.selector;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.countChars;
-import static com.intellij.openapi.util.text.StringUtil.getOccurrenceCount;
 
 public class TextMateSelectorParser {
   private static final Logger LOG = Logger.getInstance(TextMateSelectorParser.class);
@@ -151,7 +151,7 @@ public class TextMateSelectorParser {
     @Override
     public TextMateWeigh weigh(@NotNull CharSequence scope) {
       if (StringUtil.startsWith(scope, selector)) {
-        return new TextMateWeigh(BASE_WEIGH - countChars(scope, '.') + getOccurrenceCount(selector, '.'),
+        return new TextMateWeigh(BASE_WEIGH - countChars(scope, '.') + countChars(selector, '.'),
                                  TextMateWeigh.Priority.NORMAL);
       }
       return TextMateWeigh.ZERO;
@@ -182,33 +182,38 @@ public class TextMateSelectorParser {
         }
       }
 
-      Stack<Node> highlightingSelectors = new Stack<>(children);
+      Deque<Node> highlightingSelectors = new LinkedList<>();
+      for (Node child : children) {
+        highlightingSelectors.push(child);
+      }
       if (highlightingSelectors.isEmpty()) {
         highlightingSelectors.push(new Selector(""));
       }
-      Stack<CharSequence> targetSelectors = new Stack<>();
-      targetSelectors.addAll(StringUtil.split(scope, " "));
+      Deque<CharSequence> targetSelectors = new LinkedList<>();
+      for (CharSequence s : StringUtil.split(scope, " ")) {
+        targetSelectors.push(s);
+      }
 
       CharSequence currentTargetSelector = targetSelectors.pop();
       Node currentHighlightingSelector = highlightingSelectors.peek();
 
       int nestingWeigh = NESTING_WEIGH_INITIAL;
       int result = 0;
-      while (!highlightingSelectors.empty() && currentTargetSelector != null) {
+      while (!highlightingSelectors.isEmpty() && currentTargetSelector != null) {
         TextMateWeigh weigh = currentHighlightingSelector instanceof Selector
                               ? currentHighlightingSelector.weigh(currentTargetSelector)
                               : currentHighlightingSelector.weigh(scope);
         if (weigh.weigh > 0) {
           result += weigh.weigh * nestingWeigh;
           highlightingSelectors.pop();
-          if (!highlightingSelectors.empty()) {
+          if (!highlightingSelectors.isEmpty()) {
             currentHighlightingSelector = highlightingSelectors.peek();
           }
         }
         nestingWeigh--;
-        currentTargetSelector = !highlightingSelectors.empty() && !targetSelectors.empty() ? targetSelectors.pop() : null;
+        currentTargetSelector = !highlightingSelectors.isEmpty() && !targetSelectors.isEmpty() ? targetSelectors.pop() : null;
       }
-      if (!highlightingSelectors.empty()) {
+      if (!highlightingSelectors.isEmpty()) {
         return TextMateWeigh.ZERO;
       }
       return new TextMateWeigh(!startMatch || targetSelectors.isEmpty() ? result : 0, priority);

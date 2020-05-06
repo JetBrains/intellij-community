@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.regex;
 
-import com.intellij.openapi.util.TextRange;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -17,12 +16,12 @@ public class SearcherTest {
     assertTrue(searcher.search());
     MatchData matchData = searcher.getCurrentMatchData();
     assertEquals(1, matchData.count());
-    assertEquals(TextRange.create(0, 2), matchData.codePointRange(stringBytes));
+    assertEquals(new TextMateRange(0, 2), matchData.codePointRange(stringBytes));
 
     assertTrue(searcher.search());
     matchData = searcher.getCurrentMatchData();
     assertEquals(1, matchData.count());
-    assertEquals(TextRange.create(3, 5), matchData.codePointRange(stringBytes));
+    assertEquals(new TextMateRange(3, 5), matchData.codePointRange(stringBytes));
 
     assertFalse(searcher.search());
     assertEquals(-1, searcher.getCurrentCharPosition());
@@ -37,13 +36,13 @@ public class SearcherTest {
     assertTrue(searcher.search());
     MatchData matchData = searcher.getCurrentMatchData();
     assertEquals(1, matchData.count());
-    assertEquals(TextRange.create(8, 11), matchData.codePointRange(stringBytes));
+    assertEquals(new TextMateRange(8, 11), matchData.codePointRange(stringBytes));
     assertEquals(11, searcher.getCurrentCharPosition());
 
     assertTrue(searcher.search());
     matchData = searcher.getCurrentMatchData();
     assertEquals(1, matchData.count());
-    assertEquals(TextRange.create(21, 24), matchData.codePointRange(stringBytes));
+    assertEquals(new TextMateRange(21, 24), matchData.codePointRange(stringBytes));
 
     assertFalse(searcher.search());
     assertEquals(-1, searcher.getCurrentCharPosition());
@@ -68,16 +67,16 @@ public class SearcherTest {
     assertTrue(searcher.search());
     MatchData matchData = searcher.getCurrentMatchData();
     assertEquals(3, matchData.count());
-    assertEquals(TextRange.create(0, 5), matchData.codePointRange(stringBytes));
-    assertEquals(TextRange.create(0, 2), matchData.codePointRange(stringBytes, 1));
-    assertEquals(TextRange.create(3, 5), matchData.codePointRange(stringBytes, 2));
+    assertEquals(new TextMateRange(0, 5), matchData.codePointRange(stringBytes));
+    assertEquals(new TextMateRange(0, 2), matchData.codePointRange(stringBytes, 1));
+    assertEquals(new TextMateRange(3, 5), matchData.codePointRange(stringBytes, 2));
 
     assertTrue(searcher.search());
     matchData = searcher.getCurrentMatchData();
     assertEquals(3, matchData.count());
-    assertEquals(TextRange.create(8, 13), matchData.codePointRange(stringBytes));
-    assertEquals(TextRange.create(8, 10), matchData.codePointRange(stringBytes, 1));
-    assertEquals(TextRange.create(11, 13), matchData.codePointRange(stringBytes, 2));
+    assertEquals(new TextMateRange(8, 13), matchData.codePointRange(stringBytes));
+    assertEquals(new TextMateRange(8, 10), matchData.codePointRange(stringBytes, 1));
+    assertEquals(new TextMateRange(11, 13), matchData.codePointRange(stringBytes, 2));
 
     assertFalse(searcher.search());
     assertEquals(-1, searcher.getCurrentCharPosition());

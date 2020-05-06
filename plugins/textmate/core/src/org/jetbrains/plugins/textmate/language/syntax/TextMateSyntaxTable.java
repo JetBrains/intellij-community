@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
@@ -140,7 +139,7 @@ public class TextMateSyntaxTable {
                                              @NotNull SyntaxNodeDescriptor result,
                                              @NotNull Interner<CharSequence> interner) {
     String include = plist.getPlistValue(Constants.INCLUDE_KEY, "").getString();
-    if (StringUtil.startsWithChar(include, '#')) {
+    if (include.length() > 0 && include.charAt(0) == '#') {
       return new SyntaxRuleProxyDescriptor(getRuleId(include.substring(1)), result);
     }
     else if (Constants.INCLUDE_SELF_VALUE.equalsIgnoreCase(include) || Constants.INCLUDE_BASE_VALUE.equalsIgnoreCase(include)) {

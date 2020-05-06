@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.PathInterner;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ public class TextMateSnippetsLoadingTest {
     SnippetsRegistry snippetsRegistry = loadSnippets(CHEF);
     Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("log", "source.ruby.chef.something");
     assertEquals(1, snippets.size());
-    TextMateSnippet snippet = ContainerUtil.getFirstItem(snippets);
+    TextMateSnippet snippet = snippets.iterator().next();
     assertNotNull(snippet);
     assertEquals("log", snippet.getKey());
     assertEquals("Chef::Log.${1:debug} \"${2:something to log}\"", snippet.getContent());
@@ -42,7 +41,7 @@ public class TextMateSnippetsLoadingTest {
     SnippetsRegistry snippetsRegistry = loadSnippets(HTML);
     Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet("div", "text.html");
     assertEquals(1, snippets.size());
-    TextMateSnippet snippet = ContainerUtil.getFirstItem(snippets);
+    TextMateSnippet snippet = snippets.iterator().next();
     assertNotNull(snippet);
     assertEquals("div", snippet.getKey());
     assertEquals("<div${1: id=\"${2:name}\"}>\n" +
