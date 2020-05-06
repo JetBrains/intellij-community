@@ -1,28 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
-import com.intellij.ide.*;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.List;
 
 /**
  * Allows opening file in editor, optionally at specific line/column position.
@@ -101,86 +87,24 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (!canNavigate()) {
-      throw new IllegalStateException("target not valid");
-    }
-
-    if (!myFile.isDirectory()) {
-      if (navigateInEditorOrNativeApp(myProject, requestFocus)) return;
-    }
-
-    if (navigateInProjectView(requestFocus)) return;
-
-    String message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().getProductName());
-    Messages.showErrorDialog(myProject, message, IdeBundle.message("title.cannot.open.file"));
-  }
-
-  private boolean navigateInEditorOrNativeApp(@NotNull Project project, boolean requestFocus) {
-    FileType type = FileTypeManager.getInstance().getKnownFileTypeOrAssociate(myFile,project);
-    if (type == null || !myFile.isValid()) return false;
-
-    if (type instanceof INativeFileType) {
-      return ((INativeFileType) type).openFileInAssociatedApplication(project, myFile);
-    }
-
-    return navigateInEditor(project, requestFocus);
+    FileNavigator.getInstance().navigate(this, requestFocus);
   }
 
   public boolean navigateInEditor(@NotNull Project project, boolean requestFocus) {
-    return navigateInRequestedEditor() || navigateInAnyFileEditor(project, requestFocus);
+    return FileNavigator.getInstance().navigateInEditor(this, requestFocus);
   }
 
-  private boolean navigateInRequestedEditor() {
-    @SuppressWarnings("deprecation") DataContext ctx = DataManager.getInstance().getDataContext();
-    Editor e = NAVIGATE_IN_EDITOR.getData(ctx);
-    if (e == null) return false;
-    if (e.isDisposed()) {
-      Logger.getInstance(OpenFileDescriptor.class).error("Disposed editor returned for NAVIGATE_IN_EDITOR from " + ctx);
-      return false;
-    }
-    if (!Comparing.equal(FileDocumentManager.getInstance().getFile(e.getDocument()), myFile)) return false;
-
-    navigateIn(e);
-    return true;
-  }
-
-  protected boolean navigateInAnyFileEditor(@NotNull Project project, boolean focusEditor) {
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    List<FileEditor> editors = fileEditorManager.openEditor(this, focusEditor);
-    for (FileEditor editor : editors) {
-      if (editor instanceof TextEditor) {
-        Editor e = ((TextEditor)editor).getEditor();
-        fileEditorManager.runWhenLoaded(e, () -> {
-          unfoldCurrentLine(e);
-          if (focusEditor) {
-            IdeFocusManager.getInstance(project).requestFocus(e.getContentComponent(), true);
-            Window ancestor = SwingUtilities.getWindowAncestor(e.getContentComponent());
-            if (ancestor != null) {
-              ancestor.toFront();
-            }
-          }
-        });
-      }
-    }
-    return !editors.isEmpty();
-  }
-
-  private boolean navigateInProjectView(boolean requestFocus) {
-    SelectInContext context = new FileSelectInContext(myProject, myFile, null);
-    for (SelectInTarget target : SelectInManager.getInstance(myProject).getTargetList()) {
-      if (context.selectIn(target, requestFocus)) {
-        return true;
-      }
-    }
-    return false;
-  }
 
   public void navigateIn(@NotNull Editor e) {
-    final int offset = getOffset();
+    navigateInEditor(this, e);
+  }
+
+  protected static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
+    final int offset = descriptor.getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
-    if (myLogicalLine >= 0) {
-      LogicalPosition pos = new LogicalPosition(myLogicalLine, Math.max(myLogicalColumn, 0));
+    if (descriptor.getLine() >= 0) {
+      LogicalPosition pos = new LogicalPosition(descriptor.getLine(), Math.max(descriptor.getColumn(), 0));
       if (offset < 0 || offset == e.logicalPositionToOffset(pos)) {
         caretModel.removeSecondaryCarets();
         caretModel.moveToLogicalPosition(pos);
@@ -195,8 +119,8 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
     if (caretMoved) {
       e.getSelectionModel().removeSelection();
-      FileEditorManager.getInstance(myProject).runWhenLoaded(e, () -> {
-        scrollToCaret(e);
+      FileEditorManager.getInstance(descriptor.getProject()).runWhenLoaded(e, () -> {
+        descriptor.scrollToCaret(e);
         unfoldCurrentLine(e);
       });
     }
@@ -229,7 +153,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
 
   @Override
   public boolean canNavigate() {
-    return myFile.isValid();
+    return FileNavigator.getInstance().canNavigate(myFile);
   }
 
   @Override

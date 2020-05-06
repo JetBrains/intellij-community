@@ -46,10 +46,6 @@
     <extensionPoint name="anchorReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
     <extensionPoint name="dynamicContextProvider" interface="com.intellij.openapi.paths.DynamicContextProvider" dynamic="true"/>
 
-    <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
-      <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
-    </extensionPoint>
-
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider" interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider" dynamic="true"/>
 
     <extensionPoint name="intentionMenuContributor" interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor" dynamic="true"/>
