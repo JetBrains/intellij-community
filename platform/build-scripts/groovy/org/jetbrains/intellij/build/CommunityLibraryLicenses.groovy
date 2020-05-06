@@ -13,9 +13,7 @@ class CommunityLibraryLicenses {
   @SuppressWarnings("SpellCheckingInspection")
   public static final List<LibraryLicense> LICENSES_LIST = [
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", license: "Apache 2.0", url: "http://source.android.com/"),
-
     new LibraryLicense(name: "Amazon Ion Java", libraryName: "ion", license: "Apache 2.0", url: "https://github.com/amzn/ion-java"),
-
     new LibraryLicense(name: "Android Analytics", attachedTo: "intellij.android.core", license: "Apache 2.0",
                        url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Analytics Crash", libraryName: "precompiled-analytics-crash",
@@ -122,10 +120,8 @@ class CommunityLibraryLicenses {
                        url: "http://commons.apache.org/proper/commons-compress/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Apache Commons Discovery", libraryName: "commons-discovery", license: "Apache 2.0",
                        url: "http://jakarta.apache.org/commons/discovery/", licenseUrl: "http://www.apache.org/licenses/"),
-
     new LibraryLicense(name: "Apache Commons HTTPClient", libraryName: "http-client-3.1", version: "3.1&nbsp; (with patch by JetBrains)",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpclient-3.x"),
-
     new LibraryLicense(name: "Apache Commons Imaging (JetBrains's fork)", libraryName: "commons-imaging",
                        license: "Apache 2.0", url: "https://github.com/JetBrains/intellij-deps-commons-imaging"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", license: "Apache 2.0",
@@ -162,14 +158,14 @@ class CommunityLibraryLicenses {
                        url: "http://joel-costigliola.github.io/assertj/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Automaton", libraryName: "automaton", license: "BSD",
                        url: "http://www.brics.dk/automaton/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php"),
-
     new LibraryLicense(name: "batik", libraryName: "batik-transcoder", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
     new LibraryLicense(name: "batik", libraryName: "batik-codec", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
     new LibraryLicense(libraryName: "bouncy-castle-provider", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
-
+    new LibraryLicense(name: "Byte Buddy agent", libraryName: "byte-buddy-agent", license: "Apache 2.0",
+                       url: "https://github.com/raphw/byte-buddy", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
     new LibraryLicense(name: "classworlds", libraryName: "Maven", transitiveDependency: true, version: "1.1", license: "codehaus",
@@ -221,7 +217,6 @@ class CommunityLibraryLicenses {
                        url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
-
     new LibraryLicense(name: "Gant", libraryName: "gant-groovy", license: "Apache 2.0",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
     new LibraryLicense(name: "Gherkin", libraryName: "gherkin", license: "MIT",
@@ -250,14 +245,12 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     new LibraryLicense(name: "HDR Histogram", libraryName: "HdrHistogram", license: "CC0 1.0 Universal",
                        licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/"),
-
     new LibraryLicense(name: "hppc", libraryName: "com.carrotsearch:hppc:0.7.2",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "HttpComponents HttpClient", libraryName: "http-client", license: "Apache 2.0",
                        url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
     new LibraryLicense(name: "HttpComponents HttpClient Fluent API", libraryName: "fluent-hc",
                        license: "Apache 2.0", url: "http://hc.apache.org/httpcomponents-client-ga/index.html"),
-
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
     new LibraryLicense(name: "Inconsolata", attachedTo: "intellij.platform.resources", version: "001.010", license: "OFL",
@@ -274,14 +267,12 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "ISO RELAX", libraryName: "isorelax", license: "MIT License",
                        url: "http://sourceforge.net/projects/iso-relax/",
                        licenseUrl: "http://www.opensource.org/licenses/mit-license.html"),
-
     new LibraryLicense(name: "Jackson", libraryName: "jackson", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
     new LibraryLicense(name: "Jackson Databind", libraryName: "jackson-databind", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson-databind"),
     new LibraryLicense(name: "Jackson Module Kotlin", libraryName: "jackson-module-kotlin", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson-module-kotlin"),
-
     new LibraryLicense(name: "Jakarta ORO", libraryName: "OroMatcher", license: "Apache",
                        url: "http://jakarta.apache.org/oro/", licenseUrl: "http://svn.apache.org/repos/asf/jakarta/oro/trunk/LICENSE"),
     new LibraryLicense(libraryName: "Java Compatibility", license: "GPL 2.0 + Classpath",
@@ -305,11 +296,13 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JAXB (JSR 222) Reference Implementation", libraryName: "jaxb-runtime",
                        url: "https://github.com/javaee/jaxb-v2",
                        license: "CDDL 1.1 / GPL 2.0 + Classpath", licenseUrl: "https://oss.oracle.com/licenses/CDDL+GPL-1.1"),
-
     new LibraryLicense(libraryName: "Jaxen", license: "modified Apache", url: "https://github.com/jaxen-xpath/jaxen",
                        licenseUrl: "https://github.com/jaxen-xpath/jaxen/blob/master/LICENSE.txt"),
     new LibraryLicense(libraryName: "jb-jdi", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/intellij-deps-jdi",
                        licenseUrl: "https://raw.githubusercontent.com/JetBrains/intellij-deps-jdi/master/LICENSE.txt"),
+    new LibraryLicense(name: "JCEF", libraryName: "jcef", license: "Permissive",
+                       licenseUrl: "https://bitbucket.org/chromiumembedded/java-cef/src/master/LICENSE.txt",
+                       url: "https://bitbucket.org/chromiumembedded/java-cef"),
     new LibraryLicense(name: "JCIP Annotations", libraryName: "jcip", license: "Creative Commons Attribution License",
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JCodings", libraryName: "joni", transitiveDependency: true, version: "1.0.44", license: "MIT",
@@ -446,16 +439,13 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.opensource.org/licenses/zlib-license.html"),
     new LibraryLicense(name: "nekohtml", libraryName: "nekohtml", license: "Apache 2.0",
                        url: "http://nekohtml.sourceforge.net/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0.txt"),
-
     new LibraryLicense(name: "net.loomchild.segment", libraryName: "net.loomchild:segment:2.0.1",
                        license: "MIT", url: "https://github.com/loomchild/segment",
                        licenseUrl: "https://github.com/loomchild/segment/blob/master/LICENSE.txt"),
-
     new LibraryLicense(name: "netty-codec-http", libraryName: "netty-codec-http", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "netty-handler-proxy", libraryName: "netty-handler-proxy", license: "Apache 2.0",
                        url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-
     new LibraryLicense(libraryName: "ngram-slp", license: "MIT License", url: "https://github.com/SLP-team/SLP-Core",
                        licenseUrl: "https://github.com/SLP-team/SLP-Core/blob/master/LICENSE"),
     new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", license: "Apache 2.0", url: "http://objenesis.org/",
@@ -465,11 +455,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "OWASP Java HTML Sanitizer", libraryName: "owasp-java-html-sanitizer", license: "Apache 2.0",
                        url: "https://github.com/OWASP/java-html-sanitizer/",
                        licenseUrl: "https://github.com/OWASP/java-html-sanitizer/blob/master/COPYING"),
-
     new LibraryLicense(name: "PEPK", libraryName: "pepk", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Perfetto protos", libraryName: "perfetto-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-
     new LibraryLicense(name: "plexus-archiver", libraryName: "plexus-archiver", license: "Apache 2.0",
                        url: "https://github.com/codehaus-plexus/plexus-archiver", licenseUrl: "http://apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "plexus-classworlds", attachedTo: "intellij.maven.server.m30.impl", version: "2.4", license: "Apache 2.0",
@@ -513,12 +501,10 @@ class CommunityLibraryLicenses {
                        url: "http://pythonhosted.org/six/"),
     new LibraryLicense(libraryName: "Slf4j", license: "MIT License", url: "http://slf4j.org/",
                        licenseUrl: "http://slf4j.org/license.html"),
-
     new LibraryLicense(name: "SnakeYAML", libraryName: "snakeyaml", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml"),
     new LibraryLicense(name: "snakeyaml-engine", libraryName: "snakeyaml-engine", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://bitbucket.org/asomov/snakeyaml-engine/src"),
-
     new LibraryLicense(name: "Sonatype Nexus: Indexer", attachedTo: "intellij.maven.server.m3.common",
                        additionalLibraryNames: ["org.sonatype.nexus:nexus-indexer:3.0.4", "org.sonatype.nexus:nexus-indexer-artifact:1.0.1"],
                        license: "Eclipse Public License v1.0", url: "http://nexus.sonatype.org/",
@@ -590,9 +576,6 @@ class CommunityLibraryLicenses {
                        url: "https://x-stream.github.io/", licenseUrl: "https://x-stream.github.io/license.html"),
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
-    new LibraryLicense(name: "JCEF", libraryName: "jcef", license: "Permissive",
-                       licenseUrl: "https://bitbucket.org/chromiumembedded/java-cef/src/master/LICENSE.txt",
-                       url: "https://bitbucket.org/chromiumembedded/java-cef"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-ranking-java"),
