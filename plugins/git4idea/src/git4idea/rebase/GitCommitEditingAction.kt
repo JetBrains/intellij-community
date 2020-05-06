@@ -3,7 +3,6 @@ package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -16,7 +15,6 @@ import git4idea.GitUtil.getRepositoryManager
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 
 /**
@@ -121,13 +119,6 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   protected abstract fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements)
 
-  protected fun getLog(e: AnActionEvent): VcsLog = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
-
-  protected fun getSelectedCommit(e: AnActionEvent): VcsShortCommitDetails = getLog(e).selectedShortDetails[0]!!
-
-  @CalledInAny
-  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRootQuick(getSelectedCommit(e).root)!!
-
   protected abstract fun getFailureTitle(): String
 
   protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
@@ -138,9 +129,14 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
            }, GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"), true, data.project)
   }
 
-  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, @Nls operation: String, allowRebaseIfHeadCommit: Boolean = false) {
+  protected fun prohibitRebaseDuringRebase(
+    e: AnActionEvent,
+    commitEditingRequirements: CommitEditingRequirements,
+    @Nls operation: String,
+    allowRebaseIfHeadCommit: Boolean = false
+  ) {
     if (e.presentation.isEnabledAndVisible) {
-      val message = getProhibitedStateMessage(e, operation, allowRebaseIfHeadCommit)
+      val message = getProhibitedStateMessage(commitEditingRequirements, operation, allowRebaseIfHeadCommit)
       if (message != null) {
         e.presentation.isEnabled = false
         e.presentation.description = message
@@ -148,12 +144,16 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
   }
 
-  protected fun getProhibitedStateMessage(e: AnActionEvent, @Nls operation: String, allowRebaseIfHeadCommit: Boolean = false): String? {
-    val state = getRepository(e).state
+  protected fun getProhibitedStateMessage(
+    commitEditingRequirements: CommitEditingRequirements,
+    @Nls operation: String,
+    allowRebaseIfHeadCommit: Boolean = false
+  ): String? {
+    val state = commitEditingRequirements.repository.state
     if (state == NORMAL || state == DETACHED) {
       return null
     }
-    if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) {
+    if (state == REBASING && allowRebaseIfHeadCommit && commitEditingRequirements.isHeadCommit) {
       return null
     }
 
@@ -166,12 +166,9 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
   }
 
-  protected fun isHeadCommit(e: AnActionEvent): Boolean {
-    return getSelectedCommit(e).id.asString() == getRepository(e).currentRevision
-  }
-
   protected class CommitEditingRequirements(val repository: GitRepository, val log: VcsLog, val logData: VcsLogData, val logUi: VcsLogUi) {
     val project = repository.project
     val selectedCommit: VcsShortCommitDetails = log.selectedShortDetails.first()
+    val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
   }
 }

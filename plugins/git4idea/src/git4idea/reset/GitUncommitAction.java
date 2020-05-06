@@ -56,7 +56,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
       }
 
       // support undo only for the last commit in the branch
-      if (isHeadCommit(e)) {
+      if (commitEditingRequirements.isHeadCommit()) {
         e.getPresentation().setEnabled(true);
       }
       else {
@@ -75,7 +75,7 @@ public class GitUncommitAction extends GitCommitEditingAction {
     chooser.show();
     LocalChangeList selectedList = chooser.getSelectedList();
     if (selectedList != null) {
-      resetInBackground(commitEditingRequirements.getLogData(), getRepository(e), commit, selectedList);
+      resetInBackground(commitEditingRequirements.getLogData(), commitEditingRequirements.getRepository(), commit, selectedList);
     }
   }
 

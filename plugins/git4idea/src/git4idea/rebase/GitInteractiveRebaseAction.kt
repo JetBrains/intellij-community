@@ -9,12 +9,12 @@ import git4idea.rebase.interactive.startInteractiveRebase
 
 class GitInteractiveRebaseAction : GitCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
-    prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.rebase.name"))
+    prohibitRebaseDuringRebase(e, commitEditingRequirements, GitBundle.getString("rebase.log.action.operation.rebase.name"))
   }
 
   override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit
-    val repository = getRepository(e)
+    val repository = commitEditingRequirements.repository
 
     if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
       interactivelyRebaseUsingLog(repository, commit, commitEditingRequirements.logData)

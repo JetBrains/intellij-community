@@ -26,7 +26,7 @@ abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
     }
 
     val executors = repository.vcs.commitExecutors +
-                    if (getProhibitedStateMessage(e, GitBundle.getString("rebase.log.action.operation.rebase.name")) == null) {
+                    if (getProhibitedStateMessage(commitEditingRequirements, GitBundle.getString("rebase.log.action.operation.rebase.name")) == null) {
                       listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
                     }
                     else {

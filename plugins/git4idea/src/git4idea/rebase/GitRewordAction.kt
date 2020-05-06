@@ -35,13 +35,13 @@ private val LOG: Logger = logger<GitRewordAction>()
 
 class GitRewordAction : GitCommitEditingAction() {
   override fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
-    prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
+    prohibitRebaseDuringRebase(e, commitEditingRequirements, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
   }
 
   override fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit
     val project = e.project!!
-    val repository = getRepository(e)
+    val repository = commitEditingRequirements.repository
     val details = getOrLoadDetails(project, commitEditingRequirements.logData, commit)
 
     RewordDialog(project, commitEditingRequirements.logData, details, repository).show()
