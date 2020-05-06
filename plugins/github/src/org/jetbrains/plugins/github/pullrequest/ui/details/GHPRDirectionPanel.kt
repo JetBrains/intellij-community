@@ -16,6 +16,7 @@ import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import javax.swing.JLabel
 
@@ -52,17 +53,8 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
   }
 
   companion object {
-    private fun createLabel() = object : JBLabel(GithubIcons.Branch) {
-      init {
-        updateColors()
-      }
-
-      override fun updateUI() {
-        super.updateUI()
-        updateColors()
-      }
-
-      private fun updateColors() {
+    private fun createLabel() = JBLabel(GithubIcons.Branch).also {
+      GithubUIUtil.addUIUpdateListener(it) {
         foreground = CurrentBranchComponent.TEXT_COLOR
         background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
       }

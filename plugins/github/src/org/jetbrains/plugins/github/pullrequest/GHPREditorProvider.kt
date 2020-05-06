@@ -171,9 +171,8 @@ internal class GHPREditorProvider : FileEditorProvider, DumbAware {
       override fun setLoading(isLoading: Boolean) {
         loadingIcon.isVisible = isLoading
       }
-
-      override fun updateUI() {
-        super.updateUI()
+    }.also {
+      GithubUIUtil.addUIUpdateListener(it) {
         background = EditorColorsManager.getInstance().globalScheme.defaultBackground
       }
     }

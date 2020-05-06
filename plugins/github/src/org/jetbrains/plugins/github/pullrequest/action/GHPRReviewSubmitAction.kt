@@ -30,6 +30,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingRev
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.InlineIconButton
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import java.awt.FlowLayout
@@ -224,9 +225,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       override fun isDefaultButton(): Boolean {
         return getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
       }
-
-      override fun updateUI() {
-        super.updateUI()
+    }.also {
+      GithubUIUtil.addUIUpdateListener(it) {
         border = object : DarculaButtonPainter() {
           override fun getBorderInsets(c: Component) = JBUI.insets(0)
         }

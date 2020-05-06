@@ -28,6 +28,7 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.event.*
+import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -36,6 +37,12 @@ import javax.swing.event.HyperlinkEvent
 
 object GithubUIUtil {
   val avatarSize = JBUI.uiIntValue("Github.Avatar.Size", 20)
+
+  fun <T : JComponent> addUIUpdateListener(component: T, listener: T.() -> Unit) {
+    component.addPropertyChangeListener("UI", PropertyChangeListener {
+      listener.invoke(component)
+    })
+  }
 
   fun focusPanel(panel: JComponent) {
     val focusManager = IdeFocusManager.findInstanceByComponent(panel)
