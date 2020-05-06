@@ -1525,9 +1525,7 @@
                      implementationClass="com.intellij.codeInspection.streamToLoop.StreamToLoopInspection"
                      key="inspection.stream.to.loop.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalToIf"
-                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
-                     isInternal="true"
-                     level="INFORMATION"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.optionalToIf.OptionalToIfInspection"
                      key="inspection.optional.to.if.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2streamapi"
