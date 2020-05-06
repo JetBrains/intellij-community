@@ -21,9 +21,6 @@
 
     <extensionPoint name="completion.preselectionBehaviourProvider" interface="com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider" dynamic="true"/>
 
-    <extensionPoint name="completion.ignoringDumbnessAllowed" beanClass="com.intellij.codeInsight.completion.CompletionIgnoreDumbnessEP"
-                    dynamic="true"/>
-
     <extensionPoint name="lookup.charFilter" interface="com.intellij.codeInsight.lookup.CharFilter" dynamic="true"/>
     <extensionPoint name="lookup.actionProvider" interface="com.intellij.codeInsight.lookup.LookupActionProvider" dynamic="true"/>
 
