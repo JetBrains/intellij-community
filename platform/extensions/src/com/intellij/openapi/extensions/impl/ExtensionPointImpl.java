@@ -32,6 +32,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @SuppressWarnings("SynchronizeOnThis")
 @ApiStatus.Internal
@@ -68,7 +69,8 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized", "unchecked"})
   private ExtensionPointListener<T> @NotNull [] myListeners = (ExtensionPointListener<T>[])EMPTY_ARRAY;
 
-  @Nullable Class<T> myExtensionClass;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private @Nullable Class<T> myExtensionClass;
 
   private final boolean isDynamic;
 
@@ -77,10 +79,12 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   ExtensionPointImpl(@NotNull String name,
                      @NotNull String className,
                      @NotNull PluginDescriptor pluginDescriptor,
+                     @Nullable Class<T> extensionClass,
                      boolean dynamic) {
     myName = name;
     myClassName = className;
     this.pluginDescriptor = pluginDescriptor;
+    myExtensionClass = extensionClass;
     isDynamic = dynamic;
   }
 
@@ -344,8 +348,14 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   @Override
+  public final Spliterator<T> spliterator() {
+    return Spliterators.spliterator(iterator(), size(), Spliterator.IMMUTABLE | Spliterator.NONNULL | Spliterator.DISTINCT);
+  }
+
+  @Override
   public final @NotNull Stream<T> extensions() {
-    return getExtensionList().stream();
+    List<T> result = myExtensionsCache;
+    return result == null ? StreamSupport.stream(spliterator(), false) : result.stream();
   }
 
   @Override
@@ -423,7 +433,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return ActivityCategory.MODULE_EXTENSION;
   }
 
-  final @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
+  private @Nullable T processAdapter(@NotNull ExtensionComponentAdapter adapter) {
     try {
       return adapter.createInstance(componentManager);
     }

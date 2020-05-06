@@ -21,7 +21,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> {
                             @NotNull String className,
                             @NotNull PluginDescriptor pluginDescriptor,
                             boolean dynamic) {
-    super(name, className, pluginDescriptor, dynamic);
+    super(name, className, pluginDescriptor, null, dynamic);
   }
 
   @Override
