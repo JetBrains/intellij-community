@@ -89,13 +89,6 @@ public abstract class ProjectOpenProcessor {
     });
   }
 
-  @NotNull
-  public static List<ProjectOpenProcessor> getOpenProcessors(@NotNull VirtualFile file, boolean onlyIfExistingProjectFile) {
-    return ContainerUtil.filter(EXTENSION_POINT_NAME.getExtensionList(), provider -> {
-      return provider.canOpenProject(file) && (!onlyIfExistingProjectFile || provider.isProjectFile(file));
-    });
-  }
-
   /**
    * @return true if this open processor should be ranked over general .idea and .ipr files even if those exist.
    */
