@@ -2150,13 +2150,11 @@ public abstract class LongRangeSet {
           return "!= " + diff.min();
         }
         if (diff instanceof Range && !diff.intersects(this)) {
-          if (diff.max() == set.max()) {
-            return "< " + diff.min();
-          }
-          if (diff.min() == set.min()) {
-            return "> " + diff.max();
-          }
-          return "< " + diff.min() + " or > " + diff.max();
+          String min =
+            diff.min() == set.min() ? "" : diff.min() == set.min() + 1 ? formatNumber(set.min()) : "<= " + formatNumber(diff.min() - 1);
+          String max =
+            diff.max() == set.max() ? "" : diff.max() == set.max() - 1 ? formatNumber(set.max()) : ">= " + formatNumber(diff.max() + 1);
+          return StreamEx.of(min, max).without("").joining(" or ");
         }
       }
       if (myRanges.length == 4 && myRanges[0] == myRanges[1] && myRanges[2] == myRanges[3]) {

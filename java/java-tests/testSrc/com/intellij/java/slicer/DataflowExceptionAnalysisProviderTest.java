@@ -65,7 +65,7 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testAssertAnd() {
     doTest("java.lang.AssertionError", "",
-           "Find why 'idx' could be < 1 or > 3",
+           "Find why 'idx' could be <= 0 or >= 4",
            "class X {static void test(int idx) {<caret>assert idx > 0 && idx < 4;}}");
   }
 
@@ -77,13 +77,13 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
 
   public void testAssertByte() {
     doTest("java.lang.AssertionError", "",
-           "Find why 'idx' could be < 1",
+           "Find why 'idx' could be <= 0",
            "class X {static void test(byte idx) {<caret>assert idx > 0;}}");
   }
 
   public void testAssertShort() {
     doTest("java.lang.AssertionError", "",
-           "Find why 'idx' could be < 1",
+           "Find why 'idx' could be <= 0",
            "class X {static void test(short idx) {<caret>assert idx > 0;}}");
   }
 
