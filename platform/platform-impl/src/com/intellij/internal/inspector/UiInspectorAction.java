@@ -1337,7 +1337,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       StringBuilder classHierarchy = new StringBuilder();
       for (Class<?> cl = clazz.getSuperclass(); cl != null; cl = cl.getSuperclass()) {
-        if (classHierarchy.length() > 0) classHierarchy.append(" -> ");
+        if (classHierarchy.length() > 0) classHierarchy.append(" ").append(UIUtil.rightArrow()).append(" ");
         classHierarchy.append(cl.getName());
         if (JComponent.class.getName().equals(cl.getName())) break;
       }
