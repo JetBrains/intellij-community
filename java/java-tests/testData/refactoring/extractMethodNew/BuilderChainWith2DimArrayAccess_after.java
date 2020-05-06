@@ -9,8 +9,10 @@ class Foo {
     }
 
     private boolean newMethod(String[][] a, int i, int j) {
-        if (a[i][j].length() > 3 && i % 3 == 0)
+        if (a[i][j].length() > 3 && i % 3 == 0) {
+            System.out.println();
             return true;
+        }
         return false;
     }
 }
