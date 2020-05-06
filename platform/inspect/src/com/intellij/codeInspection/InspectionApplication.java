@@ -216,6 +216,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         });
         scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
       }
+      LOG.info("Used scope: " + scope.toString());
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
     }
   }
