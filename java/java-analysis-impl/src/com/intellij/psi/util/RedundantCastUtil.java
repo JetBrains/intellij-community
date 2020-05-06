@@ -4,6 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -522,38 +523,6 @@ public class RedundantCastUtil {
         }
       }
       else {
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
-        if (parent instanceof PsiConditionalExpression) {
-          //branches need to be of the same type
-          final PsiType operandType = operand.getType();
-          final PsiType conditionalType = ((PsiConditionalExpression)parent).getType();
-          if (!Comparing.equal(operandType, conditionalType)) {
-            if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
-              return;
-            }
-            if (!checkResolveAfterRemoveCast(parent)) return;
-            if (!PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
-              final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
-              final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
-              final PsiExpression opposite = PsiTreeUtil.isAncestor(thenExpression, typeCast, false) ? elseExpression : thenExpression;
-              if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
-            }
-          }
-        }
-        else if (parent instanceof PsiSynchronizedStatement &&
-                 expr != null &&
-                 (expr.getType() instanceof PsiPrimitiveType || expr instanceof PsiFunctionalExpression)) {
-          return;
-        }
-        else if (expr instanceof PsiFunctionalExpression) {
-          if (parent instanceof PsiReferenceExpression) {
-            return;
-          }
-
-          final PsiType functionalInterfaceType = PsiTypesUtil.getExpectedTypeByParent(typeCast);
-          //noinspection SuspiciousNameCombination
-          if (topCastType != null && functionalInterfaceType != null && !TypeConversionUtil.isAssignable(topCastType, functionalInterfaceType, false)) return;
-        }
         processAlreadyHasTypeCast(typeCast);
       }
       super.visitTypeCastExpression(typeCast);
@@ -605,13 +574,6 @@ public class RedundantCastUtil {
 
       if (parent instanceof PsiLambdaExpression) return;
 
-      if (parent instanceof PsiConditionalExpression) {
-        PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-        if (gParent instanceof PsiLambdaExpression) return;
-        if (gParent instanceof PsiReturnStatement &&
-            PsiTreeUtil.getParentOfType(gParent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression) return;
-      }
-
       if (isTypeCastSemantic(typeCast)) return;
 
       PsiTypeElement typeElement = typeCast.getCastType();
@@ -622,6 +584,12 @@ public class RedundantCastUtil {
 
       PsiType opType = operand.getType();
       final PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(typeCast);
+
+      if (parent instanceof PsiSynchronizedStatement &&
+               (opType instanceof PsiPrimitiveType || operand instanceof PsiFunctionalExpression)) {
+        return;
+      }
+      
       if (expectedTypeByParent != null) {
         try {
           final Project project = operand.getProject();
@@ -639,19 +607,35 @@ public class RedundantCastUtil {
               return;
             }
           }
-
-          if (opType != null) {
-            if (operand instanceof PsiConditionalExpression) {
-              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)operand).getThenExpression())) return;
-              if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)operand).getElseExpression())) return;
-            }
-          }
         }
         catch (IncorrectOperationException ignore) {}
       }
 
       if (opType == null) return;
+      if (operand instanceof PsiConditionalExpression) {
+        if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)operand).getThenExpression())) return;
+        if (!isApplicableForConditionalBranch(opType, ((PsiConditionalExpression)operand).getElseExpression())) return;
+      }
+
+      if (operand instanceof PsiFunctionalExpression) {
+        if (expectedTypeByParent != null) {
+          if (expectedTypeByParent.equals(castTo)) {
+            addToResults(typeCast);
+            return;
+          }
+          else if (!TypeConversionUtil.isAssignable(castTo, expectedTypeByParent, false)) {
+            return;
+          }
+        }
+
+        if ((parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiSwitchLabeledRuleStatement || parent instanceof PsiConditionalExpression) &&
+            !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+          return;
+        }
+      }
+
       if (parent instanceof PsiReferenceExpression) {
+        if (operand instanceof PsiFunctionalExpression) return;
         if (castTo instanceof PsiClassType && opType instanceof PsiPrimitiveType) return; //explicit boxing
         //Check accessibility
         if (opType instanceof PsiClassType) {
@@ -675,21 +659,68 @@ public class RedundantCastUtil {
             return;
           }
         }
+        
+        PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+        if (gParent instanceof PsiLambdaExpression) return;
+        if (gParent instanceof PsiReturnStatement &&
+            PsiTreeUtil.getParentOfType(gParent, PsiMethod.class, PsiLambdaExpression.class) instanceof PsiLambdaExpression) return;
+        //branches need to be of the same type
+        final PsiType conditionalType = ((PsiConditionalExpression)parent).getType();
+        if (!Comparing.equal(opType, conditionalType)) {
+          if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
+            return;
+          }
+          if (!checkResolveAfterRemoveCast(parent)) return;
+          if (!PsiPolyExpressionUtil.isPolyExpression((PsiExpression)parent)) {
+            final PsiExpression thenExpression = ((PsiConditionalExpression)parent).getThenExpression();
+            final PsiExpression elseExpression = ((PsiConditionalExpression)parent).getElseExpression();
+            final PsiExpression opposite = PsiTreeUtil.isAncestor(thenExpression, typeCast, false) ? elseExpression : thenExpression;
+            if (opposite == null || !Comparing.equal(conditionalType, opposite.getType())) return;
+          }
+        }
+      }
 
-        if (operand instanceof PsiFunctionalExpression && !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+      if (parent instanceof PsiForeachStatement) {
+        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(opType, typeCast.getResolveScope());
+        if (collectionItemType != null && TypeConversionUtil.isAssignable(((PsiForeachStatement)parent).getIterationParameter().getType(), collectionItemType)) {
+          addToResults(typeCast);
+        }
+        return;
+      }
+      if (parent instanceof PsiThrowStatement) {
+        final PsiClass thrownClass = PsiUtil.resolveClassInType(opType);
+        if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
+          addToResults(typeCast);
+          return;
+        }
+        if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_THROWABLE)) {
+          final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);//todo lambda
+          if (method != null) {
+            for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
+              if (TypeConversionUtil.isAssignable(thrownType, opType, false)) {
+                addToResults(typeCast);
+                return;
+              }
+            }
+          }
+        }
+      }
+      if (parent instanceof PsiInstanceOfExpression) {
+        if (opType instanceof PsiPrimitiveType) return;
+        //15.20.2. Type Comparison Operator instanceof:
+        //If a cast (p15.16) of the RelationalExpression to the ReferenceType would be rejected as a compile-time error,
+        //then the instanceof relational expression likewise produces a compile-time error.
+        final PsiTypeElement checkTypeElement = ((PsiInstanceOfExpression)parent).getCheckType();
+        if (checkTypeElement != null && TypeConversionUtil.areTypesConvertible(opType, checkTypeElement.getType())) {
+          addToResults(typeCast);
           return;
         }
       }
 
-      if (operand instanceof PsiFunctionalExpression) {
-        if (expectedTypeByParent != null && expectedTypeByParent.equals(castTo)) {
-          addToResults(typeCast);
-          return;
-        }
-
-        if (parent instanceof PsiExpressionStatement &&
-            parent.getParent() instanceof PsiSwitchLabeledRuleStatement &&
-            !castTo.equals(PsiTypesUtil.getExpectedTypeByParent(parent))) {
+      if (parent instanceof PsiSwitchBlock &&
+          opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        PsiClass aClass = ((PsiClassType)opType).resolve();
+        if (aClass != null && !aClass.isEnum()) {
           return;
         }
       }
@@ -698,69 +729,13 @@ public class RedundantCastUtil {
         if (TypeConversionUtil.isAssignable(opType, castTo, false) && opType.getArrayDimensions() == castTo.getArrayDimensions()) {
           addToResults(typeCast);
         }
+        return;
       }
-      else {
-        if (parent instanceof PsiInstanceOfExpression && opType instanceof PsiPrimitiveType) {
-          return;
-        }
-        if (parent instanceof PsiForeachStatement) {
-          final PsiClassType.ClassResolveResult castResolveResult = PsiUtil.resolveGenericsClassInType(opType);
-          final PsiClass psiClass = castResolveResult.getElement();
-          if (psiClass != null) {
-            final PsiClass iterableClass = JavaPsiFacade.getInstance(parent.getProject()).findClass(CommonClassNames.JAVA_LANG_ITERABLE, psiClass.getResolveScope());
-            if (iterableClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, iterableClass, true)) {
-              final PsiTypeParameter[] iterableTypeParameters = iterableClass.getTypeParameters();
-              if (iterableTypeParameters.length == 1) {
-                final PsiType resultedParamType = TypeConversionUtil.getSuperClassSubstitutor(iterableClass, psiClass, castResolveResult.getSubstitutor()).substitute(iterableTypeParameters[0]);
-                if (resultedParamType != null &&
-                    TypeConversionUtil.isAssignable(((PsiForeachStatement)parent).getIterationParameter().getType(), resultedParamType)) {
-                  addToResults(typeCast);
-                  return;
-                }
-              }
-            }
-          } else {
-            return;
-          }
-        }
-        if (parent instanceof PsiThrowStatement) {
-          final PsiClass thrownClass = PsiUtil.resolveClassInType(opType);
-          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION)) {
-            addToResults(typeCast);
-            return;
-          }
-          if (InheritanceUtil.isInheritor(thrownClass, false, CommonClassNames.JAVA_LANG_THROWABLE)) {
-            final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-            if (method != null) {
-              for (PsiClassType thrownType : method.getThrowsList().getReferencedTypes()) {
-                if (TypeConversionUtil.isAssignable(thrownType, opType, false)) {
-                  addToResults(typeCast);
-                  return;
-                }
-              }
-            }
-          }
-        }
-        if (parent instanceof PsiInstanceOfExpression) {
-          //15.20.2. Type Comparison Operator instanceof:
-          //If a cast (p15.16) of the RelationalExpression to the ReferenceType would be rejected as a compile-time error,
-          //then the instanceof relational expression likewise produces a compile-time error.
-          final PsiTypeElement checkTypeElement = ((PsiInstanceOfExpression)parent).getCheckType();
-          if (checkTypeElement != null && TypeConversionUtil.areTypesConvertible(opType, checkTypeElement.getType())) {
-            addToResults(typeCast);
-          }
-        }
-        else if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
-                 (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
-          if (parent instanceof PsiSwitchBlock &&
-              opType instanceof PsiClassType && PsiPrimitiveType.getUnboxedType(opType) == null && !opType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            PsiClass aClass = ((PsiClassType)opType).resolve();
-            if (aClass != null && !aClass.isEnum()) {
-              return;
-            }
-          }
-          addToResults(typeCast);
-        }
+
+      
+      if (TypeConversionUtil.isAssignable(castTo, opType, false) &&
+          (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
+        addToResults(typeCast);
       }
     }
 
