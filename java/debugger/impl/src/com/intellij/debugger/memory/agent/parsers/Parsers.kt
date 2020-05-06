@@ -1,12 +1,27 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.agent.parsers
 
+import com.intellij.debugger.engine.ReferringObject
 import com.intellij.debugger.memory.agent.*
 import com.sun.jdi.*
 
+object StringParser : ResultParser<String> {
+  override fun parse(value: Value): String {
+    if (value is StringReference) {
+      return value.value()
+    }
+
+    throw UnexpectedValueFormatException("String value is expected")
+  }
+}
+
 object BooleanParser : ResultParser<Boolean> {
   override fun parse(value: Value): Boolean {
-    return (value as? BooleanValue)?.value() ?: false
+    if (value is BooleanValue) {
+      return value.value()
+    }
+
+    throw UnexpectedValueFormatException("Boolean value is expected")
   }
 }
 
@@ -44,19 +59,21 @@ object ObjectReferencesParser : ResultParser<List<ObjectReference>> {
 object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
   override fun parse(value: Value): ReferringObjectsInfo {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array of arrays is expected")
-    if (value.length() != 2) throw UnexpectedValueFormatException("Array must represent 2 values: objects and backward references")
+    if (value.length() != 3) throw UnexpectedValueFormatException("Array must represent 3 values: objects, backward references and weak/soft reachability flags")
 
     val objects = ObjectReferencesParser.parse(value.getValue(0))
-    val backwardReferences = parseLinksInfos(objects, value.getValue(1))
+    val weakSoftReachable = BooleanArrayParser.parse(value.getValue(2))
+    val backwardReferences = parseLinksInfos(objects, weakSoftReachable, value.getValue(1))
     return ReferringObjectsInfo(objects, backwardReferences)
   }
 
   private fun parseLinksInfos(
     objects: List<ObjectReference>,
-    value: Value): List<List<MemoryAgentReferenceInfo>> {
+    weakSoftReachable: List<Boolean>,
+    value: Value): List<List<ReferringObject>> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array of arrays is expected")
 
-    val result = ArrayList<List<MemoryAgentReferenceInfo>>()
+    val result = ArrayList<List<ReferringObject>>()
     for (linksInfo in value.values) {
       if (linksInfo !is ArrayReference) throw UnexpectedValueFormatException("Object references information should be represented by array")
 
@@ -65,50 +82,33 @@ object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
       val infos = linksInfo.getValue(2) as? ArrayReference ?:
                   throw UnexpectedValueFormatException("Object references information should be represented by array")
 
-      result.add(getReferenceInfos(objects, indices, kinds, infos))
+      val distinctIndices = mutableSetOf<Int>()
+      val referenceInfos =  mutableListOf<ReferringObject>()
+      for ((i, index) in indices.withIndex()) {
+        if (index == -1) {
+          referenceInfos.add(
+            MemoryAgentReferringObjectCreator.createRootReferringObject(
+              MemoryAgentReferenceKind.valueOf(kinds[i]),
+              infos.getValue(i)
+            )
+          )
+        } else if (!distinctIndices.contains(index)) {
+          distinctIndices.add(index)
+          referenceInfos.add(
+            MemoryAgentReferringObjectCreator.createReferringObject(
+              objects[index],
+              MemoryAgentReferenceKind.valueOf(kinds[i]),
+              weakSoftReachable[index],
+              infos.getValue(i)
+            )
+          )
+        }
+      }
+
+      result.add(referenceInfos)
     }
 
     return result
-  }
-
-  private fun getReferenceInfos(
-    objects: List<ObjectReference>,
-    indices: List<Int>,
-    kinds: List<Int>,
-    infos: ArrayReference): List<MemoryAgentReferenceInfo> {
-    val distinctIndices = mutableSetOf<Int>()
-    val referenceInfos =  mutableListOf<MemoryAgentReferenceInfo>()
-    for ((i, index) in indices.withIndex()) {
-      if (index == -1 || distinctIndices.contains(index)) {
-        continue
-      }
-
-      distinctIndices.add(index)
-      referenceInfos.add(
-        createReferenceInfo(
-          objects[index],
-          MemoryAgentReferenceInfo.ReferenceKind.valueOf(kinds[i]),
-          infos.getValue(i)
-        )
-      )
-    }
-
-    return referenceInfos
-  }
-
-  private fun createReferenceInfo(
-    referrer: ObjectReference,
-    kind: MemoryAgentReferenceInfo.ReferenceKind,
-    value: Value?): MemoryAgentReferenceInfo {
-    return if (value == null) SimpleReferenceInfo(referrer) else
-      when (kind) {
-        MemoryAgentReferenceInfo.ReferenceKind.FIELD,
-        MemoryAgentReferenceInfo.ReferenceKind.STATIC_FIELD ->
-          FieldReferenceInfo(referrer, IntArrayParser.parse(value)[0])
-        MemoryAgentReferenceInfo.ReferenceKind.ARRAY_ELEMENT ->
-          ArrayReferenceInfo(referrer, IntArrayParser.parse(value)[0])
-        else -> SimpleReferenceInfo(referrer)
-    }
   }
 }
 
@@ -126,5 +126,82 @@ object LongArrayParser : ResultParser<List<Long>> {
   override fun parse(value: Value): List<Long> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
     return value.values.map(LongValueParser::parse)
+  }
+}
+
+object BooleanArrayParser : ResultParser<List<Boolean>> {
+  override fun parse(value: Value): List<Boolean> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    return value.values.map(BooleanParser::parse)
+  }
+}
+
+object StringArrayParser : ResultParser<List<String?>> {
+  override fun parse(value: Value): List<String?> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    return value.values.map { it?.let { StringParser.parse(it) } }
+  }
+}
+
+object MemoryAgentReferringObjectCreator {
+  fun createRootReferringObject(
+    kind: MemoryAgentReferenceKind,
+    value: Value?): GCRootReferringObject {
+    return if (value == null) GCRootReferringObject(kind) else
+      when (kind) {
+        MemoryAgentReferenceKind.STACK_LOCAL,
+        MemoryAgentReferenceKind.JNI_LOCAL -> {
+          if (value !is ArrayReference) return GCRootReferringObject(kind)
+          val longs = LongArrayParser.parse(value.getValue(0))
+          val methodName = value.getValue(1)?.let { StringArrayParser.parse(it)[0] }
+          StackLocalReferringObject(kind, methodName, longs[0], longs[1])
+        }
+        else -> GCRootReferringObject(kind)
+      }
+  }
+
+  fun createReferringObject(
+    referrer: ObjectReference,
+    kind: MemoryAgentReferenceKind,
+    isWeakSoftReachable: Boolean,
+    value: Value?): MemoryAgentReferringObject {
+    return if (value == null) MemoryAgentSimpleReferringObject(referrer, isWeakSoftReachable) else
+      when (kind) {
+        MemoryAgentReferenceKind.FIELD,
+        MemoryAgentReferenceKind.STATIC_FIELD -> {
+          val field = getFieldByJVMTIFieldIndex(referrer, IntArrayParser.parse(value)[0]) ?:
+                      return MemoryAgentSimpleReferringObject(referrer, isWeakSoftReachable)
+          MemoryAgentFieldReferringObject(referrer, isWeakSoftReachable, field)
+        }
+        MemoryAgentReferenceKind.CONSTANT_POOL ->
+          MemoryAgentConstantPoolReferringObject(referrer, IntArrayParser.parse(value)[0])
+        MemoryAgentReferenceKind.ARRAY_ELEMENT ->
+          MemoryAgentArrayReferringObject(referrer as ArrayReference, isWeakSoftReachable, IntArrayParser.parse(value)[0])
+        else -> MemoryAgentSimpleReferringObject(referrer, isWeakSoftReachable)
+      }
+  }
+
+  private fun getFieldByJVMTIFieldIndex(reference: ObjectReference, index: Int): Field? {
+    if (index < 0) {
+      return null
+    }
+
+    val allFields = reference.referenceType().allFields()
+    val it: ListIterator<Field> = allFields.listIterator(allFields.size)
+    var currIndex = index
+    var declaringType: ReferenceType? = null
+    while (it.hasPrevious()) {
+      val field = it.previous()
+      if (field.declaringType() != declaringType) {
+        declaringType = field.declaringType()
+        val fields = declaringType.fields()
+        if (currIndex < fields.size) {
+          return fields[currIndex]
+        }
+        currIndex -= fields.size
+      }
+    }
+
+    return null
   }
 }
