@@ -550,11 +550,6 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     // project container: rest of extensions wil be mostly project level
     // module container: just use rest, area will not register unrelated extension anyway as no registered point
     containerDescriptor.extensions = epNameToExtensionElements;
-    if (containerDescriptor == moduleContainerDescriptor) {
-      epNameToExtensionElements = null;
-      area.registerExtensions(containerDescriptor.extensions, rootDescriptor, listenerCallbacks);
-      return;
-    }
 
     LinkedHashMap<String, List<Element>> other = null;
     Iterator<Map.Entry<String, List<Element>>> iterator = containerDescriptor.extensions.entrySet().iterator();
@@ -569,10 +564,18 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
     isExtensionsCleared = true;
-    epNameToExtensionElements = other;
 
     if (containerDescriptor.extensions.isEmpty()) {
       containerDescriptor.extensions = Collections.emptyMap();
+    }
+
+    if (containerDescriptor == projectContainerDescriptor) {
+      // assign unsorted to module level to avoid concurrent access during parallel module loading
+      moduleContainerDescriptor.extensions = other;
+      epNameToExtensionElements = null;
+    }
+    else {
+      epNameToExtensionElements = other;
     }
   }
 
