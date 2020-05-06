@@ -86,8 +86,8 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           false
     );
 
-    myInlineKeysNoMapping = myDataDescriptor instanceof InlineKeyDescriptor && !wantKeyMapping();
-    myExternalKeysNoMapping = !(myDataDescriptor instanceof InlineKeyDescriptor) && !wantKeyMapping();
+    myInlineKeysNoMapping = dataDescriptor instanceof InlineKeyDescriptor;
+    myExternalKeysNoMapping = !(dataDescriptor instanceof InlineKeyDescriptor);
 
     if (myBTree == null) {
       try {
@@ -122,10 +122,6 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   @NotNull
   private static Path indexFile(@NotNull Path file) {
     return file.resolveSibling(file.getFileName() + "_i");
-  }
-
-  private static boolean wantKeyMapping() {
-    return false;
   }
 
   private void initBtree(boolean initial) throws IOException {
