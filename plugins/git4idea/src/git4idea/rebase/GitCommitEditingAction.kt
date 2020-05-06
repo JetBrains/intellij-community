@@ -25,6 +25,8 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   private val LOG = logger<GitCommitEditingAction>()
 
+  protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
+
   override fun update(e: AnActionEvent) {
     super.update(e)
 
@@ -60,6 +62,18 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
           protectedBranch
         )
         return
+      }
+    }
+
+    when (val policy = prohibitRebaseDuringRebasePolicy) {
+      ProhibitRebaseDuringRebasePolicy.Allow -> {
+      }
+      is ProhibitRebaseDuringRebasePolicy.Prohibit -> {
+        val message = getProhibitedStateMessage(commitEditingRequirements, policy.operation, policy.allowRebaseIfHeadCommit)
+        if (message != null) {
+          e.presentation.description = message
+          return
+        }
       }
     }
 
@@ -129,21 +143,6 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
            }, GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"), true, data.project)
   }
 
-  protected fun prohibitRebaseDuringRebase(
-    e: AnActionEvent,
-    commitEditingRequirements: CommitEditingRequirements,
-    @Nls operation: String,
-    allowRebaseIfHeadCommit: Boolean = false
-  ) {
-    if (e.presentation.isEnabledAndVisible) {
-      val message = getProhibitedStateMessage(commitEditingRequirements, operation, allowRebaseIfHeadCommit)
-      if (message != null) {
-        e.presentation.isEnabled = false
-        e.presentation.description = message
-      }
-    }
-  }
-
   protected fun getProhibitedStateMessage(
     commitEditingRequirements: CommitEditingRequirements,
     @Nls operation: String,
@@ -170,5 +169,10 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     val project = repository.project
     val selectedCommit: VcsShortCommitDetails = log.selectedShortDetails.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
+  }
+
+  protected sealed class ProhibitRebaseDuringRebasePolicy {
+    object Allow : ProhibitRebaseDuringRebasePolicy()
+    class Prohibit(val operation: @Nls String, val allowRebaseIfHeadCommit: Boolean = false) : ProhibitRebaseDuringRebasePolicy()
   }
 }

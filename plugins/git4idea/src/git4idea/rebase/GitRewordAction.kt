@@ -2,7 +2,6 @@
 package git4idea.rebase
 
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -34,9 +33,10 @@ import git4idea.repo.GitRepository
 private val LOG: Logger = logger<GitRewordAction>()
 
 class GitRewordAction : GitCommitEditingAction() {
-  override fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
-    prohibitRebaseDuringRebase(e, commitEditingRequirements, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
-  }
+  override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
+    GitBundle.getString("rebase.log.action.operation.reword.name"),
+    true
+  )
 
   override fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit
