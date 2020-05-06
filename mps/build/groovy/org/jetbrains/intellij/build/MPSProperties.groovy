@@ -50,7 +50,14 @@ class MPSProperties extends JetBrainsProductProperties {
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
         productLayout.compatiblePluginsToIgnore = ["intellij.java.plugin"]
-        productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+        productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.stream().map({ pluginLayout ->
+            // This plugins are part of COMMUNITY_REPOSITORY_PLUGINS, but with OS restriction
+            // We make OS specific builds later so build both ignoring restriction
+            if (pluginLayout.mainModule == "intellij.laf.macos" || pluginLayout.mainModule == "intellij.laf.win10") {
+                pluginLayout.bundlingRestrictions.supportedOs = OsFamily.ALL
+            }
+            return pluginLayout
+        }).collect() + [
                 JavaPluginLayout.javaPlugin()
         ]
 
