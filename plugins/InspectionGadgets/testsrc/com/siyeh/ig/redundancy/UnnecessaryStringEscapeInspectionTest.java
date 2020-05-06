@@ -16,6 +16,7 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
   public void testNewlinesAndQuotes() { doQuickFixTest(); }
   public void testDoubleQuoteInChar() { doQuickFixTest(); }
   public void testSingleQuoteInString() { doQuickFixTest(); }
+  public void testMultipleProblemsInSingleString() { doQuickFixTest(); }
 
   protected void doQuickFixTest() {
     super.doTest();
