@@ -274,6 +274,21 @@ object EventFields {
       fuData.addVersionByString(value)
     }
   }
+
+  @JvmStatic
+  fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
+    val additionalFields = mutableListOf<EventField<*>>()
+    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
+      if (ext.groupId == groupId && ext.eventId == eventId) {
+        for (field in ext.extensionFields) {
+          if (field != null) {
+            additionalFields.add(field)
+          }
+        }
+      }
+    }
+    return ObjectEventField("additional", *additionalFields.toTypedArray())
+  }
 }
 
 /**
@@ -406,21 +421,6 @@ class EventId3<T1, T2, T3>(private val group: EventLogGroup, eventId: String, pr
 
 class VarargEventId internal constructor(private val group: EventLogGroup, eventId: String, vararg fields: EventField<*>) : BaseEventId(eventId) {
   private val fields = fields.toMutableList()
-
-  init {
-    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
-      if (ext.groupId == group.id && ext.eventId == eventId) {
-        for (field in ext.extensionFields) {
-          if (field == null) {
-            LOG.info("Null extension field returned from ${ext.javaClass.name}")
-          }
-          else {
-            this.fields.add(field)
-          }
-        }
-      }
-    }
-  }
 
   fun log(vararg pairs: EventPair<*>) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())

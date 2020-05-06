@@ -18,8 +18,10 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.internal.statistic.eventLog.EventFields;
 import com.intellij.internal.statistic.eventLog.EventPair;
+import com.intellij.internal.statistic.eventLog.ObjectEventData;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -1443,7 +1445,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     final List<EventPair> customData = new ArrayList<>();
     customData.add(EventFields.CurrentFile.with(language));
     if (action instanceof FusAwareAction) {
-      ((FusAwareAction) action).addAdditionalUsageData(event, customData);
+      List<EventPair> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
+      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData.toArray(new EventPair[0]))));
     }
     ActionsCollectorImpl.recordActionInvoked(CommonDataKeys.PROJECT.getData(dataContext), action, event, customData);
     for (AnActionListener listener : myActionListeners) {

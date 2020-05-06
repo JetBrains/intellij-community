@@ -622,8 +622,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.removeFromSideBar(id)
     }
 
-    override fun addAdditionalUsageData(event: AnActionEvent, data: MutableList<EventPair<*>>) {
-      data.add(ToolwindowFusEventFields.TOOLWINDOW with id)
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
     }
   }
 
@@ -648,8 +648,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       toolWindowManager.setContentUiType(id, if (state) ToolWindowContentUiType.COMBO else ToolWindowContentUiType.TABBED)
     }
 
-    override fun addAdditionalUsageData(event: AnActionEvent, data: MutableList<EventPair<*>>) {
-      data.add(ToolwindowFusEventFields.TOOLWINDOW with id)
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with id)
     }
   }
 

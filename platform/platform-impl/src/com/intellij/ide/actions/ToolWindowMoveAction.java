@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public final class ToolWindowMoveAction extends DumbAwareAction implements FusAwareAction {
@@ -166,11 +167,12 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   }
 
   @Override
-  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull List<EventPair> data) {
+  public @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event) {
     ToolWindow toolWindow = getToolWindow(event);
     if (toolWindow != null) {
-      data.add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
+      return Collections.singletonList(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
     }
+    return Collections.emptyList();
   }
 
   public static final class Group extends DefaultActionGroup {
