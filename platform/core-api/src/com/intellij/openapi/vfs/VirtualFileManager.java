@@ -70,7 +70,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @deprecated Use {@link VirtualFileLookup#newLookup()} builder instead
-   * @see VirtualFileLookupService#newLookup()
+   * @see VirtualFileLookup#newLookup()
    * @see VirtualFileLookup#fromUrl(String)
    */
   @Deprecated
@@ -80,7 +80,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @deprecated Use {@link VirtualFileLookup#newLookup()} builder instead
-   * @see VirtualFileLookupService#newLookup()
+   * @see VirtualFileLookup#newLookup()
    * @see VirtualFileLookup#withRefresh()
    * @see VirtualFileLookup#fromUrl(String)
    */
