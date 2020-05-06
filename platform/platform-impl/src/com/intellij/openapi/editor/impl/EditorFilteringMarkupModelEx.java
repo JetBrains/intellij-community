@@ -84,6 +84,36 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
+  public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener) {
+    myDelegate.addMarkupModelListener(parentDisposable, createFilteringListener(listener));
+  }
+
+  @NotNull
+  private MarkupModelListener createFilteringListener(@NotNull MarkupModelListener listener) {
+    return new MarkupModelListener() {
+      @Override
+      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        if (isAvailable(highlighter)) {
+          listener.afterAdded(highlighter);
+        }
+      }
+
+      @Override
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        if (isAvailable(highlighter)) {
+          listener.beforeRemoved(highlighter);
+        }
+      }
+
+      @Override
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
+        if (isAvailable(highlighter)) {
+          listener.attributesChanged(highlighter, renderersChanged, fontStyleOrColorChanged);
+        }
+      }
+    };
+  }
+  @Override
   public void dispose() {
   }
 
@@ -95,11 +125,6 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @NotNull
   public Document getDocument() {
     return myDelegate.getDocument();
-  }
-
-  @Override
-  public void addMarkupModelListener(@NotNull Disposable parentDisposable, @NotNull MarkupModelListener listener) {
-    myDelegate.addMarkupModelListener(parentDisposable, listener);
   }
 
   @Override

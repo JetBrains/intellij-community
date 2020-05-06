@@ -54,6 +54,7 @@ import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.Processor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -128,7 +129,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   // null renderer means we should not show traffic light icon
   private @Nullable ErrorStripeRenderer myErrorStripeRenderer;
   private final MergingUpdateQueue myStatusUpdates;
-  private final List<ErrorStripeListener> myErrorMarkerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final ErrorStripeMarkersModel myErrorStripeMarkersModel;
 
   private boolean dimensionsAreValid;
   private int myEditorScrollbarTop = -1;
@@ -320,6 +321,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     });
     myStatusUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
+
+    myErrorStripeMarkersModel = new ErrorStripeMarkersModel(myEditor);
   }
 
   @Override
@@ -682,7 +685,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
     scrollingModel.enableAnimation();
     if (marker != null) {
-      fireErrorMarkerClicked(marker, e);
+      myErrorStripeMarkersModel.fireErrorMarkerClicked(marker, e);
     }
   }
 
@@ -692,8 +695,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       disposeErrorPanel();
       MyErrorPanel panel = new MyErrorPanel();
       myEditor.getVerticalScrollBar().setPersistentUI(panel);
+      rebuildErrorStripeMarksModel();
     }
     else {
+      myErrorStripeMarkersModel.clear();
       myEditor.getVerticalScrollBar().setPersistentUI(JBScrollBar.createUI(null));
     }
   }
@@ -701,6 +706,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private @Nullable MyErrorPanel getErrorPanel() {
     ScrollBarUI ui = myEditor.getVerticalScrollBar().getUI();
     return ui instanceof MyErrorPanel ? (MyErrorPanel)ui : null;
+  }
+
+  @NotNull ErrorStripeMarkersModel getErrorStripeMarkersModel() {
+    return myErrorStripeMarkersModel;
   }
 
   @Override
@@ -771,6 +780,22 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     if (panel != null) {
       panel.uninstallListeners();
     }
+  }
+
+  public void rebuild() {
+    rebuildErrorStripeMarksModel();
+  }
+
+  private void rebuildErrorStripeMarksModel() {
+    ErrorStripeMarkersModel errorStripeMarkersModel = myErrorStripeMarkersModel;
+    errorStripeMarkersModel.clear();
+    Processor<RangeHighlighterEx> processor = ex -> {
+      errorStripeMarkersModel.afterAdded(ex);
+      return true;
+    };
+    int textLength = myEditor.getDocument().getTextLength();
+    processRangeHighlightersOverlappingWith(0, textLength, processor);
+    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, processor);
   }
 
   void repaint() {
@@ -978,13 +1003,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       Shape oldClip = g.getClip();
       g.clipRect(clip.x, clip.y, clip.width, clip.height);
 
-      drawMarkup(g, startOffset, endOffset,
-                 myEditor.getFilteredDocumentMarkupModel(), EditorMarkupModelImpl.this);
+      drawErrorStripeMarkers(g, startOffset, endOffset);
 
       g.setClip(oldClip);
     }
 
-    private void drawMarkup(final @NotNull Graphics g, int startOffset, int endOffset, @NotNull MarkupModelEx markup1, @NotNull MarkupModelEx markup2) {
+    private void drawErrorStripeMarkers(final @NotNull Graphics g, int startOffset, int endOffset) {
       final Queue<PositionedStripe> thinEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
       final Queue<PositionedStripe> wideEnds = new PriorityQueue<>(5, Comparator.comparingInt(o -> o.yEnd));
       // sorted by layer
@@ -993,16 +1017,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<RangeHighlighterEx> iterator1 =
-        markup1.overlappingIterator(startOffset, endOffset, false, true, myEditor.getColorsScheme());
-      MarkupIterator<RangeHighlighterEx> iterator2 =
-        markup2.overlappingIterator(startOffset, endOffset, false, true, myEditor.getColorsScheme());
-      MarkupIterator<RangeHighlighterEx> iterator =
-        MarkupIterator.mergeIterators(iterator1, iterator2, RangeHighlighterEx.BY_AFFECTED_START_OFFSET);
+      MarkupIterator<ErrorStripeMarkerImpl> iterator = myErrorStripeMarkersModel.overlappingIterator(startOffset, endOffset);
       try {
-        ContainerUtil.process(iterator, highlighter -> {
-          Color color = highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme());
-          if (color == null) return true;
+        ContainerUtil.process(iterator, errorStripeMarker -> {
+          RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
           boolean isThin = highlighter.isThinErrorStripeMark();
           int[] yStart = isThin ? thinYStart : wideYStart;
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
@@ -1029,6 +1047,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
               break;
             }
           }
+          Color color = highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme());
+          if (color == null) return true;
+
           if (stripe == null) {
             // started new stripe, draw previous above
             if (i == 0 && yStart[0] != ys) {
@@ -1265,17 +1286,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                                   EditorEx.VERTICAL_SCROLLBAR_RIGHT, ERROR_STRIPE_TOOLTIP_GROUP, hintHint);
   }
 
-  private void fireErrorMarkerClicked(RangeHighlighter marker, MouseEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ErrorStripeEvent event = new ErrorStripeEvent(getEditor(), e, marker);
-    for (ErrorStripeListener listener : myErrorMarkerListeners) {
-      listener.errorMarkerClicked(event);
-    }
-  }
-
   @Override
   public void addErrorMarkerListener(final @NotNull ErrorStripeListener listener, @NotNull Disposable parent) {
-    ContainerUtil.add(listener, myErrorMarkerListeners, parent);
+    myErrorStripeMarkersModel.addErrorMarkerListener(listener, parent);
   }
 
   private void markDirtied(@NotNull ProperTextRange yPositions) {
