@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.hints.BlockConstrainedPresentation;
 import com.intellij.codeInsight.hints.BlockConstraints;
 import com.intellij.codeInsight.hints.BlockInlayRenderer;
-import com.intellij.codeInsight.hints.InlayPresentationFactory;
 import com.intellij.codeInsight.hints.presentation.*;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInspection.SmartHashMap;
@@ -15,7 +14,9 @@ import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -24,10 +25,11 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -48,21 +50,11 @@ public class ProjectProblemPassUtils {
                                                     @NotNull Set<PsiElement> brokenUsages) {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
-    InlayPresentation usagesPresentation = getUsagesPresentation(project, factory, element, brokenUsages, column, columnWidth);
-    InlayPresentation settingsPresentation = getSettingsPresentation(project, factory);
-    InlayPresentation settingsPlaceholder = new SpacePresentation(columnWidth * 5, 0);
-    return createTopLevelPresentation(factory, usagesPresentation, settingsPresentation, settingsPlaceholder);
-  }
-
-  private static InlayPresentation getUsagesPresentation(Project project,
-                                                         PresentationFactory factory,
-                                                         PsiElement element,
-                                                         Set<PsiElement> brokenUsages,
-                                                         int column,
-                                                         int columnWidth) {
     SpacePresentation usagesOffset = new SpacePresentation(column * columnWidth, 0);
     InlayPresentation textPresentation = factory.smallText(JavaErrorBundle.message("project.problems.broken.usages", brokenUsages.size()));
-    InlayPresentation usagesPresentation = factory.referenceOnHover(textPresentation, (e, p) -> {
+    TextAttributes errorAttrs = editor.getColorsScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+    InlayPresentation errorTextPresentation = new AttributesTransformerPresentation(textPresentation, __ -> errorAttrs);
+    InlayPresentation usagesPresentation = factory.referenceOnHover(errorTextPresentation, (e, p) -> {
       if (brokenUsages.size() == 1) {
         PsiElement usage = brokenUsages.iterator().next();
         if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
@@ -72,43 +64,18 @@ public class ProjectProblemPassUtils {
                                  JavaErrorBundle.message("project.problems.title"), project);
       }
     });
-    SpacePresentation settingsOffset = new SpacePresentation(columnWidth, 0);
-    return factory.seq(usagesOffset, usagesPresentation, settingsOffset);
-  }
 
-  private static InlayPresentation getSettingsPresentation(Project project, PresentationFactory factory) {
-    InlayPresentation textPresentation = factory.smallText("Settings...");
-    return factory.referenceOnHover(textPresentation, (event, translated) -> {
-      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE);
+    JPopupMenu popupMenu = new JPopupMenu();
+    JMenuItem item = new JMenuItem(JavaErrorBundle.message("project.problems.settings"));
+    item.addActionListener(e -> InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE));
+    popupMenu.add(item);
+
+    InlayPresentation withSettings = factory.onClick(usagesPresentation, MouseButton.Right, (e, __) -> {
+      popupMenu.show(e.getComponent(), e.getX(), e.getY());
+      return Unit.INSTANCE;
     });
-  }
 
-  private static InlayPresentation createTopLevelPresentation(PresentationFactory factory,
-                                                              InlayPresentation usages,
-                                                              InlayPresentation settings,
-                                                              InlayPresentation settingsPlaceholder) {
-    BiStatePresentation settingsOrPlaceholder = new BiStatePresentation(() -> settings, () -> settingsPlaceholder, false) {
-      @Override
-      public int getWidth() {
-        return Math.max(settings.getWidth(), settingsPlaceholder.getWidth());
-      }
-
-      @Override
-      public int getHeight() {
-        return Math.max(settings.getHeight(), settingsPlaceholder.getHeight());
-      }
-    };
-    return factory.onHover(factory.seq(usages, settingsOrPlaceholder), new InlayPresentationFactory.HoverListener() {
-      @Override
-      public void onHover(@NotNull MouseEvent event, @NotNull Point translated) {
-        settingsOrPlaceholder.setFirst();
-      }
-
-      @Override
-      public void onHoverFinished() {
-        settingsOrPlaceholder.setSecond();
-      }
-    });
+    return factory.seq(usagesOffset, withSettings);
   }
 
   static @NotNull BlockInlayRenderer createBlockRenderer(@NotNull InlayPresentation presentation) {
