@@ -5,9 +5,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.StructuralSearchException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +64,9 @@ class SSBasedInspectionCompiledPatternsCache {
           continue;
         }
         try {
-          final Matcher matcher = new Matcher(myProject, configuration.getMatchOptions());
+          final MatchOptions matchOptions = configuration.getMatchOptions();
+          final CompiledPattern compiledPattern = PatternCompiler.compilePattern(myProject, matchOptions, false, true);
+          final Matcher matcher = (compiledPattern == null) ? null : new Matcher(myProject, matchOptions, compiledPattern);
           newCache.put(configuration, matcher);
         }
         catch (StructuralSearchException e) {

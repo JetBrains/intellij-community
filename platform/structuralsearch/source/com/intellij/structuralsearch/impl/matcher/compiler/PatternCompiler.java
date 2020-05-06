@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,6 +47,7 @@ import java.util.regex.Pattern;
  */
 public class PatternCompiler {
 
+  private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
 
   public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
@@ -53,13 +55,16 @@ public class PatternCompiler {
     return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
   }
 
-  @NotNull
+  @Nullable
   private static CompiledPattern doCompilePattern(Project project, MatchOptions options,
                                                   boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType(), project);
-    assert profile != null : "no profile found for " + options.getFileType().getDescription();
+    if (profile == null) {
+      LOG.warn("no profile found for " + options.getFileType().getDescription());
+      return null;
+    }
     final CompiledPattern result = profile.createCompiledPattern();
 
     final String[] prefixes = result.getTypedVarPrefixes();

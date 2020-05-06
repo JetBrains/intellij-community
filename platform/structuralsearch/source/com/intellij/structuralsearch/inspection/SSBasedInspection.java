@@ -116,6 +116,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
       final Configuration configuration = entry.getKey();
       final Matcher matcher = entry.getValue();
+      if (matcher == null) {
+        continue;
+      }
       matcher.getMatchContext().setSink(new DuplicateFilteringResultSink(new InspectionResultSink(processor, configuration)));
     }
 
