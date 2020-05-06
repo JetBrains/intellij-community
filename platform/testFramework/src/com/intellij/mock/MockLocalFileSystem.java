@@ -31,12 +31,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files) { }
-
-  @Override
-  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) { }
-
-  @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) { }
 
   @Override

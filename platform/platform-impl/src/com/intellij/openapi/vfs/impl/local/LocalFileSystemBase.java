@@ -189,11 +189,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public void refreshIoFiles(@NotNull Iterable<? extends File> files) {
-    refreshIoFiles(files, false, false, null);
-  }
-
-  @Override
   public void refreshIoFiles(@NotNull Iterable<? extends File> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
     VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
@@ -218,10 +213,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     }
   }
 
-  @Override
-  public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files) {
-    refreshFiles(files, false, false, null);
-  }
 
   @Override
   public void refreshFiles(@NotNull Iterable<? extends VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
