@@ -705,7 +705,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   public void show() {
     super.show();
     final FeatureUsageData featureUsageData = collectStatistics();
-    FUCounterUsageLogger.getInstance().logEvent("java.extract.method","action.performed", featureUsageData);
+    FUCounterUsageLogger.getInstance().logEvent("java.extract.method","dialog.closed", featureUsageData);
   }
 
   private static class ParameterInfo {
@@ -759,8 +759,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       data.addData("return_changed", getReturnType() != myReturnType);
     }
     if (myMakeStatic != null && myMakeStatic.isEnabled()) {
-      String key = myVariableData.isPassFields() ? "static_pass_fields" : "static";
-      data.addData(key, myMakeStatic.isSelected());
+      data.addData("static", myMakeStatic.isSelected());
+      data.addData("static_pass_fields_available", myVariableData.isPassFields());
     }
     if (myMakeVarargs != null){
       data.addData("make_varargs", myMakeVarargs.isSelected());
