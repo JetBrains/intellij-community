@@ -5,8 +5,12 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.projectView.impl.ProjectViewPane
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
@@ -17,14 +21,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.CheckBoxWithDescription
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.XDebuggerUtil
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonRunConfigurationProducer
@@ -76,8 +85,15 @@ private object PyWelcome {
     if (PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject &&
         baseDir.children.filterNot { ProjectCoreUtil.isProjectOrWorkspaceFile(it) }.isEmpty()) {
       prepareFileAndOpen(project, baseDir).onSuccess {
-        if (it != null) createRunConfiguration(project, it)
+        if (it != null) {
+          // expand tree after the welcome script is created, otherwise expansion will have no effect on empty tree
+          expandProjectTree(project)
+          createRunConfiguration(project, it)
+        }
       }
+    }
+    else {
+      expandProjectTree(project)
     }
   }
 
@@ -103,6 +119,40 @@ private object PyWelcome {
       ?.let {
         RunManager.getInstance(project).addConfiguration(it.configurationSettings)
       }
+  }
+
+  @CalledInAny
+  private fun expandProjectTree(project: Project) {
+    val toolWindow = getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)
+    if (toolWindow == null) {
+      val listener = ProjectViewListener(project)
+      // collected listener will release the connection
+      project.messageBus.connect(listener).subscribe(ToolWindowManagerListener.TOPIC, listener)
+    }
+    else {
+      StartupManager.getInstance(project).runAfterOpened(
+        DumbAwareRunnable {
+          AppUIExecutor
+            .onUiThread(ModalityState.NON_MODAL)
+            .expireWith(project)
+            .submit {
+              val pane = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID)
+              if (pane == null) {
+                LOG.warn("Project view pane is null")
+                return@submit
+              }
+
+              val tree = pane.tree
+              if (tree == null) {
+                LOG.warn("Project view tree is null")
+                return@submit
+              }
+
+              TreeUtil.expand(tree, 2)
+            }
+        }
+      )
+    }
   }
 
   private fun prepareFile(project: Project, baseDir: VirtualFile): PsiFile? {
@@ -166,5 +216,18 @@ private object PyWelcome {
     PsiDocumentManager.getInstance(project).commitDocument(document)
 
     return breakpointLine
+  }
+
+  private class ProjectViewListener(private val project: Project) : ToolWindowManagerListener, Disposable {
+
+    override fun toolWindowsRegistered(ids: List<String>) {
+      if (ToolWindowId.PROJECT_VIEW in ids) {
+        Disposer.dispose(this) // to release message bus connection
+        expandProjectTree(project)
+      }
+    }
+
+    override fun dispose() {
+    }
   }
 }
