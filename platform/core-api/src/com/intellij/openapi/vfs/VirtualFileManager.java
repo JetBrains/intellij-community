@@ -70,29 +70,21 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * @deprecated Use {@link VirtualFileLookup#newLookup()} builder instead
+   * @see VirtualFileLookupService#newLookup()
    * @see VirtualFileLookup#fromUrl(String)
    */
   @Deprecated
-  @kotlin.Deprecated(message = "Use [VirtualFileLookup]",
-    replaceWith = @kotlin.ReplaceWith(
-      imports = "com.intellij.openapi.vfs.VirtualFileLookup",
-      expression = "VirtualFileLookup.newLookup().fromUrl(url)")
-  )
   public final @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
     return VirtualFileLookup.newLookup().fromUrl(url);
   }
 
   /**
    * @deprecated Use {@link VirtualFileLookup#newLookup()} builder instead
+   * @see VirtualFileLookupService#newLookup()
    * @see VirtualFileLookup#withRefresh()
    * @see VirtualFileLookup#fromUrl(String)
    */
   @Deprecated
-  @kotlin.Deprecated(message = "Use [VirtualFileLookup]",
-    replaceWith = @kotlin.ReplaceWith(
-      imports = "com.intellij.openapi.vfs.VirtualFileLookup",
-      expression = "VirtualFileLookup.newLookup().withRefresh().fromUrl(url)")
-  )
   public final @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
     return VirtualFileLookup.newLookup().withRefresh().fromUrl(url);
   }
