@@ -154,7 +154,6 @@ public abstract class BaseConfigurationTestCase extends JavaProjectTestCase {
                                                           @NotNull MapDataContext dataContext) {
     ConfigurationContext context = createContext(psiElement, dataContext);
     RunConfigurationProducer producer = RunConfigurationProducer.getInstance(producerClass);
-    assert producer != null;
     ConfigurationFromContext fromContext = producer.createConfigurationFromContext(context);
     assertNotNull(fromContext);
     return (TestNGConfiguration)fromContext.getConfiguration();
