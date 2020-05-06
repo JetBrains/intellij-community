@@ -248,7 +248,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun extractProblems(virtualFile: VirtualFile, inlay: Inlay<*>): String {
-    data class Problem(val fileName: String, val offset: Int, val selectedElement: String, val context: String?)
+    data class Problem(val fileName: String, val offset: Int, val selectedElement: String,
+                       val context: String?, val fileErrors: List<HighlightInfo>)
 
     fun getProblem(openedFile: VirtualFile, textEditor: TextEditor): Problem {
       val editor = textEditor.editor
@@ -258,7 +259,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val context = PsiTreeUtil.getParentOfType(selectedElement,
                                                 PsiStatement::class.java, PsiExpression::class.java,
                                                 PsiMethod::class.java, PsiClass::class.java)
-      return Problem(openedFile.name, offset, selectedElement.text, context?.text)
+      val fileErrors = rehighlight(psiFile, editor).filter { it.severity == HighlightSeverity.ERROR }
+      return Problem(openedFile.name, offset, selectedElement.text, context?.text, fileErrors)
     }
 
     clickOnInlay(inlay)
