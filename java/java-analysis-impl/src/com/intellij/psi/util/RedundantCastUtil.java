@@ -76,10 +76,8 @@ public class RedundantCastUtil {
     }
 
     @Override
-    protected void addToResults(@NotNull PsiTypeCastExpression typeCast) {
-      if (!isTypeCastSemantic(typeCast)) {
-        myFoundCasts.add(typeCast);
-      }
+    protected void registerCast(@NotNull PsiTypeCastExpression typeCast) {
+      myFoundCasts.add(typeCast);
     }
   }
 
@@ -87,11 +85,15 @@ public class RedundantCastUtil {
   private static class MyIsRedundantVisitor extends JavaRecursiveElementWalkingVisitor {
     private PsiTypeCastExpression foundRedundantCast;
 
-    protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
+    private void addToResults(@NotNull PsiTypeCastExpression typeCast){
       if (!isTypeCastSemantic(typeCast)) {
-        foundRedundantCast = typeCast;
-        stopWalking();
+        registerCast(typeCast);
       }
+    }
+
+    protected void registerCast(@NotNull PsiTypeCastExpression typeCast) {
+      foundRedundantCast = typeCast;
+      stopWalking();
     }
 
     @Override public void visitAssignmentExpression(PsiAssignmentExpression expression) {
