@@ -8,8 +8,6 @@ import org.jetbrains.annotations.Nullable;
  * This handler is called via XML RPC from {@link GitNativeSshAskPassApp} when ssh requests user credentials.
  */
 public interface GitNativeSshAskPassXmlRpcHandler {
-  String SSH_ASK_PASS_ENV = "SSH_ASKPASS";
-  String DISPLAY_ENV = "DISPLAY";
 
   String IJ_HANDLER_ENV = "INTELLIJ_SSH_ASKPASS_HANDLER";
   String IJ_PORT_ENV = "INTELLIJ_SSH_ASKPASS_PORT";

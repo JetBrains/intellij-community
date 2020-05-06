@@ -80,7 +80,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
   private void prepareHttpAuth() throws IOException {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
-    addHandlerPathToEnvironment(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service);
+    addHandlerPathToEnvironment(GitCommand.GIT_ASK_PASS_ENV, service);
     GitAuthenticationGate authenticationGate = notNull(myHandler.getAuthenticationGate(), GitPassthroughAuthenticationGate.getInstance());
     GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject,
                                                                          myHandler.getUrls(),
@@ -155,13 +155,13 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     myNativeSshHandler = service.registerHandler(authenticator);
     int port = service.getXmlRcpPort();
 
-    addHandlerPathToEnvironment(GitNativeSshAskPassXmlRpcHandler.SSH_ASK_PASS_ENV, service);
+    addHandlerPathToEnvironment(GitCommand.GIT_SSH_ASK_PASS_ENV, service);
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.IJ_PORT_ENV, Integer.toString(port));
 
     // SSH_ASKPASS is ignored if DISPLAY variable is not set
-    String displayEnv = StringUtil.nullize(System.getenv(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV));
-    myHandler.addCustomEnvironmentVariable(GitNativeSshAskPassXmlRpcHandler.DISPLAY_ENV, StringUtil.notNullize(displayEnv, ":0.0"));
+    String displayEnv = StringUtil.nullize(System.getenv(GitCommand.DISPLAY_ENV));
+    myHandler.addCustomEnvironmentVariable(GitCommand.DISPLAY_ENV, StringUtil.notNullize(displayEnv, ":0.0"));
 
     if (Registry.is("git.use.setsid.for.native.ssh")) {
       myHandler.withNoTty();
