@@ -29,33 +29,26 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val project = e.project
-    val log = e.getData(VcsLogDataKeys.VCS_LOG)
-    val data = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
-    val ui = e.getData(VcsLogDataKeys.VCS_LOG_UI)
-    if (project == null || log == null || data == null || ui == null) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
 
-    val selectedCommits = log.selectedShortDetails.size
-    if (selectedCommits != 1) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
+    e.presentation.isEnabledAndVisible = false
 
-    val commit = log.selectedShortDetails[0]
+    val project = e.project ?: return
+    val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return
+    e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return
+    e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return
+
+    val commit = log.selectedShortDetails.singleOrNull() ?: return
     val repositoryManager = getRepositoryManager(project)
-    val repository = repositoryManager.getRepositoryForRootQuick(commit.root)
-    if (repository == null || repositoryManager.isExternal(repository)) {
-      e.presentation.isEnabledAndVisible = false
+    val repository = repositoryManager.getRepositoryForRootQuick(commit.root) ?: return
+    if (repositoryManager.isExternal(repository)) {
       return
     }
+
+    e.presentation.isVisible = true
 
     // editing merge commit or root commit is not allowed
     val parents = commit.parents.size
     if (parents != 1) {
-      e.presentation.isEnabled = false
       e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", parents)
       return
     }
@@ -63,8 +56,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     // allow editing only in the current branch
     val branches = log.getContainingBranches(commit.id, commit.root)
     if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
-      if (!branches.contains(HEAD)) {
-        e.presentation.isEnabled = false
+      if (HEAD !in branches) {
         e.presentation.description = GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
         return
       }
@@ -72,8 +64,10 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       // and not if pushed to a protected branch
       val protectedBranch = findProtectedRemoteBranch(repository, branches)
       if (protectedBranch != null) {
-        e.presentation.isEnabled = false
-        e.presentation.description = commitPushedToProtectedBranchError(protectedBranch)
+        e.presentation.description = GitBundle.message(
+          "rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text",
+          protectedBranch
+        )
         return
       }
     }
@@ -92,15 +86,22 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     val branches = findContainingBranches(data, commit.root, commit.id)
 
     if (!branches.contains(HEAD)) {
-      Messages.showErrorDialog(project, GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text"),
-                               getFailureTitle())
+      Messages.showErrorDialog(
+        project,
+        GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text"),
+        getFailureTitle()
+      )
       return
     }
 
     // and not if pushed to a protected branch
     val protectedBranch = findProtectedRemoteBranch(repository, branches)
     if (protectedBranch != null) {
-      Messages.showErrorDialog(project, commitPushedToProtectedBranchError(protectedBranch), getFailureTitle())
+      Messages.showErrorDialog(
+        project,
+        GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch),
+        getFailureTitle()
+      )
       return
     }
 
@@ -129,9 +130,6 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
                branchesGetter.getContainingBranchesSynchronously(root, hash)
            }, GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"), true, data.project)
   }
-
-  protected fun commitPushedToProtectedBranchError(protectedBranch: String) =
-    GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
 
   protected fun prohibitRebaseDuringRebase(e: AnActionEvent, @Nls operation: String, allowRebaseIfHeadCommit: Boolean = false) {
     if (e.presentation.isEnabledAndVisible) {

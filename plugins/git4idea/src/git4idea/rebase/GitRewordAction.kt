@@ -149,7 +149,7 @@ class GitRewordAction : GitCommitEditingAction() {
       if (protectedBranch != null) {
         return ValidationInfo(GitBundle.message(
           "rebase.log.reword.dialog.failed.pushed.to.protected.message",
-          commitPushedToProtectedBranchError(protectedBranch)
+          GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
         ))
       }
 
