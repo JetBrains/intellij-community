@@ -4,7 +4,7 @@ import org.codehaus.plexus.logging.Logger;
 
 import java.rmi.RemoteException;
 
-public class Maven3ServerConsoleLogger implements Logger {
+public class Maven3ServerConsoleLogger extends MavenRemoteObject implements Logger {
   private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
   private MavenServerConsole myWrappee;
@@ -19,7 +19,7 @@ public class Maven3ServerConsoleLogger implements Logger {
 
     if (myWrappee != null) {
       try {
-        myWrappee.printMessage(level, message, throwable);
+        myWrappee.printMessage(level, message, wrapException(throwable));
       }
       catch (RemoteException e) {
         //todo throw new RuntimeRemoteException(e); ???

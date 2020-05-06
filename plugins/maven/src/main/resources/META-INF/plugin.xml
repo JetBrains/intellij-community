@@ -242,6 +242,10 @@
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
+    <registryKey key="maven.print.import.stacktraces" defaultValue="false"
+                 description="Print maven server stacktraces in log"/>
+
+
     <registryKey key="maven.build.tool.window.enabled" defaultValue="true"
                  description="Enable Maven tasks to use Build Tool Window"/>
 

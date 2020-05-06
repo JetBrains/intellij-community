@@ -161,6 +161,9 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   @NotNull
   private Sdk getJdk(Project project) {
+    if(ApplicationManager.getApplication().isUnitTestMode()) {
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    }
     Sdk jdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (jdk == null) {
       MavenLog.LOG.warn("cannot find JDK for project " + project);
