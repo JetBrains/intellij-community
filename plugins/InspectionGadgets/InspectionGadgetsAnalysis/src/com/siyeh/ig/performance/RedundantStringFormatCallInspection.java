@@ -4,12 +4,12 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -70,28 +70,28 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       final PsiExpressionList args = call.getArgumentList();
       if (args.getExpressionCount() != 1) return null;
 
-      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
-      if (method == null) return null;
+      final PsiElement methodNameReference = call.getMethodExpression().getReferenceNameElement();
+      if (methodNameReference == null) return null;
 
       final PsiExpression formatValue = args.getExpressions()[0];
       if (containsNewlineToken(formatValue)) return null;
 
-      return myManager.createProblemDescriptor(method, (TextRange) null,
+      return myManager.createProblemDescriptor(methodNameReference,
                                                InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
-                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
-                                               new ReplaceWithPrintFix());
+                                               new ReplaceWithPrintFix(),
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
     }
 
     @Nullable
     private ProblemDescriptor getRedundantStringFormatProblem(@NotNull final PsiMethodCallExpression call) {
-      final PsiElement method = call.getMethodExpression().getReferenceNameElement();
-      if (method == null) return null;
+      final PsiElement methodNameReference = call.getMethodExpression().getReferenceNameElement();
+      if (methodNameReference == null) return null;
 
       if (isStringFormatCallRedundant(call)) {
-        return myManager.createProblemDescriptor(method, (TextRange) null,
+        return myManager.createProblemDescriptor(methodNameReference,
                                                  InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
-                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
-                                                 new RemoveRedundantStringFormatFix());
+                                                 new RemoveRedundantStringFormatFix(),
+                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
       }
       final PsiMethodCallExpression printlnCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
       final boolean isPrintlnCall = PRINTSTREAM_PRINTLN.test(printlnCall);
@@ -100,10 +100,10 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
       }
 
-      return myManager.createProblemDescriptor(method, (TextRange) null,
+      return myManager.createProblemDescriptor(methodNameReference,
                                                InspectionGadgetsBundle.message("redundant.call.problem.descriptor"),
-                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly,
-                                               new StringFormatToPrintfQuickFix(isPrintlnCall));
+                                               new StringFormatToPrintfQuickFix(isPrintlnCall),
+                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
     }
 
     @Contract(pure = true)
@@ -122,10 +122,11 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
     }
 
     @Contract("null -> false")
-    private static boolean containsNewlineToken(@Nullable final PsiExpression expression) {
-      if (expression == null) {
+    private static boolean containsNewlineToken(@Nullable final PsiExpression expr) {
+      if (expr == null) {
         return false;
       }
+      final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(expr);
       if (expression instanceof PsiLiteralExpression) {
         final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
         final String expressionText = literalExpression.getText();
@@ -156,13 +157,20 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement methodName = descriptor.getPsiElement();
-        if (methodName == null) return;
+        if ((methodName == null) || !(methodName.getParent() instanceof PsiReferenceExpression) ||
+            !(methodName.getParent().getParent() instanceof PsiMethodCallExpression)) {
+          return;
+        }
 
-        final PsiMethodCallExpression printStreamPrintfCall = PsiTreeUtil.getParentOfType(methodName, PsiMethodCallExpression.class);
-
-        if (printStreamPrintfCall == null) return;
+        final PsiMethodCallExpression printStreamPrintfCall = (PsiMethodCallExpression)methodName.getParent().getParent();
 
         ExpressionUtils.bindCallTo(printStreamPrintfCall, "print");
+
+        final PsiExpressionList argumentList = printStreamPrintfCall.getArgumentList();
+        final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(argumentList.getExpressions()[0]);
+        if (arg instanceof PsiMethodCallExpression && STRING_FORMAT.test((PsiMethodCallExpression)arg) && isStringFormatCallRedundant((PsiMethodCallExpression)arg)) {
+          removeRedundantStringFormatCall((PsiMethodCallExpression)arg);
+        }
       }
     }
 
@@ -173,29 +181,17 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       }
 
       @Override
-      public void applyFix(@NotNull Project project,
-                           @NotNull ProblemDescriptor descriptor) {
+      public void applyFix(@NotNull final Project project,
+                           @NotNull final ProblemDescriptor descriptor) {
         final PsiElement methodName = descriptor.getPsiElement();
-        if (methodName == null) return;
-
-        final PsiMethodCallExpression stringFormat = PsiTreeUtil.getParentOfType(methodName, PsiMethodCallExpression.class);
-        if (stringFormat == null) return;
-
-        final PsiElement parent = stringFormat.getParent();
-        if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1 && parent.getParent() instanceof PsiMethodCallExpression){
-          final PsiMethodCallExpression printCall = (PsiMethodCallExpression)parent.getParent();
-          final PsiExpression[] args = stringFormat.getArgumentList().getExpressions();
-          if (args.length > 1) {
-            new CommentTracker().deleteAndRestoreComments(args[0]);
-          }
-          new CommentTracker().replaceAndRestoreComments(printCall.getArgumentList(), stringFormat.getArgumentList());
+        if ((methodName == null) || !(methodName.getParent() instanceof PsiReferenceExpression) ||
+            !(methodName.getParent().getParent() instanceof PsiMethodCallExpression)) {
+          return;
         }
-        else {
-          final CommentTracker ct = new CommentTracker();
-          final PsiExpression[] args = stringFormat.getArgumentList().getExpressions();
-          final String expression = ct.text(args[args.length - 1]);
-          ct.replaceAndRestoreComments(stringFormat, expression);
-        }
+
+        final PsiMethodCallExpression stringFormat = (PsiMethodCallExpression)methodName.getParent().getParent();
+
+        removeRedundantStringFormatCall(stringFormat);
       }
     }
 
@@ -214,10 +210,12 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         final PsiElement methodName = descriptor.getPsiElement();
-        if (methodName == null) return;
+        if ((methodName == null) || !(methodName.getParent() instanceof PsiReferenceExpression) ||
+            !(methodName.getParent().getParent() instanceof PsiMethodCallExpression)) {
+          return;
+        }
 
-        final PsiMethodCallExpression stringFormatCall = PsiTreeUtil.getParentOfType(methodName, PsiMethodCallExpression.class);
-        if (stringFormatCall == null) return;
+        final PsiMethodCallExpression stringFormatCall = (PsiMethodCallExpression)methodName.getParent().getParent();
 
         final PsiMethodCallExpression printlnCall = PsiTreeUtil.getParentOfType(stringFormatCall, PsiMethodCallExpression.class);
         if (printlnCall == null) return;
@@ -244,7 +242,8 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       @Nullable
       @Contract(pure = true)
       private static PsiExpression getArgWithFormatValue(@NotNull final PsiExpressionList stringFormatArgs) {
-        final PsiExpression firstFormatArg = stringFormatArgs.getExpressions()[0];
+        final PsiExpression firstFormatArg = PsiUtil.skipParenthesizedExprDown(stringFormatArgs.getExpressions()[0]);
+        if (firstFormatArg == null) return null;
         final PsiType firstType = firstFormatArg.getType();
 
         if (firstType == null) return null;
@@ -252,7 +251,9 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         if (firstType.equalsToText(Locale.class.getName())) {
           if (stringFormatArgs.getExpressionCount() <= 1) return null;
 
-          final PsiExpression secondFormatArg = stringFormatArgs.getExpressions()[1];
+          final PsiExpression secondFormatArg = PsiUtil.skipParenthesizedExprDown(stringFormatArgs.getExpressions()[1]);
+          if (secondFormatArg == null) return null;
+
           final PsiType secondType = secondFormatArg.getType();
           if (secondType == null || !secondType.equalsToText(String.class.getName())) return null;
 
@@ -264,7 +265,10 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         return null;
       }
 
-      private static void appendWithNewlineToken(@NotNull final PsiElement formatArg) {
+      private static void appendWithNewlineToken(@NotNull final PsiExpression expr) {
+        final PsiElement formatArg = PsiUtil.skipParenthesizedExprDown(expr);
+        if (formatArg == null) return;
+
         final String newLineToken = "%n";
 
         if (formatArg instanceof PsiLiteralExpression) {
@@ -272,7 +276,7 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
           formatArg.replace(replacement);
         }
         else if (formatArg instanceof PsiPolyadicExpression){
-          final PsiElement lastChild = formatArg.getLastChild();
+          final PsiElement lastChild = skipParenIfPossible(formatArg.getLastChild());
           if (lastChild instanceof PsiLiteralExpression) {
             final PsiLiteralExpression replacement = joinWithNewlineToken((PsiLiteralExpression)lastChild);
             lastChild.replace(replacement);
@@ -288,6 +292,13 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
           final String text = String.format("(%s) + \"%s\"", ct.text(formatArg), newLineToken);
           ct.replaceAndRestoreComments(formatArg, text);
         }
+      }
+
+      @Nullable
+      private static PsiElement skipParenIfPossible(@NotNull PsiElement element) {
+        if (!(element instanceof PsiExpression)) return element;
+
+        return PsiUtil.skipParenthesizedExprDown((PsiExpression)element);
       }
 
       @Contract(value = "null -> null; !null -> !null", pure = true)
@@ -318,5 +329,26 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
         return (PsiLiteralExpression)factory.createExpressionFromText(newExpression.toString(), null);
       }
     }
+
+    private static void removeRedundantStringFormatCall(@NotNull PsiMethodCallExpression stringFormat) {
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(stringFormat.getParent());
+      if (parent instanceof PsiExpressionList && ((PsiExpressionList)parent).getExpressionCount() == 1 && parent.getParent() instanceof PsiMethodCallExpression){
+        final PsiMethodCallExpression printCall = (PsiMethodCallExpression)parent.getParent();
+        final PsiExpression[] args = stringFormat.getArgumentList().getExpressions();
+        if (args.length > 1) {
+          new CommentTracker().deleteAndRestoreComments(args[0]);
+        }
+        new CommentTracker().replaceAndRestoreComments(printCall.getArgumentList(), stringFormat.getArgumentList());
+      }
+      else {
+        final CommentTracker ct = new CommentTracker();
+        final PsiExpression[] args = stringFormat.getArgumentList().getExpressions();
+        final PsiExpression element = PsiUtil.skipParenthesizedExprDown(args[args.length - 1]);
+        if (element == null) return;
+        final String expression = ct.text(element);
+        ct.replaceAndRestoreComments(stringFormat, expression);
+      }
+    }
   }
+
 }

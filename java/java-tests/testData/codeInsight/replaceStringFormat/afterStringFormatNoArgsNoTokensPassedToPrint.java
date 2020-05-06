@@ -4,7 +4,9 @@ import java.io.PrintStream;
 class Main {
   static {
     System.out.print(/* begin */ "Hello, World!"/* end */);
+    System.out.print((/* begin */ "Hello, World!"/* end */));
     System.out.print(String.format(/* begin */ "Hello, World!%n"/* end */));
+    System.out.print(String.format((/* begin */ "Hello, World!%n"/* end */)));
   }
 
   Main() {
