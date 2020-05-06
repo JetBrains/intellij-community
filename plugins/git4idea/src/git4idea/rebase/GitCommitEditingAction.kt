@@ -32,19 +32,12 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
     e.presentation.isEnabledAndVisible = false
 
-    val project = e.project ?: return
-    val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return
-    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return
-    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return
-
-    val commit = log.selectedShortDetails.singleOrNull() ?: return
-    val repositoryManager = getRepositoryManager(project)
-    val repository = repositoryManager.getRepositoryForRootQuick(commit.root) ?: return
-    if (repositoryManager.isExternal(repository)) {
-      return
-    }
+    val commitEditingRequirements = createCommitEditingRequirements(e) ?: return
 
     e.presentation.isVisible = true
+
+    val commit = commitEditingRequirements.selectedCommit
+    val repository = commitEditingRequirements.repository
 
     // editing merge commit or root commit is not allowed
     val parents = commit.parents.size
@@ -54,7 +47,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     // allow editing only in the current branch
-    val branches = log.getContainingBranches(commit.id, commit.root)
+    val branches = commitEditingRequirements.log.getContainingBranches(commit.id, commit.root)
     if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
       if (HEAD !in branches) {
         e.presentation.description = GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
@@ -73,24 +66,21 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabledAndVisible = true
-    update(e, CommitEditingRequirements(repository, log, logDataProvider, logUi))
+    update(e, commitEditingRequirements)
   }
 
   protected open fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
-    val data = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
-    val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
-    val logUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
+    val commitEditingRequirements = createCommitEditingRequirements(e)!!
+    val commit = commitEditingRequirements.selectedCommit
+    val repository = commitEditingRequirements.repository
+    val project = commitEditingRequirements.project
 
-    val commit = log.selectedShortDetails[0]
-    val repository = getRepositoryManager(project).getRepositoryForRootQuick(commit.root)!!
+    val branches = findContainingBranches(commitEditingRequirements.logData, commit.root, commit.id)
 
-    val branches = findContainingBranches(data, commit.root, commit.id)
-
-    if (!branches.contains(HEAD)) {
+    if (HEAD !in branches) {
       Messages.showErrorDialog(
         project,
         GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text"),
@@ -110,7 +100,23 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       return
     }
 
-    actionPerformedAfterChecks(e, CommitEditingRequirements(repository, log, data, logUi))
+    actionPerformedAfterChecks(e, commitEditingRequirements)
+  }
+
+  private fun createCommitEditingRequirements(e: AnActionEvent): CommitEditingRequirements? {
+    val project = e.project ?: return null
+    val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return null
+    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return null
+    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return null
+
+    val commit = log.selectedShortDetails.singleOrNull() ?: return null
+    val repositoryManager = getRepositoryManager(project)
+    val repository = repositoryManager.getRepositoryForRootQuick(commit.root) ?: return null
+    if (repositoryManager.isExternal(repository)) {
+      return null
+    }
+
+    return CommitEditingRequirements(repository, log, logDataProvider, logUi)
   }
 
   protected abstract fun actionPerformedAfterChecks(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements)
