@@ -119,16 +119,10 @@ class CompilationOutputsUploader {
       uploader.upload(cachePath, zipFile)
     }
 
-    // Publish artifact for dependent configuration
-    if (publishTeamCityArtifacts) {
-      File zipArtifact = new File(tmpDir, "caches.zip")
-      FileUtil.rename(zipFile, zipArtifact)
-      context.messages.artifactBuilt(zipArtifact.absolutePath)
-      zipFile = zipArtifact
-    }
-
     File zipCopy = new File(tmpDir, cachePath)
     FileUtil.rename(zipFile, zipCopy)
+    // Publish artifact for dependent configuration
+    if (publishTeamCityArtifacts) context.messages.artifactBuilt(zipCopy.absolutePath)
     return !exists
   }
 
