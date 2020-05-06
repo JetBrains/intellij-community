@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
@@ -43,12 +44,11 @@ public class GitUncommitAction extends GitCommitEditingAction {
   private static final Logger LOG = Logger.getInstance(GitUncommitAction.class);
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-
+  protected void update(@NotNull AnActionEvent e, @NotNull CommitEditingRequirements commitEditingRequirements) {
     if (e.getPresentation().isEnabledAndVisible()) {
+      VcsLogUi logUi = commitEditingRequirements.getLogUi();
       // DataPack is unavailable during refresh
-      DataPackBase dataPackBase = ((VisiblePack)getUi(e).getDataPack()).getDataPack();
+      DataPackBase dataPackBase = ((VisiblePack)logUi.getDataPack()).getDataPack();
       if (!(dataPackBase instanceof DataPack)) {
         e.getPresentation().setVisible(true);
         e.getPresentation().setEnabled(false);

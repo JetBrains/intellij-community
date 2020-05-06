@@ -8,8 +8,7 @@ import git4idea.rebase.interactive.interactivelyRebaseUsingLog
 import git4idea.rebase.interactive.startInteractiveRebase
 
 class GitInteractiveRebaseAction : GitCommitEditingAction() {
-  override fun update(e: AnActionEvent) {
-    super.update(e)
+  override fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
     prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.rebase.name"))
   }
 

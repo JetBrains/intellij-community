@@ -34,8 +34,7 @@ import git4idea.repo.GitRepository
 private val LOG: Logger = logger<GitRewordAction>()
 
 class GitRewordAction : GitCommitEditingAction() {
-  override fun update(e: AnActionEvent) {
-    super.update(e)
+  override fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
     prohibitRebaseDuringRebase(e, GitBundle.getString("rebase.log.action.operation.reword.name"), true)
   }
 

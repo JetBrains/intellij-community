@@ -34,8 +34,8 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
     val project = e.project ?: return
     val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return
-    e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return
-    e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return
+    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return
+    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return
 
     val commit = log.selectedShortDetails.singleOrNull() ?: return
     val repositoryManager = getRepositoryManager(project)
@@ -73,6 +73,10 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabledAndVisible = true
+    update(e, CommitEditingRequirements(log, logDataProvider, logUi))
+  }
+
+  protected open fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
@@ -162,4 +166,6 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
   protected fun isHeadCommit(e: AnActionEvent): Boolean {
     return getSelectedCommit(e).id.asString() == getRepository(e).currentRevision
   }
+
+  protected class CommitEditingRequirements(val log: VcsLog, val logDataProvider: VcsLogDataProvider, val logUi: VcsLogUi)
 }
