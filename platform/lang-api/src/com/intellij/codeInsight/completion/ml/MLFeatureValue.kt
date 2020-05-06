@@ -28,7 +28,7 @@ sealed class MLFeatureValue {
     fun <T : Enum<*>> categorical(value: T): MLFeatureValue = CategoricalValue(value.toString())
 
     @JvmStatic
-    fun <T : Class<*>> className(value: T): MLFeatureValue = ClassNameValue(value)
+    fun <T : Class<*>> className(value: T, useSimpleName: Boolean = true): MLFeatureValue = ClassNameValue(value, useSimpleName)
   }
 
   abstract val value: Any
@@ -36,5 +36,5 @@ sealed class MLFeatureValue {
   data class BinaryValue internal constructor(override val value: Boolean) : MLFeatureValue()
   data class FloatValue internal constructor(override val value: Double) : MLFeatureValue()
   data class CategoricalValue internal constructor(override val value: String) : MLFeatureValue()
-  data class ClassNameValue internal constructor(override val value: Class<*>) : MLFeatureValue()
+  data class ClassNameValue internal constructor(override val value: Class<*>, val useSimpleName: Boolean) : MLFeatureValue()
 }
