@@ -370,6 +370,9 @@
 
     <!-- Pipenv -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcher"/>
+
+    <suggestedRefactoringSupport language="Python"
+                                 implementationClass="com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport"/>
   </extensions>
 
   <extensionPoints>
