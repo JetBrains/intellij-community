@@ -2,11 +2,10 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
-import com.intellij.execution.Executor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -64,7 +63,7 @@ public class MavenProjectsManagerWatcher {
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
     registerGeneralSettingsWatcher(myManager, this, myBackgroundExecutor, myDisposable);
-    myProjectTracker.register(myProjectsAware);
+    myProjectTracker.register(myProjectsAware, myManager);
     myProjectTracker.activate(myProjectsAware.getProjectId());
   }
 

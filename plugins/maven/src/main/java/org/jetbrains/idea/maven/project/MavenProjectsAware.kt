@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -20,7 +19,7 @@ class MavenProjectsAware(
   project: Project,
   private val manager: MavenProjectsManager,
   private val projectsTree: MavenProjectsTree
-) : ExternalSystemProjectAware, Disposable {
+) : ExternalSystemProjectAware {
 
   private val isImportCompleted = AtomicBooleanProperty(true)
 
@@ -64,12 +63,9 @@ class MavenProjectsAware(
   private fun join(parentPath: String, relativePath: String) = File(parentPath, relativePath).path
 
   init {
-    Disposer.register(manager, this)
     manager.addManagerListener(object : MavenProjectsManager.Listener {
       override fun importAndResolveScheduled() = isImportCompleted.set(false)
       override fun projectImportCompleted() = isImportCompleted.set(true)
     })
   }
-
-  override fun dispose() { }
 }
