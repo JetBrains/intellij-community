@@ -162,7 +162,7 @@ public final class DiscoveredTestDataHolder {
   public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testClassName, testMethodName, frameworkId));
     if (testId != 0) {
-      myDiscoveredTestsIndex.update(testId, null);
+      myDiscoveredTestsIndex.updateImmediately(testId, null);
       myTestModuleIndex.removeTest(testId);
     }
   }
@@ -202,8 +202,8 @@ public final class DiscoveredTestDataHolder {
     }
 
     UsedSources usedSources = new UsedSources(result, usedVirtualFileIds);
-    myDiscoveredTestsIndex.update(testNameId, usedSources);
-    myTestFilesIndex.update(testNameId, usedSources);
+    myDiscoveredTestsIndex.updateImmediately(testNameId, usedSources);
+    myTestFilesIndex.updateImmediately(testNameId, usedSources);
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
   }
 

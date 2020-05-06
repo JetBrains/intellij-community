@@ -130,7 +130,7 @@ public class StringIndex {
   }
   
   public boolean update(final String path, @Nullable String content, @Nullable String oldContent) {
-    return myIndex.update(MathUtil.nonNegativeAbs(path.hashCode()), toInput(path, content));
+    return myIndex.updateImmediately(MathUtil.nonNegativeAbs(path.hashCode()), toInput(path, content));
   }
 
   public long getModificationStamp() {
