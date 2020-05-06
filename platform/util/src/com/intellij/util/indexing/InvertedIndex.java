@@ -16,7 +16,6 @@
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +27,12 @@ public interface InvertedIndex<Key, Value, Input> {
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
   /**
-   * Calls {@link #mapInputAndThenUpdate(int, Object)} and updates immediately.
+   * Update the current index with the given content.
+   *
+   * @param inputId *positive* id of content.
+   * @return true if success, false if error occurred.
    */
-  default boolean updateImmediately(int inputId, @Nullable Input content) {
-    return mapInputAndThenUpdate(inputId, content).compute();
-  }
-
-  /**
-   * Maps input as the first stage and returns a computation that does actual index data structure update.
-   * It may be used to separate long-running input mapping from update IO writing.
-   */
-  @NotNull
-  Computable<Boolean> mapInputAndThenUpdate(int inputId, @Nullable Input content);
+  boolean update(int inputId, @Nullable Input content);
 
   void flush() throws StorageException;
 

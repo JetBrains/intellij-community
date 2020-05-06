@@ -18,7 +18,6 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.indexing.*;
@@ -219,34 +218,38 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public final @NotNull Computable<Boolean> mapInputAndThenUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
-    InputData<Key, Value> data = mapInput(inputId, content);
+  public final boolean update(int inputId, @Nullable Input content) {
+    final InputData<Key, Value> data;
+    try {
+      data = mapInput(inputId, content);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new MapInputException("Failed to map data for input " + inputId, e);
+    }
 
-    UpdateData<Key, Value> updateData = new UpdateData<>(
-      inputId,
-      data.getKeyValues(),
-      () -> getKeysDiffBuilder(inputId),
-      myIndexId,
-      () -> updateForwardIndex(inputId, data)
-    );
-
-    return () -> {
-      try {
-        updateWithMap(updateData);
+    try {
+      updateWithMap(new UpdateData<>(
+        inputId,
+        data.getKeyValues(),
+        () -> getKeysDiffBuilder(inputId),
+        myIndexId, () -> updateForwardIndex(inputId, data))
+      );
+    }
+    catch (StorageException | ProcessCanceledException ex) {
+      String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+      //noinspection InstanceofCatchParameter
+      if (ex instanceof ProcessCanceledException) {
+        LOG.error(message, ex);
+      } else {
+        LOG.info(message, ex);
       }
-      catch (StorageException | ProcessCanceledException ex) {
-        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
-        //noinspection InstanceofCatchParameter
-        if (ex instanceof ProcessCanceledException) {
-          LOG.error(message, ex);
-        } else {
-          LOG.info(message, ex);
-        }
-        requestRebuild(ex);
-        return false;
-      }
-      return true;
-    };
+      requestRebuild(ex);
+      return false;
+    }
+    return true;
   }
 
   public static final class MapInputException extends RuntimeException {
@@ -290,15 +293,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @NotNull
   protected Map<Key, Value> mapByIndexer(int inputId, @NotNull Input content) {
-    try {
-      return myIndexer.map(content);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new MapInputException("Failed to map data for input " + inputId, e);
-    }
+    return myIndexer.map(content);
   }
 
   public abstract void checkCanceled();
