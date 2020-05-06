@@ -1048,7 +1048,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
     Icon icon = myIcons.get(key);
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, jb, error, disabled);
-      if (icon != PluginLogo.getDefault()) {
+      if (icon != PluginLogo.getDefault().getIcon(big, jb, error, disabled)) {
         myIcons.put(key, icon);
       }
     }
