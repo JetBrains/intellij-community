@@ -139,17 +139,15 @@ public abstract class EditorFactory {
   }
 
   /**
-   * @deprecated Use {@link #editors(Document, Project)}
+   * Consider using {@link #editors(Document, Project)}.
    */
-  @Deprecated
   public final Editor @NotNull [] getEditors(@NotNull Document document, @Nullable Project project) {
     return editors(document, project).toArray(Editor[]::new);
   }
 
   /**
-   * @deprecated Use {@link #editors(Document)}
+   * Consider using {@link #editors(Document)}.
    */
-  @Deprecated
   public final Editor @NotNull [] getEditors(@NotNull Document document) {
     return getEditors(document, null);
   }
