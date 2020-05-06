@@ -4,25 +4,35 @@ package com.intellij.workspace.jps
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.rd.attach
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
-import kotlin.system.measureTimeMillis
 
 const val JAVA_CLASS_PREFIX = "JavaClass"
 const val MODULE_PREFIX = "module"
-const val MODULES_COUNT = 1000
+const val TEST_MODULE_PREFIX = "test"
 
-class WorkspaceModelPerformanceTest {
+
+@RunWith(Parameterized::class)
+class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   @Rule
   @JvmField
   var application = ApplicationRule()
@@ -37,6 +47,12 @@ class WorkspaceModelPerformanceTest {
 
   private lateinit var project: Project
 
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun getModulesCount() = listOf(100, 1000/*, 5000, 10_000, 30_000, 50_000, 70_000, 100_000*/)
+  }
+
   @Before
   fun prepareProject() {
     val projectDir = temporaryDirectoryRule.newPath("project").toFile()
@@ -47,19 +63,71 @@ class WorkspaceModelPerformanceTest {
   }
 
   @Test
-  fun `test module library rename`() = WriteCommandAction.runWriteCommandAction(project) {
+  fun `test base project actions`() = WriteCommandAction.runWriteCommandAction(project) {
+    // To enable execution at old project model set -Dide.workspace.model.jps.enabled=false in Run Configuration
+    val antLibName = "ant"
+    val mavenLibName = "maven"
     val moduleManager = ModuleManager.getInstance(project)
 
-    logExecutionTimeMillis("Modules creation time") {
+    val modules = mutableListOf<Module>()
+    logExecutionTimeMillis("Hundred modules creation") {
       (1..100).forEach {
         val modifiableModel = moduleManager.modifiableModel
-        modifiableModel.newModule(File(project.basePath, "test$it.iml").path, EmptyModuleType.getInstance().id)
+        modules.add(modifiableModel.newModule(File(project.basePath, "$TEST_MODULE_PREFIX$it.iml").path, EmptyModuleType.getInstance().id))
         modifiableModel.commit()
       }
     }
+    Assert.assertEquals(modulesCount + 100, moduleManager.modules.size)
 
-    val modules = moduleManager.modules
-    println(modules.size)
+    val library = createProjectLibrary(mavenLibName)
+    logExecutionTimeMillis("Add project library at hundred modules") {
+      modules.forEach { module ->
+        ModuleRootManager.getInstance(module).modifiableModel.let {
+          it.addLibraryEntry(library)
+          it.commit()
+        }
+      }
+    }
+
+    logExecutionTimeMillis("Add module library at hundred modules") {
+      modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
+    }
+
+    logExecutionTimeMillis("Loop through the contentRoots of all modules") {
+      moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
+    }
+
+    logExecutionTimeMillis("Loop through the orderEntries of all modules") {
+      moduleManager.modules.forEach { ModuleRootManager.getInstance(it).orderEntries.forEach { entry -> entry.isValid }}
+    }
+
+    logExecutionTimeMillis("Find and remove project library from hundred modules") {
+      modules.forEach { module ->
+        ModuleRootManager.getInstance(module).modifiableModel.let {
+          it.removeOrderEntry(it.findLibraryOrderEntry(library)!!)
+          it.commit()
+        }
+      }
+    }
+
+    logExecutionTimeMillis("Find and remove module library from hundred modules") {
+      modules.forEach { module ->
+        ModuleRootManager.getInstance(module).modifiableModel.let {
+          val moduleLibrary = it.moduleLibraryTable.getLibraryByName(antLibName)!!
+          it.removeOrderEntry(it.findLibraryOrderEntry(moduleLibrary)!!)
+          it.commit()
+        }
+      }
+    }
+
+    logExecutionTimeMillis("Hundred modules remove") {
+      modules.forEach {
+        val modifiableModel = moduleManager.modifiableModel
+        modifiableModel.disposeModule(it)
+        modifiableModel.commit()
+      }
+    }
+    Assert.assertEquals(modulesCount, moduleManager.modules.size)
   }
 
   private fun loadTestProject(projectDir: File, disposableRule: DisposableRule): Project {
@@ -86,9 +154,21 @@ class WorkspaceModelPerformanceTest {
     return result
   }
 
+  private fun createProjectLibrary(libraryName: String): Library {
+    val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+    val library = projectLibraryTable.createLibrary(libraryName)
+
+    library.modifiableModel.let {
+      it.addRoot(File(project.basePath, "$libraryName.jar").path, OrderRootType.CLASSES)
+      it.addRoot(File(project.basePath, "$libraryName-sources.jar").path, OrderRootType.SOURCES)
+      it.commit()
+    }
+    return library
+  }
+
   private fun generateProject(projectDir: File) {
     createIfNotExist(projectDir)
-    for (index in 1..MODULES_COUNT) {
+    for (index in 1..modulesCount) {
       val moduleName = "$MODULE_PREFIX$index"
       val module = File(projectDir, moduleName)
       createIfNotExist(module)
@@ -122,7 +202,7 @@ class WorkspaceModelPerformanceTest {
   <component name="ProjectModuleManager">
     <modules>
 """)
-    for (index in 1..MODULES_COUNT) {
+    for (index in 1..modulesCount) {
       builder.append("      <module fileurl=\"file://${'$'}PROJECT_DIR${'$'}/$MODULE_PREFIX$index/$MODULE_PREFIX$index.iml\" " +
                      "filepath=\"${'$'}PROJECT_DIR${'$'}/$MODULE_PREFIX$index/$MODULE_PREFIX$index.iml\" />\n")
     }
