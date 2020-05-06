@@ -80,19 +80,18 @@ class TestGitImpl : GitImpl() {
     if (interactiveRebaseEditor == null) return super.createEditor(project, root, handler, commitListAware)
 
     val editor = object : GitInteractiveRebaseEditorHandler(project, root) {
-      override fun handleUnstructuredEditor(path: String): Boolean {
+      override fun handleUnstructuredEditor(file: File): Boolean {
         val plainTextEditor = interactiveRebaseEditor!!.plainTextEditor
-        return if (plainTextEditor != null) handleEditor(path, plainTextEditor) else super.handleUnstructuredEditor(path)
+        return if (plainTextEditor != null) handleEditor(file, plainTextEditor) else super.handleUnstructuredEditor(file)
       }
 
-      override fun handleInteractiveEditor(path: String): Boolean {
+      override fun handleInteractiveEditor(file: File): Boolean {
         val entriesEditor = interactiveRebaseEditor!!.entriesEditor
-        return if (entriesEditor != null) handleEditor(path, entriesEditor) else super.handleInteractiveEditor(path)
+        return if (entriesEditor != null) handleEditor(file, entriesEditor) else super.handleInteractiveEditor(file)
       }
 
-      private fun handleEditor(path: String, editor: (String) -> String): Boolean {
+      private fun handleEditor(file: File, editor: (String) -> String): Boolean {
         try {
-          val file = File(path)
           FileUtil.writeToFile(file, editor(FileUtil.loadFile(file)))
         }
         catch (e: Exception) {

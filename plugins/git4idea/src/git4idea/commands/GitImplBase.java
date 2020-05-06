@@ -229,11 +229,10 @@ public abstract class GitImplBase implements Git {
   @CalledInBackground
   public static boolean loadFileAndShowInSimpleEditor(@NotNull Project project,
                                                       @Nullable VirtualFile root,
-                                                      @NotNull String path,
+                                                      @NotNull File file,
                                                       @NotNull String dialogTitle,
                                                       @NotNull String okButtonText) throws IOException {
     String encoding = root == null ? CharsetToolkit.UTF8 : GitConfigUtil.getCommitEncoding(project, root);
-    File file = new File(path);
     String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
     String newText = showUnstructuredEditorAndWait(project, root, initialText, dialogTitle, okButtonText);

@@ -8,6 +8,8 @@ import git4idea.commands.GitImplBase;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
 public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
@@ -20,19 +22,19 @@ public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
   }
 
   @Override
-  public int editCommits(@NotNull String path) {
+  public int editCommits(@NotNull File file) {
     try {
       boolean cancelled = !GitImplBase.loadFileAndShowInSimpleEditor(
         myProject,
         null,
-        path,
+        file,
         GitBundle.getString("rebase.simple.editor.dialog.title"),
         CommonBundle.getOkButtonText()
       );
       return cancelled ? ERROR_EXIT_CODE : 0;
     }
     catch (Exception e) {
-      LOG.error("Failed to edit git rebase file: " + path, e);
+      LOG.error("Failed to edit git rebase file: " + file, e);
       return ERROR_EXIT_CODE;
     }
   }

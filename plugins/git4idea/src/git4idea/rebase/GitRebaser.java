@@ -23,6 +23,7 @@ import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -130,7 +131,7 @@ public class GitRebaser {
     rh.addLineListener(rebaseConflictDetector);
 
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
-    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor(myProject, root);
+    GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
       final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
       rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
@@ -249,14 +250,20 @@ public class GitRebaser {
       .setErrorNotificationAdditionalDescription(GitBundle.getString("rebase.update.project.conflict.error.notification.description"));
   }
 
-  public static class TrivialEditor extends GitInteractiveRebaseEditorHandler {
-    public TrivialEditor(@NotNull Project project, @NotNull VirtualFile root) {
-      super(project, root);
+  public static class TrivialEditor implements GitRebaseEditorHandler {
+    @Override
+    public int editCommits(@NotNull File file) {
+      return 0;
     }
 
     @Override
-    public int editCommits(@NotNull String path) {
-      return 0;
+    public boolean wasCommitListEditorCancelled() {
+      return false;
+    }
+
+    @Override
+    public boolean wasUnstructuredEditorCancelled() {
+      return false;
     }
   }
 

@@ -5,11 +5,13 @@ import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.BuiltInServerManager;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -18,6 +20,8 @@ import java.util.UUID;
  * The service that generates editor script for
  */
 public class GitRebaseEditorService implements Disposable {
+  private static final String CYGDRIVE_PREFIX = "/cygdrive/";
+
   /**
    * The editor command that is set to env variable
    */
@@ -142,7 +146,20 @@ public class GitRebaseEditorService implements Disposable {
     @SuppressWarnings({"UnusedDeclaration"})
     public int editCommits(@NotNull String handlerNo, String path) {
       GitRebaseEditorHandler editor = getHandler(UUID.fromString(handlerNo));
-      return editor.editCommits(path);
+
+      String localPath = adjustFilePath(path);
+      File file = new File(localPath);
+
+      return editor.editCommits(file);
     }
+  }
+
+  @NotNull
+  private static String adjustFilePath(@NotNull String file) {
+    if (SystemInfo.isWindows && file.startsWith(CYGDRIVE_PREFIX)) {
+      final int prefixSize = CYGDRIVE_PREFIX.length();
+      return file.charAt(prefixSize) + ":" + file.substring(prefixSize + 1);
+    }
+    return file;
   }
 }
