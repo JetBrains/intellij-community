@@ -7,7 +7,8 @@ import com.intellij.workspace.api.ModuleEntity
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.VirtualFileUrlManager
 import com.intellij.workspace.api.projectLibraries
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.api.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.Test

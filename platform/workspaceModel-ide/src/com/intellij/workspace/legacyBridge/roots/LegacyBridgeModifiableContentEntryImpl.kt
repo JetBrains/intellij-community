@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeModifiableRootModel
 import com.intellij.workspace.legacyBridge.typedModel.module.ContentEntryViaTypedEntity
 import com.intellij.workspace.legacyBridge.typedModel.module.ExcludeFolderViaTypedEntity

@@ -4,8 +4,8 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.TypedEntityStorageBuilder
 import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import com.intellij.workspace.api.verifyPSerializationRoundTrip
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test

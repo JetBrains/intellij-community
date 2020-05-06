@@ -6,7 +6,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
 import com.intellij.workspace.ide.JpsProjectConfigLocation
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.ClassRule

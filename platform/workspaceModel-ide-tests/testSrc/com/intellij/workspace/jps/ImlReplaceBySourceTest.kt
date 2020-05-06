@@ -5,7 +5,6 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import org.junit.*
 import com.intellij.workspace.ide.JpsProjectConfigLocation
 import org.junit.Assert

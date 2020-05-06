@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.JpsFileEntitySource
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.getInstance
 import kotlin.reflect.KClass
 
 /**

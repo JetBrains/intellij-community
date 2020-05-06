@@ -21,8 +21,8 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.isEmpty
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibrary
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeLibraryModifiableModelImpl

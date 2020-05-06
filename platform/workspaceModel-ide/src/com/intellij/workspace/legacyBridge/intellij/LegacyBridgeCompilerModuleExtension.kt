@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.toVirtualFileUrl
 import com.intellij.workspace.virtualFile
 import java.util.*

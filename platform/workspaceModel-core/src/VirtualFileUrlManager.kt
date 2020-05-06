@@ -7,7 +7,17 @@ import com.intellij.util.containers.IntArrayList
 import gnu.trove.THashMap
 import kotlin.collections.set
 
-open class VirtualFileUrlManager {
+interface VirtualFileUrlManager {
+  fun fromUrl(url: String): VirtualFileUrl
+  fun fromPath(path: String): VirtualFileUrl
+  fun getParentVirtualUrlById(id: Int): VirtualFileUrl?
+  fun getUrlById(id: Int): String
+  fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean
+}
+
+class VirtualFileUrlManagerImpl: VirtualFileUrlManager {
+  companion object;
+
   private val idGenerator= IntIdGenerator()
   private val EMPTY_URL = VirtualFileUrl(0, this)
   private val fileNameStore = VirtualFileNameStore()
@@ -15,20 +25,20 @@ open class VirtualFileUrlManager {
   private val rootNode = FilePathNode(0, 0)
 
   @Synchronized
-  fun fromUrl(url: String): VirtualFileUrl {
+  override fun fromUrl(url: String): VirtualFileUrl {
     if (url.isEmpty()) return EMPTY_URL
     return add(url)
   }
 
-  fun fromPath(path: String): VirtualFileUrl {
+  override fun fromPath(path: String): VirtualFileUrl {
     return fromUrl("file://${FileUtil.toSystemIndependentName(path)}")
   }
 
   @Synchronized
-  fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping[id]?.parent?.let { VirtualFileUrl(it.nodeId, this) }
+  override fun getParentVirtualUrlById(id: Int): VirtualFileUrl? = id2NodeMapping[id]?.parent?.let { VirtualFileUrl(it.nodeId, this) }
 
   @Synchronized
-  fun getUrlById(id: Int): String {
+  override fun getUrlById(id: Int): String {
     if (id <= 0) return ""
 
     var node = id2NodeMapping[id]
@@ -171,7 +181,7 @@ open class VirtualFileUrlManager {
 
   fun print() = rootNode.print()
 
-  fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
+  override fun isEqualOrParentOf(parentNodeId: Int, childNodeId: Int): Boolean {
     if (parentNodeId == 0 && childNodeId == 0) return true
 
     var current = childNodeId
@@ -227,7 +237,7 @@ open class VirtualFileUrlManager {
     }
 
     private fun print(buffer: StringBuilder, prefix: String, childrenPrefix: String) {
-      val name = this@VirtualFileUrlManager.fileNameStore.getNameForId(contentId)
+      val name = this@VirtualFileUrlManagerImpl.fileNameStore.getNameForId(contentId)
       if (name != null) buffer.append("$prefix $name\n")
       val iterator = children?.iterator() ?: return
       while (iterator.hasNext()) {

@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Test
 import java.io.File

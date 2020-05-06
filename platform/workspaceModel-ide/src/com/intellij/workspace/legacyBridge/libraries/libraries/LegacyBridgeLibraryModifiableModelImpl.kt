@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
 

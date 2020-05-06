@@ -3,10 +3,6 @@ package com.intellij.workspace.ide
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.workspace.api.VirtualFileUrlManager
+import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 
-class VirtualFileUrlManagerImpl: VirtualFileUrlManager() {
-  companion object {
-    fun getInstance(project: Project): VirtualFileUrlManager = project.service<VirtualFileUrlManagerImpl>()
-  }
-}
+fun VirtualFileUrlManagerImpl.Companion.getInstance(project: Project) = project.service<VirtualFileUrlManagerImpl>()

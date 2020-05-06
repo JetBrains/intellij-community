@@ -153,7 +153,7 @@ class ReferencesInPStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager()
+    virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
   @Test

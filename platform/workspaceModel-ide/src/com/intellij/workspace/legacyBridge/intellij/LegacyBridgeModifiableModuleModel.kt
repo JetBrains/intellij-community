@@ -15,8 +15,8 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.ide.NonPersistentEntitySource
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.jps.JpsProjectEntitiesLoader
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeModifiableBase
 

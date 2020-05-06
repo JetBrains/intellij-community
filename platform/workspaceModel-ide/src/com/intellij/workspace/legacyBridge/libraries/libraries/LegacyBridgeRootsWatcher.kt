@@ -19,10 +19,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
+import com.intellij.workspace.ide.getInstance
 import org.jetbrains.annotations.ApiStatus
 
 /**
