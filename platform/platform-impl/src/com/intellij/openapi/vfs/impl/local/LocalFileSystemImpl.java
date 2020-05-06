@@ -38,11 +38,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   private final WatchRootsManager myWatchRootsManager;
   private volatile boolean myDisposed;
 
-  @NotNull
-  public static LocalFileSystemImpl getImplInstance() {
-    return ApplicationManager.getApplication().getService(LocalFileSystemImpl.class);
-  }
-
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
     myWatcher = new FileWatcher(myManagingFS);
