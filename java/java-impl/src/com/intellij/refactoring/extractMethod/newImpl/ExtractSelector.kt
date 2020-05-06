@@ -49,6 +49,7 @@ class ExtractSelector {
     val singleElement = elements.singleOrNull()
     val alignedElements = when {
       elements.size > 1 -> alignStatements(elements)
+      singleElement is PsiIfStatement -> listOf(alignIfStatement(singleElement))
       singleElement is PsiBlockStatement -> if (singleElement.codeBlock.firstBodyElement != null) listOf(singleElement) else emptyList()
       singleElement is PsiCodeBlock -> alignCodeBlock(singleElement)
       singleElement is PsiExpression -> listOfNotNull(alignExpression(singleElement))
@@ -58,6 +59,18 @@ class ExtractSelector {
       alignedElements.isEmpty() -> emptyList()
       alignedElements.first() !== elements.first() || alignedElements.last() !== elements.last() -> alignElements(alignedElements)
       else -> alignedElements
+    }
+  }
+
+  private fun isControlFlowStatement(statement: PsiStatement?): Boolean {
+    return statement is PsiBreakStatement || statement is PsiContinueStatement || statement is PsiReturnStatement
+  }
+
+  private fun alignIfStatement(ifStatement: PsiIfStatement): PsiElement {
+    return if (ifStatement.elseBranch == null && isControlFlowStatement(ifStatement.thenBranch)) {
+      ifStatement.condition ?: ifStatement
+    } else {
+      ifStatement
     }
   }
 

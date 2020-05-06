@@ -1605,6 +1605,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
+  public void testExtractConditionFromSimpleIf() throws Exception {
+    doTest();
+  }
+
+  public void testExtractConditionFromSimpleIf1() throws Exception {
+    doTest();
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
