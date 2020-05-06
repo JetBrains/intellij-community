@@ -39,6 +39,8 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.GuiUtils;
@@ -81,6 +83,7 @@ import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.ToggleChangesViewCommitUiActionKt.isToggleCommitUi;
 import static java.util.Arrays.asList;
+import static java.util.Objects.requireNonNull;
 
 @State(
   name = "ChangesViewManager",
@@ -289,8 +292,6 @@ public class ChangesViewManager implements ChangesViewEx,
 
   public static class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
     @NotNull private static final RegistryValue isToolbarHorizontalSetting = Registry.get("vcs.local.changes.toolbar.horizontal");
-    @NotNull private static final RegistryValue isCommitSplitHorizontal =
-      Registry.get("vcs.non.modal.commit.split.horizontal.if.no.diff.preview");
     @NotNull private static final RegistryValue isEditorDiffPreview = Registry.get("show.diff.preview.as.editor.tab");
     @NotNull private static final RegistryValue isOpenEditorDiffPreviewWithSingleClick =
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
@@ -384,13 +385,12 @@ public class ChangesViewManager implements ChangesViewEx,
 
       setContent(myMainPanel.addToBottom(myProgressLabel));
 
-      setCommitSplitOrientation();
-      isCommitSplitHorizontal.addListener(new RegistryValueListener() {
+      project.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
         @Override
-        public void afterValueChanged(@NotNull RegistryValue value) {
+        public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
           setCommitSplitOrientation();
         }
-      }, this);
+      });
 
       isToggleCommitUi().addListener(new RegistryValueListener() {
         @Override
@@ -588,7 +588,9 @@ public class ChangesViewManager implements ChangesViewEx,
 
     private void setCommitSplitOrientation() {
       boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && isSplitterPreview();
-      myCommitPanelSplitter.setOrientation(hasPreviewPanel || !isCommitSplitHorizontal.asBoolean());
+      ToolWindow tw = requireNonNull(getToolWindowFor(myProject, LOCAL_CHANGES));
+      boolean toolwindowIsHorizontal = tw.getAnchor().isHorizontal();
+      myCommitPanelSplitter.setOrientation(hasPreviewPanel || !toolwindowIsHorizontal);
     }
 
     @NotNull
