@@ -8,7 +8,12 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.*;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.JBTabsEx;
@@ -549,6 +554,17 @@ public class TabLabel extends JPanel implements Accessible {
     return myLabel;
   }
 
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    Point pointInLabel = new RelativePoint(event).getPoint(myLabel);
+    if (myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
+      String toolTip = myIcon.getToolTip(false);
+      if (toolTip != null) {
+        return toolTip;
+      }
+    }
+    return super.getToolTipText(event);
+  }
 
   @Override
   public AccessibleContext getAccessibleContext() {
