@@ -139,7 +139,7 @@ class CompilationOutputsUploader {
       uploader.upload(metadataPath, sourceStateFile)
     }
     File sourceStateFileCopy = new File(tmpDir, metadataPath)
-    FileUtil.copy(sourceStateFile, sourceStateFileCopy)
+    FileUtil.rename(sourceStateFile, sourceStateFileCopy)
   }
 
   void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
