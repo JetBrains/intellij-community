@@ -129,7 +129,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   public void update(int commitId, @NotNull D details) {
     checkDisposed();
-    myMapReduceIndex.update(commitId, details);
+    myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).compute();
   }
 
   public void flush() throws StorageException {
