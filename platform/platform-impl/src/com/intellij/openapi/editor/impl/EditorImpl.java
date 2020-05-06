@@ -2348,6 +2348,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       getFoldingModel().runBatchFoldingOperation(() -> {
         region.setExpanded(true);
       }, true, false);
+      validateMousePointer(e, null);
     }
 
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
@@ -2402,13 +2403,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void validateMousePointer(@NotNull MouseEvent e) {
+  private void validateMousePointer(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
     if (e.getSource() == myGutterComponent) {
       myGutterComponent.validateMousePointer(e);
     }
     else {
       myGutterComponent.setActiveFoldRegions(Collections.emptyList());
-      myDefaultCursor = getDefaultCursor(e);
+      myDefaultCursor = getDefaultCursor(e, editorMouseEvent);
       updateEditorCursor();
     }
   }
@@ -2430,14 +2431,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCursorSetExternally = false;
   }
 
-  private Cursor getDefaultCursor(@NotNull MouseEvent e) {
+  private Cursor getDefaultCursor(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
+    Cursor result = null;
     if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
-      int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
+      int offset = editorMouseEvent == null ? logicalPositionToOffset(xyToLogicalPosition(e.getPoint())) : editorMouseEvent.getOffset();
       if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
-        return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+        result = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
       }
     }
-    return UIUtil.getTextCursor(getBackgroundColor());
+    if (result == null) {
+      FoldRegion foldRegion = editorMouseEvent == null ? myFoldingModel.getFoldingPlaceholderAt(e.getPoint())
+                                                       : editorMouseEvent.getCollapsedFoldRegion();
+      if (foldRegion != null) {
+        result = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      }
+    }
+    return result == null ? UIUtil.getTextCursor(getBackgroundColor()) : result;
   }
 
   private void runMouseDraggedCommand(@NotNull final MouseEvent e) {
@@ -3341,19 +3350,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseSelectionStateAlarm.cancelAllRequests();
     if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE) {
       if (myMouseSelectionStateResetRunnable == null) {
-        myMouseSelectionStateResetRunnable = () -> resetMouseSelectionState(null);
+        myMouseSelectionStateResetRunnable = () -> resetMouseSelectionState(null, null);
       }
       myMouseSelectionStateAlarm.addRequest(myMouseSelectionStateResetRunnable, Registry.intValue("editor.mouseSelectionStateResetTimeout"),
                                             ModalityState.stateForComponent(myEditorComponent));
     }
   }
 
-  private void resetMouseSelectionState(@Nullable MouseEvent event) {
+  private void resetMouseSelectionState(@Nullable MouseEvent event, @Nullable EditorMouseEvent editorMouseEvent) {
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
     MouseEvent e = event != null ? event : myMouseMovedEvent;
     if (e != null) {
-      validateMousePointer(e);
+      validateMousePointer(e, editorMouseEvent);
     }
   }
 
@@ -3897,7 +3906,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
           System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
             "editor.mouseSelectionStateResetTimeout")) {
-        resetMouseSelectionState(e);
+        resetMouseSelectionState(e, null);
       }
 
       int x = e.getX();
@@ -3929,7 +3938,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             EditorUtil.runWithAnimationDisabled(EditorImpl.this, () -> myScrollingModel.scrollVertically(newY - scrollShift));
           }
           myGutterComponent.updateSize();
-          validateMousePointer(e);
+          validateMousePointer(e, null);
           e.consume();
           return false;
         }
@@ -4241,7 +4250,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // on Mac we receive events even if drag-n-drop is in progress
         return;
       }
-      validateMousePointer(e);
+      validateMousePointer(e, null);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
@@ -4257,26 +4266,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @DirtyUI
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
+      EditorMouseEvent event = createEditorMouseEvent(e);
+
       if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
         if (myMousePressedEvent != null && myMousePressedEvent.getComponent() == e.getComponent()) {
           Point lastPoint = myMousePressedEvent.getPoint();
           Point point = e.getPoint();
           int deadZone = Registry.intValue("editor.mouseSelectionStateResetDeadZone");
           if (Math.abs(lastPoint.x - point.x) >= deadZone || Math.abs(lastPoint.y - point.y) >= deadZone) {
-            resetMouseSelectionState(e);
+            resetMouseSelectionState(e, event);
           }
         }
         else {
-          validateMousePointer(e);
+          validateMousePointer(e, event);
         }
       }
       else {
-        validateMousePointer(e);
+        validateMousePointer(e, event);
       }
 
       myMouseMovedEvent = e;
 
-      EditorMouseEvent event = createEditorMouseEvent(e);
       if (e.getSource() == myGutterComponent) {
         myGutterComponent.mouseMoved(e);
       }
