@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil
@@ -9,21 +10,23 @@ import java.nio.file.FileSystems
 import java.nio.file.Path
 
 internal data class VirtualFileLookupImpl(
+  val localFileSystem: LocalFileSystem,
   val withRefresh: Boolean = false,
   val onlyIfCached: Boolean = false
-): VirtualFileLookup {
+) : VirtualFileLookup {
   override fun withRefresh() = copy(withRefresh = true)
   override fun onlyIfCached() = copy(onlyIfCached = true)
 
   override fun fromIoFile(file: File): VirtualFile? {
+    if (localFileSystem != LocalFileSystem.getInstance()) return null
     return fromPath(FileUtil.toSystemIndependentName(file.absolutePath))
   }
 
   override fun fromPath(path: String): VirtualFile? {
     return when {
-      onlyIfCached -> VfsImplUtil.findFileByPathIfCached(localFileSystem(), path)
-      withRefresh -> VfsImplUtil.refreshAndFindFileByPath(localFileSystem(), path)
-      else -> VfsImplUtil.findFileByPath(localFileSystem(), path)
+      onlyIfCached -> VfsImplUtil.findFileByPathIfCached(localFileSystem, path)
+      withRefresh -> VfsImplUtil.refreshAndFindFileByPath(localFileSystem, path)
+      else -> VfsImplUtil.findFileByPath(localFileSystem, path)
     }
   }
 
@@ -39,14 +42,9 @@ internal data class VirtualFileLookupImpl(
   }
 
   override fun fromUrl(url: String): VirtualFile? {
-    if (onlyIfCached) return null
     val protocol = VirtualFileManager.extractProtocol(url) ?: return null
     val path = VirtualFileManager.extractPath(url)
     val fs = VirtualFileManager.getInstance().getFileSystem(protocol) ?: return null
-    return findWithFilesSystem(fs, path)
-  }
-
-  private fun findWithFilesSystem(fs: VirtualFileSystem, path: String): VirtualFile? {
     return when {
       fs is NewVirtualFileSystem && onlyIfCached -> fs.findFileByPathIfCached(path)
       onlyIfCached -> null
@@ -54,10 +52,19 @@ internal data class VirtualFileLookupImpl(
       else -> fs.findFileByPath(path)
     }
   }
-
-  private fun localFileSystem(): LocalFileSystem = LocalFileSystem.getInstance()
 }
 
-internal class VirtualFileLookupServiceImpl: VirtualFileLookupService {
-  override fun newLookup() = VirtualFileLookupImpl()
+internal class VirtualFileLookupServiceImpl : VirtualFileLookupService {
+  override fun newLookup(): VirtualFileLookupImpl {
+    return VirtualFileLookupImpl(LocalFileSystem.getInstance())
+  }
+
+  fun newLookup(fileSystem: LocalFileSystem): VirtualFileLookupImpl {
+    return VirtualFileLookupImpl(fileSystem)
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<VirtualFileLookupService>() as VirtualFileLookupServiceImpl
+  }
 }

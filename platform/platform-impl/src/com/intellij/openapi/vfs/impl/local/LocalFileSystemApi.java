@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileLookup;
-import com.intellij.openapi.vfs.VirtualFileLookupService;
+import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,33 +19,38 @@ import java.io.File;
  * filesystem implementation.
  */
 public abstract class LocalFileSystemApi extends LocalFileSystem {
+  @NotNull
+  private VirtualFileLookupImpl getLookup() {
+    return VirtualFileLookupServiceImpl.getInstance().newLookup(this);
+  }
+
   @Nullable
   @Override
   public final VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VirtualFileLookup.newLookup().onlyIfCached().fromPath(path);
+    return getLookup().onlyIfCached().fromPath(path);
   }
 
   @Nullable
   @Override
   public final VirtualFile findFileByPath(@NotNull String path) {
-    return VirtualFileLookup.newLookup().fromPath(path);
+    return getLookup().fromPath(path);
   }
 
   @Nullable
   @Override
   public final VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    return VirtualFileLookup.newLookup().withRefresh().fromPath(path);
+    return getLookup().withRefresh().fromPath(path);
   }
 
   @Nullable
   @Override
   public final VirtualFile findFileByIoFile(@NotNull File file) {
-    return VirtualFileLookup.newLookup().fromIoFile(file);
+    return getLookup().fromIoFile(file);
   }
 
   @Nullable
   @Override
   public final VirtualFile refreshAndFindFileByIoFile(@NotNull File file) {
-    return VirtualFileLookup.newLookup().withRefresh().fromIoFile(file);
+    return getLookup().withRefresh().fromIoFile(file);
   }
 }
