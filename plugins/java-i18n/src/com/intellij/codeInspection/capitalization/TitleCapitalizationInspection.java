@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInspection.*;
@@ -166,7 +166,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         if (value == null) return;
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiExpression newExpression =
-          factory.createExpressionFromText('"' + value.fixCapitalization(myCapitalization) + '"', element);
+          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"', element);
         element.replace(newExpression);
       }
       else if (element instanceof PsiMethodCallExpression) {
