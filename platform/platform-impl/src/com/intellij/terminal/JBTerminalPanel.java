@@ -7,12 +7,12 @@ package com.intellij.terminal;
 
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
@@ -266,7 +265,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     installKeyDispatcher();
 
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-      TransactionGuard.submitTransaction(this, () -> FileDocumentManager.getInstance().saveAllDocuments());
+      ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.NON_MODAL);
     }
   }
 
@@ -300,7 +299,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       myEventDispatcher.unregister();
     }
 
-    refreshAfterExecution();
+    SaveAndSyncHandler.getInstance().scheduleRefresh();
   }
 
   @Override
@@ -322,15 +321,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   public void dispose() {
     super.dispose();
     mySettingsProvider.removeListener(this);
-  }
-
-  private static void refreshAfterExecution() {
-    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
-      //we need to refresh local file system after a command has been executed in the terminal
-      ApplicationManager.getApplication().invokeLater(() -> {
-        LocalFileSystem.getInstance().refresh(true);
-      }, ModalityState.NON_MODAL); // for write-safe context
-    }
   }
 
   @Override
