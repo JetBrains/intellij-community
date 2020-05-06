@@ -2149,6 +2149,15 @@ public abstract class LongRangeSet {
         if (diff instanceof Point) {
           return "!= " + diff.min();
         }
+        if (diff instanceof Range && !diff.intersects(this)) {
+          if (diff.max() == set.max()) {
+            return "< " + diff.min();
+          }
+          if (diff.min() == set.min()) {
+            return "> " + diff.max();
+          }
+          return "< " + diff.min() + " or > " + diff.max();
+        }
       }
       if (myRanges.length == 4 && myRanges[0] == myRanges[1] && myRanges[2] == myRanges[3]) {
         return myRanges[0] + " or " + myRanges[2];
