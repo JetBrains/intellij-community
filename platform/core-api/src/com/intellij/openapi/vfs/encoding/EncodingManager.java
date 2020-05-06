@@ -56,16 +56,6 @@ public abstract class EncodingManager extends EncodingRegistry {
   @Override
   public abstract @NotNull Charset getDefaultConsoleEncoding();
 
-  /**
-   * @return default console encoding name. empty for system default
-   */
-  public abstract @NotNull String getDefaultConsoleEncodingName();
-
-  /**
-   * @param name charset name for default console encoding name. Empty for system default
-   */
-  public abstract void setDefaultConsoleEncodingName(@NotNull String name);
-
   @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 

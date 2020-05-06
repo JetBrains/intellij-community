@@ -495,16 +495,6 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   }
 
   @Override
-  public @NotNull String getDefaultConsoleEncodingName() {
-    return myIdeEncodingManager.getDefaultConsoleEncodingName();
-  }
-
-  @Override
-  public void setDefaultConsoleEncodingName(@NotNull String name) {
-    myIdeEncodingManager.setDefaultConsoleEncodingName(name);
-  }
-
-  @Override
   @Nullable
   public Charset getCachedCharsetFromContent(@NotNull Document document) {
     return myIdeEncodingManager.getCachedCharsetFromContent(document);
