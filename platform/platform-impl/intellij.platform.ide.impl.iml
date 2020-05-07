@@ -81,5 +81,6 @@
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>
