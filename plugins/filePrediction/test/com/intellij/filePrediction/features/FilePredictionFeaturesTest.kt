@@ -40,7 +40,6 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       "path_prefix",
       "relative_path_prefix",
       "history_size",
-      "history_position",
       "history_uni_mle",
       "history_bi_mle"
     )

@@ -16,7 +16,9 @@ internal class FilePredictionHistoryFeatures: FilePredictionFeatureProvider {
     result["size"] = numerical(history.size())
 
     val (position, uniGram, biGram) = history.calcHistoryFeatures(newFile.url)
-    result["position"] = numerical(position)
+    if (position != null) {
+      result["position"] = numerical(position)
+    }
     addNGramFeatures(uniGram, "uni", result)
     addNGramFeatures(biGram, "bi", result)
     return result

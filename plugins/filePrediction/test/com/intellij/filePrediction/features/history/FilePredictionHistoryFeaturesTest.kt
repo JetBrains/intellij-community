@@ -5,7 +5,7 @@ import com.intellij.filePrediction.history.FilePredictionHistoryState
 
 class FilePredictionHistoryFeaturesTest : FilePredictionHistoryBaseTest() {
 
-  private fun doTest(openedFiles: List<String>, size: Int, vararg expected: Pair<String, Int>) {
+  private fun doTest(openedFiles: List<String>, size: Int, vararg expected: Pair<String, Int?>) {
     doTestInternal(openedFiles, size, 5) { manager ->
       expected.forEach { assertEquals(it.second, manager.calcHistoryFeatures(it.first).position) }
     }
@@ -25,11 +25,11 @@ class FilePredictionHistoryFeaturesTest : FilePredictionHistoryBaseTest() {
   }
 
   fun `test position of the file without history`() {
-    doTest(listOf(), 0, "file://a" to -1)
+    doTest(listOf(), 0, "file://a" to null)
   }
 
   fun `test position of the new file`() {
-    doTest(listOf("file://a"), 1, "file://b" to -1)
+    doTest(listOf("file://a"), 1, "file://b" to null)
   }
 
   fun `test position of the prev file`() {
