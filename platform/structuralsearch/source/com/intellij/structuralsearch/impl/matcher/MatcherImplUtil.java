@@ -23,7 +23,7 @@ public class MatcherImplUtil {
                                                       LanguageFileType fileType,
                                                       Project project,
                                                       boolean physical) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(fileType.getLanguage(), project);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(fileType.getLanguage());
     if (profile != null) {
       return profile.createPatternTree(text, context, fileType, fileType.getLanguage(), null, project, physical);
     }
@@ -39,7 +39,7 @@ public class MatcherImplUtil {
     if (language == null) {
       language = fileType.getLanguage();
     }
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language, project);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile != null) {
       return profile.createPatternTree(text, contextInfo, fileType, language, project, physical);
     }

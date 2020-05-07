@@ -89,7 +89,7 @@ public final class ReplacementPreviewDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final JComponent centerPanel = new JPanel(new BorderLayout());
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType, project);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
     replacement = UIUtil.createEditor(project, myFileType, null, "", false, profile);
 

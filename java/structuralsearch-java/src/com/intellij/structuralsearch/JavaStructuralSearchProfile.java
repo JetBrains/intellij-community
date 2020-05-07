@@ -545,7 +545,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final MatchOptions matchOptions = options.getMatchOptions();
     final LanguageFileType fileType = matchOptions.getFileType();
     final Language dialect = matchOptions.getDialect();
-    final PatternContext patternContext = matchOptions.getPatternContext(project);
+    final PatternContext patternContext = matchOptions.getPatternContext();
     final PsiElement[] statements =
       createPatternTree(matchOptions.getSearchPattern(), PatternTreeContext.Block, fileType, dialect, patternContext.getId(), project, false);
     final boolean searchIsExpression = statements.length == 1 && statements[0].getLastChild() instanceof PsiErrorElement;

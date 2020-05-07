@@ -291,8 +291,8 @@ public class MatchOptions implements JDOMExternalizable {
     myDialect = dialect;
   }
 
-  public PatternContext getPatternContext(Project project) {
-    return StructuralSearchUtil.findPatternContextByID(myPatternContextId, getDialect(), project);
+  public PatternContext getPatternContext() {
+    return StructuralSearchUtil.findPatternContextByID(myPatternContextId, getDialect());
   }
 
   public void setPatternContext(PatternContext patternContext) {

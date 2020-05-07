@@ -6,14 +6,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
@@ -22,10 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -37,39 +28,48 @@ public final class StructuralSearchUtil {
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
   private static LanguageFileType ourDefaultFileType = null;
 
-  public static boolean ourUseUniversalMatchingAlgorithm = false;
-  private static final ModificationTracker ourMatchingAlgorithmTracker = () -> ourUseUniversalMatchingAlgorithm ? 1 : 0;
+  private static boolean ourUseUniversalMatchingAlgorithm = false;
+  private static final Map<Language, StructuralSearchProfile> cache = new HashMap<>();
 
   private static List<Configuration> ourPredefinedConfigurations = null;
   static {
     StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
       ourPredefinedConfigurations = null;
       ourDefaultFileType = null;
+      cache.clear();
     }, null);
   }
 
   private StructuralSearchUtil() {}
 
+  public static void setUseUniversalMatchingAlgorithm(boolean useUniversalMatchingAlgorithm) {
+    ourUseUniversalMatchingAlgorithm = useUniversalMatchingAlgorithm;
+    cache.clear();
+  }
+
   @Nullable
   public static StructuralSearchProfile getProfileByPsiElement(@NotNull PsiElement element) {
-    return getProfileByLanguage(element.getLanguage(), element.getProject());
+    return getProfileByLanguage(element.getLanguage());
   }
 
   @Nullable
-  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType, Project project) {
-    return getProfileByLanguage(fileType.getLanguage(), project);
+  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType) {
+    return getProfileByLanguage(fileType.getLanguage());
   }
 
   @Nullable
-  public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language, @NotNull Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(language, () -> {
-      for (StructuralSearchProfile profile : getProfiles()) {
-        if (profile.isMyLanguage(language)) {
-          return new CachedValueProvider.Result<>(profile, ourMatchingAlgorithmTracker);
-        }
+  public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
+    if (cache.containsKey(language)) {
+      return cache.get(language);
+    }
+    for (StructuralSearchProfile profile : getProfiles()) {
+      if (profile.isMyLanguage(language)) {
+        cache.put(language, profile);
+        return profile;
       }
-      return new CachedValueProvider.Result<>(null, ourMatchingAlgorithmTracker);
-    });
+    }
+    cache.put(language, null);
+    return null;
   }
 
   @Contract("null -> false")
@@ -226,8 +226,8 @@ public final class StructuralSearchUtil {
     return stripAccents(normalizeWhiteSpace(text));
   }
 
-  public static PatternContext findPatternContextByID(@Nullable String id, @NotNull Language language, @NotNull Project project) {
-    return findPatternContextByID(id, getProfileByLanguage(language, project));
+  public static PatternContext findPatternContextByID(@Nullable String id, @NotNull Language language) {
+    return findPatternContextByID(id, getProfileByLanguage(language));
   }
 
   public static PatternContext findPatternContextByID(@Nullable String id, @Nullable StructuralSearchProfile profile) {

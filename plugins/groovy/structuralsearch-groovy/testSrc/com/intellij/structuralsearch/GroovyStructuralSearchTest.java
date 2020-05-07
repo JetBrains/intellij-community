@@ -112,7 +112,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def $name$ = {\n" +
               "  '_T+\n" +
               "}", 0, 0);
-    final PatternContext old = options.getPatternContext(getProject());
+    final PatternContext old = options.getPatternContext();
     try {
       options.setPatternContext(GroovyStructuralSearchProfile.CLASS_CONTEXT);
       doTest(s, "def $name$ = {\n" +

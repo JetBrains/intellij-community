@@ -262,7 +262,7 @@ public class UIUtil {
     }
     if (context != null) {
       final Language language = context.getLanguage();
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language, searchContext.getProject());
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
         final LanguageFileType fileType = profile.detectFileType(context);
         return fileType != null ? fileType : language.getAssociatedFileType();

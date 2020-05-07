@@ -112,7 +112,7 @@ public class GlobalCompilingVisitor {
     myCodeBlockLevel = 0;
     this.context = context;
     final StructuralSearchProfile profile =
-      StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType(), context.getProject());
+      StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType());
     assert profile != null;
     profile.compile(elements, this);
 
@@ -218,7 +218,7 @@ public class GlobalCompilingVisitor {
       return;
     }
     final StructuralSearchProfile profile =
-      StructuralSearchUtil.getProfileByFileType(compileContext.getOptions().getFileType(), compileContext.getProject());
+      StructuralSearchUtil.getProfileByFileType(compileContext.getOptions().getFileType());
     assert profile != null;
     if (profile.getReservedWords().contains(word)) return; // skip our special annotations !!!
 

@@ -60,14 +60,14 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   private static DefaultComboBoxModel<FileTypeInfo> createModel(Project project) {
     final List<LanguageFileType> types = new ArrayList<>();
     for (LanguageFileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-      if (StructuralSearchUtil.getProfileByFileType(fileType, project) != null) {
+      if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
         types.add(fileType);
       }
     }
     types.sort((o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
     final List<FileTypeInfo> infos = new ArrayList<>();
     for (LanguageFileType fileType : types) {
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType, project);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
       assert profile != null;
       final Language language = fileType.getLanguage();
       final List<PatternContext> patternContexts = new ArrayList<>(profile.getPatternContexts());

@@ -83,12 +83,12 @@ public final class ReplacementBuilder {
     }
 
     final LanguageFileType fileType = options.getMatchOptions().getFileType();
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType, project);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
     if (profile != null) {
       try {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
           options.getReplacement(),
-          new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext(project)),
+          new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext()),
           fileType,
           options.getMatchOptions().getDialect(),
           project,
@@ -127,7 +127,7 @@ public final class ReplacementBuilder {
 
     final StringBuilder result = new StringBuilder(replacement);
 
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type, myProject);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
     assert profile != null;
 
     List<ParameterInfo> sorted = new SmartList<>(parameterizations.values());

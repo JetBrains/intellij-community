@@ -7,7 +7,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -157,15 +156,15 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
     final Language language = element.getLanguage();
     PsiElementVisitor visitor = myLanguage2MatchingVisitor.get(language);
     if (visitor == null) {
-      visitor = createMatchingVisitor(language, element.getProject());
+      visitor = createMatchingVisitor(language);
       myLanguage2MatchingVisitor.put(language, visitor);
     }
     return visitor;
   }
 
   @Nullable
-  private PsiElementVisitor createMatchingVisitor(Language language, Project project) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language, project);
+  private PsiElementVisitor createMatchingVisitor(Language language) {
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile == null) {
       LOG.warn("there is no StructuralSearchProfile for language " + language.getID());
       return null;

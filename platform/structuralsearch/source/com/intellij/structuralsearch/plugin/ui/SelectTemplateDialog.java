@@ -208,7 +208,7 @@ public class SelectTemplateDialog extends DialogWrapper {
     final MatchOptions matchOptions = configuration.getMatchOptions();
 
     UIUtil.setContent(searchPatternEditor, matchOptions.getSearchPattern());
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType(), project);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
     if (profile != null) {
       TemplateEditorUtil.setHighlighter(searchPatternEditor, UIUtil.getTemplateContextType(profile));
     }

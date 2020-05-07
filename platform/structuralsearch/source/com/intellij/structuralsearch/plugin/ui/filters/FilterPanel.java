@@ -171,7 +171,7 @@ public class FilterPanel implements FilterTable {
   @Override
   @NotNull
   public StructuralSearchProfile getProfile() {
-    final StructuralSearchProfile fileType = StructuralSearchUtil.getProfileByFileType(myFileType, myProject);
+    final StructuralSearchProfile fileType = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert fileType != null;
     return fileType;
   }
