@@ -8,7 +8,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public interface IdePerformanceListener {
-  Topic<IdePerformanceListener> TOPIC = new Topic<>("IdePerformanceListener", IdePerformanceListener.class, Topic.BroadcastDirection.NONE);
+  @Topic.AppLevel
+  Topic<IdePerformanceListener> TOPIC = new Topic<>(IdePerformanceListener.class, Topic.BroadcastDirection.NONE);
 
   /**
    * Invoked after thread state has been dumped to a file.

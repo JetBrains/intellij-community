@@ -69,8 +69,7 @@ public final class PerformanceWatcher implements Disposable {
 
   private static final boolean SHOULD_WATCH = shouldWatch();
 
-  @NotNull
-  public static PerformanceWatcher getInstance() {
+  public static @NotNull PerformanceWatcher getInstance() {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
     return ServiceManager.getService(PerformanceWatcher.class);
   }
@@ -137,8 +136,7 @@ public final class PerformanceWatcher implements Disposable {
     }
   }
 
-  @NotNull
-  private static IdePerformanceListener getPublisher() {
+  private static @NotNull IdePerformanceListener getPublisher() {
     return ApplicationManager.getApplication().getMessageBus().syncPublisher(IdePerformanceListener.TOPIC);
   }
 
@@ -169,7 +167,7 @@ public final class PerformanceWatcher implements Disposable {
     }, null, null);
   }
 
-  public void processUnfinishedFreeze(BiConsumer<File, Integer> consumer) {
+  public void processUnfinishedFreeze(@NotNull BiConsumer<File, Integer> consumer) {
     File[] files = myLogDir.listFiles();
     if (files != null) {
       Arrays.stream(files)
@@ -243,8 +241,7 @@ public final class PerformanceWatcher implements Disposable {
     });
   }
 
-  @NotNull
-  public static String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
+  public static @NotNull String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
     StringBuilder trace = new StringBuilder(
       headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n");
@@ -315,13 +312,11 @@ public final class PerformanceWatcher implements Disposable {
     }
   }
 
-  @Nullable
-  public File dumpThreads(@NotNull String pathPrefix, boolean millis) {
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis) {
     return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), null);
   }
 
-  @Nullable
-  private File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, @Nullable FreezeCheckerTask task) {
+  private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, @Nullable FreezeCheckerTask task) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -413,8 +408,7 @@ public final class PerformanceWatcher implements Disposable {
     }
   }
 
-  @NotNull
-  public static Snapshot takeSnapshot() {
+  public static @NotNull Snapshot takeSnapshot() {
     return getInstance().new Snapshot();
   }
 
