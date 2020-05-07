@@ -23,6 +23,7 @@
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.FilePredictionFileTypeFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.history.FilePredictionHistoryFeatures"/>
 
+    <applicationService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
     <projectService serviceImplementation="com.intellij.filePrediction.history.FilePredictionHistory"/>
   </extensions>
 

@@ -29,7 +29,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     val composite = TestStatisticsEventValidatorBuilder()
       .hasEventId("candidate.calculated")
-      .contains("probability")
+      .contains("probability", "session_id")
       .withCustom(validator).build()
 
     doTest(builder, predictor, expectedEvents, composite) { setPredefinedProbabilityModel(it, probabilities) }
@@ -39,7 +39,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     val predictor = FileUsagePredictor(5, 1, 3)
     val validator = TestStatisticsEventValidatorBuilder()
       .hasEventId("candidate.calculated")
-      .contains("probability").build()
+      .contains("probability", "session_id").build()
 
     doTest(builder, predictor, expectedEvents, validator) { setConstantFilePredictionModel(0.1, it) }
   }
@@ -48,6 +48,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     val predictor = FileUsagePredictor(5, 1, 3)
     val validator = TestStatisticsEventValidatorBuilder()
       .hasEventId("candidate.calculated")
+      .contains("session_id")
       .notContains("probability").build()
 
     doTest(builder, predictor, expectedEvents, validator) { disableFilePredictionModel() }
@@ -66,7 +67,7 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     modelConfigurator.invoke(testRootDisposable)
     val events = collectLogEvents {
-      predictor.predictNextFile(myFixture.project, file!!)
+      predictor.predictNextFile(myFixture.project, 1, file!!)
     }
     val candidateEvents = events.filter { it.event.id == "candidate.calculated" }
     assertEquals(expectedEvents, candidateEvents.size)
