@@ -19,7 +19,7 @@ sealed class FilePredictionFeature {
     fun categorical(value: String): FilePredictionFeature = CategoricalValue(value)
   }
 
-  protected abstract val value: Any
+  abstract val value: Any
 
   abstract fun addToEventData(key: String, data: FeatureUsageData)
 

@@ -11,6 +11,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.filePrediction.featureProvider" interface="com.intellij.filePrediction.FilePredictionFeatureProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.filePrediction.referencesProvider" interface="com.intellij.filePrediction.FileExternalReferencesProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.filePrediction.ml.model" interface="com.intellij.filePrediction.predictor.model.FilePredictionModelProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

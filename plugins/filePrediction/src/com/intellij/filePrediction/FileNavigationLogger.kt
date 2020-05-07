@@ -11,11 +11,16 @@ internal object FileNavigationLogger {
                event: String,
                features: FileFeaturesComputationResult,
                filePath: String,
-               refsComputation: Long) {
+               refsComputation: Long,
+               probability: Double? = null) {
     val data = FeatureUsageData().
       addAnonymizedPath(filePath).
       addData("refs_computation", refsComputation).
       addData("features_computation", features.duration)
+
+    if (probability != null) {
+      data.addData("probability", probability)
+    }
 
     for (feature in features.value) {
       feature.value.addToEventData(feature.key, data)
