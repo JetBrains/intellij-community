@@ -158,29 +158,10 @@ public final class JdkUtil {
                                                                         @NotNull TargetEnvironmentRequest request,
                                                                         @Nullable TargetEnvironmentConfiguration targetConfiguration)
     throws CantRunException {
-    TargetedCommandLineBuilder commandLine = new TargetedCommandLineBuilder(request);
-    JavaLanguageRuntimeConfiguration javaConfiguration = targetConfiguration != null
-                                                         ? targetConfiguration.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class)
-                                                         : null;
-    if (request instanceof LocalTargetEnvironmentRequest || targetConfiguration == null) {
-      Sdk jdk = javaParameters.getJdk();
-      if (jdk == null) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
-      SdkTypeId type = jdk.getSdkType();
-      if (!(type instanceof JavaSdkType)) throw new CantRunException(ExecutionBundle.message("run.configuration.error.no.jdk.specified"));
-      String exePath = ((JavaSdkType)type).getVMExecutablePath(jdk);
-      if (exePath == null) throw new CantRunException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
-      commandLine.setExePath(exePath);
-    }
-    else {
-      if (javaConfiguration == null) {
-        throw new CantRunException("Cannot find Java configuration in " + targetConfiguration.getDisplayName() + " target");
-      }
-      Platform platform = request.getTargetPlatform().getPlatform();
-      String java = platform == Platform.WINDOWS ? "java.exe" : "java";
-      commandLine.setExePath(StringUtil.join(new String[]{javaConfiguration.getHomePath(), "bin", java}, String.valueOf(platform.fileSeparator)));
-    }
-    setupCommandLine(commandLine, request, javaParameters, javaConfiguration);
-    return commandLine;
+
+    JdkCommandLineSetup setup = new JdkCommandLineSetup(request, targetConfiguration);
+    setup.setup(javaParameters);
+    return setup.getCommandLine();
   }
 
   public static @NotNull GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
@@ -190,10 +171,11 @@ public final class JdkUtil {
       .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null).build());
   }
 
-  private static void setupCommandLine(TargetedCommandLineBuilder commandLine,
-                                       TargetEnvironmentRequest request,
-                                       SimpleJavaParameters javaParameters,
-                                       @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration) throws CantRunException {
+  static void setupCommandLine(TargetedCommandLineBuilder commandLine,
+                               TargetEnvironmentRequest request,
+                               SimpleJavaParameters javaParameters,
+                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration) throws CantRunException {
+
     String workingDirectory = javaParameters.getWorkingDirectory();
     if (workingDirectory != null) {
       String remoteAppFolder = Optional.ofNullable(runtimeConfiguration)
