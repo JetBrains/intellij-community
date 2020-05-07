@@ -187,7 +187,7 @@ public class FilterPanel implements FilterTable {
     if (myConstraint instanceof MatchVariableConstraint) {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.label"), group, context,
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
                                                                                   null);
       popup.show(point);
