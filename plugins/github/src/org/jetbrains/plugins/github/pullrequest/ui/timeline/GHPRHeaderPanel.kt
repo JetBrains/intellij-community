@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.ide.BrowserUtil
@@ -68,6 +68,8 @@ internal class GHPRHeaderPanel(private val model: SingleValueModel<GHPullRequest
       title.text = model.value.title
       number.text = "#" + model.value.number
       descriptionPane.setBody((model.value as? GHPullRequest)?.bodyHTML.orEmpty())
+      //forces height recalculation (see JBR-2256)
+      descriptionPane.setSize(descriptionPane.width, Int.MAX_VALUE / 2)
     }
 
     model.addValueChangedListener {
