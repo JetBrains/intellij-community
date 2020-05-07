@@ -125,7 +125,7 @@ fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): Stri
 }
 
 @Throws(VcsException::class)
-fun parseGitStatusOutput(output: String, result: MutableList<LightFileStatus.StatusRecord> = mutableListOf()): List<LightFileStatus.StatusRecord> {
+private fun parseGitStatusOutput(output: String, result: MutableList<LightFileStatus.StatusRecord> = mutableListOf()): List<LightFileStatus.StatusRecord> {
   val split = output.split(NUL).toTypedArray()
   val it = split.iterator()
   while (it.hasNext()) {
