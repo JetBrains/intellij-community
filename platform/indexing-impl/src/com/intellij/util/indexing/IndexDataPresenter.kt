@@ -49,8 +49,6 @@ object IndexDataPresenter {
     }
   }
 
-  fun getPresentableStub(node: Stub): String = getPresentableStub(node, "")
-
   private fun getPresentableStub(node: Stub, indent: String): String =
     buildString {
       append(indent)

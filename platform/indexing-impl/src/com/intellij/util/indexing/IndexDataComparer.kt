@@ -70,7 +70,7 @@ object IndexDataComparer {
     return expectedTree.stubIndicesValueMap == actualTree.stubIndicesValueMap
   }
 
-  fun areStubsTheSame(expectedStub: Stub, actualStub: Stub): Boolean {
+  private fun areStubsTheSame(expectedStub: Stub, actualStub: Stub): Boolean {
     // Check toString() to not rely on identity equality of [ObjectStubSerializer]s
     // because [ObjectStubSerializer] does not declare equals() / hashCode().
     if (expectedStub.stubType != actualStub.stubType
