@@ -306,7 +306,13 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   @Nullable
   private static Analysis fromNegativeArraySizeException(@NotNull PsiElement anchor, @NotNull String exceptionMessage) {
     if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW) && anchor.getParent() instanceof PsiNewExpression) {
-      int size = Integer.parseInt(exceptionMessage);
+      int size;
+      try {
+        size = Integer.parseInt(exceptionMessage);
+      }
+      catch (NumberFormatException e) {
+        return null;
+      }
       if (size < 0) {
         PsiExpression[] dimensions = ((PsiNewExpression)anchor.getParent()).getArrayDimensions();
         if (dimensions.length == 1) {
