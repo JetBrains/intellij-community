@@ -603,7 +603,7 @@
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.OpenedInEditorWeigher" id="openedInEditor"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameDirectoryWeigher" id="sameDirectory"
              order="after openedInEditor"/>
-    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameLogicalRootWeigher" id="sameLogicalRoot"
+    <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameSourceRootWeigher" id="sameLogicalRoot"
              order="after sameDirectory"/>
     <weigher key="proximity" implementationClass="com.intellij.psi.util.proximity.SameModuleWeigher" id="sameModule"
              order="after sameLogicalRoot"/>
