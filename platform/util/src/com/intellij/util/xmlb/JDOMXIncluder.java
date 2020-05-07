@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 
 public final class JDOMXIncluder {
   private static final Logger LOG = Logger.getInstance(JDOMXIncluder.class);
-  private static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
+  public static final PathResolver DEFAULT_PATH_RESOLVER = new PathResolver() {
     @Override
     public @NotNull URL resolvePath(@NotNull String relativePath, @Nullable URL base) throws MalformedURLException {
       return base == null ? new URL(relativePath) : new URL(base, relativePath);
@@ -200,9 +200,7 @@ public final class JDOMXIncluder {
     try {
       bases.push(remote);
       Element root = JDOMUtil.loadResource(remote);
-      List<Element> list = resolve(root, bases);
-      bases.pop();
-      return list;
+      return resolve(root, bases);
     }
     catch (JDOMException e) {
       throw new XIncludeException(e);
@@ -217,6 +215,9 @@ public final class JDOMXIncluder {
         return Collections.emptyList();
       }
       throw new XIncludeException(e);
+    }
+    finally {
+      bases.pop();
     }
   }
 

@@ -132,8 +132,8 @@ final class PathBasedJdomXIncluder<T> {
   }
 
   private @Nullable Element parseRemote(@NotNull List<T> bases, @NotNull String relativePath, @NotNull Element referrerElement) {
+    int baseStackSize = bases.size();
     try {
-      int baseStackSize = bases.size();
       String base = referrerElement.getAttributeValue(BASE, Namespace.XML_NAMESPACE);
       if (base != null) {
         // to simplify implementation, no need to support obscure and not used base attribute
@@ -145,11 +145,6 @@ final class PathBasedJdomXIncluder<T> {
       }
       else {
         resolveNonXIncludeElement(root, bases);
-      }
-
-      // stack not modified, if, for example, pathResolver resolves element not via filesystem
-      if (baseStackSize != bases.size()) {
-        bases.remove(bases.size() - 1);
       }
       return root;
     }
@@ -168,6 +163,12 @@ final class PathBasedJdomXIncluder<T> {
       }
       else {
         throw new RuntimeException(e);
+      }
+    }
+    finally {
+      // stack not modified, if, for example, pathResolver resolves element not via filesystem
+      if (baseStackSize != bases.size()) {
+        bases.remove(bases.size() - 1);
       }
     }
   }
