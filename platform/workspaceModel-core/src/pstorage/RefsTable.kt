@@ -24,7 +24,9 @@ internal data class ConnectionId<T : TypedEntity, SUBT : TypedEntity> private co
   }
 
   companion object {
+    /** This function should be [@Synchronized] because interner is not thread-save */
     @Suppress("UNCHECKED_CAST")
+    @Synchronized
     fun <T : TypedEntity, SUBT : TypedEntity> create(
       parentClass: KClass<T>,
       childClass: KClass<SUBT>,

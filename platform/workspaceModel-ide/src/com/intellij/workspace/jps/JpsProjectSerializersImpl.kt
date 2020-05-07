@@ -2,13 +2,16 @@
 package com.intellij.workspace.jps
 
 import com.intellij.application.options.ReplacePathToMacroMap
+import com.intellij.concurrency.JobSchedulerImpl
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.UniqueNameGenerator
@@ -22,7 +25,9 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                                 fileSerializerFactories: List<JpsFileSerializerFactory<*>>,
@@ -136,9 +141,24 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   override fun loadAll(reader: JpsFileContentReader, builder: TypedEntityStorageBuilder) {
-    fileSerializersByUrl.values().forEach {
-      it.loadEntities(builder, reader, virtualFileManager)
+    val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", JobSchedulerImpl.getCPUCoresCount())
+    val futures = ArrayList<Future<TypedEntityStorageBuilder>>()
+    try {
+      val tasks = fileSerializersByUrl.values().map { serilizer ->
+        Callable {
+          val myBuilder = TypedEntityStorageBuilder.create()
+          serilizer.loadEntities(myBuilder, reader, virtualFileManager)
+          myBuilder
+        }
+      }
+
+      futures += ConcurrencyUtil.invokeAll(tasks, service)
     }
+    finally {
+      service.shutdown()
+    }
+
+    futures.map { it.get() }.forEach { builder.addDiff(it) }
   }
 
   @TestOnly
