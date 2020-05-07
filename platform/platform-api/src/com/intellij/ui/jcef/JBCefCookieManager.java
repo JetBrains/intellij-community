@@ -44,11 +44,6 @@ public class JBCefCookieManager {
     this(CefCookieManager.getGlobalManager());
   }
 
-  @SuppressWarnings("unused")
-  public JBCefCookieManager(@NotNull String path, boolean persistSessionCookies) {
-    this(CefCookieManager.createManager(path, persistSessionCookies));
-  }
-
   private JBCefCookieManager(@NotNull CefCookieManager cefCookieManager) {
     myCefCookieManager = cefCookieManager;
   }
