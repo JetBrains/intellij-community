@@ -120,7 +120,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
-  public @NotNull List<PluginId> getIncompatiblePluginIds() {
+  public @NotNull List<PluginId> getIncompatibleModuleIds() {
     return Collections.emptyList();
   }
 

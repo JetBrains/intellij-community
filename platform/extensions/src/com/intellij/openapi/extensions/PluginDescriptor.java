@@ -47,7 +47,7 @@ public interface PluginDescriptor {
   boolean isLicenseOptional();
 
   @NotNull
-  List<PluginId> getIncompatiblePluginIds();
+  List<PluginId> getIncompatibleModuleIds();
 
   PluginId @NotNull [] getDependentPluginIds();
 

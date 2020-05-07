@@ -88,7 +88,7 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   }
 
   @Override
-  public @NotNull List<PluginId> getIncompatiblePluginIds() {
+  public @NotNull List<PluginId> getIncompatibleModuleIds() {
     return Collections.emptyList();
   }
 

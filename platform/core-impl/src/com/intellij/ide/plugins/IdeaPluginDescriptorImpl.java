@@ -746,7 +746,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   }
 
   @Override
-  public @NotNull List<PluginId> getIncompatiblePluginIds() {
+  public @NotNull List<PluginId> getIncompatibleModuleIds() {
     return ContainerUtil.notNullize(myIncompatibilities);
   }
 

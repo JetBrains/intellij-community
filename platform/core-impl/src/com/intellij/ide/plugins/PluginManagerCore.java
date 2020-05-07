@@ -1628,15 +1628,16 @@ public final class PluginManagerCore {
     // topological sort based on required dependencies only
     IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap, false));
 
-    Set<PluginId> enabledIds = new LinkedHashSet<>();
+    Set<PluginId> enabledPluginIds = new LinkedHashSet<>();
+    Set<PluginId> enabledModuleIds = new LinkedHashSet<>();
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
     Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired) {
       boolean wasEnabled = descriptor.isEnabled();
-      if (wasEnabled && computePluginEnabled(descriptor, enabledIds, idMap, disabledRequiredIds, context.disabledPlugins, errors)) {
-        enabledIds.add(descriptor.getPluginId());
-        enabledIds.addAll(descriptor.getModules());
+      if (wasEnabled && computePluginEnabled(descriptor, enabledPluginIds, enabledModuleIds, idMap, disabledRequiredIds, context.disabledPlugins, errors)) {
+        enabledPluginIds.add(descriptor.getPluginId());
+        enabledModuleIds.addAll(descriptor.getModules());
       }
       else {
         descriptor.setEnabled(false);
@@ -1781,7 +1782,8 @@ public final class PluginManagerCore {
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                              @NotNull Set<PluginId> loadedIds,
+                                              @NotNull Set<PluginId> loadedPluginIds,
+                                              @NotNull Set<PluginId> loadedModuleIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<? super PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
@@ -1792,8 +1794,8 @@ public final class PluginManagerCore {
 
     boolean result = true;
 
-    for (PluginId incompatibleId : descriptor.getIncompatiblePluginIds()) {
-      if (!loadedIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
+    for (PluginId incompatibleId : descriptor.getIncompatibleModuleIds()) {
+      if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
 
       result = false;
       IdeaPluginDescriptor dep = idMap.get(incompatibleId);
@@ -1808,7 +1810,7 @@ public final class PluginManagerCore {
     }
 
     for (PluginId depId : descriptor.getDependentPluginIds()) {
-      if (loadedIds.contains(depId) || isOptional(descriptor, depId)) {
+      if (loadedPluginIds.contains(depId) || loadedModuleIds.contains(depId) || isOptional(descriptor, depId)) {
         continue;
       }
 
