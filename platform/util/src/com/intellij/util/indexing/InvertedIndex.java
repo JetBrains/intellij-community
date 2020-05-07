@@ -30,8 +30,7 @@ public interface InvertedIndex<Key, Value, Input> {
   /**
    * Maps input as the first stage and returns a computation that does actual index data structure update.
    * It may be used to separate long-running input mapping from writing data to disk.
-   * Computable returns `true` if data has been saved without errors and `false` if StorageException, IOException
-   * or something wrong has happened.
+   * Computable returns `true` if data has been saved without errors, otherwise - `false`.
    */
   @NotNull
   Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
