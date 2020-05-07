@@ -3,7 +3,6 @@ package git4idea.rebase
 
 import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
@@ -22,9 +21,6 @@ import org.jetbrains.annotations.Nls
  * i.e. should be enabled only on commits not pushed to a protected branch.
  */
 abstract class GitCommitEditingAction : DumbAwareAction() {
-
-  private val LOG = logger<GitCommitEditingAction>()
-
   protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
 
   override fun update(e: AnActionEvent) {
