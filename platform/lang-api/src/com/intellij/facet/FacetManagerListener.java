@@ -5,6 +5,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
+/**
+ * Implement this interface and register it in {@link com.intellij.util.messages.MessageBusConnection} for a {@link com.intellij.openapi.module.Module}
+ * instance to be notified about changes in facets of a particular module.
+ * @see ProjectFacetListener
+ */
 public interface FacetManagerListener extends EventListener {
   void beforeFacetAdded(@NotNull Facet facet);
 

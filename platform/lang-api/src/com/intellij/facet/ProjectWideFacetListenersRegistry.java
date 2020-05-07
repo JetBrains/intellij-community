@@ -6,6 +6,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Provides a way to register listeners which will be notified about changes in facets in all modules.
+ * Consider using {@link ProjectFacetListener} extension instead, it doesn't require calling code during project initialization.
+ */
 @ApiStatus.NonExtendable
 public abstract class ProjectWideFacetListenersRegistry {
   public static ProjectWideFacetListenersRegistry getInstance(@NotNull Project project) {

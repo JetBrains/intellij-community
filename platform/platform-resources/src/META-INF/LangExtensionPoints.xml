@@ -426,6 +426,9 @@
     <extensionPoint name="projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor" dynamic="true"/>
 
     <extensionPoint name="facetType" interface="com.intellij.facet.FacetType" dynamic="true"/>
+    <extensionPoint name="projectFacetListener" beanClass="com.intellij.facet.impl.ProjectFacetListenerEP" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.facet.ProjectFacetListener"/>
+    </extensionPoint>
 
     <extensionPoint name="facet.toolWindow" beanClass="com.intellij.facet.ui.FacetDependentToolWindow" dynamic="true">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
