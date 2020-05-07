@@ -40,7 +40,7 @@ public class MavenProjectReader {
   private final Project myProject;
   private SettingsProfilesCache mySettingsProfilesCache;
 
-  public MavenProjectReader(Project project) {
+  public MavenProjectReader(@NotNull Project project) {
     myProject = project;
   }
 

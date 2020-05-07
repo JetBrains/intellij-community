@@ -80,12 +80,17 @@ public class MavenProjectsTree {
     }
   };
 
-  public MavenProjectsTree(Project project) {
+  public MavenProjectsTree(@NotNull Project project) {
     myProject = project;
   }
 
   Project getProject() {
     return myProject;
+  }
+
+  public MavenWrapperConfiguration getWrapperConfiguration(MavenProject project) {
+    return null;
+
   }
 
   public MavenProjectReaderProjectLocator getProjectLocator() {

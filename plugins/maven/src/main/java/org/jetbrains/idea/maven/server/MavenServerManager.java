@@ -20,7 +20,6 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.Converter;
@@ -54,6 +53,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
+  public static final String WRAPPER_MAVEN = "Defined by wrapper";
 
   private static final String DEFAULT_VM_OPTIONS =
     "-Xmx768m";
@@ -131,7 +131,11 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     });
   }
 
-  public MavenServerConnector getConnector(Project project) {
+  public MavenServerConnector getConnector(MavenProject mavenProject, @NotNull Project project) {
+    return getConnector(project);
+  }
+
+  public MavenServerConnector getConnector(@NotNull Project project) {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
     MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
     if (distribution == null) {
