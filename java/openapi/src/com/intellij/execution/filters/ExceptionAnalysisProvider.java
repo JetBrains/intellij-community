@@ -18,4 +18,10 @@ public interface ExceptionAnalysisProvider {
   @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
                                        @NotNull String exceptionClassName,
                                        @NotNull String exceptionMessage);
+
+  /**
+   * @param anchor a place (method name identifier) in the source code where next stack frame row is invoked 
+   * @return an action to provide additional analysis for given location; null if not available
+   */
+  @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor);
 }

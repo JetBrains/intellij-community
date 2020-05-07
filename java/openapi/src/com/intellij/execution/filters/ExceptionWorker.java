@@ -419,9 +419,13 @@ public class ExceptionWorker {
 
     private void displayAnalysisAction(@NotNull Project project, @NotNull PsiElement element, @NotNull Editor editor) {
       ExceptionInfo info = myElementMatcher.getExceptionInfo();
-      if (info == null) return;
-      AnAction action = project.getService(ExceptionAnalysisProvider.class)
-        .getAnalysisAction(element, info.getExceptionClassName(), info.getExceptionMessage());
+      ExceptionAnalysisProvider exceptionAnalysisProvider = project.getService(ExceptionAnalysisProvider.class);
+      AnAction action;
+      if (info == null) {
+        action = exceptionAnalysisProvider.getIntermediateRowAnalysisAction(element);
+      } else {
+        action = exceptionAnalysisProvider.getAnalysisAction(element, info.getExceptionClassName(), info.getExceptionMessage());
+      }
       if (action == null) return;
       String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
       Ref<Balloon> ref = Ref.create();

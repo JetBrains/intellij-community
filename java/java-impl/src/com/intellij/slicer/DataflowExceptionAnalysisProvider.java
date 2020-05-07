@@ -3,9 +3,7 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -20,13 +18,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -43,16 +42,66 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return createAction(analysis);
   }
 
+  @Override
+  public @Nullable AnAction getIntermediateRowAnalysisAction(@NotNull PsiElement anchor) {
+    Analysis analysis = getIntermediateRowAnalysis(anchor);
+    return createAction(analysis);
+  }
+
+  private static @Nullable Analysis getIntermediateRowAnalysis(@NotNull PsiElement anchor) {
+    if (!(anchor instanceof PsiIdentifier)) return null;
+    PsiReferenceExpression ref = tryCast(anchor.getParent(), PsiReferenceExpression.class);
+    if (ref == null) return null;
+    PsiMethodCallExpression call = tryCast(ref.getParent(), PsiMethodCallExpression.class);
+    if (call == null) return null;
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return null;
+    if (!JavaMethodContractUtil.isPure(method)) return null;
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
+    if (contracts.isEmpty() || contracts.size() > 2) return null;
+    MethodContract failContract = contracts.get(0);
+    if (failContract.getReturnValue() != ContractReturnValue.fail()) return null;
+    if (contracts.size() == 2 && !(contracts.get(1).getReturnValue() instanceof ContractReturnValue.ParameterReturnValue)) return null;
+    ContractValue condition = ContainerUtil.getOnlyItem(failContract.getConditions());
+    if (condition == null) return null;
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    PsiExpression arg = getArgFromContract(args, condition, ContractValue.nullValue(), true);
+    if (arg != null) {
+      return Analysis.create(DfTypes.NULL, arg);
+    }
+    arg = getArgFromContract(args, condition, ContractValue.nullValue(), false);
+    if (arg != null) {
+      return Analysis.create(DfTypes.NOT_NULL_OBJECT, arg);
+    }
+    arg = getArgFromContract(args, condition, ContractValue.booleanValue(true), true);
+    if (arg != null) {
+      return fromCondition(arg);
+    }
+    arg = getArgFromContract(args, condition, ContractValue.booleanValue(false), true);
+    if (arg != null) {
+      return tryNegate(fromCondition(arg));
+    }
+    return null;
+  }
+  
+  private static @Nullable PsiExpression getArgFromContract(
+    PsiExpression[] args, ContractValue condition, ContractValue expectedValue, boolean equal) {
+    int pos = condition.getArgumentComparedTo(expectedValue, equal).orElse(-1);
+    if (pos < 0 || pos >= args.length) return null;
+    return args[pos];
+  }
+
   private @Nullable Analysis getAnalysis(@NotNull PsiElement anchor,
                                          @NotNull String exceptionName,
                                          @NotNull String exceptionMessage) {
     if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW)) {
       PsiNewExpression exceptionConstructor = tryCast(anchor.getParent(), PsiNewExpression.class);
-      if (exceptionConstructor == null) return null;
-      PsiThrowStatement throwStatement =
-        tryCast(ExpressionUtils.getTopLevelExpression(exceptionConstructor).getParent(), PsiThrowStatement.class);
-      if (throwStatement == null) return null;
-      return fromThrowStatement(throwStatement);
+      if (exceptionConstructor != null && !exceptionConstructor.isArrayCreation()) {
+        PsiThrowStatement throwStatement =
+          tryCast(ExpressionUtils.getTopLevelExpression(exceptionConstructor).getParent(), PsiThrowStatement.class);
+        if (throwStatement == null) return null;
+        return fromThrowStatement(throwStatement);
+      }
     }
     switch (exceptionName) {
       case CommonClassNames.JAVA_LANG_ASSERTION_ERROR:
@@ -62,11 +111,34 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       case "java.lang.ClassCastException":
         return fromClassCastException(anchor, exceptionMessage);
       case CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION:
-        PsiExpression deref = extractAnchor(findDereferencedExpression(anchor));
-        return deref == null ? null : new Analysis(DfTypes.NULL, deref);
+        return Analysis.create(DfTypes.NULL, findDereferencedExpression(anchor));
+      case "java.lang.NegativeArraySizeException":
+        return fromNegativeArraySizeException(anchor, exceptionMessage);
+      case "java.lang.ArithmeticException":
+        return fromArithmeticException(anchor);
       default:
         return null;
     }
+  }
+
+  private static Analysis fromArithmeticException(PsiElement anchor) {
+    if (anchor instanceof PsiJavaToken && (((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.DIV) ||
+                                           ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.PERC))) {
+      PsiPolyadicExpression division = tryCast(anchor.getParent(), PsiPolyadicExpression.class);
+      if (division != null) {
+        PsiExpression divisor = PsiTreeUtil.getNextSiblingOfType(anchor, PsiExpression.class);
+        if (divisor != null) {
+          PsiType type = divisor.getType();
+          if (PsiType.LONG.equals(type)) {
+            return Analysis.create(DfTypes.longValue(0), divisor);
+          }
+          else if (TypeConversionUtil.isIntegralNumberType(type)) {
+            return Analysis.create(DfTypes.intValue(0), divisor);
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private @Nullable static Analysis fromThrowStatement(PsiThrowStatement throwStatement) {
@@ -86,21 +158,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
           }
         }
         if (statement instanceof PsiSwitchLabelStatement) {
-          PsiStatement prev = PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
-          // TODO: support multiple labels
-          // TODO: support rule-based switch
-          if (prev != null && ControlFlowUtils.statementMayCompleteNormally(prev)) return null;
-          PsiExpressionList values = ((PsiSwitchLabelStatement)statement).getCaseValues();
-          if (values == null) return null;
-          PsiExpression[] expressions = values.getExpressions();
-          if (expressions.length != 1) return null;
-          DfType type = fromConstant(expressions[0]);
-          if (type == null) return null;
-          PsiSwitchBlock block = ((PsiSwitchLabelStatement)statement).getEnclosingSwitchBlock();
-          if (block == null) return null;
-          PsiExpression anchor = extractAnchor(block.getExpression());
-          if (anchor == null) return null;
-          return new Analysis(type, anchor);
+          return fromSwitchLabel((PsiSwitchLabelStatement)statement);
         }
       }
       if (parent.getParent() instanceof PsiBlockStatement) {
@@ -109,11 +167,77 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
         return null;
       }
     }
-    if (!(parent instanceof PsiIfStatement) || !PsiTreeUtil.isAncestor(((PsiIfStatement)parent).getThenBranch(), throwStatement, false)) {
-      return null;
+    if (parent instanceof PsiIfStatement && PsiTreeUtil.isAncestor(((PsiIfStatement)parent).getThenBranch(), throwStatement, false)) {
+      PsiExpression cond = PsiUtil.skipParenthesizedExprDown(((PsiIfStatement)parent).getCondition());
+      return fromCondition(cond);
     }
-    PsiExpression cond = PsiUtil.skipParenthesizedExprDown(((PsiIfStatement)parent).getCondition());
-    return fromCondition(cond);
+    if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      return fromSwitchLabel((PsiSwitchLabeledRuleStatement)parent);
+    }
+    return null;
+  }
+
+  private static @Nullable Analysis fromSwitchLabel(PsiSwitchLabelStatementBase label) {
+    PsiSwitchBlock block = label.getEnclosingSwitchBlock();
+    if (block == null) return null;
+    boolean hasDefault = false;
+    List<PsiExpression> labels = new ArrayList<>();
+    if (label.isDefaultCase()) {
+      hasDefault = true;
+    } else {
+      PsiExpressionList values = label.getCaseValues();
+      if (values == null) return null;
+      labels.addAll(Arrays.asList(values.getExpressions()));
+    }
+    if (label instanceof PsiSwitchLabelStatement) {
+      PsiStatement prev = label;
+      while (true) {
+        prev = PsiTreeUtil.getPrevSiblingOfType(prev, PsiStatement.class);
+        if (!(prev instanceof PsiSwitchLabelStatement)) {
+          if (prev != null && ControlFlowUtils.statementMayCompleteNormally(prev)) return null;
+          break;
+        }
+        if (((PsiSwitchLabelStatement)prev).isDefaultCase()) {
+          hasDefault = true;
+        } else {
+          PsiExpressionList prevValues = ((PsiSwitchLabelStatement)prev).getCaseValues();
+          if (prevValues == null) return null;
+          labels.addAll(Arrays.asList(prevValues.getExpressions()));
+        }
+      }
+    }
+    if (hasDefault) {
+      List<PsiExpression> allLabels = new ArrayList<>();
+      for (PsiStatement statement : Objects.requireNonNull(block.getBody()).getStatements()) {
+        if (statement instanceof PsiSwitchLabelStatementBase) {
+          PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)statement;
+          if (labelStatement.isDefaultCase()) continue;
+          PsiExpressionList caseValues = labelStatement.getCaseValues();
+          if (caseValues == null) return null;
+          allLabels.addAll(Arrays.asList(caseValues.getExpressions()));
+        }
+      }
+      allLabels.removeAll(labels);
+      labels = allLabels;
+    }
+    PsiExpression selector = block.getExpression();
+    Analysis result = null;
+    for (PsiExpression labelValue : labels) {
+      DfType type = fromConstant(labelValue);
+      if (type == null) return null;
+      Analysis next = Analysis.create(type, selector);
+      if (hasDefault) {
+        next = tryNegate(next);
+      }
+      if (next == null) return null;
+      if (result == null) {
+        result = next;
+      } else {
+        result = hasDefault ? result.tryMeet(next) : result.tryJoin(next);
+        if (result == null) return null;
+      }
+    }
+    return result; 
   }
 
   private @Nullable
@@ -172,10 +296,21 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       if (index != null) {
         PsiArrayAccessExpression access = tryCast(anchor.getParent(), PsiArrayAccessExpression.class);
         if (access != null) {
-          PsiExpression ref = extractAnchor(access.getIndexExpression());
-          if (ref != null && PsiType.INT.equals(ref.getType())) {
-            return new Analysis(DfTypes.intValue(index), ref);
-          }
+          return Analysis.create(DfTypes.intValue(index), access.getIndexExpression());
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Analysis fromNegativeArraySizeException(@NotNull PsiElement anchor, @NotNull String exceptionMessage) {
+    if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW) && anchor.getParent() instanceof PsiNewExpression) {
+      int size = Integer.parseInt(exceptionMessage);
+      if (size < 0) {
+        PsiExpression[] dimensions = ((PsiNewExpression)anchor.getParent()).getArrayDimensions();
+        if (dimensions.length == 1) {
+          return Analysis.create(DfTypes.intValue(size), dimensions[0]);
         }
       }
     }
@@ -446,6 +581,13 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       DfType meet = this.myDfType.join(next.myDfType);
       if (meet == DfTypes.TOP) return null;
       return new Analysis(meet, this.myAnchor);
+    }
+
+    private static @Nullable Analysis create(@NotNull DfType type, @Nullable PsiExpression anchor) {
+      anchor = extractAnchor(anchor);
+      if (anchor == null) return null;
+      if (DfTypes.typedObject(anchor.getType(), Nullability.UNKNOWN).meet(type) == DfTypes.BOTTOM) return null;
+      return new Analysis(type, anchor);
     }
   }
 }

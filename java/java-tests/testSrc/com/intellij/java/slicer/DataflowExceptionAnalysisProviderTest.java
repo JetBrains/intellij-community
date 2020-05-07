@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.slicer;
 
+import com.intellij.execution.filters.ExceptionAnalysisProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
-import com.intellij.slicer.DataflowExceptionAnalysisProvider;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,6 +181,28 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "  }" +
            "}");
   }
+
+  public void testInSwitchRule() {
+    doTest("java.lang.IllegalArgumentException", "",
+           "Find why 'x' could be in {2, 3, 5}",
+           "class X {static void test(int x) { switch (x) { case 2,3,5 -> throw <caret>new RuntimeException();default -> {} } }}");
+  }
+
+  public void testInSwitchDefault() {
+    doTest("java.lang.IllegalArgumentException", "",
+           "Find why 'x' could be <= 0 or >= 5",
+           "class X {static void test(int x) { switch (x) { " +
+           "case 1: break; case 2: break; case 3, 4: break; " +
+           "case 5: default: throw <caret>new IllegalArgumentException(); } }");
+  }
+
+  public void testInSwitchDefaultString() {
+    doTest("java.lang.IllegalArgumentException", "",
+           "Find why 's' could be != \"BAR\", \"FOO\" (not-null)",
+           "class X {static void test(String s) { switch (s) { " +
+           "case \"FOO\": break; case \"BAR\": break;" +
+           "default: case \"BAZ\": throw <caret>new IllegalArgumentException(); } }");
+  }
   
   public void testIfExits() {
     doTest("java.lang.IllegalArgumentException", "",
@@ -202,12 +224,70 @@ public class DataflowExceptionAnalysisProviderTest extends LightJavaCodeInsightT
            "class X {static void test(X x) {throw <caret>new IllegalArgumentException();}}");
   }
   
-  private void doTest(@NotNull String exceptionName, @NotNull String exceptionMessage, @Nullable String expectedActionTitle, @NotNull String source) {
+  public void testNegativeArraySizeException() {
+    doTest("java.lang.NegativeArraySizeException", "-2",
+           "Find why 'x' could be -2",
+           "class X {static void test(int x) {int[] data = <caret>new int[x];}}");
+  }
+  
+  public void testDivisionByZero() {
+    doTest("java.lang.ArithmeticException", "/ by zero",
+           "Find why 'y' could be 0",
+           "class X {static void test(int x, int y) {int[] data = new int[x<caret>/y];}}");
+  }
+  
+  public void testModByZero() {
+    doTest("java.lang.ArithmeticException", "/ by zero",
+           "Find why 'y' could be 0",
+           "class X {static void test(int x, long y) {long res = x <caret>% y;}}");
+  }
+  
+  public void testRequireNonNull() {
+    doTest(null, null, "Find why 'str' could be null",
+           "class X {static void test(String str, String msg) {java.util.Objects.<caret>requireNonNull(str, msg);}}");
+  }
+
+  public void testAssertNull() {
+    doTest(null, null, "Find why 'str' could be not-null",
+           "class X {static void test(String str) {<caret>assertNull(str);}" +
+           "static void assertNull(Object obj) {if(obj != null) throw new AssertionError();}}");
+  }
+
+  public void testAssertTrue() {
+    doTest(null, null, "Find why 'x' could be <= 0",
+           "class X {static void test(int x) {<caret>assertTrue(x > 0);}" +
+           "static void assertTrue(boolean flag) {if(!flag) throw new AssertionError();}}");
+  }
+
+  public void testAssertFalse() {
+    doTest(null, null, "Find why 'x' could be >= 1",
+           "class X {static void test(int x) {<caret>assertFalse(x > 0);}" +
+           "static void assertFalse(boolean flag) {if(flag) throw new AssertionError();}}");
+  }
+
+  public void testOptionalGet() {
+    // Not supported
+    doTest(null, null, null,
+           "class X {static void test(java.util.Optional x) {x.<caret>get();}}");
+  }
+
+  private void doTest(@Nullable("If intermediate line action should be tested") String exceptionName,
+                      @Nullable("If exceptionName is null") String exceptionMessage,
+                      @Nullable("If no action is expected") String expectedActionTitle,
+                      @NotNull String source) {
     configureFromFileText("Test.java", source);
     int offset = getEditor().getCaretModel().getOffset();
     assertTrue("Offset is not set", offset > 0);
     PsiElement leaf = getFile().findElementAt(offset);
-    AnAction action = new DataflowExceptionAnalysisProvider(getProject()).getAnalysisAction(leaf, exceptionName, exceptionMessage);
+    AnAction action;
+    ExceptionAnalysisProvider analysisProvider = getProject().getService(ExceptionAnalysisProvider.class);
+    if (exceptionName != null) {
+      assertNotNull(exceptionMessage);
+      action = analysisProvider.getAnalysisAction(leaf, exceptionName, exceptionMessage);
+    } else {
+      assertNull(exceptionMessage);
+      action = analysisProvider.getIntermediateRowAnalysisAction(leaf);
+    }
     if (expectedActionTitle == null) {
       assertNull(action);
     } else {
