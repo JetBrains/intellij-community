@@ -4,7 +4,6 @@ package com.intellij.structuralsearch.impl.matcher;
 import com.intellij.dupLocator.AbstractMatchingVisitor;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
@@ -23,9 +22,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
@@ -50,8 +47,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
   private boolean myResult;
 
   private MatchContext matchContext;
-
-  private final Map<Language, PsiElementVisitor> myLanguage2MatchingVisitor = new HashMap<>(1);
 
   /**
    * @return the current code element to match.
@@ -153,25 +148,12 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   @Nullable
   private PsiElementVisitor getVisitorForElement(PsiElement element) {
-    final Language language = element.getLanguage();
-    PsiElementVisitor visitor = myLanguage2MatchingVisitor.get(language);
-    if (visitor == null) {
-      visitor = createMatchingVisitor(language);
-      myLanguage2MatchingVisitor.put(language, visitor);
-    }
-    return visitor;
-  }
-
-  @Nullable
-  private PsiElementVisitor createMatchingVisitor(Language language) {
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
     if (profile == null) {
-      LOG.warn("there is no StructuralSearchProfile for language " + language.getID());
+      LOG.warn("No StructuralSearchProfile found for language " + element.getLanguage().getID());
       return null;
     }
-    else {
-      return profile.createMatchingVisitor(this);
-    }
+    return profile.createMatchingVisitor(this);
   }
 
   /**
