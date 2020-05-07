@@ -345,6 +345,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
         SliceAnalysisParams params = new SliceAnalysisParams();
         params.dataFlowToThis = true;
         params.scope = new AnalysisScope(myProject);
+        params.scope.setSearchInLibraries(true);
         params.valueFilter = new JavaDfaSliceValueFilter(analysis.myDfType);
         SliceManager.getInstance(myProject).createToolWindow(analysis.myAnchor, params);
       }
