@@ -5,7 +5,12 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.indexing.IndexDataComparer;
+import com.intellij.util.indexing.IndexDataPresenter;
+import com.intellij.util.indexing.impl.DebugAssertions;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +67,7 @@ public final class SerializedStubTree {
     forwardIndexExternalizer.save(new DataOutputStream(indexBytes), indexedStubs);
     byte[] indexedStubBytes = indexBytes.getInternalBuffer();
     int indexedStubByteLength = indexBytes.size();
-    return new SerializedStubTree(
+    SerializedStubTree stubTree = new SerializedStubTree(
       treeBytes,
       treeByteLength,
       indexedStubBytes,
@@ -71,6 +76,10 @@ public final class SerializedStubTree {
       forwardIndexExternalizer,
       serializationManager
     );
+    if (DebugAssertions.DEBUG) {
+      assertDeserializedStubMatchesOriginalStub(stubTree, rootStub);
+    }
+    return stubTree;
   }
 
   public @NotNull SerializedStubTree reSerialize(@NotNull SerializationManagerEx newSerializationManager,
@@ -188,6 +197,24 @@ public final class SerializedStubTree {
       }
     }
     return (Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>)(Map)map;
+  }
+
+  private static void assertDeserializedStubMatchesOriginalStub(@NotNull SerializedStubTree stubTree,
+                                                                @NotNull Stub originalStub) {
+    Stub deserializedStub;
+    try {
+      deserializedStub = stubTree.getStub();
+    }
+    catch (SerializerNotFoundException e) {
+      throw new RuntimeException("Failed to deserialize stub tree", e);
+    }
+    if (!IndexDataComparer.INSTANCE.areStubsTheSame(originalStub, deserializedStub)) {
+      throw new RuntimeExceptionWithAttachments(
+        "Deserialized stub does not match original stub",
+        new Attachment("original-stub.txt", IndexDataPresenter.INSTANCE.getPresentableStub(originalStub)),
+        new Attachment("deserialized-stub.txt", IndexDataPresenter.INSTANCE.getPresentableStub(deserializedStub))
+      );
+    }
   }
 
   private byte[] myTreeHash;
