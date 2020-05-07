@@ -29,6 +29,8 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
     fragments.add(CommonParameterFragments.createRedirectFragment());
 
     fragments.addAll(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
+    fragments.add(CommonJavaFragments.createBuildBeforeRun());
+    fragments.add(CommonJavaFragments.createEnvParameters());
 
     JrePathEditor jrePathEditor = new JrePathEditor();
     jrePathEditor.getLabel().setVisible(false);
@@ -59,10 +61,5 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
                                     configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
     return fragments;
-  }
-
-  @Override
-  protected String getTitle() {
-    return ExecutionBundle.message("application.configuration.title.build.and.run");
   }
 }
