@@ -48,15 +48,22 @@ object TipsOrderUtil {
     override fun runActivity(project: Project) {
       if (!ApplicationManager.getApplication().isEAP || !StatisticsUploadAssistant.isSendAllowed()
           || ApplicationManager.getApplication().isHeadlessEnvironment) return
-      try {
-        sync()
-      }
-      finally {
-        alarm.addRequest({ sync() }, TimeUnit.HOURS.toMillis(3))
-      }
+      scheduleSyncRequest()
+    }
+
+    private fun scheduleSyncRequest() {
+      alarm.addRequest(Runnable {
+        try {
+          sync()
+        }
+        finally {
+          alarm.addRequest({ sync() }, TimeUnit.HOURS.toMillis(3))
+        }
+      }, 0)
     }
 
     private fun sync() {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
       LOG.debug("Fetching tips order from the server: $TIPS_SERVER_URL")
       val allTips = ContainerUtil.map(TipAndTrickBean.EP_NAME.extensionList) { x: TipAndTrickBean -> x.fileName }
       val actionsSummary: Map<String, UsageInfo> = service<ActionsLocalSummary>().getActionsStats().mapValues {
