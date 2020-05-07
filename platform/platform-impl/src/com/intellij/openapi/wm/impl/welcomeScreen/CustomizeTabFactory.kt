@@ -97,9 +97,12 @@ class CustomizeTab : DefaultWelcomeScreenTab("Customize") {
                 .comment(UIBundle.message("color.blindness.checkbox.comment"))
             }
             else {
-              val enableColorBlindness = component(JBCheckBox(UIBundle.message("color.blindness.combobox.text")))
-                .applyToComponent { isSelected = modelBinding.get() != null }
-              component(ComboBox(supportedValues.toTypedArray()))
+              val enableColorBlindness = component(
+                JBCheckBox(UIBundle.message("welcome.screen.color.blindness.combobox.text"))).applyToComponent {
+                isSelected = modelBinding.get() != null
+                isOpaque = false
+              }
+              component<ComboBox<ColorBlindness>>(ComboBox(supportedValues.toTypedArray()))
                 .enableIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
