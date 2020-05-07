@@ -135,10 +135,10 @@ class GitRewordAction : GitSingleCommitEditingAction() {
       val editor = CommitMessage(project, false, false, true)
       editor.setText(commit.fullMessage)
       editor.editorField.setCaretPosition(0)
-      editor.editorField.addSettingsProvider { editor ->
+      editor.editorField.addSettingsProvider { editorEx ->
         // display at least several rows for one-line messages
         val MIN_ROWS = 3
-        if ((editor as EditorImpl).visibleLineCount < MIN_ROWS) {
+        if ((editorEx as EditorImpl).visibleLineCount < MIN_ROWS) {
           verticalStretch = 1.5F
         }
       }
