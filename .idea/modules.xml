@@ -521,6 +521,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/sync-perf-tests/intellij.android.sync-perf-tests.iml" filepath="$PROJECT_DIR$/../adt/idea/sync-perf-tests/intellij.android.sync-perf-tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-templates/intellij.android.templates.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-templates/intellij.android.templates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-framework/intellij.android.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-retention/intellij.android.testRetention.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-retention/intellij.android.testRetention.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-test-retention/intellij.android.testRetention.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-test-retention/intellij.android.testRetention.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" filepath="$PROJECT_DIR$/../adt/idea/android-transport/intellij.android.transport.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" filepath="$PROJECT_DIR$/../adt/idea/transport-database/intellij.android.transportDatabase.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" filepath="$PROJECT_DIR$/../adt/idea/updater-ui/intellij.android.updater.ui.iml" />

@@ -103,6 +103,8 @@ iml_project(
         "//tools/adt/idea/android-plugin:intellij.android.plugin",
         "//tools/adt/idea/android-templates:intellij.android.templates.tests",
         "//tools/adt/idea/android-test-framework:intellij.android.testFramework",
+        "//tools/adt/idea/android-test-retention:intellij.android.testRetention",
+        "//tools/adt/idea/android-test-retention:intellij.android.testRetention.tests",
         "//tools/adt/idea/android-transport:intellij.android.transport",
         "//tools/adt/idea/android-uitests:intellij.android.guiTests",
         "//tools/adt/idea/android:intellij.android.core",
