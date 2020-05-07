@@ -127,13 +127,19 @@ public class JBCefBrowser implements JBCefDisposable {
       myLifeSpanHandler = null;
     }
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
+      boolean firstSetFocus = true;
+
       @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
-        if (source == FocusSource.FOCUS_SOURCE_NAVIGATION) return true;
+        if (!firstSetFocus && source == FocusSource.FOCUS_SOURCE_NAVIGATION) {
+          // Suppress focusing the browser on navigation events.
+          // However, this doesn't work for the first on-show focus, so skip it.
+          return true;
+        }
+        firstSetFocus = false;
         // Workaround: JCEF doesn't change current focus on the client side.
         // Clear the focus manually and this will report focus loss to the client
         // and will let focus return to the client on mouse click.
-        // tav [todo]: the opposite is inadequate
         KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
         return false;
       }
