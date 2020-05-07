@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
  * Forces JCEF early startup in order to support co-existence with JavaFX (see IDEA-236310).
  */
 final class JBCefStartup {
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "FieldCanBeLocal"})
   private JBCefClient STARTUP_CLIENT; // auto-disposed along with JBCefApp on IDE shutdown
 
   // os=mac
@@ -16,9 +16,11 @@ final class JBCefStartup {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-
     RegistryManager registryManager = RegistryManager.getInstance();
-    if (registryManager.is("ide.browser.jcef.enabled") && registryManager.is("ide.browser.jcef.preinit")) {
+    if (registryManager.is("ide.browser.jcef.enabled") &&
+        registryManager.is("ide.browser.jcef.preinit") &&
+        JBCefApp.isSupported())
+    {
       try {
         STARTUP_CLIENT = JBCefApp.getInstance().createClient();
       }

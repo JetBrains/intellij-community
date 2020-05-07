@@ -44,6 +44,9 @@ import static com.intellij.ui.jcef.JBCefFileSchemeHandler.FILE_SCHEME_NAME;
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
 
+  // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
+  private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 80;
+
   @NotNull private final CefApp myCefApp;
 
   @NotNull private final Disposable myDisposable = new Disposable() {
@@ -121,23 +124,85 @@ public final class JBCefApp {
     static {
       ourInitialized.set(true);
       JCefAppConfig config = null;
-      try {
-        config = JCefAppConfig.getInstance();
-      } catch (Exception e) {
-        LOG.error(e);
+      if (isSupported(true)) {
+        try {
+          config = JCefAppConfig.getInstance();
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
       INSTANCE = config != null ? new JBCefApp(config) : null;
     }
   }
 
   /**
-   * Should be used to check if JCEF is enabled in the platform, until it is enabled by default.
+   * Returns whether JCEF is enabled. The method should be used until JCEF is enabled by default.
+   * <p>
+   * Currently the method also takes into account the {@link #isSupported()} result.
+   * When it's finally removed, the {@code isSupported} method should be used instead.
    *
-   * @deprecated should not be used after JCEF is enabled by default
+   * @deprecated to be removed after JCEF is enabled by default
    */
   @Deprecated
   public static boolean isEnabled() {
-    return Registry.is("ide.browser.jcef.enabled");
+    return Registry.is("ide.browser.jcef.enabled") && isSupported();
+  }
+
+  /**
+   * Returns whether JCEF is supported. For that:
+   * <ul>
+   * <li> It should be available in the running JBR.
+   * <li> It should have a compatible version.
+   * </ul>
+   * In order to assuredly meet the above requirements the IDE should run with a bundled JBR.
+   */
+  public static boolean isSupported() {
+    return isSupported(false);
+  }
+
+  private static boolean isSupported(boolean logging) {
+    String version = JCefAppConfig.getVersion();
+    if (version == null) {
+      if (logging) {
+        LOG.warn("JCEF runtime version is not available");
+      }
+      return false;
+    }
+    String[] split = version.split("\\.");
+    if (split.length == 0) {
+      if (logging) {
+        LOG.warn("JCEF runtime version has wrong format: " + version);
+      }
+      return false;
+    }
+    try {
+      int majorVersion = Integer.parseInt(split[0]);
+      if (MIN_SUPPORTED_CEF_MAJOR_VERSION > majorVersion) {
+        if (logging) {
+          LOG.warn("JCEF minimum supported major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
+                   ", current is " + majorVersion);
+        }
+        return false;
+      }
+    }
+    catch (NumberFormatException e) {
+      if (logging) {
+        LOG.warn("JCEF runtime version has wrong format: " + version);
+      }
+      return false;
+    }
+
+    String path = JCefAppConfig.class.getResource("JCefAppConfig.class").toString();
+    String name = JCefAppConfig.class.getName().replace('.', '/');
+    boolean isJbrModule = path != null && path.contains("/jcef/" + name);
+    if (!isJbrModule) {
+      if (logging) {
+        LOG.warn("JCEF runtime library is not a JBR module");
+      }
+      return false;
+    }
+    return true;
   }
 
   @NotNull
