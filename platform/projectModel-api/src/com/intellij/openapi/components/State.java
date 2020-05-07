@@ -57,12 +57,12 @@ public @interface State {
    * <p>Enables recording of boolean and numerical fields, if true and statistics is allowed.</p>
    * <br/>
    * <p>Boolean: records not default value of the field.</p>
-   * <p>Numerical: records an event that the value is not default.
+   * <p>Numerical/Enums: records an event that the value is not default.
    * To record an absolute value of the field, add {@link ReportValue} annotation. </p>
    *
    * <br/>
    * <i>Limitations:</i><ul>
-   * <li>Won't record the value of object, string or enum fields.</li>
+   * <li>Won't record the value of object or string</li>
    * <li>Won't record fields if state is persisted manually, i.e. the state is {@link org.jdom.Element} </li>
    * </ul>
    */

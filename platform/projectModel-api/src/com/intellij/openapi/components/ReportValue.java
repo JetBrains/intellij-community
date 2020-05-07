@@ -7,8 +7,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that an absolute value of the numerical field should be reported in statistics.
- * Won't work on objects, string or enum fields.
+ * Indicates that an absolute value of the field should be reported in statistics.
+ * Won't work on objects, string fields.
  *
  * Can be used within persistent components if reportStatistics flag is enabled.
  * @see State#reportStatistic()
