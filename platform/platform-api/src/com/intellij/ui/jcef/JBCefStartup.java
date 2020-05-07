@@ -16,11 +16,7 @@ final class JBCefStartup {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    RegistryManager registryManager = RegistryManager.getInstance();
-    if (registryManager.is("ide.browser.jcef.enabled") &&
-        registryManager.is("ide.browser.jcef.preinit") &&
-        JBCefApp.isSupported())
-    {
+    if (JBCefApp.isSupported() && RegistryManager.getInstance().is("ide.browser.jcef.preinit")) {
       try {
         STARTUP_CLIENT = JBCefApp.getInstance().createClient();
       }

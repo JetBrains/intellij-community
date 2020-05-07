@@ -36,10 +36,10 @@ public class WebBrowser extends AnAction implements DumbAware {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
 
-    if (!JBCefApp.isEnabled()) {
+    if (!JBCefApp.isSupported()) {
       JBPopupFactory.getInstance().createComponentPopupBuilder(
         new JTextArea("Set the reg key to enable JCEF:\n\"ide.browser.jcef.enabled=true\""), null).
-        setTitle("JCEF web browser is not available").
+        setTitle("JCEF Web Browser Is not Supported").
         createPopup().
         showInCenterOf(activeFrame);
       return;
