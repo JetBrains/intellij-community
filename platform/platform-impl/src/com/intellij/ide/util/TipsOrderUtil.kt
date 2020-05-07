@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 object TipsOrderUtil {
   private val LOG = logger<TipsOrderUtil>()
   private const val RANDOM_SHUFFLE_ALGORITHM = "default_shuffle"
-  private const val TIPS_SERVER_URL = "http://feature-recommendation-1580030621.eu-west-1.elb.amazonaws.com/tips/v1"
+  private const val TIPS_SERVER_URL = "https://feature-recommendation.analytics.aws.intellij.net/tips/v1"
   private val MAPPER = ObjectMapper()
 
   @Volatile
