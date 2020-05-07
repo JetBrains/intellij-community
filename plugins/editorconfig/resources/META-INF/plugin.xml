@@ -87,7 +87,7 @@ To create an EditorConfig file in a directory, right-click this directory and se
         implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
 
     <editorFactoryListener implementation="org.editorconfig.configmanagement.EditorSettingsManager"/>
-    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.EncodingManager"/>
+    <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.ConfigEncodingManager"/>
     <fileDocumentManagerListener implementation="org.editorconfig.configmanagement.LineEndingsManager"/>
 
     <fileEncodingProvider implementation="org.editorconfig.configmanagement.EditorConfigFileEncodingProvider"/>

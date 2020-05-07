@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class EncodingManager implements FileDocumentManagerListener {
+public class ConfigEncodingManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String charsetKey = "charset";
 
@@ -44,7 +44,7 @@ public class EncodingManager implements FileDocumentManagerListener {
 
   private boolean isApplyingSettings;
 
-  public EncodingManager() {
+  public ConfigEncodingManager() {
     isApplyingSettings = false;
   }
 

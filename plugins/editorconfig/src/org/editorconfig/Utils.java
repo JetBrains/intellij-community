@@ -22,7 +22,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.LineSeparator;
 import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider;
-import org.editorconfig.configmanagement.EncodingManager;
+import org.editorconfig.configmanagement.ConfigEncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.core.EditorConfig.OutPair;
@@ -175,13 +175,13 @@ public class Utils {
   @NotNull
   public static String getEncodingLine(@NotNull Project project) {
     String encoding = getEncoding(project);
-    return encoding != null ? EncodingManager.charsetKey + "=" + encoding + "\n" : "";
+    return encoding != null ? ConfigEncodingManager.charsetKey + "=" + encoding + "\n" : "";
   }
 
   @Nullable
   public static String getEncoding(@NotNull Project project) {
     final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
-    for (Map.Entry<String, Charset> entry : EncodingManager.encodingMap.entrySet()) {
+    for (Map.Entry<String, Charset> entry : ConfigEncodingManager.encodingMap.entrySet()) {
       if (entry.getValue() == charset) {
         return entry.getKey();
       }

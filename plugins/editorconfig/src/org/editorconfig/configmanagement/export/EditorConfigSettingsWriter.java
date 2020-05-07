@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.MultiMap;
 import org.editorconfig.Utils;
-import org.editorconfig.configmanagement.EncodingManager;
+import org.editorconfig.configmanagement.ConfigEncodingManager;
 import org.editorconfig.configmanagement.LineEndingsManager;
 import org.editorconfig.configmanagement.StandardEditorConfigProperties;
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil;
@@ -68,7 +68,7 @@ public class EditorConfigSettingsWriter extends OutputStreamWriter {
     if (myProject != null) {
       String encoding = Utils.getEncoding(myProject);
       if (encoding != null) {
-        myGeneralOptions.put(EncodingManager.charsetKey, encoding);
+        myGeneralOptions.put(ConfigEncodingManager.charsetKey, encoding);
       }
     }
     String lineSeparator = Utils.getLineSeparatorString(mySettings.getLineSeparator());
