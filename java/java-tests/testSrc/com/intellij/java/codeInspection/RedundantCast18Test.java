@@ -50,4 +50,5 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testInferenceIncompatibilityWithoutCast() { doTest();}
   public void testCastToPrimitive() { doTest();}
   public void testParenthesisAroundConditional() { doTest();}
+  public void testMiscStatements() { doTest();}
 }
