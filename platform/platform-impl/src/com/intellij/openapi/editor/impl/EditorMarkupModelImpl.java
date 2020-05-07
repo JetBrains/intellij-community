@@ -452,6 +452,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private void changeStatus(AnalyzerStatus newStatus) {
+    boolean resetAnalyzingStatus = analyzerStatus != null &&
+                            analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
     smallIconLabel.setIcon(analyzerStatus.getIcon());
 
@@ -462,7 +464,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
 
     boolean analyzing = analyzerStatus.getAnalyzingType() != AnalyzingType.COMPLETE;
-    hasAnalyzed = hasAnalyzed || (isAnalyzing && !analyzing);
+    hasAnalyzed = !resetAnalyzingStatus && (hasAnalyzed || (isAnalyzing && !analyzing));
     isAnalyzing = analyzing;
 
     if (analyzerStatus.getAnalyzingType() != AnalyzingType.EMPTY) {
