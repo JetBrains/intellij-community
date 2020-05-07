@@ -50,6 +50,12 @@ public final class Disposer {
     };
   }
 
+  public static Disposable newDisposable(Disposable parentDisposable, @Nullable String debugName) {
+    Disposable result = newDisposable(debugName);
+    register(parentDisposable, result);
+    return result;
+  }
+
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
 
   /**
