@@ -31,7 +31,7 @@ internal class LegacyBridgeModifiableModuleModel(
   private val myModulesToAdd = HashBiMap.create<String, LegacyBridgeModule>()
   private val myModulesToDispose = HashBiMap.create<String, LegacyBridgeModule>()
   private val myNewNameToModule = HashBiMap.create<String, LegacyBridgeModule>()
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   // TODO Add cache?
   override fun getModules(): Array<Module> {

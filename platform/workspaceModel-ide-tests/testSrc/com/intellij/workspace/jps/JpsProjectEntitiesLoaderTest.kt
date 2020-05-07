@@ -61,7 +61,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
   }
 
   private fun checkSampleProjectConfiguration(storage: TypedEntityStorage, projectDir: File) {
-    val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManagerImpl.getInstance(project))
+    val projectUrl = projectDir.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
     val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
     assertEquals(3, modules.size)
 
@@ -227,7 +227,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
   private fun loadProject(projectFile: File): TypedEntityStorage {
     val storageBuilder = TypedEntityStorageBuilder.create()
-    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+    val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     return storageBuilder.toStorage()
   }

@@ -20,7 +20,7 @@ class LegacyBridgeCompilerModuleExtension(
 ) : CompilerModuleExtension() {
 
   private var changed = false
-  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(module.project)
+  private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
   private val javaSettingsValue: CachedValue<JavaModuleSettingsEntity?> = CachedValue {
     it.resolve(module.moduleEntityId)?.javaSettings
   }

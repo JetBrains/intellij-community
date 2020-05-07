@@ -33,7 +33,7 @@ internal class LegacyBridgeModifiableContentEntryImpl(
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
   private val LOG = Logger.getInstance(javaClass)
-  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(modifiableRootModel.project)
+  private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
   private val currentContentEntry = CachedValueImpl<ContentEntryViaTypedEntity> {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryViaTypedEntity

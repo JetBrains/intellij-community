@@ -40,7 +40,7 @@ class LegacyBridgeRootsWatcher(
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val rootFilePointers = LegacyModelRootsFilePointers(project)
 

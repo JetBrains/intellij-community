@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
  * All legacy file pointers are collected in a single container to perform project model update in a single change
  */
 class LegacyModelRootsFilePointers(val project: Project) {
-  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager = VirtualFileUrlManager.getInstance(project)
   private val pointers = listOf(
     // Library roots
     TypedEntityFileWatcher(

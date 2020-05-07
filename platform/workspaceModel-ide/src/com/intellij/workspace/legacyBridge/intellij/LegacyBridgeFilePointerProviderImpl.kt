@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspace.api.VirtualFileUrl
 import com.intellij.workspace.api.VirtualFileUrlManager
-import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.toVirtualFileUrl
 import org.jdom.Element
@@ -33,7 +32,7 @@ internal class LegacyBridgeFilePointerProviderImpl(project: Project) : LegacyBri
 
   private val fileContainerUrlsLock = ReentrantLock()
   private val fileContainerUrls = MultiMap.create<VirtualFileUrl, LegacyBridgeFileContainer>()
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   init {
     VirtualFileManager.getInstance().addAsyncFileListener(AsyncFileListener { events ->

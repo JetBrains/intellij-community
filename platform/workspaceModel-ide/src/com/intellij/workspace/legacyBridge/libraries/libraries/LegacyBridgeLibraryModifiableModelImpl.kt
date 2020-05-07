@@ -26,7 +26,7 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(originalLibrary.project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
   internal var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
     private set
   private var reloadKind = false

@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing.worktree
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.workspace.api.*
-import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.getInstance
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter
 import org.jetbrains.idea.maven.importing.MavenModelUtil
@@ -24,7 +23,7 @@ class WorkspaceModuleImporter(private val project: Project,
                               private val projectsTree: MavenProjectsTree,
                               private val diff: TypedEntityStorageBuilder) {
 
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private lateinit var moduleEntity: ModuleEntity
   fun importModule() {
     val dependencies = collectDependencies();

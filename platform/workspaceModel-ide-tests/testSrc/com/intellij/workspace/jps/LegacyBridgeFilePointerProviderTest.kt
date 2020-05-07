@@ -10,7 +10,6 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspace.api.VirtualFileUrlManager
 import com.intellij.workspace.api.toVirtualFileUrl
-import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFileContainer
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
@@ -43,7 +42,7 @@ class LegacyBridgeFilePointerProviderTest {
   @Before
   fun prepareProject() {
     project = createEmptyTestProject(temporaryDirectoryRule, disposable)
-    virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
+    virtualFileManager = VirtualFileUrlManager.getInstance(project)
   }
 
   @Test

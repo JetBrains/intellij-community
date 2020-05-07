@@ -8,6 +8,7 @@ import gnu.trove.THashMap
 import kotlin.collections.set
 
 interface VirtualFileUrlManager {
+  companion object
   fun fromUrl(url: String): VirtualFileUrl
   fun fromPath(path: String): VirtualFileUrl
   fun getParentVirtualUrlById(id: Int): VirtualFileUrl?
@@ -16,8 +17,6 @@ interface VirtualFileUrlManager {
 }
 
 class VirtualFileUrlManagerImpl: VirtualFileUrlManager {
-  companion object;
-
   private val idGenerator= IntIdGenerator()
   private val EMPTY_URL = VirtualFileUrl(0, this)
   private val fileNameStore = VirtualFileNameStore()
