@@ -47,14 +47,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       throw ExtensionNotApplicableException.INSTANCE;
     }
 
-    app.getMessageBus().simpleConnect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appWillBeClosed(boolean isRestart) {
-        myAppClosing = true;
-      }
-    });
-
     NonUrgentExecutor.getInstance().execute(() -> {
+      app.getMessageBus().simpleConnect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+        @Override
+        public void appWillBeClosed(boolean isRestart) {
+          myAppClosing = true;
+        }
+      });
+
       PerformanceWatcher.getInstance().processUnfinishedFreeze((dir, duration) -> {
         try {
           // report deadly freeze
