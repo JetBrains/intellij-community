@@ -273,6 +273,9 @@ public class DfaUtil {
    */
   static @Nullable PsiElement getDataflowContext(PsiExpression expression) {
     PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+    while (member instanceof PsiAnonymousClass && PsiTreeUtil.isAncestor(((PsiAnonymousClass)member).getArgumentList(), expression, true)) {
+      member = PsiTreeUtil.getParentOfType(member, PsiMember.class);
+    }
     if (member instanceof PsiField || member instanceof PsiClassInitializer) return member.getContainingClass();
     if (member instanceof PsiMethod) {
       return ((PsiMethod)member).isConstructor() ? member.getContainingClass() : ((PsiMethod)member).getBody();
