@@ -680,18 +680,20 @@ public class RedundantCastUtil {
         }
       }
     }
-  
+
     @Override
     public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
       PsiExpression lockExpression = deparenthesizeExpression(statement.getLockExpression());
       if (lockExpression instanceof PsiTypeCastExpression) {
         PsiExpression operand = deparenthesizeExpression(((PsiTypeCastExpression)lockExpression).getOperand());
+        while (operand instanceof PsiTypeCastExpression) {
+          operand = deparenthesizeExpression(((PsiTypeCastExpression)operand).getOperand());
+        }
         if (operand != null) {
           PsiType opType = operand.getType();
-          if (operand instanceof PsiFunctionalExpression || opType instanceof PsiPrimitiveType || opType == null) {
-            return;
+          if (!(operand instanceof PsiFunctionalExpression) && !(opType instanceof PsiPrimitiveType) && opType != null) {
+            addIfNarrowing((PsiTypeCastExpression)lockExpression, opType, null);
           }
-          addIfNarrowing((PsiTypeCastExpression)lockExpression, opType, null);
         }
       }
       super.visitSynchronizedStatement(statement);
