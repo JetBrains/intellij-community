@@ -45,21 +45,18 @@ internal class FacetEntityChangeListener(private val project: Project) {
         manager.model.updateEntity(change.entity, change.entity)
         FacetManagerBase.setFacetName(facet, change.entity.name)
         facet.initFacet()
-        manager.model.facetsChanged()
         publisher.fireFacetAdded(facet)
       }
       is EntityChange.Removed -> {
         val manager = getFacetManager(change.entity.module) ?: return
         val facet = manager.model.removeEntity(change.entity) ?: return
         Disposer.dispose(facet)
-        manager.model.facetsChanged()
         publisher.fireFacetRemoved(manager.module, facet)
       }
       is EntityChange.Replaced -> {
         val manager = getFacetManager(change.newEntity.module) ?: return
         val facet = manager.model.updateEntity(change.oldEntity, change.newEntity) ?: return
         FacetManagerBase.setFacetName(facet, change.newEntity.name)
-        manager.model.facetsChanged()
         if (change.oldEntity.name != change.newEntity.name) {
           publisher.fireFacetRenamed(facet, change.oldEntity.name)
         }
