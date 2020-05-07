@@ -10,6 +10,7 @@ class Main {
                     : /* second leg start */ "%s: %s") + "%n" /* second leg end */,
       /* first arg start */ "Hello"/* first arg end */,
       /* second arg start */ "World" /* second arg end */);
+    System.out.println("hello" + String.format("%n"))
   }
 
   Main() {
