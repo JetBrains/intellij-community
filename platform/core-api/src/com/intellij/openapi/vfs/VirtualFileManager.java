@@ -69,22 +69,39 @@ public abstract class VirtualFileManager implements ModificationTracker {
   public abstract void refreshWithoutFileWatcher(boolean asynchronous);
 
   /**
-   * @deprecated Use {@link VirtualFileLookup#newLookup()} builder instead
+   * Searches for a file specified by the given {@link VirtualFile#getUrl() URL}.
+   *
+   * @param url the URL to find file by
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFile#getUrl
+   * @see VirtualFileSystem#findFileByPath
+   * @see #refreshAndFindFileByUrl
    * @see VirtualFileLookup#newLookup()
    * @see VirtualFileLookup#fromUrl(String)
    */
-  @Deprecated
+  @SuppressWarnings("MethodMayBeStatic")
   public final @Nullable VirtualFile findFileByUrl(@NonNls @NotNull String url) {
     return VirtualFileLookup.newLookup().fromUrl(url);
   }
 
   /**
-   * @deprecated Use {@link VirtualFileLookup#newLookup()} builder instead
+   * <p>Refreshes only the part of the file system needed for searching the file by the given URL and finds file
+   * by the given URL.</p>
+   *
+   * <p>This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
+   * corresponding to it.</p>
+   *
+   * <p>If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.</p>
+   *
+   * @param url the URL
+   * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
+   * @see VirtualFileSystem#findFileByPath
+   * @see VirtualFileSystem#refreshAndFindFileByPath
    * @see VirtualFileLookup#newLookup()
    * @see VirtualFileLookup#withRefresh()
    * @see VirtualFileLookup#fromUrl(String)
    */
-  @Deprecated
+  @SuppressWarnings("MethodMayBeStatic")
   public final @Nullable VirtualFile refreshAndFindFileByUrl(@NotNull String url) {
     return VirtualFileLookup.newLookup().withRefresh().fromUrl(url);
   }
