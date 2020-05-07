@@ -2,14 +2,12 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.CodeInsightUtil
-import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.LocalSearchScope
-import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.InputVariables
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
@@ -39,17 +37,22 @@ object MapFromDialog {
     val elements = extractOptions.elements.toTypedArray()
     val nullability = extractOptions.dataOutput.nullability
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
+    val staticOptions = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions)
     val canBeStatic = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions) != null
     val canBeChainedConstructor = ExtractMethodPipeline.canBeConstructor(analyzer)
+    val factory = PsiElementFactory.getInstance(project)
     val variables = extractOptions.inputParameters
-      .map { it.references.first() as? PsiReferenceExpression }
-      .map { it?.resolve() as? PsiVariable }
+      .map { factory.createVariableDeclarationStatement(it.name, it.type, null, it.references.first().context) }
+      .map { declaration -> declaration.declaredElements[0] as PsiVariable }
+    val parameterNames = extractOptions.inputParameters.map { it.name }.toSet()
+    val fields = staticOptions?.inputParameters.orEmpty()
+      .filterNot { it.name in parameterNames }.map { factory.createField(it.name, it.type) }.toSet()
     val inputVariables = InputVariables(
       variables,
       extractOptions.project,
       LocalSearchScope(extractOptions.elements.toTypedArray()),
       false,
-      emptySet()
+      fields
     )
     val typeParameterList = PsiElementFactory.getInstance(extractOptions.project).createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }

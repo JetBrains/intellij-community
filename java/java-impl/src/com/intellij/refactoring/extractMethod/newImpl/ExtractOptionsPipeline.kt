@@ -36,16 +36,15 @@ object ExtractMethodPipeline {
   ): ExtractOptions {
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
     var options = withMappedName(extractOptions, methodName)
+    if (isStatic && ! options.isStatic) {
+      options = withForcedStatic(analyzer, options) ?: options
+    }
     options = withMappedParametersInput(options, variableData.toList())
     val targetClass = extractOptions.anchor.containingClass!!
     options = if (targetClass.isInterface) {
       adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
     } else {
       options.copy(visibility = visibility)
-    }
-
-    if (isStatic && ! options.isStatic) {
-      options = withForcedStatic(analyzer, options) ?: options
     }
 
     if (isConstructor) {
