@@ -110,13 +110,20 @@ class PortableCompilationCache {
       def commitHash = require("build.vcs.number", "Repository commit")
       context.messages.buildStatus(commitHash)
       def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
-      context.messages.info("AWS sync folder $syncFolder")
       context.messages.info("Git remote url $remoteGitUrl")
       Map<String, String> remotePerCommitHash = [:]
       remotePerCommitHash[remoteGitUrl] = commitHash
       new CompilationOutputsUploader(
         context, remoteCacheUrl, remotePerCommitHash, syncFolder, updateCommitHistory
       ).upload(publishTeamCityArtifacts)
+      context.messages.block("AWS sync folder $syncFolder") {
+        def root = new File(syncFolder)
+        root.eachFileRecurse {
+          if (!it.isDirectory()) {
+            println(root.toPath().relativize(it.toPath()))
+          }
+        }
+      }
     }
   }
 }
