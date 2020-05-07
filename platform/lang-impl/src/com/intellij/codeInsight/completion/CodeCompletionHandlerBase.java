@@ -100,9 +100,6 @@ public class CodeCompletionHandlerBase {
     this.autopopup = autopopup;
     this.synchronous = synchronous;
 
-    if (invokedExplicitly) {
-      assert synchronous;
-    }
     if (autopopup) {
       assert !invokedExplicitly;
     }

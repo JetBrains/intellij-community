@@ -36,7 +36,7 @@ import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;

@@ -211,6 +211,14 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       if (target instanceof PsiPackage || target instanceof PsiClass) {
         return true;
       }
+      if (target == null) {
+        // unresolved qualifier: if it's just reference chain like a.b.c it could be inaccessible package, so let's avoid parenthesizing it
+        PsiExpression qualifier = expression;
+        while (qualifier instanceof PsiReferenceExpression) {
+          qualifier = ((PsiReferenceExpression)qualifier).getQualifierExpression();
+        }
+        return qualifier == null;
+      }
     }
     if (expression instanceof PsiArrayInitializerExpression && parent instanceof PsiArrayInitializerExpression) {
       return true;

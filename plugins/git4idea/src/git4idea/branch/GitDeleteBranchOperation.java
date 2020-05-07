@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
@@ -26,6 +27,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +38,8 @@ import java.util.regex.Pattern;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.containers.ContainerUtil.exists;
+import static git4idea.util.GitUIUtil.bold;
+import static git4idea.util.GitUIUtil.code;
 
 /**
  * Deletes a branch.
@@ -126,8 +130,12 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     boolean unmergedCommits = !myUnmergedToBranches.isEmpty();
-    String message = "<b>Deleted Branch:</b> " + myBranchName;
-    if (unmergedCommits) message += "<br/>Unmerged commits were discarded";
+    String message = GitBundle.message("delete.branch.operation.deleted.branch.bold", myBranchName);
+    if (unmergedCommits) {
+      message += UIUtil.BR;
+      message += GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded");
+    }
+
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION, null);
     notification.addAction(NotificationAction.createSimple(() -> getRestore(), () -> restoreInBackground(notification)));
     if (unmergedCommits) {
@@ -170,7 +178,8 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (!result.totalSuccess()) {
-      myNotifier.notifyError("Error during rollback of branch deletion", result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError(GitBundle.message("delete.branch.operation.error.during.rollback.of.branch.deletion"),
+                             result.getErrorOutputWithReposIndication());
     }
   }
 
@@ -210,32 +219,36 @@ class GitDeleteBranchOperation extends GitBranchOperation {
 
   @NotNull
   private String getErrorTitle() {
-    return String.format("Branch %s wasn't deleted", myBranchName);
+    return GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName);
   }
 
   @Override
   @NotNull
   public String getSuccessMessage() {
-    return String.format("Deleted branch %s", formatBranchName(myBranchName));
+    return GitBundle.message("delete.branch.operation.deleted.branch", formatBranchName(myBranchName));
   }
 
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return "However branch deletion has succeeded for the following " + repositories() + ":<br/>" +
+    return GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
+                             getSuccessfulRepositories().size()) +
+           UIUtil.BR +
            successfulRepositoriesJoined() +
-           "<br/>You may rollback (recreate " + myBranchName + " in these roots) not to let branches diverge.";
+           UIUtil.BR +
+           GitBundle.message("delete.branch.operation.you.may.rollback.not.to.let.branches.diverge", myBranchName);
   }
 
   @NotNull
+  @Nls
   @Override
   protected String getOperationName() {
-    return "branch deletion";
+    return GitBundle.message("delete.branch.operation.name");
   }
 
   @NotNull
   private static String formatBranchName(@NotNull String name) {
-    return "<b><code>" + name + "</code></b>";
+    return bold(code(name));
   }
 
   /**
@@ -340,7 +353,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   private void restoreInBackground(@NotNull Notification notification) {
-    new Task.Backgroundable(myProject, "Restoring Branch " + myBranchName + "...") {
+    new Task.Backgroundable(myProject, GitBundle.message("delete.branch.operation.restoring.branch.process", myBranchName)) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         rollbackBranchDeletion(notification);
@@ -354,12 +367,13 @@ class GitDeleteBranchOperation extends GitBranchOperation {
       notification.expire();
     }
     else {
-      myNotifier.notifyError("Couldn't Restore " + formatBranchName(myBranchName), result.getErrorOutputWithReposIndication());
+      myNotifier.notifyError(GitBundle.message("delete.branch.operation.could.not.restore.branch.error", formatBranchName(myBranchName)),
+                             result.getErrorOutputWithReposIndication());
     }
   }
 
   private void viewUnmergedCommitsInBackground(@NotNull Notification notification) {
-    new Task.Backgroundable(myProject, "Collecting Unmerged Commits...") {
+    new Task.Backgroundable(myProject, GitBundle.message("delete.branch.operation.collecting.unmerged.commits.process")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         boolean restore = showNotFullyMergedDialog(myUnmergedToBranches);

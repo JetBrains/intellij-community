@@ -54,6 +54,7 @@ import com.jetbrains.python.run.DebugAwareConfiguration;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,24 +67,23 @@ import java.util.Map;
  * @author yole
  */
 public class PyDebugRunner extends GenericProgramRunner {
-  public static final String PY_DEBUG_RUNNER = "PyDebugRunner";
+  public static final @NonNls String PY_DEBUG_RUNNER = "PyDebugRunner";
 
+  public static final @NonNls String DEBUGGER_MAIN = "pydev/pydevd.py";
+  public static final @NonNls String CLIENT_PARAM = "--client";
+  public static final @NonNls String PORT_PARAM = "--port";
+  public static final @NonNls String FILE_PARAM = "--file";
+  public static final @NonNls String MODULE_PARAM = "--module";
+  public static final @NonNls String MULTIPROCESS_PARAM = "--multiprocess";
+  public static final @NonNls String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
+  public static final @NonNls String LIBRARY_ROOTS = "LIBRARY_ROOTS";
+  public static final @NonNls String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
   @SuppressWarnings("SpellCheckingInspection")
-  public static final String DEBUGGER_MAIN = "pydev/pydevd.py";
-  public static final String CLIENT_PARAM = "--client";
-  public static final String PORT_PARAM = "--port";
-  public static final String FILE_PARAM = "--file";
-  public static final String MODULE_PARAM = "--module";
-  public static final String MULTIPROCESS_PARAM = "--multiprocess";
-  public static final String IDE_PROJECT_ROOTS = "IDE_PROJECT_ROOTS";
-  public static final String LIBRARY_ROOTS = "LIBRARY_ROOTS";
-  public static final String PYTHON_ASYNCIO_DEBUG = "PYTHONASYNCIODEBUG";
-  @SuppressWarnings("SpellCheckingInspection")
-  public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
-  public static final String PYDEVD_FILTERS = "PYDEVD_FILTERS";
-  public static final String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
-  public static final String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
-  public static final String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
+  public static final @NonNls String GEVENT_SUPPORT = "GEVENT_SUPPORT";
+  public static final @NonNls String PYDEVD_FILTERS = "PYDEVD_FILTERS";
+  public static final @NonNls String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
+  public static final @NonNls String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
+  public static final @NonNls String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
   @Override
   @NotNull

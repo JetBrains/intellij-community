@@ -188,6 +188,8 @@ abstract class ProductProperties {
    */
   List<String> additionalModulesRequiredForScrambling = []
 
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.VANILLA
+
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
    * (&lt;PRODUCT&gt;_JDK variable), *.vmoptions file (&lt;PRODUCT&gt;_VM_OPTIONS variable), idea.properties file (&lt;PRODUCT&gt;_PROPERTIES variable)

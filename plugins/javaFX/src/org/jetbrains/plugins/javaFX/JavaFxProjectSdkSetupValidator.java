@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
 import com.intellij.codeInsight.daemon.impl.JavaProjectSdkSetupValidator;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -12,11 +13,17 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationPanel.ActionHandler;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
+
+import javax.swing.event.HyperlinkEvent;
 
 /**
  * @author Pavel.Dolgov
@@ -46,11 +53,28 @@ public class JavaFxProjectSdkSetupValidator implements ProjectSdkSetupValidator 
     return null;
   }
 
+  @NotNull
   @Override
-  public void doFix(@NotNull Project project, @NotNull VirtualFile file) {
+  public ActionHandler getFixHandler(@NotNull Project project, @NotNull VirtualFile file) {
+    return new ActionHandler() {
+      @Override
+      public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {
+        doFix(project, file, handler -> handler.handlePanelActionClick(panel, event));
+      }
+
+      @Override
+      public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+        doFix(project, file, handler -> handler.handleQuickFixClick(editor, psiFile));
+      }
+    };
+  }
+
+  private static void doFix(@NotNull Project project,
+                            @NotNull VirtualFile file,
+                            @NotNull Consumer<ActionHandler> action) {
     final String javaErrorMessage = JavaProjectSdkSetupValidator.INSTANCE.getErrorMessage(project, file);
     if (javaErrorMessage != null) {
-      JavaProjectSdkSetupValidator.INSTANCE.doFix(project, file);
+      action.consume(JavaProjectSdkSetupValidator.INSTANCE.getFixHandler(project, file));
       return;
     }
     final Module module = ModuleUtilCore.findModuleForFile(file, project);

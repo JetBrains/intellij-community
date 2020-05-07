@@ -14,7 +14,7 @@ class GrazieExceptionsTab : GrazieUIComponent.Delegating {
   override val impl = GrazieExceptionsListComponent(GrazieConfig.get().suppressingContext.suppressed.toList())
 
   override val component = panel(MigLayout(createLayoutConstraints(), AC().grow(), AC().grow())) {
-    border = JBUI.Borders.emptyTop(13)
-    add(impl, CC().height("40%").alignY("top").growX())
+    border = JBUI.Borders.empty()
+    add(impl, CC().height("50%").alignY("top").growX())
   }
 }

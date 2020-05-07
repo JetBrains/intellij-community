@@ -49,5 +49,5 @@ internal class LegacyBridgeModuleImpl(
     return LocalFileSystem.getInstance().findFileByIoFile(File(moduleFilePath))
   }
 
-  override fun getModuleFilePath(): String =  directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
+  override fun getModuleFilePath(): String = directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
 }

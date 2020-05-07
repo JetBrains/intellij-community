@@ -31,6 +31,7 @@ import org.editorconfig.configmanagement.EditorConfigNavigationActionsFactory;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfigException;
 import org.editorconfig.core.ParsingException;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
@@ -139,7 +140,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
 
   @Override
   public String getName() {
-    return "EditorConfig";
+    return EditorConfigBundle.message("editorconfig");
   }
 
   private static boolean processOptions(@NotNull MyContext context,

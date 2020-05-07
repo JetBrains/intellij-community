@@ -38,7 +38,7 @@ public class GitBranchUtil {
   private static final Logger LOG = Logger.getInstance(GitBranchUtil.class);
 
   // The name that specifies that git is on specific commit rather then on some branch ({@value})
- private static final String NO_BRANCH_NAME = "(no branch)";
+ private static final String NO_BRANCH_NAME = "(no branch)"; //NON-NLS
 
   private GitBranchUtil() {}
 
@@ -102,7 +102,7 @@ public class GitBranchUtil {
    */
   @NotNull
   public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
-    return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD"));
+    return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD")); //NON-NLS
   }
 
   @NotNull
@@ -167,10 +167,10 @@ public class GitBranchUtil {
       prefix = state.toString() + " ";
     }
     else if (state == GitRepository.State.GRAFTING) {
-      prefix = "Cherry-picking in ";
+      prefix = "Cherry-picking in "; //NON-NLS
     }
     else if (state == GitRepository.State.REVERTING) {
-      prefix = "Reverting in ";
+      prefix = "Reverting in "; //NON-NLS
     }
 
     GitBranch branch = repository.getCurrentBranch();
@@ -302,7 +302,7 @@ public class GitBranchUtil {
       try {
         File headFile = GitUtil.getRepositoryForRoot(project, root).getRepositoryFiles().getHeadFile();
         head = FileUtil.loadFile(headFile, StandardCharsets.UTF_8).trim();
-        final String prefix = "ref: refs/heads/";
+        final String prefix = "ref: refs/heads/"; //NON-NLS
         return head.startsWith(prefix) ?
                Collections.singletonList(head.substring(prefix.length())) :
                Collections.emptyList();
@@ -331,8 +331,8 @@ public class GitBranchUtil {
       if (b.equals(NO_BRANCH_NAME)) { continue; }
 
       String remotePrefix = null;
-      if (b.startsWith("remotes/")) {
-        remotePrefix = "remotes/";
+      if (b.startsWith("remotes/")) { //NON-NLS
+        remotePrefix = "remotes/"; //NON-NLS
       } else if (b.startsWith(GitBranch.REFS_REMOTES_PREFIX)) {
         remotePrefix = GitBranch.REFS_REMOTES_PREFIX;
       }
@@ -341,7 +341,7 @@ public class GitBranchUtil {
         if (! remoteOnly) {
           b = b.substring(remotePrefix.length());
         }
-        final int idx = b.indexOf("HEAD ->");
+        final int idx = b.indexOf("HEAD ->"); //NON-NLS
         if (idx > 0) {
           continue;
         }

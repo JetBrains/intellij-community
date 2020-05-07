@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static com.intellij.ide.plugins.DynamicPluginsTestUtilKt.loadDescriptorInTest;
 import static org.junit.Assert.*;
 
 public class PluginManagerTest {
@@ -119,6 +120,38 @@ public class PluginManagerTest {
   @Test
   public void testUltimatePlugins() throws Exception {
     doPluginSortTest("ultimatePlugins", true);
+  }
+
+  @Test
+  public void testIdentifyPreInstalledPlugins() {
+    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
+    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
+    IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
+    assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
+    DescriptorListLoadingContext loadingContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+
+    PluginLoadingResult loadingResult = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
+    loadingResult.add(descriptorBundled, loadingContext, false);
+    loadingResult.add(descriptorInstalled, loadingContext, false);
+    assertPluginPreInstalled(loadingResult, descriptorInstalled.getPluginId());
+  }
+
+  @Test
+  public void testIdentifyPreInstalledPluginsInReverseOrder() {
+    Path pluginsPath = Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "plugins", "updatedBundled");
+    IdeaPluginDescriptorImpl descriptorBundled = loadDescriptorInTest(pluginsPath.resolve("bundled"), Collections.emptySet(), true);
+    IdeaPluginDescriptorImpl descriptorInstalled = loadDescriptorInTest(pluginsPath.resolve("updated"), Collections.emptySet(), false);
+    assertEquals(descriptorBundled.getPluginId(), descriptorInstalled.getPluginId());
+    DescriptorListLoadingContext loadingContext = DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet());
+
+    PluginLoadingResult resultInReverseOrder = new PluginLoadingResult(Collections.emptyMap(), PluginManagerCore.getBuildNumber(), false);
+    resultInReverseOrder.add(descriptorInstalled, loadingContext, false);
+    resultInReverseOrder.add(descriptorBundled, loadingContext, false);
+    assertPluginPreInstalled(resultInReverseOrder, descriptorInstalled.getPluginId());
+  }
+
+  private static void assertPluginPreInstalled(@NotNull PluginLoadingResult loadingResult, PluginId pluginId) {
+    assertTrue("Plugin should be pre installed", loadingResult.getShadowedBundledIds().contains(pluginId));
   }
 
   private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled) throws IOException, JDOMException {

@@ -2611,6 +2611,14 @@ public class ContainerUtil extends ContainerUtilRt {
     return true;
   }
 
+  /**
+   * Finds the first element in the list that satisfies given condition.
+   * 
+   * @param list list to scan
+   * @param condition condition that should be satisfied
+   * @param <T> type of the list elements
+   * @return index of the first element in the list that satisfies the condition; -1 if no element in the list satisfies the condition.
+   */
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<? extends T> list, @NotNull Condition<? super T> condition) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {

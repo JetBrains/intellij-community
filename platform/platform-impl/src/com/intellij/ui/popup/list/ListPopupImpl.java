@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -558,7 +558,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private class MyList extends JBList implements DataProvider {
     MyList() {
       super(myListModel);
-      putClientProperty("visibleRowCountIsMax", true);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }
 
@@ -711,19 +710,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private boolean isSelectable(@Nullable Object value) {
-    return value != null && getListStep().isSelectable(value);
-  }
-
-  @Nullable
-  private Object getSelectableAt(int index) {
-    if (0 <= index && index < myListModel.getSize()) {
-      Object value = myListModel.getElementAt(index);
-      if (isSelectable(value)) return value;
-    }
-    return null;
+    // it is possible to use null elements in list model
+    return getListStep().isSelectable(value);
   }
 
   private boolean isSelectableAt(int index) {
-    return null != getSelectableAt(index);
+    if (0 <= index && index < myListModel.getSize()) {
+      Object value = myListModel.getElementAt(index);
+      if (isSelectable(value)) return true;
+    }
+    return false;
   }
 }

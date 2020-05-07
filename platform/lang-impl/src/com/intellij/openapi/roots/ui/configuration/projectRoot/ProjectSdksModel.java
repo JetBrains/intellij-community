@@ -176,6 +176,12 @@ public class ProjectSdksModel implements SdkModel {
         if (ArrayUtilRt.find(allJdks, projectJdk) == -1) {
           jdkTable.addJdk(projectJdk);
           jdkTable.updateJdk(projectJdk, myProjectSdks.get(projectJdk));
+
+          SdkDownloadTracker.getInstance().tryRegisterSdkDownloadFailureHandler(projectJdk, () -> {
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              ProjectJdkTable.getInstance().removeJdk(projectJdk);
+            });
+          });
         }
       }
     });
@@ -330,7 +336,7 @@ public class ProjectSdksModel implements SdkModel {
       SdkDownload downloadExtension = SdkDownload.EP_NAME.findFirstSafe(it -> it.supportsDownload(type));
       if (downloadExtension == null) continue;
 
-      String downloadText = ProjectBundle.message("sdk.configure.download.action", type.getPresentableName());
+      String downloadText = ProjectBundle.message("sdk.configure.download.subAction", type.getPresentableName());
       NewSdkAction downloadAction = new NewSdkAction(type, downloadText, downloadExtension.getIconForDownloadAction(type)) {
         @Override
         public void actionPerformed(@Nullable Sdk selectedSdk,
@@ -349,7 +355,7 @@ public class ProjectSdksModel implements SdkModel {
   public Map<SdkType, NewSdkAction> createAddActions(@Nullable Condition<? super SdkTypeId> filter) {
     Map<SdkType, NewSdkAction> result = new LinkedHashMap<>();
     for (final SdkType type : getAddableSdkTypes(filter)) {
-      String addOnDiskText = ProjectBundle.message("sdk.configure.add.default.action", type.getPresentableName());
+      String addOnDiskText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", type.getPresentableName());
 
       NewSdkAction addAction = new NewSdkAction(type, addOnDiskText, type.getIconForAddAction()) {
         @Override
@@ -433,6 +439,7 @@ public class ProjectSdksModel implements SdkModel {
     Sdk editableSdk = doAddInternal(sdk, callback);
     if (editableSdk != null) {
       tracker.registerEditableSdk(sdk, editableSdk);
+      tracker.tryRegisterSdkDownloadFailureHandler(sdk, () -> removeSdk(editableSdk));
     }
     tracker.startSdkDownloadIfNeeded(sdk);
   }

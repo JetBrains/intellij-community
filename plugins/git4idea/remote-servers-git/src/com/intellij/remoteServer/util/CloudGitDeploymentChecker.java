@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.agent.util.CloudGitApplication;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfigurationBase;
@@ -101,7 +102,7 @@ public class CloudGitDeploymentChecker<
       }.performSync();
 
       if (application == null) {
-        Messages.showErrorDialog(project, "No application matching repository URL(s) found in account", server.getName());
+        Messages.showErrorDialog(project, CloudBundle.message("dialog.message.no.application.matching.repository.url.s.found.in.account"), server.getName());
       }
       else {
         settings.setDefaultDeploymentName(false);

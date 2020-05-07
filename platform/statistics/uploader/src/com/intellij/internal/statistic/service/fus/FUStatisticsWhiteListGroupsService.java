@@ -95,7 +95,7 @@ public class FUStatisticsWhiteListGroupsService {
       }
       return content;
     }
-    catch (Exception e) {
+    catch (IOException e) {
       throw new EventLogWhitelistLoadException(EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType.ERROR_ON_LOAD, e);
     }
   }

@@ -497,7 +497,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       try {
-        List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression);
+        List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
         return createPyDebugValue(debugValues.iterator().next(), this);
       }
       catch (Exception e) {

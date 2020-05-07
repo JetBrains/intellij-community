@@ -5,7 +5,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.i18n.GitBundle
 import java.util.function.Supplier
 
-internal open class GitRebaseEntry(var action: Action, val commit: String, val subject: String) {
+internal open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
   constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
 
   override fun toString() = "$action $commit $subject"
@@ -33,5 +33,5 @@ internal open class GitRebaseEntry(var action: Action, val commit: String, val s
   }
 }
 
-internal class GitRebaseEntryWithDetails(val entry: GitRebaseEntry, val commitDetails: VcsCommitMetadata) :
+internal open class GitRebaseEntryWithDetails(val entry: GitRebaseEntry, val commitDetails: VcsCommitMetadata) :
   GitRebaseEntry(entry.action, entry.commit, entry.subject)

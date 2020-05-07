@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtilRt
@@ -209,6 +209,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     answer.append(copyrightComment)
     append(answer, "package ${info.packageName};\n", 0)
     append(answer, "import com.intellij.ui.IconManager;", 0)
+    append(answer, "import org.jetbrains.annotations.NotNull;", 0)
     append(answer, "", 0)
     append(answer, "import javax.swing.*;", 0)
     append(answer, "", 0)
@@ -231,14 +232,14 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     }
     answer.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
-      append(answer, "private static Icon load(String path) {", 1)
+      append(answer, "private static @NotNull Icon load(@NotNull String path) {", 1)
       append(answer, "return $iconLoaderCode.getIcon(path, ${info.className}.class);", 2)
       append(answer, "}", 1)
       append(answer, "", 0)
 
       val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
       if (customExternalLoad) {
-        append(answer, "private static Icon load(String path, Class<?> clazz) {", 1)
+        append(answer, "private static @NotNull Icon load(@NotNull String path, @NotNull Class<?> clazz) {", 1)
         append(answer, "return $iconLoaderCode.getIcon(path, clazz);", 2)
         append(answer, "}", 1)
         append(answer, "", 0)
@@ -347,12 +348,12 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     if (deprecation?.replacementContextClazz != null) {
       val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
       append(answer,
-             "public static final Icon $iconName = $method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);",
+             "public static final @NotNull Icon $iconName = $method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);",
              level)
       return
     }
     else if (deprecation?.replacementReference != null) {
-      append(answer, "public static final Icon $iconName = ${deprecation.replacementReference};", level)
+      append(answer, "public static final @NotNull Icon $iconName = ${deprecation.replacementReference};", level)
       return
     }
 
@@ -376,7 +377,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     }
     val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
     val relativePath = rootPrefix + FileUtilRt.toSystemIndependentName(sourceRootFile.relativize(imageFile).toString())
-    append(answer, "${javaDoc}public static final Icon $iconName = $method(\"$relativePath\");", level)
+    append(answer, "${javaDoc}public static final @NotNull Icon $iconName = $method(\"$relativePath\");", level)
   }
 
   protected fun append(answer: StringBuilder, text: String, level: Int) {

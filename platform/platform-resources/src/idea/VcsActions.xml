@@ -300,8 +300,7 @@
               class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
       <reference id="Vcs.MessageActionGroup"/>
     </group>
-    <action id="Vcs.ToggleAmendCommitMode" icon="AllIcons.Actions.Amend"
-            class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
+    <action id="Vcs.ToggleAmendCommitMode" class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
 
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction"/>
 

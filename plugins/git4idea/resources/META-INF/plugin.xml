@@ -179,6 +179,7 @@
     <action id="git4idea.commands.TestGitHttpLoginDialogAction" class="git4idea.commands.TestGitHttpLoginDialogAction" internal="true"/>
     <action id="CopyPathFromRepositoryRootProvider" class="git4idea.actions.CopyPathFromRepositoryRootProvider">
       <add-to-group group-id="CopyFileReference"/>
+      <add-to-group group-id="CopyGroup" relative-to-action="CopySourceRootPath" anchor="after"/>
     </action>
   </actions>
 
@@ -231,7 +232,6 @@
     <projectService serviceImplementation="git4idea.update.GitUpdateProjectInfoLogProperties"/>
     <projectService serviceImplementation="git4idea.branch.GitCompareBranchesLogProperties"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
-    <projectService serviceImplementation="git4idea.ignore.GitIgnoreInStoreDirGenerator"/>
     <projectService serviceImplementation="git4idea.ui.branch.dashboard.BranchesTreeStateHolder"/>
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>

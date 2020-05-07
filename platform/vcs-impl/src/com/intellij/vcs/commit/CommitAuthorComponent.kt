@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.openapi.util.text.StringUtil.unescapeXmlEntities
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.ui.awt.RelativePoint.getNorthWestOf
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -48,7 +49,7 @@ class CommitAuthorComponent(private val project: Project) : NonOpaquePanel(Horiz
   init {
     isVisible = false
 
-    add(JBLabel("by").apply {
+    add(JBLabel(message("label.by.author")).apply {
       foreground = getInactiveTextColor()
       border = emptyRight(4)
     })

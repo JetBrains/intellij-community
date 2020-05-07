@@ -48,6 +48,7 @@ internal class GrazieInitializerManager {
   }
 }
 
+// Needed only for warming up
 private class GrazieIDEInit : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
     service<GrazieInitializerManager>().publisher.init(GrazieConfig.get())

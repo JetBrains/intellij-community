@@ -738,9 +738,11 @@ public class JavaDocInfoGenerator {
   }
 
   public void generateCommonSection(StringBuilder buffer, PsiDocComment docComment) {
-    buffer.append(DocumentationMarkup.CONTENT_START);
-    generateDescription(buffer, docComment);
-    buffer.append(DocumentationMarkup.CONTENT_END);
+    if (!isEmptyDescription(docComment)) {
+      buffer.append(DocumentationMarkup.CONTENT_START);
+      generateDescription(buffer, docComment);
+      buffer.append(DocumentationMarkup.CONTENT_END);
+    }
 
     buffer.append(DocumentationMarkup.SECTIONS_START).append("<p>");
     generateApiSection(buffer, docComment);
@@ -997,16 +999,16 @@ public class JavaDocInfoGenerator {
           return method.getContainingClass();
         }
       });
-      buffer.append("<p>");
+      if (!rendered) buffer.append("<p>");
       buffer.append(DocumentationMarkup.CONTENT_END);
       buffer.append(DocumentationMarkup.SECTIONS_START);
-      buffer.append("<p>");
+      if (!rendered) buffer.append("<p>");
     }
     else {
       buffer.append(DocumentationMarkup.SECTIONS_START);
-      buffer.append("<p>");
 
       if (!rendered) {
+        buffer.append("<p>");
         Pair<PsiElement[], InheritDocProvider<PsiElement[]>> pair = findInheritDocTag(method, descriptionLocator);
         if (pair != null) {
           PsiElement[] elements = pair.first;

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -1729,6 +1730,18 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
       skeletonsDir,
       () -> assertNull(doTestByText("from itertools import prod<caret>"))
     );
+  }
+
+  // PY-38172
+  public void testNoPrivateStubElementsInModuleCompletion() {
+    PsiFile file = myFixture.configureByText(PythonFileType.INSTANCE, "import collections\n" +
+                                                                      "collections.<caret>");
+    myFixture.completeBasic();
+    List<String> suggested = myFixture.getLookupElementStrings();
+    assertNotEmpty(suggested);
+    assertDoesntContain(suggested, "Union", "TypeVar", "Generic", "_S", "_T");
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
   }
 
   private void doTestHasattrContributor(String[] inList, String[] notInList) {

@@ -420,6 +420,7 @@
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>
           <action id="ExportSettings" class="com.intellij.configurationStore.ExportSettingsAction"/>
           <separator/>
+          <action id="RestoreDefaultSettings" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
         </group>
         <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
           <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
@@ -541,6 +542,7 @@
             <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
             <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
             <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
+            <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
             <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
@@ -847,6 +849,7 @@
               icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction"
               icon="AllIcons.ToolbarDecorator.Export"/>
+      <action id="WelcomeScreen.Configure.RestoreDefault" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
 
       <action id="WelcomeScreen.Configure.CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
 

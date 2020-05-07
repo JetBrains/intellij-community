@@ -25,6 +25,7 @@ import com.intellij.util.containers.MultiMap;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
+import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushParamsImpl;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
@@ -82,7 +83,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
         Collection<String> successfullyDeletedLocalBranches = new ArrayList<>(1);
         if (decision == DELETE_WITH_TRACKING) {
           for (String branch : branchToCommonTrackingBranches.get(branchName)) {
-            getIndicator().setText("Deleting " + branch);
+            getIndicator().setText(GitBundle.message("delete.remote.branch.operation.deleting.process", branch));
             new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branch) {
               @Override
               protected void notifySuccess() {
@@ -150,14 +151,15 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       repository.update();
     }
     if (!result.totalSuccess()) {
-      VcsNotifier.getInstance(myProject).notifyError("Failed to delete remote branch " + branchName,
-                                                       result.getErrorOutputWithReposIndication());
+      VcsNotifier.getInstance(myProject).notifyError(
+        GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
+        result.getErrorOutputWithReposIndication());
     }
     return result.totalSuccess();
   }
 
   private static boolean isAlreadyDeletedError(@NotNull String errorOutput) {
-    return errorOutput.contains("remote ref does not exist");
+    return errorOutput.contains("remote ref does not exist"); //NON-NLS
   }
 
   /**
@@ -189,9 +191,12 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private void notifySuccessfulDeletion(@NotNull String remoteBranchName, @NotNull Collection<String> localBranches) {
     String message = "";
     if (!localBranches.isEmpty()) {
-      message = "Also deleted local " + StringUtil.pluralize("branch", localBranches.size()) + ": " + StringUtil.join(localBranches, ", ");
+      message = GitBundle.message("delete.remote.branch.operation.also.deleted.local.branches",
+                                  localBranches.size(),
+                                  StringUtil.join(localBranches, ", "));
     }
-    VcsNotifier.getInstance(myProject).notifySuccess("Deleted remote branch " + remoteBranchName,
-                                                     message);
+    VcsNotifier.getInstance(myProject).notifySuccess(
+      GitBundle.message("delete.remote.branch.operation.deleted.remote.branch", remoteBranchName),
+      message);
   }
 }

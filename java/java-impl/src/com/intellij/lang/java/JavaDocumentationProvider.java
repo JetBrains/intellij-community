@@ -574,6 +574,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Override
+  public @Nullable String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+    if (originalElement != null && PsiTreeUtil.isAncestor(element, originalElement, false)) {
+      return null;
+    }
+    return generateDoc(element, originalElement);
+  }
+
+  @Override
   public @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
     JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateRenderedDocInfo());

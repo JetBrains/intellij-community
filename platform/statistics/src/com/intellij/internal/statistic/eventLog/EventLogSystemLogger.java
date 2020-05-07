@@ -76,6 +76,14 @@ public class EventLogSystemLogger {
     logEvent(recorderId, "external.send.command.creation.finished", data);
   }
 
+  public static void logSystemError(@NotNull String recorderId, @NotNull String eventId, @NotNull String errorClass, long time) {
+    FeatureUsageData data = new FeatureUsageData().addData("error", errorClass);
+    if (time != -1) {
+      data.addData("error_ts", time);
+    }
+    logEvent(recorderId, eventId, data);
+  }
+
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
     final StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
     provider.getLogger().log(new EventLogGroup(GROUP, provider.getVersion()), eventId, data.build(), false);

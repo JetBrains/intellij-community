@@ -32,5 +32,6 @@
 
     <projectService serviceImplementation="com.intellij.spellchecker.state.ProjectDictionaryState"/>
     <applicationService serviceImplementation="com.intellij.spellchecker.state.CachedDictionaryState"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.spellchecker.statistics.SpellcheckerConfigCollector"/>
   </extensions>
 </idea-plugin>

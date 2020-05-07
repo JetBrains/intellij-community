@@ -17,7 +17,8 @@ final class KeymapPluginsBuilder {
       keymapPlugin(["NetBeans 6.5"], buildContext, targetDir),
       keymapPlugin(["ReSharper", "ReSharper OSX"], buildContext, targetDir),
       keymapPlugin(["Sublime Text", "Sublime Text (Mac OS X)"], buildContext, targetDir),
-      keymapPlugin(["Visual Studio"], buildContext, targetDir),
+      keymapPlugin(["Visual Studio", "Visual Studio OSX"], buildContext, targetDir),
+      keymapPlugin(["Visual Assist", "Visual Assist OSX"], buildContext, targetDir),
       keymapPlugin(["Xcode"], buildContext, targetDir)
     ]
   }

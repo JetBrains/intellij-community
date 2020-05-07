@@ -119,7 +119,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   protected class NameColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
     public NameColumnInfo() {
-      super("Name");
+      super(ExecutionBundle.message("env.variable.column.name.title"));
     }
     @Override
     public String valueOf(EnvironmentVariable environmentVariable) {
@@ -152,7 +152,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
 
   protected class ValueColumnInfo extends ElementsColumnInfoBase<EnvironmentVariable> {
     public ValueColumnInfo() {
-      super("Value");
+      super(ExecutionBundle.message("env.variable.column.value.title"));
     }
     @Override
     public String valueOf(EnvironmentVariable environmentVariable) {

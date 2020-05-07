@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="99c8f"/>
-          <text value="&amp;Version:"/>
+          <text resource-bundle="messages/LangBundle" key="label.framework.version"/>
         </properties>
       </component>
       <hspacer id="22aa3">

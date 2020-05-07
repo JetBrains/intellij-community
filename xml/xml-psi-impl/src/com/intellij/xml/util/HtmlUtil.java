@@ -466,7 +466,9 @@ public class HtmlUtil {
     final PsiElement declaration = descriptor.getDeclaration();
     final PsiFile file = declaration != null ? declaration.getContainingFile() : null;
     final String name = file != null ? file.getName() : null;
-    return "meta.rnc".equals(name);
+    return "meta.rnc".equals(name) || "web-forms.rnc".equals(name)
+           || "embed.rnc".equals(name) || "tables.rnc".equals(name)
+           || "media.rnc".equals(name);
   }
 
   private static class TerminateException extends RuntimeException {
@@ -491,7 +493,7 @@ public class HtmlUtil {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
         @NonNls final Set<String> inTag = new THashSet<>();
         boolean metHttpEquiv;
-        boolean metHttml5Charset;
+        boolean metHtml5Charset;
 
         @Override
         public void doctype(@Nullable final CharSequence publicId,
@@ -516,7 +518,7 @@ public class HtmlUtil {
         @Override
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
           @NonNls final String name = StringUtil.toLowerCase(localName.toString());
-          if ("meta".equals(name) && (metHttpEquiv || metHttml5Charset) && contentAttributeValue != null) {
+          if ("meta".equals(name) && (metHttpEquiv || metHtml5Charset) && contentAttributeValue != null) {
             String charsetName;
             if (metHttpEquiv) {
               int start = contentAttributeValue.indexOf(CHARSET_PREFIX);
@@ -537,7 +539,7 @@ public class HtmlUtil {
           }
           inTag.remove(name);
           metHttpEquiv = false;
-          metHttml5Charset = false;
+          metHtml5Charset = false;
           contentAttributeValue = null;
         }
 
@@ -552,7 +554,7 @@ public class HtmlUtil {
               metHttpEquiv |= value.equals("content-type");
             }
             else if (name.equals(CHARSET)) {
-              metHttml5Charset = true;
+              metHtml5Charset = true;
               contentAttributeValue = value;
             }
             if (name.equals("content")) {

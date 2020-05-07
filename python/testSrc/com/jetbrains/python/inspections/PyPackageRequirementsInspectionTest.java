@@ -101,4 +101,27 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     assertContainsElements(names, "atomicwrites", "attrs", "more-itertools", "pluggy", "py", "pytest", "six");
     assertDoesntContain(names, "pathlib2");
   }
+
+  // PY-41106
+  public void testSuppressingRequirementWithExtras() {
+    myFixture.configureByText("requirements.txt", "<warning descr=\"Package requirement 'pkg[extras]' is not satisfied\">pkg[extras]</warning>");
+
+    final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+
+    myFixture.launchAction(myFixture.findSingleIntention("Ignore requirement"));
+    assertContainsElements(inspection.ignoredPackages, "pkg");
+  }
+
+  // PY-41106
+  public void testIgnoredRequirementWithExtras() {
+    myFixture.configureByText("requirements.txt", "pkg[extras]");
+
+    final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
+    inspection.ignoredPackages.add("pkg");
+
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
 }

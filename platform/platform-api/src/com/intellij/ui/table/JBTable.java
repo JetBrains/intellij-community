@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
 
+import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
+
 public class JBTable extends JTable implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   public static final int PREFERRED_SCROLLABLE_VIEWPORT_HEIGHT_IN_ROWS = 7;
   public static final int COLUMN_RESIZE_AREA_WIDTH = 3; // same as in BasicTableHeaderUI
@@ -288,13 +290,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @Override
   public Dimension getPreferredScrollableViewportSize() {
     Dimension base = super.getPreferredScrollableViewportSize();
-    if (myVisibleRowCount <= 0) return base;
+    int visibleRows = myVisibleRowCount;
+    if (visibleRows <= 0) return base;
     if (base != null && base.height > 0) return base;
 
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
 
     TableModel model = getModel();
     int modelRows = model == null ? 0 : model.getRowCount();
+    boolean forceVisibleRowCount = Boolean.TRUE.equals(UIUtil.getClientProperty(this, FORCE_VISIBLE_ROW_COUNT_KEY));
+    if (!forceVisibleRowCount) {
+      visibleRows = Math.min(modelRows, visibleRows);
+    }
     int fixedWidth = base != null && base.width > 0 ? base.width : JBUI.scale(100);
     Dimension size;
     if (modelRows == 0) {
@@ -302,16 +309,16 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       if (fixedHeight <= 0) fixedHeight = UIManager.getInt("Table.rowHeight");
       if (fixedHeight <= 0) fixedHeight = JBUIScale.scale(16); // scaled value from JDK
 
-      size = new Dimension(fixedWidth, fixedHeight * myVisibleRowCount);
+      size = new Dimension(fixedWidth, fixedHeight * visibleRows);
       if (addExtraSpace) size.height += fixedHeight / 2;
     }
     else {
-      Rectangle rect = getCellRect(Math.min(myVisibleRowCount, modelRows) - 1, 0, true);
+      Rectangle rect = getCellRect(Math.min(visibleRows, modelRows) - 1, 0, true);
       size = new Dimension(fixedWidth, rect.y + rect.height);
-      if (modelRows < myVisibleRowCount) {
-        size.height += (myVisibleRowCount - modelRows) * rect.height;
+      if (modelRows < visibleRows) {
+        size.height += (visibleRows - modelRows) * rect.height;
       }
-      else if (modelRows > myVisibleRowCount) {
+      else if (modelRows > visibleRows) {
         if (addExtraSpace) size.height += rect.height / 2;
       }
     }

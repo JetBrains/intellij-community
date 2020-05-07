@@ -18,7 +18,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private final EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
-    super(getConfigUrl(recorderId, appInfo.getTemplateUrl(), appInfo.isTest()), null, appInfo.getUserAgent(), appInfo.getLogger());
+    super(getConfigUrl(recorderId, appInfo.getTemplateUrl(), appInfo.isTest()), null, appInfo.getUserAgent(), appInfo.getLogger(), appInfo.getEventLogger());
     myApplicationInfo = appInfo;
   }
 

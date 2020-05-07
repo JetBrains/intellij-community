@@ -6,11 +6,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RemoteConnector {
-  @Nullable
-  String getId();
+  @Nullable String getId();
 
-  @NotNull
-  String getName();
+  @NotNull String getName();
+
+  default @Nullable String getAdditionalData() {
+    return null;
+  }
 
   @NotNull
   RemoteConnectionType getType();
@@ -19,8 +21,8 @@ public interface RemoteConnector {
 
   /**
    * Used to select different credentials. This method should be fast.
+   *
    * @return
    */
-  @NotNull
-  Object getConnectorKey();
+  @NotNull Object getConnectorKey();
 }

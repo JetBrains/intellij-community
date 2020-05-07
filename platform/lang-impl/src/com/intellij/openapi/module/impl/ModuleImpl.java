@@ -6,14 +6,16 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.ComponentConfig;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -28,7 +30,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import gnu.trove.THashMap;
@@ -40,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx {
+public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private static final Logger LOG = Logger.getInstance(ModuleImpl.class);
 
   @NotNull private final Project myProject;
@@ -53,30 +55,30 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project, @Nullable String filePath) {
-    super((PlatformComponentManagerImpl)project);
+    super((ComponentManagerImpl)project);
 
-    getPicoContainer().registerComponentInstance(Module.class, this);
+    registerServiceInstance(Module.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
     myName = name;
-    if (filePath != null) {
+    if (filePath == null) {
+      myImlFilePointer = null;
+    }
+    else {
       myImlFilePointer = VirtualFilePointerManager.getInstance().create(
         VfsUtilCore.pathToUrl(filePath), this,
         new VirtualFilePointerListener() {
           @Override
-          public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-            VirtualFile file = myImlFilePointer.getFile();
-            if (file != null) {
-              ((ModuleStore)ServiceKt.getStateStore(ModuleImpl.this)).setPath(file.getPath(), false);
+          public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
+            VirtualFile virtualFile = myImlFilePointer.getFile();
+            if (virtualFile != null) {
+              ((ModuleStore)getStore()).setPath(virtualFile.getPath(), virtualFile, false);
               ModuleManager.getInstance(myProject).incModificationCount();
             }
           }
         });
-    }
-    else {
-      myImlFilePointer = null;
     }
   }
 
@@ -158,9 +160,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   public void rename(@NotNull String newName, boolean notifyStorage) {
     myName = newName;
     if (notifyStorage) {
-      ServiceKt.getStateStore(this).getStorageManager()
-        .rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      getStore().getStorageManager().rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     }
+  }
+
+  private @NotNull IComponentStore getStore() {
+    return Objects.requireNonNull(getService(IComponentStore.class));
   }
 
   @Override
@@ -169,7 +174,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     if (!isPersistent()) {
       return "";
     }
-    return ServiceKt.getStateStore(this).getStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
+    return getStore().getStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
@@ -258,7 +263,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @NotNull
   private DeprecatedModuleOptionManager getOptionManager() {
     //noinspection ConstantConditions
-    return ModuleServiceManager.getService(this, DeprecatedModuleOptionManager.class);
+    return ((Module)this).getService(DeprecatedModuleOptionManager.class);
   }
 
   @Override

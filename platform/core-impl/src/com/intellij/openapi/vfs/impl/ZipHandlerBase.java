@@ -50,7 +50,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
   }
 
   @NotNull
-  protected Map<String, EntryInfo> buildEntryMapForZipFile(ZipFile zip) {
+  protected Map<String, EntryInfo> buildEntryMapForZipFile(@NotNull ZipFile zip) {
     Map<String, EntryInfo> map = new ZipEntryMap(zip.size());
     map.put("", createRootEntry());
 
@@ -75,6 +75,9 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     if (StringUtil.endsWithChar(entryName, '/')) {
       entryName = entryName.substring(0, entryName.length() - 1);
       isDirectory = true;
+    }
+    if (StringUtil.startsWithChar(entryName, '/')) {
+      entryName = StringUtil.trimStart(entryName, "/");
     }
 
     EntryInfo info = map.get(entryName);

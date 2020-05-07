@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Urls;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.ZipUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +27,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -142,7 +140,7 @@ public final class PluginDownloader {
     myShownErrors = false;
 
     if (myFile != null) {
-      IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile.toPath());
+      IdeaPluginDescriptorImpl actualDescriptor = PluginManager.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
       myDescriptor = actualDescriptor;
       return actualDescriptor;
     }
@@ -184,7 +182,7 @@ public final class PluginDownloader {
       return null;
     }
 
-    IdeaPluginDescriptorImpl actualDescriptor = loadDescriptionFromJar(myFile.toPath());
+    IdeaPluginDescriptorImpl actualDescriptor = PluginManager.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
     if (actualDescriptor != null) {
       InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
       if (state != null && state.wasUpdated(actualDescriptor.getPluginId())) {
@@ -221,27 +219,6 @@ public final class PluginDownloader {
     return VersionComparatorUtil.compare(newPluginVersion, oldPluginVersion);
   }
 
-  @Nullable
-  public static IdeaPluginDescriptorImpl loadDescriptionFromJar(@NotNull Path file) throws IOException {
-    IdeaPluginDescriptorImpl descriptor = PluginManager.loadDescriptor(file, PluginManagerCore.PLUGIN_XML);
-    if (descriptor == null) {
-      if (file.getFileName().toString().endsWith(".zip")) {
-        final File outputDir = FileUtil.createTempDirectory("plugin", "");
-        try {
-          ZipUtil.extract(file.toFile(), outputDir, null);
-          final File[] files = outputDir.listFiles();
-          if (files != null && files.length == 1) {
-            descriptor = PluginManager.loadDescriptor(files[0].toPath(), PluginManagerCore.PLUGIN_XML);
-          }
-        }
-        finally {
-          FileUtil.delete(outputDir);
-        }
-      }
-    }
-    return descriptor;
-  }
-
   public void install() throws IOException {
     if (myFile == null) {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
@@ -252,6 +229,9 @@ public final class PluginDownloader {
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
       state.onPluginInstall(myDescriptor, PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
+    }
+    else {
+      InstalledPluginsState.addPreInstalledPlugin(myDescriptor);
     }
   }
 
@@ -264,7 +244,7 @@ public final class PluginDownloader {
       if (installedPlugin == null) {
         return false;
       }
-      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager.loadDescriptor(((IdeaPluginDescriptorImpl)installedPlugin).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginEnabler.tryLoadFullDescriptor((IdeaPluginDescriptorImpl)installedPlugin);
       if (installedPluginDescriptor == null || !DynamicPlugins.unloadPlugin(installedPluginDescriptor)) {
         return false;
       }

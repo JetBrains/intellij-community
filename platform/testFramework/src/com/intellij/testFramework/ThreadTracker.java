@@ -67,6 +67,7 @@ public final class ThreadTracker {
     "AWT-Shutdown",
     "AWT-Windows",
     "Batik CleanerThread",
+    "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
     "CompilerThread0",
     "dockerjava-netty",
     "External compiler",
@@ -78,6 +79,7 @@ public final class ThreadTracker {
     "Java2D Disposer",
     "JobScheduler FJ pool ",
     "JPS thread pool",
+    "Keep-Alive-SocketCleaner", // Thread[Keep-Alive-SocketCleaner,8,InnocuousThreadGroup], JBR-11
     "Keep-Alive-Timer",
     "main",
     "Monitor Ctrl-Break",

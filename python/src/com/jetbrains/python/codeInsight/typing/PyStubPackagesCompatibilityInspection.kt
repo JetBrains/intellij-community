@@ -95,7 +95,7 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
                             "is incompatible with " +
                             "'$runtimePkgName${PyRequirementRelation.EQ.presentableText}${runtimePkg.version}'. " +
                             "Expected '$runtimePkgName' version: [$specsToString]",
-                            PyInterpreterInspection.InterpreterSettingsQuickFix(),
+                            PyInterpreterInspection.InterpreterSettingsQuickFix(module),
                             createIgnoreStubPackageQuickFix(stubPkgName, ignoredStubPackages))
           }
         }

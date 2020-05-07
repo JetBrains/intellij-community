@@ -116,10 +116,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "s" : "",
                                        PyPackageUtil.requirementsToString(unsatisfied),
                                        plural ? "are" : "is");
-            final Set<String> unsatisfiedNames = new HashSet<>();
-            for (PyRequirement req : unsatisfied) {
-              unsatisfiedNames.add(req.getName() + req.getExtras());
-            }
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
             // TODO: Introduce an inspection extension
             if (PipenvKt.isPipEnv(sdk)) {
@@ -128,7 +124,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             else {
               quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             }
-            quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
+            quickFixes.add(new IgnoreRequirementFix(ContainerUtil.map2Set(unsatisfied, PyRequirement::getName)));
             registerProblem(file, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
                             quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));

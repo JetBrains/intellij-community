@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 import static com.intellij.openapi.vfs.VirtualFile.PROP_NAME;
 import static com.intellij.util.ObjectUtils.doIfNotNull;
 
-public class SymbolicLinkRefresher {
+class SymbolicLinkRefresher {
 
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
     "File SymbolicLinkRefresher", 1);
@@ -37,7 +37,7 @@ public class SymbolicLinkRefresher {
   private ScheduledFuture<?> myScheduledFuture;
   private final LocalFileSystemImpl mySystem;
 
-  public SymbolicLinkRefresher(LocalFileSystemImpl system) {
+  SymbolicLinkRefresher(LocalFileSystemImpl system) {
     mySystem = system;
     ApplicationManager.getApplication().getMessageBus().connect(system).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override

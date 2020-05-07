@@ -4,6 +4,7 @@ package com.jetbrains.python.run.runAnything
 import com.intellij.ide.actions.runAnything.activity.RunAnythingAnActionProvider
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.RunPythonOrDebugConsoleAction
 import icons.PythonIcons
 import javax.swing.Icon
@@ -25,5 +26,5 @@ class PyConsoleRunAnythingProvider : RunAnythingAnActionProvider<RunPythonOrDebu
 
   override fun getHelpIcon(): Icon = PythonIcons.Python.PythonConsole
 
-  override fun getHelpDescription(): String = "Runs Python console"
+  override fun getHelpDescription(): String = PyBundle.message("python.console.run.anything.provider")
 }

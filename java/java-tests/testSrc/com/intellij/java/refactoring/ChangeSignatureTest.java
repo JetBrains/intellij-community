@@ -560,6 +560,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
+  
+  public void testRemoveAnnotation() {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT)
+      }, false);
+      
+  }
 
   /* workers */
 }

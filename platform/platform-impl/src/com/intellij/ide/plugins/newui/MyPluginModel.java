@@ -322,8 +322,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     boolean allowUninstallWithoutRestart = true;
     if (updateDescriptor != null) {
-      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginManager
-        .loadDescriptor(((IdeaPluginDescriptorImpl)descriptor).getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+      IdeaPluginDescriptorImpl installedPluginDescriptor = PluginEnabler.tryLoadFullDescriptor((IdeaPluginDescriptorImpl) descriptor);
       if (installedPluginDescriptor == null || !DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowUninstallWithoutRestart = false;
       }
@@ -926,8 +925,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     try {
       descriptorImpl.setDeleted(true);
       // Load descriptor to make sure we get back all the data cleared after the descriptor has been loaded
-      IdeaPluginDescriptorImpl fullDescriptor =
-        PluginManager.loadDescriptor(descriptorImpl.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet());
+      IdeaPluginDescriptorImpl fullDescriptor = PluginEnabler.tryLoadFullDescriptor(descriptorImpl);
       LOG.assertTrue(fullDescriptor != null);
       needRestartForUninstall = PluginInstaller.prepareToUninstall(fullDescriptor);
       InstalledPluginsState.getInstance().onPluginUninstall(descriptorImpl, needRestartForUninstall);

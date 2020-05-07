@@ -25,8 +25,8 @@ public final class TimeoutCachedValue<T> implements Getter<T> {
     if (hasUpToDateValue()) {
       return myCache;
     }
-    myLastCalcTime = System.currentTimeMillis();
     myCache = myValueSupplier.get();
+    myLastCalcTime = System.currentTimeMillis();
     return myCache;
   }
 

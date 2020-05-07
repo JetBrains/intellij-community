@@ -853,6 +853,12 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), numTraverser().filter(IS_ODD).toList());
   }
 
+  public void testFilterOrder() {
+    int[] count = {0};
+    assertEquals(Arrays.asList(1, 5, 7, 3, 9, 11, 13), numTraverser()
+      .filter(i -> count[0]++ % 2 == 0).filter(i -> count[0]++ % 2 == 1 && IS_ODD.value(i)).toList());
+  }
+
   public void testSimpleExpand() {
     assertEquals(Arrays.asList(1, 2, 3, 8, 9, 10, 4), numTraverser().expand(IS_ODD).toList());
   }

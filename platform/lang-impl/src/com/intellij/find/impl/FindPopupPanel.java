@@ -148,6 +148,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   private DialogWrapper myDialog;
   private LoadingDecorator myLoadingDecorator;
   private int myLoadingHash;
+  private final AtomicBoolean myNeedReset = new AtomicBoolean(true);
   private JPanel myTitlePanel;
   private String myUsagesCount;
   private String myFilesCount;
@@ -589,8 +590,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myReplaceComponent = new JBTextArea();
     myReplaceComponent.setColumns(25);
     myReplaceComponent.setRows(1);
-    mySearchTextArea = new SearchTextArea(mySearchComponent, true, true);
-    myReplaceTextArea = new SearchTextArea(myReplaceComponent, false, false);
+    mySearchTextArea = new SearchTextArea(mySearchComponent, true);
+    myReplaceTextArea = new SearchTextArea(myReplaceComponent, false);
     mySearchTextArea.setMultilineEnabled(Registry.is("ide.find.as.popup.allow.multiline"));
     myReplaceTextArea.setMultilineEnabled(Registry.is("ide.find.as.popup.allow.multiline"));
     AnAction caseSensitiveAction = createAction("find.popup.case.sensitive",
@@ -638,7 +639,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
-    myResultsPreviewTable = new JBTable() {
+    myResultsPreviewTable = new JBTable(createTableModel()) {
       @Override
       public Dimension getPreferredScrollableViewportSize() {
         return new Dimension(getWidth(), 1 + getRowHeight() * 4);
@@ -744,10 +745,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     DocumentAdapter documentAdapter = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        int maxRows = Math.max(1, Math.min(25, Registry.get("ide.find.as.popup.max.rows").asInteger()));
-        mySearchComponent.setRows(Math.max(1, Math.min(maxRows, StringUtil.countChars(mySearchComponent.getText(), '\n') + 1)));
-        myReplaceComponent.setRows(Math.max(1, Math.min(maxRows, StringUtil.countChars(myReplaceComponent.getText(), '\n') + 1)));
-
         if (myDialog == null) return;
         if (e.getDocument() == mySearchComponent.getDocument()) {
           scheduleResultsUpdate();
@@ -829,10 +826,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     else {
       add(myFilterContextButton, "wrap");
     }
-    mySearchTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0));
+    mySearchTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
     add(mySearchTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 4, wrap");
     myReplaceTextArea.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
-    add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, gaptop 1, wrap");
+    add(myReplaceTextArea, "pushx, growx, sx 10, pad 0 -4 0 4, wrap");
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
     add(splitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
     add(bottomPanel, "pushx, growx, dock south, sx 10");
@@ -850,6 +847,56 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     ContainerUtil.addAll(focusOrder, focusableComponents(bottomPanel));
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new ListFocusTraversalPolicy(focusOrder));
+  }
+
+  private DefaultTableModel createTableModel() {
+    final DefaultTableModel model = new DefaultTableModel() {
+      private String firstResultPath;
+
+      private final Comparator<Vector<UsageInfo2UsageAdapter>> COMPARATOR = (v1, v2) -> {
+        UsageInfo2UsageAdapter u1 = v1.get(0);
+        UsageInfo2UsageAdapter u2 = v2.get(0);
+        String u2Path = u2.getFile().getPath();
+        final String u1Path = u1.getFile().getPath();
+        if (u1Path.equals(firstResultPath) && !u2Path.equals(firstResultPath)) return -1; // first result is always sorted first
+        if (!u1Path.equals(firstResultPath) && u2Path.equals(firstResultPath)) return 1;
+        int c = u1Path.compareTo(u2Path);
+        if (c != 0) return c;
+        c = Integer.compare(u1.getLine(), u2.getLine());
+        if (c != 0) return c;
+        return Integer.compare(u1.getUsageInfo().getNavigationOffset(), u2.getUsageInfo().getNavigationOffset());
+      };
+
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        return false;
+      }
+
+      @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
+      @Override
+      //Inserts search results in sorted order
+      public void addRow(Object[] rowData) {
+        if (myNeedReset.compareAndSet(true, false)) {
+          dataVector.clear();
+          fireTableDataChanged();
+        }
+        final Vector<UsageInfo2UsageAdapter> v = convertToVector(rowData);
+        if (dataVector.isEmpty()) {
+          addRow(v);
+          myResultsPreviewTable.getSelectionModel().setSelectionInterval(0, 0);
+          firstResultPath = v.get(0).getFile().getPath();
+        }
+        else {
+          final int p = Collections.binarySearch(dataVector, v, COMPARATOR);
+          assert p < 0 : "duplicate result found";
+          int row = -(p + 1);
+          insertRow(row, v);
+        }
+      }
+    };
+
+    model.addColumn("Usages");
+    return model;
   }
 
   private void processCtrlEnter() {
@@ -1119,52 +1166,16 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       public void stop() {
         super.stop();
         onStop(System.identityHashCode(this));
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myNeedReset.compareAndSet(true, false)) { //nothing is found, let's clear previous results
+            reset();
+          }
+        });
       }
     };
     myResultsPreviewSearchProgress = progressIndicatorWhenSearchStarted;
     final int hash = System.identityHashCode(myResultsPreviewSearchProgress);
 
-    final DefaultTableModel model = new DefaultTableModel() {
-      private String firstResultPath;
-
-      private final Comparator<Vector<UsageInfo2UsageAdapter>> COMPARATOR = (v1, v2) -> {
-        UsageInfo2UsageAdapter u1 = v1.get(0);
-        UsageInfo2UsageAdapter u2 = v2.get(0);
-        String u2Path = u2.getFile().getPath();
-        final String u1Path = u1.getFile().getPath();
-        if (u1Path.equals(firstResultPath) && !u2Path.equals(firstResultPath)) return -1; // first result is always sorted first
-        if (!u1Path.equals(firstResultPath) && u2Path.equals(firstResultPath)) return 1;
-        int c = u1Path.compareTo(u2Path);
-        if (c != 0) return c;
-        c = Integer.compare(u1.getLine(), u2.getLine());
-        if (c != 0) return c;
-        return Integer.compare(u1.getUsageInfo().getNavigationOffset(), u2.getUsageInfo().getNavigationOffset());
-      };
-
-      @Override
-      public boolean isCellEditable(int row, int column) {
-        return false;
-      }
-
-      @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
-      @Override
-      //Inserts search results in sorted order
-      public void addRow(Object[] rowData) {
-        final Vector<UsageInfo2UsageAdapter> v = convertToVector(rowData);
-        if (dataVector.isEmpty()) {
-          dataVector.add(v);
-          firstResultPath = v.get(0).getFile().getPath();
-        }
-        else {
-          final int p = Collections.binarySearch(dataVector, v, COMPARATOR);
-          assert p < 0 : "duplicate result found";
-          int row = -(p + 1);
-          insertRow(row, v);
-        }
-      }
-    };
-
-    model.addColumn("Usages");
     // Use previously shown usage files as hint for faster search and better usage preview performance if pattern length increased
     Set<VirtualFile> filesToScanInitially = new LinkedHashSet<>();
 
@@ -1182,20 +1193,17 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     myReplaceAllButton.setEnabled(false);
     myReplaceSelectedButton.setEnabled(false);
     myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", 0));
-    myCodePreviewComponent.setVisible(false);
 
-    myInfoLabel.setText(null);
-    myResultsPreviewTable.setModel(model);
-
+    onStart(hash);
     if (result != null && result.component != myReplaceComponent) {
       onStop(hash, result.message);
+      reset();
       return;
     }
 
     GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
       FindInProjectUtil.getScopeFromModel(myProject, myHelper.myPreviousModel), myProject);
     myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new UsageTableCellRenderer(scope));
-    onStart(hash);
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
@@ -1238,6 +1246,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
               onStop(hash);
               return;
             }
+            DefaultTableModel model = (DefaultTableModel)myResultsPreviewTable.getModel();
             if (!merged) {
               model.addRow(new Object[]{usage});
             }
@@ -1245,7 +1254,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
               model.fireTableRowsUpdated(model.getRowCount() - 1, model.getRowCount() - 1);
             }
             myCodePreviewComponent.setVisible(true);
-            if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
+            if (model.getRowCount() == 1) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
             int occurrences = resultsCount.get();
@@ -1306,6 +1315,13 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     });
   }
 
+  private void reset() {
+    ((DefaultTableModel)myResultsPreviewTable.getModel()).getDataVector().clear();
+    ((DefaultTableModel)myResultsPreviewTable.getModel()).fireTableDataChanged();
+    myResultsPreviewTable.getSelectionModel().clearSelection();
+    myInfoLabel.setText(null);
+  }
+
   private void showEmptyText(@Nullable String message) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
@@ -1322,6 +1338,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
   }
 
   private void onStart(int hash) {
+    myNeedReset.set(true);
     myLoadingHash = hash;
     myLoadingDecorator.startLoading(false);
     myResultsPreviewTable.getEmptyText().setText(FindBundle.message("empty.text.searching"));

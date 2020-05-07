@@ -18,6 +18,7 @@ package com.intellij.remoteServer.util.ssh;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.remoteServer.CloudBundle;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,7 +33,7 @@ public class PublicSshKeyDialog extends DialogWrapper {
 
   public PublicSshKeyDialog(@Nullable Project project) {
     super(project);
-    setTitle("Upload Public SSH Key");
+    setTitle(CloudBundle.message("upload.public.ssh.key"));
     myPanel = new PublicSshKeyFilePanel();
     init();
   }
@@ -50,6 +51,6 @@ public class PublicSshKeyDialog extends DialogWrapper {
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
-    return getSshKey().isFile() ? null : new ValidationInfo("Public SSH key file does not exist");
+    return getSshKey().isFile() ? null : new ValidationInfo(CloudBundle.message("validation.info.public.ssh.key.file.does.not.exist"));
   }
 }

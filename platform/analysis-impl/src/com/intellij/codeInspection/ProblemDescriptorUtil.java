@@ -265,7 +265,15 @@ public class ProblemDescriptorUtil {
   }
 
   public static ProblemDescriptor toProblemDescriptor(@NotNull PsiFile file, @NotNull HighlightInfo info) {
-    List<LocalQuickFix> quickFixes = ContainerUtil.filterIsInstance(ContainerUtil.map(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()), p -> p.first.getAction()), LocalQuickFix.class);
+    List<LocalQuickFix> quickFixes =
+      ContainerUtil.mapNotNull(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()), p -> {
+        IntentionAction intention = p.first.getAction();
+        if (intention instanceof LocalQuickFix) return (LocalQuickFix)intention;
+        if (intention instanceof LocalQuickFixAsIntentionAdapter) {
+          return ((LocalQuickFixAsIntentionAdapter)intention).getFix();
+        }
+        return null;
+      });
     return convertToDescriptor(file, info.getSeverity(), info.getStartOffset(), info.getEndOffset(), info.getDescription(), info.isAfterEndOfLine(), quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 }

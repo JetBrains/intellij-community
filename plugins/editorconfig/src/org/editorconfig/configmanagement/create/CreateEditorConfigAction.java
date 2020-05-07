@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.PlatformUtils;
 import org.editorconfig.configmanagement.export.EditorConfigSettingsWriter;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.EditorConfigNotifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,9 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
             }
             else {
               Messages
-                .showErrorDialog(project, "Another EditorConfig file already exists in " + dirVFile.getPath(), "New EditorConfig File");
+                .showErrorDialog(project,
+                                 EditorConfigBundle.message("notification.message.another.editorconfig.file.already.exists.in.0", dirVFile.getPath()),
+                                 EditorConfigBundle.message("dialog.title.new.editorconfig.file"));
             }
           }
         }
@@ -152,7 +155,7 @@ public class CreateEditorConfigAction extends AnAction implements DumbAware {
   private static void notifyFailed(@NotNull Exception e) {
     LOG.warn(e);
     Notifications.Bus.notify(
-      new Notification(EditorConfigNotifier.GROUP_DISPLAY_ID, "EditorConfig Creation Failed", e.getMessage(),
+      new Notification(EditorConfigNotifier.GROUP_DISPLAY_ID, EditorConfigBundle.message("notification.title.editorconfig.creation.failed"), e.getMessage(),
                        NotificationType.ERROR));
   }
 }

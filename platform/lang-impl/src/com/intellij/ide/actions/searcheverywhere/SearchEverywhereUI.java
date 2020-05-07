@@ -392,6 +392,11 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                              KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
   }
 
+  @Override
+  protected @NotNull String getAccessibleName() {
+    return IdeBundle.message("searcheverywhere.accessible.name");
+  }
+
   @NotNull
   @Override
   protected ExtendableTextField createSearchField() {

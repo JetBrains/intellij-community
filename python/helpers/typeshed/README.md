@@ -162,10 +162,13 @@ This test requires Python 3.5 or higher.
 Run using `(.venv3)$ python3 tests/stubtest_test.py`
 
 This test compares the stdlib stubs against the objects at runtime. Because of
-this, the output depends on which version of Python it is run with.
+this, the output depends on which version of Python and on what kind of system
+it is run.
+Thus the easiest way to run this test is by enabling Travis CI on your fork;
+if you run it locally, it'll likely complain about system-specific
+differences (in e.g, `socket`) that the type system cannot capture.
 If you need a specific version of Python to repro a CI failure,
-[pyenv](https://github.com/pyenv/pyenv) can help (as can enabling Travis CI on
-your fork).
+[pyenv](https://github.com/pyenv/pyenv) can help.
 
 Due to its dynamic nature, you may run into false positives. In this case, you
 can add to the whitelists for each affected Python version in
@@ -173,7 +176,9 @@ can add to the whitelists for each affected Python version in
 at [mypy](https://github.com/python/mypy/issues).
 
 To run stubtest against third party stubs, it's easiest to use stubtest
-directly. stubtest can also help you find things missing from the stubs.
+directly, with `(.venv3)$ python3 -m mypy.stubtest --custom-typeshed-dir
+<path-to-typeshed> <third-party-module>`.
+stubtest can also help you find things missing from the stubs.
 
 
 ### flake8

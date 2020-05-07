@@ -769,8 +769,7 @@ Android Studio: This attempts to read a non-existent file. */
    * directory name return the old module name to temporary keep layout of plugins unchanged.
    */
   static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
-    // do not use old name for intellij.platform. modules
-    if (!plugin.directoryNameSetExplicitly && !plugin.mainModule.startsWith("intellij.platform.") && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
+    if (!plugin.directoryNameSetExplicitly && plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule)
                                            && context.getOldModuleName(plugin.mainModule) != null) {
       context.getOldModuleName(plugin.mainModule)
     }
@@ -957,11 +956,14 @@ Android Studio: This attempts to read a non-existent file. */
         //include all module libraries from the plugin modules added to IDE classpath to layout
         actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
                              .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
+          def excluded = layout.excludedModuleLibraries.get(moduleName) ?: Collections.emptyList()
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
+            collect { ((JpsLibraryDependency)it).library }.
+            findAll { !excluded.contains(it.name) }.
             each {
-              jpsLibrary(((JpsLibraryDependency)it).library)
+              jpsLibrary(it)
             }
         }
 

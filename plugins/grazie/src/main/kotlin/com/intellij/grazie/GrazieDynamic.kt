@@ -51,9 +51,15 @@ internal object GrazieDynamic {
     }
   }
 
-  fun getResourceAsStream(path: String): InputStream? = forClassLoader { it.getResourceAsStream(path) }
+  fun getResourceAsStream(path: String): InputStream? {
+    return forClassLoader { it.getResourceAsStream(path) }
+           ?: if (path.startsWith("/")) forClassLoader { it.getResourceAsStream(path.drop(1)) } else null
+  }
 
-  fun getResource(path: String): URL? = forClassLoader { it.getResource(path) }
+  fun getResource(path: String): URL? {
+    return forClassLoader { it.getResource(path) }
+           ?: if (path.startsWith("/")) forClassLoader { it.getResource(path.drop(1)) } else null
+  }
 
   fun getResourceBundle(baseName: String, locale: Locale) = forClassLoader {
     try {

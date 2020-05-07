@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.BaseAnalysisAction;
 import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -110,7 +111,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
   protected JComponent getAdditionalActionSettings(Project project, BaseAnalysisActionDialog dialog) {
     final JPanel panel = new JPanel(new VerticalFlowLayout());
     panel.add(new TitledSeparator());
-    myUpdateExistingCopyrightsCb = new JCheckBox("Update existing copyrights",
+    myUpdateExistingCopyrightsCb = new JCheckBox(CopyrightBundle.message("checkbox.text.update.existing.copyrights"),
                                                  PropertiesComponent.getInstance().getBoolean(UPDATE_EXISTING_COPYRIGHTS, true));
     panel.add(myUpdateExistingCopyrightsCb);
     return panel;
@@ -120,7 +121,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
   protected void analyze(@NotNull final Project project, @NotNull final AnalysisScope scope) {
     PropertiesComponent.getInstance().setValue(UPDATE_EXISTING_COPYRIGHTS, String.valueOf(myUpdateExistingCopyrightsCb.isSelected()), "true");
     final Map<PsiFile, Runnable> preparations = new LinkedHashMap<>();
-    Task.Backgroundable task = new Task.Backgroundable(project, "Prepare Copyright...", true) {
+    Task.Backgroundable task = new Task.Backgroundable(project, CopyrightBundle.message("task.title.prepare.copyright"), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         scope.accept(new PsiElementVisitor() {

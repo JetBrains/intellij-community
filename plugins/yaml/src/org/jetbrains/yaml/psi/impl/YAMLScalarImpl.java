@@ -169,7 +169,7 @@ public abstract class YAMLScalarImpl extends YAMLValueImpl implements YAMLScalar
 
     @Override
     public boolean isOneLine() {
-      return myHost.isMultiline();
+      return !myHost.isMultiline();
     }
   }
 

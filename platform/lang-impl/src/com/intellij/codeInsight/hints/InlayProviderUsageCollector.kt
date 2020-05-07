@@ -5,9 +5,7 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 
@@ -19,30 +17,40 @@ class InlayProviderUsageCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val settingsProviders = InlaySettingsProvider.EP.getExtensions()
     val metricEvents = mutableSetOf<MetricEvent>()
+    val settings = InlayHintsSettings.instance()
+    metricEvents.add(MetricEvent("global.inlays.settings",
+                                 FeatureUsageData().addData("enabled_globally", settings.hintsEnabledGlobally())))
     for (settingsProvider in settingsProviders) {
       val languages = settingsProvider.getSupportedLanguages(project)
       for (language in languages) {
         val models = settingsProvider.createModels(project, language)
         for (model in models) {
-          metricEvents.add(getModelEvent(model, language))
+          addModelEvents(model, language, metricEvents)
         }
+        metricEvents.add(MetricEvent("language.inlays.settings", FeatureUsageData()
+          .addData("enabled", settings.hintsEnabled(language))
+          .addLanguage(language)
+        ))
       }
     }
     return metricEvents
   }
 
-  private fun getModelEvent(model: InlayProviderSettingsModel, language: Language): MetricEvent {
-    val usageData = FeatureUsageData()
-      .addLanguage(language)
-      .addData("enabled", model.isEnabled)
-      .addPluginInfo(getPluginInfo(model.javaClass))
+  private fun addModelEvents(model: InlayProviderSettingsModel,
+                             language: Language,
+                             metrics: MutableSet<MetricEvent>) {
     for (case in model.cases) {
-      usageData.addData(StatisticsEventEscaper.escapeFieldName(case.id), case.value)
+      val usageData = FeatureUsageData()
+        .addData("model", model.id)
+        .addData("option_id", case.id)
+        .addData("option_value", case.value)
+        .addLanguage(language)
+        .addData("enabled", model.isEnabled)
+      metrics.add(MetricEvent("model.options", usageData))
     }
-    return MetricEvent(model.id, usageData)
   }
 
   override fun getVersion(): Int {
-    return 2
+    return 3
   }
 }

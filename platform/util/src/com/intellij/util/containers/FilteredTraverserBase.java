@@ -503,7 +503,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
     }
 
     Cond<T> append(Condition<? super T> impl) {
-      return new Cond<>(impl, this);
+      Cond<T> result = new Cond<>(impl, null);
+      for (Condition<? super T> o : ContainerUtil.reverse(JBIterable.generate(this, o -> o.next).map(o -> o.impl).toList())) {
+        result = new Cond<>(o, result);
+      }
+      return result;
     }
 
     boolean valueAnd(T t) {

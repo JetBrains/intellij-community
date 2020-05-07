@@ -35,8 +35,7 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
     return firstKeyValue;
   }
 
-  @Override
-  protected void addNewKey(@NotNull YAMLKeyValue key) {
+  private void addNewKeyToTheEnd(@NotNull YAMLKeyValue key) {
     final int indent = YAMLUtil.getIndentToThisElement(this);
 
     final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
@@ -51,6 +50,48 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
       add(generator.createIndent(indent));
     }
     add(key);
+  }
+
+  @Override
+  protected void addNewKey(@NotNull YAMLKeyValue key) {
+    final int indent = YAMLUtil.getIndentToThisElement(this);
+    ASTNode node = getNode();
+    ASTNode place = node.getLastChildNode();
+    ASTNode whereInsert = null;
+    while(place != null) {
+      if(place.getElementType() == YAMLTokenTypes.INDENT && place.getTextLength() == indent) {
+        whereInsert = place;
+      }
+      else if (place.getElementType() == YAMLTokenTypes.EOL) {
+        ASTNode next = place.getTreeNext();
+        if (next == null || next.getElementType() == YAMLTokenTypes.EOL) {
+          whereInsert = place;
+        }
+      }
+      else {
+        break;
+      }
+      place = place.getTreePrev();
+    }
+
+    final YAMLElementGenerator generator = YAMLElementGenerator.getInstance(getProject());
+    if (whereInsert == null) {
+      add(generator.createEol());
+      add(generator.createIndent(indent));
+      add(key);
+      return;
+    }
+
+    PsiElement anchor = whereInsert.getPsi();
+    if (indent == 0 || whereInsert.getElementType() == YAMLTokenTypes.INDENT && getLastChild().getTextLength() == indent) {
+      addAfter(key, anchor);
+      return;
+    }
+    if (whereInsert.getElementType() != YAMLTokenTypes.EOL) {
+      anchor = addAfter(generator.createEol(), anchor);
+    }
+    addAfter(generator.createIndent(indent), anchor);
+    addAfter(key, anchor);
   }
 
   /**
@@ -77,7 +118,7 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
     }
 
     if (offset == getTextRange().getEndOffset()) {
-      addNewKey(keyValue);
+      addNewKeyToTheEnd(keyValue);
       return;
     }
 
@@ -97,7 +138,7 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
         leaf.delete();
       }
 
-      addNewKey(keyValue);
+      addNewKeyToTheEnd(keyValue);
       return;
     }
 
@@ -130,7 +171,7 @@ public class YAMLBlockMappingImpl extends YAMLMappingImpl {
         return;
       }
     }
-    addNewKey(keyValue);
+    addNewKeyToTheEnd(keyValue);
   }
 
   /** @return deepest created or found key or null if nothing could be created */

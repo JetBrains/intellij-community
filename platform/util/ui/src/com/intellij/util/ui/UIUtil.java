@@ -875,6 +875,10 @@ public final class UIUtil {
     return JBColor.namedColor("Label.foreground", new JBColor(Gray._0, Gray.xBB));
   }
 
+  public static Color getErrorForeground() {
+    return JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+  }
+
   @NotNull
   public static Color getLabelDisabledForeground() {
     return JBColor.namedColor("Label.disabledForeground", JBColor.GRAY);

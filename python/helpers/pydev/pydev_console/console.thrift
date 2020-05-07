@@ -176,7 +176,7 @@ service PythonConsoleBackendService {
    */
   oneway void close(),
 
-  DebugValues evaluate(1: string expression),
+  DebugValues evaluate(1: string expression, 2: bool doTrunc),
 
   GetArrayResponse getArray(1: string vars, 2: i32 rowOffset, 3: i32 colOffset, 4: i32 rows, 5: i32 cols, 6: string format)
     throws (1: UnsupportedArrayTypeException unsupported, 2: ExceedingArrayDimensionsException exceedingDimensions),

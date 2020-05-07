@@ -154,7 +154,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
   }
 
   public @NotNull TerminalAction getGotoNextSplitTerminalAction(@Nullable JBTerminalWidgetListener listener, boolean forward) {
-    String actionId = forward ? "NextSplitter" : "PrevSplitter";
+    String actionId = forward ? "Terminal.NextSplitter" : "Terminal.PrevSplitter";
     String text = UIUtil.removeMnemonic(getGotoNextSplitTerminalActionText(forward));
     return new TerminalAction(new TerminalActionPresentation(text, getKeyStrokesByActionId(actionId)), event -> {
       if (listener != null) {

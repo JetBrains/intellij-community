@@ -48,22 +48,22 @@ private fun getPy37ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.7.6/python-3.7.6.exe",
-      25792544,
-      "9e73a1b27bb894f87fdce430ef88b3d5",
+      "https://www.python.org/ftp/python/3.7.7/python-3.7.7.exe",
+      25747128,
+      "e9db9cf43b4f2472d75a055380871045",
       hashFunction,
-      "python-3.7.6.exe"
+      "python-3.7.7.exe"
     )
   }
   else {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.7.6/python-3.7.6-amd64.exe",
-      26802312,
-      "cc31a9a497a4ec8a5190edecc5cdd303",
+      "https://www.python.org/ftp/python/3.7.7/python-3.7.7-amd64.exe",
+      26797616,
+      "e0c910087459df78d827eb1554489663",
       hashFunction,
-      "python-3.7.6-amd64.exe"
+      "python-3.7.7-amd64.exe"
     )
   }
 }
@@ -77,22 +77,22 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.1/python-3.8.1.exe",
-      26446128,
-      "2d4c7de97d6fcd8231fc3decbf8abf79",
+      "https://www.python.org/ftp/python/3.8.2/python-3.8.2.exe",
+      26481424,
+      "6f0ba59c7dbeba7bb0ee21682fe39748",
       hashFunction,
-      "python-3.8.1.exe"
+      "python-3.8.2.exe"
     )
   }
   else {
     PySdkToInstallOnWindows(
       name,
       version,
-      "https://www.python.org/ftp/python/3.8.1/python-3.8.1-amd64.exe",
-      27543360,
-      "3e4c42f5ff8fcdbe6a828c912b7afdb1",
+      "https://www.python.org/ftp/python/3.8.2/python-3.8.2-amd64.exe",
+      27586384,
+      "b5df1cbb2bc152cd70c3da9151cb510b",
       hashFunction,
-      "python-3.8.1-amd64.exe"
+      "python-3.8.2-amd64.exe"
     )
   }
 }

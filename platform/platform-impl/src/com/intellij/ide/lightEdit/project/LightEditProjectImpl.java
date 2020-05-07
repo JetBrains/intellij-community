@@ -5,7 +5,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -59,13 +58,7 @@ final class LightEditProjectImpl extends ProjectImpl implements LightEditCompati
 
   @Override
   public void init(@Nullable ProgressIndicator indicator) {
-    createRequiredComponents();
-  }
-
-  private void createRequiredComponents() {
-    // Create UndoManager at project creation, like it's done for a regular IDE (in ProjectImpl.createComponents method).
-    // Otherwise, undo doesn't work for the first change.
-    UndoManager.getInstance(this);
+    createComponents(null);
   }
 
   @Override

@@ -15,9 +15,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
@@ -39,6 +36,7 @@ import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupSh
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
 import com.intellij.util.ui.JBUI.Borders.empty
@@ -49,6 +47,7 @@ import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil.*
 import com.intellij.vcs.log.VcsUser
+import java.awt.LayoutManager
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
@@ -61,9 +60,7 @@ import kotlin.properties.Delegates.observable
 
 private val DEFAULT_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
 
-private fun createHorizontalPanel(): JBPanel<*> {
-  return JBPanel<JBPanel<*>>(HorizontalLayout(scale(16), SwingConstants.CENTER))
-}
+private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 
 private fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -97,11 +94,11 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   private val inclusionEventDispatcher = EventDispatcher.create(InclusionListener::class.java)
 
   private val centerPanel = simplePanel()
-  private val buttonPanel = simplePanel()
+  private val buttonPanel = NonOpaquePanel(HorizontalLayout(0))
   private val toolbarPanel = simplePanel().apply { isOpaque = false }
   private var verticalToolbarBorder: Border? = null
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
-  private val toolbar = ActionManager.getInstance().createActionToolbar("ChangesView.CommitToolbar", actions, false).apply {
+  private val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, false).apply {
     setTargetComponent(this@ChangesViewCommitPanel)
     component.isOpaque = false
   }
@@ -114,7 +111,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
       setTargetComponent(this@ChangesViewCommitPanel)
       setReservePlaceAutoPopupIcon(false)
       component.isOpaque = false
-      component.border = null
+      component.border = emptyLeft(6)
     }
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
@@ -134,8 +131,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
   private val commitAuthorComponent = CommitAuthorComponent(project)
-  private val commitLegendCalculator = ChangeInfoCalculator()
-  private val commitLegend = CommitLegendPanel(commitLegendCalculator)
 
   private var needUpdateCommitOptionsUi = false
 
@@ -150,14 +145,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   init {
     Disposer.register(this, commitMessage)
 
-    val isCompactCommitLegend = Registry.get("vcs.non.modal.commit.legend.compact")
-    commitLegend.isCompact = isCompactCommitLegend.asBoolean()
-    isCompactCommitLegend.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        commitLegend.isCompact = value.asBoolean()
-      }
-    }, this)
-
     buildLayout()
     for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
@@ -168,35 +155,26 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
       isShowCheckboxes = true
     }
 
-    addInclusionListener(object : InclusionListener {
-      override fun inclusionChanged() = this@ChangesViewCommitPanel.inclusionChanged()
-    }, this)
-
     setupShortcuts(rootComponent)
   }
 
   private fun buildLayout() {
     buttonPanel.apply {
-      background = getButtonPanelBackground()
       border = getButtonPanelBorder()
 
-      addToLeft(commitActionToolbar.component)
-      addToCenter(
-        createHorizontalPanel().apply {
-          background = getButtonPanelBackground()
-
-          add(NonOpaquePanel(HorizontalLayout(scale(4))).apply {
-            add(commitButton)
-            add(commitAuthorComponent)
-          })
-          add(CurrentBranchComponent(project, changesView, this@ChangesViewCommitPanel))
-          add(commitLegend.component)
-          add(toolbarPanel)
-        }
-      )
+      add(commitButton)
+      add(commitActionToolbar.component)
+      add(toolbarPanel)
     }
-    centerPanel.addToCenter(commitMessage).addToBottom(buttonPanel)
+    centerPanel
+      .addToCenter(commitMessage)
+      .addToBottom(panel(VerticalLayout(0)).apply {
+        background = getButtonPanelBackground()
 
+        add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
+        add(ChangesViewCommitStatusPanel(changesView, this@ChangesViewCommitPanel, getButtonPanelBackground()))
+        add(buttonPanel)
+      })
     addToCenter(centerPanel)
     addToolbar(isToolbarHorizontal)
 
@@ -224,21 +202,10 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   }
 
   private fun getButtonPanelBorder(): Border =
-    EmptyBorder(0, scale(4), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
+    EmptyBorder(0, scale(3), (scale(6) - commitButton.getBottomInset()).coerceAtLeast(0), 0)
 
   private fun getButtonPanelBackground() =
     JBColor { (commitMessage.editorField.editor as? EditorEx)?.backgroundColor ?: getTreeBackground() }
-
-  private fun inclusionChanged() {
-    updateLegend()
-  }
-
-  private fun updateLegend() {
-    // Displayed changes and unversioned files are not actually used in legend - so we don't pass them
-    commitLegendCalculator.update(
-      includedChanges = getIncludedChanges(), includedUnversionedFilesCount = getIncludedUnversionedFiles().size)
-    commitLegend.update()
-  }
 
   private fun fireDefaultExecutorCalled() = executorEventDispatcher.multicaster.executorCalled(null)
 
@@ -442,5 +409,9 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     }
 
     override fun actionPerformed(e: AnActionEvent) = commitButton.showPopup()
+  }
+
+  companion object {
+    internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
   }
 }

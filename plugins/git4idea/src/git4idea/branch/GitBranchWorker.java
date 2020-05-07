@@ -28,6 +28,7 @@ import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 
 /**
  * Executes the logic of git branch operations.
@@ -86,8 +89,11 @@ public final class GitBranchWorker {
       GitCommandResult result = myGit.createNewTag(repository, name, null, reference);
       repository.getRepositoryFiles().refreshTagsFiles();
       if (!result.success()) {
-        VcsNotifier.getInstance(myProject).notifyError("Couldn't create tag " + name + GitUtil.mention(repository),
-                                                       result.getErrorOutputAsHtmlString());
+        String error = GitBundle.message("branch.worker.could.not.create.tag",
+                                         name,
+                                         GitUtil.getRepositoryManager(repository.getProject()).getRepositories().size(),
+                                         getShortRepositoryName(repository));
+        VcsNotifier.getInstance(myProject).notifyError(error, result.getErrorOutputAsHtmlString());
         break;
       }
     }
@@ -146,7 +152,7 @@ public final class GitBranchWorker {
   }
 
   public void rebaseOnCurrent(@NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
-    rebase(repositories, "HEAD", branchName);
+    rebase(repositories, "HEAD", branchName); //NON-NLS
   }
 
   public void rebase(@NotNull List<? extends GitRepository> repositories, @NotNull String upstream, @NotNull String branchName) {

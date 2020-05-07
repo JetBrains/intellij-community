@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 @Deprecated
 public class EventLogExternalSettingsService extends EventLogUploadSettingsService {
   public EventLogExternalSettingsService(@NotNull String recorderId) {
-    super(recorderId, new EventLogInternalApplicationInfo(false));
+    super(recorderId, new EventLogInternalApplicationInfo(recorderId, false));
   }
 
   /**

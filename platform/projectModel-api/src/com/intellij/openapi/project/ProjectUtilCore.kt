@@ -26,6 +26,22 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
     }
   }
 
+  val urlWithLibraryName = decorateWithLibraryName(file, project, result)
+  if (urlWithLibraryName != null) {
+    return urlWithLibraryName
+  }
+
+  // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
+  if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
+    return result
+  }
+
+  return appendModuleName(file, project, result, moduleOnTheLeft)
+}
+
+fun decorateWithLibraryName(file: VirtualFile,
+                                    project: Project,
+                                    result: String): String? {
   if (file.fileSystem is LocalFileProvider) {
     @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
     if (localFile != null) {
@@ -36,13 +52,7 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
       }
     }
   }
-
-  // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
-  if (PlatformUtils.isCidr() || PlatformUtils.isRider()) {
-    return result
-  }
-
-  return appendModuleName(file, project, result, moduleOnTheLeft)
+  return null
 }
 
 fun appendModuleName(file: VirtualFile,

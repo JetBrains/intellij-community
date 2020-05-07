@@ -78,6 +78,7 @@ public class MavenImportingSettingsForm {
 
     LabelTextReplacingUtil.replaceText(myPanel);
     myAutoDetectCompilerCheckBox.setVisible(Registry.is("maven.import.compiler.arguments", true));
+    myJdkForImporterComboBox.setHighlightInternalJdk(false);
   }
 
   private void createUIComponents() {

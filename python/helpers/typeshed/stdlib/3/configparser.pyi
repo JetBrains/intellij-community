@@ -160,7 +160,7 @@ class SectionProxy(MutableMapping[str, str]):
     def parser(self) -> RawConfigParser: ...
     @property
     def name(self) -> str: ...
-    def get(self, option: str, fallback: Optional[str] = ..., *, raw: bool = ..., vars: Optional[_section] = ..., **kwargs: Any) -> str: ...  # type: ignore
+    def get(self, option: str, fallback: Optional[str] = ..., *, raw: bool = ..., vars: Optional[_section] = ..., _impl: Optional[Any] = ..., **kwargs: Any) -> str: ...  # type: ignore
 
     # These are partially-applied version of the methods with the same names in
     # RawConfigParser; the stubs should be kept updated together

@@ -27,7 +27,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
-import com.intellij.openapi.wm.impl.status.widget.StatusBarPopupActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.*;
 import com.intellij.util.io.SuperUserStatus;
@@ -46,6 +46,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.List;
@@ -294,7 +295,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
       ourUpdatingTitle = true;
 
       if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
-        frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+        File ioFile = currentFile != null ? currentFile.toFile() : null;
+        frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
 
       Builder builder = new Builder().append(title).append(fileTitle);
@@ -395,10 +397,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
-    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
-    StatusBarWidgetsManager widgetsManager = project.getService(StatusBarWidgetsManager.class);
-    widgetsManager.updateAllWidgets();
-    PopupHandler.installPopupHandler(statusBar, new StatusBarPopupActionGroup(widgetsManager), ActionPlaces.STATUS_BAR_PLACE);
+    project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
+    PopupHandler.installPopupHandler(Objects.requireNonNull(getStatusBar()), StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
   }
 
   @Override

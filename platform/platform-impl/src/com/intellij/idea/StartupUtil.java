@@ -196,7 +196,9 @@ IDEA-240150 */ Future<Object> euaDocument = null;
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() && !Files.exists(configPath);
+    boolean configImportNeeded = !Main.isHeadless() &&
+                                 (!Files.exists(configPath) ||
+                                  ConfigImportHelper.needsCustomConfigMigration());
 
     activity = activity.endAndStart("system dirs checking");
     // note: uses config directory
@@ -210,7 +212,10 @@ IDEA-240150 */ Future<Object> euaDocument = null;
     Logger log = setupLogger();
     activity.end();
 
-    PluginManagerCore.scheduleDescriptorLoading();
+    // plugins cannot be loaded at this moment if needed to import configs, because plugins may be added after importing
+    if (!configImportNeeded) {
+      PluginManagerCore.scheduleDescriptorLoading();
+    }
 
     NonUrgentExecutor.getInstance().execute(() -> {
       ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
@@ -258,7 +263,13 @@ IDEA-240150 */ Future<Object> euaDocument = null;
 
       if (configImportNeeded && !ConfigImportHelper.isConfigImported()) {
         // exception handler is already set by ConfigImportHelper; event queue and icons already initialized as part of old config import
-        EventQueue.invokeAndWait(() -> runStartupWizard(appStarter));
+        EventQueue.invokeAndWait(() -> {
+          runStartupWizard(appStarter);
+          PluginManagerCore.scheduleDescriptorLoading();
+        });
+      }
+      else {
+        PluginManagerCore.scheduleDescriptorLoading();
       }
 
       activity.end();

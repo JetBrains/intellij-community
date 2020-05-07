@@ -1,11 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyGotoDeclarationHandler
 import com.jetbrains.python.pyi.PyiFile
 
@@ -34,6 +36,19 @@ class PyNavigationTest : PyTestCase() {
       checkPyNotPyi(target)
     }
   }
+
+  fun testGoToClassField() {
+    myFixture.configureByFile("${getTestName(true)}.py")
+    val model = GotoSymbolModel2(myFixture.project)
+    val elements = model.getElementsByName("some_field", false, "")
+    assertSize(1, elements)
+    assertInstanceOf(elements.first(), PyTargetExpression::class.java)
+    val expression = elements.first() as PyTargetExpression
+    assertEquals("some_field", expression.name)
+    assertNotNull(expression.containingClass)
+    assertEquals("MyClass", expression.containingClass?.name)
+  }
+
 
   private fun configureByDir(dirName: String) {
     myFixture.copyDirectoryToProject(dirName, "")

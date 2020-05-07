@@ -129,7 +129,6 @@
     <module old-name="icons" new-name="intellij.platform.icons" />
     <module old-name="idea-ui" new-name="intellij.java.ui" />
     <module old-name="idea-ui-tests" new-name="intellij.java.ui.tests" />
-    <module old-name="images" new-name="intellij.platform.images" />
     <module old-name="images-build-scripts" new-name="intellij.platform.images.build" />
     <module old-name="index-tools" new-name="intellij.tools.index" />
     <module old-name="indexing-api" new-name="intellij.platform.indexing" />

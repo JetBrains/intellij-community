@@ -85,6 +85,10 @@ public class FormSourceCodeGeneratorTest extends JavaPsiTestCase {
     doTest();
   }
 
+  public void testBorderNullTitle() throws IOException {
+    doTest();
+  }
+
   public void testTitledBorderInternal() throws IOException {
     inInternalMode(() -> doTest());
   }

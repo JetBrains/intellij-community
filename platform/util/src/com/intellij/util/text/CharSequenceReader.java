@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;
 
-public class CharSequenceReader extends Reader {
+public final class CharSequenceReader extends Reader {
   private final CharSequence myText;
   private int myCurPos;
 

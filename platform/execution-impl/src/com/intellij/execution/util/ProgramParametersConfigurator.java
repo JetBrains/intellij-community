@@ -145,7 +145,8 @@ public class ProgramParametersConfigurator {
       }
     }
     workingDirectory = expandPathAndMacros(workingDirectory, module, project);
-    if (!FileUtil.isAbsolutePlatformIndependent(workingDirectory) && defaultWorkingDir != null) {
+
+    if (!com.intellij.openapi.util.io.PathUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
       if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;
       }

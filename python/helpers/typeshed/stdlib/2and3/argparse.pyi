@@ -1,6 +1,6 @@
 from typing import (
     Any, Callable, Dict, Generator, Iterable, List, IO, NoReturn, Optional,
-    Pattern, Sequence, Text, Tuple, Type, Union, TypeVar, overload
+    Pattern, Protocol, Sequence, Text, Tuple, Type, Union, TypeVar, overload
 )
 import sys
 
@@ -77,11 +77,14 @@ class _ActionsContainer:
     def _handle_conflict_error(self, action: Action, conflicting_actions: Iterable[Tuple[Text, Action]]) -> NoReturn: ...
     def _handle_conflict_resolve(self, action: Action, conflicting_actions: Iterable[Tuple[Text, Action]]) -> None: ...
 
+class _FormatterClass(Protocol):
+    def __call__(self, prog: str) -> HelpFormatter: ...
+
 class ArgumentParser(_AttributeHolder, _ActionsContainer):
     prog: _Text
     usage: Optional[_Text]
     epilog: Optional[_Text]
-    formatter_class: Type[HelpFormatter]
+    formatter_class: _FormatterClass
     fromfile_prefix_chars: Optional[_Text]
     add_help: bool
 
@@ -100,7 +103,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
                      description: Optional[str] = ...,
                      epilog: Optional[str] = ...,
                      parents: Sequence[ArgumentParser] = ...,
-                     formatter_class: Type[HelpFormatter] = ...,
+                     formatter_class: _FormatterClass = ...,
                      prefix_chars: str = ...,
                      fromfile_prefix_chars: Optional[str] = ...,
                      argument_default: Optional[str] = ...,
@@ -114,7 +117,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
                      description: Optional[Text] = ...,
                      epilog: Optional[Text] = ...,
                      parents: Sequence[ArgumentParser] = ...,
-                     formatter_class: Type[HelpFormatter] = ...,
+                     formatter_class: _FormatterClass = ...,
                      prefix_chars: Text = ...,
                      fromfile_prefix_chars: Optional[Text] = ...,
                      argument_default: Optional[Text] = ...,

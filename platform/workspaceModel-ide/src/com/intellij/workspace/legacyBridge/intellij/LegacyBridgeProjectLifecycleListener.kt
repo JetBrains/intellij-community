@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.serviceContainer.PlatformComponentManagerImpl
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelImpl
 import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
@@ -43,7 +43,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
                            ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
 
-    val container = project as PlatformComponentManagerImpl
+    val container = project as ComponentManagerImpl
 
     (project as ProjectImpl).setProjectStoreFactory(LegacyBridgeProjectStoreFactory())
     container.registerComponent(JpsProjectModelSynchronizer::class.java, JpsProjectModelSynchronizer::class.java, pluginDescriptor, false)

@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright.ui;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -93,10 +94,12 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
       public void actionPerformed(ActionEvent e) {
         try {
           VelocityHelper.verify(myEditor.getDocument().getText());
-          Messages.showInfoMessage(myProject, "Velocity template is valid.", "Validation");
+          Messages.showInfoMessage(myProject, CopyrightBundle.message("dialog.message.velocity.template.is.valid"),
+                                   CopyrightBundle.message("dialog.title.validation"));
         }
         catch (Exception e1) {
-          Messages.showInfoMessage(myProject, "Velocity template contains error:\n" + e1.getMessage(), "Validation");
+          Messages.showInfoMessage(myProject, CopyrightBundle.message("dialog.message.velocity.template.contains.error.0", e1.getMessage()),
+                                   CopyrightBundle.message("dialog.title.validation"));
         }
       }
     });

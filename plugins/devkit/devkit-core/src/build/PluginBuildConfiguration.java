@@ -6,7 +6,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -52,7 +51,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
 
   @Nullable
   public static PluginBuildConfiguration getInstance(@NotNull Module module) {
-    return ModuleType.is(module, PluginModuleType.getInstance()) ? ModuleServiceManager.getService(module, PluginBuildConfiguration.class) : null;
+    return ModuleType.is(module, PluginModuleType.getInstance()) ? module.getService(PluginBuildConfiguration.class) : null;
   }
 
   static class State {

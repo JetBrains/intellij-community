@@ -175,8 +175,8 @@ def getclasstree(classes: List[type], unique: bool = ...) -> Any: ...
 
 class ArgSpec(NamedTuple):
     args: List[str]
-    varargs: str
-    keywords: str
+    varargs: Optional[str]
+    keywords: Optional[str]
     defaults: Tuple[Any, ...]
 
 class Arguments(NamedTuple):

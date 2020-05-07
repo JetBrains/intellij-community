@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
@@ -42,7 +42,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup, val 
       setSystemPropertyIfNotConfigured("io.netty.allocator.numDirectArenas", "1")
       setSystemPropertyIfNotConfigured("io.netty.allocator.numHeapArenas", "1")
       setSystemPropertyIfNotConfigured("io.netty.allocator.useCacheForAllThreads", "false")
-      setSystemPropertyIfNotConfigured("io.netty.allocation.cacheTrimIntervalMillis", "600000")
+      setSystemPropertyIfNotConfigured("io.netty.allocator.cacheTrimIntervalMillis", "600000")
 
       val logger = IdeaNettyLogger()
       InternalLoggerFactory.setDefaultFactory(object : InternalLoggerFactory() {

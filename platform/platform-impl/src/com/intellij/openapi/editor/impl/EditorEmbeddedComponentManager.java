@@ -166,12 +166,12 @@ public class EditorEmbeddedComponentManager {
 
     @Override
     public int calcHeightInPixels(@NotNull Inlay inlay) {
-      return getHeight();
+      return Math.max(getHeight(), 0);
     }
 
     @Override
     public int calcWidthInPixels(@NotNull Inlay inlay) {
-      return getWidth();
+      return Math.max(getWidth(), 0);
     }
 
     @Override
@@ -321,7 +321,7 @@ public class EditorEmbeddedComponentManager {
       int visibleWidth = scrollPane.getViewport().getWidth() - scrollPane.getVerticalScrollBar().getWidth();
       int minWidth = renderer.isWidthSet() ? componentWidth : visibleWidth;
       int width =  Math.min(componentWidth, minWidth);
-      Dimension newSize = new Dimension(width, componentHeight);
+      Dimension newSize = new Dimension(Math.max(width, 0), Math.max(componentHeight, 0));
       if (!renderer.getSize().equals(newSize)) renderer.setSize(newSize);
     }
 
@@ -397,8 +397,8 @@ public class EditorEmbeddedComponentManager {
         int yDelta = info.direction.yMultiplier * (currentPoint.y - renderer.getY() - renderer.getHeight());
         Dimension size = renderer.getSize();
 
-        int newWidth = Math.max(info.inlay.getRenderer().getMinimumSize().width, size.width + xDelta);
-        int newHeight = Math.max(info.inlay.getRenderer().getMinimumSize().height, size.height + yDelta);
+        int newWidth = Math.max(Math.max(info.inlay.getRenderer().getMinimumSize().width, size.width + xDelta), 0);
+        int newHeight = Math.max(Math.max(info.inlay.getRenderer().getMinimumSize().height, size.height + yDelta), 0);
         renderer.setCustomWidth(newWidth);
         renderer.setCustomHeight(newHeight);
 

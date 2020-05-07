@@ -86,15 +86,15 @@ public class GitSmartOperationDialog extends DialogWrapper {
     myForceButton = forceButton;
     mySaveMethod = GitVcsSettings.getInstance(project).getSaveChangesPolicy();
     String capitalizedOperation = capitalize(myOperationTitle);
-    setTitle("Git " + capitalizedOperation + " Problem");
+    setTitle(GitBundle.message("smart.operation.dialog.git.operation.name.problem", capitalizedOperation));
 
-    setOKButtonText("Smart " + capitalizedOperation);
+    setOKButtonText(GitBundle.message("smart.operation.dialog.smart.operation.name", capitalizedOperation));
     String description = mySaveMethod.selectBundleMessage(
       GitBundle.message("smart.operation.dialog.ok.action.stash.description", operationTitle),
       GitBundle.message("smart.operation.dialog.ok.action.shelf.description", operationTitle)
     );
     getOKAction().putValue(Action.SHORT_DESCRIPTION, description);
-    setCancelButtonText("Don't " + capitalizedOperation);
+    setCancelButtonText(GitBundle.message("smart.operation.dialog.don.t.operation.name", capitalizedOperation));
     getCancelAction().putValue(FOCUSED_ACTION, Boolean.TRUE);
     init();
   }
@@ -140,7 +140,9 @@ public class GitSmartOperationDialog extends DialogWrapper {
     ForceCheckoutAction(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String buttonTitle,
                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String operationTitle) {
       super(buttonTitle);
-      putValue(Action.SHORT_DESCRIPTION, capitalize(operationTitle) + " and overwrite local changes");
+      String description = GitBundle.message("smart.operation.dialog.operation.name.and.overwrite.local.changes",
+                                             capitalize(operationTitle));
+      putValue(Action.SHORT_DESCRIPTION, description);
     }
 
     @Override

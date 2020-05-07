@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serviceContainer
 
-import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -23,11 +22,12 @@ fun <T : Any> processComponentInstancesOfType(container: PicoContainer, baseClas
 }
 
 @ApiStatus.Internal
-fun processProjectComponents(container: PicoContainer, processor: BiConsumer<ProjectComponent, PluginDescriptor>) {
+fun processProjectComponents(container: PicoContainer, @Suppress("DEPRECATION") processor: BiConsumer<com.intellij.openapi.components.ProjectComponent, PluginDescriptor>) {
   // we must use instances only from our adapter (could be service or something else)
   for (adapter in container.componentAdapters) {
     if (adapter is MyComponentAdapter) {
-      val instance = adapter.getInitializedInstance() as? ProjectComponent ?: continue
+      @Suppress("DEPRECATION")
+      val instance = adapter.getInitializedInstance() as? com.intellij.openapi.components.ProjectComponent ?: continue
       processor.accept(instance, adapter.pluginDescriptor)
     }
   }

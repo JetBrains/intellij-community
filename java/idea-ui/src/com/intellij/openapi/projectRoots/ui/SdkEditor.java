@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ui;
 
 import com.google.common.collect.Lists;
@@ -147,10 +147,10 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
     myDownloadingPanel = new JPanel(new BorderLayout());
     //myDownloadingPanel.add(new JBLabel("Downloading JDK..."), BorderLayout.NORTH);
-    myDownloadProgressIndicator = new TwoLineProgressIndicator(false);
+    myDownloadProgressIndicator = new TwoLineProgressIndicator(true);
     myDownloadProgressIndicator.setIndeterminate(true);
     myDownloadingPanel.add(myDownloadProgressIndicator.getComponent(), BorderLayout.NORTH);
-    myDownloadProgressIndicator.getComponent().setMaximumSize(JBUI.size(200, 200));
+    myDownloadProgressIndicator.getComponent().setMaximumSize(JBUI.size(300, 200));
 
     myMainPanel.add(myDownloadingPanel, new GridBagConstraints(
       0, GridBagConstraints.RELATIVE, 2, 1, 0, 1.0, GridBagConstraints.SOUTH, GridBagConstraints.BOTH, JBUI.insets(8, 10, 0, 10), 0, 0));

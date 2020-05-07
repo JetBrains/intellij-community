@@ -13,7 +13,7 @@ import com.intellij.util.messages.MessageBus
 
 internal val testPluginDescriptor = DefaultPluginDescriptor("test")
 
-internal class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) : PlatformComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
+internal class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled: Boolean = true) : ComponentManagerImpl(null, setExtensionsRootArea = false /* must work without */) {
   init {
     registerService(IComponentStore::class.java, TestComponentStore::class.java, testPluginDescriptor, false)
   }

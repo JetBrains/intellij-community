@@ -17,9 +17,14 @@ package git4idea.branch
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import git4idea.util.GitUIUtil.bold
+import git4idea.util.GitUIUtil.code
+import org.jetbrains.annotations.Nls
 
 internal class GitCreateBranchOperation(
   project: Project,
@@ -33,14 +38,14 @@ internal class GitCreateBranchOperation(
     var fatalErrorHappened = false
     while (hasMoreRepositories() && !fatalErrorHappened) {
       val repository = next()
-      val result = myGit.branchCreate(repository, branchName, startPoints[repository]!!, force);
+      val result = myGit.branchCreate(repository, branchName, startPoints[repository]!!, force)
 
       if (result.success()) {
         repository.update()
         markSuccessful(repository)
       }
       else {
-        fatalError("Couldn't create new branch $branchName", result.errorOutputAsJoinedString)
+        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result.errorOutputAsJoinedString)
         fatalErrorHappened = true
       }
     }
@@ -61,19 +66,25 @@ internal class GitCreateBranchOperation(
 
     val vcsNotifier = VcsNotifier.getInstance(myProject)
     if (deleteResult.totalSuccess()) {
-      vcsNotifier.notifySuccess("Rollback successful", "Deleted $branchName")
+      vcsNotifier.notifySuccess(GitBundle.message("create.branch.operation.rollback.successful"),
+                                GitBundle.message("create.branch.operation.deleted.branch", branchName))
     }
     else {
-      vcsNotifier.notifyError("Error during rollback", deleteResult.errorOutputWithReposIndication)
+      vcsNotifier.notifyError(GitBundle.message("create.branch.operation.error.during.rollback"),
+                              deleteResult.errorOutputWithReposIndication)
     }
   }
 
-  override fun getSuccessMessage() = "Branch <b><code>$branchName</code></b> was created"
+  override fun getSuccessMessage(): String = GitBundle.message("create.branch.operation.branch.created",
+                                                                        bold(code(branchName)))
 
-  override fun getRollbackProposal() = """
-    However the branch was created in the following ${repositories()}:<br/>
-    ${successfulRepositoriesJoined()}<br/>
-    You may rollback (delete $branchName) not to let branches diverge.""".trimIndent()
+  override fun getRollbackProposal(): String =
+    GitBundle.message("create.branch.operation.however.the.branch.was.created.in.the.following.repositories",
+                      successfulRepositories.size) +
+    UIUtil.BR +
+    successfulRepositoriesJoined() +
+    UIUtil.BR +
+    GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName)
 
-  override fun getOperationName() = "create branch"
+  override fun getOperationName(): @Nls String = GitBundle.message("create.branch.operation.name")
 }

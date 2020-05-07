@@ -12,11 +12,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.math.abs
 
-fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet()): IdeaPluginDescriptorImpl {
+fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   Assertions.assertThat(dir).exists()
   PluginManagerCore.ourPluginError = null
   val parentContext = DescriptorListLoadingContext.createSingleDescriptorContext(disabledPlugins)
-  val result = DescriptorLoadingContext(parentContext, /* isBundled = */ false, /* isEssential = */ true,
+  val result = DescriptorLoadingContext(parentContext, /* isBundled = */ isBundled, /* isEssential = */ true,
                                         PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER).use { context ->
     PluginManagerCore.loadDescriptorFromFileOrDir(dir, PluginManagerCore.PLUGIN_XML, context, Files.isDirectory(dir))
   }

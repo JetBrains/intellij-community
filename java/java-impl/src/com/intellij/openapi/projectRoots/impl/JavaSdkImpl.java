@@ -4,10 +4,12 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.ProjectBundle;
@@ -17,7 +19,6 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,8 +33,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.DigestUtil;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -46,11 +45,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -71,7 +65,8 @@ public final class JavaSdkImpl extends JavaSdk {
   public JavaSdkImpl() {
     super("JavaSDK");
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    Disposable parentDisposable = ExtensionPointUtil.createExtensionDisposable(this, EP_NAME);
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {

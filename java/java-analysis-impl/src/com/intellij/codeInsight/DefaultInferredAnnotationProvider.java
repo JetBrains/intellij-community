@@ -65,9 +65,11 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
       return null;
     }
 
-    PsiAnnotation fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotation(listOwner, annotationFQN);
-    if (fromBytecode != null) {
-      return fromBytecode;
+    if (canInferFromByteCode(listOwner)) {
+      PsiAnnotation fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotation(listOwner, annotationFQN);
+      if (fromBytecode != null) {
+        return fromBytecode;
+      }
     }
 
     if (isDefaultNullabilityAnnotation(annotationFQN)) {
@@ -234,10 +236,12 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
   public List<PsiAnnotation> findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     listOwner = PsiUtil.preferCompiledElement(listOwner);
     List<PsiAnnotation> result = new ArrayList<>();
-    PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotations(listOwner);
-    for (PsiAnnotation annotation : fromBytecode) {
-      if (!ignoreInference(listOwner, annotation.getQualifiedName())) {
-        result.add(annotation);
+    if (canInferFromByteCode(listOwner)) {
+      PsiAnnotation[] fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotations(listOwner);
+      for (PsiAnnotation annotation : fromBytecode) {
+        if (!ignoreInference(listOwner, annotation.getQualifiedName())) {
+          result.add(annotation);
+        }
       }
     }
 
@@ -266,6 +270,21 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     ContainerUtil.addIfNotNull(result, getInferredMutabilityAnnotation(listOwner));
 
     return result;
+  }
+
+  private static boolean canInferFromByteCode(PsiModifierListOwner owner) {
+    if (!(owner instanceof PsiCompiledElement)) return false;
+    if (owner instanceof PsiField) {
+      return true;
+    }
+    if (owner instanceof PsiMethod) {
+      return !PsiUtil.canBeOverridden((PsiMethod)owner);
+    }
+    if (owner instanceof PsiParameter) {
+      PsiElement scope = ((PsiParameter)owner).getDeclarationScope();
+      return scope instanceof PsiMethod && !PsiUtil.canBeOverridden((PsiMethod)scope); 
+    }
+    return false;
   }
 
   public static boolean isExperimentalInferredAnnotation(@NotNull PsiAnnotation annotation) {

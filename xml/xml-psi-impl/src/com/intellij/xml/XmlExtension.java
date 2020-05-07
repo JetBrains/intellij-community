@@ -170,6 +170,10 @@ public abstract class XmlExtension {
   public boolean shouldBeInserted(final XmlAttributeDescriptor descriptor) {
     return descriptor.isRequired();
   }
+
+  public boolean shouldCompleteTag(XmlTag context) {
+    return true;
+  }
   
   @NotNull
   public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,

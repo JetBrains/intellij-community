@@ -199,13 +199,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     initComponent();
   }
 
-  void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild) {
+  @ApiStatus.Internal
+  public void scheduleFullIndexesRebuild(@NotNull String reason) {
+    RegisteredIndexes registeredIndexes = myRegisteredIndexes;
+    if (registeredIndexes == null) {
+      scheduleFullIndexesRescan(registeredIndexes.getState().getIndexIDs(), reason);
+    } else {
+      RebuildStatus.rebuildAfterInitialization();
+    }
+  }
+
+  void scheduleFullIndexesRescan(@NotNull Collection<ID<?, ?>> indexesToRebuild, @NotNull String reason) {
     cleanupProcessedFlag();
     doClearIndices(id -> indexesToRebuild.contains(id));
-    String rebuiltIndexesLog = indexesToRebuild.isEmpty()
-      ? ""
-      : "; indexes " + indexesToRebuild + " will be rebuild completely due to version change";
-    scheduleIndexRebuild("File type change" + rebuiltIndexesLog);
+    scheduleIndexRebuild(reason);
   }
 
   @VisibleForTesting
@@ -301,7 +308,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  void waitUntilIndicesAreInitialized() {
+  public void waitUntilIndicesAreInitialized() {
     if (myRegisteredIndexes == null) {
       // interrupt all calculation while plugin reload
       throw new ProcessCanceledException();
@@ -481,7 +488,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
 
-        FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.performShutdown());
+        FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.shutdown());
         IndexedHashesSupport.flushContentHashes();
         SharedIndicesData.flushData();
         if (!keepConnection) {

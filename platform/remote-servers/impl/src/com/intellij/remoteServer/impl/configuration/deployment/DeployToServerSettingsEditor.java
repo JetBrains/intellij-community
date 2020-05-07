@@ -33,7 +33,7 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConnectionTester;
-import com.intellij.remoteServer.util.CloudBundle;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -149,7 +149,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   @Override
   protected JComponent createEditor() {
     FormBuilder builder = FormBuilder.createFormBuilder()
-      .addLabeledComponent("Server:", myServerCombo);
+      .addLabeledComponent(CloudBundle.message("label.text.server"), myServerCombo);
 
     addDeploymentSourceUi(builder);
 
@@ -194,7 +194,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
 
     @Override
     protected void addDeploymentSourceUi(FormBuilder formBuilder) {
-      formBuilder.addLabeledComponent("Deployment:", mySourceComboBox);
+      formBuilder.addLabeledComponent(CloudBundle.message("label.text.deployment"), mySourceComboBox);
     }
   }
 

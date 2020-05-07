@@ -381,7 +381,7 @@ final class WatchRootsManager {
       return myWatchRequest;
     }
 
-    public boolean hasValidTarget() {
+    boolean hasValidTarget() {
       return target != null;
     }
 

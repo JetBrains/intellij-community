@@ -173,11 +173,11 @@ if sys.version_info >= (3, 8):
 
 class Timer(Thread):
     if sys.version_info >= (3,):
-        def __init__(self, interval: float, function: Callable[..., None],
+        def __init__(self, interval: float, function: Callable[..., Any],
                      args: Optional[Iterable[Any]] = ...,
                      kwargs: Optional[Mapping[str, Any]] = ...) -> None: ...
     else:
-        def __init__(self, interval: float, function: Callable[..., None],
+        def __init__(self, interval: float, function: Callable[..., Any],
                      args: Iterable[Any] = ...,
                      kwargs: Mapping[str, Any] = ...) -> None: ...
     def cancel(self) -> None: ...
