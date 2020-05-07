@@ -1,164 +1,33 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
-import com.intellij.dvcs.repo.Repository.State.*
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.*
+import com.intellij.vcs.log.VcsLog
+import com.intellij.vcs.log.VcsLogUi
+import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
-import git4idea.GitUtil.HEAD
-import git4idea.GitUtil.getRepositoryManager
-import git4idea.findProtectedRemoteBranch
-import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitMultipleCommitEditingActionBase
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.Nls
 
-/**
- * Base class for Git action which is going to edit existing commits,
- * i.e. should be enabled only on commits not pushed to a protected branch.
- */
-abstract class GitSingleCommitEditingAction : DumbAwareAction() {
-  protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-
-    e.presentation.isEnabledAndVisible = false
-
-    val commitEditingRequirements = createSingleCommitEditingData(e) ?: return
-
-    e.presentation.isVisible = true
-
-    val commit = commitEditingRequirements.selectedCommit
-    val repository = commitEditingRequirements.repository
-
-    // editing merge commit or root commit is not allowed
-    val parents = commit.parents.size
-    if (parents != 1) {
-      e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", parents)
-      return
-    }
-
-    // allow editing only in the current branch
-    val branches = commitEditingRequirements.log.getContainingBranches(commit.id, commit.root)
-    if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
-      if (HEAD !in branches) {
-        e.presentation.description = GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
-        return
-      }
-
-      // and not if pushed to a protected branch
-      val protectedBranch = findProtectedRemoteBranch(repository, branches)
-      if (protectedBranch != null) {
-        e.presentation.description = GitBundle.message(
-          "rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text",
-          protectedBranch
-        )
-        return
-      }
-    }
-
-    when (val policy = prohibitRebaseDuringRebasePolicy) {
-      ProhibitRebaseDuringRebasePolicy.Allow -> {
-      }
-      is ProhibitRebaseDuringRebasePolicy.Prohibit -> {
-        val message = getProhibitedStateMessage(commitEditingRequirements, policy.operation)
-        if (message != null) {
-          e.presentation.description = message
-          return
-        }
-      }
-    }
-
-    e.presentation.isEnabledAndVisible = true
-    update(e, commitEditingRequirements)
-  }
-
-  protected open fun update(e: AnActionEvent, singleCommitEditingData: SingleCommitEditingData) {
-  }
-
-  final override fun actionPerformed(e: AnActionEvent) {
-    val commitEditingRequirements = createSingleCommitEditingData(e)!!
-    val commit = commitEditingRequirements.selectedCommit
-    val repository = commitEditingRequirements.repository
-    val project = commitEditingRequirements.project
-
-    val branches = findContainingBranches(commitEditingRequirements.logData, commit.root, commit.id)
-
-    if (HEAD !in branches) {
-      Messages.showErrorDialog(
-        project,
-        GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text"),
-        getFailureTitle()
-      )
-      return
-    }
-
-    // and not if pushed to a protected branch
-    val protectedBranch = findProtectedRemoteBranch(repository, branches)
-    if (protectedBranch != null) {
-      Messages.showErrorDialog(
-        project,
-        GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch),
-        getFailureTitle()
-      )
-      return
-    }
-
-    actionPerformedAfterChecks(commitEditingRequirements)
-  }
-
-  private fun createSingleCommitEditingData(e: AnActionEvent): SingleCommitEditingData? {
-    val project = e.project ?: return null
-    val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return null
-    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return null
-    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return null
-
-    val commit = log.selectedShortDetails.singleOrNull() ?: return null
-    val repositoryManager = getRepositoryManager(project)
-    val repository = repositoryManager.getRepositoryForRootQuick(commit.root) ?: return null
-    if (repositoryManager.isExternal(repository)) {
+abstract class GitSingleCommitEditingAction : GitMultipleCommitEditingActionBase<GitSingleCommitEditingAction.SingleCommitEditingData>() {
+  override fun createCommitEditingData(
+    repository: GitRepository,
+    log: VcsLog,
+    logData: VcsLogData,
+    logUi: VcsLogUi
+  ): SingleCommitEditingData? {
+    if (log.selectedCommits.size != 1) {
       return null
     }
-
-    return SingleCommitEditingData(repository, log, logDataProvider, logUi)
+    return SingleCommitEditingData(repository, log, logData, logUi)
   }
 
-  protected abstract fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData)
-
-  protected abstract fun getFailureTitle(): String
-
-  protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
-    val branchesGetter = data.containingBranchesGetter
-    return branchesGetter.getContainingBranchesQuickly(root, hash) ?:
-           ProgressManager.getInstance().runProcessWithProgressSynchronously<List<String>, RuntimeException>({
-               branchesGetter.getContainingBranchesSynchronously(root, hash)
-           }, GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"), true, data.project)
-  }
-
-  protected open fun getProhibitedStateMessage(
-    singleCommitEditingData: SingleCommitEditingData,
-    @Nls operation: String
-  ): String? = when (singleCommitEditingData.repository.state) {
-    NORMAL, DETACHED -> null
-    REBASING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.rebasing", operation)
-    MERGING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.merging", operation)
-    GRAFTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.grafting", operation)
-    REVERTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.reverting", operation)
-    else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
-  }
-
-  protected class SingleCommitEditingData(val repository: GitRepository, val log: VcsLog, val logData: VcsLogData, val logUi: VcsLogUi) {
-    val project = repository.project
-    val selectedCommit: VcsShortCommitDetails = log.selectedShortDetails.first()
+  class SingleCommitEditingData(
+    repository: GitRepository,
+    log: VcsLog,
+    logData: VcsLogData,
+    logUi: VcsLogUi
+  ) : MultipleCommitEditingData(repository, log, logData, logUi) {
+    val selectedCommit: VcsShortCommitDetails = selectedCommitList.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
-  }
-
-  protected sealed class ProhibitRebaseDuringRebasePolicy {
-    object Allow : ProhibitRebaseDuringRebasePolicy()
-    class Prohibit(val operation: @Nls String) : ProhibitRebaseDuringRebasePolicy()
   }
 }
