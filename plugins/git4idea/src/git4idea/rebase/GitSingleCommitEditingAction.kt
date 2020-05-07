@@ -28,7 +28,7 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
 
     e.presentation.isEnabledAndVisible = false
 
-    val commitEditingRequirements = createCommitEditingRequirements(e) ?: return
+    val commitEditingRequirements = createSingleCommitEditingData(e) ?: return
 
     e.presentation.isVisible = true
 
@@ -77,11 +77,11 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
     update(e, commitEditingRequirements)
   }
 
-  protected open fun update(e: AnActionEvent, commitEditingRequirements: CommitEditingRequirements) {
+  protected open fun update(e: AnActionEvent, singleCommitEditingData: SingleCommitEditingData) {
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val commitEditingRequirements = createCommitEditingRequirements(e)!!
+    val commitEditingRequirements = createSingleCommitEditingData(e)!!
     val commit = commitEditingRequirements.selectedCommit
     val repository = commitEditingRequirements.repository
     val project = commitEditingRequirements.project
@@ -111,7 +111,7 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
     actionPerformedAfterChecks(commitEditingRequirements)
   }
 
-  private fun createCommitEditingRequirements(e: AnActionEvent): CommitEditingRequirements? {
+  private fun createSingleCommitEditingData(e: AnActionEvent): SingleCommitEditingData? {
     val project = e.project ?: return null
     val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return null
     val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return null
@@ -124,10 +124,10 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
       return null
     }
 
-    return CommitEditingRequirements(repository, log, logDataProvider, logUi)
+    return SingleCommitEditingData(repository, log, logDataProvider, logUi)
   }
 
-  protected abstract fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements)
+  protected abstract fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData)
 
   protected abstract fun getFailureTitle(): String
 
@@ -140,15 +140,15 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
   }
 
   protected fun getProhibitedStateMessage(
-    commitEditingRequirements: CommitEditingRequirements,
+    singleCommitEditingData: SingleCommitEditingData,
     @Nls operation: String,
     allowRebaseIfHeadCommit: Boolean = false
   ): String? {
-    val state = commitEditingRequirements.repository.state
+    val state = singleCommitEditingData.repository.state
     if (state == NORMAL || state == DETACHED) {
       return null
     }
-    if (state == REBASING && allowRebaseIfHeadCommit && commitEditingRequirements.isHeadCommit) {
+    if (state == REBASING && allowRebaseIfHeadCommit && singleCommitEditingData.isHeadCommit) {
       return null
     }
 
@@ -161,7 +161,7 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
     }
   }
 
-  protected class CommitEditingRequirements(val repository: GitRepository, val log: VcsLog, val logData: VcsLogData, val logUi: VcsLogUi) {
+  protected class SingleCommitEditingData(val repository: GitRepository, val log: VcsLog, val logData: VcsLogData, val logUi: VcsLogUi) {
     val project = repository.project
     val selectedCommit: VcsShortCommitDetails = log.selectedShortDetails.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision

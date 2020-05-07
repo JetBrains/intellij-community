@@ -43,9 +43,9 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   private static final Logger LOG = Logger.getInstance(GitUncommitAction.class);
 
   @Override
-  protected void update(@NotNull AnActionEvent e, @NotNull CommitEditingRequirements commitEditingRequirements) {
+  protected void update(@NotNull AnActionEvent e, @NotNull SingleCommitEditingData singleCommitEditingData) {
     if (e.getPresentation().isEnabledAndVisible()) {
-      VcsLogUi logUi = commitEditingRequirements.getLogUi();
+      VcsLogUi logUi = singleCommitEditingData.getLogUi();
       // DataPack is unavailable during refresh
       DataPackBase dataPackBase = ((VisiblePack)logUi.getDataPack()).getDataPack();
       if (!(dataPackBase instanceof DataPack)) {
@@ -55,7 +55,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
       }
 
       // support undo only for the last commit in the branch
-      if (commitEditingRequirements.isHeadCommit()) {
+      if (singleCommitEditingData.isHeadCommit()) {
         e.getPresentation().setEnabled(true);
       }
       else {
@@ -66,15 +66,15 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   }
 
   @Override
-  public void actionPerformedAfterChecks(@NotNull CommitEditingRequirements commitEditingRequirements) {
-    Project project = commitEditingRequirements.getProject();
-    VcsShortCommitDetails commit = commitEditingRequirements.getSelectedCommit();
+  public void actionPerformedAfterChecks(@NotNull SingleCommitEditingData singleCommitEditingData) {
+    Project project = singleCommitEditingData.getProject();
+    VcsShortCommitDetails commit = singleCommitEditingData.getSelectedCommit();
     ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),
                                                       null, GitBundle.message("git.undo.action.select.target.changelist.title"), commit.getSubject());
     chooser.show();
     LocalChangeList selectedList = chooser.getSelectedList();
     if (selectedList != null) {
-      resetInBackground(commitEditingRequirements.getLogData(), commitEditingRequirements.getRepository(), commit, selectedList);
+      resetInBackground(singleCommitEditingData.getLogData(), singleCommitEditingData.getRepository(), commit, selectedList);
     }
   }
 

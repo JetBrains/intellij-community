@@ -38,13 +38,13 @@ class GitRewordAction : GitSingleCommitEditingAction() {
     true
   )
 
-  override fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements) {
-    val commit = commitEditingRequirements.selectedCommit
-    val project = commitEditingRequirements.project
-    val repository = commitEditingRequirements.repository
-    val details = getOrLoadDetails(project, commitEditingRequirements.logData, commit)
+  override fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData) {
+    val commit = singleCommitEditingData.selectedCommit
+    val project = singleCommitEditingData.project
+    val repository = singleCommitEditingData.repository
+    val details = getOrLoadDetails(project, singleCommitEditingData.logData, commit)
 
-    RewordDialog(project, commitEditingRequirements.logData, details, repository).show()
+    RewordDialog(project, singleCommitEditingData.logData, details, repository).show()
   }
 
   private fun getOrLoadDetails(project: Project, data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata {
