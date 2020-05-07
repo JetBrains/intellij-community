@@ -438,6 +438,8 @@
                     interface="com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.interpreterTargetEnvironmentFactory" interface="com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory"/>
+    <extensionPoint qualifiedName="Pythonid.runConfigurationTargetEnvironmentAdjuster"
+                    interface="com.jetbrains.python.run.PythonRunConfigurationTargetEnvironmentAdjuster"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

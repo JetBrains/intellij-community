@@ -281,6 +281,15 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironmentFactory targetEnvironmentFactory = createTargetEnvironmentFactory();
     TargetEnvironmentRequest targetEnvironmentRequest = targetEnvironmentFactory.createRequest();
 
+    Sdk sdk = getSdk();
+    if (sdk != null) {
+      PythonRunConfigurationTargetEnvironmentAdjuster adjuster =
+        PythonRunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
+      if (adjuster != null) {
+        adjuster.adjust(targetEnvironmentRequest, myConfig);
+      }
+    }
+
     // The original Python script to be executed
     PythonExecution pythonScript = buildPythonExecutionFinal(targetEnvironmentRequest);
 
