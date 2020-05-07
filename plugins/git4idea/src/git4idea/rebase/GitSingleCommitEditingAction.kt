@@ -65,7 +65,7 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
       ProhibitRebaseDuringRebasePolicy.Allow -> {
       }
       is ProhibitRebaseDuringRebasePolicy.Prohibit -> {
-        val message = getProhibitedStateMessage(commitEditingRequirements, policy.operation, policy.allowRebaseIfHeadCommit)
+        val message = getProhibitedStateMessage(commitEditingRequirements, policy.operation)
         if (message != null) {
           e.presentation.description = message
           return
@@ -139,26 +139,16 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
            }, GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"), true, data.project)
   }
 
-  protected fun getProhibitedStateMessage(
+  protected open fun getProhibitedStateMessage(
     singleCommitEditingData: SingleCommitEditingData,
-    @Nls operation: String,
-    allowRebaseIfHeadCommit: Boolean = false
-  ): String? {
-    val state = singleCommitEditingData.repository.state
-    if (state == NORMAL || state == DETACHED) {
-      return null
-    }
-    if (state == REBASING && allowRebaseIfHeadCommit && singleCommitEditingData.isHeadCommit) {
-      return null
-    }
-
-    return when (state) {
-      REBASING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.rebasing", operation)
-      MERGING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.merging", operation)
-      GRAFTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.grafting", operation)
-      REVERTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.reverting", operation)
-      else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
-    }
+    @Nls operation: String
+  ): String? = when (singleCommitEditingData.repository.state) {
+    NORMAL, DETACHED -> null
+    REBASING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.rebasing", operation)
+    MERGING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.merging", operation)
+    GRAFTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.grafting", operation)
+    REVERTING -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state.reverting", operation)
+    else -> GitBundle.message("rebase.log.commit.editing.action.prohibit.state", operation)
   }
 
   protected class SingleCommitEditingData(val repository: GitRepository, val log: VcsLog, val logData: VcsLogData, val logUi: VcsLogUi) {
@@ -169,6 +159,6 @@ abstract class GitSingleCommitEditingAction : DumbAwareAction() {
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {
     object Allow : ProhibitRebaseDuringRebasePolicy()
-    class Prohibit(val operation: @Nls String, val allowRebaseIfHeadCommit: Boolean = false) : ProhibitRebaseDuringRebasePolicy()
+    class Prohibit(val operation: @Nls String) : ProhibitRebaseDuringRebasePolicy()
   }
 }

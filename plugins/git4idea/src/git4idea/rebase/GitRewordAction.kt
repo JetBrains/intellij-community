@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -34,8 +35,7 @@ private val LOG: Logger = logger<GitRewordAction>()
 
 class GitRewordAction : GitSingleCommitEditingAction() {
   override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
-    GitBundle.getString("rebase.log.action.operation.reword.name"),
-    true
+    GitBundle.getString("rebase.log.action.operation.reword.name")
   )
 
   override fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData) {
@@ -95,6 +95,13 @@ class GitRewordAction : GitSingleCommitEditingAction() {
         GitRewordOperation(repository, commit, newMessage).execute()
       }
     }.queue()
+  }
+
+  override fun getProhibitedStateMessage(singleCommitEditingData: SingleCommitEditingData, operation: String): String? {
+    if (singleCommitEditingData.repository.state == Repository.State.REBASING && singleCommitEditingData.isHeadCommit) {
+      return null
+    }
+    return super.getProhibitedStateMessage(singleCommitEditingData, operation)
   }
 
   private inner class RewordDialog(val project: Project, val data: VcsLogData, val commit: VcsCommitMetadata, val repository: GitRepository)
