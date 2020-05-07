@@ -368,10 +368,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
   }
 
   private fun processExitExpression(expression: GrExpression) {
-    val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
-    builder.addConstrainingExpression(expression)
-    val typeParameter = expression.type.typeParameter() ?: return
-    builder.generateRequiredTypes(typeParameter, returnType, UPPER)
+    if (builder.signatureInferenceContext.allowedToProcessReturnType) {
+      val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
+      builder.addConstrainingExpression(expression)
+      val typeParameter = expression.type.typeParameter() ?: return
+      builder.generateRequiredTypes(typeParameter, returnType, UPPER)
+    }
   }
 
   fun buildUsageInformation(): TypeUsageInformation = builder.build()
