@@ -31,26 +31,22 @@ public final class XmlSerializer {
     return serialize(object, TRUE_FILTER);
   }
 
-  @NotNull
-  public static Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
+  public static @NotNull Element serialize(@NotNull Object object, @Nullable SerializationFilter filter) throws SerializationException {
     return XmlSerializerImpl.serialize(object, filter == null ? TRUE_FILTER : filter);
   }
 
-  @Nullable
-  public static Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
+  public static @Nullable Element serializeIfNotDefault(@NotNull Object object, @Nullable SerializationFilter filter) {
     SerializationFilter filter1 = filter == null ? TRUE_FILTER : filter;
     Class<?> aClass = object.getClass();
     return (Element)XmlSerializerImpl.serializer.getRootBinding(aClass).serialize(object, null, filter1);
   }
 
-  @NotNull
-  public static <T> T deserialize(Document document, Class<T> aClass) throws SerializationException {
+  public static @NotNull <T> T deserialize(Document document, Class<T> aClass) throws SerializationException {
     return deserialize(document.getRootElement(), aClass);
   }
 
-  @NotNull
   @SuppressWarnings({"unchecked"})
-  public static <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
+  public static @NotNull <T> T deserialize(@NotNull Element element, @NotNull Class<T> aClass) throws SerializationException {
     try {
       NotNullDeserializeBinding binding = (NotNullDeserializeBinding)XmlSerializerImpl.serializer.getRootBinding(aClass);
       return (T)binding.deserialize(null, element);
@@ -63,8 +59,7 @@ public final class XmlSerializer {
     }
   }
 
-  @NotNull
-  public static <T> T deserialize(@NotNull URL url, Class<T> aClass) throws SerializationException {
+  public static @NotNull <T> T deserialize(@NotNull URL url, Class<T> aClass) throws SerializationException {
     try {
       return deserialize(JDOMXIncluder.resolveRoot(JDOMUtil.load(url), url), aClass);
     }
@@ -89,8 +84,7 @@ public final class XmlSerializer {
    * Use only if it is a hot spot, otherwise use {@link #deserializeInto(Object, Element)} or {@link #serializeInto(Object, Element)}.
    */
   @ApiStatus.Experimental
-  @NotNull
-  public static BeanBinding getBeanBinding(@NotNull Class<?> aClass) {
+  public static @NotNull BeanBinding getBeanBinding(@NotNull Class<?> aClass) {
     return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(aClass);
   }
 

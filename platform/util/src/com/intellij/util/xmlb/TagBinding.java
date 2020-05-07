@@ -27,9 +27,8 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
     myTextIfEmpty = "";
   }
 
-  @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
+  public @Nullable Object serialize(@NotNull Object o, @Nullable SerializationFilter filter) {
     Object value = myAccessor.read(o);
     if (value == null) {
       return null;
@@ -72,8 +71,7 @@ final class TagBinding extends BasePrimitiveBinding implements MultiNodeBinding 
   }
 
   @Override
-  @NotNull
-  public Object deserialize(@NotNull Object context, @NotNull Element element) {
+  public @NotNull Object deserialize(@NotNull Object context, @NotNull Element element) {
     if (myBinding == null) {
       String value = XmlSerializerImpl.getTextValue(element, myTextIfEmpty);
       XmlSerializerImpl.doSet(context, value, myAccessor, ClassUtil.typeToClass(myAccessor.getGenericType()));

@@ -192,16 +192,13 @@ final class PathBasedJdomXIncluder<T> {
   }
 
   interface PathResolver<T> {
-    @NotNull
-    Element resolvePath(@NotNull List<T> bases,
+    @NotNull Element resolvePath(@NotNull List<T> bases,
                         @NotNull String relativePath,
                         @Nullable String base,
                         @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
 
-    @NotNull
-    Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
+    @NotNull Element resolvePath(@NotNull Path basePath, @NotNull String relativePath, @NotNull SafeJdomFactory jdomFactory) throws IOException, JDOMException;
 
-    @NotNull
-    List<T> createNewStack(@Nullable Path base);
+    @NotNull List<T> createNewStack(@Nullable Path base);
   }
 }
