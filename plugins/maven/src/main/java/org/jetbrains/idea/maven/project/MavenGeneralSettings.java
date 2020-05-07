@@ -236,6 +236,7 @@ public class MavenGeneralSettings implements Cloneable {
       return result;
     }
     result = MavenUtil.resolveSuperPomFile(getEffectiveMavenHome());
+    myEffectiveSuperPomCache = result;
     return result;
   }
 
