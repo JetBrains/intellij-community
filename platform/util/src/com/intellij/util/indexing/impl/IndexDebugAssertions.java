@@ -19,8 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.IndexId;
 
-public class DebugAssertions {
-  private static final Logger LOG = Logger.getInstance(DebugAssertions.class);
+public class IndexDebugAssertions {
+  private static final Logger LOG = Logger.getInstance(IndexDebugAssertions.class);
 
   public static final ThreadLocal<IndexId<?, ?>> DEBUG_INDEX_ID = new ThreadLocal<>();
 

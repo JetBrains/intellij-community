@@ -75,7 +75,7 @@ public final class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDi
       }
     }
 
-    if (DebugAssertions.DEBUG) {
+    if (IndexDebugAssertions.DEBUG) {
       updateStatistics(added, removed, updated, myMap, newData);
     }
 
