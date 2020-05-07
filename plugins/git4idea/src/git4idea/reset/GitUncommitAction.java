@@ -28,7 +28,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
-import git4idea.rebase.GitCommitEditingAction;
+import git4idea.rebase.GitSingleCommitEditingAction;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.reset.GitResetMode.SOFT;
 import static java.util.Collections.singletonMap;
 
-public class GitUncommitAction extends GitCommitEditingAction {
+public class GitUncommitAction extends GitSingleCommitEditingAction {
   private static final Logger LOG = Logger.getInstance(GitUncommitAction.class);
 
   @Override

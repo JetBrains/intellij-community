@@ -9,7 +9,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
-abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
+abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction() {
 
   override fun actionPerformedAfterChecks(commitEditingRequirements: CommitEditingRequirements) {
     val commit = commitEditingRequirements.selectedCommit

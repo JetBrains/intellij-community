@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nls
  * Base class for Git action which is going to edit existing commits,
  * i.e. should be enabled only on commits not pushed to a protected branch.
  */
-abstract class GitCommitEditingAction : DumbAwareAction() {
+abstract class GitSingleCommitEditingAction : DumbAwareAction() {
   protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
 
   override fun update(e: AnActionEvent) {

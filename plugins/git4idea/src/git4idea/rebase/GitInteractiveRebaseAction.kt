@@ -6,7 +6,7 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.interactivelyRebaseUsingLog
 import git4idea.rebase.interactive.startInteractiveRebase
 
-class GitInteractiveRebaseAction : GitCommitEditingAction() {
+class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
   override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
     GitBundle.getString("rebase.log.action.operation.rebase.name")
   )
