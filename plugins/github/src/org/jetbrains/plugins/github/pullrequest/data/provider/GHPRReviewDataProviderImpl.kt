@@ -55,22 +55,20 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
       if (pendingReview != null && pendingReview.id == reviewId) throw ProcessCanceledException()
       else pendingReview
     }
-    return future.notifyReviews()
+    return future.dropReviews().notifyReviews()
   }
 
   override fun canComment() = reviewService.canComment()
 
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> {
-    return reviewService.getCommentMarkdownBody(progressIndicator, commentId)
-  }
+  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String) =
+    reviewService.getCommentMarkdownBody(progressIndicator, commentId)
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           body: String,
                           commitSha: String,
                           fileName: String,
-                          diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> {
-    return reviewService.addComment(progressIndicator, pullRequestId, body, commitSha, fileName, diffLine)
-  }
+                          diffLine: Int): CompletableFuture<GithubPullRequestCommentWithHtml> =
+    reviewService.addComment(progressIndicator, pullRequestId, body, commitSha, fileName, diffLine).dropReviews()
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           reviewId: String?,
@@ -82,14 +80,11 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
       reviewService.addComment(progressIndicator, pullRequestId, reviewId, body, commitSha, fileName, diffLine)
 
     pendingReviewRequestValue.overrideProcess(future.errorOnEdt { throw ProcessCanceledException() }.successOnEdt { it.pullRequestReview })
-    return future.notifyReviews()
+    return future.dropReviews().notifyReviews()
   }
 
-  override fun addComment(progressIndicator: ProgressIndicator,
-                          body: String,
-                          replyToCommentId: Long): CompletableFuture<GithubPullRequestCommentWithHtml> {
-    return reviewService.addComment(progressIndicator, pullRequestId, body, replyToCommentId)
-  }
+  override fun addComment(progressIndicator: ProgressIndicator, body: String, replyToCommentId: Long) =
+    reviewService.addComment(progressIndicator, pullRequestId, body, replyToCommentId).dropReviews()
 
   override fun deleteComment(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<out Any> {
     val future = reviewService.deleteComment(progressIndicator, pullRequestId, commentId)
@@ -148,6 +143,11 @@ class GHPRReviewDataProviderImpl(private val reviewService: GHPRReviewService,
   private fun <T> CompletableFuture<T>.notifyReviews(): CompletableFuture<T> =
     completionOnEdt {
       messageBus.syncPublisher(GHPRDataOperationsListener.TOPIC).onReviewsChanged()
+    }
+
+  private fun <T> CompletableFuture<T>.dropReviews(): CompletableFuture<T> =
+    completionOnEdt {
+      reviewThreadsRequestValue.drop()
     }
 
   override fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit) =
