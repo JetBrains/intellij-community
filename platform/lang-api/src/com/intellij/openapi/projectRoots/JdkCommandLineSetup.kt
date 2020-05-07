@@ -14,6 +14,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 import java.nio.charset.StandardCharsets
 
@@ -107,12 +108,12 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
       else if (!vmParameters.isExplicitClassPath() && javaParameters.jarPath == null && commandLineWrapperClass != null) {
         if (javaParameters.isUseClasspathJar) {
-          JdkUtil.setClasspathJarParams(this, commandLine, request, classPathVolume, agentVolume,
+          JdkUtil.setClasspathJarParams(this, commandLine, request, classPathVolume,
                                         languageRuntime, javaParameters, vmParameters, commandLineWrapperClass,
                                         dynamicVMOptions, dynamicParameters)
         }
         else if (javaParameters.isClasspathFile) {
-          JdkUtil.setCommandLineWrapperParams(this, commandLine, request, classPathVolume, agentVolume,
+          JdkUtil.setCommandLineWrapperParams(this, commandLine, request, classPathVolume,
                                               languageRuntime, javaParameters,
                                               vmParameters, commandLineWrapperClass, dynamicVMOptions, dynamicParameters, cs)
         }
@@ -123,7 +124,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
     }
     if (!dynamicClasspath) {
-      JdkUtil.appendParamsEncodingClasspath(this, commandLine, request, classPathVolume, agentVolume,
+      JdkUtil.appendParamsEncodingClasspath(this, commandLine, request, classPathVolume,
                                             languageRuntime, javaParameters, vmParameters)
     }
 
@@ -158,6 +159,46 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
     }
+  }
+
+  @JvmName("appendVmParameters")
+  /* make private*/ internal fun appendVmParameters(vmParameters: ParametersList) {
+    vmParameters.list.forEach {
+      appendVmParameter(it)
+    }
+  }
+
+  @JvmName("appendVmParameter")
+  /* make private*/ internal fun appendVmParameter(vmParameter: String) {
+    if (request is LocalTargetEnvironmentRequest ||
+        SystemProperties.getBooleanProperty("run.targets.ignore.vm.parameter", false)) {
+      commandLine.addParameter(vmParameter)
+      return
+    }
+
+    if (vmParameter.startsWith("-agentpath:")) {
+      appendVmAgentParameter(vmParameter, "-agentpath:")
+    }
+    else if (vmParameter.startsWith("-javaagent:")) {
+      appendVmAgentParameter(vmParameter, "-javaagent:")
+    }
+    else {
+      commandLine.addParameter(vmParameter)
+    }
+  }
+
+  private fun appendVmAgentParameter(vmParameter: String, prefix: String) {
+    val value = StringUtil.trimStart(vmParameter, prefix)
+    val equalsSign = value.indexOf('=')
+    val path = if (equalsSign > -1) value.substring(0, equalsSign) else value
+    if (!path.endsWith(".jar")) {
+      // ignore non-cross-platform agents
+      return
+    }
+    val suffix = if (equalsSign > -1) value.substring(equalsSign) else ""
+    commandLine.addParameter(TargetValue.map(agentVolume.createUpload(path)) { v: String ->
+      prefix + v + suffix
+    })
   }
 
   private val platform = request.targetPlatform.platform

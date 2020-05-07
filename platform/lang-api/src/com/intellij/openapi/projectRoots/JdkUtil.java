@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -234,7 +233,7 @@ public final class JdkUtil {
           fileArgs.addAll(vmParameters.getList());
         }
         else {
-          appendVmParameters(commandLine, request, agentVolume, vmParameters);
+          setup.appendVmParameters(vmParameters);
         }
         try {
           if (classPathParameter != null) {
@@ -280,7 +279,6 @@ public final class JdkUtil {
   static void setCommandLineWrapperParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
                                           TargetEnvironmentRequest request,
                                           TargetEnvironmentRequest.Volume classPathVolume,
-                                          TargetEnvironmentRequest.Volume agentVolume,
                                           @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                           SimpleJavaParameters javaParameters,
                                           ParametersList vmParameters,
@@ -299,7 +297,7 @@ public final class JdkUtil {
             toWrite.add(param);
           }
           else {
-            appendVmParameter(commandLine, request, agentVolume, param);
+            setup.appendVmParameter(param);
           }
         }
         if (!toWrite.isEmpty()) {
@@ -309,7 +307,7 @@ public final class JdkUtil {
         }
       }
       else {
-        appendVmParameters(commandLine, request, agentVolume, vmParameters);
+        setup.appendVmParameters(vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -341,6 +339,7 @@ public final class JdkUtil {
         if (!(request instanceof LocalTargetEnvironmentRequest)) {
           throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
         }
+        //todo[remoteServers]: [why are they fixed below?]
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(UrlClassLoader.class)));
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(StringUtilRt.class)));
         classpath.add(TargetValue.fixed(PathUtil.getJarPathForClass(THashMap.class)));
@@ -351,7 +350,7 @@ public final class JdkUtil {
           for (VirtualFile file : jdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
             String path = PathUtil.getLocalPath(file);
             if (StringUtil.isNotEmpty(path)) {
-              classpath.add(TargetValue.fixed(path));
+              classpath.add(TargetValue.fixed(path)); //todo[remoteServers]: why fixed??
             }
           }
         }
@@ -403,7 +402,6 @@ public final class JdkUtil {
   static void setClasspathJarParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
                                     TargetEnvironmentRequest request,
                                     TargetEnvironmentRequest.Volume classPathVolume,
-                                    TargetEnvironmentRequest.Volume agentVolume,
                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                     SimpleJavaParameters javaParameters,
                                     ParametersList vmParameters,
@@ -422,14 +420,14 @@ public final class JdkUtil {
             properties.add(param);
           }
           else {
-            appendVmParameter(commandLine, request, agentVolume, param);
+            setup.appendVmParameter(param);
           }
         }
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
         manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
       }
       else {
-        appendVmParameters(commandLine, request, agentVolume, vmParameters);
+        setup.appendVmParameters(vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -509,11 +507,10 @@ public final class JdkUtil {
   static void appendParamsEncodingClasspath(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
                                             TargetEnvironmentRequest request,
                                             TargetEnvironmentRequest.Volume classPathVolume,
-                                            TargetEnvironmentRequest.Volume agentVolume,
                                             @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                             SimpleJavaParameters javaParameters,
                                             ParametersList vmParameters) {
-    appendVmParameters(commandLine, request, agentVolume, vmParameters);
+    setup.appendVmParameters(vmParameters);
     appendEncoding(javaParameters, commandLine, vmParameters);
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
@@ -539,51 +536,6 @@ public final class JdkUtil {
       String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
       commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
-  }
-
-  private static void appendVmParameters(TargetedCommandLineBuilder commandLine,
-                                         TargetEnvironmentRequest request,
-                                         TargetEnvironmentRequest.Volume agentVolume,
-                                         ParametersList vmParameters) {
-    for (String vmParameter : vmParameters.getList()) {
-      appendVmParameter(commandLine, request, agentVolume, vmParameter);
-    }
-  }
-
-  private static void appendVmParameter(TargetedCommandLineBuilder commandLine,
-                                        TargetEnvironmentRequest request,
-                                        TargetEnvironmentRequest.Volume agentVolume,
-                                        String vmParameter) {
-    if (request instanceof LocalTargetEnvironmentRequest ||
-        SystemProperties.getBooleanProperty("run.targets.ignore.vm.parameter", false)) {
-      commandLine.addParameter(vmParameter);
-      return;
-    }
-
-    if (vmParameter.startsWith("-agentpath:")) {
-      appendVmAgentParameter(commandLine, agentVolume, vmParameter, "-agentpath:");
-    }
-    else if (vmParameter.startsWith("-javaagent:")) {
-      appendVmAgentParameter(commandLine, agentVolume, vmParameter, "-javaagent:");
-    }
-    else {
-      commandLine.addParameter(vmParameter);
-    }
-  }
-
-  private static void appendVmAgentParameter(TargetedCommandLineBuilder commandLine,
-                                             TargetEnvironmentRequest.Volume agentVolume,
-                                             String vmParameter,
-                                             String prefix) {
-    String value = StringUtil.trimStart(vmParameter, prefix);
-    int equalsSign = value.indexOf('=');
-    String path = equalsSign > -1 ? value.substring(0, equalsSign) : value;
-    if (!path.endsWith(".jar")) {
-      // ignore non-cross-platform agents
-      return;
-    }
-    String suffix = equalsSign > -1 ? value.substring(equalsSign) : "";
-    commandLine.addParameter(TargetValue.map(agentVolume.createUpload(path), v -> prefix + v + suffix));
   }
 
   @NotNull
