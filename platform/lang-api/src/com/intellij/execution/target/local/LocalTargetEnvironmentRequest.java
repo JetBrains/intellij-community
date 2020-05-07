@@ -91,10 +91,9 @@ public class LocalTargetEnvironmentRequest implements TargetEnvironmentRequest {
       return myVolumeId;
     }
 
-    @NotNull
     @Override
-    public LocalTargetEnvironmentRequest getRequest() {
-      return myRequest;
+    public @NotNull Platform getPlatform() {
+      return myRequest.getTargetPlatform().getPlatform();
     }
 
     @NotNull

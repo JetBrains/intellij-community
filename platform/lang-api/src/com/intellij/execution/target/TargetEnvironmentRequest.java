@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.target;
 
+import com.intellij.execution.Platform;
 import com.intellij.execution.target.value.TargetValue;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ public interface TargetEnvironmentRequest {
 
   interface Volume {
     @NotNull
-    TargetEnvironmentRequest getRequest();
+    Platform getPlatform();
 
     @NotNull
     String getVolumeId();
@@ -78,10 +79,6 @@ public interface TargetEnvironmentRequest {
      */
     @NotNull
     TargetValue<String> createUpload(@NotNull String localPath);
-
-    default char getRemoteFileSeparator() {
-      return getRequest().getTargetPlatform().getPlatform().fileSeparator;
-    }
   }
 
   interface DownloadableVolume extends Volume {

@@ -219,8 +219,8 @@ public final class JdkUtil {
       Charset cs = StandardCharsets.UTF_8;  // todo detect JNU charset from VM options?
       Class<?> commandLineWrapper;
       if (javaParameters.isArgFile()) {
-        setArgFileParams(commandLine, classPathVolume, agentVolume, runtimeConfiguration, javaParameters, vmParameters, dynamicVMOptions,
-                         dynamicParameters, cs);
+        setArgFileParams(commandLine, request, classPathVolume, agentVolume, runtimeConfiguration, javaParameters, vmParameters,
+                         dynamicVMOptions, dynamicParameters, cs);
         dynamicMainClass = dynamicParameters;
       }
       else if (!explicitClassPath(vmParameters) &&
@@ -273,6 +273,7 @@ public final class JdkUtil {
   }
 
   private static void setArgFileParams(TargetedCommandLineBuilder commandLine,
+                                       TargetEnvironmentRequest request,
                                        TargetEnvironmentRequest.Volume classPathVolume,
                                        TargetEnvironmentRequest.Volume agentVolume,
                                        @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
@@ -282,7 +283,7 @@ public final class JdkUtil {
                                        boolean dynamicParameters,
                                        Charset cs) throws CantRunException {
     try {
-      Platform platform = classPathVolume.getRequest().getTargetPlatform().getPlatform();
+      Platform platform = request.getTargetPlatform().getPlatform();
       String pathSeparator = String.valueOf(platform.pathSeparator);
       Collection<Promise<String>> promises = new ArrayList<>();
       TargetValue<String> classPathParameter;
@@ -321,7 +322,7 @@ public final class JdkUtil {
           fileArgs.addAll(vmParameters.getList());
         }
         else {
-          appendVmParameters(commandLine, agentVolume, vmParameters);
+          appendVmParameters(commandLine, request, agentVolume, vmParameters);
         }
         try {
           if (classPathParameter != null) {
@@ -385,7 +386,7 @@ public final class JdkUtil {
             toWrite.add(param);
           }
           else {
-            appendVmParameter(commandLine, agentVolume, param);
+            appendVmParameter(commandLine, request, agentVolume, param);
           }
         }
         if (!toWrite.isEmpty()) {
@@ -395,7 +396,7 @@ public final class JdkUtil {
         }
       }
       else {
-        appendVmParameters(commandLine, agentVolume, vmParameters);
+        appendVmParameters(commandLine, request, agentVolume, vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -507,14 +508,14 @@ public final class JdkUtil {
             properties.add(param);
           }
           else {
-            appendVmParameter(commandLine, agentVolume, param);
+            appendVmParameter(commandLine, request, agentVolume, param);
           }
         }
         manifest.getMainAttributes().putValue("VM-Options", ParametersListUtil.join(properties));
         manifestText += "VM-Options: " + ParametersListUtil.join(properties) + "\n";
       }
       else {
-        appendVmParameters(commandLine, agentVolume, vmParameters);
+        appendVmParameters(commandLine, request, agentVolume, vmParameters);
       }
 
       appendEncoding(javaParameters, commandLine, vmParameters);
@@ -597,7 +598,7 @@ public final class JdkUtil {
                                                     @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
                                                     SimpleJavaParameters javaParameters,
                                                     ParametersList vmParameters) {
-    appendVmParameters(commandLine, agentVolume, vmParameters);
+    appendVmParameters(commandLine, request, agentVolume, vmParameters);
     appendEncoding(javaParameters, commandLine, vmParameters);
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
@@ -626,17 +627,19 @@ public final class JdkUtil {
   }
 
   private static void appendVmParameters(TargetedCommandLineBuilder commandLine,
+                                         TargetEnvironmentRequest request,
                                          TargetEnvironmentRequest.Volume agentVolume,
                                          ParametersList vmParameters) {
     for (String vmParameter : vmParameters.getList()) {
-      appendVmParameter(commandLine, agentVolume, vmParameter);
+      appendVmParameter(commandLine, request, agentVolume, vmParameter);
     }
   }
 
   private static void appendVmParameter(TargetedCommandLineBuilder commandLine,
+                                        TargetEnvironmentRequest request,
                                         TargetEnvironmentRequest.Volume agentVolume,
                                         String vmParameter) {
-    if (agentVolume.getRequest() instanceof LocalTargetEnvironmentRequest ||
+    if (request instanceof LocalTargetEnvironmentRequest ||
         SystemProperties.getBooleanProperty("run.targets.ignore.vm.parameter", false)) {
       commandLine.addParameter(vmParameter);
       return;
@@ -682,7 +685,7 @@ public final class JdkUtil {
         result.add(classPathVolume.createUpload(path));
       }
       else {
-        char separator = classPathVolume.getRequest().getTargetPlatform().getPlatform().fileSeparator;
+        char separator = classPathVolume.getPlatform().fileSeparator;
         result.add(
           TargetValue.fixed(FileUtil.toCanonicalPath(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath), separator)));
       }
