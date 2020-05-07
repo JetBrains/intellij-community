@@ -17,7 +17,7 @@ class JavaExternalReferenceProviderTest : LightJavaCodeInsightFixtureTestCase() 
     val root = myFixture.copyDirectoryToProject(getTestName(true), "")
     assertNotNull("Cannot create test project", root)
 
-    val file = FilePredictionTestDataHelper.findChildRecursively(root)
+    val file = FilePredictionTestDataHelper.findMainTestFile(root)
     assertNotNull("Cannot find file with '$DEFAULT_MAIN_FILE' name", file)
 
     val psiFile = PsiManager.getInstance(myFixture.project).findFile(file!!)

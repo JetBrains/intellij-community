@@ -10,11 +10,15 @@ internal object FilePredictionTestDataHelper {
   const val DEFAULT_MAIN_FILE = "MainTest"
   const val defaultTestData: String = "/plugins/filePrediction/testData/com/intellij/filePrediction"
 
-  fun findChildRecursively(root: VirtualFile): VirtualFile? {
+  fun findMainTestFile(root: VirtualFile): VirtualFile? {
+    return findChildRecursively(DEFAULT_MAIN_FILE, root)
+  }
+
+  fun findChildRecursively(fileName: String, root: VirtualFile): VirtualFile? {
     val target = Ref<VirtualFile>()
     VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
       override fun visitFile(file: VirtualFile): Boolean {
-        val isMainTestFile = FileUtil.namesEqual(FileUtil.getNameWithoutExtension(file.name), DEFAULT_MAIN_FILE)
+        val isMainTestFile = FileUtil.namesEqual(FileUtil.getNameWithoutExtension(file.name), fileName)
 
         if (isMainTestFile && target.isNull) {
           target.set(file)

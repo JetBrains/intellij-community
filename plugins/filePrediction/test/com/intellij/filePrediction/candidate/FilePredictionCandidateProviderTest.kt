@@ -27,7 +27,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     val root = builder.create(myFixture)
     assertNotNull("Cannot create test project", root)
 
-    val file = FilePredictionTestDataHelper.findChildRecursively(root)
+    val file = FilePredictionTestDataHelper.findMainTestFile(root)
     assertNotNull("Cannot find file with '${FilePredictionTestDataHelper.DEFAULT_MAIN_FILE}' name", file)
 
     val result = FilePredictionFeaturesHelper.calculateExternalReferences(myFixture.project, file!!).value

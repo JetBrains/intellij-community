@@ -1,5 +1,6 @@
 package com.intellij.filePrediction
 
+import com.intellij.filePrediction.FilePredictionTestDataHelper.DEFAULT_MAIN_FILE
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.PathUtil
@@ -10,11 +11,16 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import junit.framework.TestCase
 
-class FilePredictionTestProjectBuilder {
+internal class FilePredictionTestProjectBuilder {
   private var mainFile: String? = null
   private var mainFileContent: String? = null
 
   private val files: MutableMap<String, String> = hashMapOf()
+
+  fun addMainFile(path: String, imports: String? = null): FilePredictionTestProjectBuilder {
+    val extension = if (imports != null) "java" else "txt"
+    return addFile("$path/$DEFAULT_MAIN_FILE.$extension", imports)
+  }
 
   fun addFiles(vararg paths: String): FilePredictionTestProjectBuilder {
     paths.forEach { addFile(it) }
@@ -34,7 +40,7 @@ class FilePredictionTestProjectBuilder {
   }
 
   fun create(fixture: CodeInsightTestFixture): VirtualFile {
-    TestCase.assertTrue("Cannot create empty project", files.isNotEmpty())
+    TestCase.assertTrue("Cannot create empty project", files.isNotEmpty() || mainFile != null)
     TestCase.assertNotNull("Cannot create project without main file", mainFile)
 
     for (file in files.entries) {
@@ -71,7 +77,7 @@ class FilePredictionTestProjectBuilder {
     return name!!
   }
 
-  private fun isMainFile(path: String) = StringUtil.equals(FilePredictionTestDataHelper.DEFAULT_MAIN_FILE, getFileName(path))
+  private fun isMainFile(path: String) = StringUtil.equals(DEFAULT_MAIN_FILE, getFileName(path))
 
   private fun getFileName(path: String) =
     FileUtilRt.getRelativePath(PathUtil.getParent(path)!!, FileUtilRt.getNameWithoutExtension(path), '/')
