@@ -410,13 +410,15 @@ public class VfsUtilCore {
   /**
    * @return a {@link File} for a given {@link VirtualFile},
    * the created file may not exist or may not make sense.
+   * <br />
+   * It could be better and more reliably to use the {@link VirtualFile#toPath()}
+   * <br />
+   * @implNote The takes the part after ://, trims !/ at the end and turns it as a File path
    *
    * @see VirtualFile#toPathOrNull()
    * @see VirtualFile#toPath()
-   * @deprecated use {@link VirtualFile#toPathOrNull()}
    */
   @NotNull
-  @Deprecated
   public static File virtualToIoFile(@NotNull VirtualFile file) {
     return new File(PathUtil.toPresentableUrl(file.getUrl()));
   }
@@ -434,12 +436,14 @@ public class VfsUtilCore {
   /**
    * @return a {@link File} for a given {@link VirtualFile},
    * the created file may not exist or may not make sense.
-   *
+   * <br />
+   * It could be better and more reliably to use the {@link VirtualFile#toPath()}
+   * <br />
+   * @implNote The takes the part after ://, trims !/ at the end and turns it as a File path
+   * @see #virtualToIoFile(VirtualFile)
    * @see VirtualFile#toPathOrNull()
    * @see VirtualFile#toPath()
-   * @deprecated use {@link VirtualFile#toPathOrNull()}
    */
-  @Deprecated
   public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
     return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
   }
