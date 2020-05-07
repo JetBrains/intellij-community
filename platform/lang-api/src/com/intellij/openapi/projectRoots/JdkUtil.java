@@ -3,7 +3,6 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommandLineWrapperUtil;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
@@ -50,7 +49,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -67,8 +65,6 @@ public final class JdkUtil {
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
 
-  private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
-  private static final String JAVAAGENT = "-javaagent";
   private static final Logger LOG = Logger.getInstance(JdkUtil.class);
 
   private JdkUtil() { }
@@ -160,7 +156,8 @@ public final class JdkUtil {
     throws CantRunException {
 
     JdkCommandLineSetup setup = new JdkCommandLineSetup(request, targetConfiguration);
-    setup.setup(javaParameters);
+    setup.setupJavaExePath(javaParameters);
+    setup.setupCommandLine(javaParameters);
     return setup.getCommandLine();
   }
 
@@ -171,117 +168,32 @@ public final class JdkUtil {
       .createGeneralCommandLine(setupJVMCommandLine(javaParameters, request, null).build());
   }
 
-  static void setupCommandLine(TargetedCommandLineBuilder commandLine,
-                               TargetEnvironmentRequest request,
-                               SimpleJavaParameters javaParameters,
-                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration) throws CantRunException {
-
-    String workingDirectory = javaParameters.getWorkingDirectory();
-    if (workingDirectory != null) {
-      String remoteAppFolder = Optional.ofNullable(runtimeConfiguration)
-        .map(JavaLanguageRuntimeConfiguration::getApplicationFolder)
-        .map(StringUtil::nullize)
-        .orElse(null);
-
-      TargetEnvironmentRequest.Volume volume = request.createUploadRoot(remoteAppFolder, false);
-      commandLine.setWorkingDirectory(volume.createUpload(workingDirectory));
-    }
-    javaParameters.getEnv().forEach((key, value) -> commandLine.addEnvironmentVariable(key, value));
-
-    if (request instanceof LocalTargetEnvironmentRequest) {
-      ParentEnvironmentType type = javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE;
-      ((LocalTargetEnvironmentRequest)request).setParentEnvironmentType(type);
-    }
-
-    TargetEnvironmentRequest.Volume classPathVolume = request.createTempVolume();
-    TargetEnvironmentRequest.Volume agentVolume = request.createTempVolume();
-
-    ParametersList vmParameters = javaParameters.getVMParametersList();
-    boolean dynamicClasspath = javaParameters.isDynamicClasspath();
-    boolean dynamicVMOptions = dynamicClasspath && javaParameters.isDynamicVMOptions() && useDynamicVMOptions();
-    boolean dynamicParameters = dynamicClasspath && javaParameters.isDynamicParameters() && useDynamicParameters();
-    boolean dynamicMainClass = false;
-
-    // copies agent .jar files to the beginning of the classpath to load agent classes faster
-    if (isUrlClassloader(vmParameters)) {
-      if (!(request instanceof LocalTargetEnvironmentRequest)) {
-        throw new CantRunException("Cannot run application with UrlClassPath on the remote target.");
-      }
-      for (String parameter : vmParameters.getParameters()) {
-        if (parameter.startsWith(JAVAAGENT)) {
-          int agentArgsIdx = parameter.indexOf("=", JAVAAGENT.length());
-          javaParameters.getClassPath().addFirst(parameter.substring(JAVAAGENT.length() + 1, agentArgsIdx > -1 ? agentArgsIdx : parameter.length()));
-        }
-      }
-    }
-
-    if (dynamicClasspath) {
-      Charset cs = StandardCharsets.UTF_8;  // todo detect JNU charset from VM options?
-      Class<?> commandLineWrapper;
-      if (javaParameters.isArgFile()) {
-        setArgFileParams(commandLine, request, classPathVolume, agentVolume, runtimeConfiguration, javaParameters, vmParameters,
-                         dynamicVMOptions, dynamicParameters, cs);
-        dynamicMainClass = dynamicParameters;
-      }
-      else if (!explicitClassPath(vmParameters) &&
-               javaParameters.getJarPath() == null &&
-               (commandLineWrapper = getCommandLineWrapperClass()) != null) {
-        if (javaParameters.isUseClasspathJar()) {
-          setClasspathJarParams(commandLine, request, classPathVolume, agentVolume,
-                                runtimeConfiguration, javaParameters, vmParameters, commandLineWrapper,
-                                dynamicVMOptions, dynamicParameters);
-        }
-        else if (javaParameters.isClasspathFile()) {
-          setCommandLineWrapperParams(commandLine, request, classPathVolume, agentVolume,
-                                      runtimeConfiguration, javaParameters,
-                                      vmParameters, commandLineWrapper, dynamicVMOptions, dynamicParameters, cs);
-        }
-      }
-      else {
-        dynamicClasspath = dynamicParameters = false;
-      }
-    }
-
-    if (!dynamicClasspath) {
-      appendParamsEncodingClasspath(commandLine, request, classPathVolume, agentVolume,
-                                    runtimeConfiguration, javaParameters, vmParameters);
-    }
-
-    if (!dynamicMainClass) {
-      for (TargetValue<String> parameter : getMainClassParams(javaParameters, classPathVolume)) {
-        commandLine.addParameter(parameter);
-      }
-    }
-
-    if (!dynamicParameters) {
-      for (String parameter : javaParameters.getProgramParametersList().getList()) {
-        commandLine.addParameter(parameter);
-      }
-    }
-  }
-
-  private static boolean isUrlClassloader(ParametersList vmParameters) {
+  /*make private */
+  static boolean isUrlClassloader(ParametersList vmParameters) {
     return UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"));
   }
 
-  private static boolean explicitClassPath(ParametersList vmParameters) {
+  /*make private */
+  static boolean explicitClassPath(ParametersList vmParameters) {
     return vmParameters.hasParameter("-cp") || vmParameters.hasParameter("-classpath") || vmParameters.hasParameter("--class-path");
   }
 
-  private static boolean explicitModulePath(ParametersList vmParameters) {
+  /*make private*/
+  static boolean explicitModulePath(ParametersList vmParameters) {
     return vmParameters.hasParameter("-p") || vmParameters.hasParameter("--module-path");
   }
 
-  private static void setArgFileParams(TargetedCommandLineBuilder commandLine,
-                                       TargetEnvironmentRequest request,
-                                       TargetEnvironmentRequest.Volume classPathVolume,
-                                       TargetEnvironmentRequest.Volume agentVolume,
-                                       @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                       SimpleJavaParameters javaParameters,
-                                       ParametersList vmParameters,
-                                       boolean dynamicVMOptions,
-                                       boolean dynamicParameters,
-                                       Charset cs) throws CantRunException {
+  /*make private*/
+  static void setArgFileParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
+                               TargetEnvironmentRequest request,
+                               TargetEnvironmentRequest.Volume classPathVolume,
+                               TargetEnvironmentRequest.Volume agentVolume,
+                               @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                               SimpleJavaParameters javaParameters,
+                               ParametersList vmParameters,
+                               boolean dynamicVMOptions,
+                               boolean dynamicParameters,
+                               Charset cs) throws CantRunException {
     try {
       Platform platform = request.getTargetPlatform().getPlatform();
       String pathSeparator = String.valueOf(platform.pathSeparator);
@@ -308,7 +220,7 @@ public final class JdkUtil {
         modulePathParameter = null;
       }
 
-      List<TargetValue<String>> mainClassParameters = dynamicParameters ? getMainClassParams(javaParameters, classPathVolume)
+      List<TargetValue<String>> mainClassParameters = dynamicParameters ? setup.getMainClassParams(javaParameters)
                                                                         : Collections.emptyList();
 
       promises.addAll(ContainerUtil.map(mainClassParameters, TargetValue::getTargetValue));
@@ -364,17 +276,18 @@ public final class JdkUtil {
     }
   }
 
-  private static void setCommandLineWrapperParams(TargetedCommandLineBuilder commandLine,
-                                                  TargetEnvironmentRequest request,
-                                                  TargetEnvironmentRequest.Volume classPathVolume,
-                                                  TargetEnvironmentRequest.Volume agentVolume,
-                                                  @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                                  SimpleJavaParameters javaParameters,
-                                                  ParametersList vmParameters,
-                                                  Class<?> commandLineWrapper,
-                                                  boolean dynamicVMOptions,
-                                                  boolean dynamicParameters,
-                                                  Charset cs) throws CantRunException {
+  /*make private*/
+  static void setCommandLineWrapperParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
+                                          TargetEnvironmentRequest request,
+                                          TargetEnvironmentRequest.Volume classPathVolume,
+                                          TargetEnvironmentRequest.Volume agentVolume,
+                                          @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                                          SimpleJavaParameters javaParameters,
+                                          ParametersList vmParameters,
+                                          Class<?> commandLineWrapper,
+                                          boolean dynamicVMOptions,
+                                          boolean dynamicParameters,
+                                          Charset cs) throws CantRunException {
     try {
       String lineSeparator = request.getTargetPlatform().getPlatform().lineSeparator;
       int pseudoUniquePrefix = new Random().nextInt(Integer.MAX_VALUE);
@@ -486,16 +399,17 @@ public final class JdkUtil {
     });
   }
 
-  private static void setClasspathJarParams(TargetedCommandLineBuilder commandLine,
-                                            TargetEnvironmentRequest request,
-                                            TargetEnvironmentRequest.Volume classPathVolume,
-                                            TargetEnvironmentRequest.Volume agentVolume,
-                                            @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                            SimpleJavaParameters javaParameters,
-                                            ParametersList vmParameters,
-                                            Class<?> commandLineWrapper,
-                                            boolean dynamicVMOptions,
-                                            boolean dynamicParameters) throws CantRunException {
+  /*make private*/
+  static void setClasspathJarParams(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
+                                    TargetEnvironmentRequest request,
+                                    TargetEnvironmentRequest.Volume classPathVolume,
+                                    TargetEnvironmentRequest.Volume agentVolume,
+                                    @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                                    SimpleJavaParameters javaParameters,
+                                    ParametersList vmParameters,
+                                    Class<?> commandLineWrapper,
+                                    boolean dynamicVMOptions,
+                                    boolean dynamicParameters) throws CantRunException {
     try {
       Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By", ApplicationNamesInfo.getInstance().getFullProductName());
@@ -591,13 +505,14 @@ public final class JdkUtil {
     throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
-  private static void appendParamsEncodingClasspath(TargetedCommandLineBuilder commandLine,
-                                                    TargetEnvironmentRequest request,
-                                                    TargetEnvironmentRequest.Volume classPathVolume,
-                                                    TargetEnvironmentRequest.Volume agentVolume,
-                                                    @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                                    SimpleJavaParameters javaParameters,
-                                                    ParametersList vmParameters) {
+  /*make private */
+  static void appendParamsEncodingClasspath(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
+                                            TargetEnvironmentRequest request,
+                                            TargetEnvironmentRequest.Volume classPathVolume,
+                                            TargetEnvironmentRequest.Volume agentVolume,
+                                            @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
+                                            SimpleJavaParameters javaParameters,
+                                            ParametersList vmParameters) {
     appendVmParameters(commandLine, request, agentVolume, vmParameters);
     appendEncoding(javaParameters, commandLine, vmParameters);
     PathsList classPath = javaParameters.getClassPath();
@@ -711,34 +626,6 @@ public final class JdkUtil {
     }
   }
 
-  private static List<TargetValue<String>> getMainClassParams(SimpleJavaParameters javaParameters,
-                                                              TargetEnvironmentRequest.Volume volume) throws CantRunException {
-    String mainClass = javaParameters.getMainClass();
-    String moduleName = javaParameters.getModuleName();
-    String jarPath = javaParameters.getJarPath();
-    if (mainClass != null && moduleName != null) {
-      return Arrays.asList(TargetValue.fixed("-m"), TargetValue.fixed(moduleName + '/' + mainClass));
-    }
-    else if (mainClass != null) {
-      return Collections.singletonList(TargetValue.fixed(mainClass));
-    }
-    else if (jarPath != null) {
-      return Arrays.asList(TargetValue.fixed("-jar"), volume.createUpload(jarPath));
-    }
-    else {
-      throw new CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"));
-    }
-  }
-
-  private static @Nullable Class<?> getCommandLineWrapperClass() {
-    try {
-      return Class.forName(WRAPPER_CLASS);
-    }
-    catch (ClassNotFoundException e) {
-      return null;
-    }
-  }
-
   public static boolean useDynamicClasspath(@Nullable Project project) {
     boolean hasDynamicProperty = Boolean.parseBoolean(System.getProperty("idea.dynamic.classpath", "false"));
     return project != null
@@ -778,7 +665,9 @@ public final class JdkUtil {
     LocalTargetEnvironmentFactory environmentFactory = new LocalTargetEnvironmentFactory();
     TargetEnvironmentRequest request = environmentFactory.createRequest();
     TargetedCommandLineBuilder targetedCommandLineBuilder = new TargetedCommandLineBuilder(request);
-    setupCommandLine(targetedCommandLineBuilder, request, javaParameters, null);
+    JdkCommandLineSetup setup = new JdkCommandLineSetup(request, null);
+    setup.setupCommandLine(javaParameters);
+
     LocalTargetEnvironment environment = environmentFactory.prepareRemoteEnvironment(request, new EmptyProgressIndicator());
     GeneralCommandLine generalCommandLine = environment.createGeneralCommandLine(targetedCommandLineBuilder.build());
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
