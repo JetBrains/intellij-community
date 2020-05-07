@@ -6,7 +6,10 @@ repositories {
 def buildDir = "../../../build"
 
 def pluginProperties = new Properties()
-file(buildDir + "/../goland/intellij-go/gradle.properties").withInputStream { pluginProperties.load(it) }
+def gradleProperties = file(buildDir + "/../goland/intellij-go/gradle.properties")
+if (gradleProperties.exists()) {
+  gradleProperties.withInputStream { pluginProperties.load(it) }
+}
 def delveVersion = pluginProperties.getProperty("delveVersion")
 
 configurations {
