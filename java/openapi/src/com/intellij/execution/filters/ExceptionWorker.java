@@ -439,6 +439,7 @@ public class ExceptionWorker {
               }
             }
           })
+        .setDisposable(project)
         .createBalloon();
       ref.set(balloon);
       RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
