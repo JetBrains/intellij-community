@@ -103,7 +103,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
-    myFileStatusManager.addFileStatusListener(myFileStatusListener);
+    myFileStatusManager.addFileStatusListener(myFileStatusListener, this);
     createTree();
     init();
     myTreeExpander = new DefaultTreeExpander(myTree);
@@ -113,10 +113,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   @Override
   public void dispose() {
     Disposer.dispose(myRoot);
-    if (myFileStatusListener != null) {
-      myFileStatusManager.removeFileStatusListener(myFileStatusListener);
-      myFileStatusListener = null;
-    }
   }
 
   public void setCanGroupByChangeList(final boolean canGroupByChangeList) {

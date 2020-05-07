@@ -59,13 +59,7 @@ public class CoverageViewBuilder extends AbstractListBuilder {
     myCoverageViewExtension = ((CoverageViewTreeStructure)myTreeStructure).myData
       .getCoverageEngine().createCoverageViewExtension(myProject, ((CoverageViewTreeStructure)myTreeStructure).myData,
                                                        ((CoverageViewTreeStructure)myTreeStructure).myStateBean);
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
-  }
-
-  @Override
-  public void dispose() {
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    super.dispose();
+    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
   }
 
   @Override
