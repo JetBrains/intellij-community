@@ -56,5 +56,6 @@ iml_module(
         "//tools/idea/xml/dom-openapi:intellij.xml.dom[module]",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/idea/platform/statistics:intellij.platform.statistics[module]",
     ],
 )
