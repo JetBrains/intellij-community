@@ -92,3 +92,13 @@ internal class MarketplaceSearchPluginData(
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal class AggregationSearchResponse(val aggregations: Map<String, Int> = emptyMap(), val total: Int = 0)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class FeatureImpl(
+  val pluginId: String? = null,
+  val pluginName: String? = null,
+  val description: String? = null,
+  val version: String? = null,
+  val implementationName: String? = null,
+  val bundled: Boolean = false
+)

@@ -96,6 +96,27 @@ open class MarketplaceRequests {
     "$PLUGIN_MANAGER_URL/api/search/plugins?$query&build=$IDE_BUILD_FOR_REQUEST&max=$count"
   )
 
+  private fun createFeatureUrl(param: Map<String, String>) = Urls.newFromEncoded(
+    "${PLUGIN_MANAGER_URL}/feature/getImplementations"
+  ).addParameters(param)
+
+  fun getFeatures(param: Map<String, String>): List<FeatureImpl> = try {
+    HttpRequests
+      .request(createFeatureUrl(param))
+      .throwStatusCodeException(false)
+      .productNameAsUserAgent()
+      .connect {
+        objectMapper.readValue(
+          it.inputStream,
+          object : TypeReference<List<FeatureImpl>>() {}
+        )
+      }
+  }
+  catch (e: Exception) {
+    LOG.warn("Can not get features from Marketplace")
+    emptyList()
+  }
+
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator?): List<String> {
     val pluginXmlIdsFile = File(PathManager.getPluginsPath(), FULL_PLUGINS_XML_IDS_FILENAME)
