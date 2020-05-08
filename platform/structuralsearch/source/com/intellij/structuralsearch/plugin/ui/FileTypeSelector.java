@@ -25,8 +25,8 @@ import java.util.List;
  */
 public class FileTypeSelector extends ComboBox<FileTypeInfo> {
 
-  public FileTypeSelector(Project project) {
-    super(createModel(project));
+  public FileTypeSelector() {
+    super(createModel());
     setRenderer(new MyCellRenderer());
     setSwingPopup(false);
   }
@@ -57,7 +57,7 @@ public class FileTypeSelector extends ComboBox<FileTypeInfo> {
   }
 
   @NotNull
-  private static DefaultComboBoxModel<FileTypeInfo> createModel(Project project) {
+  private static DefaultComboBoxModel<FileTypeInfo> createModel() {
     final List<LanguageFileType> types = new ArrayList<>();
     for (LanguageFileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
       if (StructuralSearchUtil.getProfileByFileType(fileType) != null) {
