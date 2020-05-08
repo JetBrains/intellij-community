@@ -85,6 +85,10 @@
     <runConfigurationExtension implementation="org.jetbrains.plugins.javaFX.execution.JavaFxRunConfigurationExtension"/>
   </extensions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.javaFX.fxml.FxmlPresenceListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
+
   <actions>
     <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
