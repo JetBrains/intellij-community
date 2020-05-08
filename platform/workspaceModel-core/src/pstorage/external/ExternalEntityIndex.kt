@@ -3,14 +3,28 @@ package com.intellij.workspace.api.pstorage.external
 
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspace.api.TypedEntity
+import com.intellij.workspace.api.pstorage.AbstractPEntityStorage
 import com.intellij.workspace.api.pstorage.PId
+import com.intellij.workspace.api.pstorage.PTypedEntity
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Add
 import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableExternalEntityIndex.IndexLogRecord.Remove
 import java.util.*
 
 open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<PId<out TypedEntity>, T>) {
-  internal fun getIds(data: T): List<PId<out TypedEntity>>? = index.getKeysByValue(data)
-  internal fun getDataById(id: PId<out TypedEntity>): T? = index[id]
+  private var entityStorage: AbstractPEntityStorage? = null
+  internal fun getIds(data: T): List<TypedEntity>? {
+    val storage = entityStorage ?: return null
+    return index.getKeysByValue(data)?.toMutableList()?.mapNotNull { storage.entityDataById(it)?.createEntity(storage) }
+  }
+
+  internal fun getDataById(entity: TypedEntity): T? {
+    entity as PTypedEntity
+    return index[entity.id]
+  }
+
+  internal fun setTypedEntityStorage(storage: AbstractPEntityStorage) {
+    entityStorage = storage
+  }
 
   internal fun copyIndex(): BidirectionalMap<PId<out TypedEntity>, T> {
     val copy = BidirectionalMap<PId<out TypedEntity>, T>()
@@ -24,17 +38,32 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
   ) : ExternalEntityIndex<T>(index) {
     constructor() : this(BidirectionalMap<PId<out TypedEntity>, T>(), mutableListOf())
 
-    internal fun index(id: PId<out TypedEntity>, data: T) {
+    internal fun index(entity: TypedEntity, data: T) {
+      entity as PTypedEntity
+      index(entity.id, data)
+    }
+
+    private fun index(id: PId<out TypedEntity>, data: T) {
       index[id] = data
       indexLog.add(Add(id, data))
     }
 
-    internal fun update(id: PId<out TypedEntity>, newData: T) {
+    internal fun update(entity: TypedEntity, newData: T) {
+      entity as PTypedEntity
+      update(entity.id, newData)
+    }
+
+    private fun update(id: PId<out TypedEntity>, newData: T) {
       remove(id)
       index(id, newData)
     }
 
-    internal fun remove(id: PId<out TypedEntity>) {
+    internal fun remove(entity: TypedEntity) {
+      entity as PTypedEntity
+      remove(entity.id)
+    }
+
+    private fun remove(id: PId<out TypedEntity>) {
       index.remove(id)
       indexLog.add(Remove(id))
     }

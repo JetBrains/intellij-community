@@ -766,13 +766,16 @@ internal class PEntityStorageBuilder(
 
   @Suppress("UNCHECKED_CAST")
   fun <T> getOrCreateExternalIndex(identifier: String): MutableExternalEntityIndex<T> {
-    return externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndex<T>() }
-      as MutableExternalEntityIndex<T>
+    val index = externalIndices.computeIfAbsent(identifier) { MutableExternalEntityIndex<T>() } as MutableExternalEntityIndex<T>
+    index.setTypedEntityStorage(this)
+    return index
   }
 
   @Suppress("UNCHECKED_CAST")
   override fun <T> getExternalIndex(identifier: String): MutableExternalEntityIndex<T>? {
-    return externalIndices[identifier] as? MutableExternalEntityIndex<T>
+    val index = externalIndices[identifier] as? MutableExternalEntityIndex<T>
+    index?.setTypedEntityStorage(this)
+    return index
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -977,7 +980,9 @@ internal sealed class AbstractPEntityStorage : TypedEntityStorage {
 
   @Suppress("UNCHECKED_CAST")
   open fun <T> getExternalIndex(identifier: String): ExternalEntityIndex<T>? {
-    return externalIndices[identifier] as? ExternalEntityIndex<T>
+    val index = externalIndices[identifier] as? ExternalEntityIndex<T>
+    index?.setTypedEntityStorage(this)
+    return index
   }
 }
 
