@@ -138,7 +138,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
           GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
         }
         else {
-          Logger.getInstance(NotificationsManagerImpl.class).error("Notification posted too early (no window to display)");
+          Logger.getInstance(NotificationsManagerImpl.class).error("Notification posted too early (no window to display): " + notification);
         }
       }
       else if (!project.isDisposed()) {
