@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.InspectionGadgetsBundle.BUNDLE;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -50,7 +49,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher STRING_SUBSTRING_TWO_ARG = exactInstanceCall(JAVA_LANG_STRING, "substring").parameterTypes("int", "int");
   private static final CallMatcher STRING_SUBSTRING = anyOf(STRING_SUBSTRING_ONE_ARG, STRING_SUBSTRING_TWO_ARG);
   private static final CallMatcher STRING_BUILDER_APPEND =
-    instanceCall(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
+    instanceCall(JAVA_LANG_ABSTRACT_STRING_BUILDER, "append").parameterTypes(JAVA_LANG_STRING);
+  private static final CallMatcher STRING_BUILDER_TO_STRING = instanceCall(JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0);
   private static final CallMatcher PRINTSTREAM_PRINTLN = instanceCall("java.io.PrintStream", "println")
     .parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER =
@@ -87,6 +87,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_TO_STRING, call -> getProblem(call, "inspection.redundant.string.call.message"))
       .register(STRING_SUBSTRING, this::getSubstringProblem)
       .register(STRING_BUILDER_APPEND, this::getAppendProblem)
+      .register(STRING_BUILDER_TO_STRING, this::getRedundantStringBuilderToStringProblem)
       .register(STRING_INTERN, this::getInternProblem)
       .register(PRINTSTREAM_PRINTLN, call -> getRedundantArgumentProblem(getSingleEmptyStringArgument(call)))
       .register(METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER, this::getRedundantZeroAsSecondParameterProblem)
@@ -116,7 +117,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void visitNewExpression(PsiNewExpression expression) {
       PsiJavaCodeReferenceElement classRef = expression.getClassReference();
       ProblemDescriptor descriptor = null;
-      if (ConstructionUtils.isReferenceTo(classRef, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
+      if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING_BUILDER, JAVA_LANG_STRING_BUFFER)) {
         descriptor = getRedundantArgumentProblem(getSingleEmptyStringArgument(expression));
       }
       else if (ConstructionUtils.isReferenceTo(classRef, JAVA_LANG_STRING) && !myInspection.ignoreStringConstructor) {
@@ -274,6 +275,30 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @Nullable
     private ProblemDescriptor getAppendProblem(PsiMethodCallExpression call) {
       return getSingleEmptyStringArgument(call) != null ? getProblem(call, "inspection.redundant.string.call.message") : null;
+    }
+
+    @Nullable
+    private ProblemDescriptor getRedundantStringBuilderToStringProblem(@NotNull final PsiMethodCallExpression call) {
+      if (!ExpressionUtils.isConversionToStringNecessary(call, false)) {
+        // report naked `new StringBuilder().toString()`
+        final PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+        if (parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS) {
+          // if there is a polyadic expression where all the operands are `new StringBuilder().toString()`
+          // then it is wrong to report all the `toString` calls as redundant: at least one of them should call
+          // `toString()`, let's choose the last one to remain with `toString()`
+          final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+          final PsiExpression lastChild = PsiUtil.skipParenthesizedExprDown(polyadicExpression.getOperands()[polyadicExpression.getOperands().length - 1]);
+          if (lastChild == call) {
+            return null;
+          }
+        }
+        return getProblem(call, "inspection.redundant.string.call.message");
+      }
+
+      final PsiMethodCallExpression substringCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
+      if (!STRING_SUBSTRING.test(substringCall)) return null;
+
+      return getProblem(call, "inspection.redundant.string.call.message");
     }
 
     @Nullable
