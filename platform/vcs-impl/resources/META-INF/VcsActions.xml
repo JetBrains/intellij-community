@@ -31,11 +31,12 @@
     <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffAfterWithLocalAction"/>
     <action id="Vcs.VcsClone" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction"/>
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
+    <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
+      <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
+    </action>
 
-    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true"/>
-
-    <group id="VersionControlsGroup">
-      <reference ref="VcsFileGroupPopup"/>
+    <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true">
+      <add-to-group group-id="VersionControlsGroup" />
     </group>
 
     <group id="GoToChangeMarkerGroup">
@@ -49,8 +50,16 @@
     </group>
     <action id="VcsShowCurrentChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Current"/>
 
+    <group id="VcsTouchBarGroup">
+      <reference ref="Vcs.UpdateProject"/>
+      <reference ref="CheckinProject"/>
+      <reference ref="ChangesView.ToggleCommitUi"/>
+      <add-to-group group-id="TouchBarDefaultOptionalGroup" anchor="first" />
+    </group>
+
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" popup="true">
+      <reference ref="LocalHistory" />
       <action id="Start.Use.Vcs" class="com.intellij.ide.actions.StartUseVcsAction"/>
       <separator/>
       <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGlobalGroup">
@@ -59,16 +68,18 @@
                 class = "com.intellij.openapi.vcs.actions.VcsQuickListPopupAction"/>
         <reference ref="CheckinProject"/>
         <reference ref="ChangesView.ToggleCommitUi"/>
-        <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
-          <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
-        </action>
+        <reference ref="Vcs.UpdateProject" />
         <action id="Vcs.IntegrateProject" class="com.intellij.openapi.vcs.update.CommonIntegrateProjectAction"/>
         <action id="Vcs.RefreshStatuses" class="com.intellij.openapi.vcs.actions.RefreshStatuses"/>
         <separator/>
         <group id="Vcs.Specific" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
         <separator/>
         <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
-        <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
+        <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction">
+          <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ProjectViewEditSource" anchor="after" />
+          <add-to-group group-id="NavbarPopupMenu" relative-to-action="EditSource" anchor="after" />
+          <add-to-group group-id="FavoritesViewPopupMenu" relative-to-action="EditSource" anchor="after" />
+        </action>
         <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
         <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="AllIcons.Vcs.Shelve"/>
       </group>
@@ -477,6 +488,36 @@
             class="com.intellij.unscramble.AnnotateStackTraceAction" icon="AllIcons.Actions.Annotate">
       <add-to-group group-id="AnalyzeStacktraceToolbar" anchor="first" />
     </action>
+
+    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup">
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </action>
+
+    <group id="Vcs.Operations.Popup">
+      <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
+        <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
+        <reference id="ChangesView.AddUnversioned"/>
+        <reference id="CheckinProject"/>
+        <reference ref="ChangesView.ToggleCommitUi"/>
+        <reference id="CheckinFiles"/>
+        <reference id="ChangesView.Revert"/>
+        <separator/>
+        <reference id="Vcs.ShowTabbedFileHistory"/>
+        <reference id="Annotate"/>
+        <reference id="Compare.SameVersion"/>
+      </group>
+      <separator/>
+      <group id="Vcs.Operations.Popup.Vcs.Providers"
+             class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$Providers"/>
+      <group id="Vcs.Operations.Popup.NonVcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$NonVcsAware">
+        <reference id="Start.Use.Vcs"/>
+      </group>
+      <separator/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
+      <separator text="Local History"/>
+      <reference id="LocalHistory.ShowHistory"/>
+      <reference id="LocalHistory.PutLabel"/>
+    </group>
 
   </actions>
 </idea-plugin>

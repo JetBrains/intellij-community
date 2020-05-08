@@ -8,6 +8,9 @@
     <applicationService serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
                         serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
+    <applicationService serviceInterface="com.intellij.conversion.ConversionService"
+                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"
+                        overrides="true"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangeListManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl" preload="notHeadless"/>
@@ -15,8 +18,6 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
-    <projectService serviceInterface="com.intellij.openapi.diff.DirDiffManager"
-                    serviceImplementation="com.intellij.openapi.diff.impl.dir.DirDiffManagerImpl"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.VcsConfiguration"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
@@ -143,6 +144,9 @@
 
     <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorProvider"/>
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.changes.committed.OutdatedVersionNotifier"/>
+    <editorTabTitleProvider implementation="com.intellij.openapi.vcs.vfs.VcsFileEditorTabTitleProvider"/>
+
+    <customizableActionGroupProvider implementation="com.intellij.openapi.vcs.ui.VcsCustomizableActionGroupProvider"/>
 
     <changesGroupingPolicy key="directory" id="directory"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
@@ -161,6 +165,12 @@
                             order="first, before liveTemplates"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
                             order="first"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
+
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.RemoteRevisionsCache"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
@@ -190,7 +200,9 @@
     <getDataRule key="vcs.ChangesSelection" implementationClass="com.intellij.openapi.vcs.changes.VcsChangesSelectionRule"/>
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
     <diff.DiffExtension implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$MyDiffExtension"/>
-    <diff.DiffExtension implementation="com.intellij.diff.actions.ShowBlankDiffWindowDiffExtension"/>
+
+    <patch.extension implementation="com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP"/>
+    <patch.extension implementation="com.intellij.openapi.diff.impl.patch.CharsetEP"/>
 
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateLocalFileAction$Provider"/>
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateVcsVirtualFileAction$Provider"/>
@@ -254,6 +266,9 @@
     <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
     <findInProjectExtension implementation="com.intellij.vcs.changes.ChangeListsFindInProjectExtension" />
     <silentChangeVetoer implementation="com.intellij.codeInsight.daemon.VcsSilentChangeVetoer" />
+
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
   </extensions>
 
   <applicationListeners>

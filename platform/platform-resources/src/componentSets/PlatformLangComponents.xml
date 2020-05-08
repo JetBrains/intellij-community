@@ -27,7 +27,6 @@
 
   <xi:include href="/componentSets/UICore.xml"/>
   <xi:include href="/componentSets/Editor.xml"/>
-  <xi:include href="/componentSets/VCS.xml"/>
   <xi:include href="/componentSets/Lang.xml"/>
 
   <applicationListeners>

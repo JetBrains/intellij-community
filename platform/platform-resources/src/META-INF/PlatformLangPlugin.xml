@@ -4,7 +4,6 @@
 
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.lang"/>
-  <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.externalSystem"/>
 
@@ -26,7 +25,6 @@
   <xi:include href="/META-INF/Inspect.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensionPoints.xml"/>
-  <xi:include href="/META-INF/VcsExtensionPoints.xml"/>
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
   <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml"/>
 
@@ -96,18 +94,15 @@
     Framework Detection;Power Save Mode;Show control flow group"/>
   </extensions>
 
-  <xi:include href="/META-INF/VcsExtensions.xml"/>
+  <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
 
   <xi:include href="xdebugger.xml"/>
   <xi:include href="/META-INF/GraphPlugin.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/vcs-log.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/dvcs.xml">
-    <xi:fallback/>
-  </xi:include>
+
   <xi:include href="built-in-server.xml"/>
   <xi:include href="/idea/ExternalSystemActions.xml"/>
   <xi:include href="/componentSets/ExternalSystemComponents.xml"/>

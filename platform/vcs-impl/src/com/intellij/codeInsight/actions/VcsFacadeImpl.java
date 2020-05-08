@@ -18,6 +18,7 @@ import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -321,5 +322,10 @@ public final class VcsFacadeImpl extends VcsFacade {
     else {
       o.run();
     }
+  }
+
+  @Override
+  public void markFilesDirty(@NotNull Project project, @NotNull List<? extends VirtualFile> virtualFiles) {
+    VcsFileUtil.markFilesDirty(project, virtualFiles);
   }
 }
