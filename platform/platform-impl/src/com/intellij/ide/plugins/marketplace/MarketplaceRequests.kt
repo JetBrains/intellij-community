@@ -200,6 +200,20 @@ open class MarketplaceRequests {
     ).toPluginNode()
   }
 
+  @JvmOverloads
+  fun loadLastCompatiblePluginDescriptors(ids: List<String>, buildNumber: BuildNumber? = null): List<PluginNode> {
+    if (ids.isEmpty()) return emptyList()
+    val data: List<IdeCompatibleUpdate> = try {
+      getLastCompatiblePluginUpdate(ids, buildNumber)
+    }
+    catch (e: Exception) {
+      LOG.warn("Can not get compatible update from Marketplace", e)
+      emptyList()
+    }
+    return data.map { loadPluginDescriptor(it.pluginId, it, null) }
+  }
+
+
   fun loadPluginDescriptor(xmlId: String, externalPluginId: String, externalUpdateId: String): PluginNode {
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
     return loadPluginDescriptor(xmlId, ideCompatibleUpdate)
