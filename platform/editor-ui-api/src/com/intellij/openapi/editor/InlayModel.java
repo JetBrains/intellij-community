@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -30,7 +30,7 @@ public interface InlayModel {
   /**
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer.
    *
-   * @param relatesToPrecedingText whether element is associated with preceding or following text 
+   * @param relatesToPrecedingText whether element is associated with preceding or following text
    *                               (see {@link Inlay#isRelatedToPrecedingText()})
    * @return {@code null} if requested element cannot be created, e.g. if corresponding functionality
    *         is not supported by current editor instance.
@@ -76,7 +76,7 @@ public interface InlayModel {
    * Both visible and invisible (due to folding) elements are returned.
    */
   @NotNull
-  List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
+  List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset);
 
   /**
    * Same as {@link #getInlineElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
@@ -192,7 +192,7 @@ public interface InlayModel {
    * @see #addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
    */
   @NotNull
-  List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine);
+  List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine);
 
   /**
    * When text is inserted at inline element's offset, resulting element's position is determined by its

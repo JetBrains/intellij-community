@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
@@ -15,6 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.Consumer;
+import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -629,9 +629,9 @@ public class GenericPatchApplier {
                                   AppliedTextPatch.HunkStatus hunkStatus) {
     if (hunk != null) {
       // +1 to the end  because end range is always not included -> [i;j); except add modification;
-      int newStart = lineWithPartContextApplied.getStartOffset() + contextRangeShift.val1;
+      int newStart = lineWithPartContextApplied.getStartOffset() + contextRangeShift.first;
       int newEnd = hunk.isInsertion() && hunkStatus != AppliedTextPatch.HunkStatus.ALREADY_APPLIED
-                   ? newStart : lineWithPartContextApplied.getEndOffset() + 1 - contextRangeShift.val2;
+                   ? newStart : lineWithPartContextApplied.getEndOffset() + 1 - contextRangeShift.second;
       myAppliedInfo.add(new AppliedTextPatch.AppliedSplitPatchHunk(hunk, newStart, newEnd, hunkStatus));
     }
   }
@@ -659,7 +659,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private static class Point {
+  private static final class Point {
     private final int myDistance;
     private final int myContextDistance;
     private final int myCommon;
@@ -694,7 +694,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private class SequentialStepsChecker {
+  private final class SequentialStepsChecker {
     private int myDistance;
     // in the end, will be [excluding] end of changing interval
     private int myIdx;
@@ -758,7 +758,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private static class FirstLineDescriptor {
+  private static final class FirstLineDescriptor {
     private final String myLine;
     private final int myOffset;
     private final int myStepNumber;
@@ -794,7 +794,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private static class ExactMatchSolver extends MismatchSolver {
+  private static final class ExactMatchSolver extends MismatchSolver {
     private ExactMatchSolver(final SplitHunk hunk) {
       super(false);
       final List<BeforeAfter<List<String>>> steps = hunk.getPatchSteps();
@@ -860,7 +860,7 @@ public class GenericPatchApplier {
                                           new WalkingIterator(line, originalStart, maxWalkFromBinding, false));
   }
 
-  private class WalkingIterator implements Iterator<Integer> {
+  private final class WalkingIterator implements Iterator<Integer> {
     private final String myLine;
     // true = down
     private final boolean myDirection;
@@ -973,7 +973,7 @@ public class GenericPatchApplier {
   }
 
   // will not find consider fragments that intersect
-  private class FragmentMatcher {
+  private final class FragmentMatcher {
     private final int myIdx;
     private int myOffsetIdxInHunk;
     // if we set index in hunk != 0, then we will check only one side

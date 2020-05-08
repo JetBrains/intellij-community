@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffColors;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -273,7 +273,7 @@ public abstract class LineStatusMarkerRenderer {
     IntPair area = getGutterArea(editor);
     int y = editor.visualLineToY(startLine);
     int endY = editor.visualLineToY(endLine);
-    return new Rectangle(area.val1, y, area.val2 - area.val1, endY - y);
+    return new Rectangle(area.first, y, area.second - area.first, endY - y);
   }
 
   protected boolean shouldPaintGutter() {
@@ -309,8 +309,8 @@ public abstract class LineStatusMarkerRenderer {
     int line2 = block.get(block.size() - 1).line2;
 
     IntPair area = getGutterArea(editor);
-    final int x = area.val1;
-    final int endX = area.val2;
+    final int x = area.first;
+    final int endX = area.second;
 
     final int y = editorImpl.visualLineToY(line1);
     final int endY = editorImpl.visualLineToY(line2);
@@ -389,8 +389,8 @@ public abstract class LineStatusMarkerRenderer {
 
   public static void paintSimpleRange(Graphics g, Editor editor, int line1, int line2, @Nullable Color color) {
     IntPair horizontalArea = getGutterArea(editor);
-    int x = horizontalArea.val1;
-    int endX = horizontalArea.val2;
+    int x = horizontalArea.first;
+    int endX = horizontalArea.second;
 
     int y = lineToY(editor, line1);
     int endY = lineToY(editor, line2);

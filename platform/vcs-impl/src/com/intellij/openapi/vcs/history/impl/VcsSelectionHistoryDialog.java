@@ -13,7 +13,6 @@ import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.IntPair;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -37,6 +36,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.*;
@@ -55,6 +55,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -161,7 +162,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
         final VcsFileRevision revision;
         if (myList.getSelectedRowCount() == 1 && !myList.isEmpty()) {
           revision = myList.getItems().get(myList.getSelectedRow());
-          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, revision.getCommitMessage());
+          String message = IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, Objects.requireNonNull(revision.getCommitMessage()));
           myComments.setText(message);
           myComments.setCaretPosition(0);
         }
@@ -271,7 +272,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
 
       IntPair range = getSelectedRevisionsRange(data);
-      List<VcsFileRevision> oldSelection = data.getRevisions().subList(range.val1, range.val2);
+      List<VcsFileRevision> oldSelection = data.getRevisions().subList(range.first, range.second);
 
       myListModel.setItems(newItems);
 
@@ -374,8 +375,8 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     }
 
     IntPair range = getSelectedRevisionsRange(blockData);
-    int revIndex1 = range.val2;
-    int revIndex2 = range.val1;
+    int revIndex1 = range.second;
+    int revIndex2 = range.first;
 
     if (revIndex1 == count && revIndex2 == count) {
       myDiffPanel.setRequest(NoDiffRequest.INSTANCE);
@@ -691,12 +692,12 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       IntPair range = dialog.getSelectedRevisionsRange(blockData);
 
       List<VcsFileRevision> revisions = blockData.getRevisions();
-      VcsFileRevision beforeRevision = range.val2 < revisions.size() ? revisions.get(range.val2) : VcsFileRevision.NULL;
-      VcsFileRevision afterRevision = revisions.get(range.val1);
+      VcsFileRevision beforeRevision = range.second < revisions.size() ? revisions.get(range.second) : VcsFileRevision.NULL;
+      VcsFileRevision afterRevision = revisions.get(range.first);
 
       FilePath filePath = VcsUtil.getFilePath(dialog.myFile);
 
-      if (range.val2 - range.val1 > 1) {
+      if (range.second - range.first > 1) {
         dialog.getDiffHandler().showDiffForTwo(dialog.myProject, filePath, beforeRevision, afterRevision);
       }
       else {

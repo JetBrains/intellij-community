@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -9,16 +9,18 @@ import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.io.*;
-import gnu.trove.TIntArrayList;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.IntCollectionDataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
-  protected DiscoveredTestsIndex(@NotNull Path file) throws IOException {
+public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntArrayList, UsedSources> {
+  DiscoveredTestsIndex(@NotNull Path file) throws IOException {
     super(INDEX_EXTENSION,
           new MyIndexStorage(file),
           new PersistentMapBasedForwardIndex(file.resolve("forward.idx"), false),
@@ -39,7 +41,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     return getForwardIndex().get(testId) != null;
   }
 
-  private static class MyIndexStorage extends MapIndexStorage<Integer, TIntArrayList> {
+  private static class MyIndexStorage extends MapIndexStorage<Integer, IntArrayList> {
     protected MyIndexStorage(@NotNull Path storageFile) throws IOException {
       super(storageFile, EnumeratorIntegerDescriptor.INSTANCE, IntArrayExternalizer.INSTANCE, 4 * 1024, false);
     }
@@ -50,16 +52,18 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     }
   }
 
-  private static final IndexExtension<Integer, TIntArrayList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, TIntArrayList, UsedSources>() {
+  private static final IndexExtension<Integer, IntArrayList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, IntArrayList, UsedSources>() {
     @NotNull
     @Override
-    public IndexId<Integer, TIntArrayList> getName() {
+    public IndexId<Integer, IntArrayList> getName() {
       return IndexId.create("jvm.discovered.tests");
     }
 
     @NotNull
     @Override
-    public DataIndexer<Integer, TIntArrayList, UsedSources> getIndexer() {return inputData -> inputData.myUsedMethods;}
+    public DataIndexer<Integer, IntArrayList, UsedSources> getIndexer() {
+      return inputData -> inputData.myUsedMethods;
+    }
 
     @NotNull
     @Override
@@ -69,7 +73,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
 
     @NotNull
     @Override
-    public DataExternalizer<TIntArrayList> getValueExternalizer() {
+    public DataExternalizer<IntArrayList> getValueExternalizer() {
       return IntArrayExternalizer.INSTANCE;
     }
 

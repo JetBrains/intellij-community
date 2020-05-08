@@ -17,5 +17,6 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" exported="" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

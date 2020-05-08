@@ -15,6 +15,10 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +42,7 @@ public final class SearchUtil {
   private static final Pattern NON_WORD_PATTERN = Pattern.compile("[\\W&&[^\\p{Punct}\\p{Blank}]]");
 
   public static final String HIGHLIGHT_WITH_BORDER = "searchUtil.highlightWithBorder";
-  public static final String STYLE_END = "</style>";
+  private static final String STYLE_END = "</style>";
 
   private SearchUtil() { }
 
@@ -77,8 +81,7 @@ public final class SearchUtil {
         final Configurable unwrapped = unwrapConfigurable(configurable);
         if (unwrapped instanceof CompositeConfigurable) {
           unwrapped.disposeUIResources();
-          //noinspection unchecked
-          final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable)unwrapped).getConfigurables();
+          final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable<?>)unwrapped).getConfigurables();
           for (final UnnamedConfigurable child : children) {
             final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
             options.put(new SearchableConfigurableAdapter(searchableConfigurable, child), childConfigurableOptions);
@@ -152,7 +155,7 @@ public final class SearchUtil {
       processUILabel(label, configurableOptions, path);
     }
     else if (component instanceof JComboBox) {
-      List<String> labels = getItemsFromComboBox((JComboBox)component);
+      List<String> labels = getItemsFromComboBox((JComboBox<?>)component);
       for (String each : labels) {
         processUILabel(each, configurableOptions, path);
       }
@@ -213,20 +216,20 @@ public final class SearchUtil {
   }
 
   @NotNull
-  public static List<String> getItemsFromComboBox(@NotNull JComboBox comboBox) {
-    ListCellRenderer renderer = comboBox.getRenderer();
+  private static List<String> getItemsFromComboBox(@NotNull JComboBox<?> comboBox) {
+    @SuppressWarnings("unchecked")
+    ListCellRenderer<Object> renderer = (ListCellRenderer<Object>)comboBox.getRenderer();
     if (renderer == null) {
       renderer = new DefaultListCellRenderer();
     }
 
-    JList jList = new BasicComboPopup(comboBox).getList();
+    JList<?> jList = new BasicComboPopup(comboBox).getList();
 
     List<String> result = new ArrayList<>();
 
     int count = comboBox.getItemCount();
     for (int i = 0; i < count; i++) {
       Object value = comboBox.getItemAt(i);
-      //noinspection unchecked
       Component labelComponent = renderer.getListCellRendererComponent(jList, value, i, false, false);
       String label = getLabelFromComponent(labelComponent);
       if (label != null) {
@@ -289,7 +292,7 @@ public final class SearchUtil {
       }
     }
     else if (rootComponent instanceof JComboBox) {
-      List<String> labels = getItemsFromComboBox(((JComboBox)rootComponent));
+      List<String> labels = getItemsFromComboBox(((JComboBox<?>)rootComponent));
       if (ContainerUtil.exists(labels, it -> isComponentHighlighted(it, option, force, configurable))) {
         highlightComponent(rootComponent, option);
         return true; // do not visit children of highlighted component
@@ -467,24 +470,25 @@ public final class SearchUtil {
     if (filter == null || filter.length() == 0) {
       textRenderer.append(text, new SimpleTextAttributes(background, foreground, JBColor.RED, style));
     }
-    else { //markup
-      final HashSet<String> quoted = new HashSet<>();
+    else {
+      //markup
+      ObjectOpenHashSet<String> quoted = new ObjectOpenHashSet<>();
       filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
-      final TreeMap<Integer, String> indx = new TreeMap<>();
+      final Int2ObjectRBTreeMap<String> indexToString = new Int2ObjectRBTreeMap<>();
       for (String stripped : quoted) {
         int beg = 0;
         int idx;
         while ((idx = StringUtil.indexOfIgnoreCase(text, stripped, beg)) != -1) {
-          indx.put(idx, text.substring(idx, idx + stripped.length()));
+          indexToString.put(idx, text.substring(idx, idx + stripped.length()));
           beg = idx + stripped.length();
         }
       }
 
       final List<String> selectedWords = new ArrayList<>();
       int pos = 0;
-      for (Integer index : indx.keySet()) {
-        final String stripped = indx.get(index);
-        final int start = index.intValue();
+      for (Int2ObjectMap.Entry<String> entry : Int2ObjectMaps.fastIterable(indexToString)) {
+        String stripped = entry.getValue();
+        int start = entry.getIntKey();
         if (pos > start) {
           final String highlighted = selectedWords.get(selectedWords.size() - 1);
           if (highlighted.length() < stripped.length()) {
@@ -556,7 +560,7 @@ public final class SearchUtil {
     return keySetList;
   }
 
-  public static String processFilter(String filter, Set<? super String> quoted) {
+  private static String processFilter(String filter, Set<? super String> quoted) {
     StringBuilder withoutQuoted = new StringBuilder();
     int beg = 0;
     final Matcher matcher = QUOTED.matcher(filter);

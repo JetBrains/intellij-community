@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -37,13 +37,17 @@ import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledWithReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -93,8 +97,8 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        MultiMap<VirtualFile, Integer> files2lines = new MultiMap<>();
-        Map<Integer, LastRevision> revisions = new HashMap<>();
+        Object2ObjectOpenHashMap<VirtualFile, IntArrayList> files2lines = new Object2ObjectOpenHashMap<>();
+        Int2ObjectOpenHashMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {
           for (int line = 0; line < editor.getDocument().getLineCount(); line++) {
@@ -102,21 +106,21 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
             VirtualFile file = getHyperlinkVirtualFile(hyperlinks.findAllHyperlinksOnLine(line));
             if (file == null) continue;
 
-            files2lines.putValue(file, line);
+            files2lines.computeIfAbsent(file, __ -> new IntArrayList()).add(line);
           }
         });
 
-        files2lines.entrySet().forEach(entry -> {
-          indicator.checkCanceled();
+        for (Map.Entry<VirtualFile, IntArrayList> entry : Object2ObjectMaps.fastIterable(files2lines)) {
           VirtualFile file = entry.getKey();
-          Collection<Integer> lines = entry.getValue();
-
+          IntArrayList value = entry.getValue();
+          indicator.checkCanceled();
           LastRevision revision = getLastRevision(file);
-          if (revision == null) return;
-
+          if (revision == null) {
+            continue;
+          }
           synchronized (LOCK) {
-            for (Integer line : lines) {
-              revisions.put(line, revision);
+            for (IntListIterator iterator = value.iterator(); iterator.hasNext(); ) {
+              revisions.put(iterator.nextInt(), revision);
             }
           }
 
@@ -126,7 +130,7 @@ public class AnnotateStackTraceAction extends DumbAwareAction {
               updateGutter(indicator, revisions);
             }
           });
-        });
+        }
 
         // myUpdateQueue can be disposed before the last revisions are passed to the gutter
         ApplicationManager.getApplication().invokeLater(() -> updateGutter(indicator, revisions));

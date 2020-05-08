@@ -1,17 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Locale;
 
 /**
 * @author irengrig
 */
-public class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
+public final class DateChangeListGroupingStrategy implements ChangeListGroupingStrategy {
   @NonNls private final SimpleDateFormat myMonthYearFormat = new SimpleDateFormat("MMMM yyyy", Locale.ENGLISH);
   private long myTimeToRecalculateAfter;
   private Calendar myCurrentCalendar;
@@ -73,36 +77,34 @@ public class DateChangeListGroupingStrategy implements ChangeListGroupingStrateg
     return CommittedChangeListByDateComparator.DESCENDING;
   }
 
-  private static class MonthsCache {
-    @NonNls private final SimpleDateFormat myMonthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
-    private final Map<Integer, String> myCache;
+  private static final class MonthsCache {
+    private final Int2ObjectOpenHashMap<String> myCache = new Int2ObjectOpenHashMap<>(12);
 
-    private MonthsCache(final Calendar calendarForInit) {
-      myCache = new HashMap<>();
+    private MonthsCache(Calendar calendarForInit) {
+      SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", Locale.ENGLISH);
       for (int i = 0; i < 12; i++) {
         calendarForInit.set(Calendar.MONTH, i);
-        myCache.put(i, myMonthFormat.format(calendarForInit.getTime()));
+        myCache.put(i, monthFormat.format(calendarForInit.getTime()));
       }
     }
 
-    public String get(final int month) {
+    public String get(int month) {
       return myCache.get(month);
     }
   }
 
-  private static class WeekDayFormatCache {
-    @NonNls private final SimpleDateFormat myWeekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
-    private final Map<Integer, String> myCache;
+  private static final class WeekDayFormatCache {
+    private final Int2ObjectOpenHashMap<String> myCache = new Int2ObjectOpenHashMap<>(7);
 
     private WeekDayFormatCache(final Calendar calendarForInit) {
-      myCache = new HashMap<>();
+      SimpleDateFormat weekdayFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
       for (int i = 1; i < 8; i++) {
         calendarForInit.set(Calendar.DAY_OF_WEEK, i);
-        myCache.put(i, myWeekdayFormat.format(calendarForInit.getTime()));
+        myCache.put(i, weekdayFormat.format(calendarForInit.getTime()));
       }
     }
 
-    public String get(final int dayOfWeek) {
+    public String get(int dayOfWeek) {
       return myCache.get(dayOfWeek);
     }
   }

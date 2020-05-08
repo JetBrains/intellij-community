@@ -52,7 +52,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   boolean myMoveInProgress;
   boolean myPutMergedIntervalsAtBeginning;
   private boolean myConsiderCaretPositionOnDocumentUpdates = true;
-  private List<Inlay> myInlaysAtCaret;
+  private List<Inlay<?>> myInlaysAtCaret;
   private boolean myInBatchMode;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
@@ -74,7 +74,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     if (myInBatchMode) LOG.error("Document shouldn't be changed during batch inlay operation");
     int offset = event.getOffset();
     if (myConsiderCaretPositionOnDocumentUpdates && event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
-      List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+      List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
       int inlayCount = inlays.size();
       if (inlayCount > 0) {
         VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
@@ -162,17 +162,15 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
 
   @NotNull
   @Override
-  public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
-    List<InlineInlayImpl> range =
-      getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
+  public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
     //noinspection unchecked
-    return (List)range;
+    return getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true, INLINE_ELEMENTS_COMPARATOR);
   }
 
   @NotNull
   @Override
   public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
-    List<InlineInlayImpl> range =
+    List<InlineInlayImpl<?>> range =
       getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                          INLINE_ELEMENTS_COMPARATOR);
     //noinspection unchecked
@@ -197,11 +195,11 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     return (List)range;
   }
 
-  private static <T extends Inlay> List<T> getElementsInRange(@NotNull IntervalTreeImpl<? extends T> tree,
-                                                              int startOffset,
-                                                              int endOffset,
-                                                              Predicate<? super T> predicate,
-                                                              Comparator<? super T> comparator) {
+  private static <T extends Inlay<?>> List<T> getElementsInRange(@NotNull IntervalTreeImpl<? extends T> tree,
+                                                                 int startOffset,
+                                                                 int endOffset,
+                                                                 Predicate<? super T> predicate,
+                                                                 Comparator<? super T> comparator) {
     List<T> result = new ArrayList<>();
     tree.processOverlappingWith(startOffset, endOffset, inlay -> {
       if (predicate.test(inlay)) result.add(inlay);
@@ -290,7 +288,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
   @Override
   public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.visualPositionToOffset(visualPosition);
-    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+    List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
     if (visualPosition.line != inlayStartPosition.line) return null;
@@ -353,12 +351,12 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     }
     if (hasInlineElements) {
       int offset = location.getOffset();
-      List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+      List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
       if (!inlays.isEmpty()) {
         VisualPosition startVisualPosition = myEditor.offsetToVisualPosition(offset);
         Point inlayPoint = myEditor.visualPositionToXY(startVisualPosition);
         if (point.y < inlayPoint.y || point.y >= inlayPoint.y + myEditor.getLineHeight()) return null;
-        Inlay inlay = findInlay(inlays, point.x, inlayPoint.x);
+        Inlay<?> inlay = findInlay(inlays, point.x, inlayPoint.x);
         if (inlay != null) return inlay;
       }
     }
@@ -366,12 +364,12 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
       int offset = location.getOffset();
       int logicalLine = myEditor.getDocument().getLineNumber(offset);
       if (offset == myEditor.getDocument().getLineEndOffset(logicalLine) && !myEditor.getFoldingModel().isOffsetCollapsed(offset)) {
-        List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+        List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
         if (!inlays.isEmpty()) {
           Rectangle bounds = inlays.get(0).getBounds();
           assert bounds != null;
           if (point.y < bounds.y || point.y >= bounds.y + bounds.height) return null;
-          Inlay inlay = findInlay(inlays, point.x, bounds.x);
+          Inlay<?> inlay = findInlay(inlays, point.x, bounds.x);
           if (inlay != null) return inlay;
         }
       }
@@ -379,7 +377,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
     return null;
   }
 
-  private static Inlay findInlay(List<? extends Inlay> inlays, int x, int startX) {
+  private static Inlay<?> findInlay(List<Inlay<?>> inlays, int x, int startX) {
     for (Inlay inlay : inlays) {
       int endX = startX + inlay.getWidthInPixels();
       if (x >= startX && x < endX) return inlay;
@@ -411,7 +409,7 @@ public class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, 
 
   @NotNull
   @Override
-  public List<Inlay> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+  public List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
     DocumentEx document = myEditor.getDocument();
     if (!hasAfterLineEndElements() || logicalLine < 0 || logicalLine > 0 && logicalLine >= document.getLineCount()) {
       return Collections.emptyList();

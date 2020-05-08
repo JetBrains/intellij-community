@@ -45,5 +45,6 @@
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-framework" level="project" />
     <orderEntry type="library" name="rd-swing" level="project" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

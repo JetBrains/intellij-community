@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -11,7 +10,7 @@ import java.util.*;
 /**
  * @author Irina.Chernushina on 4/22/2017.
  */
-public class MatchResult {
+public final class MatchResult {
   public final List<JsonSchemaObject> mySchemas;
   public final List<Collection<? extends JsonSchemaObject>> myExcludingSchemas;
 
@@ -22,7 +21,7 @@ public class MatchResult {
 
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
     List<JsonSchemaObject> schemas = new ArrayList<>();
-    MultiMap<Integer, JsonSchemaObject> oneOfGroups = MultiMap.create();
+    Int2ObjectOpenHashMap<List<JsonSchemaObject>> oneOfGroups = new Int2ObjectOpenHashMap<>();
     iterateTree(root, node -> {
       if (node.isAny()) return true;
       int groupNumber = node.getExcludingGroupNumber();
@@ -30,15 +29,16 @@ public class MatchResult {
         schemas.add(node.getSchema());
       }
       else {
-        oneOfGroups.putValue(groupNumber, node.getSchema());
+        oneOfGroups.computeIfAbsent(groupNumber, __ -> new ArrayList<>()).add(node.getSchema());
       }
       return true;
     });
-    List<Collection<? extends JsonSchemaObject>> result = oneOfGroups.isEmpty()
-                                                          ? ContainerUtil.emptyList()
-                                                          : new ArrayList<>(oneOfGroups.keySet().size());
-    for (Map.Entry<Integer, Collection<JsonSchemaObject>> entry: oneOfGroups.entrySet()) {
-      result.add(entry.getValue());
+    List<Collection<? extends JsonSchemaObject>> result;
+    if (oneOfGroups.isEmpty()) {
+      result = Collections.emptyList();
+    }
+    else {
+      result = new ArrayList<>(oneOfGroups.values());
     }
     return new MatchResult(schemas, result);
   }

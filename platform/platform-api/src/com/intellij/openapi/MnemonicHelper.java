@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +26,6 @@ import java.awt.event.InputEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.IntPredicate;
 
 /**
@@ -60,7 +59,7 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
     }
   };
 
-  private Map<Integer, String> myMnemonics;
+  private Int2ObjectOpenHashMap<String> myMnemonics;
 
   /**
    * @see #init(Component)
@@ -137,12 +136,12 @@ public final class MnemonicHelper extends ComponentTreeWatcher {
 
   public void checkForDuplicateMnemonics(int mnemonic, String text) {
     if (mnemonic == 0) return;
-    if (myMnemonics == null) myMnemonics = new HashMap<>();
-    final String other = myMnemonics.get(Integer.valueOf(mnemonic));
+    if (myMnemonics == null) myMnemonics = new Int2ObjectOpenHashMap<>();
+    final String other = myMnemonics.get(mnemonic);
     if (other != null && !other.equals(text)) {
       LOG.error("conflict: multiple components with mnemonic '" + (char)mnemonic + "' seen on '" + text + "' and '" + other + "'");
     }
-    myMnemonics.put(Integer.valueOf(mnemonic), text);
+    myMnemonics.put(mnemonic, text);
   }
 
   /**
