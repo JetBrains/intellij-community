@@ -5,30 +5,21 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
-import com.intellij.util.ui.UIUtil.DEFAULT_VGAP
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
-import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitNewCommitMessageActionDialog
 import git4idea.repo.GitRepository
 
 private val LOG: Logger = logger<GitRewordAction>()
@@ -39,12 +30,9 @@ class GitRewordAction : GitSingleCommitEditingAction() {
   )
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
-    val commit = commitEditingData.selectedCommit
-    val project = commitEditingData.project
-    val repository = commitEditingData.repository
-    val details = getOrLoadDetails(project, commitEditingData.logData, commit)
+    val details = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selectedCommit)
 
-    RewordDialog(project, commitEditingData.logData, details, repository).show()
+    RewordNewCommitMessageActionDialog(commitEditingData, details).show()
   }
 
   private fun getOrLoadDetails(project: Project, data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata {
@@ -104,68 +92,24 @@ class GitRewordAction : GitSingleCommitEditingAction() {
     return super.getProhibitedStateMessage(commitEditingData, operation)
   }
 
-  private inner class RewordDialog(val project: Project, val data: VcsLogData, val commit: VcsCommitMetadata, val repository: GitRepository)
-    : DialogWrapper(project, true) {
-
-    val originalHEAD = repository.info.currentRevision
-    val commitEditor = createCommitEditor()
-
+  private inner class RewordNewCommitMessageActionDialog(
+    commitEditingData: SingleCommitEditingData,
+    private val commit: VcsCommitMetadata
+  ) : GitNewCommitMessageActionDialog<SingleCommitEditingData>(
+    commitEditingData,
+    commit.fullMessage,
+    GitBundle.message(
+      "rebase.log.reword.dialog.description.label",
+      commit.id.toShortString(),
+      getShortPresentation(commit.author)
+    )
+  ) {
     init {
-      Disposer.register(disposable, commitEditor)
-
-      init()
-      isModal = false
       title = GitBundle.getString("rebase.log.reword.dialog.title")
     }
 
-    override fun createCenterPanel() =
-      JBUI.Panels.simplePanel(DEFAULT_HGAP, DEFAULT_VGAP)
-        .addToTop(JBLabel(GitBundle.message(
-          "rebase.log.reword.dialog.description.label",
-          commit.id.toShortString(),
-          getShortPresentation(commit.author)
-        )))
-        .addToCenter(commitEditor)
-
-    override fun getPreferredFocusedComponent() = commitEditor.editorField
-
-    override fun getDimensionServiceKey() = "GitRewordDialog"
-
-    private fun createCommitEditor(): CommitMessage {
-      val editor = CommitMessage(project, false, false, true)
-      editor.setText(commit.fullMessage)
-      editor.editorField.setCaretPosition(0)
-      editor.editorField.addSettingsProvider { editorEx ->
-        // display at least several rows for one-line messages
-        val MIN_ROWS = 3
-        if ((editorEx as EditorImpl).visibleLineCount < MIN_ROWS) {
-          verticalStretch = 1.5F
-        }
-      }
-      return editor
-    }
-
-    override fun doValidate(): ValidationInfo? {
-      if (repository.info.currentRevision != originalHEAD || Disposer.isDisposed(data)) {
-        return ValidationInfo(GitBundle.getString("rebase.log.reword.dialog.failed.repository.changed.message"))
-      }
-
-      val branches = findContainingBranches(data, commit.root, commit.id)
-      val protectedBranch = findProtectedRemoteBranch(repository, branches)
-      if (protectedBranch != null) {
-        return ValidationInfo(GitBundle.message(
-          "rebase.log.reword.dialog.failed.pushed.to.protected.message",
-          GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
-        ))
-      }
-
-      return null
-    }
-
-    override fun doOKAction() {
-      super.doOKAction()
-
-      rewordInBackground(project, commit, repository, commitEditor.comment)
+    override fun startOperation(commitEditingData: SingleCommitEditingData, newMessage: String) {
+      rewordInBackground(commitEditingData.project, commit, commitEditingData.repository, newMessage)
     }
   }
 }

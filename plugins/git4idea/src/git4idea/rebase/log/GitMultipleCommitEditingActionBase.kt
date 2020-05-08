@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -191,23 +190,6 @@ abstract class GitMultipleCommitEditingActionBase<T : GitMultipleCommitEditingAc
       project
     )
     return description
-  }
-
-  protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
-    val branchesGetter = data.containingBranchesGetter
-    val branches = branchesGetter.getContainingBranchesQuickly(root, hash)
-    if (branches == null) {
-      return ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously<List<String>, RuntimeException>(
-          {
-            branchesGetter.getContainingBranchesSynchronously(root, hash)
-          },
-          GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"),
-          true,
-          data.project
-        )
-    }
-    return branches
   }
 
   private fun createCommitEditingData(e: AnActionEvent): T? {
