@@ -13,17 +13,23 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -64,7 +70,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     }
   }
 
-  private static void run(@NotNull Project project) throws IOException {
+  private void run(@NotNull Project project) throws IOException {
     Set<UnknownFeature> unknownFeatures = UnknownFeaturesCollector.getInstance(project).getUnknownFeatures();
     final PluginsAdvertiser.KnownExtensions extensions = PluginsAdvertiser.loadExtensions();
     if (extensions != null && unknownFeatures.isEmpty()) {
@@ -193,6 +199,22 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         notification.notify(project);
       }
     }, ModalityState.NON_MODAL);
+
+    Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
+    Disposer.register(project, activityDisposable);
+
+    project.getMessageBus().connect(activityDisposable)
+      .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+        @Override
+        public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            PluginAdvertiserExtensionsKey extensionsKey = new PluginAdvertiserExtensionsKey(file.getName(), file.getFileType().getName(), file.getExtension());
+            PluginAdvertiserExtensionsState.getInstance(project).updateCache(extensionsKey);
+            EditorNotifications.getInstance(project).updateNotifications(file);
+          });
+        }
+      });
+
   }
 
   @NotNull

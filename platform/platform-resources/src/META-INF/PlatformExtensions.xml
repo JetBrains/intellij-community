@@ -751,6 +751,7 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsState"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
 
