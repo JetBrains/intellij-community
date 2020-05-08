@@ -113,6 +113,12 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
         }
 
         override fun changed(event: EntityStoreChanged) = LOG.bracket("ModuleManagerComponent.EntityStoreChange") {
+
+          val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
+          val changes = event.getChanges(ModuleEntity::class.java)
+          val facetChanges = event.getChanges(FacetEntity::class.java)
+          if (changes.isEmpty() && moduleLibraryChanges.isEmpty() && facetChanges.isEmpty()) return@bracket
+
           executeOrQueueOnDispatchThread {
             incModificationCount()
 
@@ -122,17 +128,30 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
             val unloadedModulesSet = unloadedModulesSetOriginal.toMutableSet()
             val oldModuleNames = mutableMapOf<Module, String>()
 
-            // Process changes
-            for (change in event.getAllChanges()) {
-              @Suppress("UNCHECKED_CAST")
-              when (change.entity()) {
-                is LibraryEntity -> {
-                  change as EntityChange<LibraryEntity>
-                  if (change.isModuleLibrary()) processModuleLibraryChange(change, modulesToCheck)
-                }
-                is ModuleEntity -> processModuleChange(change as EntityChange<ModuleEntity>, unloadedModulesSet, oldModuleNames)
-                is FacetEntity -> FacetEntityChangeListener.getInstance(project).processChange(change as EntityChange<FacetEntity>)
-              }
+            for (change in moduleLibraryChanges) when (change) {
+              is EntityChange.Removed -> processModuleLibraryChange(change, modulesToCheck)
+              is EntityChange.Replaced -> processModuleLibraryChange(change, modulesToCheck)
+              is EntityChange.Added -> Unit
+            }
+
+            for (change in facetChanges) when (change) {
+              is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change)
+              is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change)
+              is EntityChange.Added -> Unit
+            }
+
+            for (change in changes) processModuleChange(change, unloadedModulesSet, oldModuleNames)
+
+            for (change in moduleLibraryChanges) when (change) {
+              is EntityChange.Removed -> Unit
+              is EntityChange.Replaced -> Unit
+              is EntityChange.Added -> processModuleLibraryChange(change, modulesToCheck)
+            }
+
+            for (change in facetChanges) when (change) {
+              is EntityChange.Removed -> Unit
+              is EntityChange.Replaced -> Unit
+              is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change)
             }
 
             // After every change processed
@@ -594,6 +613,15 @@ class LegacyBridgeModuleManagerComponent(private val project: Project) : ModuleM
       is EntityChange.Removed -> entity.tableId is LibraryTableId.ModuleLibraryTableId
       is EntityChange.Replaced -> oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
     }
+
+    private fun List<EntityChange<LibraryEntity>>.filterModuleLibraryChanges() =
+      filter {
+        when (it) {
+          is EntityChange.Added -> it.entity.tableId is LibraryTableId.ModuleLibraryTableId
+          is EntityChange.Removed -> it.entity.tableId is LibraryTableId.ModuleLibraryTableId
+          is EntityChange.Replaced -> it.oldEntity.tableId is LibraryTableId.ModuleLibraryTableId
+        }
+      }
 
     private fun EntityChange<*>.entity(): TypedEntity = when (this) {
       is EntityChange.Added -> entity
