@@ -114,8 +114,8 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     else if (info instanceof ClassCastExceptionInfo) {
       return fromClassCastException(anchor, ((ClassCastExceptionInfo)info).getActualClass());
     }
-    else if (info instanceof NullPointerExceptionInfo) {
-      return Analysis.create(DfTypes.NULL, findDereferencedExpression(anchor));
+    else if (info instanceof NullPointerExceptionInfo || info instanceof JetBrainsNotNullInstrumentationExceptionInfo) {
+      return Analysis.create(DfTypes.NULL, tryCast(anchor, PsiExpression.class));
     }
     else if (info instanceof NegativeArraySizeExceptionInfo) {
       Integer size = ((NegativeArraySizeExceptionInfo)info).getSuppliedSize();
@@ -125,11 +125,6 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     }
     else if (info instanceof ArithmeticExceptionInfo) {
       return fromArithmeticException(anchor);
-    }
-    else if (info instanceof JetBrainsNotNullInstrumentationExceptionInfo) {
-      if (anchor instanceof PsiExpression) {
-        return Analysis.create(DfTypes.NULL, (PsiExpression)anchor);
-      }
     }
     return null;
   }
@@ -245,27 +240,6 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       }
     }
     return result; 
-  }
-
-  private @Nullable
-  static PsiExpression findDereferencedExpression(PsiElement anchor) {
-    if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.THROW) && anchor.getParent() instanceof PsiThrowStatement) {
-      return ((PsiThrowStatement)anchor.getParent()).getException();
-    }
-    if (anchor instanceof PsiKeyword &&
-        anchor.textMatches(PsiKeyword.SYNCHRONIZED) &&
-        anchor.getParent() instanceof PsiSynchronizedStatement) {
-      return ((PsiSynchronizedStatement)anchor.getParent()).getLockExpression();
-    }
-    if (anchor instanceof PsiIdentifier && anchor.getParent() instanceof PsiReferenceExpression) {
-      return ((PsiReferenceExpression)anchor.getParent()).getQualifierExpression();
-    }
-    if (anchor instanceof PsiJavaToken && ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LBRACKET) &&
-        anchor.getParent() instanceof PsiArrayAccessExpression) {
-      // Currently we don't report auto-unboxing of index, so it's surely array itself
-      return ((PsiArrayAccessExpression)anchor.getParent()).getArrayExpression();
-    }
-    return null;
   }
 
   private @Nullable Analysis fromClassCastException(@NotNull PsiElement anchor, @Nullable String actualClass) {
