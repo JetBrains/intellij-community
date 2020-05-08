@@ -104,10 +104,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean argument_list_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "argument_list_recover_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, LEFT_CURLY);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -253,10 +251,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean assignment_command_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_command_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, ASSIGN);
     if (!r) r = consumeToken(b, PLUS_ASSIGN);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -413,13 +409,11 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean block_compound_list_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "block_compound_list_recover_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, LEFT_CURLY);
     if (!r) r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, RIGHT_CURLY);
     if (!r) r = consumeToken(b, DO);
     if (!r) r = consumeToken(b, DONE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -583,11 +577,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean case_pattern_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "case_pattern_recover_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, RIGHT_PAREN);
     if (!r) r = consumeToken(b, CASE_END);
     if (!r) r = consumeToken(b, ESAC);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -741,10 +733,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean commands_list_1_0_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, AND_AND);
     if (!r) r = consumeToken(b, OR_OR);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -771,12 +761,10 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean commands_list_1_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "commands_list_1_0_1_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, PIPE);
     if (!r) r = consumeToken(b, PIPE_AMP);
     if (!r) r = consumeToken(b, AMP);
     if (!r) r = consumeToken(b, SEMI);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -816,11 +804,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean composed_var_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "composed_var_1_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, LEFT_PAREN);
     if (!r) r = consumeToken(b, LEFT_DOUBLE_PAREN);
     if (!r) r = consumeToken(b, LEFT_CURLY);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -859,7 +845,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // newlines pipeline_command_list end_of_list  newlines
+  // newlines pipeline_command_list end_of_list newlines
   public static boolean compound_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compound_list")) return false;
     boolean r, p;
@@ -1052,11 +1038,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   static boolean end_of_list(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "end_of_list")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, LINEFEED);
     if (!r) r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, AMP);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1178,7 +1162,7 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // word argument_list  newlines block
+  // word argument_list newlines block
   //                                      | function (word | <<functionNameKeywordsRemapped>>) argument_list? newlines block
   static boolean function_definition_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner")) return false;
@@ -1191,7 +1175,7 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // word argument_list  newlines block
+  // word argument_list newlines block
   private static boolean function_definition_inner_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "function_definition_inner_0")) return false;
     boolean r, p;
@@ -1348,14 +1332,12 @@ public class ShParser implements PsiParser, LightPsiParser {
   static boolean heredoc_pipeline_separator(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_pipeline_separator")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, AND_AND);
     if (!r) r = consumeToken(b, OR_OR);
     if (!r) r = consumeToken(b, AMP);
     if (!r) r = consumeToken(b, PIPE);
     if (!r) r = consumeToken(b, PIPE_AMP);
     if (!r) r = consumeToken(b, SEMI);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1545,10 +1527,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean include_directive_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "include_directive_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, "source");
     if (!r) r = consumeToken(b, ".");
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1615,11 +1595,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean list_terminator_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "list_terminator_recover_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, DO);
     if (!r) r = consumeToken(b, LEFT_CURLY);
     if (!r) r = consumeToken(b, LINEFEED);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1671,13 +1649,11 @@ public class ShParser implements PsiParser, LightPsiParser {
   static boolean not_lvalue(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "not_lvalue")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, BANG);
     if (!r) r = vars(b, l + 1);
     if (!r) r = consumeToken(b, DOLLAR);
     if (!r) r = brace_expansion(b, l + 1);
     if (!r) r = consumeToken(b, FILEDESCRIPTOR);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1934,14 +1910,12 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean pipeline_command_list_separator_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_command_list_separator_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, AND_AND);
     if (!r) r = consumeToken(b, OR_OR);
     if (!r) r = consumeToken(b, AMP);
     if (!r) r = consumeToken(b, SEMI);
     if (!r) r = consumeToken(b, PIPE);
     if (!r) r = consumeToken(b, LINEFEED);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -1962,7 +1936,6 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean pipeline_recover_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pipeline_recover_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, CASE);
     if (!r) r = consumeToken(b, IF);
     if (!r) r = consumeToken(b, WHILE);
@@ -1993,7 +1966,6 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, DO);
     if (!r) r = consumeToken(b, DONE);
     if (!r) r = consumeToken(b, RIGHT_CURLY);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2016,10 +1988,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean process_substitution_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "process_substitution_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, INPUT_PROCESS_SUBSTITUTION);
     if (!r) r = consumeToken(b, OUTPUT_PROCESS_SUBSTITUTION);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2087,10 +2057,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean redirection_inner_0_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_0_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, REDIRECT_LESS_AMP);
     if (!r) r = consumeToken(b, REDIRECT_GREATER_AMP);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2098,10 +2066,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean redirection_inner_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_0_1")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = number(b, l + 1);
     if (!r) r = consumeToken(b, MINUS);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2120,7 +2086,6 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean redirection_inner_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeToken(b, GT);
     if (!r) r = consumeToken(b, LT);
     if (!r) r = consumeToken(b, SHIFT_RIGHT);
@@ -2131,7 +2096,6 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeToken(b, REDIRECT_AMP_GREATER_GREATER);
     if (!r) r = consumeToken(b, REDIRECT_LESS_GREATER);
     if (!r) r = consumeToken(b, REDIRECT_GREATER_BAR);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2615,11 +2579,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean equality_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "equality_condition_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, EQ);
     if (!r) r = consumeTokenSmart(b, NE);
     if (!r) r = consumeTokenSmart(b, REGEXP);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2627,10 +2589,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean comparison_condition_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "comparison_condition_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LT);
     if (!r) r = consumeTokenSmart(b, GT);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2817,7 +2777,6 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean assignment_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "assignment_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, ASSIGN);
     if (!r) r = consumeTokenSmart(b, MULT_ASSIGN);
     if (!r) r = consumeTokenSmart(b, DIV_ASSIGN);
@@ -2829,7 +2788,6 @@ public class ShParser implements PsiParser, LightPsiParser {
     if (!r) r = consumeTokenSmart(b, BIT_AND_ASSIGN);
     if (!r) r = consumeTokenSmart(b, BIT_XOR_ASSIGN);
     if (!r) r = consumeTokenSmart(b, BIT_OR_ASSIGN);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2848,10 +2806,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean equality_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "equality_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, EQ);
     if (!r) r = consumeTokenSmart(b, NE);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2859,12 +2815,10 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean comparison_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "comparison_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, LE);
     if (!r) r = consumeTokenSmart(b, GE);
     if (!r) r = consumeTokenSmart(b, LT);
     if (!r) r = consumeTokenSmart(b, GT);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2872,10 +2826,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean bitwise_shift_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "bitwise_shift_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, SHIFT_LEFT);
     if (!r) r = consumeTokenSmart(b, SHIFT_RIGHT);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2883,10 +2835,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean add_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "add_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, PLUS);
     if (!r) r = consumeTokenSmart(b, MINUS);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2894,11 +2844,9 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean mul_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "mul_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, MULT);
     if (!r) r = consumeTokenSmart(b, DIV);
     if (!r) r = consumeTokenSmart(b, MOD);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2918,10 +2866,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean logical_bitwise_negation_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "logical_bitwise_negation_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, BANG);
     if (!r) r = consumeTokenSmart(b, BITWISE_NEGATION);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2941,10 +2887,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean unary_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unary_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, MINUS);
     if (!r) r = consumeTokenSmart(b, PLUS);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2964,10 +2908,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean pre_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "pre_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, MINUS_MINUS);
     if (!r) r = consumeTokenSmart(b, PLUS_PLUS);
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -2975,10 +2917,8 @@ public class ShParser implements PsiParser, LightPsiParser {
   private static boolean post_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "post_expression_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = consumeTokenSmart(b, MINUS_MINUS);
     if (!r) r = consumeTokenSmart(b, PLUS_PLUS);
-    exit_section_(b, m, null, r);
     return r;
   }
 
