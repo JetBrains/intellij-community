@@ -35,9 +35,11 @@ import git4idea.reset.GitResetMode
 import java.io.File
 import java.io.IOException
 
-class GitRewordOperation(private val repository: GitRepository,
-                         private val commit: VcsCommitMetadata,
-                         private val newMessage: String) {
+internal class GitRewordOperation(
+  private val repository: GitRepository,
+  private val commit: VcsCommitMetadata,
+  private val newMessage: String
+) {
   init {
     repository.update()
   }

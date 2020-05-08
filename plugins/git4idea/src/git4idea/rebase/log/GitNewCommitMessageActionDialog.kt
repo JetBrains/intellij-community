@@ -13,7 +13,7 @@ import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 
-abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData>(
+internal abstract class GitNewCommitMessageActionDialog<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData>(
   private val commitEditingData: T,
   private val originMessage: String,
   private val dialogLabel: @Nls String

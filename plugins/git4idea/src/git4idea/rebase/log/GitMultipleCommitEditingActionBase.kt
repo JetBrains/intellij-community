@@ -20,7 +20,7 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
-abstract class GitMultipleCommitEditingActionBase<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
+internal abstract class GitMultipleCommitEditingActionBase<T : GitMultipleCommitEditingActionBase.MultipleCommitEditingData> : DumbAwareAction() {
 
   protected open val prohibitRebaseDuringRebasePolicy: ProhibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Allow
 

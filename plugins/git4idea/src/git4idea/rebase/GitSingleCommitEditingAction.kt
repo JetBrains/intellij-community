@@ -12,7 +12,7 @@ import git4idea.rebase.log.GitMultipleCommitEditingActionBase
 import git4idea.rebase.log.findContainingBranches
 import git4idea.repo.GitRepository
 
-abstract class GitSingleCommitEditingAction : GitMultipleCommitEditingActionBase<GitSingleCommitEditingAction.SingleCommitEditingData>() {
+internal abstract class GitSingleCommitEditingAction : GitMultipleCommitEditingActionBase<GitSingleCommitEditingAction.SingleCommitEditingData>() {
   override fun createCommitEditingData(
     repository: GitRepository,
     log: VcsLog,

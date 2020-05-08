@@ -24,7 +24,7 @@ import git4idea.repo.GitRepository
 
 private val LOG: Logger = logger<GitRewordAction>()
 
-class GitRewordAction : GitSingleCommitEditingAction() {
+internal class GitRewordAction : GitSingleCommitEditingAction() {
   override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
     GitBundle.getString("rebase.log.action.operation.reword.name")
   )
