@@ -402,9 +402,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     CodeStyleManager.getInstance(getProject()).reformat(psiFile)
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
 
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
+
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
 
     assert ((PsiJavaFile)psiFile).importList.node
+
+    assert stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(StubUpdatingIndex.INDEX_ID, project)
   }
 
   void "test rename file with indexed associated unsaved document don't lost its data"() {
