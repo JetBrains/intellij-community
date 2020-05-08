@@ -15,7 +15,7 @@ import java.io.Serializable
  */
 
 @Suppress("unused")
-class ModuleEntityData : PEntityData<ModuleEntity>(), PSoftLinkable {
+class ModuleEntityData : PEntityData.WithCalculatablePersistentId<ModuleEntity>(), PSoftLinkable {
   lateinit var name: String
   var type: String? = null
   lateinit var dependencies: List<ModuleDependencyItem>
@@ -65,6 +65,8 @@ class ModuleEntityData : PEntityData<ModuleEntity>(), PSoftLinkable {
   override fun createEntity(snapshot: TypedEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies.toList()).also {
     addMetaData(it, snapshot)
   }
+
+  override fun persistentId(): ModuleId = ModuleId(name)
 }
 
 class ModuleEntity(
@@ -325,7 +327,7 @@ sealed class LibraryTableId : Serializable {
 }
 
 @Suppress("unused")
-class LibraryEntityData : PEntityData<LibraryEntity>(), PSoftLinkable {
+class LibraryEntityData : PEntityData.WithCalculatablePersistentId<LibraryEntity>(), PSoftLinkable {
   lateinit var tableId: LibraryTableId
   lateinit var name: String
   lateinit var roots: List<LibraryRoot>
@@ -350,6 +352,8 @@ class LibraryEntityData : PEntityData<LibraryEntity>(), PSoftLinkable {
   override fun createEntity(snapshot: TypedEntityStorage): LibraryEntity {
     return LibraryEntity(tableId, name, roots.toList(), excludedRoots.toList()).also { addMetaData(it, snapshot) }
   }
+
+  override fun persistentId(): LibraryId = LibraryId(name, tableId)
 }
 
 open class LibraryEntity(
@@ -450,7 +454,7 @@ val ModuleEntity.externalSystemOptions: ExternalSystemModuleOptionsEntity?
   get() = referrers(ExternalSystemModuleOptionsEntity::module).firstOrNull()
 
 @Suppress("unused")
-class FacetEntityData : PEntityData<FacetEntity>() {
+class FacetEntityData : PEntityData.WithPersistentId<FacetEntity>() {
   lateinit var name: String
   lateinit var facetType: String
   var configurationXmlTag: String? = null
@@ -490,7 +494,7 @@ data class ArtifactId(val name: String) : PersistentEntityId<ArtifactEntity>() {
 }
 
 @Suppress("unused")
-class ArtifactEntityData : PEntityData<ArtifactEntity>() {
+class ArtifactEntityData : PEntityData.WithCalculatablePersistentId<ArtifactEntity>() {
   lateinit var name: String
   lateinit var artifactType: String
   var includeInProjectBuild: Boolean = false
@@ -499,6 +503,8 @@ class ArtifactEntityData : PEntityData<ArtifactEntity>() {
   override fun createEntity(snapshot: TypedEntityStorage): ArtifactEntity {
     return ArtifactEntity(name, artifactType, includeInProjectBuild, outputUrl).also { addMetaData(it, snapshot) }
   }
+
+  override fun persistentId(): ArtifactId = ArtifactId(name)
 }
 
 class ArtifactEntity(

@@ -1,15 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspace.api.pstorage
 
-import com.intellij.workspace.api.*
+import com.intellij.workspace.api.EntitySource
+import com.intellij.workspace.api.TypedEntityStorage
+import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.TypedEntityWithPersistentId
 import org.junit.Assert
 import org.junit.Test
 
-internal class PPersistentIdEntityData : PEntityData<PPersistentIdEntity>() {
+internal class PPersistentIdEntityData : PEntityData.WithCalculatablePersistentId<PPersistentIdEntity>() {
   lateinit var data: String
   override fun createEntity(snapshot: TypedEntityStorage): PPersistentIdEntity {
     return PPersistentIdEntity(data).also { addMetaData(it, snapshot) }
   }
+
+  override fun persistentId(): PSampleEntityId = PSampleEntityId(data)
 }
 
 internal class PPersistentIdEntity(val data: String) : TypedEntityWithPersistentId, PTypedEntity() {

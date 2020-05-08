@@ -158,7 +158,7 @@ internal class PEntityStorageBuilder(
     // Restore links to soft references
     if (cloned is PSoftLinkable) {
       for (link in cloned.getLinks()) {
-        softLinks.put(link, cloned.createPid())
+        softLinks.put(link, replaceToPid)
       }
     }
 
@@ -205,8 +205,7 @@ internal class PEntityStorageBuilder(
 
     val id = newEntity.createPid()
     val existingEntityData = entityDataById(id)
-    val existingEntity = existingEntityData?.createEntity(this)
-    val beforePersistentId = if (existingEntity is TypedEntityWithPersistentId) existingEntity.persistentId() else null
+    val beforePersistentId = existingEntityData?.persistentId(this)
     val beforeSoftLinks = if (existingEntityData is PSoftLinkable) existingEntityData.getLinks() else null
 
     /// Replace entity data. id should not be changed
@@ -257,10 +256,9 @@ internal class PEntityStorageBuilder(
   private fun <T : TypedEntity> updateSoftReferences(beforePersistentId: PersistentEntityId<*>?,
                                                      beforeSoftLinks: List<PersistentEntityId<*>>?,
                                                      copiedData: PEntityData<T>) {
-    val updatedEntity = copiedData.createEntity(this)
-    val pid = (updatedEntity as PTypedEntity).id
+    val pid = copiedData.createPid()
     if (beforePersistentId != null) {
-      val afterPersistentId = (updatedEntity as TypedEntityWithPersistentId).persistentId()
+      val afterPersistentId = copiedData.persistentId(this) ?: error("Persistent id expected")
       if (beforePersistentId != afterPersistentId) {
         val updatedIds = mutableListOf(beforePersistentId to afterPersistentId)
         while (updatedIds.isNotEmpty()) {
@@ -415,23 +413,15 @@ internal class PEntityStorageBuilder(
   }
 
   private fun PEntityData<*>.identificator(storage: AbstractPEntityStorage): Any {
-    val entity = this.createEntity(storage)
-    return if (entity is TypedEntityWithPersistentId) {
-      entity.persistentId()
-    }
-    else {
-      this.hashCode()
-    }
+    return this.persistentId(storage) ?: this.hashCode()
   }
 
   private fun ArrayListMultimap<Any, PEntityData<out TypedEntity>>.find(entity: PEntityData<out TypedEntity>,
                                                                         storage: AbstractPEntityStorage): PEntityData<out TypedEntity>? {
     val possibleValues = this[entity.identificator(storage)]
-    return if (entity.hasPersistentId()) {
-      possibleValues.find {
-        (it.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId() ==
-          (entity.createEntity(this@PEntityStorageBuilder) as TypedEntityWithPersistentId).persistentId()
-      }
+    val persistentId = entity.persistentId(storage)
+    return if (persistentId != null) {
+      possibleValues.find { it.persistentId(this@PEntityStorageBuilder) == persistentId }
     }
     else {
       possibleValues.find { it == entity }
@@ -753,7 +743,9 @@ internal class PEntityStorageBuilder(
     // TODO: 27.03.2020 Here should be consistency check
     val res = HashMap<TypedEntity, TypedEntity>()
     replaceMap.forEach { (oldId, newId) ->
-      res[diff.entityDataByIdOrDie(oldId).createEntity(diff)] = this.entityDataByIdOrDie(newId).createEntity(this)
+      if (oldId != newId) {
+        res[diff.entityDataByIdOrDie(oldId).createEntity(diff)] = this.entityDataByIdOrDie(newId).createEntity(this)
+      }
     }
     return res
   }

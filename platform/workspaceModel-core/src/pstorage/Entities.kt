@@ -6,7 +6,6 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
-import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 
 abstract class PTypedEntity : ReferableTypedEntity, Any() {
@@ -150,6 +149,24 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
       .mapNotNull { it.get(this)?.hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
   }
+
+  /**
+   * Temporally solution.
+   * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.
+   * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating persistent id.
+   */
+  abstract class WithCalculatablePersistentId<E : TypedEntity> : PEntityData<E>() {
+    abstract fun persistentId(): PersistentEntityId<*>
+  }
+
+  abstract class WithPersistentId<E : TypedEntity> : PEntityData<E>() {
+  }
+}
+
+fun PEntityData<*>.persistentId(snapshot: TypedEntityStorage): PersistentEntityId<*>? = when (this) {
+  is PEntityData.WithCalculatablePersistentId -> this.persistentId()
+  is PEntityData.WithPersistentId -> (this.createEntity(snapshot) as TypedEntityWithPersistentId).persistentId()
+  else -> null
 }
 
 class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {
