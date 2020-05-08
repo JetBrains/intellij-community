@@ -18,8 +18,8 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -377,10 +377,9 @@ public class RedundantCastUtil {
             }
 
             if (i == args.length - 1 && args.length == parameters.length && parameters[i].isVarArgs() &&
-                (ExpressionUtils.isNullLiteral(cast.getOperand()) ||
+                (NullArgumentToVariableArgMethodInspection.isSuspiciousVararg(newCall, newArgs[i].getType()) ||
                  oldResult instanceof MethodCandidateInfo && newResult instanceof MethodCandidateInfo &&
                  ((MethodCandidateInfo)oldResult).getApplicabilityLevel() != ((MethodCandidateInfo)newResult).getApplicabilityLevel())) {
-              //do not mark cast to resolve ambiguity for calling varargs method with inexact argument
               continue;
             }
 
