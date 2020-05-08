@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
-import com.intellij.execution.ui.FragmentedSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -206,10 +205,6 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       applyTo(settings);
     }
     return settings;
-  }
-
-  public boolean isFragmented() {
-    return myConfigurationEditor instanceof FragmentedSettingsEditor;
   }
 
   private static final class RunnersEditorComponent {

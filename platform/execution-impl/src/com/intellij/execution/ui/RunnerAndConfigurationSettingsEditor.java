@@ -2,7 +2,7 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Disposer;
@@ -12,10 +12,10 @@ import javax.swing.*;
 
 public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> {
 
-  private final SettingsEditor<RunConfiguration> myConfigurationEditor;
+  private final RunConfigurationFragmentedEditor<FragmentedSettings> myConfigurationEditor;
 
   public RunnerAndConfigurationSettingsEditor(RunnerAndConfigurationSettings settings,
-                                              SettingsEditor<RunConfiguration> configurationEditor) {
+                                              RunConfigurationFragmentedEditor<FragmentedSettings> configurationEditor) {
     super(settings.createFactory());
     myConfigurationEditor = configurationEditor;
     myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
@@ -24,12 +24,14 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
   @Override
   protected void resetEditorFrom(@NotNull RunnerAndConfigurationSettings s) {
-    myConfigurationEditor.resetFrom(s.getConfiguration());
+    myConfigurationEditor.resetFrom((FragmentedSettings)s.getConfiguration());
+    myConfigurationEditor.resetEditorFrom((RunnerAndConfigurationSettingsImpl)s);
   }
 
   @Override
   protected void applyEditorTo(@NotNull RunnerAndConfigurationSettings s) throws ConfigurationException {
-    myConfigurationEditor.applyTo(s.getConfiguration());
+    myConfigurationEditor.applyTo((FragmentedSettings)s.getConfiguration());
+    myConfigurationEditor.applyEditorTo((RunnerAndConfigurationSettingsImpl)s);
   }
 
   @Override

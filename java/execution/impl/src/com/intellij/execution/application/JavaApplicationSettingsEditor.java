@@ -15,7 +15,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
-public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<ApplicationConfiguration> {
+public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
 
   public JavaApplicationSettingsEditor(Project project) {

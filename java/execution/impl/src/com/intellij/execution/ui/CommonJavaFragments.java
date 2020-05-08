@@ -7,7 +7,9 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,35 +32,37 @@ public class CommonJavaFragments {
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
     jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-    return new SettingsEditorFragment<S, JLabel>("buildBeforeRun",
+    return new RunConfigurationEditorFragment<S, JLabel>("buildBeforeRun",
                                                  ExecutionBundle.message("build.before.run"),
                                                  ExecutionBundle.message("group.java.options"),
-                                                 jLabel, -1,
-                                                 (s, label) -> {
-                                                   label.setText(exists(s.getBeforeRunTasks(),
-                                                                        t -> CompileStepBeforeRun.ID == t.getProviderId())
-                                                                 ? buildAndRun
-                                                                 : run);
-                                                 },
-                                                 (s, label) -> {
-                                                   if (buildAndRun.equals(label.getText())) {
-                                                     if (!exists(s.getBeforeRunTasks(),
-                                                                 t -> CompileStepBeforeRun.ID == t.getProviderId())) {
-                                                       CompileStepBeforeRun.MakeBeforeRunTask task =
-                                                         new CompileStepBeforeRun.MakeBeforeRunTask();
-                                                       task.setEnabled(true);
-                                                       ArrayList<BeforeRunTask<?>> tasks = new ArrayList<>(s.getBeforeRunTasks());
-                                                       tasks.add(task);
-                                                       s.setBeforeRunTasks(tasks);
-                                                     }
-                                                   }
-                                                   else {
-                                                     ArrayList<BeforeRunTask<?>> tasks = new ArrayList<>(s.getBeforeRunTasks());
-                                                     tasks.removeIf(t -> CompileStepBeforeRun.ID == t.getProviderId());
-                                                     s.setBeforeRunTasks(tasks);
-                                                   }
-                                                 },
-                                                 s -> true) {
+                                                 jLabel, -1) {
+      @Override
+      public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
+        jLabel.setText(hasTask(s) ? buildAndRun : run);
+      }
+
+      private boolean hasTask(@NotNull RunnerAndConfigurationSettingsImpl s) {
+        return exists(s.getManager().getBeforeRunTasks(s.getConfiguration()),
+                      t -> CompileStepBeforeRun.ID == t.getProviderId());
+      }
+
+      @Override
+      public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
+        ArrayList<BeforeRunTask<?>> tasks = new ArrayList<>(s.getManager().getBeforeRunTasks(s.getConfiguration()));
+        if (isSelected()) {
+          if (!hasTask(s)) {
+            CompileStepBeforeRun.MakeBeforeRunTask task =
+              new CompileStepBeforeRun.MakeBeforeRunTask();
+            task.setEnabled(true);
+            tasks.add(task);
+          }
+        }
+        else {
+          tasks.removeIf(t -> CompileStepBeforeRun.ID == t.getProviderId());
+        }
+        s.getManager().setBeforeRunTasks(s.getConfiguration(), tasks);
+      }
+
       @Override
       public void setSelected(boolean selected) {
         jLabel.setText(selected ? buildAndRun : run);
