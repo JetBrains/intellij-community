@@ -217,7 +217,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
    * Some changes (ex: applied ones) can be excluded from general processing, but should be painted/used for synchronized scrolling
    */
   @NotNull
-  protected List<? extends ThreesideDiffChangeBase> getAllChanges() {
+  public List<? extends ThreesideDiffChangeBase> getAllChanges() {
     return getChanges();
   }
 
