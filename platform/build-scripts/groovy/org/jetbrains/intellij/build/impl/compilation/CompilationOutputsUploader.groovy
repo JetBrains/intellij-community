@@ -129,9 +129,7 @@ class CompilationOutputsUploader {
   private void uploadMetadata() {
     String metadataPath = "metadata/$commitHash"
     File sourceStateFile = sourcesStateProcessor.sourceStateFile
-    if (!uploader.isExist(metadataPath)) {
-      uploader.upload(metadataPath, sourceStateFile)
-    }
+    uploader.upload(metadataPath, sourceStateFile)
     File sourceStateFileCopy = new File(tmpDir, metadataPath)
     FileUtil.rename(sourceStateFile, sourceStateFileCopy)
   }
