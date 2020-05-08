@@ -188,13 +188,8 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement methodName = descriptor.getPsiElement();
-        if ((methodName == null) || !(methodName.getParent() instanceof PsiReferenceExpression) ||
-            !(methodName.getParent().getParent() instanceof PsiMethodCallExpression)) {
-          return;
-        }
-
-        final PsiMethodCallExpression printStreamPrintfCall = (PsiMethodCallExpression)methodName.getParent().getParent();
+        final PsiMethodCallExpression printStreamPrintfCall = getDirectParentMethod(descriptor.getPsiElement());
+        if (printStreamPrintfCall == null) return;
 
         ExpressionUtils.bindCallTo(printStreamPrintfCall, "print");
 
@@ -215,15 +210,11 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
       @Override
       public void applyFix(@NotNull final Project project,
                            @NotNull final ProblemDescriptor descriptor) {
-        final PsiElement methodName = descriptor.getPsiElement();
-        if ((methodName == null) || !(methodName.getParent() instanceof PsiReferenceExpression) ||
-            !(methodName.getParent().getParent() instanceof PsiMethodCallExpression)) {
-          return;
+        final PsiMethodCallExpression stringFormat = getDirectParentMethod(descriptor.getPsiElement());
+        if (stringFormat != null) {
+          removeRedundantStringFormatCall(stringFormat);
         }
 
-        final PsiMethodCallExpression stringFormat = (PsiMethodCallExpression)methodName.getParent().getParent();
-
-        removeRedundantStringFormatCall(stringFormat);
       }
     }
 
@@ -266,12 +257,9 @@ public final class RedundantStringFormatCallInspection extends LocalInspectionTo
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement methodName = descriptor.getPsiElement();
-        if ((methodName == null) || !(methodName.getParent() instanceof PsiReferenceExpression) ||
-            !(methodName.getParent().getParent() instanceof PsiMethodCallExpression)) {
-          return;
-        }
-        final PsiMethodCallExpression stringFormattedCall = (PsiMethodCallExpression)methodName.getParent().getParent();
+        final PsiMethodCallExpression stringFormattedCall = getDirectParentMethod(descriptor.getPsiElement());
+        if (stringFormattedCall == null) return;
+
         final PsiExpression expression = stringFormattedCall.getMethodExpression().getQualifierExpression();
         if (expression != null) {
           new CommentTracker().replaceAndRestoreComments(stringFormattedCall, expression);
