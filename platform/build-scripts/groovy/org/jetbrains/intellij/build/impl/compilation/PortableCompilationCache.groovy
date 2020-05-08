@@ -120,7 +120,7 @@ class PortableCompilationCache {
         def root = new File(syncFolder)
         root.eachFileRecurse {
           if (!it.isDirectory()) {
-            println(root.toPath().relativize(it.toPath()))
+            context.messages.info(root.toPath().relativize(it.toPath()).toString())
           }
         }
       }
