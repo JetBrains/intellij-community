@@ -7,6 +7,8 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.WithoutOwnBeforeRunSteps;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.FragmentedSettingsEditor;
+import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -54,8 +56,8 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     return myEditor.selectTabAndGetEditor(editorClass);
   }
 
-  public ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings) {
-    myEditor = new ConfigurationSettingsEditor(settings);
+  private ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings, SettingsEditor<RunConfiguration> configurationEditor) {
+    myEditor = new ConfigurationSettingsEditor(settings, configurationEditor);
     myEditor.addSettingsEditorListener(editor -> fireStepsBeforeRunChanged());
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
@@ -91,14 +93,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
   }
 
-  public boolean isFragmented() {
-    return myEditor.isFragmented();
-  }
-
   @Override
   @NotNull
   protected JComponent createEditor() {
-    if (isFragmented()) {
+    if (myEditor.isFragmented()) {
       return myEditor.getComponent();
     }
     myComponentPlace.setLayout(new BorderLayout());
@@ -192,5 +190,13 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
         }
       }
     });
+  }
+
+  public static SettingsEditor<RunnerAndConfigurationSettings> createWrapper(@NotNull RunnerAndConfigurationSettings settings) {
+    @SuppressWarnings("unchecked") SettingsEditor<RunConfiguration> configurationEditor =
+      (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
+    return configurationEditor instanceof FragmentedSettingsEditor<?>
+           ? new RunnerAndConfigurationSettingsEditor(settings, configurationEditor)
+           : new ConfigurationSettingsEditorWrapper(settings, configurationEditor);
   }
 }

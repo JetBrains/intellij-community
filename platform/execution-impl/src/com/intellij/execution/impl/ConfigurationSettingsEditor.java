@@ -185,10 +185,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return null;
   }
 
-  public ConfigurationSettingsEditor(@NotNull RunnerAndConfigurationSettings settings) {
+  public ConfigurationSettingsEditor(@NotNull RunnerAndConfigurationSettings settings, SettingsEditor<RunConfiguration> configurationEditor) {
     super(settings.createFactory());
 
-    myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
+    myConfigurationEditor = configurationEditor;
     myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
     Disposer.register(this, myConfigurationEditor);
     myConfiguration = settings.getConfiguration();

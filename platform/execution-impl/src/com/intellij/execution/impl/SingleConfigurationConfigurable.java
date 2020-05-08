@@ -98,7 +98,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
 
   private SingleConfigurationConfigurable(@NotNull RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
-    super(new ConfigurationSettingsEditorWrapper(settings), settings);
+    super(ConfigurationSettingsEditorWrapper.createWrapper(settings), settings);
 
     myProject = settings.getConfiguration().getProject();
     myExecutor = executor;
@@ -675,7 +675,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myIsAllowRunningInParallel = configuration.isAllowRunningInParallel();
       myIsAllowRunningInParallelCheckBox.setEnabled(isManagedRunConfiguration);
       myIsAllowRunningInParallelCheckBox.setSelected(myIsAllowRunningInParallel);
-      myIsAllowRunningInParallelCheckBox.setVisible(!((ConfigurationSettingsEditorWrapper)getEditor()).isFragmented() &&
+      myIsAllowRunningInParallelCheckBox.setVisible(getEditor() instanceof ConfigurationSettingsEditorWrapper &&
                                                     settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
     }
 
