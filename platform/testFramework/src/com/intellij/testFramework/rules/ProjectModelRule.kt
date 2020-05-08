@@ -13,6 +13,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.rd.attach
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -71,13 +72,13 @@ class ProjectModelRule : TestRule {
     return sdk
   }
 
-  fun addProjectLevelLibrary(name: String, setup: (Library.ModifiableModel) -> Unit = {}): Library {
+  fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     return addLibrary(name, projectLibraryTable, setup)
   }
 
-  fun addLibrary(name: String, libraryTable: LibraryTable, setup: (Library.ModifiableModel) -> Unit = {}): Library {
+  fun addLibrary(name: String, libraryTable: LibraryTable, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     val model = libraryTable.modifiableModel
-    val library = model.createLibrary(name)
+    val library = model.createLibrary(name) as LibraryEx
     val libraryModel = library.modifiableModel
     setup(libraryModel)
     runWriteActionAndWait {
@@ -87,17 +88,33 @@ class ProjectModelRule : TestRule {
     return library
   }
 
-  fun addApplicationLevelLibrary(name: String): Library {
+  fun addApplicationLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = addLibrary(name, libraryTable) {}
+    val library = addLibrary(name, libraryTable, setup)
+    disposeOnTearDown(library)
+    return library
+  }
+
+  private fun disposeOnTearDown(library: LibraryEx) {
     disposableRule.disposable.attach {
       runWriteActionAndWait {
-        if (libraryTable.getLibraryByName(name) == library) {
-          libraryTable.removeLibrary(library)
+        if (!library.isDisposed && library.table.getLibraryByName(library.name!!) == library) {
+          library.table.removeLibrary(library)
         }
       }
     }
+  }
+
+  fun createLibraryAndDisposeOnTearDown(name: String, model: LibraryTable.ModifiableModel): LibraryEx {
+    val library = model.createLibrary(name) as LibraryEx
+    disposeOnTearDown(library)
     return library
+  }
+
+  fun renameLibrary(library: Library, newName: String) {
+    val model = library.modifiableModel
+    model.name = newName
+    runWriteActionAndWait { model.commit() }
   }
 
   val sdkType: SdkTypeId

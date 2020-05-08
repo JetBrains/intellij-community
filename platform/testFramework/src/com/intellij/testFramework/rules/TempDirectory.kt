@@ -103,6 +103,15 @@ class TempDirectory : ExternalResource() {
     return VfsTestUtil.createDir(virtualFileRoot, relativePath)
   }
 
+  /**
+   * Creates a new virtual file with the given relative path from the root temp directory. Throws an exception if such a file already exists.
+   */
+  fun newVirtualFile(relativePath: String, content: String = ""): VirtualFile {
+    val existing = virtualFileRoot.findFileByRelativePath(relativePath)
+    require(existing == null) { "Already exists: ${existing!!.path}"}
+    return VfsTestUtil.createFile(virtualFileRoot, relativePath, content)
+  }
+
   @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))
   fun newFolder(relativePath: String): File {
     return newDirectory(relativePath)
