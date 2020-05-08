@@ -228,7 +228,7 @@ class CompilationOutputsUploader {
         debug("GET " + url)
 
         def request = new HttpGet(url)
-        response = myHttpClient.execute(request)
+        response = executeWithRetry(request)
 
         return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
       }
