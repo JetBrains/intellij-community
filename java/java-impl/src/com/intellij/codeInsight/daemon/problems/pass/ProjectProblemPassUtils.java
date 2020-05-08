@@ -30,10 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ProjectProblemPassUtils {
 
@@ -46,7 +43,7 @@ public class ProjectProblemPassUtils {
                                                     @NotNull Document document,
                                                     @NotNull PresentationFactory factory,
                                                     int offset,
-                                                    @NotNull PsiElement element,
+                                                    @NotNull PsiMember member,
                                                     @NotNull Set<PsiElement> brokenUsages) {
     int column = offset - document.getLineStartOffset(document.getLineNumber(offset));
     int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
@@ -60,8 +57,9 @@ public class ProjectProblemPassUtils {
         if (usage instanceof Navigatable) ((Navigatable)usage).navigate(true);
       }
       else {
-        FindUtil.showInUsageView(element, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
-                                 JavaErrorBundle.message("project.problems.title"), project);
+        String memberName = Objects.requireNonNull(member.getName());
+        FindUtil.showInUsageView(member, brokenUsages.toArray(PsiElement.EMPTY_ARRAY),
+                                 JavaErrorBundle.message("project.problems.title", memberName), project);
       }
     });
 
