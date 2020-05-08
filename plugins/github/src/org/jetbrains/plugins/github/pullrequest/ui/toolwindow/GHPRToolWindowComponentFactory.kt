@@ -36,6 +36,8 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
                                               private val remoteUrl: GitRemoteUrlCoordinates,
                                               private val parentDisposable: Disposable) {
 
+  private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
+
   @CalledInAwt
   fun createComponent(): JComponent {
     val panel = JPanel().apply {
@@ -188,22 +190,22 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
     private fun createDataContextLoadingPanel(account: GithubAccount,
                                               requestExecutor: GithubApiRequestExecutor,
                                               disposable: Disposable): JComponent {
-      Disposer.register(disposable, Disposable {
-        GHPRDataContextRepository.getInstance(project).clearContext(remoteUrl)
-      })
 
       val uiDisposable = Disposer.newDisposable()
-      Disposer.register(disposable, uiDisposable)
+      Disposer.register(disposable, Disposable {
+        Disposer.dispose(uiDisposable)
+        dataContextRepository.clearContext(remoteUrl)
+      })
 
       val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
-        future = GHPRDataContextRepository.getInstance(project).acquireContext(remoteUrl, account, requestExecutor)
+        future = dataContextRepository.acquireContext(remoteUrl, account, requestExecutor)
       }
 
       return GHLoadingPanel.create(loadingModel,
                                    { GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable) }, uiDisposable,
                                    errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
                                    errorHandler = GHLoadingErrorHandlerImpl(project, account) {
-                                     val contextRepository = GHPRDataContextRepository.getInstance(project)
+                                     val contextRepository = dataContextRepository
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
                                    })
