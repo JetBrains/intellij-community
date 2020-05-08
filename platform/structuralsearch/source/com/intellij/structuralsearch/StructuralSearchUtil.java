@@ -29,7 +29,7 @@ public final class StructuralSearchUtil {
   private static LanguageFileType ourDefaultFileType = null;
 
   private static boolean ourUseUniversalMatchingAlgorithm = false;
-  private static final Map<Language, StructuralSearchProfile> cache = new HashMap<>();
+  private static final Map<String, StructuralSearchProfile> cache = new HashMap<>();
 
   private static List<Configuration> ourPredefinedConfigurations = null;
   static {
@@ -59,16 +59,17 @@ public final class StructuralSearchUtil {
 
   @Nullable
   public static StructuralSearchProfile getProfileByLanguage(@NotNull Language language) {
-    if (cache.containsKey(language)) {
-      return cache.get(language);
+    final String id = language.getID();
+    if (cache.containsKey(id)) {
+      return cache.get(id);
     }
     for (StructuralSearchProfile profile : getProfiles()) {
       if (profile.isMyLanguage(language)) {
-        cache.put(language, profile);
+        cache.put(id, profile);
         return profile;
       }
     }
-    cache.put(language, null);
+    cache.put(id, null);
     return null;
   }
 
