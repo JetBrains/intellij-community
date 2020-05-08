@@ -292,13 +292,12 @@ open class MarketplaceRequests {
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))
     }
-
     val file = FileUtil.createTempFile(pluginsTemp, "plugin_", "_download", true, false)
     return HttpRequests.request(pluginUrl).gzip(false).productNameAsUserAgent().connect(
       HttpRequests.RequestProcessor { request: HttpRequests.Request ->
         request.saveToFile(file, indicator)
         val fileName: String = guessFileName(request.connection, file, pluginUrl)
-        val newFile = File(file.getParentFile(), fileName)
+        val newFile = File(file.parentFile, fileName)
         FileUtil.rename(file, newFile)
         newFile
       })
@@ -312,11 +311,8 @@ open class MarketplaceRequests {
     if (contentDisposition != null && contentDisposition.contains(FILENAME)) {
       val startIdx = contentDisposition.indexOf(FILENAME)
       val endIdx = contentDisposition.indexOf(';', startIdx)
-      fileName = contentDisposition.substring(startIdx + FILENAME.length,
-                                              if (endIdx > 0) endIdx else contentDisposition.length)
-      if (StringUtil.startsWithChar(fileName,
-                                    '\"') && StringUtil.endsWithChar(fileName,
-                                                                     '\"')) {
+      fileName = contentDisposition.substring(startIdx + FILENAME.length, if (endIdx > 0) endIdx else contentDisposition.length)
+      if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
         fileName = fileName.substring(1, fileName.length - 1)
       }
     }
@@ -325,7 +321,7 @@ open class MarketplaceRequests {
       val usedURL = connection.url.toString()
       LOG.debug("url: $usedURL")
       fileName = usedURL.substring(usedURL.lastIndexOf('/') + 1)
-      if (fileName.length == 0 || fileName.contains("?")) {
+      if (fileName.isEmpty() || fileName.contains("?")) {
         fileName = pluginUrl.substring(pluginUrl.lastIndexOf('/') + 1)
       }
     }
