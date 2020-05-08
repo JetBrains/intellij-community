@@ -94,6 +94,10 @@ class CompilationOutputsUploader {
 
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
+      def metadata = new File(tmpDir, "metadata/$commitHash")
+      if (!metadata.exists()) {
+        messages.error("$metadata.absolutePath doesn't exist")
+      }
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
       messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
       messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
