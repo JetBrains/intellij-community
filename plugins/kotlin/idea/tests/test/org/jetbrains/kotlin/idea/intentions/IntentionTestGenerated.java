@@ -4576,6 +4576,224 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw")
+    public abstract static class ConvertFilteringFunctionWithDemorgansLaw extends AbstractIntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToAny")
+        public static class AllToAny extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToAny/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone")
+        public static class AllToNone extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/array.kt");
+            }
+
+            @TestMetadata("lambdaInParentheses.kt")
+            public void testLambdaInParentheses() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/lambdaInParentheses.kt");
+            }
+
+            @TestMetadata("sequence.kt")
+            public void testSequence() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/sequence.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/simple.kt");
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/predicate")
+            public static class Predicate extends AbstractIntentionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("isNotEmpty.kt")
+                public void testIsNotEmpty() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/predicate/isNotEmpty.kt");
+                }
+
+                @TestMetadata("not.kt")
+                public void testNot() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/predicate/not.kt");
+                }
+
+                @TestMetadata("notOr.kt")
+                public void testNotOr() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/predicate/notOr.kt");
+                }
+
+                @TestMetadata("or.kt")
+                public void testOr() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/predicate/or.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/allToNone/predicate/simple.kt");
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll")
+        public static class AnyToAll extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToAll/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone")
+        public static class AnyToNone extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/anyToNone/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterNotToFilter")
+        public static class FilterNotToFilter extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterNotToFilter/simple.kt");
+            }
+
+            @TestMetadata("simple2.kt")
+            public void testSimple2() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterNotToFilter/simple2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterNotToToFilterTo")
+        public static class FilterNotToToFilterTo extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterNotToToFilterTo/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterToFilterNot")
+        public static class FilterToFilterNot extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterToFilterNot/simple.kt");
+            }
+
+            @TestMetadata("simple2.kt")
+            public void testSimple2() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterToFilterNot/simple2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterToToFilterNotTo")
+        public static class FilterToToFilterNotTo extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/filterToToFilterNotTo/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/noneToAll")
+        public static class NoneToAll extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/noneToAll/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/noneToAny")
+        public static class NoneToAny extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/noneToAny/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/takeIfToTakeUnless")
+        public static class TakeIfToTakeUnless extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/takeIfToTakeUnless/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/convertFilteringFunctionWithDemorgansLaw/takeUnlessToTakeIf")
+        public static class TakeUnlessToTakeIf extends AbstractIntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/intentions/convertFilteringFunctionWithDemorgansLaw/takeUnlessToTakeIf/simple.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertForEachToForLoop")
     public static class ConvertForEachToForLoop extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {

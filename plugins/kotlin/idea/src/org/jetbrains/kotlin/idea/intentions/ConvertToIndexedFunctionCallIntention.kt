@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCallExpression>(
     KtCallExpression::class.java,
@@ -31,7 +29,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
     override fun applicabilityRange(element: KtCallExpression): TextRange? {
         val callee = element.calleeExpression ?: return null
         val (functionFqName, newFunctionName) = functions[callee.text] ?: return null
-        if (element.lambda() == null) return null
+        if (element.singleLambdaArgumentExpression() == null) return null
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (functionFqName != element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull()) return null
         setTextGetter(KotlinBundle.lazyMessage("convert.to.0", "'$newFunctionName'"))
@@ -41,7 +39,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         val functionName = element.calleeExpression?.text ?: return
         val (_, newFunctionName) = functions[functionName] ?: return
-        val functionLiteral = element.lambda()?.functionLiteral ?: return
+        val functionLiteral = element.singleLambdaArgumentExpression()?.functionLiteral ?: return
         val psiFactory = KtPsiFactory(element)
         val context = element.analyze(BodyResolveMode.PARTIAL)
 
@@ -73,23 +71,11 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
             parameterList.addParameterBefore(indexParameter, parameters.first())
         }
         val callOrQualified = element.getQualifiedExpressionForSelector() ?: element
-        psiFactory.buildExpression {
-            if (callOrQualified is KtQualifiedExpression) {
-                appendExpression(callOrQualified.receiverExpression)
-                appendFixedText(".")
+        callOrQualified.replace(
+            psiFactory.buildExpression {
+                appendCallOrQualifiedExpression(element, newFunctionName)
             }
-            appendFixedText(newFunctionName)
-            element.valueArgumentList?.let {
-                appendFixedText(it.text)
-            }
-            if (element.lambdaArguments.isNotEmpty()) {
-                appendFixedText(functionLiteral.text)
-            }
-        }.let { callOrQualified.replace(it) }
-    }
-
-    private fun KtCallExpression.lambda(): KtLambdaExpression? {
-        return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs() ?: getLastLambdaExpression()
+        )
     }
 
     companion object {
