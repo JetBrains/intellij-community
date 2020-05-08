@@ -9,6 +9,12 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+import com.intellij.vcs.log.graph.utils.DfsWalk
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
@@ -94,35 +100,97 @@ abstract class GitMultipleCommitEditingActionBase<T : GitMultipleCommitEditingAc
 
   final override fun actionPerformed(e: AnActionEvent) {
     val commitEditingRequirements = createCommitEditingData(e)!!
-    val commitList = commitEditingRequirements.selectedCommitList
-    val repository = commitEditingRequirements.repository
-    val project = commitEditingRequirements.project
+    val description = checkCommitsEditingAvailability(commitEditingRequirements)
 
-    commitList.forEach { commit ->
-      val branches = findContainingBranches(commitEditingRequirements.logData, commit.root, commit.id)
+    if (description != null) {
+      Messages.showErrorDialog(
+        commitEditingRequirements.project,
+        description,
+        getFailureTitle()
+      )
+      return
+    }
+    actionPerformedAfterChecks(commitEditingRequirements)
+  }
 
-      if (GitUtil.HEAD !in branches) {
-        Messages.showErrorDialog(
-          project,
-          GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text"),
-          getFailureTitle()
-        )
-        return
-      }
-
-      // and not if pushed to a protected branch
-      val protectedBranch = findProtectedRemoteBranch(repository, branches)
-      if (protectedBranch != null) {
-        Messages.showErrorDialog(
-          project,
-          GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch),
-          getFailureTitle()
-        )
-        return
-      }
+  protected open fun checkCommitsEditingAvailability(commitEditingData: T): String? {
+    val description = checkHeadLinearHistory(commitEditingData)
+    if (description != null) {
+      return description
     }
 
-    actionPerformedAfterChecks(commitEditingRequirements)
+    // if any commit is pushed to protected branch, the last (oldest) commit is published as well => it is enough to check only the last.
+    val lastCommit = commitEditingData.selectedCommitList.last()
+    val branches = findContainingBranches(commitEditingData.logData, lastCommit.root, lastCommit.id)
+    val protectedBranch = findProtectedRemoteBranch(commitEditingData.repository, branches)
+    if (protectedBranch != null) {
+      return GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
+    }
+
+    return null
+  }
+
+  private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: Int): CommitId =
+    data.getCommitId(permanentGraph.permanentCommitsInfo.getCommitId(nodeId))!!
+
+  /**
+   * Check that a path which contains selected commits and doesn't contain merge commits exists in HEAD
+   */
+  private fun checkHeadLinearHistory(commitEditingData: MultipleCommitEditingData): String? {
+    val project = commitEditingData.project
+    val root = commitEditingData.repository.root
+    val logData = commitEditingData.logData
+    val dataPack = logData.dataPack
+    val commits = commitEditingData.selectedCommitList
+    val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+    val commitsInfo = permanentGraph.permanentCommitsInfo
+    val commitIndices = commits.map { logData.getCommitIndex(it.id, root) }
+
+    var description: String? = null
+
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      {
+        val commitNodeIds = commitsInfo.convertToNodeIds(commitIndices).toMutableSet()
+        val headRef = VcsLogUtil.findBranch(dataPack.refsModel, root, GitUtil.HEAD) ?: let {
+          description = GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commits.size)
+          return@runProcessWithProgressSynchronously
+        }
+        val headIndex = logData.getCommitIndex(headRef.commitHash, root)
+        val headId = commitsInfo.getNodeId(headIndex)
+        val maxNodeId = commitNodeIds.max()!!
+
+        val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
+        val used = BitSetFlags(permanentGraph.linearGraph.nodesCount())
+        DfsWalk(listOf(headId), graph, used).walk(true) { nodeId ->
+          ProgressManager.checkCanceled()
+          val parents = graph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
+          when {
+            parents.size != 1 -> { // commit is root or merge
+              val commit = getCommitIdByNodeId(logData, permanentGraph, nodeId)
+              description = GitBundle.message(
+                "rebase.log.multiple.commit.editing.action.specific.commit.root.or.merge",
+                commit.hash,
+                parents.size
+              )
+              false
+            }
+            nodeId > maxNodeId -> { // we can no longer meet remaining selected commits below
+              val commitNotInHead = getCommitIdByNodeId(logData, permanentGraph, commitNodeIds.first())
+              description = GitBundle.message("rebase.log.multiple.commit.editing.action.specific.commit.not.in.head", commitNotInHead.hash)
+              false
+            }
+            else -> {
+              commitNodeIds.remove(nodeId)
+              commitNodeIds.isNotEmpty()
+            }
+          }
+        }
+      },
+      GitBundle.getString("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"),
+      true,
+      project
+    )
+    return description
   }
 
   protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {

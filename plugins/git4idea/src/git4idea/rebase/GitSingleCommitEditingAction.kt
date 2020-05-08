@@ -5,6 +5,9 @@ import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import git4idea.GitUtil
+import git4idea.findProtectedRemoteBranch
+import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitMultipleCommitEditingActionBase
 import git4idea.repo.GitRepository
 
@@ -19,6 +22,22 @@ abstract class GitSingleCommitEditingAction : GitMultipleCommitEditingActionBase
       return null
     }
     return SingleCommitEditingData(repository, log, logData, logUi)
+  }
+
+  override fun checkCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
+    val commit = commitEditingData.selectedCommit
+    val branches = findContainingBranches(commitEditingData.logData, commit.root, commit.id)
+
+    if (GitUtil.HEAD !in branches) {
+      return GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
+    }
+
+    // and not if pushed to a protected branch
+    val protectedBranch = findProtectedRemoteBranch(commitEditingData.repository, branches)
+    if (protectedBranch != null) {
+      return GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
+    }
+    return null
   }
 
   class SingleCommitEditingData(
