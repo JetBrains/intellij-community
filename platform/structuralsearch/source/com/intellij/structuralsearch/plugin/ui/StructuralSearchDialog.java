@@ -10,6 +10,8 @@ import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationType;
@@ -33,8 +35,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -49,10 +49,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -83,7 +80,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.JDOMException;
@@ -113,7 +110,7 @@ import static com.intellij.openapi.util.text.StringUtil.trimEnd;
  *
  * @author Bas Leijdekkers
  */
-public class StructuralSearchDialog extends DialogWrapper implements ProjectManagerListener, DocumentListener {
+public class StructuralSearchDialog extends DialogWrapper implements DocumentListener {
   @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
   @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
 
@@ -218,19 +215,25 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
         myAlarm.addRequest(runnable, 100);
       }
     };
-    StructuralSearchProfile.EP_NAME.addExtensionPointListener(new ExtensionPointListener<StructuralSearchProfile>() {
+    final MessageBusConnection connection = getProject().getMessageBus().connect(getDisposable());
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
-      public void extensionRemoved(@NotNull StructuralSearchProfile extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         close(CANCEL_EXIT_CODE);
       }
-    }, getDisposable());
-    getProject().getMessageBus().connect(getDisposable()).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
+    });
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
     init();
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
-    ProjectManager.getInstance().addProjectManagerListener(getProject(), this);
   }
 
   private void addRestartHighlightingListenerToCurrentEditor() {
@@ -1162,14 +1165,8 @@ public class StructuralSearchDialog extends DialogWrapper implements ProjectMana
   }
 
   @Override
-  public void projectClosing(@NotNull Project project) {
-    close(CANCEL_EXIT_CODE);
-  }
-
-  @Override
   public void dispose() {
     getProject().putUserData(STRUCTURAL_SEARCH_PREVIOUS_CONFIGURATION, myConfiguration);
-    ProjectManager.getInstance().removeProjectManagerListener(getProject(), this);
 
     if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
     else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
