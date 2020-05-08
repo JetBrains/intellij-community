@@ -75,8 +75,6 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import it.unimi.dsi.fastutil.ints.Int2IntRBTreeMap;
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2185,7 +2183,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (p.y >= startY && p.y < endY) {
       List<GutterMark> renderers = getGutterRenderers(line);
       final PointInfo[] result = {null};
-      Int2IntRBTreeMap xPos = new Int2IntRBTreeMap();
+      Map<Integer, Integer> xPos = new TreeMap<>();
       processIconsRowForY(startY, renderers, (x, y, renderer) -> {
         Icon icon = scaleIcon(renderer.getIcon());
         int iconWidth = icon.getIconWidth();
@@ -2198,25 +2196,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       });
       if (result[0] != null) {
         result[0].renderersInLine = xPos.size();
-        int x = result[0].iconCenterPosition.x;
-        int index = -1;
-        if (xPos.size() == 1) {
-          if (xPos.get(xPos.firstIntKey()) == x) {
-            index = 0;
-          }
-        }
-        else {
-          IntIterator iterator = xPos.values().iterator();
-          int i = 0;
-          while (iterator.hasNext()) {
-            if (iterator.nextInt() == x) {
-              index = i;
-              break;
-            }
-            i++;
-          }
-        }
-        result[0].rendererPosition = index;
+        result[0].rendererPosition = new ArrayList<>(xPos.values()).indexOf(result[0].iconCenterPosition.x);
       }
       return result[0];
     }
