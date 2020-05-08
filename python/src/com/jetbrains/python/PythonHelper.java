@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PythonHelpersLocator.getHelperFile;
 import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
@@ -125,6 +126,17 @@ public enum PythonHelper implements HelperPackage {
     }
 
     @Override
+    public @NotNull List<String> getPythonPathEntries() {
+      // at first add dependencies
+      ArrayList<String> entries = myDependencies.stream()
+        .flatMap(dependency -> dependency.getPythonPathEntries().stream())
+        .collect(Collectors.toCollection(ArrayList::new));
+      // then add helper script
+      entries.add(getPythonPathEntry());
+      return entries;
+    }
+
+    @Override
     public void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd) {
       addToPythonPath(cmd.getEnvironment());
       group.addParameter(asParamString());
@@ -226,6 +238,11 @@ public enum PythonHelper implements HelperPackage {
     }
 
     @NotNull
+    public List<String> getPythonPathEntries() {
+      return Collections.singletonList(myPythonPath);
+    }
+
+    @NotNull
     private static List<HelperDependency> findThirdPartyDependencies(String... dependencies) {
       if (dependencies == null) {
         return Collections.emptyList();
@@ -249,6 +266,11 @@ public enum PythonHelper implements HelperPackage {
   @Override
   public String getPythonPathEntry() {
     return myModule.getPythonPathEntry();
+  }
+
+  @Override
+  public @NotNull List<String> getPythonPathEntries() {
+    return myModule.getPythonPathEntries();
   }
 
   @Override

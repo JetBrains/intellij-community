@@ -218,11 +218,21 @@ public final class PythonSdkType extends SdkType {
    * @param commandLine what to patch
    * @param sdk         SDK we're using
    */
-  public static void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
+  public static void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine,
+                                                   @NotNull Sdk sdk) {
+    patchEnvironmentVariablesForVirtualenv(commandLine.getEnvironment(), sdk);
+  }
+
+  /**
+   * Alters PATH so that a virtualenv is activated, if present.
+   *
+   * @param environment the environment to patch
+   * @param sdk         SDK we're using
+   */
+  public static void patchEnvironmentVariablesForVirtualenv(@NotNull Map<String, String> environment,
+                                                            @NotNull Sdk sdk) {
     final Map<String, String> virtualEnv = activateVirtualEnv(sdk);
     if (!virtualEnv.isEmpty()) {
-      final Map<String, String> environment = commandLine.getEnvironment();
-
       for (Map.Entry<String, String> entry : virtualEnv.entrySet()) {
         final String key = entry.getKey();
         final String value = entry.getValue();
