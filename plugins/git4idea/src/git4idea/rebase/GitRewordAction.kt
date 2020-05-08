@@ -38,13 +38,13 @@ class GitRewordAction : GitSingleCommitEditingAction() {
     GitBundle.getString("rebase.log.action.operation.reword.name")
   )
 
-  override fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData) {
-    val commit = singleCommitEditingData.selectedCommit
-    val project = singleCommitEditingData.project
-    val repository = singleCommitEditingData.repository
-    val details = getOrLoadDetails(project, singleCommitEditingData.logData, commit)
+  override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
+    val commit = commitEditingData.selectedCommit
+    val project = commitEditingData.project
+    val repository = commitEditingData.repository
+    val details = getOrLoadDetails(project, commitEditingData.logData, commit)
 
-    RewordDialog(project, singleCommitEditingData.logData, details, repository).show()
+    RewordDialog(project, commitEditingData.logData, details, repository).show()
   }
 
   private fun getOrLoadDetails(project: Project, data: VcsLogData, commit: VcsShortCommitDetails): VcsCommitMetadata {
@@ -97,11 +97,11 @@ class GitRewordAction : GitSingleCommitEditingAction() {
     }.queue()
   }
 
-  override fun getProhibitedStateMessage(singleCommitEditingData: SingleCommitEditingData, operation: String): String? {
-    if (singleCommitEditingData.repository.state == Repository.State.REBASING && singleCommitEditingData.isHeadCommit) {
+  override fun getProhibitedStateMessage(commitEditingData: SingleCommitEditingData, operation: String): String? {
+    if (commitEditingData.repository.state == Repository.State.REBASING && commitEditingData.isHeadCommit) {
       return null
     }
-    return super.getProhibitedStateMessage(singleCommitEditingData, operation)
+    return super.getProhibitedStateMessage(commitEditingData, operation)
   }
 
   private inner class RewordDialog(val project: Project, val data: VcsLogData, val commit: VcsCommitMetadata, val repository: GitRepository)

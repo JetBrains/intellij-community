@@ -11,12 +11,12 @@ import git4idea.repo.GitRepositoryManager
 
 abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction() {
 
-  override fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData) {
-    val commit = singleCommitEditingData.selectedCommit
-    val project = singleCommitEditingData.project
+  override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
+    val commit = commitEditingData.selectedCommit
+    val project = commitEditingData.project
 
     val changeList = ChangeListManager.getInstance(project).defaultChangeList
-    val repository = singleCommitEditingData.repository
+    val repository = commitEditingData.repository
 
     val gitRepositoryManager = GitRepositoryManager.getInstance(project)
 
@@ -25,7 +25,7 @@ abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction() {
     }
 
     val executors = repository.vcs.commitExecutors +
-                    if (getProhibitedStateMessage(singleCommitEditingData, GitBundle.getString("rebase.log.action.operation.rebase.name")) == null) {
+                    if (getProhibitedStateMessage(commitEditingData, GitBundle.getString("rebase.log.action.operation.rebase.name")) == null) {
                       listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
                     }
                     else {

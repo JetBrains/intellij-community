@@ -11,12 +11,12 @@ class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
     GitBundle.getString("rebase.log.action.operation.rebase.name")
   )
 
-  override fun actionPerformedAfterChecks(singleCommitEditingData: SingleCommitEditingData) {
-    val commit = singleCommitEditingData.selectedCommit
-    val repository = singleCommitEditingData.repository
+  override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
+    val commit = commitEditingData.selectedCommit
+    val repository = commitEditingData.repository
 
     if (Registry.`is`("git.interactive.rebase.collect.entries.using.log")) {
-      interactivelyRebaseUsingLog(repository, commit, singleCommitEditingData.logData)
+      interactivelyRebaseUsingLog(repository, commit, commitEditingData.logData)
     }
     else {
       startInteractiveRebase(repository, commit)
