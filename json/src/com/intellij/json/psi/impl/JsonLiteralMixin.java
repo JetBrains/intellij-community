@@ -10,7 +10,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import org.jetbrains.annotations.NotNull;
 
 abstract class JsonLiteralMixin extends JsonElementImpl implements JsonLiteral {
-  protected JsonLiteralMixin(ASTNode node) {
+  protected JsonLiteralMixin(@NotNull ASTNode node) {
     super(node);
   }
 
