@@ -157,21 +157,23 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
-    if ((++myRecreatedLogCount) % RECREATE_LOG_TRIES == 0) {
-      String message = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
-                                            myRecreatedLogCount,
-                                            LOG_CACHE,
-                                            ApplicationNamesInfo.getInstance().getFullProductName(),
-                                            t.getMessage());
-      LOG.error(message, t);
+    myRecreatedLogCount++;
+    String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
+    if (myRecreatedLogCount % RECREATE_LOG_TRIES == 0) {
+      LOG.error(logMessage, t);
 
       VcsLogManager manager = getLogManager();
       if (manager != null && manager.isLogVisible()) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+        String balloonMessage = VcsLogBundle.message("vcs.log.recreated.due.to.corruption",
+                                                     VcsLogUtil.getVcsDisplayName(myProject, manager),
+                                                     myRecreatedLogCount,
+                                                     LOG_CACHE,
+                                                     ApplicationNamesInfo.getInstance().getFullProductName());
+        VcsBalloonProblemNotifier.showOverChangesView(myProject, balloonMessage, MessageType.ERROR);
       }
     }
     else {
-      LOG.debug("Recreating VCS Log after storage corruption", t);
+      LOG.debug(logMessage, t);
     }
 
     disposeLog(true);

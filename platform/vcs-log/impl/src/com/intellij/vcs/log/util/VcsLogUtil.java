@@ -21,6 +21,7 @@ import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcsUtil.VcsUtil;
@@ -349,5 +350,10 @@ public class VcsLogUtil {
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
     if (vcs.size() != 1) return VcsLogBundle.message("vcs");
     return Objects.requireNonNull(getFirstItem(vcs)).getDisplayName();
+  }
+
+  @NotNull
+  public static String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
+    return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
   }
 }
