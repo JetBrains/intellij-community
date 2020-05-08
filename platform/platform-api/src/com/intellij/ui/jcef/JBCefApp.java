@@ -139,16 +139,6 @@ public final class JBCefApp {
   }
 
   /**
-   * Returns whether JCEF is enabled.
-   *
-   * @deprecated use {@link #isSupported()} instead
-   */
-  @Deprecated
-  public static boolean isEnabled() {
-    return Registry.is("ide.browser.jcef.enabled") && isSupported();
-  }
-
-  /**
    * Returns whether JCEF is supported. For that:
    * <ul>
    * <li> It should be available in the running JBR.
