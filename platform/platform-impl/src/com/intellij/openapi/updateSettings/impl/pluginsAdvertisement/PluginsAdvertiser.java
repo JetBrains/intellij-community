@@ -1,19 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.marketplace.FeatureImpl;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
@@ -22,16 +18,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.Url;
-import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -42,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class PluginsAdvertiser {
   static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
@@ -54,91 +49,35 @@ public final class PluginsAdvertiser {
   private static SoftReference<KnownExtensions> ourKnownExtensions = new SoftReference<>(null);
   private static boolean extensionsHaveBeenUpdated = false;
 
-  @Nullable
-  public static List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) throws IOException {
-    Map<String, String> map = new HashMap<>();
-    map.put("featureType", unknownFeature.getFeatureType());
-    map.put("implementationName", unknownFeature.getImplementationName());
-    map.put("build", MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests());
-    return processFeatureRequest(map, request -> {
-      JsonReader jsonReader = new JsonReader(request.getReader());
-      jsonReader.setLenient(true);
-      JsonElement jsonRootElement = JsonParser.parseReader(jsonReader);
-      List<Plugin> result = new ArrayList<>();
-      for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
-        JsonObject jsonObject = jsonElement.getAsJsonObject();
-        JsonElement pluginId = jsonObject.get("pluginId");
-        JsonElement pluginName = jsonObject.get("pluginName");
-        JsonElement bundled = jsonObject.get("bundled");
-        result.add(new Plugin(StringUtil.unquoteString(pluginId.toString()),
-                              pluginName != null ? StringUtil.unquoteString(pluginName.toString()) : null,
-                              Boolean.parseBoolean(StringUtil.unquoteString(bundled.toString()))));
-      }
-      return result;
-    });
+  @NotNull
+  public static List<Plugin> retrieve(@NotNull UnknownFeature unknownFeature) {
+    Map<String, String> params = new HashMap<>();
+    params.put("featureType", unknownFeature.getFeatureType());
+    params.put("implementationName", unknownFeature.getImplementationName());
+    params.put("build", MarketplaceRequests.getInstance().getBuildForPluginRepositoryRequests());
+    List<FeatureImpl> features =  MarketplaceRequests.getInstance().getFeatures(params);
+    return ContainerUtil.map(features, feature ->
+      new Plugin(
+        feature.getPluginId() != null ? StringUtil.unquoteString(feature.getPluginId()) : null,
+        feature.getPluginName() != null ? StringUtil.unquoteString(feature.getPluginName()) : null,
+        feature.getBundled())
+    );
   }
 
-  static void loadSupportedExtensions(@NotNull List<? extends IdeaPluginDescriptor> allPlugins) throws IOException {
-    Map<String, IdeaPluginDescriptor> availableIds = new HashMap<>();
-    for (IdeaPluginDescriptor plugin : allPlugins) {
-      availableIds.put(plugin.getPluginId().getIdString(), plugin);
-    }
+  static void loadAllExtensions(Set<String> customPluginIds) throws IOException {
     @SuppressWarnings("deprecation")
     Map<String, String> params = Collections.singletonMap("featureType", FileTypeFactory.FILE_TYPE_FACTORY_EP.getName());
-    processFeatureRequest(params, request -> {
-      JsonReader jsonReader = new JsonReader(request.getReader());
-      jsonReader.setLenient(true);
-      JsonElement jsonRootElement = JsonParser.parseReader(jsonReader);
-      Map<String, Set<Plugin>> result = new HashMap<>();
-      for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
-        JsonObject jsonObject = jsonElement.getAsJsonObject();
-
-        String pluginId = StringUtil.unquoteString(jsonObject.get("pluginId").toString());
-        JsonElement bundledExt = jsonObject.get("bundled");
-        boolean isBundled = Boolean.parseBoolean(bundledExt.toString());
-        IdeaPluginDescriptor fromServerPluginDescription = availableIds.get(pluginId);
-        if (fromServerPluginDescription == null && !isBundled) {
-          continue;
-        }
-
-        IdeaPluginDescriptor loadedPlugin = PluginManagerCore.getPlugin(PluginId.getId(pluginId));
-        if (loadedPlugin != null && loadedPlugin.isEnabled()) {
-          continue;
-        }
-
-        if (loadedPlugin != null && fromServerPluginDescription != null &&
-            StringUtil.compareVersionNumbers(loadedPlugin.getVersion(), fromServerPluginDescription.getVersion()) >= 0) {
-          continue;
-        }
-
-        if (fromServerPluginDescription != null && PluginManagerCore.isBrokenPlugin(fromServerPluginDescription)) {
-          continue;
-        }
-
-        JsonElement ext = jsonObject.get("implementationName");
-        String extension = StringUtil.unquoteString(ext.toString());
-        Set<Plugin> pluginIds = result.get(extension);
-        if (pluginIds == null) {
-          pluginIds = new HashSet<>();
-          result.put(extension, pluginIds);
-        }
-        JsonElement pluginNameElement = jsonObject.get("pluginName");
-        String pluginName = pluginNameElement != null ? StringUtil.unquoteString(pluginNameElement.toString()) : null;
-        pluginIds.add(new Plugin(pluginId, pluginName, isBundled));
-      }
-      saveExtensions(result);
-      return result;
-    });
-  }
-
-  private static <K> K processFeatureRequest(@NotNull Map<String, String> params, @NotNull HttpRequests.RequestProcessor<K> requestProcessor) throws IOException {
-    String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
-    Url url = Urls.parseEncoded(baseUrl);
-    if (url == null) {
-      LOG.error("Cannot parse URL: " + baseUrl);
-      return null;
-    }
-    return HttpRequests.request(url.addParameters(params)).productNameAsUserAgent().connect(requestProcessor);
+    List<FeatureImpl> features =  MarketplaceRequests.getInstance().getFeatures(params);
+    Map<String, Set<Plugin>> setExtensions = features.stream().collect(
+      Collectors.groupingBy(FeatureImpl::getImplementationName, Collectors.mapping(
+        feature -> new Plugin(
+          feature.getPluginId() != null ? StringUtil.unquoteString(feature.getPluginId()) : null,
+          feature.getPluginName() != null ? StringUtil.unquoteString(feature.getPluginName()) : null,
+          feature.getBundled(),
+          customPluginIds.contains(feature.getPluginId())
+        ), Collectors.toSet()
+      )));
+    saveExtensions(setExtensions);
   }
 
   static void ensureDeleted() {
@@ -224,18 +163,24 @@ public final class PluginsAdvertiser {
   public static void installAndEnable(@Nullable Project project, @NotNull Set<PluginId> pluginIds, boolean showDialog, @NotNull Runnable onSuccess) {
     ProgressManager.getInstance().run(new Task.Modal(project, IdeBundle.message("plugins.advertiser.task.searching.for.plugins"), true) {
       private final Set<PluginDownloader> myPlugins = new HashSet<>();
+      private List<IdeaPluginDescriptor> myRepositoryPlugins;
       private List<IdeaPluginDescriptor> myCustomPlugins;
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myCustomPlugins = RepositoryHelper.loadPluginsFromAllRepositories(indicator);
+          List<@NotNull String> ids = ContainerUtil.map(pluginIds, id -> id.getIdString());
+          List<PluginNode> marketplacePlugins =  MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
+          myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
+
+          myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins);
+
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
-            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId())) {
+            if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId()) && PluginManagerCore.isCompatible(descriptor)) {
               myPlugins.add(PluginDownloader.createDownloader(descriptor));
             }
           }
-          for (IdeaPluginDescriptor loadedPlugin : myCustomPlugins) {
+          for (IdeaPluginDescriptor loadedPlugin : myRepositoryPlugins) {
             if (pluginIds.contains(loadedPlugin.getPluginId())) {
               myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
             }
@@ -248,14 +193,12 @@ public final class PluginsAdvertiser {
 
       @Override
       public void onSuccess() {
-        if (myCustomPlugins == null) {
+        if (myRepositoryPlugins == null) {
           return;
         }
 
         PluginsAdvertiserDialog advertiserDialog =
-          new PluginsAdvertiserDialog(null,
-                                      myPlugins.toArray(new PluginDownloader[0]),
-                                      myCustomPlugins);
+          new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[0]), myCustomPlugins);
         if (showDialog) {
           if (advertiserDialog.showAndGet()) {
             onSuccess.run();
@@ -308,6 +251,7 @@ public final class PluginsAdvertiser {
     public String myPluginId;
     public String myPluginName;
     public boolean myBundled;
+    public boolean myFromCustomRepository;
 
     /**
      * @deprecated Please use {@link #Plugin(String, String, boolean)}
@@ -321,6 +265,13 @@ public final class PluginsAdvertiser {
       myPluginId = pluginId;
       myBundled = bundled;
       myPluginName = pluginName;
+    }
+
+    public Plugin(String pluginId, String pluginName, boolean bundled, boolean isFromCustomRepository) {
+      myPluginId = pluginId;
+      myPluginName = pluginName;
+      myBundled = bundled;
+      myFromCustomRepository = isFromCustomRepository;
     }
 
     public Plugin() { }

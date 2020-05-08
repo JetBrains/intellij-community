@@ -255,11 +255,10 @@ open class MarketplaceRequests {
       }
   }
 
-  @Throws(IOException::class)
-  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> {
+  fun getLastCompatiblePluginUpdate(ids: List<String>, buildNumber: BuildNumber? = null): List<IdeCompatibleUpdate> = try {
     val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(PluginDownloader.getBuildNumberForDownload(buildNumber), ids))
     val url = Urls.newFromEncoded(COMPATIBLE_UPDATE_URL).toExternalForm()
-    return HttpRequests
+    HttpRequests
       .post(url, HttpRequests.JSON_CONTENT_TYPE)
       .productNameAsUserAgent()
       .throwStatusCodeException(false)
@@ -271,6 +270,10 @@ open class MarketplaceRequests {
             object : TypeReference<List<IdeCompatibleUpdate>>() {}
           )
       }
+  }
+  catch (e: Exception) {
+    LOG.warn("Can not get compatible updates from Marketplace")
+    emptyList()
   }
 
   @JvmOverloads

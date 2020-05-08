@@ -55,10 +55,11 @@ public final class RepositoryHelper {
    * Loads list of plugins, compatible with a current build, from all configured repositories
    */
   @NotNull
-  public static List<IdeaPluginDescriptor> loadPluginsFromAllRepositories(@Nullable ProgressIndicator indicator) {
+  public static List<IdeaPluginDescriptor> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator) {
     List<IdeaPluginDescriptor> result = new ArrayList<>();
     Set<PluginId> addedPluginIds = new HashSet<>();
     for (String host : getPluginHosts()) {
+      if (host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) continue;
       try {
         List<IdeaPluginDescriptor> plugins = loadPlugins(host, indicator);
         for (IdeaPluginDescriptor plugin : plugins) {
@@ -68,7 +69,7 @@ public final class RepositoryHelper {
         }
       }
       catch (IOException e) {
-        LOG.info("Couldn't load plugins from " + (host == null ? "main repository" : host) + ": " + e);
+        LOG.info("Couldn't load plugins from" + host + ":" + e);
         LOG.debug(e);
       }
     }

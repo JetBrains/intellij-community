@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PluginAdvertiserEditorNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
@@ -103,7 +105,16 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private EditorNotificationPanel createPanel(@NotNull String extension,
                                               @NotNull PluginsAdvertiser.KnownExtensions knownExtensions,
                                               @NotNull Project project) {
-    final Set<PluginsAdvertiser.Plugin> plugins = knownExtensions.find(extension);
+    Set<PluginsAdvertiser.Plugin> plugins = knownExtensions.find(extension);
+    if (plugins != null) {
+      Set<String> pluginIdsFromMarketplace = ContainerUtil.map2Set(
+        MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(ContainerUtil.map(plugins, plugin -> plugin.myPluginId), null),
+        p -> p.getPluginId()
+      );
+      plugins = plugins.stream()
+        .filter(p -> p.myFromCustomRepository || p.myBundled || pluginIdsFromMarketplace.contains(p.myPluginId))
+        .collect(Collectors.toSet());
+    }
     if (plugins != null && !plugins.isEmpty()) {
       List<String> pluginIds = ContainerUtil.map(plugins, plugin -> plugin.myPluginId);
       LOG.debug(String.format("Found following plugins for '%s': [%s]", extension, StringUtil.join(pluginIds, ",")));

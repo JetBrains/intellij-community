@@ -433,6 +433,26 @@ object UpdateChecker {
     }
   }
 
+  @JvmStatic
+  fun mergePluginsFromRepositories(
+    marketplaceUpdates: List<IdeaPluginDescriptor>,
+    customPlugins: List<IdeaPluginDescriptor>
+  ): List<IdeaPluginDescriptor> {
+    val compatiblePluginMap = marketplaceUpdates.associateBy { it.pluginId }.toMutableMap()
+    for (customPlugin in customPlugins) {
+      val pluginId = customPlugin.pluginId
+      val plugin = compatiblePluginMap[pluginId]
+      if (plugin == null) {
+        compatiblePluginMap[pluginId] = customPlugin
+      } else {
+        if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(plugin, customPlugin.version) > 0) {
+          compatiblePluginMap[pluginId] = customPlugin
+        }
+      }
+    }
+    return compatiblePluginMap.values.toList()
+  }
+
   @Throws(IOException::class)
   @JvmStatic
   fun checkAndPrepareToInstall(
