@@ -7,8 +7,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.execution.filters.ExceptionAnalysisProvider;
-import com.intellij.execution.filters.ExceptionInfo;
+import com.intellij.execution.filters.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,8 +36,9 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   @Override
-  public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor, @NotNull String exceptionName, @NotNull String exceptionMessage) {
-    Analysis analysis = getAnalysis(anchor, exceptionName, exceptionMessage);
+  public @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
+                                              @NotNull ExceptionInfo info) {
+    Analysis analysis = getAnalysis(anchor, info);
     return createAction(analysis);
   }
 
@@ -92,8 +92,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private @Nullable Analysis getAnalysis(@NotNull PsiElement anchor,
-                                         @NotNull String exceptionName,
-                                         @NotNull String exceptionMessage) {
+                                         @NotNull ExceptionInfo info) {
     if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW)) {
       PsiNewExpression exceptionConstructor = tryCast(anchor.getParent(), PsiNewExpression.class);
       if (exceptionConstructor != null && !exceptionConstructor.isArrayCreation()) {
@@ -103,22 +102,25 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
         return fromThrowStatement(throwStatement);
       }
     }
-    switch (exceptionName) {
-      case CommonClassNames.JAVA_LANG_ASSERTION_ERROR:
-        return fromAssertionError(anchor);
-      case "java.lang.ArrayIndexOutOfBoundsException":
-        return fromArrayIndexOutOfBoundsException(anchor, exceptionMessage);
-      case "java.lang.ClassCastException":
-        return fromClassCastException(anchor, exceptionMessage);
-      case CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION:
-        return Analysis.create(DfTypes.NULL, findDereferencedExpression(anchor));
-      case "java.lang.NegativeArraySizeException":
-        return fromNegativeArraySizeException(anchor, exceptionMessage);
-      case "java.lang.ArithmeticException":
-        return fromArithmeticException(anchor);
-      default:
-        return null;
+    if (info instanceof AssertionErrorInfo) {
+      return fromAssertionError(anchor);
     }
+    else if (info instanceof ArrayIndexOutOfBoundsExceptionInfo) {
+      return fromArrayIndexOutOfBoundsException(anchor, ((ArrayIndexOutOfBoundsExceptionInfo)info).getIndex());
+    }
+    else if (info instanceof ClassCastExceptionInfo) {
+      return fromClassCastException(anchor, ((ClassCastExceptionInfo)info).getActualClass());
+    }
+    else if (info instanceof NullPointerExceptionInfo) {
+      return Analysis.create(DfTypes.NULL, findDereferencedExpression(anchor));
+    }
+    else if (info instanceof NegativeArraySizeExceptionInfo) {
+      return fromNegativeArraySizeException(anchor, ((NegativeArraySizeExceptionInfo)info).getSuppliedSize());
+    }
+    else if (info instanceof ArithmeticExceptionInfo) {
+      return fromArithmeticException(anchor);
+    }
+    return null;
   }
 
   private static Analysis fromArithmeticException(PsiElement anchor) {
@@ -261,63 +263,47 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
     return null;
   }
 
-  private @Nullable Analysis fromClassCastException(@NotNull PsiElement anchor, @NotNull String exceptionMessage) {
-    if (anchor instanceof PsiJavaToken && ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LPARENTH)) {
-      String actualClass = ExceptionInfo.getCastActualClassFromMessage(exceptionMessage);
-      if (actualClass != null) {
-        PsiTypeCastExpression castExpression = tryCast(anchor.getParent(), PsiTypeCastExpression.class);
-        if (castExpression != null) {
-          PsiExpression ref = extractAnchor(castExpression.getOperand());
-          if (ref != null) {
-            // TODO: support arrays, primitive arrays, inner classes
-            PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(actualClass, GlobalSearchScope.allScope(myProject));
-            if (classes.length == 1) {
-              return new Analysis(
-                DfTypes.typedObject(JavaPsiFacade.getElementFactory(myProject).createType(classes[0]), Nullability.NOT_NULL), ref);
-            }
-            else {
-              PsiType castType = castExpression.getType();
-              if (castType != null) {
-                return tryNegate(new Analysis(DfTypes.typedObject(castType, Nullability.NULLABLE), ref));
-              }
-            }
-          }
-        }
+  private @Nullable Analysis fromClassCastException(@NotNull PsiElement anchor, @Nullable String actualClass) {
+    if (!(anchor instanceof PsiJavaToken) || !((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LPARENTH)) {
+      return null;
+    }
+    PsiTypeCastExpression castExpression = tryCast(anchor.getParent(), PsiTypeCastExpression.class);
+    if (castExpression == null) return null;
+    PsiExpression ref = extractAnchor(castExpression.getOperand());
+    if (ref == null) return null;
+    if (actualClass != null) {
+      // TODO: support arrays, primitive arrays, inner classes
+      PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(actualClass, GlobalSearchScope.allScope(myProject));
+      if (classes.length == 1) {
+        return new Analysis(
+          DfTypes.typedObject(JavaPsiFacade.getElementFactory(myProject).createType(classes[0]), Nullability.NOT_NULL), ref);
+      }
+    }
+    PsiType castType = castExpression.getType();
+    if (castType != null) {
+      return tryNegate(new Analysis(DfTypes.typedObject(castType, Nullability.NULLABLE), ref));
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Analysis fromArrayIndexOutOfBoundsException(@NotNull PsiElement anchor, @Nullable Integer index) {
+    if (index != null && anchor instanceof PsiJavaToken && ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LBRACKET)) {
+      PsiArrayAccessExpression access = tryCast(anchor.getParent(), PsiArrayAccessExpression.class);
+      if (access != null) {
+        return Analysis.create(DfTypes.intValue(index), access.getIndexExpression());
       }
     }
     return null;
   }
 
   @Nullable
-  private static Analysis fromArrayIndexOutOfBoundsException(@NotNull PsiElement anchor, @NotNull String exceptionMessage) {
-    if (anchor instanceof PsiJavaToken &&
-        ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LBRACKET)) {
-      Integer index = ExceptionInfo.getArrayIndexFromMessage(exceptionMessage);
-      if (index != null) {
-        PsiArrayAccessExpression access = tryCast(anchor.getParent(), PsiArrayAccessExpression.class);
-        if (access != null) {
-          return Analysis.create(DfTypes.intValue(index), access.getIndexExpression());
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Analysis fromNegativeArraySizeException(@NotNull PsiElement anchor, @NotNull String exceptionMessage) {
+  private static Analysis fromNegativeArraySizeException(@NotNull PsiElement anchor, @Nullable Integer size) {
+    if (size == null || size >= 0) return null;
     if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW) && anchor.getParent() instanceof PsiNewExpression) {
-      int size;
-      try {
-        size = Integer.parseInt(exceptionMessage);
-      }
-      catch (NumberFormatException e) {
-        return null;
-      }
-      if (size < 0) {
-        PsiExpression[] dimensions = ((PsiNewExpression)anchor.getParent()).getArrayDimensions();
-        if (dimensions.length == 1) {
-          return Analysis.create(DfTypes.intValue(size), dimensions[0]);
-        }
+      PsiExpression[] dimensions = ((PsiNewExpression)anchor.getParent()).getArrayDimensions();
+      if (dimensions.length == 1) {
+        return Analysis.create(DfTypes.intValue(size), dimensions[0]);
       }
     }
     return null;

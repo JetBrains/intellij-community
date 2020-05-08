@@ -424,7 +424,7 @@ public class ExceptionWorker {
       if (info == null) {
         action = exceptionAnalysisProvider.getIntermediateRowAnalysisAction(element);
       } else {
-        action = exceptionAnalysisProvider.getAnalysisAction(element, info.getExceptionClassName(), info.getExceptionMessage());
+        action = exceptionAnalysisProvider.getAnalysisAction(element, info);
       }
       if (action == null) return;
       String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());

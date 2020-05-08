@@ -11,13 +11,10 @@ import org.jetbrains.annotations.Nullable;
 public interface ExceptionAnalysisProvider {
   /**
    * @param anchor a place (leaf element) in the source code where exception occurred
-   * @param exceptionClassName exception class name (fully-qualified)
-   * @param exceptionMessage exception message (fully-qualified)
+   * @param info exception info
    * @return an action to provide additional analysis for given exception; null if not available.
    */
-  @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor,
-                                       @NotNull String exceptionClassName,
-                                       @NotNull String exceptionMessage);
+  @Nullable AnAction getAnalysisAction(@NotNull PsiElement anchor, @NotNull ExceptionInfo info);
 
   /**
    * @param anchor a place (method name identifier) in the source code where next stack frame row is invoked 
