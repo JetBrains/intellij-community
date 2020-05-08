@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
@@ -24,7 +26,7 @@ import static com.intellij.openapi.util.Clock.getTime;
  * <p>
  * Use {@link #getCookies()} and others for retrieving cookies synchronously.
  * <p>
- * Use {@link #setCookie(String, CefCookie, boolean)} and others for setting cookie. Can be used both with synchronization or without one.
+ * Use {@link #setCookie(String, JBCefCookie, boolean)} and others for setting cookie. Can be used both with synchronization or without one.
  * <p>
  * Use {@link #deleteCookies(boolean)} and others for deleting cookies. Can be used both with synchronization or without one.
  *
@@ -57,16 +59,14 @@ public class JBCefCookieManager {
   /**
    * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
    */
-  public @Nullable List<CefCookie> getCookies() {
+  public @Nullable List<JBCefCookie> getCookies() {
     return getCookies(null, false, null);
   }
 
   /**
-   * TODO[hatari] Doesn't work now, waiting for JCEF library update <p/>
-   *
    * @see JBCefCookieManager#getCookies(String, Boolean, Integer)
    */
-  public @Nullable List<CefCookie> getCookies(@NotNull String url) {
+  public @Nullable List<JBCefCookie> getCookies(@NotNull String url) {
     return getCookies(url, false, null);
   }
 
@@ -78,9 +78,9 @@ public class JBCefCookieManager {
    * @param includeHttpOnly include only true HTTP-only cookies.
    * @param maxTimeToWait   time to wait getting cookies in ms, default value is
    *                        {@link JBCefCookieManager#DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION}.
-   * @return list of {@link CefCookie} or null if cookies cannot be accessed
+   * @return list of {@link JBCefCookie} or null if cookies cannot be accessed
    */
-  public @Nullable List<CefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
+  public @Nullable List<JBCefCookie> getCookies(@Nullable String url, @Nullable Boolean includeHttpOnly, @Nullable Integer maxTimeToWait) {
     long startTime = getTime();
 
     boolean httpOnly = includeHttpOnly != null ? includeHttpOnly : false;
@@ -91,7 +91,6 @@ public class JBCefCookieManager {
 
     boolean result;
     if (url != null) {
-      // TODO[hatari] Doesn't work now, waiting for JCEF library update <p/>
       result = myCefCookieManager.visitUrlCookies(url, httpOnly, cookieVisitor);
     }
     else {
@@ -123,20 +122,18 @@ public class JBCefCookieManager {
   }
 
   /**
-   * @see JBCefCookieManager#setCookie(String, CefCookie, Integer)
+   * @see JBCefCookieManager#setCookie(String, JBCefCookie, Integer)
    */
-  public boolean setCookie(@NotNull String url, @NotNull CefCookie cefCookie, boolean doSync) {
+  public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, boolean doSync) {
     if (doSync) {
-      return setCookie(url, cefCookie, null);
+      return setCookie(url, jbCefCookie, null);
     }
     else {
-      return myCefCookieManager.setCookie(url, cefCookie);
+      return myCefCookieManager.setCookie(url, jbCefCookie.getCefCookie());
     }
   }
 
   /**
-   * TODO[hatari] Doesn't work now, waiting for JCEF library update <p/>
-   * <p>
    * Sets a cookie given a valid URL and explicit user-provided cookie attributes.
    * Underlying native method {@link CefCookieManager#setCookie(String, CefCookie)} is asynchronous.
    * This method is synchronous and will wait up to `maxTimeToWait` ms.
@@ -145,15 +142,35 @@ public class JBCefCookieManager {
    *                      {@link JBCefCookieManager#DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION} ms.
    * @return true if setting the cookie was successful.
    */
-  public boolean setCookie(@NotNull String url, @NotNull CefCookie cefCookie, @Nullable Integer maxTimeToWait) {
+  public boolean setCookie(@NotNull String url, @NotNull JBCefCookie jbCefCookie, @Nullable Integer maxTimeToWait) {
+    try {
+      URI uri = new URI(url);
+      String scheme = uri.getScheme();
+      String domain = uri.getHost();
+      domain = domain.startsWith("www") ? domain : "." + domain;
+
+      if (scheme.equals("http") && jbCefCookie.isSecure()) {
+        LOG.warn("Cannot set cookie without secure flag for HTTPS web-site");
+        return false;
+      }
+      if (!domain.contains(jbCefCookie.getDomain())) {
+        LOG.warn("Cookie domain `" + jbCefCookie.getDomain() + "` doesn't match URL host `" + domain + "`");
+        return false;
+      }
+    }
+    catch (URISyntaxException e) {
+      LOG.error(e);
+      return false;
+    }
+
     int timeout = maxTimeToWait != null ? maxTimeToWait : DEFAULT_TIMEOUT_FOR_SYNCHRONOUS_FUNCTION;
 
     IntFunction<Boolean> checkFunction = (timeoutForCheck) -> {
-      List<CefCookie> cookies = getCookies(url, null, timeoutForCheck);
+      List<JBCefCookie> cookies = getCookies(url, null, timeoutForCheck);
       if (cookies == null) {
         return false;
       }
-      return cookies.contains(cefCookie);
+      return cookies.contains(jbCefCookie);
     };
 
     myLock.lock();
@@ -163,7 +180,7 @@ public class JBCefCookieManager {
           LOG.debug("Cookie is already set");
           return true;
         }
-        if (!myCefCookieManager.setCookie(url, cefCookie)) {
+        if (!myCefCookieManager.setCookie(url, jbCefCookie.getCefCookie())) {
           LOG.error("Posting task to set cookie is failed");
           return false;
         }
@@ -204,7 +221,7 @@ public class JBCefCookieManager {
   public boolean deleteCookies(boolean doSync) {
     if (doSync) {
       return deleteCookies("", "", (timeout) -> {
-        List<CefCookie> cookies = getCookies(null, false, timeout);
+        List<JBCefCookie> cookies = getCookies(null, false, timeout);
         if (cookies == null) {
           return false;
         }
@@ -225,7 +242,7 @@ public class JBCefCookieManager {
   public boolean deleteCookies(@NotNull String url, boolean doSync) {
     if (doSync) {
       return deleteCookies(url, "", (timeout) -> {
-        List<CefCookie> cookies = getCookies(url, false, timeout);
+        List<JBCefCookie> cookies = getCookies(url, false, timeout);
         if (cookies == null) {
           return false;
         }
@@ -259,11 +276,11 @@ public class JBCefCookieManager {
    */
   public boolean deleteCookies(@NotNull String url, @NotNull String cookieName, @Nullable Integer maxTimeToWait) {
     IntFunction<Boolean> checkFunction = (timeout) -> {
-      List<CefCookie> cookies = getCookies(url, false, timeout);
+      List<JBCefCookie> cookies = getCookies(url, false, timeout);
       if (cookies == null) {
         return false;
       }
-      return cookies.stream().allMatch(cefCookie -> cefCookie.name != cookieName);
+      return cookies.stream().noneMatch(cefCookie -> cefCookie.getName().equals(cookieName));
     };
 
     return deleteCookies(url, cookieName, checkFunction, maxTimeToWait);
@@ -327,7 +344,7 @@ public class JBCefCookieManager {
   }
 
   private static class JBCookieVisitor implements CefCookieVisitor {
-    final List<CefCookie> myCefCookies = new ArrayList<>();
+    final List<JBCefCookie> myCefCookies = new ArrayList<>();
     final CountDownLatch myCountDownLatch;
 
     JBCookieVisitor(CountDownLatch countDownLatch) {
@@ -338,7 +355,7 @@ public class JBCefCookieManager {
     // TODO[hatari]: This method may never be called if no cookies are found.
     //  So CountDownLatch can't countDown() well except timeout.
     public boolean visit(CefCookie cookie, int count, int total, BoolRef delete) {
-      myCefCookies.add(cookie);
+      myCefCookies.add(new JBCefCookie(cookie));
       if (count >= total - 1) {
         // last element
         myCountDownLatch.countDown();
@@ -346,7 +363,7 @@ public class JBCefCookieManager {
       return true;
     }
 
-    public List<CefCookie> getCookies() {
+    public List<JBCefCookie> getCookies() {
       return myCefCookies;
     }
   }

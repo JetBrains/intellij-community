@@ -9,10 +9,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
+import com.intellij.ui.jcef.JBCefCookie;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
-import org.cef.network.CefCookie;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +84,7 @@ public class WebBrowser extends AnAction implements DumbAware {
       @Override
       public void actionPerformed(ActionEvent e) {
         myCookieManagerDialog.setVisible(true);
-        List<CefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
+        List<JBCefCookie> cookies = myJBCefBrowser.getJBCefCookieManager().getCookies();
         if (cookies != null) {
           myCookieManagerDialog.update(cookies);
         }

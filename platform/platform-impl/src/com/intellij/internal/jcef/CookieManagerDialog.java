@@ -4,10 +4,10 @@
 package com.intellij.internal.jcef;
 
 import com.intellij.ui.jcef.JBCefBrowser;
+import com.intellij.ui.jcef.JBCefCookie;
 import com.intellij.ui.jcef.JBCefCookieManager;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
-import org.cef.network.CefCookie;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +22,6 @@ import java.util.List;
 class CookieManagerDialog extends JDialog {
   private static final String myTitle = "Cookie Manager";
   private static final String myDeleteCookiesButtonText = "Delete All Cookies";
-  private static final String myAdditionalButtonText = "Test SetCookie";
   @SuppressWarnings("unused") private final JBCefBrowser myJBCefBrowser;
   private final JBCefCookieManager myJBCefCookieManager;
   private final CookieTableModel myTableModel = new CookieTableModel();
@@ -46,7 +45,7 @@ class CookieManagerDialog extends JDialog {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (myJBCefCookieManager.deleteCookies(true)) {
-          List<CefCookie> cookies = myJBCefCookieManager.getCookies();
+          List<JBCefCookie> cookies = myJBCefCookieManager.getCookies();
           if (cookies != null) {
             update(cookies);
           }
@@ -55,41 +54,10 @@ class CookieManagerDialog extends JDialog {
     });
     controlPanel.add(myDeleteCookiesButton);
 
-    final JButton myAdditionalButton = new JButton(myAdditionalButtonText);
-    myAdditionalButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        List<CefCookie> cookies = myJBCefCookieManager.getCookies();
-        if (cookies == null || cookies.isEmpty()) return;
-
-        CefCookie firstCookie = cookies.get(0);
-        CefCookie newCookie = new CefCookie(
-          "Cookie",
-          "Value",
-          firstCookie.domain,
-          firstCookie.path,
-          firstCookie.secure,
-          firstCookie.secure,
-          firstCookie.creation,
-          firstCookie.lastAccess,
-          firstCookie.hasExpires,
-          firstCookie.expires
-        );
-
-        if (myJBCefCookieManager.setCookie("http://maps.google.com", newCookie, true)) {
-          cookies = myJBCefCookieManager.getCookies();
-          if (cookies != null) {
-            update(cookies);
-          }
-        }
-      }
-    });
-    controlPanel.add(myAdditionalButton);
-
     add(controlPanel, BorderLayout.SOUTH);
   }
 
-  public void update(List<CefCookie> cefCookies) {
+  public void update(List<JBCefCookie> cefCookies) {
     myTableModel.clear();
     myTableModel.show(cefCookies);
   }
@@ -99,18 +67,18 @@ class CookieManagerDialog extends JDialog {
       new String[]{"Name", "Value", "Domain", "Path", "Secure", "HTTP only", "Created", "Last Access", "Expires"};
     private final ArrayList<Object[]> rowData = new ArrayList<>();
 
-    private void show(@NotNull List<CefCookie> cefCookies) {
-      for (CefCookie cookie : cefCookies) {
+    private void show(@NotNull List<JBCefCookie> cefCookies) {
+      for (JBCefCookie cookie : cefCookies) {
         Object[] entry = {
-          cookie.name,
-          cookie.value,
-          cookie.domain,
-          cookie.path,
-          Boolean.valueOf(cookie.secure),
-          Boolean.valueOf(cookie.httponly),
-          cookie.creation,
-          cookie.lastAccess,
-          cookie.expires
+          cookie.getName(),
+          cookie.getValue(),
+          cookie.getDomain(),
+          cookie.getPath(),
+          cookie.isSecure(),
+          cookie.isHttpOnly(),
+          cookie.getCreation(),
+          cookie.getLastAccess(),
+          cookie.getExpires()
         };
         int row = rowData.size();
         rowData.add(entry);
