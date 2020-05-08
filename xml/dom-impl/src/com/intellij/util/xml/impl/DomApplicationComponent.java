@@ -81,6 +81,7 @@ public final class DomApplicationComponent {
     myTypeChooserManager.clearCache();
 
     myInvocationCaches.clear();
+    assignabilityCache.clear();
 
     registerDescriptions();
   }
