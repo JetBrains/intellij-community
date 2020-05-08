@@ -79,7 +79,25 @@ internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>)
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
 
-  override fun toString(): String = clazz.simpleName + "-:-"+ arrayId.toString()
+  override fun toString(): String = clazz.simpleName + "-:-" + arrayId.toString()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PId<*>
+
+    if (arrayId != other.arrayId) return false
+    if (clazz.java != other.clazz.java) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = arrayId
+    result = 31 * result + clazz.java.hashCode()
+    return result
+  }
 }
 
 interface PSoftLinkable {
