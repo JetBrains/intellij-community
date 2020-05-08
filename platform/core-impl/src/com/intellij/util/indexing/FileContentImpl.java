@@ -212,7 +212,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
 
   @Override
   public String toString() {
-    return myFileName;
+    return "FileContentImpl(" + getFileName() + ")";
   }
 
   public byte @Nullable [] getHash() {

@@ -56,4 +56,9 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
   public void setProject(@NotNull Project project) {
     myProject = project;
   }
+
+  @Override
+  public String toString() {
+    return "IndexedFileImpl(" + getFileName() + ")";
+  }
 }
