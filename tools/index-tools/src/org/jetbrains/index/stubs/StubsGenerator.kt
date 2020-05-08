@@ -112,10 +112,12 @@ fun mergeStubs(paths: List<String>, stubsFilePath: String, stubsFileName: String
 
         if (storage.containsMapping(key)) {
           if (newStubTree != storage.get(key)) { // TODO: why are they slightly different???
-            storage.get(key).getStub(newSerializationManager)
+            storage.get(key).stub
 
-            val stub = value.getStub(serializationManager)
-            val newStubTree2 = SerializedStubTree.serializeStub(stub, newSerializationManager, newForwardIndexSerializer)
+            val stub = value.stub
+            val newStubTree2 = SerializedStubTree.serializeStub(stub,
+                                                                newSerializationManager,
+                                                                newForwardIndexSerializer)
 
             TestCase.assertTrue(newStubTree == newStubTree2) // wtf!!! why are they equal now???
           }

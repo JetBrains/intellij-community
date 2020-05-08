@@ -127,11 +127,7 @@ public final class SerializedStubTree {
   }
 
   public @NotNull Stub getStub() throws SerializerNotFoundException {
-    return getStub(mySerializationManager);
-  }
-
-  public @NotNull Stub getStub(@NotNull SerializationManagerEx serializationManager) throws SerializerNotFoundException {
-    return serializationManager.deserialize(new UnsyncByteArrayInputStream(myTreeBytes, 0, myTreeByteLength));
+    return mySerializationManager.deserialize(new UnsyncByteArrayInputStream(myTreeBytes, 0, myTreeByteLength));
   }
 
   @Override
