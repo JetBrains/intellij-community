@@ -1,24 +1,10 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
 
-# managed by go/iml_to_build
 iml_module(
     name = "intellij.gradle.toolingExtension.impl",
-    srcs = ["src"],
     iml_files = ["intellij.gradle.toolingExtension.impl.iml"],
     visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea/.idea/libraries:jetbrains-annotations-java5",
-        "//tools/idea/platform/external-system-rt:intellij.platform.externalSystem.rt[module]",
-        "//tools/idea/plugins/gradle/tooling-extension-api:intellij.gradle.toolingExtension[module]",
-        "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/.idea/libraries:Groovy",
-        "//tools/idea/.idea/libraries:gson",
-        "//tools/idea/platform/object-serializer:intellij.platform.objectSerializer.annotations[module]",
-        "//tools/idea/.idea/libraries:Trove4j",
-        "//tools/idea/.idea/libraries:ion",
-        "//tools/idea/platform/util-rt:intellij.platform.util.rt[module]",
-    ],
+    exports = ["//prebuilts/tools/common/jetbrains:gradle-tooling-extension-impl"],  # b/156122269
 )
 
 # managed by go/iml_to_build

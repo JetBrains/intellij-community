@@ -453,7 +453,6 @@ iml_project(
         "//tools/idea/plugins/gradle/native/tooling:intellij.gradle.native.tooling.tests",
         "//tools/idea/plugins/gradle/native:intellij.gradle.native",
         "//tools/idea/plugins/gradle/tooling-extension-api:intellij.gradle.toolingExtension",
-        "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.impl",
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.tests",
         "//tools/idea/plugins/gradle/tooling-loader-rt:intellij.gradle.toolingLoaderRt",
         "//tools/idea/plugins/gradle:intellij.gradle",
