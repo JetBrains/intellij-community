@@ -238,6 +238,11 @@
                      groupPath="Plugin DevKit" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.SerializableCtorInspection"/>
+    <localInspection language="UAST" shortName="IncorrectParentDisposable"
+                     displayName="Incorrect parentDisposable parameter"
+                     groupPath="Plugin DevKit" groupKey="inspections.group.code"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.IncorrectParentDisposableInspection"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
