@@ -11,13 +11,13 @@ import com.intellij.workspace.api.pstorage.external.ExternalEntityIndex.MutableE
 import java.util.*
 
 open class ExternalEntityIndex<T> private constructor(internal val index: BidirectionalMap<PId<out TypedEntity>, T>) {
-  private var entityStorage: AbstractPEntityStorage? = null
-  internal fun getIds(data: T): List<TypedEntity>? {
-    val storage = entityStorage ?: return null
-    return index.getKeysByValue(data)?.toMutableList()?.mapNotNull { storage.entityDataById(it)?.createEntity(storage) }
+  private lateinit var entityStorage: AbstractPEntityStorage
+
+  fun getEntities(data: T): List<TypedEntity>? = index.getKeysByValue(data)?.toMutableList()?.mapNotNull {
+    entityStorage.entityDataById(it)?.createEntity(entityStorage)
   }
 
-  internal fun getDataById(entity: TypedEntity): T? {
+  fun getDataByEntity(entity: TypedEntity): T? {
     entity as PTypedEntity
     return index[entity.id]
   }
@@ -38,7 +38,7 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
   ) : ExternalEntityIndex<T>(index) {
     constructor() : this(BidirectionalMap<PId<out TypedEntity>, T>(), mutableListOf())
 
-    internal fun index(entity: TypedEntity, data: T) {
+    fun index(entity: TypedEntity, data: T) {
       entity as PTypedEntity
       index(entity.id, data)
     }
@@ -48,17 +48,7 @@ open class ExternalEntityIndex<T> private constructor(internal val index: Bidire
       indexLog.add(Add(id, data))
     }
 
-    internal fun update(entity: TypedEntity, newData: T) {
-      entity as PTypedEntity
-      update(entity.id, newData)
-    }
-
-    private fun update(id: PId<out TypedEntity>, newData: T) {
-      remove(id)
-      index(id, newData)
-    }
-
-    internal fun remove(entity: TypedEntity) {
+    fun remove(entity: TypedEntity) {
       entity as PTypedEntity
       remove(entity.id)
     }
