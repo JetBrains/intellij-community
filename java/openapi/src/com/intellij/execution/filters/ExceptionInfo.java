@@ -8,9 +8,11 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Experimental
 public class ExceptionInfo {
   private static final String EXCEPTION_IN_THREAD = "Exception in thread \"";
   private static final String CAUSED_BY = "Caused by: ";
@@ -24,33 +26,16 @@ public class ExceptionInfo {
     myExceptionMessage = exceptionMessage;
   }
 
-  boolean isSpecificExceptionElement(PsiElement element) {
-    return false;
+  @Nullable PsiElement matchSpecificExceptionElement(@NotNull PsiElement element) {
+    return null;
   }
 
   /**
    * @return a predicate that matches an element within the source line that is likely an exception source
    */
-  @NotNull ExceptionLineRefiner getPositionRefiner() {
-    return new ExceptionLineRefiner() {
-      @Override
-      public boolean test(PsiElement element) {
-        // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
-        if (element instanceof PsiKeyword && element.textMatches(PsiKeyword.NEW)) {
-          PsiNewExpression newExpression = ObjectUtils.tryCast(element.getParent(), PsiNewExpression.class);
-          if (newExpression != null) {
-            PsiType type = newExpression.getType();
-            if (type != null && type.equalsToText(getExceptionClassName())) return true;
-          }
-        }
-        return isSpecificExceptionElement(element);
-      }
-
-      @Override
-      public ExceptionInfo getExceptionInfo() {
-        return ExceptionInfo.this;
-      }
-    };
+  @NotNull
+  public ExceptionLineRefiner getPositionRefiner() {
+    return new AfterExceptionRefiner(this);
   }
 
   /**
@@ -127,7 +112,9 @@ public class ExceptionInfo {
       case "java.lang.NegativeArraySizeException":
         return new NegativeArraySizeExceptionInfo(startOffset, message);
       default:
-        return new ExceptionInfo(startOffset, exceptionName, message);
+        ExceptionInfo info =
+          JetBrainsNotNullInstrumentationExceptionInfo.tryCreate(startOffset, exceptionName, message);
+        return info != null ? info : new ExceptionInfo(startOffset, exceptionName, message);
     }
   }
 
@@ -161,5 +148,42 @@ public class ExceptionInfo {
     }
     if (!hasDot) return null;
     return new TextRange(from, to);
+  }
+
+  private static class AfterExceptionRefiner implements ExceptionLineRefiner {
+    private final ExceptionInfo myInfo;
+
+    public AfterExceptionRefiner(ExceptionInfo info) {this.myInfo = info;}
+
+    @Override
+    public PsiElement matchElement(@NotNull PsiElement element) {
+      // We look for new Exception() expression rather than throw statement, because stack-trace is filled in exception constructor
+      if (element instanceof PsiKeyword && element.textMatches(PsiKeyword.NEW)) {
+        PsiNewExpression newExpression = ObjectUtils.tryCast(element.getParent(), PsiNewExpression.class);
+        if (newExpression != null) {
+          PsiType type = newExpression.getType();
+          if (type != null && type.equalsToText(myInfo.getExceptionClassName())) return element;
+        }
+      }
+      return myInfo.matchSpecificExceptionElement(element);
+    }
+
+    @Override
+    public ExceptionLineRefiner consumeNextLine(String line) {
+      ExceptionInfo info = myInfo.consumeStackLine(line);
+      if (info != null) {
+        return new AfterExceptionRefiner(info);
+      }
+      return null;
+    }
+
+    @Override
+    public ExceptionInfo getExceptionInfo() {
+      return myInfo;
+    }
+  }
+
+  public ExceptionInfo consumeStackLine(String line) {
+    return null;
   }
 }

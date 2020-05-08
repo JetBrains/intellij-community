@@ -106,7 +106,10 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       return fromAssertionError(anchor);
     }
     else if (info instanceof ArrayIndexOutOfBoundsExceptionInfo) {
-      return fromArrayIndexOutOfBoundsException(anchor, ((ArrayIndexOutOfBoundsExceptionInfo)info).getIndex());
+      Integer index = ((ArrayIndexOutOfBoundsExceptionInfo)info).getIndex();
+      if (index != null && anchor instanceof PsiExpression) {
+        return Analysis.create(DfTypes.intValue(index), (PsiExpression)anchor);
+      }
     }
     else if (info instanceof ClassCastExceptionInfo) {
       return fromClassCastException(anchor, ((ClassCastExceptionInfo)info).getActualClass());
@@ -115,29 +118,31 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
       return Analysis.create(DfTypes.NULL, findDereferencedExpression(anchor));
     }
     else if (info instanceof NegativeArraySizeExceptionInfo) {
-      return fromNegativeArraySizeException(anchor, ((NegativeArraySizeExceptionInfo)info).getSuppliedSize());
+      Integer size = ((NegativeArraySizeExceptionInfo)info).getSuppliedSize();
+      if (size != null && size < 0 && anchor instanceof PsiExpression) {
+        return Analysis.create(DfTypes.intValue(size), (PsiExpression)anchor);
+      }
     }
     else if (info instanceof ArithmeticExceptionInfo) {
       return fromArithmeticException(anchor);
+    }
+    else if (info instanceof JetBrainsNotNullInstrumentationExceptionInfo) {
+      if (anchor instanceof PsiExpression) {
+        return Analysis.create(DfTypes.NULL, (PsiExpression)anchor);
+      }
     }
     return null;
   }
 
   private static Analysis fromArithmeticException(PsiElement anchor) {
-    if (anchor instanceof PsiJavaToken && (((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.DIV) ||
-                                           ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.PERC))) {
-      PsiPolyadicExpression division = tryCast(anchor.getParent(), PsiPolyadicExpression.class);
-      if (division != null) {
-        PsiExpression divisor = PsiTreeUtil.getNextSiblingOfType(anchor, PsiExpression.class);
-        if (divisor != null) {
-          PsiType type = divisor.getType();
-          if (PsiType.LONG.equals(type)) {
-            return Analysis.create(DfTypes.longValue(0), divisor);
-          }
-          else if (TypeConversionUtil.isIntegralNumberType(type)) {
-            return Analysis.create(DfTypes.intValue(0), divisor);
-          }
-        }
+    if (anchor instanceof PsiExpression) {
+      PsiExpression divisor = (PsiExpression)anchor;
+      PsiType type = divisor.getType();
+      if (PsiType.LONG.equals(type)) {
+        return Analysis.create(DfTypes.longValue(0), divisor);
+      }
+      else if (TypeConversionUtil.isIntegralNumberType(type)) {
+        return Analysis.create(DfTypes.intValue(0), divisor);
       }
     }
     return null;
@@ -264,9 +269,7 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private @Nullable Analysis fromClassCastException(@NotNull PsiElement anchor, @Nullable String actualClass) {
-    if (!(anchor instanceof PsiJavaToken) || !((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LPARENTH)) {
-      return null;
-    }
+    if (!(anchor instanceof PsiTypeElement)) return null;
     PsiTypeCastExpression castExpression = tryCast(anchor.getParent(), PsiTypeCastExpression.class);
     if (castExpression == null) return null;
     PsiExpression ref = extractAnchor(castExpression.getOperand());
@@ -287,36 +290,9 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   @Nullable
-  private static Analysis fromArrayIndexOutOfBoundsException(@NotNull PsiElement anchor, @Nullable Integer index) {
-    if (index != null && anchor instanceof PsiJavaToken && ((PsiJavaToken)anchor).getTokenType().equals(JavaTokenType.LBRACKET)) {
-      PsiArrayAccessExpression access = tryCast(anchor.getParent(), PsiArrayAccessExpression.class);
-      if (access != null) {
-        return Analysis.create(DfTypes.intValue(index), access.getIndexExpression());
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Analysis fromNegativeArraySizeException(@NotNull PsiElement anchor, @Nullable Integer size) {
-    if (size == null || size >= 0) return null;
-    if (anchor instanceof PsiKeyword && anchor.textMatches(PsiKeyword.NEW) && anchor.getParent() instanceof PsiNewExpression) {
-      PsiExpression[] dimensions = ((PsiNewExpression)anchor.getParent()).getArrayDimensions();
-      if (dimensions.length == 1) {
-        return Analysis.create(DfTypes.intValue(size), dimensions[0]);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
   private static Analysis fromAssertionError(@NotNull PsiElement anchor) {
-    if (anchor instanceof PsiKeyword &&
-        anchor.textMatches(PsiKeyword.ASSERT)) {
-      PsiAssertStatement assertStatement = tryCast(anchor.getParent(), PsiAssertStatement.class);
-      if (assertStatement != null) {
-        return tryNegate(fromCondition(assertStatement.getAssertCondition()));
-      }
+    if (anchor instanceof PsiAssertStatement) {
+      return tryNegate(fromCondition(((PsiAssertStatement)anchor).getAssertCondition()));
     }
     return null;
   }

@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ArithmeticExceptionInfo extends ExceptionInfo {
   ArithmeticExceptionInfo(int offset, String message) {
@@ -12,7 +13,7 @@ public class ArithmeticExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  boolean isSpecificExceptionElement(PsiElement e) {
+  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
     if (e instanceof PsiJavaToken && (e.textMatches("%") || e.textMatches("/")) &&
         e.getParent() instanceof PsiPolyadicExpression) {
       PsiExpression prevOperand = PsiTreeUtil.getPrevSiblingOfType(e, PsiExpression.class);
@@ -25,11 +26,11 @@ public class ArithmeticExceptionInfo extends ExceptionInfo {
         }
         if (nextOperand instanceof PsiLiteral) {
           Object value = ((PsiLiteral)nextOperand).getValue();
-          if (value instanceof Number && ((Number)value).longValue() != 0) return false;
+          if (value instanceof Number && ((Number)value).longValue() != 0) return null;
         }
-        return true;
+        return nextOperand;
       }
     }
-    return false;
+    return null;
   }
 }

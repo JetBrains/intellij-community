@@ -343,8 +343,8 @@ public class ExceptionWorker {
     }
 
     @Override
-    public boolean test(@NotNull PsiElement element) {
-      if (!(element instanceof PsiIdentifier)) return false;
+    public PsiElement matchElement(@NotNull PsiElement element) {
+      if (!(element instanceof PsiIdentifier)) return null;
       if (myMethodName.equals("<init>")) {
         if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
           PsiElement parent = element.getParent();
@@ -352,11 +352,11 @@ public class ExceptionWorker {
             parent = parent.getParent();
           }
           if (parent instanceof PsiAnonymousClass) {
-            return isTargetClass(parent) || isTargetClass(((PsiAnonymousClass)parent).getSuperClass());
+            return isTargetClass(parent) || isTargetClass(((PsiAnonymousClass)parent).getSuperClass()) ? element : null;
           }
           if (parent instanceof PsiNewExpression) {
             PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-            return ref != null && isTargetClass(ref.resolve());
+            return ref != null && isTargetClass(ref.resolve()) ? element : null;
           }
         }
       }
@@ -364,10 +364,10 @@ public class ExceptionWorker {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceExpression) {
           PsiElement target = ((PsiReferenceExpression)parent).resolve();
-          return target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass());
+          return target instanceof PsiMethod && isTargetClass(((PsiMethod)target).getContainingClass()) ? element : null;
         }
       }
-      return false;
+      return null;
     }
 
     private boolean isTargetClass(PsiElement maybeClass) {
@@ -403,8 +403,9 @@ public class ExceptionWorker {
       PsiElement element = file.findElementAt(startOffset);
       List<PsiElement> candidates = new ArrayList<>();
       while (element != null && element.getTextRange().getStartOffset() < endOffset) {
-        if (myElementMatcher.test(element)) {
-          candidates.add(element);
+        PsiElement matched = myElementMatcher.matchElement(element);
+        if (matched != null) {
+          candidates.add(matched);
           if (candidates.size() > 1) return;
         }
         element = PsiTreeUtil.nextLeaf(element);
@@ -453,15 +454,16 @@ public class ExceptionWorker {
 
   private static class FunctionCallMatcher implements ExceptionLineRefiner {
     @Override
-    public boolean test(@NotNull PsiElement element) {
-      if (!(element instanceof PsiIdentifier)) return false;
+    public PsiElement matchElement(@NotNull PsiElement element) {
+      if (!(element instanceof PsiIdentifier)) return null;
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiReferenceExpression)) return false;
+      if (!(parent instanceof PsiReferenceExpression)) return null;
       PsiMethodCallExpression call = ObjectUtils.tryCast(parent.getParent(), PsiMethodCallExpression.class);
-      if (call == null) return false;
+      if (call == null) return null;
       PsiMethod target = call.resolveMethod();
-      if (target == null) return false;
-      return LambdaUtil.getFunctionalInterfaceMethod(target.getContainingClass()) == target;
+      if (target == null) return null;
+      if (LambdaUtil.getFunctionalInterfaceMethod(target.getContainingClass()) != target) return null;
+      return element;
     }
   }
 }

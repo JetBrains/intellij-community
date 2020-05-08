@@ -34,12 +34,14 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  boolean isSpecificExceptionElement(PsiElement e) {
-    if (myTargetClass == null) return false;
+  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+    if (myTargetClass == null) return null;
     if (e instanceof PsiJavaToken && e.textMatches("(") && e.getParent() instanceof PsiTypeCastExpression) {
       PsiTypeElement typeElement = ((PsiTypeCastExpression)e.getParent()).getCastType();
-      if (typeElement == null) return true;
-      return castClassMatches(typeElement.getType(), myTargetClass);
+      if (typeElement == null) return null;
+      if (castClassMatches(typeElement.getType(), myTargetClass)) {
+        return typeElement;
+      }
     }
     if (e instanceof PsiIdentifier && e.getParent() instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)e.getParent();
@@ -52,14 +54,16 @@ public class ClassCastExceptionInfo extends ExceptionInfo {
         type = ((PsiVariable)target).getType();
       }
       else {
-        return false;
+        return null;
       }
       PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (!(psiClass instanceof PsiTypeParameter)) return false;
+      if (!(psiClass instanceof PsiTypeParameter)) return null;
       // Implicit cast added by compiler
-      return castClassMatches(ref.getType(), myTargetClass);
+      if (castClassMatches(ref.getType(), myTargetClass)) {
+        return e;
+      }
     }
-    return false;
+    return null;
   }
 
   private static boolean castClassMatches(PsiType type, String className) {

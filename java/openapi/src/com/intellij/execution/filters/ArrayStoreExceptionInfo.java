@@ -3,6 +3,7 @@ package com.intellij.execution.filters;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class ArrayStoreExceptionInfo extends ExceptionInfo {
   ArrayStoreExceptionInfo(int offset, String message) {
@@ -10,11 +11,13 @@ public class ArrayStoreExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  boolean isSpecificExceptionElement(PsiElement e) {
+  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
     if (e instanceof PsiJavaToken && e.textMatches("=") && e.getParent() instanceof PsiAssignmentExpression) {
       PsiExpression lExpression = ((PsiAssignmentExpression)e.getParent()).getLExpression();
-      return PsiUtil.skipParenthesizedExprDown(lExpression) instanceof PsiArrayAccessExpression;
+      if (PsiUtil.skipParenthesizedExprDown(lExpression) instanceof PsiArrayAccessExpression) {
+        return e;
+      }
     }
-    return false;
+    return null;
   }
 }

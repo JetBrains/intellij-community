@@ -4,6 +4,7 @@ package com.intellij.execution.filters;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NegativeArraySizeExceptionInfo extends ExceptionInfo {
@@ -21,7 +22,8 @@ public class NegativeArraySizeExceptionInfo extends ExceptionInfo {
   }
   
   @Override
-  boolean isSpecificExceptionElement(PsiElement e) {
+  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+    PsiExpression candidate = null;
     if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.NEW) && e.getParent() instanceof PsiNewExpression) {
       PsiExpression[] dimensions = ((PsiNewExpression)e.getParent()).getArrayDimensions();
       for (PsiExpression dimension : dimensions) {
@@ -30,9 +32,13 @@ public class NegativeArraySizeExceptionInfo extends ExceptionInfo {
           // Explicit negative number like -1 cannot be literal, it's unary expression
           if (literal != null && literal.getValue() instanceof Integer) continue;
         }
-        return true;
+        if (candidate == null) {
+          candidate = dimension;
+        } else {
+          return null;
+        }
       }
     }
-    return false;
+    return candidate;
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.execution.filters;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -118,7 +119,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  boolean isSpecificExceptionElement(PsiElement e) {
-    return myPredicate != null && myPredicate.test(e);
+  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
+    return (myPredicate != null && myPredicate.test(e)) ? e : null;
   }
 }

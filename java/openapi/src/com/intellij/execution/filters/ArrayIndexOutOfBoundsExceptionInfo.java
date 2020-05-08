@@ -1,12 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.filters;
 
-import com.intellij.psi.PsiArrayAccessExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.*;
+import com.intellij.psi.util.ConstantExpressionUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -32,14 +29,16 @@ public class ArrayIndexOutOfBoundsExceptionInfo extends ExceptionInfo {
   }
 
   @Override
-  boolean isSpecificExceptionElement(PsiElement e) {
+  PsiElement matchSpecificExceptionElement(@NotNull PsiElement e) {
     if (!(e instanceof PsiJavaToken && e.textMatches("[") && e.getParent() instanceof PsiArrayAccessExpression)) {
-      return false;
+      return null;
     }
+    PsiExpression indexExpression = ((PsiArrayAccessExpression)e.getParent()).getIndexExpression();
+    if (indexExpression == null) return null;
     if (myIndex != null) {
-      PsiLiteralExpression next = ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(e), PsiLiteralExpression.class);
-      return next == null || myIndex.equals(next.getValue());
+      Object value = ConstantExpressionUtil.computeCastTo(indexExpression, PsiType.INT);
+      if (value != null && !value.equals(myIndex)) return null;
     }
-    return true;
+    return indexExpression;
   }
 }

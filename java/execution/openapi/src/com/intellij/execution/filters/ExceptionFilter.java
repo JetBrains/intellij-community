@@ -35,6 +35,10 @@ public class ExceptionFilter implements Filter, DumbAware {
     ExceptionWorker worker = new ExceptionWorker(myCache);
     Result result = worker.execute(line, textEndOffset, myNextLineRefiner);
     if (result == null) {
+      if (myNextLineRefiner != null) {
+        myNextLineRefiner = myNextLineRefiner.consumeNextLine(line);
+        if (myNextLineRefiner != null) return null;
+      }
       ExceptionInfo exceptionInfo = ExceptionInfo.parseMessage(line, textEndOffset);
       myNextLineRefiner = exceptionInfo == null ? null : exceptionInfo.getPositionRefiner();
       return null;
