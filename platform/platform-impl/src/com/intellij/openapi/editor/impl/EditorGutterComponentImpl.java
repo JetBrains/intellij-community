@@ -2199,7 +2199,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (myHasInlaysWithGutterIcons) {
       if (p.y < startY) {
-        List<Inlay> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, true);
+        List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, true);
         int yDiff = startY - p.y;
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
@@ -2211,7 +2211,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
       else {
-        List<Inlay> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, false);
+        List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, false);
         int yDiff = p.y - endY;
         for (Inlay inlay : inlays) {
           int height = inlay.getHeightInPixels();

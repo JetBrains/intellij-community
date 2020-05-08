@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -19,17 +17,17 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- * Performs transformations between various location representations in editor 
+ * Performs transformations between various location representations in editor
  * (offset, logical position, visual position, pixel coordinates).
- * 
+ *
  * @see LogicalPosition
  * @see VisualPosition
  */
-class EditorCoordinateMapper {
+final class EditorCoordinateMapper {
   private final EditorView myView;
   private final Document myDocument;
   private final FoldingModelImpl myFoldingModel;
-  
+
   EditorCoordinateMapper(EditorView view) {
     myView = view;
     myDocument = myView.getEditor().getDocument();
@@ -195,7 +193,7 @@ class EditorCoordinateMapper {
         // delaying result to check whether there's an 'invisible' fold region going next
         if (column != maxColumn) return delayedResult;
       }
-      maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
+      maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) :
                          fragment.getMaxLogicalColumn();
       maxVisualColumn = maxColumn;
       logicalLine = fragment.getEndLogicalLine();
@@ -354,7 +352,7 @@ class EditorCoordinateMapper {
     float plainSpaceWidth = myView.getPlainSpaceWidth();
     float remainingShift = px - x;
     if (remainingShift > plainSpaceWidth && logicalLine >= 0) {
-      List<Inlay> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+      List<Inlay<?>> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
       int inlaysWidth = 0;
       int inlayCount = 0;
       for (Inlay inlay : inlays) {
@@ -408,7 +406,7 @@ class EditorCoordinateMapper {
       }
     }
     if (column > lastColumn + 1 && logicalLine >= 0) {
-      List<Inlay> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+      List<Inlay<?>> inlays = myView.getEditor().getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
       int inlaysWidth = 0;
       int inlayCount = 0;
       for (Inlay inlay : inlays) {

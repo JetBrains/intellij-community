@@ -91,7 +91,7 @@ public interface InlayModel {
    * (higher priority ones appear first). Both visible and invisible (due to folding) elements are returned.
    */
   @NotNull
-  List<Inlay> getBlockElementsInRange(int startOffset, int endOffset);
+  List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset);
 
   /**
    * Same as {@link #getBlockElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
@@ -106,7 +106,7 @@ public interface InlayModel {
    * Only visible (not folded) elements are returned.
    */
   @NotNull
-  List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above);
+  List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above);
 
   /**
    * Tells whether there exists at least one block element currently.
@@ -173,7 +173,7 @@ public interface InlayModel {
    * @see #addAfterLineEndElement(int, boolean, EditorCustomElementRenderer)
    */
   @NotNull
-  List<Inlay> getAfterLineEndElementsInRange(int startOffset, int endOffset);
+  List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset);
 
   /**
    * Same as {@link #getAfterLineEndElementsInRange(int, int)}, but returned list contains only inlays with renderer of given type.
@@ -231,18 +231,18 @@ public interface InlayModel {
   void addListener(@NotNull Listener listener, @NotNull Disposable disposable);
 
   interface Listener extends EventListener {
-    default void onAdded(@NotNull Inlay inlay) {}
+    default void onAdded(@NotNull Inlay<?> inlay) {}
 
-    default void onUpdated(@NotNull Inlay inlay) {}
+    default void onUpdated(@NotNull Inlay<?> inlay) {}
 
     /**
      * @param changeFlags see {@link ChangeFlags}
      */
-    default void onUpdated(@NotNull Inlay inlay, @MagicConstant(flagsFromClass = ChangeFlags.class) int changeFlags) {
+    default void onUpdated(@NotNull Inlay<?> inlay, @MagicConstant(flagsFromClass = ChangeFlags.class) int changeFlags) {
       onUpdated(inlay);
     }
 
-    default void onRemoved(@NotNull Inlay inlay) {}
+    default void onRemoved(@NotNull Inlay<?> inlay) {}
 
     /**
      * @see #execute(boolean, Runnable)

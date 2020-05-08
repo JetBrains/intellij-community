@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -13,7 +13,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.IntSupplier;
 
-class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl> implements IntSupplier {
+final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl<?>> implements IntSupplier {
   final boolean myShowAbove;
   final int myPriority;
   private int myHeightInPixels;
@@ -31,7 +31,7 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   }
 
   @Override
-  MarkerTreeWithPartialSums<BlockInlayImpl> getTree() {
+  MarkerTreeWithPartialSums<BlockInlayImpl<?>> getTree() {
     return myEditor.getInlayModel().myBlockElementsTree;
   }
 
@@ -56,17 +56,17 @@ class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R,
   Point getPosition() {
     int visualLine = myEditor.offsetToVisualLine(getOffset());
     int y = myEditor.visualLineToY(visualLine);
-    List<Inlay> allInlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, myShowAbove);
+    List<Inlay<?>> allInlays = myEditor.getInlayModel().getBlockElementsForVisualLine(visualLine, myShowAbove);
     if (myShowAbove) {
       boolean found = false;
-      for (Inlay inlay : allInlays) {
+      for (Inlay<?> inlay : allInlays) {
         if (inlay == this) found = true;
         if (found) y -= inlay.getHeightInPixels();
       }
     }
     else {
       y += myEditor.getLineHeight();
-      for (Inlay inlay : allInlays) {
+      for (Inlay<?> inlay : allInlays) {
         if (inlay == this) break;
         y += inlay.getHeightInPixels();
       }

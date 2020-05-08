@@ -426,7 +426,7 @@ public class EditorPainter implements TextDrawingCallback {
               paintVirtualSelectionIfNecessary(visualLine, columnStart, x, y);
               myTextDrawingTasks.add(g -> {
                 int logicalLine = myDocument.getLineNumber(offset);
-                List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+                List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
                 if (!inlays.isEmpty()) {
                   float curX = x + myView.getPlainSpaceWidth();
                   for (Inlay inlay : inlays) {
@@ -1147,7 +1147,7 @@ public class EditorPainter implements TextDrawingCallback {
         int y = visLinesIterator.getY() + myYShift;
 
         int curY = y;
-        List<Inlay> inlaysAbove = visLinesIterator.getBlockInlaysAbove();
+        List<Inlay<?>> inlaysAbove = visLinesIterator.getBlockInlaysAbove();
         if (!inlaysAbove.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine);
           for (Inlay inlay : inlaysAbove) {
@@ -1161,7 +1161,7 @@ public class EditorPainter implements TextDrawingCallback {
           }
         }
         curY = y + myLineHeight;
-        List<Inlay> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
+        List<Inlay<?>> inlaysBelow = visLinesIterator.getBlockInlaysBelow();
         if (!inlaysBelow.isEmpty()) {
           TextAttributes attributes = getInlayAttributes(visualLine + 1);
           for (Inlay inlay : inlaysBelow) {
