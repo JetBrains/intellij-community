@@ -3,6 +3,7 @@ package com.intellij.testFramework.rules
 
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -24,6 +25,7 @@ import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
+import java.io.File
 
 class ProjectModelRule : TestRule {
   val baseProjectDir = TempDirectory()
@@ -46,11 +48,17 @@ class ProjectModelRule : TestRule {
   }
 
   fun createModule(name: String = "module"): Module {
-    val imlFile = baseProjectDir.newFile("$name/$name.iml")
+    val imlFile = File(baseProjectDir.root, "$name/$name.iml")
     return runWriteActionAndWait {
-      ModuleManager.getInstance(project).newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+      moduleManager.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
     }
   }
+
+  fun createModule(name: String, moduleModel: ModifiableModuleModel): Module {
+    val imlFile = baseProjectDir.newFile("$name/$name.iml")
+    return moduleModel.newModule(imlFile.systemIndependentPath, EmptyModuleType.EMPTY_MODULE)
+  }
+
 
   fun createSdk(name: String = "sdk"): Sdk {
     return ProjectJdkTable.getInstance().createSdk(name, sdkType)
@@ -67,7 +75,7 @@ class ProjectModelRule : TestRule {
     return addLibrary(name, projectLibraryTable, setup)
   }
 
-  private fun addLibrary(name: String, libraryTable: LibraryTable, setup: (Library.ModifiableModel) -> Unit): Library {
+  fun addLibrary(name: String, libraryTable: LibraryTable, setup: (Library.ModifiableModel) -> Unit = {}): Library {
     val model = libraryTable.modifiableModel
     val library = model.createLibrary(name)
     val libraryModel = library.modifiableModel
@@ -97,6 +105,9 @@ class ProjectModelRule : TestRule {
 
   val projectRootManager: ProjectRootManager
     get() = ProjectRootManager.getInstance(project)
+
+  val moduleManager: ModuleManager
+    get() = ModuleManager.getInstance(project)
 
   val projectLibraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
