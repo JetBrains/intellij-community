@@ -23,7 +23,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.loader.NativeLibraryLoader;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
@@ -217,19 +216,11 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         }
       };
 
-      // NOTE: Linux implementation of JavaFX starts native main loop with GtkApplication._runLoop()
-      try {
-        Class<?> platformImpl = Class.forName("com.sun.javafx.application.PlatformImpl");
-        Method startup = platformImpl.getMethod("startup", Runnable.class);
-        Runnable r = () -> ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-        startup.invoke(null, r);
-      }
-      catch (Throwable e) {
-        LOG.info("can't start main loop via JavaFX (will run it manually): " + e.getMessage());
-        final Thread glibMain = new Thread(() -> ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished),
-                                           "GlobalMenuLinux loop");
-        glibMain.start();
-      }
+      final Thread glibMain = new Thread(
+              () -> ourLib.runMainLoop(ourGLogger,
+                      ourOnAppmenuServiceAppeared,
+                      ourOnAppmenuServiceVanished), "GlobalMenuLinux loop");
+      glibMain.start();
     }
   }
 
