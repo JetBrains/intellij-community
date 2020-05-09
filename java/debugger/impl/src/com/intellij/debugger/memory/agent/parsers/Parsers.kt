@@ -165,19 +165,19 @@ object MemoryAgentReferringObjectCreator {
     kind: MemoryAgentReferenceKind,
     isWeakSoftReachable: Boolean,
     value: Value?): MemoryAgentReferringObject {
-    return if (value == null) MemoryAgentSimpleReferringObject(referrer, isWeakSoftReachable) else
+    return if (value == null) MemoryAgentKindReferringObject(referrer, isWeakSoftReachable, kind) else
       when (kind) {
         MemoryAgentReferenceKind.FIELD,
         MemoryAgentReferenceKind.STATIC_FIELD -> {
           val field = getFieldByJVMTIFieldIndex(referrer, IntArrayParser.parse(value)[0]) ?:
-                      return MemoryAgentSimpleReferringObject(referrer, isWeakSoftReachable)
+                      return MemoryAgentKindReferringObject(referrer, isWeakSoftReachable, kind)
           MemoryAgentFieldReferringObject(referrer, isWeakSoftReachable, field)
         }
         MemoryAgentReferenceKind.CONSTANT_POOL ->
           MemoryAgentConstantPoolReferringObject(referrer, IntArrayParser.parse(value)[0])
         MemoryAgentReferenceKind.ARRAY_ELEMENT ->
           MemoryAgentArrayReferringObject(referrer as ArrayReference, isWeakSoftReachable, IntArrayParser.parse(value)[0])
-        else -> MemoryAgentSimpleReferringObject(referrer, isWeakSoftReachable)
+        else -> MemoryAgentKindReferringObject(referrer, isWeakSoftReachable, kind)
       }
   }
 
