@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeoutException;
 public abstract class SingleTaskController<Request, Result> implements Disposable {
   protected static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
-  @NotNull private final String myName;
+  @NotNull @NonNls private final String myName;
   @NotNull private final Consumer<? super Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
 
@@ -43,7 +44,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   private boolean myIsClosed = false;
 
-  public SingleTaskController(@NotNull String name,
+  public SingleTaskController(@NotNull @NonNls String name,
                               @NotNull Consumer<? super Result> handler,
                               @NotNull Disposable parent) {
     myName = name;
