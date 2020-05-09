@@ -2,12 +2,15 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -24,6 +27,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -35,7 +39,9 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
@@ -88,10 +94,10 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
-  private void subscribeToMappingsAndEPsChanges() {
-    myMessageBus.connect(myListenersDisposable).subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
-    LOG_PROVIDER_EP.getPoint(myProject).addChangeListener(() -> disposeLog(true), myListenersDisposable);
-    LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.addChangeListener(myProject, () -> disposeLog(true), myListenersDisposable);
+  private void subscribeToMappingsAndPluginsChanges() {
+    MessageBusConnection connection = myMessageBus.connect(myListenersDisposable);
+    connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
+    connection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginUnloader());
   }
 
   @Nullable
@@ -348,8 +354,48 @@ public class VcsProjectLog implements Disposable {
 
       VcsProjectLog projectLog = getInstance(project);
 
-      projectLog.subscribeToMappingsAndEPsChanges();
+      projectLog.subscribeToMappingsAndPluginsChanges();
       projectLog.createLogInBackground(false);
+    }
+  }
+
+  private class MyDynamicPluginUnloader implements DynamicPluginListener {
+    private final Set<PluginId> affectedPlugins = new HashSet<>();
+
+    @Override
+    public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+      if (hasLogExtensions(pluginDescriptor)) {
+        disposeLog(true);
+      }
+    }
+
+    @Override
+    public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      if (hasLogExtensions(pluginDescriptor)) {
+        affectedPlugins.add(pluginDescriptor.getPluginId());
+        LOG.debug("Disposing Vcs Log before unloading " + pluginDescriptor.getPluginId());
+        disposeLog(false);
+      }
+    }
+
+    @Override
+    public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+      if (affectedPlugins.remove(pluginDescriptor.getPluginId())) {
+        LOG.debug("Recreating Vcs Log after unloading " + pluginDescriptor.getPluginId());
+        // createLog calls between beforePluginUnload and pluginUnloaded are technically not prohibited
+        // so just in case, recreating log here
+        disposeLog(true);
+      }
+    }
+
+    private boolean hasLogExtensions(@NotNull IdeaPluginDescriptor descriptor) {
+      for (VcsLogProvider logProvider : LOG_PROVIDER_EP.getExtensions(myProject)) {
+        if (logProvider.getClass().getClassLoader() == descriptor.getPluginClassLoader()) return true;
+      }
+      for (CustomVcsLogUiFactoryProvider factory : LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.getExtensions(myProject)) {
+        if (factory.getClass().getClassLoader() == descriptor.getPluginClassLoader()) return true;
+      }
+      return false;
     }
   }
 
