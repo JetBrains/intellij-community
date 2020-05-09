@@ -110,6 +110,9 @@
   <xi:include href="/META-INF/builtInServer.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/smRunner.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <xi:include href="/META-INF/tasks.xml">
     <xi:fallback/>

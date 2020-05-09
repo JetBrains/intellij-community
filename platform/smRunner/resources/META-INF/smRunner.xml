@@ -1,0 +1,18 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
+    <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
+                            order="first" id="smtRunnerCustomizer"/>
+  </extensions>
+  <actions>
+    <group id="SmRunTestGroup">
+      <separator/>
+      <action id="ImportTests" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup" icon="AllIcons.Vcs.History"/>
+      <action id="ImportTestsFromFile" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction" icon="AllIcons.ToolbarDecorator.Import"/>
+      <add-to-group group-id="RunTestGroup" anchor="first" />
+    </group>
+  </actions>
+</idea-plugin>
