@@ -46,19 +46,19 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
 
       "package org.apache.logging.log4j;" +
       "public class LogManager {" +
-      "  public static Logger getLogger() {" +
+      "  public static Logger getLogger(Class<?> clazz) {" +
       "    return null;" +
       "  }" +
-      "}"
+      "  public static Logger getLogger(String name) {" +
+      "    return null;" +
+      "  }" +
+      "}" +
+      "public interface Logger {}"
     };
   }
 
   public void testLog4J2() {
-    doTest("import org.apache.logging.log4j.*;\n" +
-           "class Other {}\n" +
-           "class Logging {\n" +
-           "  private static final Logger LOGGER = LogManager.getLogger(Other.class);\n" +
-           "}"
-    );
+    doTest();
+    checkQuickFixAll();
   }
 }
