@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -16,8 +16,7 @@ import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map;
 
-public class FileOffsetsManager {
-
+public final class FileOffsetsManager {
   @NotNull
   public static FileOffsetsManager getInstance() {
     return ServiceManager.getService(FileOffsetsManager.class);
@@ -176,6 +175,6 @@ public class FileOffsetsManager {
       prev = c;
     }
 
-    return new LineOffsets(modificationStamp, originalLineOffsets.toArray(), convertedLineOffsets.toArray());
+    return new LineOffsets(modificationStamp, originalLineOffsets.toIntArray(), convertedLineOffsets.toIntArray());
   }
 }

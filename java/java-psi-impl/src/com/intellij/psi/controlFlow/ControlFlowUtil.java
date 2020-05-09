@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -9,17 +9,17 @@ import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.*;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntStack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ControlFlowUtil {
+public final class ControlFlowUtil {
   private static final Logger LOG = Logger.getInstance(ControlFlowUtil.class);
 
   private static class SSAInstructionState implements Cloneable {
@@ -557,7 +557,7 @@ public class ControlFlowUtil {
         for (PsiVariable variable : visibleReadOffsets.keySet()) {
           final Function<Integer, BitSet> calculator = getReachableInstructionsCalculator();
           final BitSet collectedOffsets = new BitSet(flowEnd);
-          for (final int writeOffset : writeOffsets.get(variable).toArray()) {
+          for (int writeOffset : writeOffsets.get(variable).toIntArray()) {
             LOG.assertTrue(writeOffset >= flowStart, "writeOffset");
             final BitSet reachableOffsets = calculator.fun(writeOffset);
             collectedOffsets.or(reachableOffsets);
@@ -612,9 +612,9 @@ public class ControlFlowUtil {
 
       private boolean isAnyReadOffsetReachableFrom(@Nullable IntArrayList readOffsets, @NotNull IntArrayList fromOffsets) {
         if (readOffsets != null && !readOffsets.isEmpty()) {
-          final int[] readOffsetsArray = readOffsets.toArray();
+          final int[] readOffsetsArray = readOffsets.toIntArray();
           for (int j = 0; j < fromOffsets.size(); j++) {
-            int fromOffset = fromOffsets.get(j);
+            int fromOffset = fromOffsets.getInt(j);
             if (areInstructionsReachable(flow, readOffsetsArray, fromOffset)) {
               LOG.debug("reachableFromOffset:", fromOffset);
               return true;
@@ -923,11 +923,11 @@ public class ControlFlowUtil {
   }
 
   public static boolean returnPresentBetween(@NotNull ControlFlow flow, final int startOffset, final int endOffset) {
-    class MyVisitor extends InstructionClientVisitor<Boolean> {
+    final class MyVisitor extends InstructionClientVisitor<Boolean> {
       // false if control flow at this offset terminates either by return called or exception thrown
       private final boolean[] isNormalCompletion = new boolean[flow.getSize() + 1];
 
-      MyVisitor() {
+      private MyVisitor() {
         int i;
         final int length = flow.getSize();
         for (i = 0; i < startOffset; i++) {
@@ -1236,7 +1236,7 @@ public class ControlFlowUtil {
    */
   public static boolean isDominator(ControlFlow flow, int maybeDominator, int target) {
     class MyVisitor extends InstructionClientVisitor<Boolean> {
-      final BitSet myReachedWithoutDominator = new BitSet();
+      private final BitSet myReachedWithoutDominator = new BitSet();
 
       @Override
       public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
@@ -2372,7 +2372,7 @@ public class ControlFlowUtil {
         locationOffsetList.add(offset);
       }
     }
-    int[] locationOffsets = locationOffsetList.toArray();
+    int[] locationOffsets = locationOffsetList.toIntArray();
 
     for (int offset = startOffset; offset < endOffset; offset++) {
       Instruction instruction = instructions.get(offset);

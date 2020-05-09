@@ -1,33 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.controlFlow.*
 import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
-import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
-import com.intellij.util.containers.IntArrayList
 import com.siyeh.ig.psiutils.VariableAccessUtils
-import java.util.LinkedHashSet
-import kotlin.Comparator
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
@@ -94,7 +82,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   fun findOutputVariables(): List<PsiVariable> {
     val exitPoints = IntArrayList()
     ControlFlowUtil.findExitPointsAndStatements(flow, flowRange.first, flowRange.last, exitPoints, *DEFAULT_EXIT_STATEMENTS_CLASSES)
-    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, exitPoints.toArray()).distinct()
+    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, exitPoints.toIntArray()).distinct()
   }
 
   fun findUndeclaredVariables(): List<PsiVariable> {

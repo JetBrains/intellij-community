@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
@@ -43,10 +43,10 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -576,7 +576,7 @@ public abstract class DesignerEditorPanel extends JPanel
       for (int i = 0; i < myExpandedState.length; i++) {
         IntArrayList path = new IntArrayList();
         componentToPath((RadComponent)myExpandedComponents.get(i), path);
-        myExpandedState[i] = path.toArray();
+        myExpandedState[i] = path.toIntArray();
       }
 
       mySelectionState = getSelectionState();
@@ -608,7 +608,7 @@ public abstract class DesignerEditorPanel extends JPanel
     for (int i = 0; i < selectionState.length; i++) {
       IntArrayList path = new IntArrayList();
       componentToPath(selection.get(i), path);
-      selectionState[i] = path.toArray();
+      selectionState[i] = path.toIntArray();
     }
 
     return selectionState;

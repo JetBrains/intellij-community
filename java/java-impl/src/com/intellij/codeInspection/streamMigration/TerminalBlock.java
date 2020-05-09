@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.*;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +29,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * as a part of forEach operation of resulting stream possibly with
  * some intermediate operations extracted.
  */
-class TerminalBlock {
+final class TerminalBlock {
   private static final Logger LOG = Logger.getInstance(TerminalBlock.class);
 
   private final @NotNull PsiVariable myVariable;
@@ -423,7 +423,7 @@ class TerminalBlock {
    * @return the terminal block with all possible terminal operations extracted (may return this if no operations could be extracted)
    */
   @NotNull
-  TerminalBlock extractOperations() {
+  private TerminalBlock extractOperations() {
     return StreamEx.iterate(this, Objects::nonNull, TerminalBlock::extractOperation).reduce((a, b) -> b).orElse(this);
   }
 
@@ -455,7 +455,7 @@ class TerminalBlock {
   /**
    * @return stream of physical expressions used in intermediate operations in arbitrary order
    */
-  StreamEx<PsiExpression> intermediateExpressions() {
+  private StreamEx<PsiExpression> intermediateExpressions() {
     return StreamEx.of(myOperations, 1, myOperations.length).flatMap(Operation::expressions);
   }
 

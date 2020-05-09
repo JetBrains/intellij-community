@@ -8,18 +8,17 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class DefUseUtil {
+public final class DefUseUtil {
   private static final Logger LOG = Logger.getInstance(DefUseUtil.class);
 
   private DefUseUtil() { }
@@ -269,7 +268,7 @@ public class DefUseUtil {
 
         @Override
         protected int getNext(int index, int no) {
-          return myBackwardTraces[index].get(no);
+          return myBackwardTraces[index].getInt(no);
         }
 
         @Override
@@ -411,11 +410,11 @@ public class DefUseUtil {
         // hack: ControlFlow doesn't contains parameters initialization
         int startIndex = elem;
 
-        TIntArrayList workQueue = new TIntArrayList();
+        IntArrayList workQueue = new IntArrayList();
         workQueue.add(startIndex);
 
         while (!workQueue.isEmpty()) {
-          int index = workQueue.remove(workQueue.size() - 1);
+          int index = workQueue.removeInt(workQueue.size() - 1);
           if (visited[index]) {
             continue;
           }
@@ -526,7 +525,7 @@ public class DefUseUtil {
     }
   }
 
-  private static class InstructionStateWalker {
+  private static final class InstructionStateWalker {
     private final Map<InstructionKey, InstructionState> myStates;
     private final WalkThroughStack myWalkThroughStack;
     private final List<? extends Instruction> myInstructions;

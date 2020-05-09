@@ -23,10 +23,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
+public final class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private static final Logger LOG = Logger.getInstance(DocumentImpl.class);
   private static final int STRIP_TRAILING_SPACES_BULK_MODE_LINES_LIMIT = 1000;
 
@@ -1197,7 +1197,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     if (myDoingBulkUpdate) throw new UnexpectedBulkUpdateStateException(myBulkUpdateEnteringTrace);
   }
 
-  private static class UnexpectedBulkUpdateStateException extends RuntimeException implements ExceptionWithAttachments {
+  private static final class UnexpectedBulkUpdateStateException extends RuntimeException implements ExceptionWithAttachments {
     private final Attachment[] myAttachments;
 
     private UnexpectedBulkUpdateStateException(Throwable enteringTrace) {
