@@ -1,0 +1,1 @@
+x = 'hello {<caret>' + ' world'

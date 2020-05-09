@@ -1,0 +1,1 @@
+x = 'my ' f'test {<caret>'

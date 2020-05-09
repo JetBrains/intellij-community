@@ -1,0 +1,1 @@
+x = r'test {<caret>'

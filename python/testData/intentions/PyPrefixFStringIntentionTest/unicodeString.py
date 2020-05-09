@@ -1,0 +1,1 @@
+x = u'test {<caret>'

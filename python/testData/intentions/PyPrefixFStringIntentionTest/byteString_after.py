@@ -1,0 +1,1 @@
+x = b'test {<caret>'

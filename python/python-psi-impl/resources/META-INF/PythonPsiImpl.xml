@@ -353,6 +353,11 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateVariableTypeIntention</className>
       <category>Python</category>
     </intentionAction>
+
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyPrefixFStringIntention</className>
+      <category>Python</category>
+    </intentionAction>
   </extensions>
 
   <extensionPoints>
