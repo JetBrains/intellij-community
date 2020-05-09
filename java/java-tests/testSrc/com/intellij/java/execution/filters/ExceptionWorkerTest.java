@@ -24,8 +24,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +37,10 @@ import java.util.List;
  * @author gregsh
  */
 public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
 
   public void testParsing() {
     myFixture.addClass("package com.sample;\n" +
@@ -617,6 +623,22 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
       Trinity.create("java.lang.NullPointerException: Cannot invoke \"Object.getClass()\" because \"s\" is null\n", null, null),
       Trinity.create("\tat MainTest.main(MainTest.java:5)\n", 5, 9));
+    checkColumnFinder(classText, traceAndPositions);
+  }
+
+  public void testNpeRequireNonNullOnSwitch() {
+    @Language("JAVA") String classText =
+      "/** @noinspection ALL*/\n" +
+      "public class MainTest {\n" +
+      "    public static void main(String[] args) {\n" +
+      "        String test = null;\n" +
+      "        switch(test) {}\n" +
+      "    }\n" +
+      "}";
+    List<Trinity<String, Integer, Integer>> traceAndPositions = Arrays.asList(
+      Trinity.create("Exception in thread \"main\" java.lang.NullPointerException\n", null, null),
+      Trinity.create("\tat java.base/java.util.Objects.requireNonNull(Objects.java:222)\n", null, null),
+      Trinity.create("\tat MainTest.main(MainTest.java:5)\n", 5, 16));
     checkColumnFinder(classText, traceAndPositions);
   }
 

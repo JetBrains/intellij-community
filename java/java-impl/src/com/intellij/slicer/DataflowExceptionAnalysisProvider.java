@@ -49,6 +49,9 @@ public class DataflowExceptionAnalysisProvider implements ExceptionAnalysisProvi
   }
 
   private static @Nullable Analysis getIntermediateRowAnalysis(@NotNull PsiElement anchor) {
+    if (anchor instanceof PsiExpression) {
+      return new Analysis(DfTypes.NULL, (PsiExpression)anchor);
+    }
     if (!(anchor instanceof PsiIdentifier)) return null;
     PsiReferenceExpression ref = tryCast(anchor.getParent(), PsiReferenceExpression.class);
     if (ref == null) return null;

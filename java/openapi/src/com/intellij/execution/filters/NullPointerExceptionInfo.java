@@ -54,9 +54,7 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
       if (result != null) return result;
       result = fromSynchronized(e);
       if (result != null) return result;
-      result = fromQualifiedNew(e);
-      if (result != null) return result;
-      result = fromMethodReference(e);
+      result = matchCompilerGeneratedNullCheck(e);
       if (result != null) return result;
       result = fromUnboxing(e, null);
       if (result != null) return result;
@@ -127,26 +125,6 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
     }
     return null;
   }
-  
-  private static PsiExpression fromMethodReference(PsiElement e) {
-    if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType().equals(JavaTokenType.DOUBLE_COLON)) {
-      PsiMethodReferenceExpression methodRef = tryCast(e.getParent(), PsiMethodReferenceExpression.class);
-      if (methodRef == null) return null;
-      PsiExpression qualifier = methodRef.getQualifierExpression();
-      if (mayBeNull(qualifier)) return qualifier;
-    }
-    return null;
-  }
-  
-  private static PsiExpression fromQualifiedNew(PsiElement e) {
-    if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.NEW)) {
-      PsiNewExpression newExpression = tryCast(e.getParent(), PsiNewExpression.class);
-      if (newExpression == null) return null;
-      PsiExpression qualifier = newExpression.getQualifier();
-      if (mayBeNull(qualifier)) return qualifier;
-    }
-    return null;
-  }
 
   private static UnaryOperator<PsiElement> getJep358Extractor(String message) {
     if (!message.startsWith("Cannot ")) return null;
@@ -191,10 +169,10 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
         String methodName = method.substring(dotPos + 1);
         PsiPrimitiveType type = UNBOXING_METHODS.get(methodName);
         return e -> {
-          if (methodName.equals("getClass")) {
-            PsiExpression result = fromMethodReference(e);
-            if (result != null) return result;
-            result = fromQualifiedNew(e);
+          if (methodName.equals("getClass") || methodName.equals("ordinal")) {
+            // x.getClass() was generated as a null-check by javac until Java 9
+            // it's still possible that such a code is executed under Java 14+
+            PsiElement result = matchCompilerGeneratedNullCheck(e);
             if (result != null) return result;
           }
           if (type != null) {
@@ -212,6 +190,39 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
       }
     }
     return null;
+  }
+
+  @Nullable
+  static PsiExpression matchCompilerGeneratedNullCheck(PsiElement e) {
+    PsiExpression dereferenced = null;
+    if (e instanceof PsiJavaToken && ((PsiJavaToken)e).getTokenType().equals(JavaTokenType.DOUBLE_COLON)) {
+      // method reference qualifier
+      PsiMethodReferenceExpression methodRef = tryCast(e.getParent(), PsiMethodReferenceExpression.class);
+      if (methodRef != null) {
+        dereferenced = methodRef.getQualifierExpression();
+      }
+    }
+    else if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.SWITCH)) {
+      // switch on string or enum
+      PsiSwitchBlock switchBlock = tryCast(e.getParent(), PsiSwitchBlock.class);
+      if (switchBlock != null) {
+        PsiExpression selector = switchBlock.getExpression();
+        if (selector != null) {
+          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(selector.getType());
+          if (psiClass != null && (psiClass.isEnum() || CommonClassNames.JAVA_LANG_STRING.equals(psiClass.getQualifiedName()))) {
+            dereferenced = selector;
+          }
+        }
+      }
+    }
+    else if (e instanceof PsiKeyword && e.textMatches(PsiKeyword.NEW)) {
+      // qualified new
+      PsiNewExpression newExpression = tryCast(e.getParent(), PsiNewExpression.class);
+      if (newExpression != null) {
+        dereferenced = newExpression.getQualifier();
+      }
+    }
+    return mayBeNull(dereferenced) ? dereferenced : null;
   }
 
   private static boolean mayBeNull(PsiExpression qualifier) {

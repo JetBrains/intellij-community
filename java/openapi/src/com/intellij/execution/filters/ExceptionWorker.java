@@ -344,6 +344,13 @@ public class ExceptionWorker {
 
     @Override
     public PsiElement matchElement(@NotNull PsiElement element) {
+      if (myMethodName.equals("requireNonNull") && myClassName.equals(CommonClassNames.JAVA_UTIL_OBJECTS)) {
+        // Since Java 9 Objects.requireNonNull(x) is used by javac instead of x.getClass() for generated null-check (JDK-8074306)
+        PsiExpression expression = NullPointerExceptionInfo.matchCompilerGeneratedNullCheck(element);
+        if (expression != null) {
+          return expression;
+        }
+      }
       if (!(element instanceof PsiIdentifier)) return null;
       if (myMethodName.equals("<init>")) {
         if (myHasDollarInName || element.textMatches(StringUtil.getShortName(myClassName))) {
