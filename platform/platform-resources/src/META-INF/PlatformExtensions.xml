@@ -993,7 +993,6 @@
     <applicationInitializedListener implementation="com.intellij.openapi.application.impl.JitSuppressor"/>
 
     <applicationService serviceImplementation="com.intellij.internal.DebugAttachDetector" headlessImplementation="" preload="true"/>
-    <applicationService serviceInterface="org.jetbrains.ide.BuiltInServerManager" serviceImplementation="org.jetbrains.ide.BuiltInServerManagerImpl" preload="true"/>
 
     <projectService serviceInterface="com.intellij.ui.EditorNotifications" serviceImplementation="com.intellij.ui.EditorNotificationsImpl" preload="true"/>
 

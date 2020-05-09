@@ -106,7 +106,9 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="built-in-server.xml"/>
+  <xi:include href="/META-INF/builtInServer.xml">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/idea/ExternalSystemActions.xml"/>
   <xi:include href="/componentSets/ExternalSystemComponents.xml"/>
 </idea-plugin>
