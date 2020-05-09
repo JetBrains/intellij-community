@@ -40,10 +40,11 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
   [refresh the Gradle projects](https://www.jetbrains.com/help/idea/jetgradle-tool-window.html). 
 
 ### IntelliJ Build Configuration
-JDK version 1.8 (u162 or newer) is required for building and developing for IntelliJ IDEA Community Edition.
+JDK version 1.8 (u162 or newer) with JavaFX is required for building and developing for IntelliJ IDEA Community Edition.
 1. Using IntelliJ IDEA, [configure](https://www.jetbrains.com/help/idea/sdk.html) a JDK named "**1.8**", pointing to `<JDK_18_HOME>`.
    * If not already present, add `<JDK_18_HOME>/lib/tools.jar` [to the Classpath](https://www.jetbrains.com/help/idea/sdk.html#manage_sdks) tab
      for the **1.8** JDK.
+   * Since many JDK 8 builds no longer include JavaFX, consider using the [JetBrains Runtime 8 JDK](https://confluence.jetbrains.com/display/JBR/JetBrains+Runtime).
 2. Also configure a JDK named "**IDEA jdk**" (case sensitive), pointing to `<JDK_16_HOME>`. If you don’t want to install JDK 1.6
    then you may configure **IDEA jdk** to point to `<JDK_18_HOME>`. However, you must be careful to avoid using Java 8 APIs in IntelliJ IDEA Community Edition modules that use **IDEA jdk**. 
    * If not already present, add the corresponding path for tools.jar to the Classpath for "**IDEA jdk**" JDK.
