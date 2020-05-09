@@ -66,9 +66,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.VirtualFileLookupService"
                         serviceImplementation="com.intellij.openapi.vfs.VirtualFileLookupServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.history.LocalHistory"
-                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
-
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
@@ -173,9 +170,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.project.DefaultProjectFactory"
                         serviceImplementation="com.intellij.openapi.project.DefaultProjectFactoryImpl"/>
-
-    <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
-    <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.command.CommandProcessor"
                         serviceImplementation="com.intellij.openapi.command.impl.CommandProcessorImpl"/>

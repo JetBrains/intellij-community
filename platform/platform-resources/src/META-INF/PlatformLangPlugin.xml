@@ -95,6 +95,9 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
   </extensions>
 
+  <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+    <xi:fallback/>
+  </xi:include>
   <xi:include href="/META-INF/VCS.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
