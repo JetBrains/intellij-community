@@ -834,14 +834,6 @@
     <runDashboardCustomizer implementation="com.intellij.execution.testframework.sm.runner.SMTRunnerRunDashboardCustomizer"
                             order="first" id="smtRunnerCustomizer"/>
 
-    <!--context providers-->
-    <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
-    <tasks.contextProvider implementation="com.intellij.tasks.context.BookmarkContextProvider"/>
-
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
 
@@ -1030,6 +1022,5 @@
               topic="com.intellij.openapi.fileTypes.FileTypeListener" />
   </applicationListeners>
   <projectListeners>
-    <listener class="com.intellij.tasks.context.BranchContextTracker" topic="com.intellij.openapi.vcs.BranchChangeListener"/>
   </projectListeners>
 </idea-plugin>
