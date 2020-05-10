@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,11 +10,8 @@ import org.jetbrains.idea.svn.api.Url;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
-import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.util.containers.ContainerUtil.ar;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -115,19 +111,12 @@ public class SvnExternalTest extends SvnTestCase {
   }
 
   private void updatedCreatedExternalFromIDEAImpl() {
-    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
-    setNewDirectoryMappings(sourceDir);
     imitUpdate();
 
+    final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalFile = new File(sourceDir, "external/t11.txt");
     final VirtualFile externalVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(externalFile);
     assertNotNull(externalVf);
-  }
-
-  private void setNewDirectoryMappings(final File sourceDir) {
-    runInEdtAndWait(
-      () -> vcsManager.setDirectoryMappings(
-        Arrays.asList(new VcsDirectoryMapping(toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
   }
 
   @Test
@@ -168,7 +157,6 @@ public class SvnExternalTest extends SvnTestCase {
   }
 
   private void uncommittedExternalCopyIsDetectedImpl() {
-    setNewDirectoryMappings(new File(myWorkingCopyDir.getPath(), "source"));
     imitUpdate();
     refreshSvnMappingsSynchronously();
 
