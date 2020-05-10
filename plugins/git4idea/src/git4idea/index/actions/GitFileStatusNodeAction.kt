@@ -93,6 +93,20 @@ class GitResetAction : GitFileStatusNodeAction(GitBundle.messagePointer("stage.r
   }
 }
 
+class GitRevertAction : GitFileStatusNodeAction(GitBundle.messagePointer("stage.revert.action.text")) {
+  override fun matches(statusNode: GitFileStatusNode) = statusNode.kind == NodeKind.UNSTAGED
+
+  override fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>) {
+    GitFileUtils.revertUnstagedPaths(project, root, paths)
+  }
+
+  override fun progressTitle() = GitBundle.message("stage.revert.process")
+
+  override fun showErrorMessage(project: Project, exceptions: Collection<VcsException>) {
+    showErrorMessage(project, GitBundle.message("stage.revert.error.title"), exceptions)
+  }
+}
+
 fun <T> runProcess(project: Project, title: @NlsContexts.ProgressTitle String, canBeCancelled: Boolean, process: () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable { process() },
                                                                                          title, canBeCancelled, project)

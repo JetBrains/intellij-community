@@ -228,6 +228,15 @@ public class GitFileUtils {
     }
   }
 
+  public static void revertUnstagedPaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHECKOUT);
+      handler.endOptions();
+      handler.addParameters(paths);
+      Git.getInstance().runCommand(handler).throwOnError();
+    }
+  }
+
   /**
    * Get file content for the specific revision
    *
