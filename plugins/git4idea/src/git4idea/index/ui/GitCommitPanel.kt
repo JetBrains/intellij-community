@@ -12,15 +12,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import com.intellij.vcs.commit.getBottomInset
+import com.intellij.vcs.commit.loadLastCommitMessage
 import git4idea.i18n.GitBundle
 import java.awt.Component
 import java.awt.event.ActionEvent
@@ -31,9 +31,12 @@ import javax.swing.SwingConstants
 import javax.swing.border.Border
 import javax.swing.border.EmptyBorder
 
-abstract class GitCommitPanel(project: Project,
+abstract class GitCommitPanel(private val project: Project,
                               parent: Disposable) : BorderLayoutPanel(), EditorColorsListener, ComponentContainer, DataProvider {
   var isAmend: Boolean = false
+
+  private var lastCommitMessage: String = ""
+  private var lastAmendMessage: String = ""
 
   val commitMessage = CommitMessage(project, false, false, true)
   val commitButton = CommitButton()
@@ -72,6 +75,8 @@ abstract class GitCommitPanel(project: Project,
 
   protected abstract fun performCommit()
 
+  protected abstract fun rootsToCommit(): Collection<VcsRoot>
+
   protected abstract fun isFocused(): Boolean
 
   private fun getButtonPanelBorder(): Border =
@@ -98,6 +103,25 @@ abstract class GitCommitPanel(project: Project,
     else return GitBundle.getString("commit.action.name")
   }
 
+  private fun updateCommitMessage() {
+    if (isAmend) {
+      val roots = rootsToCommit()
+      if (roots.isEmpty()) return
+
+      val amendMessage = loadLastCommitMessage(project, roots)
+      amendMessage?.let {
+        lastCommitMessage = commitMessage.text
+        lastAmendMessage = it
+        commitMessage.text = it
+      }
+    }
+    else {
+      if (commitMessage.text == lastAmendMessage) {
+        commitMessage.text = lastCommitMessage
+      }
+    }
+  }
+
   inner class CommitButton : JButton(object : AbstractAction(getCommitText()) {
     override fun actionPerformed(e: ActionEvent) {
       performCommit()
@@ -114,8 +138,11 @@ abstract class GitCommitPanel(project: Project,
   inner class AmendAction : CheckboxAction(VcsBundle.messagePointer("checkbox.amend")) {
     override fun isSelected(e: AnActionEvent): Boolean = isAmend
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      isAmend = state
-      commitButton.text = getCommitText()
+      if (isAmend != state) {
+        isAmend = state
+        commitButton.text = getCommitText()
+        updateCommitMessage()
+      }
     }
   }
 }

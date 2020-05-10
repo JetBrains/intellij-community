@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.wm.IdeFocusManager
@@ -15,6 +16,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import git4idea.GitVcs
 import git4idea.i18n.GitBundle
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
@@ -113,6 +115,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     override fun performCommit() {
       performCommit(isAmend)
     }
+
+    override fun rootsToCommit() = state.stagedRoots.map { VcsRoot(GitVcs.getInstance(project), it) }
   }
 
   inner class MyGitStageTrackerListener : GitStageTrackerListener {
