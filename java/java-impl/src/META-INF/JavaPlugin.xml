@@ -2011,7 +2011,6 @@
     <statistics.counterUsagesCollector groupId="java.lens" version="1"/>
     <notificationWhitelist groupIds="Accepted language levels;Build Script Found;Clean artifact;Java Preview Features;HotSwap;
     Analyze thread dump;SharedIndexes;Compiler;Source searcher;Repository;JSHELL_NOTIFICATIONS;Build;Quarantine Cleaner"/>
-    <commandLineInspectionProjectConfigurator implementation="com.intellij.codeInspection.JavaCommandLineInspectionProjectConfigurator"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
