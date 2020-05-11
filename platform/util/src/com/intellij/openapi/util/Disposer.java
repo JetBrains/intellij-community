@@ -4,10 +4,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Map;
 
@@ -50,7 +47,7 @@ public final class Disposer {
     };
   }
 
-  public static Disposable newDisposable(Disposable parentDisposable, @Nullable String debugName) {
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @Nullable String debugName) {
     Disposable result = newDisposable(debugName);
     register(parentDisposable, result);
     return result;
