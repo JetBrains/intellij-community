@@ -295,8 +295,7 @@ class DistributionJARsBuilder {
     if (!buildContext.options.validateModuleStructure)
       return
 
-    def modules = new HashSet<String>(platform.moduleJars.values())
-    def validator = new ModuleStructureValidator(buildContext, modules)
+    def validator = new ModuleStructureValidator(buildContext, platform.moduleJars)
     validator.validate()
   }
 

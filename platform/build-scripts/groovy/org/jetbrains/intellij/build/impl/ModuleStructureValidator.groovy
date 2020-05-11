@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.util.containers.MultiMap
 import groovy.io.FileType
 import groovy.transform.CompileStatic
 import groovy.xml.QName
@@ -30,18 +31,23 @@ class ModuleStructureValidator {
   private static HashSet<String> predefinedTypes = new HashSet<String>(["java.lang.Object"])
 
   private BuildContext buildContext
+  private MultiMap<String, String> moduleJars
   private HashSet<String> moduleNames
   private ArrayList<GString> errors
   private ArrayList<GString> warnings
 
-  ModuleStructureValidator(BuildContext buildContext, HashSet<String> moduleNames) {
+  ModuleStructureValidator(BuildContext buildContext, MultiMap<String, String> moduleJars) {
     this.buildContext = buildContext
-    this.moduleNames = moduleNames
+    this.moduleJars = moduleJars
+    this.moduleNames = new HashSet<String>(moduleJars.values())
     this.errors = new ArrayList<>()
     this.warnings = new ArrayList<>()
   }
 
   void validate() {
+    buildContext.messages.info("Validating jars...")
+    validateJarModules()
+
     buildContext.messages.info("Validating modules...")
     def visitedModules = new HashSet<JpsModule>()
     for (moduleName in moduleNames) {
@@ -60,6 +66,22 @@ class ModuleStructureValidator {
       }
       if (errors.any()) {
         buildContext.messages.warning("Validation errors: \n" + errors.join("\n"))
+      }
+    }
+  }
+
+  private void validateJarModules() {
+    def modulesInJars = new MultiMap<String, String>()
+    for (jar in moduleJars.keySet()) {
+      for (module in moduleJars.get(jar)) {
+        modulesInJars.putValue(module, jar)
+      }
+    }
+
+    for (module in modulesInJars.keySet()) {
+      def jars = modulesInJars.get(module)
+      if (jars.size() > 1) {
+        warnings.add("Module '$module' contains in several JARs: " + jars.join("; "))
       }
     }
   }
@@ -195,7 +217,8 @@ class ModuleStructureValidator {
       }
 
       if (value.startsWith("com.") || value.startsWith("org.")) {
-        warnings.add("Attribute '$name' contains qualified path '$value'. Add attribute into 'ModuleStructureValidator.pathAttributes' or 'ModuleStructureValidator.nonPathAttributes' collection.")
+        warnings.add(
+          "Attribute '$name' contains qualified path '$value'. Add attribute into 'ModuleStructureValidator.pathAttributes' or 'ModuleStructureValidator.nonPathAttributes' collection.")
       }
     }
 
