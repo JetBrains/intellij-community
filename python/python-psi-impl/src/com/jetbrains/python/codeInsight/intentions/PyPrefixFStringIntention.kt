@@ -19,6 +19,10 @@ import com.jetbrains.python.psi.PyStringElement
  */
 class PyPrefixFStringIntention : PyBaseIntentionAction() {
 
+  companion object {
+    val OPEN_CURLY_BRACES = "\\{+".toRegex()
+  }
+
   init {
     text = PyPsiBundle.message("INTN.prefix.fstring")
   }
@@ -34,7 +38,10 @@ class PyPrefixFStringIntention : PyBaseIntentionAction() {
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     if (file !is PyFile) return false
-    return finStringElementAtCaret(file, editor)?.textContains('{') ?: false
+    finStringElementAtCaret(file, editor)?.let { it ->
+      return OPEN_CURLY_BRACES.findAll(it.text).any { it.value.length % 2 == 1 }
+    }
+    return false
   }
 
   private fun finStringElementAtCaret(file: PsiFile, editor: Editor): PyStringElement? {
