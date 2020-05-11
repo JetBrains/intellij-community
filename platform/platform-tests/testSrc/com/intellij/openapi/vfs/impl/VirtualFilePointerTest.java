@@ -56,7 +56,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.openapi.util.io.IoTestUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -876,14 +875,14 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testUncPathNormalization() {
-    assumeWindows();
+    IoTestUtil.assumeWindows();
     assertEquals("\\\\wsl$\\Ubuntu\\", createPointerByFile(new File("\\\\wsl$\\Ubuntu"), null).getPresentableUrl());
     assertEquals("\\\\wsl$\\Ubuntu\\bin", createPointerByFile(new File("//wsl$//Ubuntu//bin//"), null).getPresentableUrl());
   }
 
   @Test
   public void testSpacesOnlyFileNamesUnderUnixMustBeAllowed() {
-    assumeUnix();
+    IoTestUtil.assumeUnix();
     VirtualFile vDir = getVirtualTempRoot();
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + "/xxx/ /c.txt", disposable, null);
     assertFalse(pointer.isValid());
@@ -891,7 +890,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testCrazyExclamationMarkInFileNameMustBeAllowed() {
-    assumeWindows();
+    IoTestUtil.assumeWindows();
     VirtualFile vDir = getVirtualTempRoot();
     String rel = "/xxx/!/c.txt";
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(vDir.getUrl() + rel, disposable, null);
@@ -903,8 +902,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   @Test
   public void testUnc() throws IOException {
-    assumeWindows();
-    Path uncRootPath = Paths.get(toLocalUncPath(tempDir.getRoot().getPath()));
+    IoTestUtil.assumeWindows();
+    Path uncRootPath = Paths.get(IoTestUtil.toLocalUncPath(tempDir.getRoot().getPath()));
     assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
 
     VirtualFile vTemp = LocalFileSystem.getInstance().refreshAndFindFileByPath(uncRootPath.toString());

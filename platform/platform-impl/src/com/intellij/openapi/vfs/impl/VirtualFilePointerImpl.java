@@ -113,7 +113,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
     boolean shouldKill;
     if (pointerManager instanceof VirtualFilePointerManagerImpl) {
       shouldKill = ((VirtualFilePointerManagerImpl)pointerManager).decrementUsageCount(this);
-    } else {
+    }
+    else {
       shouldKill = incrementUsageCount(-1) == 0;
     }
 

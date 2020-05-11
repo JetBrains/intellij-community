@@ -137,7 +137,7 @@ public class VfsData {
     return new VirtualFileImpl(id, segment, parent);
   }
 
-  private static InvalidVirtualFileAccessException reportDeadFileAccess(VirtualFileSystemEntry file) {
+  private static @NotNull InvalidVirtualFileAccessException reportDeadFileAccess(@NotNull VirtualFileSystemEntry file) {
     return new InvalidVirtualFileAccessException("Accessing dead virtual file: " + file.getUrl());
   }
 
@@ -160,7 +160,7 @@ public class VfsData {
   }
 
   public static class FileAlreadyCreatedException extends RuntimeException {
-    private FileAlreadyCreatedException(String message) {
+    private FileAlreadyCreatedException(@NotNull String message) {
       super(message);
     }
   }
@@ -196,7 +196,7 @@ public class VfsData {
     return myHasChangedParents ? myChangedParents.get(id): null;
   }
 
-  void changeParent(int id, VirtualDirectoryImpl parent) {
+  void changeParent(int id, @NotNull VirtualDirectoryImpl parent) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     myHasChangedParents = true;
     myChangedParents.put(id, parent);
@@ -236,7 +236,8 @@ public class VfsData {
       myObjectArray.set(getOffset(fileId), map);
     }
 
-    KeyFMap getUserMap(VirtualFileSystemEntry file, int id) {
+    @NotNull
+    KeyFMap getUserMap(@NotNull VirtualFileSystemEntry file, int id) {
       Object o = myObjectArray.get(getOffset(id));
       if (!(o instanceof KeyFMap)) {
         throw reportDeadFileAccess(file);
@@ -282,7 +283,6 @@ public class VfsData {
         }
       }
     }
-
   }
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
@@ -314,7 +314,7 @@ public class VfsData {
       return children;
     }
 
-    boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
+    boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
       return MY_USER_MAP_UPDATER.compareAndSet(this, oldMap, newMap);
     }
 
@@ -407,5 +407,4 @@ public class VfsData {
              '}';
     }
   }
-
 }

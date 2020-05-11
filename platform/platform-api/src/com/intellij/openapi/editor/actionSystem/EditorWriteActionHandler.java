@@ -60,28 +60,18 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     };
     if (editor instanceof TextComponentEditor) {
       runnable.run();
-    } else {
+    }
+    else {
       ApplicationManager.getApplication().runWriteAction(runnable);
     }
   }
 
   /**
-   * @deprecated Use/override
-   * {@link #executeWriteAction(Editor, Caret, DataContext)}
-   * instead.
+   * @deprecated Use/override {@link #executeWriteAction(Editor, Caret, DataContext)} instead.
    */
   @Deprecated
   public void executeWriteAction(Editor editor, DataContext dataContext) {
-    if (inExecution) {
-      return;
-    }
-    try {
-      inExecution = true;
-      executeWriteAction(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-    }
-    finally {
-      inExecution = false;
-    }
+    executeWriteAction(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
   }
 
   public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
