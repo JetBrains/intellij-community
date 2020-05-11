@@ -119,7 +119,6 @@ public final class SvnVcs extends AbstractVcs {
   private final SvnChangelistListener myChangeListListener;
 
   private SvnCopiesRefreshManager myCopiesRefreshManager;
-  private SvnFileUrlMappingImpl myMapping;
 
   private Disposable myFrameStateListenerDisposable;
 
@@ -652,10 +651,7 @@ public final class SvnVcs extends AbstractVcs {
 
   @NotNull
   public SvnFileUrlMapping getSvnFileUrlMapping() {
-    if (myMapping == null) {
-      myMapping = SvnFileUrlMappingImpl.getInstance(myProject);
-    }
-    return myMapping;
+    return myProject.getService(SvnFileUrlMapping.class);
   }
 
   /**

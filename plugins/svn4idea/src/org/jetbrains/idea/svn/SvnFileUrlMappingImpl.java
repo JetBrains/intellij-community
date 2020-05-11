@@ -2,7 +2,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -68,11 +71,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     public static boolean isInProgress() {
       return ourInProgress.get();
     }
-  }
-
-  @NotNull
-  public static SvnFileUrlMappingImpl getInstance(@NotNull Project project) {
-    return (SvnFileUrlMappingImpl)ServiceManager.getService(project, SvnFileUrlMapping.class);
   }
 
   @SuppressWarnings("UnusedDeclaration")
