@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceManager
@@ -19,18 +20,28 @@ class ProjectPluginTracker {
     fun getInstance(): ProjectPluginTracker = ServiceManager.getService(ProjectPluginTracker::class.java)
   }
 
+  private val projectPluginReferences = mutableMapOf<Project, MutableSet<PluginId>>()
+  private var applicationShuttingDown = false
+
   init {
-    ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       override fun projectClosing(project: Project) {
         val pluginsToUnload = projectPluginReferences.remove(project) ?: return
-        val pluginDescriptorsToUnload = pluginsToUnload.mapNotNull { PluginManagerCore.getPlugin(it) }
-        LOG.info("Disabling plugins on project unload: " + pluginDescriptorsToUnload.joinToString { it.pluginId.toString() })
-        PluginEnabler.enablePlugins(project, pluginDescriptorsToUnload, false)
+        if (!applicationShuttingDown) {
+          val pluginDescriptorsToUnload = pluginsToUnload.mapNotNull { PluginManagerCore.getPlugin(it) }
+          LOG.info("Disabling plugins on project unload: " + pluginDescriptorsToUnload.joinToString { it.pluginId.toString() })
+          PluginEnabler.enablePlugins(project, pluginDescriptorsToUnload, false)
+        }
+      }
+    })
+
+    connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
+      override fun appWillBeClosed(isRestart: Boolean) {
+        applicationShuttingDown = true
       }
     })
   }
-
-  private val projectPluginReferences = mutableMapOf<Project, MutableSet<PluginId>>()
 
   fun registerProjectPlugin(project: Project, plugin: IdeaPluginDescriptor) {
     projectPluginReferences.getOrPut(project) { mutableSetOf() }.add(plugin.pluginId)
