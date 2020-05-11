@@ -2,7 +2,9 @@
 package git4idea.index
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -29,10 +31,7 @@ class GitStageContentProvider(private val tracker: GitStageTracker) : ChangesVie
 }
 
 class GitStageContentVisibilityPredicate : NotNullFunction<Project, Boolean> {
-  override fun `fun`(project: Project): Boolean {
-    return Registry.`is`("git.enable.stage") &&
-           ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).isNotEmpty()
-  }
+  override fun `fun`(project: Project) = isStageAvailable(project)
 }
 
 class GitStageDisplayNameSupplier : Supplier<String> {

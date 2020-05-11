@@ -147,6 +147,11 @@ class GitStageTracker(val project: Project) : Disposable {
     state = State.EMPTY
   }
 
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project) = project.getService(GitStageTracker::class.java)
+  }
+
   private sealed class Request {
     class RefreshRoots(val roots: Collection<VirtualFile>) : Request() {
       override fun toString(): String = "Request.RefreshRoots(roots=${roots.joinToString(",") { it.name }})"
