@@ -84,7 +84,7 @@ public class RedundantCastUtil {
       }
     }
 
-    private void addIfNarrowing(PsiTypeCastExpression castExpression, PsiType opType, PsiType expectedTypeByParent) {
+    private void addIfNarrowing(PsiTypeCastExpression castExpression, @NotNull PsiType opType, PsiType expectedTypeByParent) {
       PsiTypeElement castElement = castExpression.getCastType();
       if (castElement != null && TypeConversionUtil.isAssignable(castElement.getType(), opType, false) &&
           (expectedTypeByParent == null || TypeConversionUtil.isAssignable(expectedTypeByParent, opType, false))) {
@@ -97,7 +97,10 @@ public class RedundantCastUtil {
       if (expression instanceof PsiTypeCastExpression) {
         PsiExpression operand = getInnerMostOperand(expression);
         if (operand != null) {
-          addIfNarrowing((PsiTypeCastExpression)expression, operand.getType(), expectedTypeByParent);
+          PsiType opType = operand.getType();
+          if (opType != null) {
+            addIfNarrowing((PsiTypeCastExpression)expression, opType, expectedTypeByParent);
+          }
         }
       }
     }
@@ -786,7 +789,9 @@ public class RedundantCastUtil {
               return;
             }
           }
-          addIfNarrowing((PsiTypeCastExpression)switchVariable, opType, null);
+          if (opType != null) {
+            addIfNarrowing((PsiTypeCastExpression)switchVariable, opType, null);
+          }
         } 
       }
     }
