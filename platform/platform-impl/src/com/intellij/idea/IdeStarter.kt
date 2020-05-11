@@ -272,19 +272,12 @@ private fun reportPluginError() {
         return@Notification
       }
 
-      val disabledPlugins = LinkedHashSet(DisabledPluginsState.disabledPlugins())
       if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-        disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false);
       }
       else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-        disabledPlugins.removeAll(PluginManagerCore.ourPluginsToEnable)
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true);
         PluginManagerMain.notifyPluginsUpdated(null)
-      }
-
-      try {
-        DisabledPluginsState.saveDisabledPlugins(disabledPlugins, false)
-      }
-      catch (ignore: IOException) {
       }
 
       PluginManagerCore.ourPluginsToEnable = null

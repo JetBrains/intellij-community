@@ -144,7 +144,7 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated Use {@link DisabledPluginsState#enablePlugins(Collection, boolean)}
+   * @deprecated Use {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}
    */
   @Deprecated
   public static boolean enablePlugin(@NotNull String id) {
@@ -152,7 +152,7 @@ public final class PluginManager {
   }
 
   /**
-   * Consider using {@link DisabledPluginsState#enablePlugins(Collection, boolean)}.
+   * Consider using {@link DisabledPluginsState#enablePluginsById(Collection, boolean)}.
    */
   @SuppressWarnings("MethodMayBeStatic")
   public boolean enablePlugin(@NotNull PluginId id) {

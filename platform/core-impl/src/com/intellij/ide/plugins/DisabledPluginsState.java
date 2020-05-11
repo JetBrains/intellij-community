@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,16 +146,23 @@ public class DisabledPluginsState {
   }
 
   public static void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
+    enablePluginsById(ContainerUtil.map(plugins, (plugin) -> plugin.getPluginId()), enabled);
+  }
+
+  public static void enablePluginsById(@NotNull Collection<PluginId> plugins, boolean enabled) {
     Set<PluginId> disabled = getDisabledIds();
     int sizeBefore = disabled.size();
-    for (PluginDescriptor plugin : plugins) {
+    for (PluginId plugin : plugins) {
       if (enabled) {
-        disabled.remove(plugin.getPluginId());
+        disabled.remove(plugin);
       }
       else {
-        disabled.add(plugin.getPluginId());
+        disabled.add(plugin);
       }
-      plugin.setEnabled(enabled);
+      IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(plugin);
+      if (pluginDescriptor != null) {
+        pluginDescriptor.setEnabled(enabled);
+      }
     }
 
     if (sizeBefore == disabled.size()) {
