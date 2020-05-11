@@ -26,9 +26,24 @@ public interface CommandLineInspectionProjectConfigurator {
   }
 
   /**
+   * This method is for {@link #isApplicable(Path, CommandLineInspectionProgressReporter)} inspections
+   * after project is opened. In addition to the method, you may implement the
+   * {@link #configureProject(Project, AnalysisScope, CommandLineInspectionProgressReporter)}
+   * that is executed to prepare inspections run.
+   *
+   * @see #configureProject(Project, AnalysisScope, CommandLineInspectionProgressReporter)
+   */
+  default void configureProject(@NotNull Project project, @NotNull CommandLineInspectionProgressReporter logger) {
+
+  }
+
+  /**
    * Invoked after the project has been imported and before the analysis on the specified scope
    * is started.
+   *
+   * @see #configureProject(Project, CommandLineInspectionProgressReporter)
    */
   default void configureProject(@NotNull Project project, @NotNull AnalysisScope scope, @NotNull CommandLineInspectionProgressReporter logger) {
+    configureProject(project, logger);
   }
 }
