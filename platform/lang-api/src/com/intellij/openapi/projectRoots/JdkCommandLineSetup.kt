@@ -131,8 +131,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
       }
     }
     if (!dynamicClasspath) {
-      JdkUtil.appendParamsEncodingClasspath(this, commandLine, request, classPathVolume,
-                                            languageRuntime, javaParameters, vmParameters)
+      appendParamsEncodingClasspath(javaParameters, vmParameters)
     }
 
     if (!dynamicMainClass) {
@@ -233,12 +232,29 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     val modulePath = javaParameters.modulePath
     if (!modulePath.isEmpty && !vmParameters.isExplicitModulePath()) {
       commandLine.addParameter("-p")
-      val pathValues: List<TargetValue<String>> = getClassPathValues(javaParameters, modulePath)
+      val pathValues = getClassPathValues(javaParameters, modulePath)
       val pathSeparator = platform.pathSeparator.toString()
       commandLine.addParameter(TargetValue.composite(pathValues) { values: Collection<String> ->
         values.joinTo(StringBuilder(), pathSeparator).toString()
       })
     }
+  }
+
+  private fun appendParamsEncodingClasspath(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    appendVmParameters(vmParameters)
+    appendEncoding(javaParameters, vmParameters)
+
+    val classPath = javaParameters.classPath
+    if (!classPath.isEmpty && !vmParameters.isExplicitClassPath()) {
+      commandLine.addParameter("-classpath")
+      val pathValues = getClassPathValues(javaParameters, classPath)
+      val pathSeparator = platform.pathSeparator.toString()
+      commandLine.addParameter(TargetValue.composite(pathValues) { values: Collection<String> ->
+        values.joinTo(StringBuilder(), pathSeparator).toString()
+      })
+    }
+
+    appendModulePath(javaParameters, vmParameters)
   }
 
   @JvmName("getClassPathValues")

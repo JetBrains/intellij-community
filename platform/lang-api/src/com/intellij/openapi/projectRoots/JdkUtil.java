@@ -499,27 +499,6 @@ public final class JdkUtil {
     throw new CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause);
   }
 
-  /*make private */
-  static void appendParamsEncodingClasspath(JdkCommandLineSetup setup, TargetedCommandLineBuilder commandLine,
-                                            TargetEnvironmentRequest request,
-                                            TargetEnvironmentRequest.Volume classPathVolume,
-                                            @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                            SimpleJavaParameters javaParameters,
-                                            ParametersList vmParameters) {
-    setup.appendVmParameters(vmParameters);
-    setup.appendEncoding(javaParameters, vmParameters);
-
-    PathsList classPath = javaParameters.getClassPath();
-    if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-      commandLine.addParameter("-classpath");
-      List<TargetValue<String>> pathValues = setup.getClassPathValues(javaParameters, classPath);
-      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
-      commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
-    }
-
-    setup.appendModulePath(javaParameters, vmParameters);
-  }
-
   public static boolean useDynamicClasspath(@Nullable Project project) {
     boolean hasDynamicProperty = Boolean.parseBoolean(System.getProperty("idea.dynamic.classpath", "false"));
     return project != null
