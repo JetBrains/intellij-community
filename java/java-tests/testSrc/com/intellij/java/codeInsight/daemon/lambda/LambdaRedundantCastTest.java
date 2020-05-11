@@ -88,6 +88,7 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testThrowsStatementInLambdaBody() { doTest(); }
   public void testSynchronizeCasts() { doTest(); }
   public void testBoxingInConditionalOfLambdaReturn() { doTest(); }
+  public void testRawMiddleMan() { doTest(); }
   public void testRejectReturnTypeChange() {
     doTest();
   }

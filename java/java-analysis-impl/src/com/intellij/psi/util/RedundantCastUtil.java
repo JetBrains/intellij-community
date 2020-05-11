@@ -146,7 +146,7 @@ public class RedundantCastUtil {
     private void processTypeCastWithExpectedType(PsiExpression rExpr, @Nullable PsiType lType) {
       rExpr = deparenthesizeExpression(rExpr);
       if (rExpr instanceof PsiTypeCastExpression) {
-        PsiExpression castOperand = getInnerMostOperand(((PsiTypeCastExpression)rExpr).getOperand());
+        PsiExpression castOperand = deparenthesizeExpression(((PsiTypeCastExpression)rExpr).getOperand());
         if (castOperand != null) {
           if (castOperand instanceof PsiFunctionalExpression) {
             if (lType != null) {
