@@ -350,8 +350,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   @NotNull
-  public List<IndexableFilesProvider> getOrderedIndexableFilesProviders(@NotNull Project project,
-                                                                        @SuppressWarnings({"unused", "for the sake of descriptor as in master branch"}) @NotNull ProgressIndicator indicator) {
+  public List<IndexableFilesProvider> getOrderedIndexableFilesProviders(@NotNull Project project) {
     if (LightEdit.owns(project)) {
       return Collections.emptyList();
     }
@@ -362,7 +361,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
       Set<Library> seenLibraries = new HashSet<>();
       Set<Sdk> seenSdks = new HashSet<>();
-      Set<OrderEntry> allEntries = new THashSet<>();
 
       List<IndexableFilesProvider> providers = new ArrayList<>();
       Module[] modules = ModuleManager.getInstance(project).getSortedModules();
@@ -371,7 +369,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
         OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
         for (OrderEntry orderEntry : orderEntries) {
-          allEntries.add(orderEntry);
           if (orderEntry instanceof LibraryOrderEntry) {
             Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
             if (library != null && seenLibraries.add(library)) {

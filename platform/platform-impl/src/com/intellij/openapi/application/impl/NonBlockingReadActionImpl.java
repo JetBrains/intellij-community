@@ -4,6 +4,7 @@ package com.intellij.openapi.application.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -489,6 +490,9 @@ public class NonBlockingReadActionImpl<T>
         } else {
           setResult(result);
         }
+      }
+      catch (ServiceNotReadyException e) {
+        throw e;
       }
       catch (ProcessCanceledException e) {
         if (!indicator.isCanceled()) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,6 +100,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   }
 
   public static boolean isWriteAccessAllowed(@NotNull VirtualFile file, @NotNull Project project) {
+    if (LightEdit.owns(project)) return true;
     if (isAllAccessAllowed()) return true;
     if (file.isDirectory()) return true;
 

@@ -145,6 +145,8 @@ public abstract class FilterModel<Filter> {
 
     @Override
     public void setFilter(@Nullable FilterPair<Filter1, Filter2> filter) {
+      if (filter != null && filter.isEmpty()) filter = null;
+
       boolean anyFiltersDiffers = false;
       if (filterDiffers(filter, FilterPair::getFilter1, myFilter)) {
         triggerFilterSet(filter, FilterPair::getFilter1, myFilterKey1.getName());

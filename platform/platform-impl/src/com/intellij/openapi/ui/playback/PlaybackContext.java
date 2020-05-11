@@ -55,6 +55,9 @@ public abstract class PlaybackContext  {
   }
 
   public Robot getRobot() {
+    if (myRobot == null) {
+      throw new RuntimeException("Robot is not available in the headless mode");
+    }
     return myRobot;
   }
 
@@ -84,30 +87,6 @@ public abstract class PlaybackContext  {
 
   public Set<Class<?>> getCallClasses() {
     return myCallClasses;
-  }
-
-  public void flushAwtAndRunInEdt(final Runnable runnable) {
-    if (EventQueue.isDispatchThread()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        getRobot().waitForIdle();
-        SwingUtilities.invokeLater(runnable);
-      });
-    } else {
-      getRobot().waitForIdle();
-      SwingUtilities.invokeLater(runnable);
-    }
-  }
-
-  public void delayAndRunInEdt(final Runnable runnable, final long delay) {
-    runPooledThread(() -> {
-      try {
-        Thread.sleep(delay);
-      }
-      catch (InterruptedException e) {
-
-      }
-      SwingUtilities.invokeLater(runnable);
-    });
   }
   
   public void runPooledThread(Runnable runnable) {

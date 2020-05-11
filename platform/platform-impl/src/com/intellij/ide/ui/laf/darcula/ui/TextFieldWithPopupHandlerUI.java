@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -162,10 +163,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     super.installDefaults();
     if (SystemInfo.isMacOSCatalina) {
       JTextComponent component = getComponent();
-      Font oldFont = component.getFont();
-      Font newFont = oldFont.deriveFont(DISABLE_KERNING);
-      component.setFont(oldFont instanceof UIResource ? new FontUIResource(newFont) : newFont);
+      component.setFont(disableKerning(component.getFont()));
     }
+  }
+
+  @NotNull
+  private static Font disableKerning(@NotNull Font oldFont) {
+    Font newFont = oldFont.deriveFont(DISABLE_KERNING);
+    return oldFont instanceof UIResource ? new FontUIResource(newFont) : newFont;
   }
 
   /**
@@ -580,7 +585,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         Font font = component.getFont();
         if (font == null || font instanceof UIResource) {
           font = UIManager.getFont(getPropertyPrefix() + ".font");
-          component.setFont(!monospaced ? font : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
+          component.setFont(!monospaced
+                            ? !SystemInfo.isMacOSCatalina ? font : disableKerning(font)
+                            : new FontUIResource("monospaced", font.getStyle(), font.getSize()));
         }
       }
     }
@@ -619,6 +626,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
 
   private final class SearchExtension implements Extension {
+    private final PopupState myPopupState = new PopupState();
     private Rectangle bounds; // should be bound to IconHandler#bounds
 
     @Override
@@ -648,8 +656,12 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       Object property = component == null ? null : component.getClientProperty(POPUP);
       JPopupMenu popup = property instanceof JPopupMenu ? (JPopupMenu)property : null;
       return popup == null ? null : () -> {
+        if (myPopupState.isRecentlyHidden()) return; // do not show new popup
         Rectangle editor = getVisibleEditorRect();
-        if (editor != null) popup.show(component, bounds.x, editor.y + editor.height);
+        if (editor != null) {
+          popup.addPopupMenuListener(myPopupState);
+          popup.show(component, bounds.x, editor.y + editor.height);
+        }
       };
     }
 

@@ -62,9 +62,8 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myPinnable = isPinnable;
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
@@ -305,13 +304,12 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  @Nullable
-  public AlertIcon getAlertIcon() {
+  public @Nullable AlertIcon getAlertIcon() {
     return myAlertIcon;
   }
 
   @Override
-  public void setAlertIcon(@Nullable final AlertIcon icon) {
+  public void setAlertIcon(final @Nullable AlertIcon icon) {
     myAlertIcon = icon;
   }
 
@@ -375,9 +373,8 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     myHelpId = helpId;
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return myHelpId;
   }
 }

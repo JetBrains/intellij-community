@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -17,11 +17,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBInsets;
@@ -266,7 +266,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
       }
       myExtraActionsPanel.setLayout(new BorderLayout());
       myExtraActionsPanel.add(buttonsGrid, BorderLayout.NORTH);
-      myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(4)));
+      myExtraActionsPanel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), 0, 1, 0, 0), JBUI.Borders.emptyLeft(4)));
     }
     return addedButtons;
   }
@@ -328,6 +328,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   public void setInfoText(String info) {}
 
   private class ShowHistoryAction extends DumbAwareAction {
+    private final PopupState myPopupState = new PopupState();
 
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -338,12 +339,13 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
       JBList<String> historyList = new JBList<>(ArrayUtil.reverseArray(recent));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
+      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null, myPopupState);
     }
   }
 

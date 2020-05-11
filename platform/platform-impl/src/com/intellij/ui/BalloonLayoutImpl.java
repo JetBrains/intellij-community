@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
+import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -51,6 +52,8 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   private final Runnable myCloseAll = () -> {
     for (Balloon balloon : new ArrayList<>(myBalloons)) {
+      BalloonLayoutData layoutData = myLayoutData.get(balloon);
+      NotificationCollector.getInstance().logNotificationBalloonClosedByUser(layoutData.id, layoutData.groupId);
       remove(balloon, true);
     }
   };

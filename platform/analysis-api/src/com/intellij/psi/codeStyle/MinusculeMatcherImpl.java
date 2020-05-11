@@ -300,7 +300,7 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
     }
 
     return matchSkippingWords(name, patternIndex,
-                              findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName, true),
+                              findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName),
                               true, isAsciiName);
   }
 
@@ -338,7 +338,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
           return ranges;
         }
       }
-      nameIndex = findNextPatternCharOccurrence(name, nameIndex + 1, patternIndex, isAsciiName, allowSpecialChars);
+      int next = findNextPatternCharOccurrence(name, nameIndex + 1, patternIndex, isAsciiName);
+      nameIndex = allowSpecialChars ? next : checkForSpecialChars(name, nameIndex + 1, next, patternIndex);
     }
     return null;
   }
@@ -346,23 +347,25 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
   private int findNextPatternCharOccurrence(@NotNull String name,
                                             int startAt,
                                             int patternIndex,
-                                            boolean isAsciiName,
-                                            boolean allowSpecialChars) {
-    int next = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex]
-               ? indexOfWordStart(name, patternIndex, startAt)
-               : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
+                                            boolean isAsciiName) {
+    return !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex]
+           ? indexOfWordStart(name, patternIndex, startAt)
+           : indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex, isAsciiName);
+  }
+
+  private int checkForSpecialChars(String name, int start, int end, int patternIndex) {
+    if (end < 0) return -1;
 
     // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-    if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, startAt, next)) {
+    if (!myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, start, end)) {
       return -1;
     }
     // if the user has typed a dot, don't skip other dots between humps
     // but one pattern dot may match several name dots
-    if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, startAt, next, '.')) {
+    if (myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, start, end, '.')) {
       return -1;
     }
-
-    return next;
+    return end;
   }
 
   private boolean seemsLikeFragmentStart(@NotNull String name, int patternIndex, int nextOccurrence) {
@@ -460,7 +463,8 @@ class MinusculeMatcherImpl extends MinusculeMatcher {
         ranges = matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName);
       }
       else {
-        int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i, patternIndex + i, isAsciiName, false);
+        int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex + i + 1, patternIndex + i, isAsciiName);
+        nextOccurrence = checkForSpecialChars(name, nameIndex + i, nextOccurrence, patternIndex + i);
         if (nextOccurrence >= 0 && nextOccurrence < minNext) {
           ranges = matchSkippingWords(name, patternIndex + i, nextOccurrence, false, isAsciiName);
 

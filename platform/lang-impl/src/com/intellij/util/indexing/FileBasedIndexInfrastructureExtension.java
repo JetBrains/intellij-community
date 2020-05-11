@@ -4,28 +4,23 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 @ApiStatus.Internal
 public interface FileBasedIndexInfrastructureExtension {
   ExtensionPointName<FileBasedIndexInfrastructureExtension> EP_NAME =  ExtensionPointName.create("com.intellij.fileBasedIndexInfrastructureExtension");
 
   /**
-   * This notification is send from an IDE to let the extension point implementation
-   * update it's internal state in order to supply indexes for the given {@param entries}.
-   *
-   * Called every time when project structure is updated.
+   * This notification is sent from the IDE to let the extension point implementation
+   * update it's internal state in order to supply indexes.
+   * Extension point must not run any heavy tasks in this thread.
+   * @param indexingIndicator used only to track cancellation of the indexing, must not be used for updating texts/fractions.
    */
-  void processProjectEntries(@NotNull Project project,
-                             @NotNull Set<OrderEntry> entries,
-                             @NotNull ProgressIndicator indicator);
+  void processIndexingProject(@NotNull Project project, @NotNull ProgressIndicator indexingIndicator);
 
 
   interface FileIndexingStatusProcessor {

@@ -6,8 +6,12 @@ import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRevisionFilter
 
-data class FilterPair<F1 : VcsLogFilter, F2 : VcsLogFilter>(val filter1: F1?, val filter2: F2?)
+data class FilterPair<F1 : VcsLogFilter, F2 : VcsLogFilter>(val filter1: F1?, val filter2: F2?) {
+  fun isEmpty() = filter1 == null && filter2 == null
+}
 
-internal data class BranchFilters(val branchFilter: VcsLogBranchFilter?,
-                                  val revisionFilter: VcsLogRevisionFilter?,
-                                  val rangeFilter: VcsLogRangeFilter?)
+data class BranchFilters(val branchFilter: VcsLogBranchFilter?,
+                         val revisionFilter: VcsLogRevisionFilter?,
+                         val rangeFilter: VcsLogRangeFilter?) {
+  fun isEmpty() = branchFilter == null && revisionFilter == null && rangeFilter == null
+}

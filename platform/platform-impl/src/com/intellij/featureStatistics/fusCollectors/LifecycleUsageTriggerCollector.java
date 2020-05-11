@@ -2,6 +2,7 @@
 package com.intellij.featureStatistics.fusCollectors;
 
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
@@ -136,5 +137,27 @@ public final class LifecycleUsageTriggerCollector {
       return seconds + "s+";
     }
     return seconds + "s";
+  }
+
+  public static void onProjectFrameSelected(int option) {
+    String optionValue;
+    switch (option) {
+      case GeneralSettings.OPEN_PROJECT_NEW_WINDOW:
+        optionValue = "new";
+        break;
+
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW:
+        optionValue = "same";
+        break;
+
+      case GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH:
+        optionValue = "attach";
+        break;
+
+      default:
+        return;
+    }
+    FUCounterUsageLogger.getInstance().logEvent("lifecycle", "project.frame.selected",
+                                                new FeatureUsageData().addData("mode", optionValue));
   }
 }

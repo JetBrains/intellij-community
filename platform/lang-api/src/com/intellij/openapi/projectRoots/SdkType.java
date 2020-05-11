@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
@@ -39,6 +40,10 @@ public abstract class SdkType implements SdkTypeId {
    * <p/>
    * E.g. for Python SDK on Unix the method may return either {@code "/usr/bin"} or {@code "/usr/bin/python"}
    * (if there is only one Python interpreter installed on a host).
+   * <p/>
+   * This method should work fast and allow running from the EDT thread. See the {@link #suggestHomePaths()}
+   * for more advanced scenarios
+   * @see #suggestHomePaths()
    */
   @Nullable
   public abstract String suggestHomePath();
@@ -47,6 +52,11 @@ public abstract class SdkType implements SdkTypeId {
    * Returns a list of all valid SDKs found on this host.
    * <p/>
    * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
+   * <p/>
+   * This method may take significant time to execute. The implementation may check {@link ProgressManager#checkCanceled()}
+   * for possible interruption request. It is not recommended to call this method from a ETD thread. See
+   * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
+   * @see #suggestHomePath()
    */
   @NotNull
   public Collection<String> suggestHomePaths() {

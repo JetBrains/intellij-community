@@ -4,13 +4,13 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.codeInsight.completion.JavaCompletionAutoPopupTestCase
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.psi.InjectedLanguagePlaces
 import com.intellij.psi.LanguageInjector
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.testFramework.ExtensionTestUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-
 /**
  * For tests checking platform behavior not related to Java language (but they may still use Java for code samples)
  */
@@ -85,5 +85,19 @@ class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
       assert !lookup
       assert myFixture.editor.document.text.contains('\n')
     }
+  }
+
+  void "test skip autopopup if confidence needs non-ready index"() {
+    myFixture.configureByText 'a.java', 'class C { int abc; { getClass().getDeclaredField("<caret>x"); }}'
+    edt { DumbServiceImpl.getInstance(project).setDumb(true) }
+    try {
+      type 'a'
+      assert !lookup
+    }
+    finally {
+      edt { DumbServiceImpl.getInstance(project).setDumb(false) }
+    }
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'abc'
   }
 }

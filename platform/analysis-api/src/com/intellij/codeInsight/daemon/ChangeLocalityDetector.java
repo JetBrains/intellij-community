@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ChangeLocalityDetector {
   /**
-   * @return the psi element (ancestor of the changedElement) which should be re-highlighted, or null if unsure.
+   * @return the psi element (ancestor of the changedElement) which should be re-highlighted/re-inspected, or null if unsure.
    * Examples:
    *  - in Java, when the statement has changed, re-highlight the enclosing code block only.
    *  - in (hypothetical) framework which stores its annotations in comments, e.g. "// @someAnnotation",

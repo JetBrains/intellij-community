@@ -46,6 +46,7 @@
     <statistics.validation.customWhiteListRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
     <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="2"/>
+    <statistics.counterUsagesCollector groupId="debugger.evaluate.usage" version="1"/>
 
     <editorActionHandler action="EditorUp" implementationClass="com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler$UpHandler"
                          id="smart-step-into-up"/>
@@ -68,6 +69,7 @@
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
+    <notificationWhitelist groupIds="Debugger messages;Attach to Process action"/>
   </extensions>
 
   <actions>

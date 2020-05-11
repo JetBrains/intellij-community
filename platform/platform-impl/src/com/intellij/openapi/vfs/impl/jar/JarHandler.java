@@ -435,7 +435,7 @@ public class JarHandler extends ZipHandler {
     @NotNull
     @Override
     protected NotificationGroup compute() {
-      return NotificationGroup.balloonGroup(IdeBundle.message("jar.copy.error.title"));
+      return NotificationGroup.balloonGroup("Error Copying File", IdeBundle.message("jar.copy.error.title"));
     }
   };
 

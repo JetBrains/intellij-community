@@ -118,12 +118,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
     if (behavior == CheckCanceledBehavior.NONE) return;
 
-    final ProgressIndicator progress = getProgressIndicator();
-    if (progress != null && behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS) {
-      progress.checkCanceled();
+    if (behavior == CheckCanceledBehavior.INDICATOR_PLUS_HOOKS) {
+      ProgressIndicator progress = getProgressIndicator();
+      if (progress != null) {
+        progress.checkCanceled();
+      }
     }
     else {
-      runCheckCanceledHooks(progress);
+      runCheckCanceledHooks(null);
     }
   }
 
@@ -947,7 +949,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @FunctionalInterface
   interface CheckCanceledHook {
     /**
-     * @param indicator the indicator whose {@link ProgressIndicator#checkCanceled()} was called, or null if a non-progressive thread performed {@link ProgressManager#checkCanceled()}
+     * @param indicator the indicator whose {@link ProgressIndicator#checkCanceled()} was called,
+     *                  or null if {@link ProgressManager#checkCanceled()} was called (even on a thread with indicator)
      * @return true if the hook has done anything that might take some time.
      */
     boolean runHook(@Nullable ProgressIndicator indicator);

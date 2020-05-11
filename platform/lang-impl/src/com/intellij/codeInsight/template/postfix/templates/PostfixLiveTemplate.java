@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
@@ -304,7 +305,13 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
-    return template -> template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
+    return template -> template != null && isDumbEnough(template, context) &&
+                       template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
+  }
+
+  private static boolean isDumbEnough(@NotNull PostfixTemplate template, @NotNull PsiElement context) {
+    DumbService dumbService = DumbService.getInstance(context.getProject());
+    return !dumbService.isDumb() || DumbService.isDumbAware(template);
   }
 
   @NotNull

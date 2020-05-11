@@ -35,11 +35,6 @@ import java.util.List;
 public class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
 
   @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
     final PsiClass callClass = ClassUtils.getContainingClass(methodCallExpression);

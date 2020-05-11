@@ -16,13 +16,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAction extends AnAction implements DumbAware {
+public class CloseAction extends AnAction implements DumbAware, LightEditCompatible {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

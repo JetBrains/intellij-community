@@ -111,7 +111,7 @@ def main():
     if args.state_file_policy == 'readwrite':
         # We can't completely shut off stdin in case Docker-based interpreter to use json.load()
         # and have to retreat to reading the content line-wise
-        state_json = json.loads(sys.stdin.readline(), encoding='utf-8')
+        state_json = json.loads(sys.stdin.readline())  # utf-8 by default
     else:
         state_json = None
 

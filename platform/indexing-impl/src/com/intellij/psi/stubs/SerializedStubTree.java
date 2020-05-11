@@ -5,6 +5,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.io.DigestUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
@@ -120,7 +121,8 @@ public class SerializedStubTree {
     );
   }
 
-  void restoreIndexedStubs() throws IOException {
+  @VisibleForTesting
+  public void restoreIndexedStubs() throws IOException {
     if (myIndexedStubs == null) {
       myIndexedStubs = myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength)));
     }

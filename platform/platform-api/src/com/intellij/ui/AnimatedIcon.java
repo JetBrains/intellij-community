@@ -32,6 +32,8 @@ public class AnimatedIcon implements Icon {
    */
   @ApiStatus.Internal
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
+  @ApiStatus.Internal
+  public static final Key<Runnable> REFRESH_DELEGATE = Key.create("REFRESH_DELEGATE");
 
   public interface Frame {
     @NotNull
@@ -275,7 +277,13 @@ public class AnimatedIcon implements Icon {
   }
 
   protected void doRefresh(@NotNull Component component) {
-    component.repaint();
+    Runnable delegate = UIUtil.getClientProperty(component, REFRESH_DELEGATE);
+    if (delegate != null) {
+      delegate.run();
+    }
+    else {
+      component.repaint();
+    }
   }
 
   @Nullable

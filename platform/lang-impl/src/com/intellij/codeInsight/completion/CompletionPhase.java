@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListenerImpl;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -165,10 +166,16 @@ public abstract class CompletionPhase implements Disposable {
       Language language = PsiUtilCore.findLanguageFromElement(elementAt);
 
       for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
-        final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
-        if (result != ThreeState.UNSURE) {
-          LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
-          return result == ThreeState.YES;
+        try {
+          ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+          if (result != ThreeState.UNSURE) {
+            LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
+            return result == ThreeState.YES;
+          }
+        }
+        catch (IndexNotReadyException e) {
+          LOG.debug(e);
+          return true;
         }
       }
       return false;

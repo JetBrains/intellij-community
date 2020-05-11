@@ -12,6 +12,9 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.TObjectIntHashMap;
@@ -38,7 +41,7 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 2;
+    return 3;
   }
 
   @NotNull
@@ -82,6 +85,12 @@ public class ProjectStructureUsageCollector extends ProjectUsagesCollector {
     if (PlatformUtils.isIntelliJ()) {
       result.add(newCounterMetric("package.prefix", packagePrefix));
     }
+
+    NamedScope[] localScopes = NamedScopeManager.getInstance(project).getEditableScopes();
+    result.add(newCounterMetric("named.scopes.total.local", localScopes.length));
+    NamedScope[] sharedScopes = DependencyValidationManager.getInstance(project).getEditableScopes();
+    result.add(newCounterMetric("named.scopes.total.shared", sharedScopes.length));
+
     return result;
   }
 }

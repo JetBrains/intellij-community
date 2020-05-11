@@ -49,12 +49,12 @@ import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_CO
  */
 public class PyPackageManagerImpl extends PyPackageManager {
 
-  private static final String SETUPTOOLS_VERSION = "40.8.0";
-  private static final String PIP_VERSION = "19.0.3";
+  private static final String SETUPTOOLS_VERSION = "44.1.0";
+  private static final String PIP_VERSION = "20.0.2";
 
   private static final String SETUPTOOLS_WHEEL_NAME = "setuptools-" + SETUPTOOLS_VERSION + "-py2.py3-none-any.whl";
   private static final String PIP_WHEEL_NAME = "pip-" + PIP_VERSION + "-py2.py3-none-any.whl";
-  private static final String VIRTUALENV_WHEEL_NAME = "virtualenv-16.4.3-py2.py3-none-any.whl";
+  private static final String VIRTUALENV_WHEEL_NAME = "virtualenv-16.7.10-py2.py3-none-any.whl";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
 

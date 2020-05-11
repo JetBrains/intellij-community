@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.icons.AllIcons;
@@ -199,6 +199,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
 
     @Override
     protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
         @Override
@@ -214,6 +215,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       popupMenu.setTargetComponent(this);
 
       JPopupMenu menu = popupMenu.getComponent();
+      menu.addPopupMenuListener(myPopupState);
       if (event.isFromActionToolbar()) {
         menu.show(this, DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
       }

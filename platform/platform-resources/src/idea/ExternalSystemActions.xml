@@ -19,11 +19,7 @@
               class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction"
               icon="AllIcons.General.Settings">
       </action>
-
-      <action id="ExternalSystem.ToggleProjectRefresh"
-              class="com.intellij.openapi.externalSystem.autoimport.ToggleProjectRefreshAction">
-      </action>
-
+      <action id="ExternalSystem.ToggleAutoReload" class="com.intellij.openapi.externalSystem.autoimport.ToggleAutoReloadAction"/>
       <action id="ExternalSystem.OpenTasksActivationManager"
               class="com.intellij.openapi.externalSystem.action.OpenTasksActivationManagerAction">
       </action>
@@ -123,6 +119,7 @@
       <reference id="ExternalSystem.SelectProjectDataToImport"/>
     </group>
     <group id="ExternalSystemView.ActionsToolbar.RightPanel">
+      <reference id="ExternalSystem.ToggleAutoReload"/>
     </group>
 
     <group id="ExternalSystemView.TaskActivationGroup">
@@ -170,8 +167,8 @@
       <reference id="ExternalSystem.AssignRunConfigurationShortcut"/>
     </group>
 
-    <group id="ProjectRefreshActionGroup" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshActionGroup">
-      <action id="ProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction">
+    <group id="ExternalSystem.ProjectRefreshActionGroup" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshActionGroup">
+      <action id="ExternalSystem.ProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction">
         <keyboard-shortcut first-keystroke="control shift O" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control shift O" keymap="Eclipse" remove="true"/>
         <keyboard-shortcut first-keystroke="control shift O" keymap="NetBeans 6.5" remove="true"/>
@@ -181,7 +178,7 @@
         <keyboard-shortcut first-keystroke="meta shift O" keymap="Xcode" replace-all="true" remove="true"/>
         <keyboard-shortcut first-keystroke="meta shift I" keymap="Mac OS X 10.5+" replace-all="true"/>
       </action>
-      <action id="HideProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.HideProjectRefreshAction"/>
+      <action id="ExternalSystem.HideProjectRefreshAction" class="com.intellij.openapi.externalSystem.autoimport.HideProjectRefreshAction"/>
     </group>
   </actions>
 </idea-plugin>

@@ -31,7 +31,8 @@ import java.util.function.Consumer;
  * @author Konstantin Bulenkov
  */
 public class ActionsCollectorImpl extends ActionsCollector {
-  private static final String GROUP = "actions";
+  public static final String GROUP = "actions";
+  public static final String ACTION_INVOKED_EVENT_ID = "action.invoked";
   public static final String DEFAULT_ID = "third.party";
 
   private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
@@ -53,9 +54,16 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   @Override
   public void record(@Nullable Project project, @Nullable AnAction action, @Nullable AnActionEvent event, @Nullable Language lang) {
-    record(GROUP, "action.invoked", project, action, event, data -> {
+    recordActionInvoked(project, action, event, data -> {
       if (lang != null) data.addCurrentFile(lang);
     });
+  }
+
+  public static void recordActionInvoked(@Nullable Project project,
+                                         @Nullable AnAction action,
+                                         @Nullable AnActionEvent event,
+                                         @NotNull Consumer<FeatureUsageData> configurator) {
+    record(GROUP, ACTION_INVOKED_EVENT_ID, project, action, event, configurator);
   }
 
   /**
@@ -92,6 +100,16 @@ public class ActionsCollectorImpl extends ActionsCollector {
       configurator.accept(data);
     }
 
+    String actionId = addActionClass(data, action, info);
+
+    String reportedEventId = StringUtil.notNullize(eventId, actionId);
+    FUCounterUsageLogger.getInstance().logEvent(groupId, reportedEventId, data);
+  }
+
+  @NotNull
+  public static String addActionClass(@NotNull FeatureUsageData data,
+                                      @NotNull AnAction action,
+                                      @NotNull PluginInfo info) {
     String actionClassName = info.isSafeToReport() ? action.getClass().getName() : DEFAULT_ID;
     String actionId = ((ActionsCollectorImpl)getInstance()).getActionId(info, action);
     if (action instanceof ActionWithDelegate) {
@@ -105,9 +123,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
       data.addData("class", actionClassName);
     }
     data.addData("action_id", actionId);
-
-    String reportedEventId = StringUtil.notNullize(eventId, actionId);
-    FUCounterUsageLogger.getInstance().logEvent(groupId, reportedEventId, data);
+    return actionId;
   }
 
   @NotNull

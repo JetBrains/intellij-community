@@ -88,13 +88,9 @@ final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRu
         }
       }
 
-      // iterate associated libraries
-      Set<OrderEntry> allEntries = new HashSet<>();
-
       for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
         OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
         for (OrderEntry orderEntry : orderEntries) {
-          allEntries.add(orderEntry);
           if (!(orderEntry instanceof LibraryOrSdkOrderEntry) || !orderEntry.isValid()) {
             continue;
           }
@@ -115,8 +111,6 @@ final class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanRu
           }
         }
       }
-
-      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processProjectEntries(myProject, allEntries, indicator));
 
       return tasks;
     });

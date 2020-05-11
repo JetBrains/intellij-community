@@ -59,6 +59,7 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
     }
 
     val provider = SuggestedRefactoringProviderImpl.getInstance(project)
+    val amendStateInBackgroundSaved = provider._amendStateInBackgroundEnabled
     try {
       provider._amendStateInBackgroundEnabled = false
 
@@ -72,7 +73,7 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
       checkAvailability(expectedAvailabilityAfterBackgroundAmend, afterResolve = true)
     }
     finally {
-      provider._amendStateInBackgroundEnabled = true
+      provider._amendStateInBackgroundEnabled = amendStateInBackgroundSaved
     }
   }
 

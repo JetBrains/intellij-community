@@ -1048,7 +1048,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                final JavaReplaceChoice replaceChoice) {
     final boolean replaceAll = replaceChoice.isMultiple();
     final SuggestedNameInfo suggestedName = getSuggestedName(typeSelectorManager.getDefaultType(), expr, anchor);
-    final String variableName = suggestedName.names.length > 0 ? suggestedName.names[0] : "";
+    final String variableName = suggestedName.names.length > 0 ? suggestedName.names[0] : "v";
     final boolean declareFinal = replaceAll && declareFinalIfAll || !anyAssignmentLHS && createFinals(anchor.getContainingFile()) ||
                                  anchor instanceof PsiSwitchLabelStatementBase;
     final boolean declareVarType = canBeExtractedWithoutExplicitType(expr) && createVarType() && !replaceChoice.isChain();

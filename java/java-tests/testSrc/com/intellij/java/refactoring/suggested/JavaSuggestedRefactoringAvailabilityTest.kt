@@ -3,7 +3,10 @@ package com.intellij.java.refactoring.suggested
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringAvailabilityTest
 
 class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailabilityTest() {
@@ -602,6 +605,139 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
       },
       expectedAvailability = Availability.Available(changeSignatureAvailableTooltip("foo", "usages")),
       expectedAvailabilityAfterBackgroundAmend = Availability.Disabled
+    )
+  }
+
+  fun testUndo() {
+    doTest(
+      """
+        class C {
+            String test(boolean q) {
+                String s<caret> = "a";
+                String d = "b";
+                if (q) return (s + d);
+                else return(s + d);
+            }
+        }
+      """.trimIndent(),
+      {
+        executeCommand(project) { myFixture.type("1") }
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      },
+      {
+        val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
+        assertNotNull(intention)
+        executeCommand(project) {
+          runWriteAction {
+            intention!!.invoke(project, editor, file)
+          }
+        }
+      },
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      },
+      {
+        myFixture.performEditorAction(IdeActions.ACTION_UNDO)
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      },
+      {
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        executeCommand(project) { myFixture.type("2") }
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("s", "s2")),
+      wrapIntoCommandAndWriteActionAndCommitAll = false
+    )
+  }
+
+  fun testRenameClassWithNameErased() {
+    doTest(
+      """
+        class X<caret> {
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("X")
+      },
+      {
+        myFixture.type("Y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("X", "Y"))
+    )
+  }
+
+  fun testRenameMethodWithNameErased() {
+    doTest(
+      """
+        class X {
+          void foo<caret>() {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("foo")
+      },
+      {
+        myFixture.type("bar")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("foo", "bar"))
+    )
+  }
+
+  fun testRenameLocalWithNameErased() {
+    doTest(
+      """
+        class X {
+          int foo() {
+            int local<caret> = 10;
+            return local;
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("local")
+      },
+      {
+        myFixture.type("xxx")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("local", "xxx"))
+    )
+  }
+
+  fun testRenameParameterWithNameErased1() {
+    doTest(
+      """
+        class RenameParam {
+          void foo(int x, int x2<caret>) {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("x2")
+      },
+      {
+        myFixture.type("y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("x2", "y"))
+    )
+  }
+
+  fun testRenameParameterWithNameErased2() {
+    doTest(
+      """
+        class RenameParam {
+          void foo(int x, int x2<caret>, Object o) {
+          }
+        }
+      """.trimIndent(),
+      {
+        deleteTextBeforeCaret("x2")
+      },
+      {
+        myFixture.type("y")
+      },
+      expectedAvailability = Availability.Available(renameAvailableTooltip("x2", "y"))
     )
   }
 }

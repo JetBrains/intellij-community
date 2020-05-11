@@ -96,6 +96,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
   }
 
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
   @NotNull
   public State getState() {
     // JMenuBar calls getBorder on init before our own init (super is called before our constructor).

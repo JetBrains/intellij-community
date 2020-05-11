@@ -3,16 +3,19 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -34,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 
-final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
+final class LightEditTabs extends JBEditorTabs implements LightEditorListener, CloseAction.CloseTarget {
   private final LightEditorManagerImpl myEditorManager;
   private final ExecutorService myTabUpdateExecutor;
 
@@ -74,6 +77,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     select(tabInfo, true);
     asyncUpdateTab(tabInfo);
     myEditorManager.fireEditorSelected(editorInfo);
+  }
+
+  @Override
+  public void close() {
+    ObjectUtils.consumeIfNotNull(getSelectedInfo(), tabInfo -> closeTab(tabInfo));
   }
 
   private static Icon getFileTypeIcon(@NotNull LightEditorInfo editorInfo) {
@@ -153,7 +161,22 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
           LightEditUtil.confirmClose(
             ApplicationBundle.message("light.edit.close.message"),
             ApplicationBundle.message("light.edit.close.title"),
-            () -> saveDocument(editorInfo))) {
+            new LightEditSaveConfirmationHandler() {
+              @Override
+              public void onSave() {
+                saveDocument(editorInfo);
+              }
+
+              @Override
+              public void onDiscard() {
+                FileEditor fileEditor = editorInfo.getFileEditor();
+                if (fileEditor instanceof TextEditor) {
+                  Editor editor = ((TextEditor)fileEditor).getEditor();
+                  FileDocumentManager.getInstance().reloadFromDisk(editor.getDocument());
+                }
+              }
+            })
+      ) {
         removeTab(tabInfo).doWhenDone(() -> myEditorManager.closeEditor(editorInfo));
       }
     }
@@ -174,7 +197,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
     }
   }
 
-  private void saveDocument(@NotNull LightEditorInfo editorInfo) {
+  void saveDocument(@NotNull LightEditorInfo editorInfo) {
     if (editorInfo.isNew()) {
       VirtualFile targetFile = LightEditUtil.chooseTargetFile(this.getParent(), editorInfo);
       if (targetFile != null) {
@@ -243,6 +266,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener {
       else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         final VirtualFile selectedFile = getSelectedFile();
         return selectedFile != null ? new VirtualFile[] {selectedFile} : VirtualFile.EMPTY_ARRAY;
+      }
+      else if (CloseAction.CloseTarget.KEY.is(dataId)) {
+        return LightEditTabs.this;
       }
       return null;
     }

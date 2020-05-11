@@ -8,7 +8,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 public class ShowDiffPreviewAction extends BooleanPropertyToggleAction {
 
   public ShowDiffPreviewAction() {
-    super(VcsLogBundle.messagePointer("vcs.log.action.show.all.branches"),
+    super(VcsLogBundle.messagePointer("vcs.log.action.show.diff.preview"),
           VcsLogBundle.messagePointer("vcs.log.action.description.show.diff.preview"), null);
   }
 

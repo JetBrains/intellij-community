@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.ReportValue;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Disposer;
@@ -260,6 +261,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
    */
   @OpenNewProjectOption
   @OptionTag("confirmOpenNewProject2")
+  @ReportValue
   public int getConfirmOpenNewProject() {
     return myConfirmOpenNewProject;
   }

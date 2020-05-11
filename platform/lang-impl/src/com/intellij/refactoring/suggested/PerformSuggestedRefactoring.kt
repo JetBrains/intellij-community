@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -29,8 +30,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
+import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
 import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.ui.awt.RelativePoint
+import org.jetbrains.annotations.TestOnly
 import java.awt.Font
 import java.awt.Insets
 import java.awt.Point
@@ -48,11 +51,12 @@ internal fun performSuggestedRefactoring(
 ) {
   PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-  val state = (SuggestedRefactoringProviderImpl.getInstance(project).state ?: return)
-    .let {
+  val state = SuggestedRefactoringProviderImpl.getInstance(project).state
+    ?.takeIf { it.errorLevel == ErrorLevel.NO_ERRORS }
+    ?.let {
       it.refactoringSupport.availability.refineSignaturesWithResolve(it)
-    }
-  if (state.syntaxError || state.oldSignature == state.newSignature) return
+    } ?: return
+  if (state.errorLevel != ErrorLevel.NO_ERRORS || state.oldSignature == state.newSignature) return
   val refactoringSupport = state.refactoringSupport
 
   when (val refactoringData = refactoringSupport.availability.detectAvailableRefactoring(state)) {
@@ -60,14 +64,9 @@ internal fun performSuggestedRefactoring(
       val popup = RenamePopup(refactoringData.oldName, refactoringData.declaration.name!!)
 
       fun doRefactor() {
-        SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.REFACTORING_PERFORMED, refactoringData, state, actionPlace)
-
-        performWithDumbEditor(editor) {
+        doRefactor(refactoringData, state, editor, actionPlace) {
           performRename(refactoringSupport, refactoringData, project, editor)
         }
-
-        // no refactoring availability anymore even if no usages updated
-        SuggestedRefactoringProvider.getInstance(project).reset()
       }
 
       if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -97,14 +96,9 @@ internal fun performSuggestedRefactoring(
 
     is SuggestedChangeSignatureData -> {
       fun doRefactor(newParameterValues: List<NewParameterValue>) {
-        SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.REFACTORING_PERFORMED, refactoringData, state, actionPlace)
-
-        performWithDumbEditor(editor) {
+        doRefactor(refactoringData, state, editor, actionPlace) {
           performChangeSignature(refactoringSupport, refactoringData, newParameterValues, project, editor)
         }
-
-        // no refactoring availability anymore even if no usages updated
-        SuggestedRefactoringProvider.getInstance(project).reset()
       }
 
       val newParameterData = refactoringSupport.ui.extractNewParameterData(refactoringData)
@@ -162,6 +156,24 @@ internal fun performSuggestedRefactoring(
       SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.POPUP_SHOWN, refactoringData, state, actionPlace)
     }
   }
+}
+
+private fun doRefactor(
+  refactoringData: SuggestedRefactoringData,
+  state: SuggestedRefactoringState,
+  editor: Editor,
+  actionPlace: String,
+  doRefactor: () -> Unit
+) {
+  SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.REFACTORING_PERFORMED, refactoringData, state, actionPlace)
+
+  val project = state.declaration.project
+  UndoManager.getInstance(project).undoableActionPerformed(SuggestedRefactoringUndoableAction.create(editor.document, state))
+
+  performWithDumbEditor(editor, doRefactor)
+
+  // no refactoring availability anymore even if no usages updated
+  SuggestedRefactoringProvider.getInstance(project).reset()
 }
 
 private data class BalloonCallbacks<TData>(val onOk: (TData) -> Unit, val onNext: () -> Unit)
@@ -365,5 +377,5 @@ private fun SuggestedRefactoringSupport.anchorOffset(declaration: PsiElement): I
   return nameRange(declaration)?.startOffset ?: declaration.startOffset
 }
 
-// for testing
+@set:TestOnly
 var _suggestedChangeSignatureNewParameterValuesForTests: ((index: Int) -> NewParameterValue)? = null

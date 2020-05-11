@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerTestUtil;
+import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
@@ -475,12 +476,20 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         eval("exponent").hasValue("5");
         resume();
+        if (TestEnv.LINUX.isThisOs()) {
+          waitForPause();
+          resume();
+        }
         waitForTerminate();
       }
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("python3");
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+        builder.addAll(super.getTags());
+        builder.add("-python2");
+        builder.add("-django");
+        return builder.build();
       }
     });
   }
@@ -849,12 +858,23 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         eval("x").hasValue("100");
         resume();
+        if (TestEnv.LINUX.isThisOs()) {
+          // Python interpreter acts a but different on Linux.
+          waitForPause();
+          resume();
+          waitForPause();
+          resume();
+        }
         waitForTerminate();
       }
 
       @Override
       public @NotNull Set<String> getTags() {
-        return ImmutableSet.of("-python2.7");
+        ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+        builder.addAll(super.getTags());
+        builder.add("-python2.7");
+        builder.add("-django");
+        return builder.build();
       }
     });
   }

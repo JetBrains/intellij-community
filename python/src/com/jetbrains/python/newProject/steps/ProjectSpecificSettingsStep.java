@@ -71,7 +71,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
     if (advancedSettings != null) {
       final JPanel jPanel = new JPanel(new VerticalFlowLayout());
-      final HideableDecorator deco = new HideableDecorator(jPanel, "Mor&e Settings", false);
+      final HideableDecorator deco = new HideableDecorator(jPanel, PyBundle.message("python.new.project.more.settings"), false);
       if (myProjectGenerator instanceof PythonProjectGenerator) {
         final ValidationResult result = ((PythonProjectGenerator)myProjectGenerator).warningValidation(getInterpreterPanelSdk());
         deco.setOn(!result.isOk());
@@ -329,13 +329,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   private static String getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {
     final String name;
     if (panel instanceof PyAddNewEnvironmentPanel) {
-      name = "New " + ((PyAddNewEnvironmentPanel)panel).getSelectedPanel().getEnvName() + " environment";
+      name = PyBundle.message("python.sdk.new.environment.kind", ((PyAddNewEnvironmentPanel)panel).getSelectedPanel().getEnvName());
     }
     else {
       final Sdk sdk = panel.getSdk();
       name = sdk != null ? sdk.getName() : panel.getPanelName();
     }
-    return "Project Interpreter: " + name;
+    return PyBundle.message("python.sdk.python.interpreter.title.0", name);
   }
 
   @Nullable

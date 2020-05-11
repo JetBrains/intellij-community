@@ -467,7 +467,7 @@ class ModuleRedeclarator(object):
                 return (spec, ret_literal, "restored from __doc__ with multiple overloads")
 
         # find the first thing to look like a definition
-        prefix_re = re.compile("\s*(?:(\w+)[ \\t]+)?" + func_id + "\s*\(") # "foo(..." or "int foo(..."
+        prefix_re = re.compile(r"\s*(?:(\w+)[ \t]+)?" + func_id + r"\s*\(") # "foo(..." or "int foo(..."
         match = prefix_re.search(func_doc) # Note: this and previous line may consume up to 35% of time
         # parse the part that looks right
         if match:

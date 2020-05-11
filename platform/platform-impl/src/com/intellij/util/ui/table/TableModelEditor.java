@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +34,9 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
 
   private final MyListTableModel model;
 
-  public TableModelEditor(ColumnInfo @NotNull [] columns, @NotNull CollectionItemEditor<T> itemEditor, @NotNull String emptyText) {
+  public TableModelEditor(ColumnInfo @NotNull [] columns,
+                          @NotNull CollectionItemEditor<T> itemEditor,
+                          @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String emptyText) {
     this(Collections.emptyList(), columns, itemEditor, emptyText);
   }
 

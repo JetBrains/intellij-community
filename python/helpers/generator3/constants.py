@@ -206,28 +206,28 @@ IS_JAVA = hasattr(os, "java")
 
 BUILTIN_MOD_NAME = the_builtins.__name__
 
-IDENT_PATTERN = "[A-Za-z_][0-9A-Za-z_]*" # re pattern for identifier
-STR_CHAR_PATTERN = "[0-9A-Za-z_.,\+\-&\*% ]"
+IDENT_PATTERN = r"[A-Za-z_][0-9A-Za-z_]*" # re pattern for identifier
+STR_CHAR_PATTERN = r"[0-9A-Za-z_.,\+\-&\*% ]"
 
-DOC_FUNC_RE = re.compile("(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, $2 = arglist
+DOC_FUNC_RE = re.compile(r"(?:.*\.)?(\w+)\(([^\)]*)\).*") # $1 = function name, $2 = arglist
 
-SANE_REPR_RE = re.compile(IDENT_PATTERN + "(?:\(.*\))?") # identifier with possible (...), go catches
+SANE_REPR_RE = re.compile(IDENT_PATTERN + r"(?:\(.*\))?") # identifier with possible (...), go catches
 
 IDENT_RE = re.compile("(" + IDENT_PATTERN + ")") # $1 = identifier
 
-STARS_IDENT_RE = re.compile("(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with a * or **
+STARS_IDENT_RE = re.compile(r"(\*?\*?" + IDENT_PATTERN + ")") # $1 = identifier, maybe with a * or **
 
-IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + "\s*=)") # $1 = identifier with a following '='
+IDENT_EQ_RE = re.compile("(" + IDENT_PATTERN + r"\s*=)") # $1 = identifier with a following '='
 
 SIMPLE_VALUE_RE = re.compile(
-    "(\([+-]?[0-9](?:\s*,\s*[+-]?[0-9])*\))|" + # a numeric tuple, e.g. in pygame
-    "([+-]?[0-9]+\.?[0-9]*(?:[Ee]?[+-]?[0-9]+\.?[0-9]*)?)|" + # number
-    "('" + STR_CHAR_PATTERN + "*')|" + # single-quoted string
-    '("' + STR_CHAR_PATTERN + '*")|' + # double-quoted string
-    "(\[\])|" +
-    "(\{\})|" +
-    "(\(\))|" +
-    "(True|False|None)"
+    r"(\([+-]?[0-9](?:\s*,\s*[+-]?[0-9])*\))|" + # a numeric tuple, e.g. in pygame
+    r"([+-]?[0-9]+\.?[0-9]*(?:[Ee]?[+-]?[0-9]+\.?[0-9]*)?)|" + # number
+    r"('" + STR_CHAR_PATTERN + "*')|" + # single-quoted string
+    r'("' + STR_CHAR_PATTERN + '*")|' + # double-quoted string
+    r"(\[\])|" +
+    r"(\{\})|" +
+    r"(\(\))|" +
+    r"(True|False|None)"
 ) # $? = sane default value
 
 

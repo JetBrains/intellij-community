@@ -67,7 +67,7 @@ private enum class NotificationUniqueType {
  */
 object UpdateChecker {
   private val notificationGroupRef by lazy {
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true)
+    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
   }
 
   @JvmField
@@ -278,7 +278,7 @@ object UpdateChecker {
     val updates = PluginsMetaLoader.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
-      val isOutdated = descriptor == null || PluginDownloader.comparePluginVersions(lastUpdate.version, descriptor.version) > 0
+      val isOutdated = descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(descriptor, lastUpdate.version) > 0
       if (isOutdated) {
         val newDescriptor = try {
           PluginsMetaLoader.loadPluginDescriptor(id.idString, lastUpdate, indicator)
@@ -551,6 +551,7 @@ object UpdateChecker {
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType) {
     val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, null)
+    notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         notification.expire()

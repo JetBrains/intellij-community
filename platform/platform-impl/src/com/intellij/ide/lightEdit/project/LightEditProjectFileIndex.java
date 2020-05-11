@@ -128,7 +128,7 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    return true;
+    return LightEditDirectoryIndex.getFileInfo().isInProject(fileOrDir);
   }
 
   @Override

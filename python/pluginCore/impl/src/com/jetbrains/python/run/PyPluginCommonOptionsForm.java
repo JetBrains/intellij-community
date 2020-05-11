@@ -71,7 +71,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     myModuleComboBox.setSelectedModule(selection);
 
     myInterpreterComboBox.setMinimumAndPreferredWidth(100);
-    myInterpreterComboBox.setRenderer(new PySdkListCellRenderer(null,"<Project Default>"));
+    myInterpreterComboBox
+      .setRenderer(new PySdkListCellRenderer(null, "<" + PyBundle.message("python.sdk.rendering.project.default") + ">"));
     myWorkingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
@@ -89,23 +90,24 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     setAnchor(myEnvsComponent.getLabel());
 
 
-    final HideableDecorator decorator = new HideableDecorator(myHideablePanel, "Environment", false) {
-      @Override
-      protected void on() {
-        super.on();
-        storeState();
-      }
+    final HideableDecorator decorator =
+      new HideableDecorator(myHideablePanel, PyBundle.message("python.sdk.common.options.environment"), false) {
+        @Override
+        protected void on() {
+          super.on();
+          storeState();
+        }
 
-      @Override
-      protected void off() {
-        super.off();
-        storeState();
-      }
+        @Override
+        protected void off() {
+          super.off();
+          storeState();
+        }
 
-      private void storeState() {
-        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
-      }
-    };
+        private void storeState() {
+          PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
+        }
+      };
     decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
     decorator.setContentComponent(myMainPanel);
     myPathMappingsComponent.setAnchor(myEnvsComponent.getLabel());

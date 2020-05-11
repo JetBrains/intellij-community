@@ -27,6 +27,8 @@ import com.intellij.xdebugger.impl.frame.XThreadsFramesView
 import com.intellij.xdebugger.impl.frame.XVariablesView
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl
 import javax.swing.Icon
+import javax.swing.event.AncestorEvent
+import javax.swing.event.AncestorListener
 
 class XDebugSessionTab2(
   session: XDebugSessionImpl,
@@ -93,6 +95,29 @@ class XDebugSessionTab2(
         }
       }
     })
+
+    val ancestorListener = object : AncestorListener {
+      override fun ancestorAdded(event: AncestorEvent?) {
+        if (XDebuggerManager.getInstance(project).currentSession == session) {
+          splitter.restoreProportions()
+        }
+      }
+
+      override fun ancestorRemoved(event: AncestorEvent?) {
+        if (XDebuggerManager.getInstance(project).currentSession == session) {
+          splitter.saveProportions()
+          xThreadsFramesView.saveUiState()
+        }
+      }
+
+      override fun ancestorMoved(event: AncestorEvent?) {
+      }
+    }
+
+    toolWindow?.component?.addAncestorListener(ancestorListener)
+    Disposer.register(lifetime, Disposable {
+      toolWindow?.component?.removeAncestorListener(ancestorListener)
+    })
   }
 
   override fun getWatchesContentId() = debuggerContentId
@@ -129,8 +154,6 @@ class XDebugSessionTab2(
 
     session.rebuildViews()
   }
-
-  override fun initListeners(ui: RunnerLayoutUi?) = Unit
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
     val framesView = xThreadsFramesView

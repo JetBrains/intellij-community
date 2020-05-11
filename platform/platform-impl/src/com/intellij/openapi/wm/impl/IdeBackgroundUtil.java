@@ -103,6 +103,7 @@ public final class IdeBackgroundUtil {
            component instanceof JButton ? "button" :
            component instanceof ActionToolbar ? "toolbar" :
            component instanceof StatusBar ? "statusbar" :
+           component instanceof JMenuBar || component instanceof JMenu? "menubar" :
            component instanceof Stripe ? "stripe" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
@@ -433,10 +434,13 @@ public final class IdeBackgroundUtil {
       Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
       Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(true) :
                          view instanceof JList ? UIUtil.getListSelectionBackground(true) :
-                         view instanceof JTable ? UIUtil.getTableSelectionBackground(true) : null;
+                         view instanceof JTable ? UIUtil.getTableSelectionBackground(true) :
+                         view instanceof JMenuBar || view instanceof JMenu ? UIManager.getColor("Menu.selectionBackground") :
+                         null;
       Color selection2 = view instanceof JTree ? UIUtil.getTreeSelectionBackground(false) :
                          view instanceof JList ? UIUtil.getListSelectionBackground(false) :
-                         view instanceof JTable ? UIUtil.getTableSelectionBackground(false) : null;
+                         view instanceof JTable ? UIUtil.getTableSelectionBackground(false) :
+                         null;
       return color -> color == selection1 || color == selection2;
     }
   }

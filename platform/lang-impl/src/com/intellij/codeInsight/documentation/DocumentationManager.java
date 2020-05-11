@@ -372,6 +372,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
+    if (file != null && !file.isValid()) {
+      file = null; // commit could invalidate the file
+    }
+
     PsiElement list = ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
     PsiElement expressionList = null;
     if (list != null) {
@@ -406,6 +410,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     PsiElement finalElement = element;
+    PsiFile finalFile = file;
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
       public void updatePopup(Object lookupIteObject) {
@@ -419,7 +424,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           return;
         }
 
-        DocumentationProvider documentationProvider = getProviderFromElement(file);
+        DocumentationProvider documentationProvider = getProviderFromElement(finalFile);
 
         PsiElement element = documentationProvider.getDocumentationElementForLookupItem(
           PsiManager.getInstance(myProject),

@@ -393,8 +393,8 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
    * unversioned: do nothing, return false
    * obstructed: do nothing, return false
    * external or wc root: do nothing, return false
-   * missing: do nothing, return false
    * <p/>
+   * missing: schedule for deletion
    * versioned: schedule for deletion, return true
    * added: schedule for deletion (make unversioned), return true
    * copied, but not scheduled: schedule for deletion, return true
@@ -420,8 +420,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     Status status = getFileStatus(ioFile);
 
     if (status == null ||
-        status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_MISSING, StatusType.STATUS_EXTERNAL,
-                  StatusType.STATUS_IGNORED)) {
+        status.is(StatusType.STATUS_UNVERSIONED, StatusType.STATUS_OBSTRUCTED, StatusType.STATUS_EXTERNAL, StatusType.STATUS_IGNORED)) {
       return false;
     }
     else if (status.is(StatusType.STATUS_DELETED)) {

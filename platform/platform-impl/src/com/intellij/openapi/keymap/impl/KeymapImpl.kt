@@ -702,6 +702,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun equals(other: Any?): Boolean {
     if (other !is KeymapImpl) return false
+    if (other === this) return true
     if (name != other.name) return false
     if (canModify != other.canModify) return false
     if (parent != other.parent) return false

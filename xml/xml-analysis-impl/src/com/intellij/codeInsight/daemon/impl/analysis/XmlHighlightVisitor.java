@@ -157,7 +157,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     super.visitXmlProcessingInstruction(processingInstruction);
     PsiElement parent = processingInstruction.getParent();
 
-    if (parent instanceof XmlProlog && processingInstruction.getText().startsWith("<?xml")) {
+    if (parent instanceof XmlProlog && processingInstruction.getText().startsWith("<?xml ")) {
       for(PsiElement e = PsiTreeUtil.prevLeaf(processingInstruction); e != null; e = PsiTreeUtil.prevLeaf(e)) {
         if (e instanceof PsiWhiteSpace && PsiTreeUtil.prevLeaf(e) != null ||
             e instanceof OuterLanguageElement) {

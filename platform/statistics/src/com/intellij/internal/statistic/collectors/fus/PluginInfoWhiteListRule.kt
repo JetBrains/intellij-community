@@ -13,6 +13,6 @@ class PluginInfoWhiteListRule : CustomWhiteListRule() {
   }
 
   companion object {
-    private val acceptedRules = hashSetOf("project_type", "framework", "gutter_icon", "editor_notification_panel_key", "plugin_version")
+    private val acceptedRules = hashSetOf("plugin_info", "project_type", "framework", "gutter_icon", "editor_notification_panel_key", "plugin_version")
   }
 }

@@ -3,10 +3,7 @@ package com.intellij.execution.impl.statistics;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.UnknownConfigurationType;
+import com.intellij.execution.configurations.*;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -16,6 +13,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhite
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.openapi.components.StoredProperty;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -28,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   private static final String ID_FIELD = "id";
@@ -45,7 +40,7 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @NotNull
@@ -73,12 +68,8 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
           final FeatureUsageData data = newFeatureUsageData(configurationType, configurationFactory);
           fillSettings(data, settings, runConfiguration);
           final Template template = new Template("configured.in.project", data);
-          if (templates.containsKey(template)) {
-            templates.increment(template);
-          }
-          else {
-            templates.put(template, 1);
-          }
+          addOrIncrement(templates, template);
+          collectRunConfigurationFeatures(runConfiguration, templates);
         }
         Set<MetricEvent> metrics = new HashSet<>();
         templates.forEachEntry((template, value) -> {
@@ -93,6 +84,55 @@ public class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector 
       }
     });
     return result;
+  }
+
+  private static void addOrIncrement(TObjectIntHashMap<Template> templates, Template template) {
+    if (templates.containsKey(template)) {
+      templates.increment(template);
+    }
+    else {
+      templates.put(template, 1);
+    }
+  }
+
+  private static void collectRunConfigurationFeatures(RunConfiguration runConfiguration, TObjectIntHashMap<Template> templates) {
+    if (runConfiguration instanceof RunConfigurationBase) {
+      PluginInfo info = PluginInfoDetectorKt.getPluginInfo(runConfiguration.getClass());
+      if (!info.isSafeToReport()) return;
+      Object state = ((RunConfigurationBase)runConfiguration).getState();
+      if (state instanceof RunConfigurationOptions) {
+        RunConfigurationOptions runConfigurationOptions = (RunConfigurationOptions)state;
+        List<StoredProperty<Object>> properties = runConfigurationOptions.__getProperties();
+        for (StoredProperty<Object> property : properties) {
+          String name = property.getName();
+          if (name == null || name.equals("isAllowRunningInParallel") || name.equals("isNameGenerated")) continue;
+          Object value = property.getValue(runConfigurationOptions);
+          boolean featureUsed;
+          if (value instanceof Boolean) {
+            featureUsed = (Boolean)value;
+          }
+          else if (value instanceof String) {
+            featureUsed = StringUtil.isNotEmpty((String)value);
+          }
+          else if (value instanceof Collection) {
+            featureUsed = ((Collection)value).size() > 0;
+          }
+          else if (value instanceof Map) {
+            featureUsed = ((Map)value).size() > 0;
+          }
+          else {
+            continue;
+          }
+          if (featureUsed) {
+            FeatureUsageData data = new FeatureUsageData()
+              .addData(ID_FIELD, runConfiguration.getType().getId())
+              .addPluginInfo(info)
+              .addData("featureName", name);
+            addOrIncrement(templates, new Template("feature.used", data));
+          }
+        }
+      }
+    }
   }
 
   @NotNull

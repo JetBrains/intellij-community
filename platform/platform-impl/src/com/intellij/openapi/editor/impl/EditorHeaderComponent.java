@@ -16,7 +16,7 @@ import java.awt.*;
 public class EditorHeaderComponent extends JPanel implements UISettingsListener {
   public EditorHeaderComponent() {
     super(new BorderLayout(0, 0));
-    uiSettingsChanged(UISettings.getInstance());
+    setBorder(new CustomLineBorder(JBColor.border(), 0, 0, 1, 0));
   }
 
   @Override
@@ -27,8 +27,5 @@ public class EditorHeaderComponent extends JPanel implements UISettingsListener 
 
   @Override
   public void uiSettingsChanged(@NotNull UISettings uiSettings) {
-    boolean topBorderRequired = uiSettings.getShowNavigationBar() || uiSettings.getShowMainToolbar();
-    topBorderRequired = uiSettings.getEditorTabPlacement() == 0 && topBorderRequired;
-    setBorder(new CustomLineBorder(JBColor.border(), topBorderRequired ? 1 : 0, 0, 1, 0));
   }
 }

@@ -56,6 +56,7 @@ public class EditorConfigPreviewFile extends LightVirtualFile implements CodeSty
   }
 
   private void reformat() {
+    if (!myProject.isInitialized()) return;
     CommandProcessor.getInstance().executeCommand(
       myProject,
       () -> ApplicationManager.getApplication().runWriteAction(

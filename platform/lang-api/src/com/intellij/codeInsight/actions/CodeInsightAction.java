@@ -81,6 +81,7 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
     final DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext, project, true);
     if (editor == null) {
+      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
       presentation.setEnabled(false);
       return;
     }

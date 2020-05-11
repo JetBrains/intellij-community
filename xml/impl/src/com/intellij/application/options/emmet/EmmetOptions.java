@@ -17,7 +17,8 @@ import java.util.Set;
 
 @State(
   name = "EmmetOptions",
-  storages = @Storage("emmet.xml")
+  storages = @Storage("emmet.xml"),
+  reportStatistic = true
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions> {
   private boolean myEmmetEnabled = true;

@@ -36,6 +36,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBHtmlEditorKit;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,6 +61,7 @@ class DocRenderer implements EditorCustomElementRenderer {
   private static final int RIGHT_INSET = 12;
   private static final int TOP_BOTTOM_INSETS = 2;
   private static final int LINE_WIDTH = 2;
+  private static final int ARC_RADIUS = 5;
 
   private static StyleSheet ourCachedStyleSheet;
   private static String ourCachedStyleSheetLinkColor = "non-existing";
@@ -107,9 +109,27 @@ class DocRenderer implements EditorCustomElementRenderer {
     if (filledHeight <= 0) return;
     int filledStartY = targetRegion.y + topMargin;
 
-    g.setColor(((EditorEx)inlay.getEditor()).getBackgroundColor());
-    g.fillRect(startX, filledStartY, endX - startX, filledHeight);
-    g.setColor(inlay.getEditor().getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
+    EditorEx editor = (EditorEx)inlay.getEditor();
+    Color defaultBgColor = editor.getBackgroundColor();
+    Color currentBgColor = textAttributes.getBackgroundColor();
+    Color bgColor = currentBgColor == null ? defaultBgColor
+                                           : ColorUtil.mix(defaultBgColor, textAttributes.getBackgroundColor(),
+                                                           Registry.doubleValue("editor.render.doc.comments.bg.transparency"));
+    if (currentBgColor != null) {
+      g.setColor(bgColor);
+      int arcDiameter = ARC_RADIUS * 2;
+      if (endX - startX >= arcDiameter) {
+        g.fillRect(startX, filledStartY, endX - startX - ARC_RADIUS, filledHeight);
+        Object savedHint = ((Graphics2D)g).getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.fillRoundRect(endX - arcDiameter, filledStartY, arcDiameter, filledHeight, arcDiameter, arcDiameter);
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+      }
+      else {
+        g.fillRect(startX, filledStartY, endX - startX, filledHeight);
+      }
+    }
+    g.setColor(editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_GUIDE));
     g.fillRect(startX, filledStartY, scale(LINE_WIDTH), filledHeight);
 
     int topBottomInset = scale(TOP_BOTTOM_INSETS);
@@ -117,6 +137,7 @@ class DocRenderer implements EditorCustomElementRenderer {
     int componentHeight = filledHeight - topBottomInset * 2;
     if (componentWidth > 0 && componentHeight > 0) {
       JComponent component = getRendererComponent(inlay, componentWidth, componentHeight);
+      component.setBackground(bgColor);
       Graphics dg = g.create(startX + scale(LEFT_INSET), filledStartY + topBottomInset, componentWidth, componentHeight);
       GraphicsUtil.setupAntialiasing(dg);
       component.paint(dg);
@@ -188,7 +209,7 @@ class DocRenderer implements EditorCustomElementRenderer {
       fontAttributes.put(TextAttribute.KERNING, 0);
       myPane.setFont(myPane.getFont().deriveFont(fontAttributes));
       myPane.setForeground(getTextColor(editor.getColorsScheme()));
-      myPane.setBackground(editor.getBackgroundColor());
+      UIUtil.enableEagerSoftWrapping(myPane);
       String textToRender = myItem.textToRender;
       if (textToRender == null) {
         textToRender = CodeInsightBundle.message("doc.render.loading.text");
@@ -346,8 +367,10 @@ class DocRenderer implements EditorCustomElementRenderer {
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
       String escapedFontName = StringUtil.escapeQuotes(editorFontName);
       ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
+        "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family:\"" + escapedFontName + "\"}" +
-        "pre {font-family:\"" + escapedFontName + "\"}" +
+        "pre {font-family:\"" + escapedFontName + "\";" +
+             "white-space: pre-wrap}" + // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }" +
         "a { color: #" + linkColorHex + "; text-decoration: none;}" +
         "p { padding: 1px 0 2px 0; }" +

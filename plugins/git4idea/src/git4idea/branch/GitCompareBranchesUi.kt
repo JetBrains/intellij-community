@@ -108,7 +108,7 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
     override fun createBranchComponent(): FilterActionComponent {
       return FilterActionComponent {
         LinkLabel.create(GitBundle.message("git.compare.branches.swap.link")) {
-          setFilter(rangeFilter.asReversed())
+          myBranchFilterModel.setRangeFilter(rangeFilter.asReversed())
         }
       }
     }
@@ -122,20 +122,20 @@ class GitCompareBranchesUi(private val project: Project, private val repositorie
         val (start, end) = rangeFilter.getRange()
         text.text = GitBundle.message("git.compare.branches.empty.status", start, end)
         text.appendSecondaryText(GitBundle.message("git.compare.branches.swap.link"), getLinkAttributes()) {
-          setFilter(rangeFilter.asReversed())
+          myBranchFilterModel.setRangeFilter(rangeFilter.asReversed())
         }
       }
     }
 
-    override fun setFilter(filter: VcsLogFilter?) {
-      when (filter) {
-        null -> {
-          if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
-          myDateFilterModel.setFilter(null)
-          myTextFilterModel.setFilter(null)
-          myUserFilterModel.setFilter(null)
-        }
-        is VcsLogRangeFilter -> myBranchFilterModel.setRangeFilter(filter)
+    override fun setFilters(collection: VcsLogFilterCollection) {
+      if (collection.isEmpty) {
+        if (myStructureFilterModel.structureFilter != null) myStructureFilterModel.setFilter(null)
+        myDateFilterModel.setFilter(null)
+        myTextFilterModel.setFilter(null)
+        myUserFilterModel.setFilter(null)
+      }
+      else {
+        collection.get(VcsLogFilterCollection.RANGE_FILTER)?.let(myBranchFilterModel::setRangeFilter)
       }
     }
   }

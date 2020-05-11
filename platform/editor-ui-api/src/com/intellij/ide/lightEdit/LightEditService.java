@@ -36,6 +36,7 @@ public interface LightEditService {
 
   boolean closeEditorWindow();
 
+  @NotNull
   LightEditorManager getEditorManager();
 
   @Nullable

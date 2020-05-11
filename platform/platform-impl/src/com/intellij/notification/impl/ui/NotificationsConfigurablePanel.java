@@ -3,6 +3,7 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.impl.NotificationParentGroup;
 import com.intellij.notification.impl.NotificationParentGroupBean;
 import com.intellij.notification.impl.NotificationSettings;
@@ -174,7 +175,12 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
     @Override
     public String toString() {
-      return myTitle == null ? getGroupId() : myTitle;
+      if (myTitle == null) {
+        String groupId = getGroupId();
+        String title = NotificationGroup.findLocalizedGroupTitle(groupId);
+        return title == null ? groupId : title;
+      }
+      return myTitle;
     }
   }
 

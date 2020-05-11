@@ -101,6 +101,7 @@ Includes the following features:</p>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <category>Markdown</category>
     </intentionAction>
+    <notificationWhitelist groupIds="Markdown headers group;Markdown"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.markdown">

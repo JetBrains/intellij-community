@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,6 +17,14 @@ public class DelegateKeyStore extends KeyStoreSpi {
   }};
 
   protected final KeyStore delegate;
+
+
+  @SuppressWarnings("SpellCheckingInspection")
+  static String getDefaultKeyStorePath() {
+    File base = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "security");
+    File jssecacerts = new File(base, "jssecacerts");
+    return jssecacerts.exists() ? jssecacerts.getPath() : new File(base, "cacerts").getPath();
+  }
 
   public DelegateKeyStore(String type) {
     try {

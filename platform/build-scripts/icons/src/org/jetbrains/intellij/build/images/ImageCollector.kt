@@ -291,7 +291,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
               val replacement = replacementString?.substringAfter('@')?.trim()
               val replacementContextClass = StringUtil.nullize(replacementString?.substringBefore('@', "")?.trim())
 
-              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass, replacementReference = null)
+              val deprecatedData = DeprecationData(comment, replacement, replacementContextClass,
+                                                   replacementReference = computeReplacementReference(comment))
               answer.deprecated.add(DeprecatedEntry(compilePattern(dir, root, pattern), deprecatedData))
 
               if (!pattern.contains('*') && !pattern.startsWith('/')) {
@@ -307,12 +308,8 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
 
     private fun computeReplacementReference(comment: String?): String? {
-      if (className == null) {
-        return null
-      }
-
-      val result = StringUtil.nullize(comment?.substringAfter(" - use $className.", "")?.substringBefore(' ')?.trim()) ?: return null
-      return "$className.$result"
+      // allow only same class fields (IDEA-218345)
+      return StringUtil.nullize(comment?.substringAfter("use {@link #", "")?.substringBefore('}')?.trim())
     }
 
     private fun parse(robots: Path, vararg handlers: RobotFileHandler) {

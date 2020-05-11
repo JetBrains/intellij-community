@@ -115,23 +115,24 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
     updateRemoteInterpreterMode();
 
-    final HideableDecorator decorator = new HideableDecorator(myHideablePanel, "Environment", false) {
-      @Override
-      protected void on() {
-        super.on();
-        storeState();
-      }
+    final HideableDecorator decorator =
+      new HideableDecorator(myHideablePanel, PyBundle.message("python.sdk.common.options.environment"), false) {
+        @Override
+        protected void on() {
+          super.on();
+          storeState();
+        }
 
-      @Override
-      protected void off() {
-        super.off();
-        storeState();
-      }
+        @Override
+        protected void off() {
+          super.off();
+          storeState();
+        }
 
-      private void storeState() {
-        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
-      }
-    };
+        private void storeState() {
+          PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()), "true");
+        }
+      };
     decorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
     decorator.setContentComponent(myMainPanel);
 
@@ -220,7 +221,9 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private void updateDefaultInterpreter(Module module) {
     final Sdk sdk = module == null ? null : ModuleRootManager.getInstance(module).getSdk();
     myInterpreterComboBox.setRenderer(
-      sdk == null ? new PySdkListCellRenderer(null) : new PySdkListCellRenderer(null, "Project Default (" + sdk.getName() + ")", sdk)
+      sdk == null
+      ? new PySdkListCellRenderer(null)
+      : new PySdkListCellRenderer(null, PyBundle.message("python.sdk.rendering.project.default.0", sdk.getName()), sdk)
     );
   }
 

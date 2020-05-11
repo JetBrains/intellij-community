@@ -159,4 +159,10 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("A")).findAll());
   }
 
+  public void testQueryingNonAnonymousInheritors() {
+    PsiClass foo = myFixture.addClass("class Foo { { new Foo(){}; }; class Bar extends Foo {} }");
+    GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    assertSize(1, ClassInheritorsSearch.search(foo, scope, true, true, false).findAll());
+    assertSize(2, ClassInheritorsSearch.search(foo, scope, true, true, true).findAll());
+  }
 }

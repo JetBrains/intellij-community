@@ -29,8 +29,8 @@ public class GradientViewport extends JBViewport {
   }
 
   @Override
-  public void paint(Graphics g) {
-    super.paint(g);
+  protected void paintChildren(Graphics g) {
+    super.paintChildren(g);
     paintGradient(g);
   }
 

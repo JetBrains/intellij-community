@@ -2,7 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -13,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("ComponentNotRegistered")
-public class ToolWindowViewModeAction extends DumbAwareToggleAction {
+public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction {
   public enum ViewMode {
     DockPinned("DockPinnedMode"),
     DockUnpinned("DockUnpinnedMode"),
@@ -147,6 +149,14 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(getToolWindow(e) != null);
+  }
+
+  @Override
+  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull FeatureUsageData data) {
+    ToolWindow toolWindow = getToolWindow(event);
+    if (toolWindow != null) {
+      data.addData("toolwindow", toolWindow.getId());
+    }
   }
 
   public static class Group extends DefaultActionGroup {

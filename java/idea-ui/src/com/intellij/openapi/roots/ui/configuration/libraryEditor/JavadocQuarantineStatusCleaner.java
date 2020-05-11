@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -86,7 +87,8 @@ public class JavadocQuarantineStatusCleaner {
         LOG.warn(error);
         String title = JavaUiBundle.message("quarantine.cleaner");
         String message = JavaUiBundle.message("quarantine.error.message", error.getMessage());
-        new Notification(title, title, message, NotificationType.WARNING).notify(null);
+        new Notification(NotificationGroup.createIdWithTitle("Quarantine Cleaner", title), title, message, NotificationType.WARNING)
+          .notify(null);
       }
     }.queue();
   }

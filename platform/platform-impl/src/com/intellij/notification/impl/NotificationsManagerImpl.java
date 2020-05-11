@@ -143,6 +143,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       return;
     }
 
+
+
     String groupId = notification.getGroupId();
     final NotificationSettings settings = NotificationsConfigurationImpl.getSettings(groupId);
 
@@ -217,6 +219,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
         //noinspection SSBasedInspection
         ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
+        NotificationCollector.getInstance().logToolWindowNotificationShown(project, notification);
     }
   }
 
@@ -261,13 +264,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       return null;
     }
 
-    layout.add(balloon, layoutDataRef.get());
+    BalloonLayoutData layoutData = layoutDataRef.get();
+    layout.add(balloon, layoutData);
     if (balloon.isDisposed()) {
       return null;
     }
 
-    if (layoutDataRef.get() != null) {
-      layoutDataRef.get().project = project;
+    if (layoutData != null) {
+      layoutData.project = project;
     }
     ((BalloonImpl)balloon).startFadeoutTimer(0);
     if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0) {
@@ -277,6 +281,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       });
     }
+    NotificationCollector.getInstance().logBalloonShown(project, displayType, notification, layoutData != null && layoutData.isExpandable);
     return balloon;
   }
 
@@ -337,12 +342,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : layoutDataRef.get();
     if (layoutData.groupId == null) {
       layoutData.groupId = notification.getGroupId();
-      layoutData.id = notification.id;
     }
     else {
       layoutData.groupId = null;
       layoutData.mergeData = null;
     }
+    layoutData.id = notification.id;
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -491,6 +496,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
             link.setIcon(AllIcons.Ide.Notification.Expand);
             link.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
+            NotificationCollector.getInstance().logNotificationBalloonCollapsed(notification);
           }
           else {
             text.select(0, 0);
@@ -498,6 +504,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
             pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
             link.setIcon(AllIcons.Ide.Notification.Collapse);
             link.setHoveringIcon(AllIcons.Ide.Notification.CollapseHover);
+            NotificationCollector.getInstance().logNotificationBalloonExpanded(notification);
           }
 
           text.setPreferredSize(size);
@@ -513,6 +520,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       });
       expandAction.setHoveringIcon(AllIcons.Ide.Notification.ExpandHover);
+      layoutData.isExpandable = true;
     }
 
     NotificationCenterPanel centerPanel = new NotificationCenterPanel(text, layoutData);
@@ -628,7 +636,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
     if (!layoutData.welcomeScreen && buttons == null) {
       balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId()));
+        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id));
     }
 
     Disposer.register(parentDisposable, balloon);
@@ -741,6 +749,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
+            NotificationCollector.getInstance()
+              .logNotificationActionInvoked(notification, action, NotificationCollector.NotificationPlace.BALLOON);
             Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 @State(name = "XmlFoldingSettings", storages = {
   @Storage("editor.xml"),
   @Storage(value = "editor.codeinsight.xml", deprecated = true),
-})
+}, reportStatistic = true)
 public class XmlFoldingSettings implements XmlCodeFoldingSettings, PersistentStateComponent<XmlFoldingSettings.State> {
   private final XmlFoldingSettings.State myState = new State();
 

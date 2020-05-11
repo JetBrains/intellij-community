@@ -130,25 +130,17 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
                                          myDateFilterModel.getFilter(), myUserFilterModel.getFilter());
   }
 
-  /**
-   * Only VcsLogBranchFilter, VcsLogStructureFilter and null (which means resetting all filters) are currently supported.
-   */
   @Override
-  public void setFilter(@Nullable VcsLogFilter filter) {
+  public void setFilters(@NotNull VcsLogFilterCollection collection) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (filter == null) {
-      myBranchFilterModel.setFilter(null);
-      myStructureFilterModel.setFilter(null);
-      myDateFilterModel.setFilter(null);
-      myTextFilterModel.setFilter(null);
-      myUserFilterModel.setFilter(null);
-    }
-    else if (filter instanceof VcsLogBranchFilter) {
-      myBranchFilterModel.setBranchFilter((VcsLogBranchFilter)filter);
-    }
-    else if (filter instanceof VcsLogStructureFilter) {
-      myStructureFilterModel.setStructureFilter((VcsLogStructureFilter)filter);
-    }
+    myBranchFilterModel.setFilter(new BranchFilters(collection.get(BRANCH_FILTER),
+                                                    collection.get(REVISION_FILTER),
+                                                    collection.get(RANGE_FILTER)));
+    myStructureFilterModel.setFilter(new FilterPair<>(collection.get(STRUCTURE_FILTER), collection.get(ROOT_FILTER)));
+    myDateFilterModel.setFilter(collection.get(DATE_FILTER));
+    myTextFilterModel.setFilter(new FilterPair<>(collection.get(TEXT_FILTER),
+                                                 collection.get(HASH_FILTER)));
+    myUserFilterModel.setFilter(collection.get(USER_FILTER));
   }
 
   @NotNull
@@ -214,6 +206,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void setFilter(@Nullable BranchFilters filters) {
+      if (filters != null && filters.isEmpty()) filters = null;
+
       boolean anyFilterDiffers = false;
 
       if (filterDiffers(filters, BranchFilters::getBranchFilter, myFilter)) {
@@ -531,8 +525,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     public void setFilter(@Nullable FilterPair<VcsLogTextFilter, VcsLogHashFilter> filter) {
-      if (ObjectUtils.equals(myFilter, filter)) return;
-
       super.setFilter(filter);
       myText = null;
     }

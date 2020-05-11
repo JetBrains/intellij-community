@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class DropDownLink<T> extends LinkLabel<Object> {
+  private final PopupState myPopupState = new PopupState();
   private T chosenItem;
 
   public DropDownLink(@NotNull T value, @NotNull Runnable clickAction) {
@@ -32,8 +34,10 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     chosenItem = value;
 
     setListener((linkLabel, d) -> {
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       JBPopup popup = popupBuilder.apply((DropDownLink)linkLabel);
       Point showPoint = new Point(0, getHeight() + JBUIScale.scale(4));
+      popup.addListener(myPopupState);
       popup.show(new RelativePoint(this, showPoint));
     }, null);
 

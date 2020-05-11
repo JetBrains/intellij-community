@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,11 +54,11 @@ public abstract class PyRootTypeProvider {
 
   public abstract Icon getIcon();
 
+  @Nls
   public abstract String getName();
 
-  public String getNamePlural() {
-    return getName() + "s";
-  }
+  @Nls
+  public abstract String getDescription();
 
   public abstract Color getColor();
 
@@ -79,8 +79,8 @@ public abstract class PyRootTypeProvider {
     public RootEntryEditingAction(JTree tree, Disposable disposable, PyContentEntriesEditor editor, ModifiableRootModel model) {
       super(tree);
       final Presentation templatePresentation = getTemplatePresentation();
-      templatePresentation.setText(getNamePlural());
-      templatePresentation.setDescription(PyBundle.message("python.module.template.folders", getName()));
+      templatePresentation.setText(getName());
+      templatePresentation.setDescription(getDescription());
       templatePresentation.setIcon(getIcon());
       myDisposable = disposable;
       myEditor = editor;

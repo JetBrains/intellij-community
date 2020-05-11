@@ -6,6 +6,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.refactoring.suggested.SuggestedRefactoringState.ErrorLevel
+import com.intellij.refactoring.suggested.SuggestedRefactoringState.ParameterMarker
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
 
 /**
@@ -49,20 +51,20 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
     return SuggestedRefactoringState(
       declaration,
       refactoringSupport,
-      syntaxError = false,
+      errorLevel = ErrorLevel.NO_ERRORS,
       oldDeclarationText = document.getText(signatureRange),
       oldImportsText = refactoringSupport.importsRange(file)
         ?.extendWithWhitespace(document.charsSequence)
         ?.let { document.getText(it) },
       oldSignature = signature,
       newSignature = signature,
-      parameterMarkers = parameterMarkers(declaration)
+      parameterMarkers = parameterMarkers(declaration, signature)
     )
   }
 
   open fun updateState(state: SuggestedRefactoringState, declaration: PsiElement): SuggestedRefactoringState {
     val newSignature = signature(declaration, state)
-                       ?: return state.withDeclaration(declaration).withSyntaxError(true)
+                       ?: return state.withDeclaration(declaration).withErrorLevel(ErrorLevel.SYNTAX_ERROR)
 
     val idsPresent = newSignature.parameters.map { it.id }.toSet()
     val disappearedParameters = state.disappearedParameters.entries
@@ -75,17 +77,31 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
       }
     }
 
+    val parameterMarkers = parameterMarkers(declaration, newSignature).toMutableList()
+    val syntaxError = refactoringSupport.hasSyntaxError(declaration)
+    if (syntaxError) {
+      // when there is a syntax error inside the signature, there can be parameters which are temporarily not parsed as parameters
+      // we must keep their markers in order to match them later
+      for (marker in state.parameterMarkers) {
+        if (marker.rangeMarker.isValid && newSignature.parameterById(marker.parameterId) == null) {
+          parameterMarkers += marker
+        }
+      }
+    }
+
     return state
       .withDeclaration(declaration)
       .withNewSignature(newSignature)
-      .withSyntaxError(refactoringSupport.hasSyntaxError(declaration))
-      .withParameterMarkers(parameterMarkers(declaration))
+      .withErrorLevel(if (syntaxError) ErrorLevel.SYNTAX_ERROR else ErrorLevel.NO_ERRORS)
+      .withParameterMarkers(parameterMarkers)
       .withDisappearedParameters(disappearedParameters)
   }
 
-  protected fun matchParametersWithPrevState(signature: Signature,
-                                             newDeclaration: PsiElement,
-                                             prevState: SuggestedRefactoringState): Signature {
+  protected fun matchParametersWithPrevState(
+    signature: Signature,
+    newDeclaration: PsiElement,
+    prevState: SuggestedRefactoringState
+  ): Signature {
     // first match all parameters by names (in prevState or in the history of changes)
     val ids = signature.parameters.map { guessParameterIdByName(it, prevState) }.toMutableList()
 
@@ -118,18 +134,7 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
   }
 
   protected fun guessParameterIdByMarkers(markerRange: TextRange, prevState: SuggestedRefactoringState): Any? {
-    val oldParamIndex = prevState.parameterMarkers.indexOfFirst { it?.range == markerRange }
-    return if (oldParamIndex >= 0)
-      prevState.newSignature.parameters[oldParamIndex].id
-    else
-      null
-  }
-
-  private fun parameterMarkers(declaration: PsiElement): List<RangeMarker?> {
-    val document = PsiDocumentManager.getInstance(declaration.project).getDocument(declaration.containingFile)!!
-    return parameterMarkerRanges(declaration).map { range ->
-      range?.let { document.createRangeMarker(it) }
-    }
+    return prevState.parameterMarkers.firstOrNull { it.rangeMarker.range == markerRange }?.parameterId
   }
 
   /**
@@ -145,4 +150,14 @@ abstract class SuggestedRefactoringStateChanges(protected val refactoringSupport
       return emptyList()
     }
   }
+}
+
+fun SuggestedRefactoringStateChanges.parameterMarkers(declaration: PsiElement, signature: Signature): List<ParameterMarker> {
+  val document = PsiDocumentManager.getInstance(declaration.project).getDocument(declaration.containingFile)!!
+  val markerRanges = parameterMarkerRanges(declaration)
+  require(markerRanges.size == signature.parameters.size)
+  return markerRanges.zip(signature.parameters)
+    .mapNotNull { (range, parameter) ->
+      range?.let { ParameterMarker(document.createRangeMarker(it), parameter.id) }
+    }
 }

@@ -48,6 +48,17 @@ function override_jb_variables
         end
       end
     end
+
+    if string match -q -- "_INTELLIJ_FORCE_PREPEND_*" $name
+      set new_name (string sub -s 25 -- $name)
+      if [ $new_name ]
+        if [ $new_name = "PATH" ]; or [ $new_name = "CDPATH" ]; or [ $new_name = "MANPATH" ]
+            set -x $new_name (string split ":" -- "$value$$new_name")
+        else
+            set -x $new_name "$value$$new_name"
+        end
+      end
+    end
   end
 end
 

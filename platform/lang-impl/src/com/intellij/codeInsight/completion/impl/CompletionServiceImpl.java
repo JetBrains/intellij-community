@@ -44,7 +44,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     });
   }
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl)CompletionService.getCompletionService();
   }
@@ -63,7 +63,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
                                                 @NotNull Consumer<? super CompletionResult> consumer,
                                                 @NotNull CompletionContributor contributor,
                                                 @NotNull PrefixMatcher matcher) {
-    return new CompletionResultSetImpl(consumer, matcher, contributor, parameters, defaultSorter(parameters, matcher), null);
+    return new CompletionResultSetImpl(consumer, matcher, contributor, parameters, null, null);
   }
 
   @Override
@@ -83,7 +83,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private static class CompletionResultSetImpl extends BaseCompletionResultSet {
     CompletionResultSetImpl(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
                             CompletionContributor contributor, CompletionParameters parameters,
-                            @NotNull CompletionSorterImpl sorter, @Nullable CompletionResultSetImpl original) {
+                            @Nullable CompletionSorter sorter, @Nullable CompletionResultSetImpl original) {
       super(consumer, prefixMatcher, contributor, parameters, sorter, original);
     }
 
@@ -105,8 +105,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     @NotNull
     @Override
     public CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter) {
-      return new CompletionResultSetImpl(getConsumer(), getPrefixMatcher(), myContributor, myParameters, (CompletionSorterImpl)sorter,
-                                         this);
+      return new CompletionResultSetImpl(getConsumer(), getPrefixMatcher(), myContributor, myParameters, sorter, this);
     }
 
     @Override
@@ -141,6 +140,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   private static void reportPhase() {
     LOG.error(ourPhase + (ourPhaseTrace != null ? "; set at " + ExceptionUtil.getThrowableText(ourPhaseTrace) : ""));
+    ourTracePhases = true; // let's have more diagnostics in case the exception happens again in this session
   }
 
   @SafeVarargs

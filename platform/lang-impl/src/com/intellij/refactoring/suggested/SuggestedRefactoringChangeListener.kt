@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.RangeMarker
@@ -50,7 +51,7 @@ class SuggestedRefactoringChangeListener(
   override fun dispose() {
   }
 
-  fun reset() {
+  fun reset(withNewIdentifiers: Boolean = false) {
     if (editingState != null) {
       editingState!!.signatureRangeMarker.dispose()
       editingState!!.importRangeMarker?.dispose()
@@ -59,6 +60,15 @@ class SuggestedRefactoringChangeListener(
       }
       editingState = null
     }
+    if (withNewIdentifiers) {
+      newIdentifierWatcher.reset()
+    }
+  }
+
+  fun undoToState(state: SuggestedRefactoringState, signatureRange: TextRange) {
+    val psiFile = state.declaration.containingFile
+    val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile)!!
+    editingState = createEditingState(document, state.declaration, signatureRange, state.refactoringSupport)
   }
 
   fun suppressForCurrentDeclaration() {
@@ -82,6 +92,9 @@ class SuggestedRefactoringChangeListener(
 
     // suppress if live template is active - otherwise refactoring appears for create from usage and other features
     if (editors.any { TemplateManager.getInstance(project).getActiveTemplate(it) != null }) return
+
+    // undo of some action can't be a start of signature editing
+    if (UndoManager.getInstance(project).isUndoInProgress) return
 
     fun declarationByOffsetInSignature(offset: Int): PsiElement? {
       val declaration = refactoringSupport.declarationByOffset(psiFile, offset) ?: return null
@@ -112,11 +125,23 @@ class SuggestedRefactoringChangeListener(
     val signatureRange = refactoringSupport.signatureRange(declaration) ?: return
     val extendedSignatureRange = signatureRange.union(truncatedChangeRange)
 
-    val signatureRangeMarker = document.createRangeMarker(extendedSignatureRange).apply {
+    editingState = createEditingState(document, declaration, extendedSignatureRange, refactoringSupport)
+    if (!editingState!!.isRefactoringSuppressed) {
+      watcher.editingStarted(declaration, refactoringSupport)
+    }
+  }
+
+  private fun createEditingState(
+    document: Document,
+    declaration: PsiElement,
+    signatureRange: TextRange,
+    refactoringSupport: SuggestedRefactoringSupport
+  ): SignatureEditingState? {
+    val signatureRangeMarker = document.createRangeMarker(signatureRange).apply {
       isGreedyToLeft = true
       isGreedyToRight = true
     }
-    val importRangeMarker = refactoringSupport.importsRange(psiFile)
+    val importRangeMarker = refactoringSupport.importsRange(declaration.containingFile)
       ?.let { document.createRangeMarker(it) }
       ?.apply {
         isGreedyToLeft = true
@@ -124,11 +149,7 @@ class SuggestedRefactoringChangeListener(
       }
 
     val refactoringSuppressed = shouldSuppressRefactoring(declaration, document, refactoringSupport)
-
-    editingState = SignatureEditingState(signatureRangeMarker, importRangeMarker, refactoringSuppressed)
-    if (!refactoringSuppressed) {
-      watcher.editingStarted(declaration, refactoringSupport)
-    }
+    return SignatureEditingState(signatureRangeMarker, importRangeMarker, refactoringSuppressed)
   }
 
   private fun shouldSuppressRefactoring(
@@ -236,7 +257,8 @@ class SuggestedRefactoringChangeListener(
       val signatureRange = declaration?.let { refactoringSupport.signatureRange(it) }
 
       if (declaration == null || signatureRange == null || strippedWatchedRange != signatureRange.stripWhitespace(chars)) {
-        val range = signatureRange?.union(watchedRange) ?: watchedRange
+        val watchedRangeExtended = watchedRange.extendWithWhitespace(document.charsSequence)
+        val range = signatureRange?.union(watchedRangeExtended) ?: watchedRangeExtended
         if (psiFile.hasErrorElementInRange(range)) {
           if (!editingState.isRefactoringSuppressed) {
             watcher.inconsistentState()

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.collectors.fus.actions.persistence;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.internal.statistic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -10,21 +11,22 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.ListPopup;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class IntentionsCollector {
-
-  public void record(@NotNull IntentionAction action, @NotNull Language language) {
-    record(null, action, language);
+  public static void record(@NotNull Project project, @NotNull IntentionAction action, @NotNull Language language) {
+    recordIntentionEvent(project, action, language, "called");
   }
 
-  public void record(@Nullable Project project, @NotNull IntentionAction action, @NotNull Language language) {
+  protected static void recordIntentionEvent(@NotNull Project project, @NotNull IntentionAction action, @NotNull Language language, @NonNls String eventId) {
     final Class<?> clazz = getOriginalHandlerClass(action);
     final PluginInfo info = PluginInfoDetectorKt.getPluginInfo(clazz);
 
@@ -32,7 +34,7 @@ public class IntentionsCollector {
       addData("id", clazz.getName()).
       addPluginInfo(info).
       addLanguage(language);
-    FUCounterUsageLogger.getInstance().logEvent(project, "intentions", "called", data);
+    FUCounterUsageLogger.getInstance().logEvent(project, "intentions", eventId, data);
   }
 
   @NotNull
@@ -53,8 +55,13 @@ public class IntentionsCollector {
     return handler.getClass();
   }
 
-  public static IntentionsCollector getInstance() {
-    return ServiceManager.getService(IntentionsCollector.class);
+  public static void reportShownIntentions(@NotNull Project project,
+                                           ListPopup popup,
+                                           @NotNull Language language) {
+    @SuppressWarnings("unchecked") List<IntentionActionWithTextCaching> values = popup.getListStep().getValues();
+    for (IntentionActionWithTextCaching value : values) {
+      recordIntentionEvent(project, value.getAction(), language, "shown");
+    }
   }
 }
 

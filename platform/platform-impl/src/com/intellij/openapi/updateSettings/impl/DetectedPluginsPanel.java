@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
       }
     });
     setCheckboxColumnName("");
-    myDescriptionPanel.setPreferredSize(new Dimension(400, -1));
+    myDescriptionPanel.setPreferredSize(new JBDimension(600, 400));
     myDescriptionPanel.setEditable(false);
     myDescriptionPanel.setEditorKit(UIUtil.getHTMLEditorKit());
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());

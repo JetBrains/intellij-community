@@ -102,9 +102,11 @@ def _is_make_opname(opname):
 Instruction = namedtuple("Instruction", ["opname", "opcode", "arg", "argval", "lineno", "offset"])
 
 if IS_PY3K:
-    _unpack_opargs = dis._unpack_opargs
     long = int
-else:
+
+try:
+    _unpack_opargs = dis._unpack_opargs
+except AttributeError:
     def _unpack_opargs(code):
         n = len(code)
         i = 0

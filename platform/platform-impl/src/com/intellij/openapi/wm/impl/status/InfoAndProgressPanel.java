@@ -218,6 +218,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   void addProgress(@NotNull ProgressIndicatorEx original, @NotNull TaskInfo info) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // openProcessPopup may require dispatch thread
+
     synchronized (myOriginals) {
       final boolean veryFirst = !hasProgressIndicators();
 

@@ -6,6 +6,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightClassReference;
+import com.intellij.psi.impl.light.LightClassTypeReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -167,6 +168,9 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
   public @NotNull ClassResolveResult resolveGenerics() {
     PsiJavaCodeReferenceElement reference = getReference();
     if (!reference.isValid()) {
+      if (reference instanceof LightClassTypeReference) {
+        PsiUtil.ensureValidType(((LightClassTypeReference)reference).getType());
+      }
       throw new PsiInvalidElementAccessException(reference, myReference.toString() + "; augmenters=" + PsiAugmentProvider.EP_NAME.getExtensionList());
     }
     final JavaResolveResult result = reference.advancedResolve(false);

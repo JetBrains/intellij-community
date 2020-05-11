@@ -16,7 +16,7 @@ class One {
 }
 class Two extends One {
   Two() {
-    <warning descr="Call to overridable method 'a()' during object construction">a</warning>();
+    <warning descr="Call to overridable method 'a()' during object construction"><caret>a</warning>();
   }
 }
 class A implements Cloneable {

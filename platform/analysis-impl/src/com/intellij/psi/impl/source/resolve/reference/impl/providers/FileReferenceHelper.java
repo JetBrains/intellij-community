@@ -71,6 +71,11 @@ public abstract class FileReferenceHelper {
   }
 
   @NotNull
+  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile file) {
+    return getRoots(module);
+  }
+
+  @NotNull
   public abstract Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file);
 
   public abstract boolean isMine(final Project project, @NotNull final VirtualFile file);
@@ -90,7 +95,7 @@ public abstract class FileReferenceHelper {
       if (module == null) {
         return emptyList();
       }
-      return ContainerUtil.map(getRoots(module), FileTargetContext::new);
+      return ContainerUtil.map(getRoots(module, file), FileTargetContext::new);
     }
 
     return ContainerUtil.map(getContexts(project, file), FileTargetContext::new);

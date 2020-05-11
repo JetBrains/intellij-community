@@ -238,10 +238,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
   }
 
   public void scrollToSelection() {
-    TreePath selectionPath = myWizardTree.getSelectionPath();
-    if (selectionPath != null) {
-      TreeUtil.scrollToVisible(myWizardTree, selectionPath, false);
-    }
+    myWizardTree.scrollPathToVisible(myWizardTree.getSelectionPath());
   }
 
   private TreePopupStep getTreeStep() {

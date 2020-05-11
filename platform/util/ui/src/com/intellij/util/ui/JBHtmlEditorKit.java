@@ -30,7 +30,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       "small { font-size: small; }" +  // x-small by Swing's default
       "a { text-decoration: none;}" +
       // override too large default margin "ul {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
-      "ul { margin-left-ltr: 10; margin-right-rtl: 10; }" +
+      "ul { margin-left-ltr: 12; margin-right-rtl: 12; }" +
       // override too large default margin "ol {margin-left-ltr: 50; margin-right-rtl: 50}" from javax/swing/text/html/default.css
       // Select ol margin to have the same indentation as "ul li" and "ol li" elements (seems value 22 suites well)
       "ol { margin-left-ltr: 22; margin-right-rtl: 22; }"

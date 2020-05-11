@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -42,6 +43,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
+  private final PopupState myPopupState = new PopupState();
   private final TextPanel.WithIconAndArrows myComponent;
   private final boolean myWriteableFileRequired;
   private boolean actionEnabled;
@@ -167,15 +169,14 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   private void showPopup(@NotNull MouseEvent e) {
-    if (!actionEnabled) {
-      return;
-    }
+    if (!actionEnabled || myPopupState.isRecentlyHidden()) return; // do not show popup
     DataContext dataContext = getContext();
     ListPopup popup = createPopup(dataContext);
 
     if (popup != null) {
       Dimension dimension = popup.getContent().getPreferredSize();
       Point at = new Point(0, -dimension.height);
+      popup.addListener(myPopupState);
       popup.show(new RelativePoint(e.getComponent(), at));
       Disposer.register(this, popup); // destroy popup on unexpected project close
     }

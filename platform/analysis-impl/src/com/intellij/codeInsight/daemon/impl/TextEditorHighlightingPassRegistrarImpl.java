@@ -20,21 +20,24 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlightingPassRegistrarEx implements Disposable {
   public static final ExtensionPointName<TextEditorHighlightingPassFactoryRegistrar> EP_NAME = new ExtensionPointName<>("com.intellij.highlightingPassFactory");
 
   private final TIntObjectHashMap<PassConfig> myRegisteredPassFactories = new TIntObjectHashMap<>();
   private final List<DirtyScopeTrackingHighlightingPassFactory> myDirtyScopeTrackingFactories = new ArrayList<>();
-  private int nextAvailableId = Pass.LAST_PASS + 1;
+  private final AtomicInteger nextAvailableId = new AtomicInteger();
   private boolean checkedForCycles;
   private final Project myProject;
+  private boolean runInspectionsAfterCompletionOfGeneralHighlightPass;
 
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
@@ -59,12 +62,13 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
     }, this);
   }
 
-  void reregisterFactories() {
+  private void reregisterFactories() {
     synchronized (this) {
       checkedForCycles = false;
+      myRegisteredPassFactories.clear();
+      nextAvailableId.set(Pass.LAST_PASS + 1);
+      myDirtyScopeTrackingFactories.clear();
     }
-    myRegisteredPassFactories.clear();
-    myDirtyScopeTrackingFactories.clear();
     for (TextEditorHighlightingPassFactoryRegistrar factoryRegistrar : EP_NAME.getExtensionList()) {
       factoryRegistrar.registerHighlightingPassFactory(this, myProject);
     }
@@ -72,6 +76,17 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
 
   @Override
   public void dispose() {
+  }
+
+  @ApiStatus.Internal
+  void runInspectionsAfterCompletionOfGeneralHighlightPass(boolean flag) {
+    runInspectionsAfterCompletionOfGeneralHighlightPass = flag;
+    reregisterFactories();
+  }
+
+  @ApiStatus.Internal
+  boolean isRunInspectionsAfterCompletionOfGeneralHighlightPass() {
+    return runInspectionsAfterCompletionOfGeneralHighlightPass;
   }
 
   private static class PassConfig {
@@ -98,7 +113,7 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
                                                                                                       : runAfterCompletionOf,
                                      runAfterOfStartingOf == null || runAfterOfStartingOf.length == 0 ? ArrayUtilRt.EMPTY_INT_ARRAY
                                                                                                       : runAfterOfStartingOf);
-    int passId = forcedPassId == -1 ? nextAvailableId++ : forcedPassId;
+    int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
@@ -106,6 +121,11 @@ public class TextEditorHighlightingPassRegistrarImpl extends TextEditorHighlight
       myDirtyScopeTrackingFactories.add((DirtyScopeTrackingHighlightingPassFactory) factory);
     }
     return passId;
+  }
+
+  @NotNull
+  AtomicInteger getNextAvailableId() {
+    return nextAvailableId;
   }
 
   @Override

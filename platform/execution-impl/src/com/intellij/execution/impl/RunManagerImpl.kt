@@ -797,9 +797,21 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   private fun runConfigurationFirstLoaded() {
+    if (project.isDefault) return;
+
     if (selectedConfiguration == null) {
       notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
       selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
+
+      if (selectedConfiguration == null && notYetAppliedInitialSelectedConfigurationId == null) {
+        // This happens when there's exactly one RC in the project and it is stored in .run.xml file. It will be loaded later, and we need to set it as selected.
+        // This may also happen if there are several RCs but all stored in .run.xml files AND workspace.xml file is malformed or deleted or
+        // doesn't contain info about selected RC for any other reason. We'll set any RC as selected in this case.
+        StartupManager.getInstance(project).runAfterOpened {
+          GuiUtils.invokeLaterIfNeeded(Runnable { selectedConfiguration = allSettings.firstOrNull { it.type.isManaged } },
+                                       ModalityState.NON_MODAL, project.disposed)
+        }
+      }
     }
   }
 

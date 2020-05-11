@@ -67,7 +67,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     boolean isValid = strategy.isValid(id, manager, context);
     if (!isValid) {
       File localRepository = MavenProjectsManager.getInstance(context.getProject()).getLocalRepository();
-      VirtualFile file = strategy.getRepositoryFile(id, MavenProjectsManager.getInstance(context.getProject()));
+      VirtualFile file = MavenUtil.getRepositoryFile(context.getProject(), id, "pom", null);
       if (file != null) {
         File artifactFile = new File(file.getPath());
         MavenIndicesManager.getInstance().fixArtifactIndex(artifactFile, localRepository);
@@ -241,26 +241,10 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     private PsiFile resolveInLocalRepository(MavenId id, MavenProjectsManager projectsManager, PsiManager psiManager) {
-      VirtualFile virtualFile = getRepositoryFile(id, projectsManager);
+      VirtualFile virtualFile = MavenUtil.getRepositoryFile(psiManager.getProject(), id, "pom", null);
       if (virtualFile == null) return null;
 
       return psiManager.findFile(virtualFile);
-    }
-
-    @Nullable
-    protected VirtualFile getRepositoryFile(MavenId id, MavenProjectsManager projectsManager) {
-      File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository());
-      return LocalFileSystem.getInstance().findFileByIoFile(file);
-    }
-
-    private File makeLocalRepositoryFile(MavenId id, File localRepository) {
-      String relPath = (StringUtil.notNullize(id.getGroupId(), "null")).replace(".", "/");
-
-      relPath += "/" + id.getArtifactId();
-      relPath += "/" + id.getVersion();
-      relPath += "/" + id.getArtifactId() + "-" + id.getVersion() + ".pom";
-
-      return new File(localRepository, relPath);
     }
   }
 

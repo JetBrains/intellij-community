@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.ImplementationConflictException;
@@ -30,6 +30,10 @@ public final class StartupAbortedException extends RuntimeException {
       return;
     }
 
+    logAndExit(t);
+  }
+
+  public static void logAndExit(@NotNull Throwable t) {
     PluginManagerCore.EssentialPluginMissingException essentialPluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
     if (essentialPluginMissingException != null && essentialPluginMissingException.pluginIds != null) {
       Main.showMessage("Corrupted Installation",
@@ -46,7 +50,8 @@ public final class StartupAbortedException extends RuntimeException {
       try {
         PluginManagerCore.getLogger().error(t);
       }
-      catch (Throwable ignore) { }
+      catch (Throwable ignore) {
+      }
 
       // workaround for SOE on parsing PAC file (JRE-247)
       if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {

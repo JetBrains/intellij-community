@@ -2,20 +2,21 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class SplitEditorToolbar extends JPanel {
+public class SplitEditorToolbar extends EditorHeaderComponent {
 
   private final ActionToolbar myRightToolbar;
 
   public SplitEditorToolbar(@Nullable ActionToolbar leftToolbar, @NotNull ActionToolbar rightToolbar) {
-    super(new GridBagLayout());
+    super();
+    setLayout(new GridBagLayout());
     myRightToolbar = rightToolbar;
 
     if (leftToolbar != null) {
@@ -27,8 +28,6 @@ public class SplitEditorToolbar extends JPanel {
                                             GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
 
     add(myRightToolbar.getComponent());
-
-    setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, UIUtil.CONTRAST_BORDER_COLOR));
 
     if (leftToolbar != null) leftToolbar.updateActionsImmediately();
     rightToolbar.updateActionsImmediately();

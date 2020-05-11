@@ -16,7 +16,6 @@
 package com.jetbrains.python.debugger.settings;
 
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.ui.components.JBCheckBox;
@@ -54,7 +53,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
 
   private void createUIComponents() {
     TableModelEditor.DialogItemEditor<PySteppingFilter> itemEditor = new DialogEditor();
-    myPySteppingFilterEditor = new TableModelEditor<>(COLUMNS, itemEditor, "No script filters configured");
+    myPySteppingFilterEditor = new TableModelEditor<>(COLUMNS, itemEditor, PyBundle.message("debugger.stepping.no.script.filters"));
     mySteppingPanel = new JPanel(new BorderLayout());
     mySteppingPanel.add(myPySteppingFilterEditor.createComponent());
   }
@@ -77,7 +76,7 @@ public class PyDebuggerSteppingConfigurableUi implements ConfigurableUi<PyDebugg
   }
 
   @Override
-  public void apply(@NotNull PyDebuggerSettings settings) throws ConfigurationException {
+  public void apply(@NotNull PyDebuggerSettings settings) {
     settings.setLibrariesFilterEnabled(myLibrariesFilterCheckBox.isSelected());
     settings.setSteppingFiltersEnabled(myStepFilterEnabledCheckBox.isSelected());
     settings.setAlwaysDoSmartStepIntoEnabled(myAlwaysDoSmartStepIntoCheckBox.isSelected());

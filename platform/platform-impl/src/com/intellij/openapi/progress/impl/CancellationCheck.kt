@@ -20,9 +20,9 @@ class CancellationCheck private constructor(val thresholdMs: () -> Long, val che
   internal constructor(thresholdMs: Long): this(thresholdMs = { thresholdMs }, checkEnabled = { true })
 
   private val statusRecord = ThreadLocal.withInitial { CanceledStatusRecord() }
-  private val hook = CoreProgressManager.CheckCanceledHook { indicator ->
+  private val hook = CoreProgressManager.CheckCanceledHook {
     checkCancellationDiff(statusRecord.get())
-    return@CheckCanceledHook indicator != null
+    false
   }
 
   private fun checkCancellationDiff(record: CanceledStatusRecord) {

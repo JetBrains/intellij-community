@@ -2,6 +2,8 @@
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -142,6 +144,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
     setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));
     switchToMode(mode, text);
+    FUCounterUsageLogger.getInstance().logEvent("debugger.evaluate.usage", "dialog.open",
+                                                new FeatureUsageData().addData("mode", mode.name()));
     if (mode == EvaluationMode.EXPRESSION) {
       myInputComponent.getInputEditor().selectAll();
     }
@@ -181,6 +185,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    FUCounterUsageLogger.getInstance().logEvent("debugger.evaluate.usage", "evaluate",
+                                                new FeatureUsageData().addData("mode", myMode.name()));
     evaluate();
   }
 
@@ -356,6 +362,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       EvaluationMode newMode = (myMode == EvaluationMode.EXPRESSION) ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION;
       // remember only on user selection
       XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().setEvaluationDialogMode(newMode);
+      FUCounterUsageLogger.getInstance().logEvent("debugger.evaluate.usage", "mode.switch",
+                                                  new FeatureUsageData().addData("mode", newMode.name()));
       switchToMode(newMode, text);
     }
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -430,4 +431,23 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     assertSame(cause, loggedError.getAndSet(null));
   }
 
+  public void testTryAgainOnServiceNotReadyException() {
+    AtomicInteger count = new AtomicInteger();
+    Callable<String> computation = () -> {
+      if (count.incrementAndGet() < 10) {
+        throw new ServiceNotReadyException();
+      }
+      return "x";
+    };
+
+    CancellablePromise<String> future1 = ReadAction.nonBlocking(computation).submit(AppExecutorUtil.getAppExecutorService());
+    assertEquals("x", PlatformTestUtil.waitForFuture(future1, 1000));
+    assertEquals(10, count.get());
+
+    count.set(0);
+    Future<String> future2 = ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ReadAction.nonBlocking(computation).executeSynchronously());
+    assertEquals("x", PlatformTestUtil.waitForFuture(future2, 1000));
+    assertEquals(10, count.get());
+  }
 }

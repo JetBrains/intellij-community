@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
@@ -49,6 +50,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -115,7 +117,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     myDocument = EditorFactory.getInstance().createDocument("");
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
-    myEditor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
 
     OnesideContentPanel contentPanel = new OnesideContentPanel(myEditor.getComponent());
     contentPanel.setTitle(createTitles());
@@ -351,6 +352,25 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     myModel.updateGutterActions();
   }
 
+  @Nullable
+  private static EditorHighlighter buildHighlighter(@Nullable Project project,
+                                                    @NotNull Document document,
+                                                    @NotNull DocumentContent content1,
+                                                    @NotNull DocumentContent content2,
+                                                    @NotNull CharSequence text1,
+                                                    @NotNull CharSequence text2,
+                                                    @NotNull List<HighlightRange> ranges,
+                                                    int textLength) {
+    EditorHighlighter highlighter1 = DiffUtil.initEditorHighlighter(project, content1, text1);
+    EditorHighlighter highlighter2 = DiffUtil.initEditorHighlighter(project, content2, text2);
+
+    if (highlighter1 == null && highlighter2 == null) return null;
+    if (highlighter1 == null) highlighter1 = DiffUtil.initEmptyEditorHighlighter(text1);
+    if (highlighter2 == null) highlighter2 = DiffUtil.initEmptyEditorHighlighter(text2);
+
+    return new UnifiedEditorHighlighter(document, highlighter1, highlighter2, ranges, textLength);
+  }
+
   @NotNull
   protected Runnable apply(@NotNull UnifiedFragmentBuilder builder,
                            CharSequence @NotNull [] texts,
@@ -358,8 +378,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     final DocumentContent content1 = getContent1();
     final DocumentContent content2 = getContent2();
 
+    EditorHighlighter highlighter = ReadAction.nonBlocking(() -> {
+      return buildHighlighter(myProject, myDocument, content1, content2,
+                              texts[0], texts[1], builder.getRanges(),
+                              builder.getText().length());
+    })
+      .cancelWith(indicator)
+      .executeSynchronously();
+
     UnifiedEditorRangeHighlighter rangeHighlighter = ReadAction.nonBlocking(() -> {
-      return new UnifiedEditorRangeHighlighter(myProject, content1, content2, builder.getRanges());
+      return new UnifiedEditorRangeHighlighter(myProject, content1.getDocument(), content2.getDocument(), builder.getRanges());
     })
       .wrapProgress(indicator)
       .executeSynchronously();
@@ -408,6 +436,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         }
       });
 
+      if (highlighter != null) myEditor.setHighlighter(highlighter);
       DiffUtil.setEditorCodeStyle(myProject, myEditor, getContent(myMasterSide));
 
       if (rangeHighlighter != null) rangeHighlighter.apply(myProject, myDocument);
@@ -1310,8 +1339,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
           ReadAction
             .nonBlocking(() -> updateHighlighters(blockData))
-            .finishOnUiThread(ModalityState.stateForComponent(myPanel), rangeHighlighter -> {
+            .finishOnUiThread(ModalityState.stateForComponent(myPanel), result -> {
               if (myStateIsOutOfDate || blockData != myModel.getData()) return;
+
+              EditorHighlighter highlighter = result.first;
+              UnifiedEditorRangeHighlighter rangeHighlighter = result.second;
+
+              if (highlighter != null) myEditor.setHighlighter(highlighter);
 
               UnifiedEditorRangeHighlighter.erase(myProject, myDocument);
               rangeHighlighter.apply(myProject, myDocument);
@@ -1324,9 +1358,20 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
 
     @NotNull
-    private UnifiedEditorRangeHighlighter updateHighlighters(@NotNull ChangedBlockData blockData) {
+    private Pair<EditorHighlighter, UnifiedEditorRangeHighlighter> updateHighlighters(@NotNull ChangedBlockData blockData) {
       List<HighlightRange> ranges = blockData.getRanges();
-      return new UnifiedEditorRangeHighlighter(myProject, getContent1(), getContent2(), ranges);
+      Document document1 = getContent1().getDocument();
+      Document document2 = getContent2().getDocument();
+
+      ProgressManager.checkCanceled();
+      EditorHighlighter highlighter = buildHighlighter(myProject, myDocument, getContent1(), getContent2(),
+                                                       document1.getCharsSequence(), document2.getCharsSequence(), ranges,
+                                                       myDocument.getTextLength());
+
+      ProgressManager.checkCanceled();
+      UnifiedEditorRangeHighlighter rangeHighlighter = new UnifiedEditorRangeHighlighter(myProject, document1, document2, ranges);
+
+      return Pair.create(highlighter, rangeHighlighter);
     }
 
     private class MyMarkupModelListener implements MarkupModelListener {

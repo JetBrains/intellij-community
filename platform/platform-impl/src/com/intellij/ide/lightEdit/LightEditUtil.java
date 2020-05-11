@@ -56,7 +56,7 @@ public final class LightEditUtil {
 
   static boolean confirmClose(@NotNull String message,
                               @NotNull String title,
-                              @NotNull Runnable saveRunnable) {
+                              @NotNull LightEditSaveConfirmationHandler handler) {
     final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
@@ -64,7 +64,10 @@ public final class LightEditUtil {
         return false;
       }
       else if (getCloseSave().equals(options[result])) {
-        saveRunnable.run();
+        handler.onSave();
+      }
+      else if (getCloseDiscard().equals(options[result])){
+        handler.onDiscard();
       }
       return true;
     }

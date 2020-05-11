@@ -616,6 +616,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   private fun setHiddenState(info: WindowInfoImpl, entry: ToolWindowEntry) {
+    ToolWindowCollector.recordHidden(info)
+
     info.isActiveOnStart = false
     info.isVisible = false
     activeStack.remove(entry, true)
@@ -856,6 +858,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       return false
     }
 
+    ToolWindowCollector.recordShown(toBeShownInfo)
     toBeShownInfo.isVisible = true
     toBeShownInfo.isShowStripeButton = true
 
@@ -1429,6 +1432,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     task()
 
     if (wasVisible) {
+      ToolWindowCollector.recordShown(info)
       info.isVisible = true
       val infoSnapshot = info.copy()
       entry.applyWindowInfo(infoSnapshot)

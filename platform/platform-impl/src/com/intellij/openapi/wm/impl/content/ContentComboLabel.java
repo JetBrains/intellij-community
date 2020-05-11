@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.popup.util.PopupState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -21,6 +22,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 final class ContentComboLabel extends BaseLabel {
+  private final PopupState myPopupState = new PopupState();
+
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {
@@ -58,7 +61,8 @@ final class ContentComboLabel extends BaseLabel {
     super.processMouseEvent(e);
 
     if (UIUtil.isActionClick(e)) {
-      ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
+      if (myPopupState.isRecentlyHidden()) return; // do not show new popup
+      ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager(), myPopupState);
     }
   }
 

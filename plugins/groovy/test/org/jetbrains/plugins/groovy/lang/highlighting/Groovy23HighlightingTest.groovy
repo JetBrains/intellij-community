@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
@@ -33,7 +33,7 @@ public <T, X> void exec(T t, Action<T, X> f, X x) {
 
 def foo() {
     exec('foo', { String t, Integer x -> ; }, 1)
-    exec('foo', { Integer t, Integer x -> ; }, 1)
+    exec<warning descr="'exec' in '_' cannot be applied to '(java.lang.String, groovy.lang.Closure<java.lang.Void>, java.lang.Integer)'">('foo', { Integer t, Integer x -> ; }, 1)</warning>
 }
 ''')
   }
@@ -66,7 +66,7 @@ public <T, X> void exec(T t, Action<T, X> f, X x) {
 
 def foo() {
     exec('foo', { String s, Integer x -> print s + x }, 1)
-    exec('foo', { Integer s, Integer x -> print 9 }, 1)
+    exec<warning descr="'exec' in '_' cannot be applied to '(java.lang.String, groovy.lang.Closure, java.lang.Integer)'">('foo', { Integer s, Integer x -> print 9 }, 1)</warning>
 }
 ''')
   }

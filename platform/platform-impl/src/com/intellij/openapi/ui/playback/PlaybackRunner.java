@@ -94,7 +94,9 @@ public class PlaybackRunner implements Disposable {
         });
       });
 
-      myRobot = new Robot();
+      if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        myRobot = new Robot();
+      }
 
       parse();
 

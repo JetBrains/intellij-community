@@ -336,7 +336,7 @@ class SkeletonGenerationTest(FunctionalGeneratorTestCase):
 
         self.run_generator('_ast', None)
         with open(os.path.join(self.temp_skeletons_dir, '_ast.py')) as f:
-            self.assertEquals(template.format(origin='(built-in)'), f.read())
+            self.assertEqual(template.format(origin='(built-in)'), f.read())
 
     def test_single_pyexpat_skeletons_layout(self):
         self.run_generator('pyexpat')
@@ -443,7 +443,7 @@ class MultiModuleGenerationTest(FunctionalGeneratorTestCase):
         result = self.run_generator()
         log_messages = [m['message'] for m in result.control_messages if m['type'] == 'log']
         subprocess_messages = [m for m in log_messages if m.startswith('Updating cache for mod')]
-        self.assertEquals(2, len(subprocess_messages))
+        self.assertEqual(2, len(subprocess_messages))
 
 
 class StatePassingGenerationTest(FunctionalGeneratorTestCase):

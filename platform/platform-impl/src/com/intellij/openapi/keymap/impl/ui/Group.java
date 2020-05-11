@@ -15,7 +15,7 @@ import java.util.Set;
 public class Group implements KeymapGroup {
   private Group myParent;
   private final String myName;
-  private String myId;
+  private final String myId;
   private final Icon myIcon;
   /**
    * Group or action id (String) or Separator or QuickList or Hyperlink
@@ -32,9 +32,7 @@ public class Group implements KeymapGroup {
   }
 
   public Group(final String name, final Icon icon) {
-    myChildren = new ArrayList<>();
-    myIcon = icon;
-    myName = name;
+    this(name, null, icon);
   }
 
   public String getName() {

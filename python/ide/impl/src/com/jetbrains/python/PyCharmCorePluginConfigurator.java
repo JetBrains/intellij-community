@@ -9,8 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 
@@ -60,11 +58,5 @@ final class PyCharmCorePluginConfigurator implements ApplicationInitializedListe
     }
 
     ActionManager.getInstance().unregisterAction("RunAnything");
-
-    for (ConfigurableEP<Configurable> ep : Configurable.APPLICATION_CONFIGURABLE.getExtensionList()) {
-      if ("com.jetbrains.python.documentation.PythonDocumentationConfigurable".equals(ep.id)) {
-        ep.displayName = "External Documentation";
-      }
-    }
   }
 }

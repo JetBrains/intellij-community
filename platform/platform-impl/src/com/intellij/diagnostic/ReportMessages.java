@@ -33,5 +33,6 @@ public class ReportMessages {
     return DiagnosticBundle.message("error.report.title");
   }
 
-  public static final NotificationGroup GROUP = new NotificationGroup(getErrorReport(), NotificationDisplayType.BALLOON, false);
+  public static final NotificationGroup GROUP =
+    new NotificationGroup("Error Report", NotificationDisplayType.BALLOON, false, getErrorReport());
 }

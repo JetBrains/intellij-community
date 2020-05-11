@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"))
+@State(name = "DateTimeFormatter", storages = @Storage("ui-datetime.xml"), reportStatistic = true)
 public class DateTimeFormatManager implements PersistentStateComponent<Element> {
   public static final String DEFAULT_DATE_FORMAT = "dd MMM yyyy";
   private boolean myPrettyFormattingAllowed = true;

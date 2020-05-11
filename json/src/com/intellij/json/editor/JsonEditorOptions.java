@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "JsonEditorOptions",
-  storages = @Storage("editor.xml")
+  storages = @Storage("editor.xml"),
+  reportStatistic = true
 )
 public class JsonEditorOptions implements PersistentStateComponent<JsonEditorOptions> {
   public boolean COMMA_ON_ENTER = true;

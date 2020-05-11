@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.*
@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.mac.TouchbarDataKeys
+import com.intellij.ui.popup.util.PopupState
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
@@ -947,6 +948,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected inner class MyToolbarAddAction : AnAction(ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                     ExecutionBundle.message("add.new.run.configuration.action2.name"),
                                                     IconUtil.getAddIcon()), AnActionButtonRunnable {
+    private val myPopupState = PopupState()
+
     init {
       registerCustomShortcutSet(CommonShortcuts.INSERT, tree)
     }
@@ -960,6 +963,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }
 
     private fun showAddPopup(showApplicableTypesOnly: Boolean) {
+      if (showApplicableTypesOnly && myPopupState.isRecentlyHidden) return // do not show new popup
       val allTypes = ConfigurationType.CONFIGURATION_TYPE_EP.extensionList
       val configurationTypes: MutableList<ConfigurationType?> = configurationTypeSorted(project, showApplicableTypesOnly, allTypes).toMutableList()
       val hiddenCount = allTypes.size - configurationTypes.size
@@ -973,6 +977,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                                                           { factory -> createNewConfiguration(factory) }, selectedConfigurationType,
                                                           { showAddPopup(false) }, true)
       //new TreeSpeedSearch(myTree);
+      popup.addListener(myPopupState)
       popup.showUnderneathOf(toolbarDecorator!!.actionsPanel)
     }
   }
