@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -19,7 +19,6 @@ import org.jetbrains.idea.svn.info.Info;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +33,6 @@ import static org.jetbrains.idea.svn.SvnUtil.*;
 public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart> {
   private static final Logger LOG = Logger.getInstance(SvnFileUrlMappingImpl.class);
 
-  @NotNull private final SvnCompatibilityChecker myChecker;
   @NotNull private final Object myMonitor = new Object();
   // strictly: what real roots are under what vcs mappings
   @NotNull private final SvnMapping myMapping = new SvnMapping();
@@ -81,7 +79,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private SvnFileUrlMappingImpl(@NotNull Project project) {
     myProject = project;
     myRootsHelper = new MyRootsHelper(project, ProjectLevelVcsManager.getInstance(project));
-    myChecker = new SvnCompatibilityChecker(project);
   }
 
   @Override
@@ -162,16 +159,15 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   public List<VirtualFile> convertRoots(@NotNull List<VirtualFile> result) {
     if (MyRootsHelper.isInProgress()) return new ArrayList<>(result);
 
+    List<VirtualFile> cachedRoots;
+    List<VirtualFile> lonelyRoots;
     synchronized (myMonitor) {
-      List<VirtualFile> cachedRoots = myMoreRealMapping.getUnderVcsRoots();
-      List<VirtualFile> lonelyRoots = myMoreRealMapping.getLonelyRoots();
-      if (!lonelyRoots.isEmpty()) {
-        myChecker.reportNoRoots(lonelyRoots);
-      }
-
-      Collection<? extends VirtualFile> iterable = cachedRoots.isEmpty() ? result : cachedRoots;
-      return new ArrayList<>(iterable);
+      cachedRoots = myMoreRealMapping.getUnderVcsRoots();
+      lonelyRoots = myMoreRealMapping.getLonelyRoots();
     }
+
+    myProject.getService(SvnCompatibilityChecker.class).checkAndNotify(lonelyRoots);
+    return new ArrayList<>(cachedRoots.isEmpty() ? result : cachedRoots);
   }
 
   public void acceptNestedData(@NotNull Set<NestedCopyInfo> set) {
