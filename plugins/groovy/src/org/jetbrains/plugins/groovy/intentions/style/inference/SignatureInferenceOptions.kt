@@ -30,6 +30,8 @@ open class SignatureInferenceContext(val ignored: List<GrMethod>) {
   }
 
   open val allowedToProcessReturnType : Boolean = true
+
+  open val allowedToResolveOperators : Boolean = true
 }
 
 object DefaultInferenceContext : SignatureInferenceContext(emptyList())
@@ -57,4 +59,6 @@ class ClosureIgnoringInferenceContext(private val manager: PsiManager, ignored: 
   }
 
   override val allowedToProcessReturnType: Boolean = false
+
+  override val allowedToResolveOperators: Boolean = false
 }
