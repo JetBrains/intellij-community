@@ -664,7 +664,6 @@
 
     <searchEverywhereClassifier implementation="com.intellij.ide.actions.DefaultSearchEverywhereClassifier"/>
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor"/>
-    <gotoTargetRendererProvider implementation="com.intellij.xml.impl.schema.GotoXmlSchemaTypeRendererProvider"/>
     <gotoRelatedProvider implementation="com.intellij.ide.actions.RelatedItemLineMarkerGotoAdapter"/>
 
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInGroupTarget"/>
@@ -955,7 +954,6 @@
     <filePasteProvider implementation="com.intellij.ide.FileListPasteProvider" id="fileList"/>
 
     <definitionsSearch implementation="com.intellij.pom.PomDefinitionSearch"/>
-    <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
 
     <applicationService serviceImplementation="com.intellij.ConfigurableFactory"/>
 

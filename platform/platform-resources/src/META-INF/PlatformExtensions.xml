@@ -593,19 +593,6 @@
 
     <editorFloatingToolbarProvider implementation="com.intellij.openapi.editor.toolbar.floating.DefaultFloatingToolbarProvider"/>
 
-    <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
-                         bundle="messages.XmlBundle" id="preferences.externalResources">
-      <configurable instance="com.intellij.javaee.DefaultSchemasConfigurable"
-                    bundle="messages.XmlBundle"
-                    key="configurable.DefaultSchemasConfigurable.display.name"
-                    id="xml.defaultSchemas"/>
-
-      <configurable instance="com.intellij.javaee.XMLCatalogConfigurable"
-                    bundle="messages.XmlBundle"
-                    key="configurable.XMLCatalogConfigurable.display.name"
-                    id="xml.catalog"/>
-    </projectConfigurable>
-
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>
     <bundledKeymap file="Mac OS X.xml"/>
