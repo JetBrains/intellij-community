@@ -34,7 +34,7 @@ public final class PluginEnabler {
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = loadFullDescriptors(pluginsToEnable);
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToDisable = loadFullDescriptors(pluginsToDisable);
 
-    Set<PluginId> disabledIds = PluginManagerCore.getDisabledIds();
+    Set<PluginId> disabledIds = DisabledPluginsState.getDisabledIds();
     for (PluginDescriptor descriptor : pluginsToEnable) {
       descriptor.setEnabled(true);
       disabledIds.remove(descriptor.getPluginId());
@@ -45,7 +45,7 @@ public final class PluginEnabler {
     }
 
     try {
-      PluginManagerCore.saveDisabledPlugins(disabledIds, false);
+      DisabledPluginsState.saveDisabledPlugins(disabledIds, false);
     }
     catch (IOException e) {
       LOG.error(e);

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.plugins;
 
+import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.beans.MetricEvent;
@@ -31,7 +32,7 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   public Set<MetricEvent> getMetrics() {
     Set<MetricEvent> result = new THashSet<>();
-    for (PluginId id : PluginManagerCore.disabledPlugins()) {
+    for (PluginId id : DisabledPluginsState.disabledPlugins()) {
       PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(id);
       FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);
       result.add(MetricEventFactoryKt.newMetric("disabled.plugin", data));

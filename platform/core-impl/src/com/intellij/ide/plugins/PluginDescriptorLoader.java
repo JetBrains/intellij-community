@@ -348,7 +348,7 @@ public final class PluginDescriptorLoader {
     }
 
     PluginLoadingResult result = PluginManagerCore.createLoadingResult(null);
-    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, PluginManagerCore.disabledPlugins(), result);
+    DescriptorListLoadingContext context = new DescriptorListLoadingContext(flags, DisabledPluginsState.disabledPlugins(), result);
     try {
       loadBundledDescriptorsAndDescriptorsFromDir(context, Paths.get(PathManager.getPluginsPath()));
 
@@ -455,7 +455,8 @@ public final class PluginDescriptorLoader {
   }
 
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact(@NotNull Path file, @Nullable BuildNumber buildNumber) throws IOException {
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR, PluginManagerCore.disabledPlugins(),
+    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(DescriptorListLoadingContext.IGNORE_MISSING_SUB_DESCRIPTOR, DisabledPluginsState
+      .disabledPlugins(),
                                                                                   PluginManagerCore.createLoadingResult(buildNumber));
     try (DescriptorLoadingContext context = new DescriptorLoadingContext(parentContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)) {
       IdeaPluginDescriptorImpl descriptor = loadDescriptorFromFileOrDir(file, PluginManagerCore.PLUGIN_XML, context, false);

@@ -309,7 +309,7 @@ public abstract class PluginManagerMain {
     class HEADLESS implements PluginEnabler {
       @Override
       public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        PluginManager.getInstance().enablePlugins(disabled, true);
+        DisabledPluginsState.enablePlugins(disabled, true);
       }
 
       @Override

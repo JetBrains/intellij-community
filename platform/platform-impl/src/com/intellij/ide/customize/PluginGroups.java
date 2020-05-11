@@ -64,7 +64,7 @@ public class PluginGroups {
       }
     };
     worker.execute();
-    PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
+    DisabledPluginsState.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
     Map<String, Pair<Icon, List<String>>> treeMap = new LinkedHashMap<>();
     initGroups(treeMap, myFeaturedPlugins);

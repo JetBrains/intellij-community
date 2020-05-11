@@ -290,7 +290,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
             PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
             if (downloader.prepareToInstall(indicator)) {
               downloader.install();
-              PluginManager.getInstance().enablePlugins(Collections.singletonList(descriptor), true);
+              DisabledPluginsState.enablePlugins(Collections.singletonList(descriptor), true);
               PluginManagerMain.notifyPluginsUpdated(myProject);
             }
           }

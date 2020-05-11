@@ -2,7 +2,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -215,7 +215,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   @Override
   public boolean beforeOkAction() {
     try {
-      PluginManagerCore.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
+      DisabledPluginsState.saveDisabledPlugins(myPluginGroups.getDisabledPluginIds(), false);
     }
     catch (IOException ignored) {
     }

@@ -37,7 +37,7 @@ public final class PluginManager {
   }
 
   private PluginManager() {
-    PluginManagerCore.setDisabledPluginListener(() -> {
+    DisabledPluginsState.setDisabledPluginListener(() -> {
       for (Runnable listener : disabledPluginListeners) {
         listener.run();
       }
@@ -62,7 +62,7 @@ public final class PluginManager {
 
   // not in PluginManagerCore because it is helper method
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file, @NotNull String fileName) {
-    return loadDescriptor(file, fileName, PluginManagerCore.disabledPlugins(), false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
+    return loadDescriptor(file, fileName, DisabledPluginsState.disabledPlugins(), false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER);
   }
 
   public static @Nullable IdeaPluginDescriptorImpl loadDescriptor(@NotNull Path file,
@@ -123,20 +123,20 @@ public final class PluginManager {
 
   /**
    * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
-   * {@link PluginManagerCore#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
+   * {@link DisabledPluginsState#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   public static @NotNull List<String> getDisabledPlugins() {
-    return PluginManagerCore.getDisabledPlugins();
+    return DisabledPluginsState.getDisabledPlugins();
   }
 
   /**
-   * @deprecated Use {@link PluginManagerCore#saveDisabledPlugins(Collection, boolean)}
+   * @deprecated Use {@link DisabledPluginsState#saveDisabledPlugins(Collection, boolean)}
    */
   @Deprecated
   public static void saveDisabledPlugins(@NotNull Collection<String> ids, boolean append) throws IOException {
-    PluginManagerCore.saveDisabledPlugins(ContainerUtil.map(ids, PluginId::getId), append);
+    DisabledPluginsState.saveDisabledPlugins(ContainerUtil.map(ids, PluginId::getId), append);
   }
 
   public static boolean disablePlugin(@NotNull String id) {
@@ -144,7 +144,7 @@ public final class PluginManager {
   }
 
   /**
-   * @deprecated Use {@link #enablePlugins(Collection, boolean)}
+   * @deprecated Use {@link DisabledPluginsState#enablePlugins(Collection, boolean)}
    */
   @Deprecated
   public static boolean enablePlugin(@NotNull String id) {
@@ -152,7 +152,7 @@ public final class PluginManager {
   }
 
   /**
-   * Consider using {@link #enablePlugins(Collection, boolean)}.
+   * Consider using {@link DisabledPluginsState#enablePlugins(Collection, boolean)}.
    */
   @SuppressWarnings("MethodMayBeStatic")
   public boolean enablePlugin(@NotNull PluginId id) {
@@ -194,28 +194,6 @@ public final class PluginManager {
       }
     }
     return false;
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public void enablePlugins(@NotNull Collection<? extends PluginDescriptor> plugins, boolean enabled) {
-    Set<PluginId> disabled = PluginManagerCore.getDisabledIds();
-    int sizeBefore = disabled.size();
-    for (PluginDescriptor plugin : plugins) {
-      if (enabled) {
-        disabled.remove(plugin.getPluginId());
-      }
-      else {
-        disabled.add(plugin.getPluginId());
-      }
-      plugin.setEnabled(enabled);
-    }
-
-    if (sizeBefore == disabled.size()) {
-      // nothing changed
-      return;
-    }
-
-    PluginManagerCore.trySaveDisabledPlugins(disabled);
   }
 
   @SuppressWarnings("MethodMayBeStatic")

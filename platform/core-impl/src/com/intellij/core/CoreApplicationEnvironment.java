@@ -4,6 +4,7 @@ package com.intellij.core;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -77,7 +78,7 @@ public class CoreApplicationEnvironment {
     myParentDisposable = parentDisposable;
     myUnitTestMode = unitTestMode;
 
-    PluginManagerCore.dontLoadDisabledPlugins();
+    DisabledPluginsState.dontLoadDisabledPlugins();
 
     myFileTypeRegistry = new CoreFileTypeRegistry();
 

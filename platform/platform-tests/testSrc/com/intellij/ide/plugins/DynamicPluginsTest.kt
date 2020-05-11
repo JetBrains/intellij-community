@@ -97,11 +97,11 @@ class DynamicPluginsTest {
 
     DynamicPlugins.loadPlugin(descriptor)
 
-    PluginManagerCore.saveDisabledPlugins(arrayListOf(PluginId.getId("bar")), false)
+    DisabledPluginsState.saveDisabledPlugins(arrayListOf(PluginId.getId("bar")), false)
     DynamicPlugins.unloadPlugin(descriptor, true)
     assertThat(PluginManagerCore.getPlugin(descriptor.pluginId)?.pluginClassLoader as? PluginClassLoader).isNull()
 
-    PluginManagerCore.saveDisabledPlugins(arrayListOf(), false)
+    DisabledPluginsState.saveDisabledPlugins(arrayListOf(), false)
     val newDescriptor = loadDescriptorInTest(path)
     PluginManagerCore.initClassLoader(newDescriptor)
     DynamicPlugins.loadPlugin(newDescriptor)

@@ -90,7 +90,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
         PluginManagerMain.notifyPluginsUpdated(myProject);
       }
     };
-    PluginManager.getInstance().enablePlugins(pluginsToEnable, true);
+    DisabledPluginsState.enablePlugins(pluginsToEnable, true);
     if (!nodes.isEmpty()) {
       try {
         PluginManagerMain.downloadPlugins(nodes, myAllPlugins, true, notifyRunnable, pluginHelper, null);

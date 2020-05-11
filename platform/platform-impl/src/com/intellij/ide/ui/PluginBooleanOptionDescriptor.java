@@ -169,7 +169,7 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
     @Override
     public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
       boolean enabled = !myEnabled;
-      PluginManager.getInstance().enablePlugins(myDescriptors, enabled);
+      DisabledPluginsState.enablePlugins(myDescriptors, enabled);
       notification.expire();
       ourRestartNeededNotifier.showNotification();
     }

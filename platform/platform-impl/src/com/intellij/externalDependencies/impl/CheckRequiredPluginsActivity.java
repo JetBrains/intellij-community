@@ -136,7 +136,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
                                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                                   if ("enable".equals(event.getDescription())) {
                                     notification.expire();
-                                    PluginManager.getInstance().enablePlugins(disabled, true);
+                                    DisabledPluginsState.enablePlugins(disabled, true);
                                     PluginManagerMain.notifyPluginsUpdated(project);
                                   }
                                   else {

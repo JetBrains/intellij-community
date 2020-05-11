@@ -11,6 +11,7 @@ import com.intellij.ide.customize.CustomizeIDEWizardDialog
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
+import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.PluginManagerConfigurableProxy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
@@ -271,7 +272,7 @@ private fun reportPluginError() {
         return@Notification
       }
 
-      val disabledPlugins = LinkedHashSet(PluginManagerCore.disabledPlugins())
+      val disabledPlugins = LinkedHashSet(DisabledPluginsState.disabledPlugins())
       if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
         disabledPlugins.addAll(PluginManagerCore.ourPluginsToDisable)
       }
@@ -281,7 +282,7 @@ private fun reportPluginError() {
       }
 
       try {
-        PluginManagerCore.saveDisabledPlugins(disabledPlugins, false)
+        DisabledPluginsState.saveDisabledPlugins(disabledPlugins, false)
       }
       catch (ignore: IOException) {
       }

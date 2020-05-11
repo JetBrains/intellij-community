@@ -239,7 +239,8 @@ object DynamicPlugins {
 
   private fun loadOptionalDependencyDescriptor(descriptor: IdeaPluginDescriptorImpl, dependencyConfigFile: String): IdeaPluginDescriptorImpl? {
     val pluginXmlFactory = PluginXmlFactory()
-    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
+    val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(
+      DisabledPluginsState.disabledPlugins())
     val context = DescriptorLoadingContext(listContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)
     val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(descriptor, context)
     try {
