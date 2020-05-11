@@ -907,6 +907,7 @@ public class RedundantCastUtil {
       }
 
       PsiType opType = operand.getType();
+      if (opType == null) return;
       
       if (castTo instanceof PsiClassType && TypeConversionUtil.isPrimitiveAndNotNull(opType)) {
         if (oppositeOperand != null &&
