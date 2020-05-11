@@ -170,6 +170,10 @@ final class XmlReader {
           descriptor.myImplementationDetail = Boolean.parseBoolean(attribute.getValue());
           break;
 
+        case "require-restart":
+          descriptor.myRequireRestart = Boolean.parseBoolean(attribute.getValue());
+          break;
+
         case "version":
           String internalVersionString = StringUtil.nullize(attribute.getValue());
           if (internalVersionString != null) {

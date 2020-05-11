@@ -77,6 +77,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myUseCoreClassLoader;
   boolean myAllowBundledUpdate;
   boolean myImplementationDetail;
+  boolean myRequireRestart;
   private String mySinceBuild;
   private String myUntilBuild;
 
@@ -907,6 +908,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public boolean isImplementationDetail() {
     return myImplementationDetail;
+  }
+
+  @Override
+  public boolean isRequireRestart() {
+    return myRequireRestart;
   }
 
   public @NotNull List<PluginId> getModules() {

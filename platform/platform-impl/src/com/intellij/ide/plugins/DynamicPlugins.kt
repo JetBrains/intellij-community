@@ -120,6 +120,10 @@ object DynamicPlugins {
       return null
     }
 
+    if (descriptor.isRequireRestart) {
+      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart";
+    }
+
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
 
     val app = ApplicationManager.getApplication()
