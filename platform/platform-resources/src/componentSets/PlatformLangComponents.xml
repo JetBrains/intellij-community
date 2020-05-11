@@ -59,5 +59,9 @@
 
     <!-- another one for project level -->
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.codeInsight.actions.ReaderModeFileEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
+              topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>
   </projectListeners>
 </idea-plugin>

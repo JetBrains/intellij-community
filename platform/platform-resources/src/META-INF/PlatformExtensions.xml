@@ -1012,6 +1012,8 @@
 
     <projectService serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeHintPersistentComponent" configurationSchemaKey="fileTypes"/>
     <fileTypeOverrider implementation="com.intellij.openapi.fileTypes.impl.FileTypeHintService"/>
+
+    <editorFloatingToolbarProvider implementation="com.intellij.openapi.editor.impl.ReaderModeFloatingToolbarProvider"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>

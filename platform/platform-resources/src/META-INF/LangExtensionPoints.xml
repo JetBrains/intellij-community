@@ -592,6 +592,7 @@
 
     <extensionPoint name="fileTypeStatisticProvider" interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider" dynamic="true"/>
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
+    <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
   </extensionPoints>
 </idea-plugin>
 
