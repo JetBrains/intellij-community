@@ -195,7 +195,7 @@ public class AnActionEvent implements PlaceProvider<String> {
    *   public void update(AnActionEvent e) {
    *     // perform action if and only if EDITOR != null
    *     boolean enabled = e.getData(CommonDataKeys.EDITOR) != null;
-   *     e.getPresentation.setEnabled(enabled);
+   *     e.getPresentation().setEnabled(enabled);
    *   }
    *
    *   public void actionPerformed(AnActionEvent e) {
