@@ -72,6 +72,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
     fun isFileSystemPath(path: String): Boolean {
       return path.indexOf('/') != -1 || path.indexOf('\\') != -1
     }
+
+    @JvmField
+    var dontReopenProjects = false
   }
 
   private val modCounter = AtomicLong()
@@ -384,7 +387,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
   }
 
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject) {
+    if (!GeneralSettings.getInstance().isReopenLastProject || dontReopenProjects) {
       return false
     }
 
