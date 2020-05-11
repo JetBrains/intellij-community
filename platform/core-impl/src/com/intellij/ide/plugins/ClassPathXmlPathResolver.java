@@ -17,12 +17,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiStatus.Internal
-public final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResolver<String> {
+final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResolver<String> {
   private final ClassLoader classLoader;
 
-  @ApiStatus.Internal
-  public ClassPathXmlPathResolver(@NotNull ClassLoader classLoader) {
+  ClassPathXmlPathResolver(@NotNull ClassLoader classLoader) {
     this.classLoader = classLoader;
   }
 

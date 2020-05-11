@@ -241,7 +241,7 @@ object DynamicPlugins {
     val pluginXmlFactory = PluginXmlFactory()
     val listContext = DescriptorListLoadingContext.createSingleDescriptorContext(PluginManagerCore.disabledPlugins())
     val context = DescriptorLoadingContext(listContext, false, false, PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER)
-    val pathResolver = PluginEnabler.createPathResolverForPlugin(descriptor, context)
+    val pathResolver = PluginDescriptorLoader.createPathResolverForPlugin(descriptor, context)
     try {
       val jarPair = URLUtil.splitJarUrl(descriptor.basePath.toUri().toString())
       val newBasePath = if (jarPair == null) {

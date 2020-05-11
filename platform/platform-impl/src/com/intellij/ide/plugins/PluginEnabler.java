@@ -5,13 +5,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -77,41 +74,9 @@ public final class PluginEnabler {
     List<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
       if (descriptor instanceof IdeaPluginDescriptorImpl) {
-        result.add(loadFullDescriptor((IdeaPluginDescriptorImpl) descriptor));
+        result.add(PluginDescriptorLoader.loadFullDescriptor((IdeaPluginDescriptorImpl) descriptor));
       }
     }
     return result;
-  }
-
-  public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
-    return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
-  }
-
-  static @NotNull PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                                     @Nullable DescriptorLoadingContext context) {
-    if (PluginManagerCore.isRunningFromSources() &&
-        descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
-        descriptor.getPluginPath().toString().contains("out/classes")) {
-      return new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
-    }
-
-    if (context != null) {
-      PathBasedJdomXIncluder.PathResolver<Path> resolver = PluginManagerCore.createPluginJarsPathResolver(descriptor.getPluginPath(), context);
-      if (resolver != null) {
-        return resolver;
-      }
-    }
-    return PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
-  }
-
-  public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
-    IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
-    if (fullDescriptor == null) {
-      LOG.error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
-      fullDescriptor = descriptor;
-    }
-    return fullDescriptor;
   }
 }

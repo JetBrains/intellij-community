@@ -833,7 +833,7 @@ public final class PluginManagerCore {
   }
 
   @Nullable
-  public static PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
+  static PathBasedJdomXIncluder.PathResolver<Path> createPluginJarsPathResolver(@NotNull Path pluginDir, @NotNull DescriptorLoadingContext context) {
     List<Path> pluginJarFiles = new ArrayList<>(), dirs = new ArrayList<>();
     if (!PluginDescriptorLoader.collectPluginDirectoryContents(pluginDir, pluginJarFiles, dirs)) return null;
     return new PluginXmlPathResolver(pluginJarFiles, context);

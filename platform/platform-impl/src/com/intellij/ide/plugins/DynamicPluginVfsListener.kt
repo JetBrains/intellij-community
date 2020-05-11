@@ -43,7 +43,7 @@ class DynamicPluginVfsListener : AsyncFileListener {
     }
     val descriptorsToReload = pluginsToReload
       .filter { it.isEnabled }
-      .map { PluginEnabler.loadFullDescriptor(it) }
+      .map { PluginDescriptorLoader.loadFullDescriptor(it) }
       .filter { DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
 
     if (descriptorsToReload.isEmpty()) return null
