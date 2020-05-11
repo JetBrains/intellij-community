@@ -31,6 +31,7 @@ import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static org.jetbrains.idea.svn.SvnFormatSelector.findRootAndGetFormat;
 import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.SvnUtilKtKt.putWcDbFilesToVfs;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart> {
@@ -180,21 +181,18 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public void realRefresh(final Runnable afterRefreshCallback) {
-    if (myProject.isDisposed()) {
-      afterRefreshCallback.run();
-    }
-    else {
-      SvnVcs vcs = SvnVcs.getInstance(myProject);
-      VirtualFile[] roots = myRootsHelper.execute();
-      SvnRootsDetector rootsDetector = new SvnRootsDetector(vcs, this, myNestedCopiesHolder);
-      // do not send additional request for nested copies when in init state
-      rootsDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
-    }
-  }
+  public void realRefresh() {
+    if (myProject.isDisposed()) return;
 
-  public void applyDetectionResult(@NotNull SvnRootsDetector.Result result) {
-    new NewRootsApplier(result).apply();
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    VirtualFile[] roots = myRootsHelper.execute();
+    SvnRootsDetector rootsDetector = new SvnRootsDetector(vcs, myNestedCopiesHolder);
+    SvnRootsDetector.Result result = rootsDetector.detectCopyRoots(roots, init());
+
+    if (result != null) {
+      putWcDbFilesToVfs(result.getTopRoots());
+      new NewRootsApplier(result).apply();
+    }
   }
 
   private class NewRootsApplier {

@@ -1,13 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -31,9 +29,7 @@ import com.intellij.testFramework.vcs.MockChangelistBuilder;
 import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
@@ -156,22 +152,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
   }
 
   protected void refreshSvnMappingsSynchronously() {
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(() -> semaphore.up());
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      long start = System.currentTimeMillis();
-      while (true) {
-        UIUtil.dispatchAllInvocationEvents();
-        if (semaphore.waitFor(50)) break;
-        if (System.currentTimeMillis() - start > 60_000) {
-          throw new AssertionError("Couldn't await SVN mapping refresh\n" + ThreadDumper.dumpThreadsToString());
-        }
-      }
-    }
-    else {
-      semaphore.waitFor();
-    }
+    ((SvnFileUrlMappingImpl)vcs.getSvnFileUrlMapping()).realRefresh();
   }
 
   protected void refreshChanges() {
