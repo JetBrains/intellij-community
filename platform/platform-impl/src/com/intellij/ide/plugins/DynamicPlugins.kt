@@ -422,7 +422,7 @@ object DynamicPlugins {
         return true
       }
 
-      val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
+      val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(Registry.intValue("ide.plugins.unload.timeout", 5000))
       if (!classLoaderUnloaded) {
         InstalledPluginsState.getInstance().isRestartRequired = true
 

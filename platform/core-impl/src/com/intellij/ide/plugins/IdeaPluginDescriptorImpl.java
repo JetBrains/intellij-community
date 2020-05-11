@@ -817,10 +817,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myLoader = loader;
   }
 
-  public boolean unloadClassLoader() {
+  public boolean unloadClassLoader(int timeoutMs) {
     GCWatcher watcher = GCWatcher.tracking(myLoader);
     myLoader = null;
-    return watcher.tryCollect();
+    return watcher.tryCollect(timeoutMs);
   }
 
   @Override
