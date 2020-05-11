@@ -29,7 +29,7 @@ internal fun setCustomTestFilePredictionModel(disposable: Disposable?, predictor
   setCustomTestFilePredictionModel(disposable, TestFilePredictionModelProvider(predictor))
 }
 
-private fun setCustomTestFilePredictionModel(disposable: Disposable? = null, model: FilePredictionModelProvider? = null) {
+internal fun setCustomTestFilePredictionModel(disposable: Disposable? = null, model: FilePredictionModelProvider? = null) {
   val ep: ExtensionPoint<FilePredictionModelProvider> = Extensions.getRootArea().getExtensionPoint(EP_NAME)
   for (extension in EP_NAME.extensions) {
     ep.unregisterExtension(extension.javaClass)
