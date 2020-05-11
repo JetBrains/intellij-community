@@ -8,16 +8,15 @@ import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkTypeId
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.projectRoots.*
 import com.intellij.openapi.rd.attach
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.RuleChain
@@ -66,15 +65,29 @@ class ProjectModelRule : TestRule {
     return ProjectJdkTable.getInstance().createSdk(name, sdkType)
   }
 
-  fun addSdk(sdk: Sdk): Sdk {
+  fun addSdk(sdk: Sdk, setup: (SdkModificator) -> Unit = {}): Sdk {
     runWriteActionAndWait {
       ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable)
+      val sdkModificator = sdk.sdkModificator
+      try {
+        setup(sdkModificator)
+      } finally {
+        sdkModificator.commitChanges()
+      }
     }
     return sdk
   }
 
   fun addProjectLevelLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
     return addLibrary(name, projectLibraryTable, setup)
+  }
+
+  fun addModuleLevelLibrary(module: Module, name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
+    val library = Ref.create<LibraryEx>()
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      library.set(addLibrary(name, model.moduleLibraryTable, setup))
+    }
+    return library.get()
   }
 
   fun addLibrary(name: String, libraryTable: LibraryTable, setup: (LibraryEx.ModifiableModelEx) -> Unit = {}): LibraryEx {
