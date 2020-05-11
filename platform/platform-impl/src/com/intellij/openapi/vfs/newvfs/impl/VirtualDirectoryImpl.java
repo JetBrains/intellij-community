@@ -392,8 +392,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         for (int i = 0; i < children.size(); i++) {
           ChildInfo child = children.get(i);
           int id = child.getId();
-          result[i] = id;
           assert id > 0 : child;
+          result[i] = id;
           prevChildren.remove(id);
           VirtualFileSystemEntry file = mySegment.vfsData.getFileById(id, this, true);
           if (file == null) {
@@ -541,6 +541,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         @Override
         public ChildInfo get(int index) {
           int id = oldIds[index];
+          assert id > 0 : id;
           int nameId = mySegment.vfsData.getNameId(id);
           return new ChildInfoImpl(id, nameId, null, null, null/*irrelevant here*/);
         }
@@ -609,6 +610,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       int o = 0;
       for (int oldId : oldIds) {
         if (!idsToRemove.contains(oldId)) {
+          assert oldId > 0 : Arrays.toString(oldIds);
           newIds[o++] = oldId;
         }
       }

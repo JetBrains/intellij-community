@@ -1259,6 +1259,7 @@ public final class FSRecords {
   }
 
   private static int doGetNameId(int id) {
+    assert id > 0 : id;
     return getRecordInt(id, NAME_OFFSET);
   }
 
