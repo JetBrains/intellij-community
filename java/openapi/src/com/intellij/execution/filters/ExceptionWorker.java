@@ -379,6 +379,7 @@ public class ExceptionWorker {
 
     private boolean isTargetClass(PsiElement maybeClass) {
       if (!(maybeClass instanceof PsiClass)) return false;
+      if (myClassName.startsWith("com.sun.proxy.$Proxy")) return true;
       PsiClass declaredClass = (PsiClass)maybeClass;
       String declaredName = declaredClass.getQualifiedName();
       if (myClassName.equals(declaredName)) return true;
