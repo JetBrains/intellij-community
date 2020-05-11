@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
@@ -113,9 +114,19 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   @Override
   public PsiElement getValueDeclaration(XmlElement attributeValue, String value) {
     String s = myCaseSensitive ? value : StringUtil.toLowerCase(value);
+    //noinspection unchecked
     return delegate instanceof XmlEnumerationDescriptor ?
-           ((XmlEnumerationDescriptor)delegate).getValueDeclaration(attributeValue, s) :
+           ((XmlEnumerationDescriptor<XmlElement>)delegate).getValueDeclaration(attributeValue, s) :
            super.getValueDeclaration(attributeValue, value);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public PsiReference[] getValueReferences(XmlElement element, @NotNull String text) {
+    if (delegate instanceof XmlEnumerationDescriptor) {
+      return ((XmlEnumerationDescriptor<XmlElement>)delegate).getValueReferences(element, text);
+    }
+    return super.getValueReferences(element, text);
   }
 
   public boolean isCaseSensitive() {
