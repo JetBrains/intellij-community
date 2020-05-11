@@ -31,11 +31,13 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.function.Consumer
 
 private const val PORTS_COUNT = 20
 private const val PROPERTY_RPC_PORT = "rpc.port"
+private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
@@ -123,6 +125,12 @@ class BuiltInServerManagerImpl : BuiltInServerManager() {
   }
 
   private fun startServerInPooledThread(): Future<*> {
+    if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
+      return CompletableFuture<Any>().apply {
+        completeExceptionally(Throwable("Built-in server is disabled by `$PROPERTY_DISABLED` VM option"))
+      }
+    }
+
     return StartupUtil.getServerFuture()
       .thenAcceptAsync(Consumer { mainServer ->
         try {
