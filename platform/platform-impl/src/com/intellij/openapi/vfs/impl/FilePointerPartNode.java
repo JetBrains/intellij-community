@@ -162,8 +162,8 @@ class FilePointerPartNode {
       if (child.nameEqualTo(nameId)) return child;
     }
     if (createIfNotFound) {
-      CharSequence name = fromNameId(nameId);
-      int index = binarySearchChildByName(name);
+      CharSequence name = null;
+      int index = children.length == 0 ? -1 : binarySearchChildByName(fromNameId(nameId));
       FilePointerPartNode child;
       assert index < 0 : index + " : child= '" + (child = children[index]) + "'"
                          + "; child.nameEqualTo(nameId)=" + child.nameEqualTo(nameId)
@@ -174,7 +174,7 @@ class FilePointerPartNode {
                          + "; name='" + name + "'"
                          + "; compare(child) = " + StringUtil.compare(child.getName(), name, !SystemInfo.isFileSystemCaseSensitive) + ";"
                          + " UrlPart.nameEquals: " + FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(child.getName(), fromNameId(nameId))
-                         + "; name.equals(child.getName())=" + name.equals(child.getName())
+                         + "; name.equals(child.getName())=" + child.getName().equals(name)
         ;
       child = new FilePointerPartNode(nameId, this);
       children = ArrayUtil.insert(children, -index-1, child);
@@ -442,7 +442,7 @@ class FilePointerPartNode {
       }
       // create and insert new node
       // first, have to check if the file root/names(end)/.../names[i] exists
-      // if yes, create nameId-based FilePinterPartNode (for faster search and memory efficiency),
+      // if yes, create nameId-based FilePointerPartNode (for faster search and memory efficiency),
       // if not, create temp UrlPartNode which will be replaced with FPPN when the real file is created
       //noinspection UseVirtualFileEquals
       if (currentFile == NEVER_TRIED_TO_FIND) {
