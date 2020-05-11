@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsListener
@@ -35,6 +36,8 @@ import git4idea.util.toMapOfSets
 import git4idea.util.toShortenedString
 import java.util.*
 import kotlin.collections.HashSet
+
+private val PROCESSED = Key.create<Boolean>("GitStageTracker.file.processed")
 
 class GitStageTracker(val project: Project) : Disposable {
   private val eventDispatcher = EventDispatcher.create(GitStageTrackerListener::class.java)
@@ -72,17 +75,34 @@ class GitStageTracker(val project: Project) : Disposable {
     })
     connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : FileDocumentManagerListener {
       override fun unsavedDocumentDropped(document: Document) {
-        scheduleUpdateDocument(document)
+        val file = FileDocumentManager.getInstance().getFile(document) ?: return
+        file.putUserData(PROCESSED, null)
+        scheduleUpdateFile(file)
       }
 
-      override fun unsavedDocumentsDropped() {
-        scheduleUpdateAll()
+      override fun fileContentReloaded(file: VirtualFile, document: Document) {
+        file.putUserData(PROCESSED, null)
+        scheduleUpdateFile(file)
+      }
+
+      override fun fileWithNoDocumentChanged(file: VirtualFile) {
+        file.putUserData(PROCESSED, null)
+        scheduleUpdateFile(file)
+      }
+
+      override fun beforeDocumentSaving(document: Document) {
+        val file = FileDocumentManager.getInstance().getFile(document) ?: return
+        file.putUserData(PROCESSED, null)
       }
     })
 
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        scheduleUpdateDocument(event.document)
+        val file = FileDocumentManager.getInstance().getFile(event.document) ?: return
+        if (file.getUserData(PROCESSED) == null) {
+          file.putUserData(PROCESSED, true)
+          scheduleUpdateFile(file)
+        }
       }
     }, this)
   }
@@ -91,8 +111,7 @@ class GitStageTracker(val project: Project) : Disposable {
     singleTaskController.sendRequests(refreshRoots(gitRoots()))
   }
 
-  private fun scheduleUpdateDocument(document: Document) {
-    val file = FileDocumentManager.getInstance().getFile(document) ?: return
+  private fun scheduleUpdateFile(file: VirtualFile) {
     val root = getRoot(project, file) ?: return
     if (!gitRoots().contains(root)) return
     singleTaskController.request(Request.RefreshFiles(mutableMapOf(Pair(root, setOf(file.filePath()))), emptyMap()))
