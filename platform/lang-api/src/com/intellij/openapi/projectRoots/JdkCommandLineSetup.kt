@@ -13,10 +13,17 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.encoding.EncodingManager
+import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
+import java.nio.charset.Charset
+import java.nio.charset.IllegalCharsetNameException
 import java.nio.charset.StandardCharsets
+import java.nio.charset.UnsupportedCharsetException
+import java.util.*
 
 internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
                                    private val target: TargetEnvironmentConfiguration?) {
@@ -201,8 +208,62 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
     })
   }
 
+  @JvmName("appendEncoding")
+  internal fun appendEncoding(javaParameters: SimpleJavaParameters, parametersList: ParametersList) {
+    // for correct handling of process's input and output, values of file.encoding and charset of CommandLine object should be in sync
+    val encoding = parametersList.getPropertyValue("file.encoding")
+    if (encoding == null) {
+      val charset = javaParameters.charset ?: EncodingManager.getInstance().defaultCharset
+      commandLine.addParameter("-Dfile.encoding=" + charset.name())
+      commandLine.setCharset(charset)
+    }
+    else {
+      try {
+        commandLine.setCharset(Charset.forName(encoding))
+      }
+      catch (ignore: UnsupportedCharsetException) {
+      }
+      catch (ignore: IllegalCharsetNameException) {
+      }
+    }
+  }
+
+  @JvmName("appendModulePath")
+  internal fun appendModulePath(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    val modulePath = javaParameters.modulePath
+    if (!modulePath.isEmpty && !vmParameters.isExplicitModulePath()) {
+      commandLine.addParameter("-p")
+      val pathValues: List<TargetValue<String>> = getClassPathValues(javaParameters, modulePath)
+      val pathSeparator = platform.pathSeparator.toString()
+      commandLine.addParameter(TargetValue.composite(pathValues) { values: Collection<String> ->
+        values.joinTo(StringBuilder(), pathSeparator).toString()
+      })
+    }
+  }
+
+  @JvmName("getClassPathValues")
+  internal fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
+    val localJdkPath = javaParameters.jdk?.homePath
+    val remoteJdkPath = languageRuntime?.homePath
+    val result = ArrayList<TargetValue<String>>()
+
+    for (path in classPath.pathList) {
+      if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
+        result.add(classPathVolume.createUpload(path))
+      }
+      else {
+        //todo[remoteServers]: revisit with "provided" volume (?)
+        val separator = platform.fileSeparator
+        result.add(TargetValue.fixed(FileUtil.toCanonicalPath(
+          remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath), separator)))
+      }
+    }
+    return result
+  }
+
   private val platform = request.targetPlatform.platform
-  private fun joinPath(segments: Array<String>) = StringUtil.join(segments, platform.fileSeparator.toString())
+
+  private fun joinPath(segments: Array<String>) = segments.joinTo(StringBuilder(), platform.fileSeparator.toString()).toString()
 
   companion object {
     private const val JAVAAGENT = "-javaagent"

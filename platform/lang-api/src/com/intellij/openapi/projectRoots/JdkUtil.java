@@ -29,8 +29,6 @@ import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,8 +45,6 @@ import org.jetbrains.concurrency.Promises;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -200,7 +196,7 @@ public final class JdkUtil {
       TargetValue<String> classPathParameter;
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
-        List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, classPath);
+        List<TargetValue<String>> pathValues = setup.getClassPathValues(javaParameters, classPath);
         classPathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(classPathParameter.getTargetValue());
       }
@@ -211,7 +207,7 @@ public final class JdkUtil {
       TargetValue<String> modulePathParameter;
       PathsList modulePath = javaParameters.getModulePath();
       if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-        List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, modulePath);
+        List<TargetValue<String>> pathValues = setup.getClassPathValues(javaParameters, modulePath);
         modulePathParameter = TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator));
         promises.add(modulePathParameter.getTargetValue());
       }
@@ -265,7 +261,7 @@ public final class JdkUtil {
       HashMap<String, String> commandLineContent = new HashMap<>();
       commandLine.putUserData(COMMAND_LINE_CONTENT, commandLineContent);
 
-      appendEncoding(javaParameters, commandLine, vmParameters);
+      setup.appendEncoding(javaParameters, vmParameters);
       TargetValue<String> argFileParameter = classPathVolume.createUpload(argFile.getAbsolutePath());
       commandLine.addParameter(TargetValue.map(argFileParameter, s -> "@" + s));
       addCommandLineContentOnResolve(commandLineContent, argFile, argFileParameter);
@@ -310,7 +306,7 @@ public final class JdkUtil {
         setup.appendVmParameters(vmParameters);
       }
 
-      appendEncoding(javaParameters, commandLine, vmParameters);
+      setup.appendEncoding(javaParameters, vmParameters);
 
       File appParamsFile = null;
       if (dynamicParameters) {
@@ -322,7 +318,7 @@ public final class JdkUtil {
       File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       commandLine.addFileToDeleteOnTermination(classpathFile);
 
-      Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
+      Collection<TargetValue<String>> classPathParameters = setup.getClassPathValues(javaParameters, javaParameters.getClassPath());
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(pathList -> {
         try {
           CommandLineWrapperUtil.writeWrapperFile(classpathFile, pathList, lineSeparator, cs);
@@ -430,7 +426,7 @@ public final class JdkUtil {
         setup.appendVmParameters(vmParameters);
       }
 
-      appendEncoding(javaParameters, commandLine, vmParameters);
+      setup.appendEncoding(javaParameters, vmParameters);
 
       if (dynamicParameters) {
         manifest.getMainAttributes()
@@ -457,7 +453,7 @@ public final class JdkUtil {
       TargetValue<String> jarFileValue = classPathVolume.createUpload(jarFilePath);
       commandLine.addParameter(jarFileValue);
 
-      Collection<TargetValue<String>> classPathParameters = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, javaParameters.getClassPath());
+      Collection<TargetValue<String>> classPathParameters = setup.getClassPathValues(javaParameters, javaParameters.getClassPath());
       Promises.collectResults(ContainerUtil.map(classPathParameters, TargetValue::getTargetValue)).onSuccess(targetClassPathParameters -> {
         try {
           boolean notEscape = vmParameters.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
@@ -491,7 +487,7 @@ public final class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
-    appendModulePath(commandLine, request, classPathVolume, runtimeConfiguration, javaParameters, vmParameters);
+    setup.appendModulePath(javaParameters, vmParameters);
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -511,71 +507,17 @@ public final class JdkUtil {
                                             SimpleJavaParameters javaParameters,
                                             ParametersList vmParameters) {
     setup.appendVmParameters(vmParameters);
-    appendEncoding(javaParameters, commandLine, vmParameters);
+    setup.appendEncoding(javaParameters, vmParameters);
+
     PathsList classPath = javaParameters.getClassPath();
     if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
       commandLine.addParameter("-classpath");
-      List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, classPath);
+      List<TargetValue<String>> pathValues = setup.getClassPathValues(javaParameters, classPath);
       String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
       commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
     }
 
-    appendModulePath(commandLine, request, classPathVolume, runtimeConfiguration, javaParameters, vmParameters);
-  }
-
-  private static void appendModulePath(TargetedCommandLineBuilder commandLine,
-                                       TargetEnvironmentRequest request,
-                                       TargetEnvironmentRequest.Volume classPathVolume,
-                                       @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                       SimpleJavaParameters javaParameters,
-                                       ParametersList vmParameters) {
-    PathsList modulePath = javaParameters.getModulePath();
-    if (!modulePath.isEmpty() && !explicitModulePath(vmParameters)) {
-      commandLine.addParameter("-p");
-      List<TargetValue<String>> pathValues = getClassPathValues(classPathVolume, runtimeConfiguration, javaParameters, modulePath);
-      String pathSeparator = String.valueOf(request.getTargetPlatform().getPlatform().pathSeparator);
-      commandLine.addParameter(TargetValue.composite(pathValues, values -> StringUtil.join(values, pathSeparator)));
-    }
-  }
-
-  @NotNull
-  private static List<TargetValue<String>> getClassPathValues(TargetEnvironmentRequest.Volume classPathVolume,
-                                                              @Nullable JavaLanguageRuntimeConfiguration runtimeConfiguration,
-                                                              SimpleJavaParameters javaParameters,
-                                                              PathsList classPath) {
-    String localJdkPath = ObjectUtils.doIfNotNull(javaParameters.getJdk(), jdk -> jdk.getHomePath());
-    String remoteJdkPath = runtimeConfiguration != null ? runtimeConfiguration.getHomePath() : null;
-
-    ArrayList<TargetValue<String>> result = new ArrayList<>();
-    for (String path : classPath.getPathList()) {
-      if (localJdkPath == null || remoteJdkPath == null || !path.startsWith(localJdkPath)) {
-        result.add(classPathVolume.createUpload(path));
-      }
-      else {
-        char separator = classPathVolume.getPlatform().fileSeparator;
-        result.add(
-          TargetValue.fixed(FileUtil.toCanonicalPath(remoteJdkPath + separator + StringUtil.trimStart(path, localJdkPath), separator)));
-      }
-    }
-    return result;
-  }
-
-  private static void appendEncoding(SimpleJavaParameters javaParameters, TargetedCommandLineBuilder commandLine, ParametersList parametersList) {
-    // for correct handling of process's input and output, values of file.encoding and charset of CommandLine object should be in sync
-    String encoding = parametersList.getPropertyValue("file.encoding");
-    if (encoding == null) {
-      Charset charset = javaParameters.getCharset();
-      if (charset == null) charset = EncodingManager.getInstance().getDefaultCharset();
-      commandLine.addParameter("-Dfile.encoding=" + charset.name());
-      commandLine.setCharset(charset);
-    }
-    else {
-      try {
-        commandLine.setCharset(Charset.forName(encoding));
-      }
-      catch (UnsupportedCharsetException | IllegalCharsetNameException ignore) {
-      }
-    }
+    setup.appendModulePath(javaParameters, vmParameters);
   }
 
   public static boolean useDynamicClasspath(@Nullable Project project) {
