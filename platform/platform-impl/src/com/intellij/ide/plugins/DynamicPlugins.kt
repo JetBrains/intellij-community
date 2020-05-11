@@ -105,6 +105,11 @@ object DynamicPlugins {
       return allowLoadUnloadSynchronously(descriptor)
     }
 
+    if (descriptor.isRequireRestart) {
+      LOG.info("Plugin ${descriptor.pluginId} is explicitly marked as requiring restart")
+      return false
+    }
+
     val projectManager = ProjectManager.getInstance()
     val anyProject = projectManager.openProjects.firstOrNull() ?: projectManager.defaultProject
 

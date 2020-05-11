@@ -98,6 +98,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
   private boolean myUseCoreClassLoader;
   private boolean myAllowBundledUpdate;
   private boolean myImplementationDetail;
+  boolean myRequireRestart;
   private String mySinceBuild;
   private String myUntilBuild;
 
@@ -998,6 +999,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
     return myImplementationDetail;
   }
 
+  @Override
+  public boolean isRequireRestart() {
+    return myRequireRestart;
+  }
+
   @NotNull
   public List<PluginId> getModules() {
     return ContainerUtil.notNullize(myModules);
@@ -1141,6 +1147,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor, Plu
 
           case "implementation-detail":
             descriptor.myImplementationDetail = Boolean.parseBoolean(attribute.getValue());
+            break;
+
+          case "require-restart":
+            descriptor.myRequireRestart = Boolean.parseBoolean(attribute.getValue());
             break;
 
           case "version":
