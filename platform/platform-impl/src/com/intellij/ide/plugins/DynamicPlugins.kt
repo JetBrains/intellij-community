@@ -309,7 +309,8 @@ object DynamicPlugins {
 
   @JvmStatic
   @JvmOverloads
-  fun unloadPluginWithProgress(parentComponent: JComponent?,
+  fun unloadPluginWithProgress(project: Project? = null,
+                               parentComponent: JComponent?,
                                pluginDescriptor: IdeaPluginDescriptorImpl,
                                disable: Boolean = false,
                                isUpdate: Boolean = false): Boolean {
@@ -323,7 +324,7 @@ object DynamicPlugins {
         }
       }
     }
-    val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", null, parentComponent, null)
+    val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", project, parentComponent, null)
     indicator.runInSwingThread {
       result = unloadPlugin(pluginDescriptor, disable, isUpdate, save = false)
     }
@@ -531,6 +532,7 @@ object DynamicPlugins {
 
   @JvmStatic
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl) {
+    val loadStartTime = System.currentTimeMillis()
     val app = ApplicationManager.getApplication() as ApplicationImpl
     if (!app.isUnitTestMode) {
       PluginManagerCore.initClassLoader(pluginDescriptor)
@@ -573,6 +575,7 @@ object DynamicPlugins {
         }
         val fuData = FeatureUsageData().addPluginInfo(getPluginInfoByDescriptor(pluginDescriptor))
         FUCounterUsageLogger.getInstance().logEvent("plugins.dynamic", "load", fuData)
+        LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {
         app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(pluginDescriptor)

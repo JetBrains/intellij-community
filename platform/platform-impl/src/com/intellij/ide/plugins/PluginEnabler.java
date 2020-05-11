@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +18,8 @@ import java.util.*;
 public final class PluginEnabler {
   private static final Logger LOG = Logger.getInstance(PluginEnabler.class);
 
-  public static boolean enablePlugins(Collection<IdeaPluginDescriptor> plugins, boolean enable) {
-    return updatePluginEnabledState(enable ? plugins : Collections.emptyList(),
+  public static boolean enablePlugins(@Nullable Project project, Collection<IdeaPluginDescriptor> plugins, boolean enable) {
+    return updatePluginEnabledState(project, enable ? plugins : Collections.emptyList(),
                                     enable ? Collections.emptyList() : plugins,
                                     null);
   }
@@ -26,7 +27,8 @@ public final class PluginEnabler {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  public static boolean updatePluginEnabledState(Collection<IdeaPluginDescriptor> pluginsToEnable,
+  public static boolean updatePluginEnabledState(@Nullable Project project,
+                                                 Collection<IdeaPluginDescriptor> pluginsToEnable,
                                                  Collection<IdeaPluginDescriptor> pluginsToDisable,
                                                  @Nullable JComponent parentComponent) {
     List<IdeaPluginDescriptorImpl> pluginDescriptorsToEnable = loadFullDescriptors(pluginsToEnable);
@@ -53,7 +55,7 @@ public final class PluginEnabler {
         ContainerUtil.all(pluginDescriptorsToEnable, DynamicPlugins::allowLoadUnloadWithoutRestart)) {
       boolean needRestart = false;
       for (IdeaPluginDescriptorImpl descriptor : pluginDescriptorsToDisable) {
-        if (!DynamicPlugins.unloadPluginWithProgress(parentComponent, descriptor, true)) {
+        if (!DynamicPlugins.unloadPluginWithProgress(project, parentComponent, descriptor, true)) {
           needRestart = true;
           break;
         }

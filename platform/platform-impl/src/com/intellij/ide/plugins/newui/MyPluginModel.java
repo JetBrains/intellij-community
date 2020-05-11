@@ -230,7 +230,7 @@ public abstract class MyPluginModel extends InstalledPluginsTableModel implement
       }
     }
 
-    return PluginEnabler.updatePluginEnabledState(pluginDescriptorsToEnable, pluginDescriptorsToDisable, parentComponent);
+    return PluginEnabler.updatePluginEnabledState(null, pluginDescriptorsToEnable, pluginDescriptorsToDisable, parentComponent);
   }
 
   public void pluginInstalledFromDisk(@NotNull PluginInstallCallbackData callbackData) {

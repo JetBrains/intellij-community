@@ -49,7 +49,7 @@ final class PluginBooleanOptionDescriptor extends NotABooleanOptionDescription i
   @Override
   public void setOptionState(boolean enabled) {
     Collection<IdeaPluginDescriptor> autoSwitchedIds = enabled ? getPluginsIdsToEnable(plugin) : getPluginsIdsToDisable(plugin);
-    boolean enabledWithoutRestart = PluginEnabler.enablePlugins(autoSwitchedIds, enabled);
+    boolean enabledWithoutRestart = PluginEnabler.enablePlugins(null, autoSwitchedIds, enabled);
     if (autoSwitchedIds.size() > 1) {
       showAutoSwitchNotification(autoSwitchedIds, enabled);
     }

@@ -8,7 +8,6 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.codeInspection.GlobalInspectionTool
 import com.intellij.codeInspection.InspectionEP
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
-import com.intellij.configurationStore.Ksuid
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -453,12 +452,12 @@ class DynamicPluginsTest {
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(pluginBuilder.id))!!
-    val success = PluginEnabler.updatePluginEnabledState(emptyList(), listOf(pluginDescriptor), null)
+    val success = PluginEnabler.updatePluginEnabledState(null, emptyList(), listOf(pluginDescriptor), null)
     assertThat(success).isTrue()
     assertThat(pluginDescriptor.isEnabled).isFalse()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNull()
 
-    assertThat(PluginEnabler.updatePluginEnabledState(listOf(pluginDescriptor), emptyList(), null)).isTrue()
+    assertThat(PluginEnabler.updatePluginEnabledState(null, listOf(pluginDescriptor), emptyList(), null)).isTrue()
     assertThat(pluginDescriptor.isEnabled).isTrue()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
 

@@ -109,7 +109,7 @@ public final class PluginInstaller {
 
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent, IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
     boolean uninstalledWithoutRestart = parentComponent != null
-      ? DynamicPlugins.unloadPluginWithProgress(parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate)
+      ? DynamicPlugins.unloadPluginWithProgress(null, parentComponent, (IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate)
       : DynamicPlugins.unloadPlugin((IdeaPluginDescriptorImpl)pluginDescriptor, false, isUpdate);
 
     if (uninstalledWithoutRestart) {
