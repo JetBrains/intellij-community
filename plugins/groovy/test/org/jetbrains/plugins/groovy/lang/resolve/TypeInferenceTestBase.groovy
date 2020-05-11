@@ -25,12 +25,6 @@ abstract class TypeInferenceTestBase extends GroovyResolveTestCase {
     NestedContextKt.forbidNestedContext(testRootDisposable)
   }
 
-  @Override
-  void tearDown() {
-    Registry.get(FunctionalExpressionFlowUtil.GROOVY_PROCESS_NESTED_DFA).resetToDefault()
-    super.tearDown()
-  }
-
   protected void doTest(String text, @Nullable String type) {
     def file = myFixture.configureByText('_.groovy', text)
     def ref = file.findReferenceAt(myFixture.editor.caretModel.offset) as GrReferenceExpression

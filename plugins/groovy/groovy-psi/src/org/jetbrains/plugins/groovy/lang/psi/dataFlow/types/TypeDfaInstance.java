@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.findNearestVariableDescriptor;
 import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.getForeignVariableDescriptors;
@@ -200,10 +199,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return;
     }
     switch (kind) {
-      case EXACTLY_ONCE:
+      case IN_PLACE_ONCE:
         handleClosureDFAResult(state, blockFlowOwner, state::putType);
         break;
-      case ZERO_OR_MORE:
+      case IN_PLACE_UNKNOWN:
       case UNKNOWN:
         handleClosureDFAResult(state, blockFlowOwner, (descriptor, dfaType) -> {
           DFAType existingType = state.getVariableType(descriptor);

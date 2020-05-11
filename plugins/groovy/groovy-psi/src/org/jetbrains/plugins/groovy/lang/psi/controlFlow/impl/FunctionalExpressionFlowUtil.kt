@@ -23,21 +23,23 @@ import org.jetbrains.plugins.groovy.lang.psi.util.skipParenthesesDown
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
-/**
- * Specifies how many times functional expression will be invoked.
- *
- * [EXACTLY_ONCE] is for functional expressions that will be invoked inplace and only one time.
- * Such functional expressions may be inlined in the place where they are defined.
- *
- * [ZERO_OR_MORE] is for functional expressions that will be invoked inplace, but amount of their invocations is undefined.
- * Such functional expressions act like code blocks under some conditional statement.
- *
- * [UNKNOWN] is for functional expressions for which we don't have any information:
- * neither if they are invoked inplace, nor about amount of invocations.
- */
 enum class InvocationKind {
-  EXACTLY_ONCE,
-  ZERO_OR_MORE,
+  /**
+   * Indicates that functional expressions will be invoked inplace and only one time.
+   * Such functional expressions may be inlined in the place where they are defined.
+   */
+  IN_PLACE_ONCE,
+
+  /**
+   * Indicates that functional expressions will be invoked inplace, but amount of its invocations is undefined.
+   * Such functional expressions act like code blocks under some conditional statement.
+   */
+  IN_PLACE_UNKNOWN,
+
+  /**
+   * Indicates that functional expressions does not provide any information:
+   * neither if it is invoked inplace, nor about the amount of invocations.
+   */
   UNKNOWN
 }
 
@@ -124,21 +126,21 @@ private fun computeInvocationKind(block: GrFunctionalExpression): InvocationKind
   }
   val method = call.multiResolve(false).firstOrNull()?.element as? GrGdkMethod
   val primaryInvocationKind = when (method?.name) {
-    in trustedMethodsForExecutingOnce -> EXACTLY_ONCE
-    in trustedMethodsForExecutingManyTimes -> ZERO_OR_MORE
+    in trustedMethodsForExecutingOnce -> IN_PLACE_ONCE
+    in trustedMethodsForExecutingManyTimes -> IN_PLACE_UNKNOWN
     else -> return UNKNOWN
   }
   return primaryInvocationKind.weakenIfUsesSafeNavigation(call)
 }
 
 private fun InvocationKind.weakenIfUsesSafeNavigation(call: GrMethodCall): InvocationKind = when (this) {
-  EXACTLY_ONCE -> {
+  IN_PLACE_ONCE -> {
     val refExpr = PsiTreeUtil.findChildOfType(call, GrReferenceExpression::class.java)
     if (refExpr != null && refExpr.dotToken?.text == "?.") {
-      ZERO_OR_MORE
+      IN_PLACE_UNKNOWN
     }
     else {
-      EXACTLY_ONCE
+      IN_PLACE_ONCE
     }
   }
   else -> this
