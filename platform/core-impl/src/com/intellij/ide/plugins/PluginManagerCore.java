@@ -720,10 +720,11 @@ public final class PluginManagerCore {
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
-      PluginId[] dependentPluginIds = rootDescriptor.getDependentPluginIds();
+      List<PluginId> dependentPluginIds = ContainerUtil.newArrayList(rootDescriptor.getDependentPluginIds());
+      List<PluginId> incompatibleModuleIds = rootDescriptor.getIncompatibleModuleIds();
       IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
       PluginId[] optionalDependentPluginIds = withOptional ? rootDescriptor.getOptionalDependentPluginIds() : PluginId.EMPTY_ARRAY;
-      int capacity = dependentPluginIds.length - (withOptional ? 0 : optionalDependentPluginIds.length);
+      int capacity = dependentPluginIds.size() - (withOptional ? 0 : optionalDependentPluginIds.length) + incompatibleModuleIds.size();
       if (capacity == 0) {
         return implicitDep == null ? Collections.emptyList() : Collections.singletonList(implicitDep);
       }
@@ -741,7 +742,9 @@ public final class PluginManagerCore {
         }
       }
 
-      boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependentPluginIds.length;
+      boolean excludeOptional = !withOptional && optionalDependentPluginIds.length > 0 && optionalDependentPluginIds.length != dependentPluginIds.size();
+
+      dependentPluginIds.addAll(incompatibleModuleIds);
 
       loop:
       for (PluginId dependentPluginId : dependentPluginIds) {

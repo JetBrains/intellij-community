@@ -9,6 +9,7 @@
 + duplicate0
   missing1
   missing2
++ incompatible_with_disabled_module
   missing3
 + optional_config_cycle1
   optional_config_cycle0
@@ -18,6 +19,7 @@
   optional_cycle1
 + plugin3
 + plugin0
+  incompatible_with_enabled_module
 + plugin1
 + plugin2
 
@@ -34,5 +36,6 @@ The missing2 (id=missing2, path=file:/missing2.xml) plugin requires "com.intelli
 The missing3 (id=missing3, path=file:/missing3.xml) plugin requires "missing2" plugin to be enabled.
 The missing1 (id=missing1, path=file:/missing1.xml) plugin requires "com.intellij.modules.missing" plugin to be installed.
 The cycle0 (id=cycle0, path=file:/cycle0.xml) plugin requires "cycle1" plugin to be enabled.
+The incompatible_with_enabled_module (id=incompatible_with_enabled_module, path=file:/incompatible_with_enabled_module.xml) plugin requires "plugin0" plugin to be disabled.
 <br><a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>
