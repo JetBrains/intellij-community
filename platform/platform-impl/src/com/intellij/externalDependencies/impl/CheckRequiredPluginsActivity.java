@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class CheckRequiredPluginsActivity implements StartupActivity.DumbAware {
+final class CheckRequiredPluginsActivity implements StartupActivity {
   private static final Logger LOG = Logger.getInstance(CheckRequiredPluginsActivity.class);
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Required Plugins", NotificationDisplayType.BALLOON, true);
 
