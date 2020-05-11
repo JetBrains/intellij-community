@@ -124,7 +124,7 @@ class CompilationOutputsUploader {
     }
 
     File zipCopy = new File(tmpDir, cachePath)
-    FileUtil.rename(zipFile, zipCopy)
+    move(zipFile, zipCopy)
     // Publish artifact for dependent configuration
     if (publishTeamCityArtifacts) context.messages.artifactBuilt(zipCopy.absolutePath)
     return !exists
@@ -135,7 +135,7 @@ class CompilationOutputsUploader {
     File sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
     File sourceStateFileCopy = new File(tmpDir, metadataPath)
-    FileUtil.rename(sourceStateFile, sourceStateFileCopy)
+    move(sourceStateFile, sourceStateFileCopy)
   }
 
   void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
@@ -158,7 +158,7 @@ class CompilationOutputsUploader {
         uploadedOutputsCount.incrementAndGet()
       }
       File zipCopy = new File(tmpDir, sourcePath)
-      FileUtil.rename(zipFile, zipCopy)
+      move(zipFile, zipCopy)
     }
   }
 
@@ -201,6 +201,12 @@ class CompilationOutputsUploader {
     File commitHistoryFile = new File(tmpDir, COMMIT_HISTORY_FILE)
     commitHistoryFile.write(jsonAsString)
     uploader.upload(COMMIT_HISTORY_FILE, commitHistoryFile)
+  }
+
+  private static move(File src, File dst) {
+    if (!src.exists()) throw new IllegalStateException("File $src doesn't exist.")
+
+    FileUtil.rename(src, dst)
   }
 
   @CompileStatic
