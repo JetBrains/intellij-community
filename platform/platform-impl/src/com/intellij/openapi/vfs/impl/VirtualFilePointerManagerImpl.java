@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
 
 public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);
-  private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
   static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
   private static final VirtualFilePointerListener NULL_LISTENER = new VirtualFilePointerListener() {
@@ -484,7 +483,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           addRelevantPointers((VirtualFileSystemEntry)createEvent.getParent(), createEvent.getChildNameId(), toFireEvents, fireSubdirectoryPointers, fs);
           // when new file created its UrlPartNode should be converted to id-based FilePointerPartNode to save memory
           toUpdateUrl.putAllValues(toFireEvents);
-
         }
         else if (event instanceof VFileCopyEvent) {
           VFileCopyEvent copyEvent = (VFileCopyEvent)event;
@@ -632,7 +630,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         assert after != null : "can't invalidate inside modification";
         String urlAfter = after.second;
         VirtualFile fileAfter = after.first;
-        if (URL_COMPARATOR.compare(urlBefore, urlAfter) != 0 || !node.urlEndsWithName(urlAfter, fileAfter)) {
+        // exact comparision because we want to fire events on rename even under case-insensitive FS
+        if (!urlBefore.equals(urlAfter) || !node.urlEndsWithName(urlAfter, fileAfter)) {
           VirtualFileSystem fs = virtualFileManager.getFileSystem(VirtualFileManager.extractProtocol(urlAfter));
           if (fs instanceof NewVirtualFileSystem) {
             List<VirtualFilePointerImpl> myPointers = new SmartList<>();

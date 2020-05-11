@@ -300,6 +300,10 @@ public class RefreshWorker {
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
+    if (!fs.isCaseSensitive()) {
+      // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
+      name = fs.getCanonicallyCasedName(file);
+    }
     return new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
