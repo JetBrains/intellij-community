@@ -1801,10 +1801,8 @@ public final class PluginManagerCore {
       if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
 
       result = false;
-      IdeaPluginDescriptor dep = idMap.get(incompatibleId);
-      String depName = dep == null ? null : dep.getName();
-      String presentableName = toPresentableName(depName == null ? incompatibleId.getIdString() : depName);
-      errors.add(descriptor.formatErrorMessage("requires " + presentableName + " plugin to be disabled"));
+      String presentableName = toPresentableName(incompatibleId.getIdString());
+      errors.add(descriptor.formatErrorMessage("is incompatible with the IDE containing module " + presentableName));
     }
 
     // no deps at all or all are optional
