@@ -20,12 +20,10 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -282,15 +280,17 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (!ExpressionUtils.isConversionToStringNecessary(call, false)) {
         // report naked `new StringBuilder().toString()`
         final PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-        if (parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS) {
-          // if there is a polyadic expression where all the operands are `new StringBuilder().toString()`
-          // then it is wrong to report all the `toString` calls as redundant: at least one of them should call
-          // `toString()`, let's choose the last one to remain with `toString()`
+        if (parent instanceof PsiPolyadicExpression) {
+          if (((PsiPolyadicExpression)parent).getOperationTokenType() != JavaTokenType.PLUS) return null;
+
           final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-          final PsiExpression lastChild = PsiUtil.skipParenthesizedExprDown(polyadicExpression.getOperands()[polyadicExpression.getOperands().length - 1]);
-          if (lastChild == call) {
-            return null;
-          }
+          final PsiExpression[] operands = polyadicExpression.getOperands();
+
+          final boolean hasStringOperand = Arrays.stream(operands)
+            .filter(operand -> operand != call)
+            .anyMatch(RedundantStringOperationVisitor::isOperandOfStringType);
+
+          if (!hasStringOperand) return null;
         }
         return getProblem(call, "inspection.redundant.string.call.message");
       }
@@ -299,6 +299,56 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (!STRING_SUBSTRING.test(substringCall)) return null;
 
       return getProblem(call, "inspection.redundant.string.call.message");
+    }
+
+    @Contract("null -> false")
+    private static boolean isOperandOfStringType(final PsiExpression op) {
+      final PsiExpression operand = PsiUtil.skipParenthesizedExprDown(op);
+
+      if (operand == null) return false;
+
+      if (operand instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
+        final PsiElement resolve = referenceExpression.resolve();
+        final PsiType type;
+        if (resolve instanceof PsiVariable) {
+          type = ((PsiVariable)resolve).getType();
+        }
+        else if (resolve instanceof PsiMethod && ((PsiMethod)resolve).getReturnType() != null) {
+          type = ((PsiMethod)resolve).getReturnType();
+        }
+        else if (resolve instanceof PsiExpression && ((PsiExpression)resolve).getType() != null) {
+          type = ((PsiExpression)resolve).getType();
+        }
+        else {
+          return false;
+        }
+        if (type != null && type.equalsToText(String.class.getName())) {
+          return true;
+        }
+      }
+      else if (operand instanceof PsiMethodCallExpression) {
+        if (STRING_BUILDER_TO_STRING.matches(operand)) return false;
+
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method != null && method.getReturnType() != null && method.getReturnType().equalsToText(String.class.getName())) {
+          return true;
+        }
+      }
+      else if (operand instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression expression = (PsiPolyadicExpression)operand;
+        if (expression.getType() != null && expression.getType().equalsToText(String.class.getName())) {
+          return true;
+        }
+      }
+      else {
+        final String value = tryCast(ExpressionUtils.computeConstantExpression(operand), String.class);
+        if (value != null) {
+          return true;
+        }
+      }
+      return false;
     }
 
     @Nullable
