@@ -15,13 +15,18 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import com.intellij.workspace.api.ModuleDependencyItem
+import com.intellij.workspace.api.ModuleEntity
+import com.intellij.workspace.api.TypedEntityStorageBuilder
+import com.intellij.workspace.api.addModuleEntity
+import com.intellij.workspace.ide.NonPersistentEntitySource
+import com.intellij.workspace.ide.WorkspaceModel
+import org.junit.*
+import org.junit.Assert.assertEquals
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.io.File
@@ -56,7 +61,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   @Before
   fun prepareProject() {
     val projectDir = temporaryDirectoryRule.newPath("project").toFile()
-    logExecutionTimeMillis("Project generation") {
+    logExecutionTimeInMillis("Project generation") {
       generateProject(projectDir)
     }
     project = loadTestProject(projectDir, disposableRule)
@@ -64,23 +69,24 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Test
   fun `test base project actions`() = WriteCommandAction.runWriteCommandAction(project) {
+    // To enable execution at new project model set -Dide.new.project.model=true in Run Configuration
     // To enable execution at old project model set -Dide.workspace.model.jps.enabled=false in Run Configuration
     val antLibName = "ant"
     val mavenLibName = "maven"
     val moduleManager = ModuleManager.getInstance(project)
 
     val modules = mutableListOf<Module>()
-    logExecutionTimeMillis("Hundred modules creation") {
+    logExecutionTimeInMillis("Hundred modules creation") {
       (1..100).forEach {
         val modifiableModel = moduleManager.modifiableModel
         modules.add(modifiableModel.newModule(File(project.basePath, "$TEST_MODULE_PREFIX$it.iml").path, EmptyModuleType.getInstance().id))
         modifiableModel.commit()
       }
     }
-    Assert.assertEquals(modulesCount + 100, moduleManager.modules.size)
+    assertEquals(modulesCount + 100, moduleManager.modules.size)
 
     val library = createProjectLibrary(mavenLibName)
-    logExecutionTimeMillis("Add project library at hundred modules") {
+    logExecutionTimeInMillis("Add project library at hundred modules") {
       modules.forEach { module ->
         ModuleRootManager.getInstance(module).modifiableModel.let {
           it.addLibraryEntry(library)
@@ -89,19 +95,19 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
       }
     }
 
-    logExecutionTimeMillis("Add module library at hundred modules") {
+    logExecutionTimeInMillis("Add module library at hundred modules") {
       modules.forEach { module -> ModuleRootModificationUtil.addModuleLibrary(module, antLibName, listOf(), emptyList()) }
     }
 
-    logExecutionTimeMillis("Loop through the contentRoots of all modules") {
+    logExecutionTimeInMillis("Loop through the contentRoots of all modules") {
       moduleManager.modules.forEach { ModuleRootManager.getInstance(it).contentRoots.forEach { entry -> entry.canonicalFile } }
     }
 
-    logExecutionTimeMillis("Loop through the orderEntries of all modules") {
+    logExecutionTimeInMillis("Loop through the orderEntries of all modules") {
       moduleManager.modules.forEach { ModuleRootManager.getInstance(it).orderEntries.forEach { entry -> entry.isValid }}
     }
 
-    logExecutionTimeMillis("Find and remove project library from hundred modules") {
+    logExecutionTimeInMillis("Find and remove project library from hundred modules") {
       modules.forEach { module ->
         ModuleRootManager.getInstance(module).modifiableModel.let {
           it.removeOrderEntry(it.findLibraryOrderEntry(library)!!)
@@ -110,7 +116,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
       }
     }
 
-    logExecutionTimeMillis("Find and remove module library from hundred modules") {
+    logExecutionTimeInMillis("Find and remove module library from hundred modules") {
       modules.forEach { module ->
         ModuleRootManager.getInstance(module).modifiableModel.let {
           val moduleLibrary = it.moduleLibraryTable.getLibraryByName(antLibName)!!
@@ -120,33 +126,70 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
       }
     }
 
-    logExecutionTimeMillis("Hundred modules remove") {
+    logExecutionTimeInMillis("Hundred modules remove") {
       modules.forEach {
         val modifiableModel = moduleManager.modifiableModel
         modifiableModel.disposeModule(it)
         modifiableModel.commit()
       }
     }
-    Assert.assertEquals(modulesCount, moduleManager.modules.size)
+    assertEquals(modulesCount, moduleManager.modules.size)
+  }
+
+  @Test
+  fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
+    Assume.assumeTrue("Not applicable to the old project model", Registry.`is`("ide.new.project.model"))
+
+    val workspaceModel = WorkspaceModel.getInstance(project)
+    var diff = TypedEntityStorageBuilder.from(workspaceModel.entityStore.current)
+
+    val moduleType = EmptyModuleType.getInstance().id
+    val dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
+    logExecutionTimeInMillis("Hundred entries creation in store") {
+      (1..100).forEach {
+        diff.addModuleEntity("$TEST_MODULE_PREFIX$it", dependencies, NonPersistentEntitySource, moduleType)
+      }
+      workspaceModel.updateProjectModel { it.addDiff(diff) }
+    }
+
+    var entities = workspaceModel.entityStore.current.entities(ModuleEntity::class.java)
+    logExecutionTimeInInNano("Loop thorough the entities from store") { entities.forEach { it.name } }
+    assertEquals(modulesCount + 100, entities.toList().size)
+
+    diff = TypedEntityStorageBuilder.from(workspaceModel.entityStore.current)
+    logExecutionTimeInMillis("Remove hundred entities from store") {
+      workspaceModel.entityStore.current.entities(ModuleEntity::class.java).take(100).forEach { diff.removeEntity(it) }
+      workspaceModel.updateProjectModel { it.addDiff(diff) }
+    }
+
+    entities = workspaceModel.entityStore.current.entities(ModuleEntity::class.java)
+    assertEquals(modulesCount, entities.toList().size)
   }
 
   private fun loadTestProject(projectDir: File, disposableRule: DisposableRule): Project {
-    val project = logExecutionTimeMillis<Project>("Project load") {
-      return@logExecutionTimeMillis ProjectManager.getInstance().loadAndOpenProject(projectDir)!!
+    val project = logExecutionTimeInMillis<Project>("Project load") {
+      return@logExecutionTimeInMillis ProjectManager.getInstance().loadAndOpenProject(projectDir)!!
     }
     invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().openTestProject(project) }
     disposableRule.disposable.attach { invokeAndWaitIfNeeded { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } }
     return project
   }
 
-  private fun logExecutionTimeMillis(message: String, block: () -> Unit) {
+  private fun logExecutionTimeInMillis(message: String, block: () -> Unit) {
     val start = System.currentTimeMillis()
     block()
     val end = System.currentTimeMillis() - start
     println("$message: ${end}ms")
   }
 
-  private fun <T> logExecutionTimeMillis(message: String, block: () -> T): T {
+  private fun logExecutionTimeInInNano(message: String, block: () -> Unit) {
+    val start = System.nanoTime()
+    block()
+    val end = System.nanoTime() - start
+    println("$message: ${end}ns")
+  }
+
+  private fun <T> logExecutionTimeInMillis(message: String, block: () -> T): T {
     val start = System.currentTimeMillis()
     val result = block()
     val end = System.currentTimeMillis() - start
