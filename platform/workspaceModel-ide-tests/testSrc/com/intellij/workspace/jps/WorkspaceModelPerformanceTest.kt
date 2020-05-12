@@ -138,7 +138,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
-    Assume.assumeTrue("Not applicable to the old project model", Registry.`is`("ide.new.project.model"))
+    if (!Registry.`is`("ide.new.project.model")) return@runWriteCommandAction
 
     val workspaceModel = WorkspaceModel.getInstance(project)
     var diff = TypedEntityStorageBuilder.from(workspaceModel.entityStore.current)
