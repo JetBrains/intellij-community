@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
@@ -24,7 +25,9 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
+import com.jetbrains.jdi.StringReferenceImpl;
 import com.sun.jdi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public class ClassRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance(ClassRenderer.class);
@@ -83,7 +87,34 @@ public class ClassRenderer extends NodeRendererImpl{
   @Override
   public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
     throws EvaluateException {
-    return calcLabel(descriptor, evaluationContext);
+    return calcLabelAsync(descriptor, evaluationContext, labelListener);
+  }
+
+  protected static String calcLabelAsync(ValueDescriptor descriptor,
+                                         EvaluationContext evaluationContext,
+                                         DescriptorLabelListener labelListener)
+    throws EvaluateException {
+    Value value = descriptor.getValue();
+    CompletableFuture<String> future;
+    if (value instanceof StringReferenceImpl) {
+      DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
+      future = DebuggerUtilsAsync.getStringValue((StringReference)value, evaluationContext.getSuspendContext());
+    }
+    else {
+      future = CompletableFuture.completedFuture(calcLabel(descriptor, evaluationContext));
+    }
+    if (!future.isDone()) {
+      future.whenComplete((s, throwable) -> {
+        if (throwable != null) {
+          descriptor.setValueLabelFailed((EvaluateException)throwable);
+        }
+        else {
+          descriptor.setValueLabel(s);
+        }
+        labelListener.labelChanged();
+      });
+    }
+    return future.getNow(XDebuggerUIConstants.getCollectingDataMessage());
   }
 
   protected static String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext) throws EvaluateException {
