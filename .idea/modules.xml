@@ -452,6 +452,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/room/intellij.android.room.tests.iml" filepath="$PROJECT_DIR$/android/room/intellij.android.room.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/rt/intellij.android.rt.iml" filepath="$PROJECT_DIR$/android/rt/intellij.android.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.iml" filepath="$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.tests.iml" filepath="$PROJECT_DIR$/android/sdk-updates/intellij.android.sdkUpdates.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/smali/intellij.android.smali.iml" filepath="$PROJECT_DIR$/android/smali/intellij.android.smali.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/intellij.android.studio.main.iml" filepath="$PROJECT_DIR$/android/android/intellij.android.studio.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-test-framework/intellij.android.testFramework.iml" filepath="$PROJECT_DIR$/android/android-test-framework/intellij.android.testFramework.iml" />
