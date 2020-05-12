@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
@@ -83,6 +84,7 @@ public class ClsResolveTest {
   public void tearDown() throws Exception {
     myFixture.tearDown();
     myFixture = null;
+    JarFileSystemImpl.cleanupForNextTest();
   }
 
   @Test
