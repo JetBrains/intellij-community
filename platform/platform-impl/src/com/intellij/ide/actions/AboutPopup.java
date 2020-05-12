@@ -453,7 +453,7 @@ public final class AboutPopup {
     }
 
     public String getText() {
-      return myInfo.toString() + getExtraInfo();
+      return myInfo + getExtraInfo();
     }
 
     private class TextRenderer {

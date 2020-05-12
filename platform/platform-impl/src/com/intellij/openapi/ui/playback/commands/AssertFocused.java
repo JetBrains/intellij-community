@@ -96,7 +96,7 @@ public class AssertFocused extends AbstractCommand {
       untestedText.append(each).append("=").append(untested.get(each));
     }
 
-    context.message("Untested info: " + untestedText.toString(), getLine());
+    context.message("Untested info: " + untestedText, getLine());
   }
 
 }

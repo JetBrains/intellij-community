@@ -33,7 +33,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
       final StringBuilder buff = new StringBuilder("Options:");
       printArgs(args, buff);
       buff.append("\n");
-      System.out.println(buff.toString());
+      System.out.println(buff);
     }
 
     // TODO[romeo] : if config given - parse config and set attrs
@@ -99,7 +99,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     buff.append("\n");
     buff.append("Invalid options or syntax:");
     printArgs(args, buff);
-    System.err.println(buff.toString());
+    System.err.println(buff);
     opts.printHelpAndExit();
   }
 }

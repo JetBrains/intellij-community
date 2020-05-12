@@ -67,7 +67,7 @@ public class ReplaceConstructorWithSettersChainInfo extends FixableUsageInfo {
           }
 
           final PsiExpression settersChain = elementFactory.createExpressionFromText(
-            "new " + myBuilderClass + "()." + buf.toString() + "create" + StringUtil.capitalize(constructor.getName()) + "()",
+            "new " + myBuilderClass + "()." + buf + "create" + StringUtil.capitalize(constructor.getName()) + "()",
             null);
 
           styleManager.shortenClassReferences(expr.replace(settersChain));

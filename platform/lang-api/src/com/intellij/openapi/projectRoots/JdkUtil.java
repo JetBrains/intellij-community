@@ -582,7 +582,7 @@ public final class JdkUtil {
           CommandLineWrapperUtil.fillClasspathJarFile(manifest, classPath.toString(), classpathJarFile);
 
           jarFileValue.getTargetValue().onSuccess(value -> {
-            commandLineContent.put(value, jarFileContentPrefix + classPath.toString());
+            commandLineContent.put(value, jarFileContentPrefix + classPath);
           });
         }
         catch (IOException | ExecutionException e) {

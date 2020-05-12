@@ -239,15 +239,15 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
       buf.append(myParametersMap.get(pureParamName).getFieldName());
     }
     return myElementFactory.createMethodFromText("public " +
-                                               constructor.getName() +
-                                               " " +
-                                               createMethodName +
-                                               "(){\n return new " +
-                                               constructor.getName() +
-                                               "(" +
-                                               buf.toString() +
-                                               ")" +
-                                               ";\n}", constructor);
+                                                 constructor.getName() +
+                                                 " " +
+                                                 createMethodName +
+                                                 "(){\n return new " +
+                                                 constructor.getName() +
+                                                 "(" +
+                                                 buf +
+                                                 ")" +
+                                                 ";\n}", constructor);
   }
 
   private PsiMethod getWorkingConstructor() {

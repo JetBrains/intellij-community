@@ -100,7 +100,7 @@ public class PathRelativizerService {
     if (LOG.isDebugEnabled()) {
       final StringBuilder logBuilder = new StringBuilder();
       myUnhandledPaths.forEach(it -> logBuilder.append(it).append("\n"));
-      LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder.toString());
+      LOG.debug("Unhandled by relativizer paths:" + "\n" + logBuilder);
       myUnhandledPaths.clear();
     }
   }

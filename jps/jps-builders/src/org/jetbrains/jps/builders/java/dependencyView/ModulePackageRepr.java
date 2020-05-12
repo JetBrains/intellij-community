@@ -110,7 +110,7 @@ public class ModulePackageRepr extends Proto {
         sb.append(" ").append(s);
       }
     }
-    stream.println(sb.toString());
+    stream.println(sb);
   }
 
   public static DataExternalizer<ModulePackageRepr> externalizer(final DependencyContext context) {

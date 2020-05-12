@@ -233,7 +233,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     final String hash = Integer.toHexString(fingerprint);
     out.write(hash);
     if (logBuilder != null) {
-      LOG.debug("Configuration hash for " + getPresentableName() + ": " + hash + "\n" + logBuilder.toString());
+      LOG.debug("Configuration hash for " + getPresentableName() + ": " + hash + "\n" + logBuilder);
     }
   }
 

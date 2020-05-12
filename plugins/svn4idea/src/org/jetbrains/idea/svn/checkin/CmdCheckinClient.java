@@ -208,12 +208,12 @@ public class CmdCheckinClient extends BaseSvnClient implements CheckinClient {
               myHandler.committedRevision(myCommittedRevision);
             }
           } catch (NumberFormatException e) {
-            final String message = "Wrong committed revision number: " + num.toString() + ", string: " + line;
+            final String message = "Wrong committed revision number: " + num + ", string: " + line;
             LOG.info(message, e);
             throw new SvnBindException(message);
           }
         } else {
-          final String message = "Missing committed revision number: " + num.toString() + ", string: " + line;
+          final String message = "Missing committed revision number: " + num + ", string: " + line;
           LOG.info(message);
           throw new SvnBindException(message);
         }

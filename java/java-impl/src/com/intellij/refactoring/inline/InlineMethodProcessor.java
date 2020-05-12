@@ -541,7 +541,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         }
 
         exprs[parameters.length - 1] = JavaPsiFacade.getElementFactory(constructorCall.getProject())
-          .createExpressionFromText("new " + arrayType.getCanonicalText() + "[]{" + varargs.toString() + "}", constructorCall);
+          .createExpressionFromText("new " + arrayType.getCanonicalText() + "[]{" + varargs + "}", constructorCall);
 
         instanceCreationArguments = exprs;
       }

@@ -53,7 +53,7 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
           remainingTokens.append("\"").append(checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
-        fail("Too many tokens. Following tokens: " + remainingTokens.toString());
+        fail("Too many tokens. Following tokens: " + remainingTokens);
       }
       assertEquals("Token offset mismatch at position " + idx, tokenPos, lexer.getTokenStart());
       String tokenName = checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString();

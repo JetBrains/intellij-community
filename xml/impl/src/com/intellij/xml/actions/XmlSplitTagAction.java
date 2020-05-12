@@ -112,7 +112,7 @@ public class XmlSplitTagAction implements IntentionAction {
         attrsWoId.append(attribute.getText()).append(" ");
       }
     }
-    return attrsWoId.length() == 0 ? "" : " " + attrsWoId.toString();
+    return attrsWoId.length() == 0 ? "" : " " + attrsWoId;
   } 
 
   @Override

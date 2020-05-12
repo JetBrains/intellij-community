@@ -312,7 +312,7 @@ public class CommitPresentationUtil {
       }
     }
 
-    return head + branchesText.toString();
+    return head + branchesText;
   }
 
   @NotNull

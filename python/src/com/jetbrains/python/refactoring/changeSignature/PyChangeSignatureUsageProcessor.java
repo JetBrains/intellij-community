@@ -116,7 +116,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
         final PyExpression newCall;
         if (call instanceof PyDecorator) {
-          newCall = elementGenerator.createDecoratorList("@" + builder.toString()).getDecorators()[0];
+          newCall = elementGenerator.createDecoratorList("@" + builder).getDecorators()[0];
         }
         else {
           newCall = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), builder.toString());

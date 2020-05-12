@@ -396,7 +396,7 @@ public class JavaDocUtil {
         }
       }
     }
-    return memberText.substring(0, parenthIndex + 1) + buffer.toString() + ")";
+    return memberText.substring(0, parenthIndex + 1) + buffer + ")";
   }
 
   public static PsiClassType[] getImplementsList(PsiClass aClass) {

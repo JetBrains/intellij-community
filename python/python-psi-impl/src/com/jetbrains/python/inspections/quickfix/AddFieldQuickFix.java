@@ -221,7 +221,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           sb.append(params[i].getText());
         }
         sb.append(")");
-        functionText += "    " + sb.toString();
+        functionText += "    " + sb;
       }
       else {
         functionText += "    pass";

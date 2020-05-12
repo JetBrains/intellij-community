@@ -465,7 +465,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         try {
           int i = Integer.parseInt(line);
           if (flag) {
-            LOG.warn("Unexpected strings in output:\n" + sb.toString());
+            LOG.warn("Unexpected strings in output:\n" + sb);
           }
           return i;
         }

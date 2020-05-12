@@ -108,7 +108,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
       }
       // report error if converter isn't registered.
       if (builder != null) {
-        throw new CmdlineArgsValidationException("Unsupported format option '" + outputFormat + "'. Please use one of: " + builder.toString());
+        throw new CmdlineArgsValidationException("Unsupported format option '" + outputFormat + "'. Please use one of: " + builder);
       }
     }
   }

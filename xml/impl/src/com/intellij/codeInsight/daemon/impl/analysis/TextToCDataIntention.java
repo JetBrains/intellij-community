@@ -73,7 +73,7 @@ public class TextToCDataIntention implements IntentionAction {
     }
 
     int begin = texts.get(0).getTextRange().getStartOffset();
-    String replacement = "<![CDATA[" + text.toString() + "]]>";
+    String replacement = "<![CDATA[" + text + "]]>";
     editor.getDocument().replaceString(begin, texts.get(texts.size() - 1).getTextRange().getEndOffset(), replacement);
     editor.getCaretModel().moveToOffset(begin + replacement.length());
   }

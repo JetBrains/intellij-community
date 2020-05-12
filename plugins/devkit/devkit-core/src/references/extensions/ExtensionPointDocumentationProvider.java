@@ -45,7 +45,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     return moduleName +
            "<b>" + extensionPoint.getEffectiveQualifiedName() + "</b>" +
            " (" + epDeclarationFile.getName() + ")<br/>" +
-           epClassesText.toString();
+           epClassesText;
   }
 
   @Override

@@ -208,7 +208,7 @@ public final class UnixProcessManager {
           errorStr.append(s).append("\n");
         }
         if (throwOnError && errorStr.length() > 0) {
-          throw new IOException("Error reading ps output:" + errorStr.toString());
+          throw new IOException("Error reading ps output:" + errorStr);
         }
       }
     }
