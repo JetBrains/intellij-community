@@ -11,6 +11,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -113,7 +114,7 @@ public class ArtifactPropertiesEditors {
     private final ArtifactProperties<?> myProperties;
     private final ArtifactPropertiesProvider myProvider;
 
-    private PropertiesEditorInfo(ArtifactPropertiesProvider provider) {
+    private PropertiesEditorInfo(@NotNull ArtifactPropertiesProvider provider) {
       myProvider = provider;
       myProperties = provider.createProperties(myOriginalArtifact.getArtifactType());
       final ArtifactProperties<?> originalProperties = myOriginalArtifact.getProperties(provider);
