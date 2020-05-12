@@ -99,7 +99,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
 
   @NotNull
   public List<String> getComponents() {
-    return myComponents;
+    return Collections.unmodifiableList(myComponents);
   }
 
   public int getComponentCount() {
