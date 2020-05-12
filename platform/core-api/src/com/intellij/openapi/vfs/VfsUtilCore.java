@@ -413,7 +413,7 @@ public class VfsUtilCore {
    * <br />
    * It could be better and more reliably to use the {@link VirtualFile#toPath()}
    * <br />
-   * @implNote The takes the part after ://, trims !/ at the end and turns it as a File path
+   * @implNote it takes the part after ://, trims !/ at the end and turns it into a File path
    *
    * @see VirtualFile#toPathOrNull()
    * @see VirtualFile#toPath()
@@ -439,7 +439,7 @@ public class VfsUtilCore {
    * <br />
    * It could be better and more reliably to use the {@link VirtualFile#toPath()}
    * <br />
-   * @implNote The takes the part after ://, trims !/ at the end and turns it as a File path
+   * @implNote for every item, it takes the part after ://, trims !/ at the end and turns it into a File path
    * @see #virtualToIoFile(VirtualFile)
    * @see VirtualFile#toPathOrNull()
    * @see VirtualFile#toPath()
