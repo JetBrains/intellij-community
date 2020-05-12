@@ -308,22 +308,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (operand == null) return false;
 
       if (operand instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
-        final PsiElement resolve = referenceExpression.resolve();
-        final PsiType type;
-        if (resolve instanceof PsiVariable) {
-          type = ((PsiVariable)resolve).getType();
-        }
-        else if (resolve instanceof PsiMethod && ((PsiMethod)resolve).getReturnType() != null) {
-          type = ((PsiMethod)resolve).getReturnType();
-        }
-        else if (resolve instanceof PsiExpression && ((PsiExpression)resolve).getType() != null) {
-          type = ((PsiExpression)resolve).getType();
-        }
-        else {
-          return false;
-        }
-        if (type != null && type.equalsToText(String.class.getName())) {
+        if (operand.getType() != null && operand.getType().equalsToText(String.class.getName())) {
           return true;
         }
       }
@@ -722,7 +707,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     private static void extractSideEffects(PsiExpression result, PsiStatement statement) {
       List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(result);
-      if (Objects.equals(Collections.singletonList(result), sideEffects)) return;
+      if (Collections.singletonList(result).equals(sideEffects)) return;
 
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, result);
       if (statements.length > 0) {
