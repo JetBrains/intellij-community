@@ -15,16 +15,9 @@
 
     <projectService serviceImplementation="com.intellij.coverage.CoverageOptionsProvider"/>
     <projectService serviceImplementation="com.intellij.coverage.view.CoverageViewManager"/>
+    <projectService serviceImplementation="com.intellij.coverage.CoverageDataManagerImpl"/>
     <executor implementation="com.intellij.coverage.CoverageExecutor" />
   </extensions>
-
-  <project-components>
-    <component>
-      <interface-class>com.intellij.coverage.CoverageDataManager</interface-class>
-      <implementation-class>com.intellij.coverage.CoverageDataManagerImpl</implementation-class>
-      <option name="workspace" value="true"/>
-    </component>
-  </project-components>
 
   <actions>
     <group id="CoverageMenu">

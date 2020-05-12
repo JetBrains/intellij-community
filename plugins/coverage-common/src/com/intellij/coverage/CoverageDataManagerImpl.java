@@ -17,6 +17,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -38,8 +42,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -66,7 +68,8 @@ import java.util.*;
 /**
  * @author ven
  */
-public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable{
+@State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable, PersistentStateComponent<Element> {
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
@@ -195,7 +198,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(@NotNull Element element) {
     for (Element suiteElement : element.getChildren(SUITE)) {
       final CoverageRunner coverageRunner = BaseCoverageSuite.readRunnerAttribute(suiteElement);
       // skip unknown runners
@@ -232,13 +235,16 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
     }
   }
 
+  @Nullable
   @Override
-  public void writeExternal(final Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     for (CoverageSuite coverageSuite : myCoverageSuites) {
       final Element suiteElement = new Element(SUITE);
       element.addContent(suiteElement);
       coverageSuite.writeExternal(suiteElement);
     }
+    return element;
   }
 
   @Override
