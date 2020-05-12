@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.SystemInfo
@@ -12,7 +12,6 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
-import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -26,6 +25,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipException
 import java.util.zip.ZipOutputStream
 
+@Suppress("UsePropertyAccessSyntax")
 class DecompressorTest {
   @Rule @JvmField var tempDir = TempDirectory()
 
@@ -181,7 +181,7 @@ class DecompressorTest {
     }
     val dir = tempDir.newDirectory("unpacked")
     Decompressor.Tar(tar).withSymlinks().extract(dir)
-    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameBinaryContentAs(File(dir, "f").toPath())
   }
 
   @Test fun zipSymlinks() {
@@ -194,7 +194,7 @@ class DecompressorTest {
     }
     val dir = tempDir.newDirectory("unpacked")
     Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().extract(dir)
-    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameBinaryContentAs(File(dir, "f").toPath())
   }
 
   @Test fun tarRogueSymlinks() {
@@ -258,8 +258,7 @@ class DecompressorTest {
     assertThat(File(dir, "a/b")).doesNotExist()
     assertThat(File(dir, "b")).doesNotExist()
 
-    //it must call filter before cut-dirs
-    Assert.assertEquals(setOf("a/b/c.txt", "skip.txt"), filterLog.toSet())
+    assertThat(filterLog).containsExactlyInAnyOrder("a/b/c.txt", "skip.txt")
   }
 
   @Test fun prefixPathsFilesInTarWithSymlinks() {
@@ -274,7 +273,7 @@ class DecompressorTest {
     Decompressor.Tar(tar).removePrefixPath("a").extract(dir)
 
     assertThat(File(dir, "f")).isFile()
-    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameBinaryContentAs(File(dir, "f").toPath())
   }
 
   @Test fun prefixPathFillMatch() {
@@ -345,7 +344,7 @@ class DecompressorTest {
     Decompressor.Tar(tar).removePrefixPath("a/b").extract(dir)
 
     assertThat(File(dir, "f")).isFile()
-    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameBinaryContentAs(File(dir, "f").toPath())
   }
 
   @Test fun prefixPathZipSymlink() {
@@ -360,7 +359,7 @@ class DecompressorTest {
     Decompressor.Zip(zip).withUnixPermissionsAndSymlinks().removePrefixPath("a/b").extract(dir)
 
     assertThat(File(dir, "f")).isFile()
-    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameContentAs(File(dir, "f").toPath())
+    assertThat(File(dir, "links/ok").toPath()).isSymbolicLink().hasSameBinaryContentAs(File(dir, "f").toPath())
   }
 
   @Test fun prefixPathRogueSymlinks() {
