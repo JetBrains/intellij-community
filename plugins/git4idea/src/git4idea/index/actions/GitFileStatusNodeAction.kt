@@ -2,6 +2,7 @@
 package git4idea.index.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -41,6 +42,7 @@ abstract class GitFileStatusNodeAction(dynamicText: Supplier<String>) : DumbAwar
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
     val paths = e.getRequiredData(GIT_FILE_STATUS_NODES_STREAM).filter(this::matches).map { it.filePath }.toList()
+    FileDocumentManager.getInstance().saveAllDocuments()
     val exceptions = runProcess(project, progressTitle(), true) {
       performAction(project, paths)
     }
