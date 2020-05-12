@@ -1440,8 +1440,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     private final List<RangeHighlighterEx> myHighlighters = new ArrayList<>();
     private @Nullable BufferedImage myCacheLevel1;
     private @Nullable BufferedImage myCacheLevel2;
-    private int myCacheStartLine;
-    private int myCacheEndLine;
+    private int myCacheFromY;
+    private int myCacheToY;
     private int myStartVisualLine;
     private int myEndVisualLine;
     private int myRelativeY;
@@ -1509,19 +1509,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             EditorComponentImpl content = myEditor.getContentComponent();
 
             int gutterWidth = gutter.getWidth();
-            if (myCacheLevel2 == null || myCacheStartLine > myStartVisualLine || myCacheEndLine < myEndVisualLine) {
-              myCacheStartLine = fitLineToEditor(myVisualLine - myCachePreviewLines);
-              myCacheEndLine = fitLineToEditor(myCacheStartLine + 2 * myCachePreviewLines + 1);
-              int cacheStartY = myEditor.visualLineToY(myCacheStartLine);
-              if (myCacheLevel2 == null) {
-                myCacheLevel2 = ImageUtil
-                  .createImage(g, size.width, myEditor.visualLineToY(myCacheEndLine) - cacheStartY + myEditor.getLineHeight(),
-                               BufferedImage.TYPE_INT_RGB);
-              }
+            int lineHeight = myEditor.getLineHeight();
+            if (myCacheLevel2 != null && (myEditor.visualLineToY(myStartVisualLine) < myCacheFromY ||
+                                          myEditor.visualLineToY(myEndVisualLine) + lineHeight > myCacheToY)) {
+              myCacheLevel2 = null;
+            }
+            if (myCacheLevel2 == null) {
+              myCacheFromY = Math.max(0, myEditor.visualLineToY(myVisualLine) - myCachePreviewLines * lineHeight);
+              myCacheToY = Math.min(myEditor.visualLineToY(myEditor.getVisibleLineCount()),
+                                    myCacheFromY + (2 * myCachePreviewLines + 1) * lineHeight);
+              myCacheLevel2 = ImageUtil.createImage(g, size.width, myCacheToY - myCacheFromY, BufferedImage.TYPE_INT_RGB);
               Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
               EditorUIUtil.setupAntialiasing(cg);
-              int lineShift = - cacheStartY;
+              int lineShift = - myCacheFromY;
 
               int shift = JBUIScale.scale(EDITOR_FRAGMENT_POPUP_BORDER) + contentInsets;
               AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
@@ -1545,8 +1546,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
             }
             if (myCacheLevel1 == null) {
-              myCacheLevel1 =
-                ImageUtil.createImage(g, size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+              myCacheLevel1 = ImageUtil.createImage(g, size.width, lineHeight * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
               isDirty = true;
             }
             if (isDirty) {
@@ -1558,14 +1558,13 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());
               int topDisplayedY = Math.max(myEditor.visualLineToY(myStartVisualLine),
-                                           myEditor.visualLineToY(myVisualLine) - myPreviewLines * myEditor.getLineHeight());
-              int cacheStartY = myEditor.visualLineToY(myCacheStartLine);
-              AffineTransform translateInstance = AffineTransform.getTranslateInstance(gutterWidth, cacheStartY - topDisplayedY);
+                                           myEditor.visualLineToY(myVisualLine) - myPreviewLines * lineHeight);
+              AffineTransform translateInstance = AffineTransform.getTranslateInstance(gutterWidth, myCacheFromY - topDisplayedY);
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
               UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
               TIntIntHashMap rightEdges = new TIntIntHashMap();
-              int h = myEditor.getLineHeight() - 2;
+              int h = lineHeight - 2;
 
               EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
               Font font = UIUtil.getFontWithFallback(colorsScheme.getEditorFontName(), Font.PLAIN, colorsScheme.getEditorFontSize());
@@ -1587,7 +1586,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                 Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
                 logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
                 placeToShow.x += R * 3 / 2;
-                placeToShow.y -= cacheStartY - 1;
+                placeToShow.y -= myCacheFromY - 1;
 
                 int w = g2d.getFontMetrics().stringWidth(s);
 
@@ -1615,7 +1614,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                 Shape s = new Rectangle(0, 0, size.width, size.height);
                 double cx = size.width / 2.0;
                 double rx = size.width / 10.0;
-                int ry = myEditor.getLineHeight() * 3 / 2;
+                int ry = lineHeight * 3 / 2;
                 g2.setPaint(new GradientPaint(0, 0, Gray._255.withAlpha(75), 0, ry, Gray._255.withAlpha(10)));
                 double pseudoMajorAxis = size.width - rx * 9 / 5;
                 double cy = 0;
@@ -1643,12 +1642,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           public void hide(boolean ok) {
             super.hide(ok);
             myCacheLevel1 = null;
-            if (myCacheLevel2 != null) {
-              myCacheLevel2 = null;
-              myCacheStartLine = -1;
-              myCacheEndLine = -1;
-            }
-
+            myCacheLevel2 = null;
             myDelayed = false;
           }
         };
