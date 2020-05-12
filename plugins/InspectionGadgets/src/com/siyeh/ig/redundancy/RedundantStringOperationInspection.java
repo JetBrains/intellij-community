@@ -707,7 +707,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     private static void extractSideEffects(PsiExpression result, PsiStatement statement) {
       List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(result);
-      if (Collections.singletonList(result).equals(sideEffects)) return;
+      if (Objects.equals(Collections.singletonList(result), sideEffects)) return;
 
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, result);
       if (statements.length > 0) {
