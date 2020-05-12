@@ -95,7 +95,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
         }
 
         request.bindTargetPort(remotePort).getLocalValue().onSuccess(it -> {
-          remoteConnection.setDebuggerHostName("0.0.0.0");
+          remoteConnection.setDebuggerHostName("localhost");
           remoteConnection.setDebuggerAddress(String.valueOf(it));
         });
         myRemoteConnection = remoteConnection;
