@@ -70,11 +70,6 @@
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
-    <listener class="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager$AccountTokenListener"
-              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
-              activeInHeadlessMode="false" activeInTestMode="false"/>
-
-
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$AccountsListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
@@ -90,7 +85,9 @@
     <listener class="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder$RemovalListener"
               topic="org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-
+    <listener class="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager$AccountTokenListener"
+              topic="org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
 
     <listener class="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTabsManager$RemoteUrlsListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"

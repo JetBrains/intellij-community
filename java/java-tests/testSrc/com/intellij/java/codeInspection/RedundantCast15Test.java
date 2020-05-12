@@ -58,6 +58,7 @@ public class RedundantCast15Test extends LightJavaCodeInsightFixtureTestCase {
   public void testCaseThrowable() { doTest();}
   public void testSafeTempVarName() { doTest();}
   public void testBinaryComparison() { doTest();}
+  public void testQualifierWithCapture() { doTest();}
 
   public void testTypeParameterAccessChecksJava7() {
     doTest();
@@ -81,6 +82,7 @@ public class RedundantCast15Test extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
   public void testDifferentNullness() { doTest();}
+  public void testSuspiciousVarargsCall() { doTest();}
 
   public void testPrimitiveWidening() { doTest(); }
   public void testCastLongLiteral() { doTest(); }

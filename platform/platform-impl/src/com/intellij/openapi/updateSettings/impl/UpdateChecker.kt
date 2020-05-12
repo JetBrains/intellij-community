@@ -310,15 +310,15 @@ object UpdateChecker {
     state: InstalledPluginsState,
     indicator: ProgressIndicator?
   ) {
-    val marketplacePluginIds = MarketplaceRequests.getMarketplacePlugins(indicator)
+    val marketplacePluginIds = MarketplaceRequests.getInstance().getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.map { it.key.idString }.filter { it in marketplacePluginIds }
-    val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
+    val updates = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
       val isOutdated = descriptor == null || VersionComparatorUtil.compare(lastUpdate.version, descriptor.version) > 0
       if (isOutdated) {
         val newDescriptor = try {
-          MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator)
+          MarketplaceRequests.getInstance().loadPluginDescriptor(id.idString, lastUpdate, indicator)
         }
         catch (e: HttpRequests.HttpStatusException) {
           if (e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) continue

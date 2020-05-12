@@ -480,7 +480,7 @@ public class PluginManagerConfigurable
                   }
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
-                      allTags.addAll(MarketplaceRequests.getAllPluginsTags());
+                      allTags.addAll(MarketplaceRequests.getInstance().getAllPluginsTags());
                     }).get();
                   }
                   catch (InterruptedException | ExecutionException e) {
@@ -497,7 +497,7 @@ public class PluginManagerConfigurable
                   LinkedHashSet<String> vendors = new LinkedHashSet<>(customRepositoriesVendors);
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
-                      vendors.addAll(MarketplaceRequests.getAllPluginsVendors());
+                      vendors.addAll(MarketplaceRequests.getInstance().getAllPluginsVendors());
                     }).get();
                   }
                   catch (InterruptedException | ExecutionException e) {
@@ -687,7 +687,7 @@ public class PluginManagerConfigurable
                   return;
                 }
 
-                List<PluginNode> plugins = MarketplaceRequests.searchPlugins(parser.getUrlQuery(), 10000);
+                List<PluginNode> plugins = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000);
                 result.descriptors.addAll(plugins);
 
                 if (parser.searchQuery != null) {
@@ -1600,7 +1600,7 @@ public class PluginManagerConfigurable
     @NotNull @NonNls String showAllQuery
   ) throws IOException {
     addGroup(groups, name, showAllQuery, descriptors -> {
-      List<PluginNode> pluginNodes = MarketplaceRequests.searchPlugins(query, ITEMS_PER_GROUP);
+      List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP);
       descriptors.addAll(pluginNodes);
       return pluginNodes.size() == ITEMS_PER_GROUP;
     });

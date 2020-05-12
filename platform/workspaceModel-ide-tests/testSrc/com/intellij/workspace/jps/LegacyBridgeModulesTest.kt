@@ -59,7 +59,7 @@ class LegacyBridgeModulesTest {
   @Before
   fun prepareProject() {
     project = createEmptyTestProject(temporaryDirectoryRule, disposableRule)
-    virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
+    virtualFileManager = VirtualFileUrlManager.getInstance(project)
   }
 
   @Test

@@ -4,7 +4,6 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
-import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -46,11 +45,6 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                                  (settings, component) -> component.getComponent().setText(settings.getWorkingDirectory()),
                                                  (settings, component) -> settings.setWorkingDirectory(component.getComponent().getText()),
                                                  settings -> isNotEmpty(settings.getWorkingDirectory())));
-
-    EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
-    env.setLabelLocation(BorderLayout.WEST);
-    myFragments.add(SettingsEditorFragment.create("environmentVariables",
-                                                  ExecutionBundle.message("environment.variables.fragment.name"), ExecutionBundle.message("group.java.options"), env));
   }
 
   public List<SettingsEditorFragment<Settings, ?>> getFragments() {

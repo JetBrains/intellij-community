@@ -5,15 +5,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.MatchVariableConstraint;
-import com.intellij.structuralsearch.NamedScriptableDefinition;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.ui.SimpleColoredComponent;
@@ -52,7 +50,7 @@ public class FilterPanel implements FilterTable {
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
-  StructuralSearchProfile myProfile;
+  LanguageFileType myFileType;
 
   final Header myHeader = new Header();
   private final ScriptFilter myScriptFilter = new ScriptFilter(this);
@@ -66,9 +64,9 @@ public class FilterPanel implements FilterTable {
   private Runnable myConstraintChangedCallback;
   boolean myValid;
 
-  public FilterPanel(@NotNull Project project, StructuralSearchProfile profile, Disposable parent) {
+  public FilterPanel(@NotNull Project project, LanguageFileType fileType, Disposable parent) {
     myProject = project;
-    myProfile = profile;
+    myFileType = fileType;
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
       @Nullable
       @Override
@@ -173,7 +171,9 @@ public class FilterPanel implements FilterTable {
   @Override
   @NotNull
   public StructuralSearchProfile getProfile() {
-    return myProfile;
+    final StructuralSearchProfile fileType = StructuralSearchUtil.getProfileByFileType(myFileType);
+    assert fileType != null;
+    return fileType;
   }
 
   @Override
@@ -187,15 +187,13 @@ public class FilterPanel implements FilterTable {
     if (myConstraint instanceof MatchVariableConstraint) {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.label"), group, context,
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true,
                                                                                   null);
       popup.show(point);
     }
     else {
-      final AnActionEvent event =
-        AnActionEvent.createFromAnAction(myScriptFilter, null, ActionPlaces.UNKNOWN,
-                                         DataContext.EMPTY_CONTEXT);
+      final AnActionEvent event = AnActionEvent.createFromAnAction(myScriptFilter, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
       myScriptFilter.actionPerformed(event);
     }
   }
@@ -204,8 +202,8 @@ public class FilterPanel implements FilterTable {
     return myFilterPanel;
   }
 
-  public void setProfile(@NotNull StructuralSearchProfile profile) {
-    myProfile = profile;
+  public void setFileType(@NotNull LanguageFileType fileType) {
+    myFileType = fileType;
   }
 
   public void setCompiledPattern(@NotNull CompiledPattern compiledPattern) {

@@ -6,6 +6,7 @@
 package com.intellij.patterns.uast
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ObjectPattern
@@ -59,8 +60,11 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     })
 
   fun sourcePsiFilter(filter: (PsiElement) -> Boolean): Self =
-    withSourcePsiCondition(object : PatternCondition<PsiElement>("sourcePsiFilter") {
-      override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean = filter(t)
+    this.with(object : PatternCondition<T>("sourcePsiFilter") {
+      override fun accepts(t: T, context: ProcessingContext?): Boolean {
+        val sourcePsiElement = t.sourcePsiElement ?: return false
+        return filter(sourcePsiElement)
+      }
     })
 
   fun filterWithContext(filter: (T, ProcessingContext) -> Boolean): Self =
@@ -83,11 +87,23 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
 
 private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastCallKind.METHOD_CALL)
 
+private val IS_UAST_CALL_EXPRESSION_PARAMETER: Key<Boolean> = Key.create("UAST_CALL_EXPRESSION_PARAMETER")
+
 private fun isCallExpressionParameter(argumentExpression: UExpression,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>, context: ProcessingContext): Boolean {
-  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) ?: return false
-  if (call.kind !in constructorOrMethodCall) return false
+  val sharedContext = context.sharedContext
+  val isCallParameter = sharedContext.get(IS_UAST_CALL_EXPRESSION_PARAMETER, argumentExpression)
+  if (isCallParameter == java.lang.Boolean.FALSE) {
+    return false
+  }
+
+  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2)
+  if (call == null || call.kind !in constructorOrMethodCall) {
+    sharedContext.put(IS_UAST_CALL_EXPRESSION_PARAMETER, argumentExpression, java.lang.Boolean.FALSE)
+    return false
+  }
+
   return callPattern.accepts(call, context)
          && call.getArgumentForParameter(parameterIndex)?.let(::wrapULiteral) == wrapULiteral(argumentExpression)
 }
@@ -112,7 +128,7 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   fun withReceiver(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern =
     filterWithContext { it, context -> (it.receiverType as? PsiClassType)?.resolve()?.let { classPattern.accepts(it, context) } ?: false }
 
-  fun withMethodName(methodName : String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
+  fun withMethodName(methodName: String): UCallExpressionPattern = withMethodName(string().equalTo(methodName))
 
   fun withAnyResolvedMethod(method: ElementPattern<out PsiMethod>): UCallExpressionPattern = withResolvedMethod(method, true)
 
@@ -136,8 +152,9 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   }
 
   fun constructor(className: String): UCallExpressionPattern = constructor(PsiJavaPatterns.psiClass().withQualifiedName(className))
-
 }
+
+private val IS_UAST_ANNOTATION_PARAMETER: Key<Boolean> = Key.create("UAST_ANNOTATION_PARAMETER")
 
 open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self>>(clazz: Class<T>) : UElementPattern<T, Self>(clazz) {
 
@@ -146,10 +163,21 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 
   fun annotationParams(annotationPattern: ElementPattern<UAnnotation>, parameterNames: ElementPattern<String>): Self =
     this.with(object : PatternCondition<T>("annotationParam") {
-
       override fun accepts(uElement: T, context: ProcessingContext?): Boolean {
-        val (annotation, paramName) = getContainingUAnnotationEntry(uElement) ?: return false
-        return parameterNames.accepts(paramName ?: "value", context) && annotationPattern.accepts(annotation, context)
+        val sharedContext = context?.sharedContext
+        val isAnnotationParameter = sharedContext?.get(IS_UAST_ANNOTATION_PARAMETER, uElement)
+        if (isAnnotationParameter == java.lang.Boolean.FALSE) {
+          return false
+        }
+
+        val containingUAnnotationEntry = getContainingUAnnotationEntry(uElement)
+        if (containingUAnnotationEntry == null) {
+          sharedContext?.put(IS_UAST_ANNOTATION_PARAMETER, uElement, java.lang.Boolean.FALSE)
+          return false
+        }
+
+        return parameterNames.accepts(containingUAnnotationEntry.second ?: "value", context)
+               && annotationPattern.accepts(containingUAnnotationEntry.first, context)
       }
     })
 

@@ -39,7 +39,7 @@ import java.text.Normalizer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class NativeFileWatcherImpl extends PluggableFileWatcher {
+public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
@@ -216,12 +216,18 @@ public final class NativeFileWatcherImpl extends PluggableFileWatcher {
         try { writeLine(EXIT_COMMAND); }
         catch (IOException ignore) { }
         if (!processHandler.waitFor(10)) {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          Runnable r = () -> {
             if (!processHandler.waitFor(500)) {
               LOG.warn("File watcher is still alive. Doing a force quit.");
               processHandler.destroyProcess();
             }
-          });
+          };
+          if (myIsShuttingDown) {
+            new Thread(r, "fsnotifier shutdown").start();
+          }
+          else {
+            ApplicationManager.getApplication().executeOnPooledThread(r);
+          }
         }
       }
 

@@ -201,11 +201,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       List<StackFrameItem> asyncStack = null;
       for (StackFrameProxyImpl frameProxy : suspendContext.getThread().forceFrames()) {
         Location location = frameProxy.location();
-        builder.append("\n\t  ").append(ThreadDumpAction.renderLocation(location));
+        builder.append("\n\t").append(ThreadDumpAction.renderLocation(location));
         if (Registry.is("debugger.log.async.stacks")) {
           if (asyncStack != null) {
             StreamEx.of(asyncStack).prepend((StackFrameItem)null).forEach(s -> {
-              builder.append("\n\t  ");
+              builder.append("\n\t");
               if (s == null) {
                 builder.append(" - ").append(StackFrameItem.getAsyncStacktraceMessage());
               }

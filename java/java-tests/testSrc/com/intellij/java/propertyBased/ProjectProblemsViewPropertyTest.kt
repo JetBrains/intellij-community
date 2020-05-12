@@ -248,7 +248,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun extractProblems(virtualFile: VirtualFile, inlay: Inlay<*>): String {
-    data class Problem(val fileName: String, val offset: Int, val selectedElement: String, val context: String?)
+    data class Problem(val fileName: String, val offset: Int, val selectedElement: String,
+                       val context: String?, val fileErrors: List<HighlightInfo>)
 
     fun getProblem(openedFile: VirtualFile, textEditor: TextEditor): Problem {
       val editor = textEditor.editor
@@ -258,7 +259,8 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val context = PsiTreeUtil.getParentOfType(selectedElement,
                                                 PsiStatement::class.java, PsiExpression::class.java,
                                                 PsiMethod::class.java, PsiClass::class.java)
-      return Problem(openedFile.name, offset, selectedElement.text, context?.text)
+      val fileErrors = rehighlight(psiFile, editor).filter { it.severity == HighlightSeverity.ERROR }
+      return Problem(openedFile.name, offset, selectedElement.text, context?.text, fileErrors)
     }
 
     clickOnInlay(inlay)
@@ -306,15 +308,13 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val renderer = inlay.renderer as BlockInlayRenderer
       val constrainedPresentations = renderer.getConstrainedPresentations()
       val presentation = constrainedPresentations[0]
-      val root = presentation.root as RecursivelyUpdatingRootPresentation
-      val hoverPresentation = root.content as OnHoverPresentation
-      hoverPresentation.mouseMoved(click, point)
-      val usagesSequencePresentation = (hoverPresentation.presentation as SequencePresentation).presentations[0] as SequencePresentation
-      val usagesHoverPresentation = usagesSequencePresentation.presentations[1] as OnHoverPresentation
+      val rootPresentation = presentation.root
+      val settingsOnClickPresentation = (rootPresentation.content as SequencePresentation).presentations[1] as OnClickPresentation
+      val usagesHoverPresentation = settingsOnClickPresentation.presentation as OnHoverPresentation
       usagesHoverPresentation.mouseMoved(click, point)
       val delegatePresentation = usagesHoverPresentation.presentation as DynamicDelegatePresentation
-      val onClickPresentation = delegatePresentation.delegate as OnClickPresentation
-      onClickPresentation.mouseClicked(click, point)
+      val usagesClickPresentation = delegatePresentation.delegate as OnClickPresentation
+      usagesClickPresentation.mouseClicked(click, point)
     }
   }
 

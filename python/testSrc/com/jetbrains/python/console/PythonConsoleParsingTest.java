@@ -12,6 +12,7 @@ import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
@@ -42,8 +43,6 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     } else {
       myServiceDisposable = null;
     }
-
-    PythonDialectsTokenSetProvider.reset();
   }
 
   @Override
@@ -114,7 +113,7 @@ public class PythonConsoleParsingTest extends ParsingTestCase {
     virtualFile.setOriginalFile(originalFile);
 
     originalFile.setCharset(StandardCharsets.UTF_8);
-    originalFile.putUserData(LanguageLevel.KEY, myLanguageLevel);
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(originalFile, myLanguageLevel);
     PyConsoleUtil.markIPython(originalFile);
     return createFile(virtualFile);
   }

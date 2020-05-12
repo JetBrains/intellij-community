@@ -256,14 +256,14 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
 
 
   override fun visitExpression(expression: GrExpression) {
-    if (expression is GrOperatorExpression) {
+    if (expression is GrOperatorExpression && builder.signatureInferenceContext.allowedToResolveOperators) {
       val operatorMethodResolveResult = expression.reference?.advancedResolve()
       if (operatorMethodResolveResult != null) {
         processMethod(operatorMethodResolveResult)
       }
       builder.addConstrainingExpression(expression)
     }
-    if (expression is GrIndexProperty) {
+    if (expression is GrIndexProperty && builder.signatureInferenceContext.allowedToResolveOperators) {
       expression.lValueReference?.advancedResolve()?.run {
         val lValueArguments = extractArguments(expression, expression.lValueReference as? GrIndexPropertyReference)
         processMethod(this, lValueArguments)
@@ -368,10 +368,12 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
   }
 
   private fun processExitExpression(expression: GrExpression) {
-    val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
-    builder.addConstrainingExpression(expression)
-    val typeParameter = expression.type.typeParameter() ?: return
-    builder.generateRequiredTypes(typeParameter, returnType, UPPER)
+    if (builder.signatureInferenceContext.allowedToProcessReturnType) {
+      val returnType = expression.parentOfType<GrMethod>()?.returnType?.takeIf { it != PsiType.NULL && it != PsiType.VOID } ?: return
+      builder.addConstrainingExpression(expression)
+      val typeParameter = expression.type.typeParameter() ?: return
+      builder.generateRequiredTypes(typeParameter, returnType, UPPER)
+    }
   }
 
   fun buildUsageInformation(): TypeUsageInformation = builder.build()

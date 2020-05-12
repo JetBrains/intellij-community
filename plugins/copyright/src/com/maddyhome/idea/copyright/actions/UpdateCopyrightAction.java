@@ -72,7 +72,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     else if (files != null && areFiles(files)) {
       boolean copyrightEnabled  = false;
       for (VirtualFile vfile : files) {
-        if (vfile != null && FileTypeUtil.getInstance().isSupportedFile(vfile)) {
+        if (vfile != null && FileTypeUtil.isSupportedFile(vfile)) {
           copyrightEnabled = true;
           break;
         }
@@ -92,7 +92,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
         for (PsiElement elem : elems) {
           if (!(elem instanceof PsiDirectory)) {
             final PsiFile file = elem.getContainingFile();
-            if (file == null || !FileTypeUtil.getInstance().isSupportedFile(file.getVirtualFile())) {
+            if (file == null || !FileTypeUtil.isSupportedFile(file.getVirtualFile())) {
               copyrightEnabled = true;
               break;
             }

@@ -57,13 +57,13 @@ public interface PythonSshInterpreterManager {
   class Factory {
     @Nullable
     public static PythonSshInterpreterManager getInstance() {
-      PythonSshInterpreterManager[] extensions = EP_NAME.getExtensions();
-      if (extensions.length == 0) {
+      List<PythonSshInterpreterManager> extensions = EP_NAME.getExtensionList();
+      if (extensions.isEmpty()) {
         LOG.debug(MessageFormat.format("Extension for ''{0}'' extension point is absent", EP_NAME.getName()));
         return null;
       }
-      else if (extensions.length == 1) {
-        return extensions[0];
+      else if (extensions.size() == 1) {
+        return extensions.get(0);
       }
       else {
         LOG.error(MessageFormat.format("Several extensions registered for ''{0}'' extension point", EP_NAME.getName()));

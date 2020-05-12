@@ -1,25 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ui.configuration.*;
-import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorNotificationPanel;
@@ -211,6 +203,7 @@ public class UnknownSdkTracker {
                 onSdkNameReady,
                 sdk -> {
                   if (sdk != null) {
+                    fix.configureSdk(sdk);
                     registerNewSdkInJdkTable(sdk.getName(), sdk);
                   }
                   onCompleted.consume(sdk);
@@ -267,7 +260,7 @@ public class UnknownSdkTracker {
         catch (Exception error) {
           LOG.warn("Failed to setupPaths for " + sdk + ". " + error.getMessage(), error);
         }
-
+        fix.configureSdk(sdk);
         registerNewSdkInJdkTable(actualSdkName, sdk);
         LOG.info("Automatically set Sdk " + info + " to " + fix.getExistingSdkHome());
         onCompleted.consume(sdk);
@@ -315,7 +308,6 @@ public class UnknownSdkTracker {
           LOG.warn("SDK with name " + sdkName + " already exists: clash=" + clash + ", new=" + sdk);
           return;
         }
-
         SdkModificator mod = sdk.getSdkModificator();
         mod.setName(sdkName);
         mod.commitChanges();

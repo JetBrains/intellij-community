@@ -160,10 +160,6 @@ public class SearchCommand {
     }
   }
 
-  public void stopAsyncSearch() {
-    if (process != null) process.stop();
-  }
-
   protected void findStarted() {
     StructuralSearchPlugin.getInstance(mySearchContext.getProject()).setSearchInProgress(true);
   }

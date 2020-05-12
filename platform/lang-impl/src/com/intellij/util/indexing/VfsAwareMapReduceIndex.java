@@ -44,9 +44,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   public static final int VERSION = 0;
 
   static {
-    if (!DebugAssertions.DEBUG) {
+    if (!IndexDebugAssertions.DEBUG) {
       final Application app = ApplicationManager.getApplication();
-      DebugAssertions.DEBUG = (app.isEAP() || app.isInternal()) && !ApplicationInfoImpl.isInStressTest();
+      IndexDebugAssertions.DEBUG = (app.isEAP() || app.isInternal()) && !ApplicationInfoImpl.isInStressTest();
     }
   }
 
@@ -116,6 +116,12 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     installMemoryModeListener();
   }
 
+  public void dumpStatistics() {
+    if (mySnapshotInputMappings instanceof SnapshotInputMappings<?, ?>) {
+      ((SnapshotInputMappings<?, ?>) mySnapshotInputMappings).dumpStatistics();
+    }
+  }
+
   public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {
     return indexer instanceof CompositeDataIndexer && !FileBasedIndex.USE_IN_MEMORY_INDEX;
   }
@@ -132,7 +138,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   protected InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
-    if (mySnapshotInputMappings != null && content != null) {
+    boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();
+    if (mySnapshotInputMappings != null && isPhysical) {
       try {
         data = mySnapshotInputMappings.readData(content);
         if (data != null) {
@@ -146,7 +153,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       }
     }
     data = super.mapInput(inputId, content);
-    if (!containsSnapshotData && !UpdatableSnapshotInputMappingIndex.ignoreMappingIndexUpdate(content)) {
+    if (!containsSnapshotData) {
       try {
         return ((UpdatableSnapshotInputMappingIndex<Key, Value, FileContent>)mySnapshotInputMappings).putData(content, data);
       }

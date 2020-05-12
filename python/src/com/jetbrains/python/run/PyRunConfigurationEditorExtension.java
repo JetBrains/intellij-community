@@ -20,6 +20,8 @@ import com.intellij.openapi.options.SettingsEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * @author Alexander Koshevoy
  */
@@ -35,7 +37,7 @@ public interface PyRunConfigurationEditorExtension {
   class Factory {
     @Nullable
     public static PyRunConfigurationEditorExtension getExtension(@NotNull AbstractPythonRunConfiguration<?> configuration) {
-      PyRunConfigurationEditorExtension[] extensions = EP_NAME.getExtensions();
+      List<PyRunConfigurationEditorExtension> extensions = EP_NAME.getExtensionList();
       for (PyRunConfigurationEditorExtension extension : extensions) {
         if (extension.accepts(configuration)) {
           return extension;

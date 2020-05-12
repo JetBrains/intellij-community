@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.annotate.AnnotationTooltipBuilder;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -257,15 +258,15 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
   protected abstract void showAllAffectedPaths(SvnRevisionNumber number);
 
-  private static class MyPartiallyCreatedInfos {
+  private static final class MyPartiallyCreatedInfos {
     private boolean myShowMergeSource;
-    private final Map<Integer, CommitInfo> myMappedLineInfo;
-    private final Map<Integer, CommitInfo> myMergeSourceInfos;
+    private final Int2ObjectOpenHashMap<CommitInfo> myMappedLineInfo;
+    private final Int2ObjectOpenHashMap<CommitInfo> myMergeSourceInfos;
     private int myMaxIdx;
 
     private MyPartiallyCreatedInfos() {
-      myMergeSourceInfos = new HashMap<>();
-      myMappedLineInfo = new HashMap<>();
+      myMergeSourceInfos = new Int2ObjectOpenHashMap<>();
+      myMappedLineInfo = new Int2ObjectOpenHashMap<>();
       myMaxIdx = 0;
     }
 
@@ -279,7 +280,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
     void appendNumberedLineInfo(final int lineNumber, @NotNull CommitInfo info, @Nullable CommitInfo mergeInfo) {
       if (myMappedLineInfo.get(lineNumber) != null) return;
-      myMaxIdx = (myMaxIdx < lineNumber) ? lineNumber : myMaxIdx;
+      myMaxIdx = Math.max(myMaxIdx, lineNumber);
       myMappedLineInfo.put(lineNumber, info);
       if (mergeInfo != null) {
         myMergeSourceInfos.put(lineNumber, mergeInfo);

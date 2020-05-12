@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 public class MaximizeToolWindowAction extends AnAction implements DumbAware, FusAwareAction {
@@ -65,10 +66,11 @@ public class MaximizeToolWindowAction extends AnAction implements DumbAware, Fus
   }
 
   @Override
-  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull List<EventPair> data) {
+  public @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event) {
     ToolWindow toolWindow = event.getData(PlatformDataKeys.TOOL_WINDOW);
     if (toolWindow != null) {
-      data.add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
+      return Collections.singletonList(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
     }
+    return Collections.emptyList();
   }
 }

@@ -116,7 +116,8 @@ public class StringIndex {
       @Override
       public void requestRebuild(@NotNull Throwable ex) {
         if (failOnRebuildRequest) {
-          Assert.fail();
+          ex.printStackTrace();
+          Assert.fail("Rebuild is not expected in this test");
         } else {
           myRebuildThrowable = ex;
         }
@@ -129,8 +130,10 @@ public class StringIndex {
     return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
   }
   
-  public boolean update(final String path, @Nullable String content, @Nullable String oldContent) {
-    return myIndex.update(MathUtil.nonNegativeAbs(path.hashCode()), toInput(path, content));
+  public boolean update(@NotNull String path, @Nullable String content) {
+    int inputId = MathUtil.nonNegativeAbs(path.hashCode());
+    PathContentPair contentPair = toInput(path, content);
+    return myIndex.mapInputAndPrepareUpdate(inputId, contentPair).compute();
   }
 
   public long getModificationStamp() {
@@ -146,7 +149,7 @@ public class StringIndex {
   }
 
   @Nullable
-  private PathContentPair toInput(@NotNull String path, @Nullable String content) {
+  private static PathContentPair toInput(@NotNull String path, @Nullable String content) {
     return content != null ? new PathContentPair(path, content) : null;
   }
 

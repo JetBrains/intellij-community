@@ -108,6 +108,10 @@ public class PagedFileStorage implements Forceable {
     myNativeBytesOrder = nativeBytesOrder;
   }
 
+  public int getPageSize() {
+    return myPageSize;
+  }
+
   public void lock() {
     myStorageLockContext.lock();
   }
@@ -157,11 +161,11 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
-  int getOffsetInPage(long addr) {
+  public int getOffsetInPage(long addr) {
     return (int)(addr % myPageSize);
   }
 
-  ByteBufferWrapper getByteBuffer(long address, boolean modify) {
+  public ByteBufferWrapper getByteBuffer(long address, boolean modify) {
     long page = address / myPageSize;
     assert page >= 0 && page <= MAX_PAGES_COUNT:address + " in " + myFile;
     return getBufferWrapper(page, modify);

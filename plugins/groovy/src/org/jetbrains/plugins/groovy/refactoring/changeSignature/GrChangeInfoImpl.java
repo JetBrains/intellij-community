@@ -39,8 +39,8 @@ import java.util.Objects;
  * @author Maxim.Medvedev
  */
 public class GrChangeInfoImpl implements JavaChangeInfo {
-  GrMethod method;
-  final String newName;
+  private GrMethod method;
+  private final String newName;
   @Nullable private final CanonicalTypes.Type returnType;
   private final String visibilityModifier;
   private final List<? extends GrParameterInfo> parameters;
@@ -64,7 +64,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   private final String[] myOldParameterNames;
   private final String[] myOldParameterTypes;
 
-  public GrChangeInfoImpl(GrMethod method,
+  public GrChangeInfoImpl(@NotNull GrMethod method,
                           @Nullable String visibilityModifier,
                           @Nullable CanonicalTypes.Type returnType,
                           String newName,
@@ -271,7 +271,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  public GrMethod getMethod() {
+  public @NotNull GrMethod getMethod() {
     return method;
   }
 
@@ -353,14 +353,14 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   }
 
   @Override
-  public void updateMethod(PsiMethod psiMethod) {
+  public void updateMethod(@NotNull PsiMethod psiMethod) {
     if (psiMethod instanceof GrMethod) {
       method = (GrMethod)psiMethod;
     }
   }
 
   @Override
-  public Collection<PsiMethod> getMethodsToPropagateParameters() {
+  public @NotNull Collection<PsiMethod> getMethodsToPropagateParameters() {
     return Collections.emptyList();
   }
 }

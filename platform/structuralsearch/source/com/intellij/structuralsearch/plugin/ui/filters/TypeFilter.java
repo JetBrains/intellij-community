@@ -64,10 +64,11 @@ public class TypeFilter extends FilterAction {
   @Override
   protected void setLabel(SimpleColoredComponent component) {
     final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
-    myLabel.append("type=");
-    if (constraint.isInvertExprType()) myLabel.append("!");
-    myLabel.append(constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes());
-    if (constraint.isExprTypeWithinHierarchy()) myLabel.append(", within hierarchy", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    final String s = constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes();
+    final String value = constraint.isInvertExprType() ? "!" + s : s;
+    myLabel.append(SSRBundle.message("type.0.label", value));
+    if (constraint.isExprTypeWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"),
+                                                               SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   @Override

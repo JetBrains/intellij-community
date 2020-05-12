@@ -29,6 +29,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.messages.*
+import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.util.pico.DefaultPicoContainer
 import org.jetbrains.annotations.ApiStatus
@@ -133,10 +134,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   final override fun getMessageBus(): MessageBus {
-    if (containerState.get().compareTo(ContainerState.DISPOSE_IN_PROGRESS) >= 0) {
+    if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
       throw AlreadyDisposedException("Already disposed: $this")
     }
-    return messageBus ?: getOrCreateMessageBusUnderLock()
+    return messageBus!!
   }
 
   protected open fun setProgressDuringInit(indicator: ProgressIndicator) {
@@ -150,10 +151,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   final override fun getExtensionArea() = extensionArea
 
   @Internal
-  fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, notifyListeners: Boolean) {
-    val listenerCallbacks = if (notifyListeners) mutableListOf<Runnable>() else null
-    registerComponents(plugins.map { DescriptorToLoad(it) }, listenerCallbacks)
-    listenerCallbacks?.forEach(Runnable::run)
+  fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>) {
+    registerComponents(plugins.map { DescriptorToLoad(it) }, null)
   }
 
   data class DescriptorToLoad(
@@ -238,7 +237,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     // ensure that messageBus is created, regardless of lazy listeners map state
     val messageBus = getOrCreateMessageBusUnderLock()
     if (map != null) {
-      messageBus.setLazyListeners(map)
+      (messageBus as MessageBusEx).setLazyListeners(map)
     }
   }
 
@@ -494,13 +493,13 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   @Synchronized
-  protected open fun getOrCreateMessageBusUnderLock(): MessageBusImpl {
+  protected open fun getOrCreateMessageBusUnderLock(): MessageBus {
     var messageBus = this.messageBus
     if (messageBus != null) {
       return messageBus
     }
 
-    messageBus = MessageBusFactory.newMessageBus(this, parent?.messageBus) as MessageBusImpl
+    messageBus = MessageBusFactory.getInstance().createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
       messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
         if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
@@ -826,7 +825,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   override fun isDisposed(): Boolean {
-    return containerState.get().compareTo(ContainerState.DISPOSE_IN_PROGRESS) >= 0
+    return containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS
   }
 
   final override fun beforeTreeDispose() {

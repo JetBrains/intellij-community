@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,9 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     setButtonsAlignment(SwingUtilities.CENTER);
   }
 
+  @ActionText
   protected abstract String getOkActionName();
+  @ActionText
   protected abstract String getCancelActionName();
 
   @Override

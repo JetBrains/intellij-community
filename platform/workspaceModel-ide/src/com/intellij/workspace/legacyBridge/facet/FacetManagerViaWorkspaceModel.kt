@@ -89,14 +89,18 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
 
   fun populateFrom(mapping: HashBiMap<FacetEntity, Facet<*>>) {
     entityToFacet.putAll(mapping)
+    facetsChanged()
   }
 
   internal fun populateFrom(mapping: FacetModelViaWorkspaceModel) {
     entityToFacet.putAll(mapping.entityToFacet)
+    facetsChanged()
   }
 
   fun removeEntity(entity: FacetEntity): Facet<*>? {
-    return entityToFacet.remove(entity)
+    val removed = entityToFacet.remove(entity)
+    facetsChanged()
+    return removed
   }
 
   fun updateEntity(oldEntity: FacetEntity, newEntity: FacetEntity): Facet<*>? {
@@ -104,11 +108,8 @@ internal open class FacetModelViaWorkspaceModel(protected val legacyBridgeModule
     if (oldFacet != null) {
       entityToFacet[newEntity] = oldFacet
     }
+    facetsChanged()
     return entityToFacet[newEntity]
-  }
-
-  public override fun facetsChanged() {
-    super.facetsChanged()
   }
 
   fun checkConsistency(facetEntities: List<FacetEntity>) {

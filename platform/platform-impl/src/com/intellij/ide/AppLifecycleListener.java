@@ -14,7 +14,8 @@ import java.util.List;
  * Listener for application lifecycle events.
  */
 public interface AppLifecycleListener {
-  Topic<AppLifecycleListener> TOPIC = new Topic<>(AppLifecycleListener.class, Topic.BroadcastDirection.NONE);
+  @Topic.AppLevel
+  Topic<AppLifecycleListener> TOPIC = new Topic<>(AppLifecycleListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   /** @deprecated use {@link #appFrameCreated(List)} */
   @Deprecated
@@ -26,12 +27,21 @@ public interface AppLifecycleListener {
   /**
    * Called before an application frame is shown.
    */
-  default void appFrameCreated(@NotNull List<String> commandLineArgs) { }
+  default void appFrameCreated(@NotNull List<String> commandLineArgs) {
+    appUiReady();
+  }
 
   /**
    * Called when the welcome screen is displayed (not called if the application opens a project).
    */
-  default void welcomeScreenDisplayed() { }
+  default void welcomeScreenDisplayed() {
+    appUiReady();
+  }
+
+  /**
+   * Called when either a welcome screen or a project frame is displayed.
+   */
+  default void appUiReady() { }
 
   /**
    * Called after an application frame is shown.

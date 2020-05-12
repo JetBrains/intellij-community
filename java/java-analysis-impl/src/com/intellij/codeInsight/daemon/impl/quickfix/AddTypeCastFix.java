@@ -74,7 +74,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     addTypeCast(project, (PsiExpression)startElement, myType);
   }
 
-  private static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
+  public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
     PsiExpression typeCast = createCastExpression(originalExpression, project, type);
     originalExpression.replace(typeCast);
   }

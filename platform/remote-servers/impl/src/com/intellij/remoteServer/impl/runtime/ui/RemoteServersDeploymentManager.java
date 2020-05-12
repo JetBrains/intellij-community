@@ -9,6 +9,7 @@ import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -148,7 +149,7 @@ public class RemoteServersDeploymentManager {
     if (messagePanel == null) return;
 
     if (connection == null) {
-      messagePanel.setEmptyText("Double-click on the server node to connect");
+      messagePanel.setEmptyText(CloudBundle.message("cloud.status.double.click.to.connect"));
     }
     else {
       String text = connection.getStatusText();

@@ -33,6 +33,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.messages.Topic;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -165,7 +166,7 @@ public final class SvnVcs extends AbstractVcs {
     myLogExceptions = app != null && (app.isInternal() || app.isUnitTestMode());
   }
 
-  public void postStartup() {
+  private void postStartup() {
     if (myProject.isDefault()) {
       return;
     }
@@ -228,10 +229,13 @@ public final class SvnVcs extends AbstractVcs {
     return myCopiesRefreshManager;
   }
 
-  private void upgradeIfNeeded(final MessageBus bus) {
-    final MessageBusConnection connection = bus.connect();
+  private void upgradeIfNeeded(@NotNull MessageBus bus) {
+    SimpleMessageBusConnection connection = bus.simpleConnect();
     connection.subscribe(ChangeListManagerImpl.LISTS_LOADED, lists -> {
-      if (lists.isEmpty()) return;
+      if (lists.isEmpty()) {
+        return;
+      }
+
       try {
         ChangeListManager.getInstance(myProject).setReadOnly(LocalChangeList.getDefaultName(), true);
 

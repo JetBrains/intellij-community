@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
@@ -235,7 +235,7 @@ public class PythonTask {
   public void run(@Nullable final Map<String, String> env, @Nullable final ConsoleView consoleView) throws ExecutionException {
     final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
-    stopProcessWhenAppClosed(process, project);
+    stopProcessWhenAppClosed(process);
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)
@@ -265,8 +265,8 @@ public class PythonTask {
    * Adds process listener that kills process on application shutdown.
    * Listener is removed from process stopped to prevent leak
    */
-  private void stopProcessWhenAppClosed(@NotNull final ProcessHandler process, @NotNull Project project) {
-    final Disposable disposable = Disposer.newDisposable();
+  private void stopProcessWhenAppClosed(@NotNull ProcessHandler process) {
+    Disposable disposable = Disposer.newDisposable();
     Disposer.register(myModule, disposable);
     process.addProcessListener(new ProcessAdapter() {
       @Override
@@ -274,7 +274,7 @@ public class PythonTask {
         Disposer.dispose(disposable);
       }
     }, myModule);
-    project.getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
         process.destroyProcess();

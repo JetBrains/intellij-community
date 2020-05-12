@@ -3,14 +3,11 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class PyCustomClassStubType<T extends PyCustomClassStub> implements PyCustomStubType<PyClass, T> {
 
-  /**
-   * @deprecated It is our internal API, try to avoid using it.
-   * It is planned to be removed sooner or later, so please don't rely on this EP.
-   */
-  @Deprecated
   public static final ExtensionPointName<PyCustomClassStubType<? extends PyCustomClassStub>> EP_NAME =
     ExtensionPointName.create("Pythonid.customClassStubType");
 }

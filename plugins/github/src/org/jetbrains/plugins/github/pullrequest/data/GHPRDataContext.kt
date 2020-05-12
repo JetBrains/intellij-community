@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.messages.Topic
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -29,15 +28,5 @@ internal class GHPRDataContext(val gitRepositoryCoordinates: GitRemoteUrlCoordin
     Disposer.dispose(dataLoader)
     Disposer.dispose(listLoader)
     Disposer.dispose(repositoryDataService)
-  }
-
-  companion object {
-    val PULL_REQUEST_EDITED_TOPIC = Topic(PullRequestEditedListener::class.java)
-
-    interface PullRequestEditedListener {
-      fun onPullRequestEdited(id: GHPRIdentifier) {}
-      fun onPullRequestReviewsEdited(id: GHPRIdentifier) {}
-      fun onPullRequestCommentsEdited(id: GHPRIdentifier) {}
-    }
   }
 }

@@ -388,7 +388,7 @@ final class ProjectData {
         return;
       }
 
-      contents.remove(cd);
+      contents.remove(content);
       cd.setOptionalContextActions(null);
     }
 

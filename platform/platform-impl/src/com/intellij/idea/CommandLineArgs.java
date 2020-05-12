@@ -13,6 +13,7 @@ public class CommandLineArgs {
     for (String arg : args) {
       if (arg.equalsIgnoreCase(DISABLE_NON_BUNDLED_PLUGINS)) {
         PluginManagerCore.ourDisableNonBundledPlugins = true;
+        break;
       }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -22,15 +22,13 @@ final class CompactCollectionBinding extends NotNullDeserializeBinding implement
     name = accessor.getName();
   }
 
-  @NotNull
   @Override
-  public MutableAccessor getAccessor() {
+  public @NotNull MutableAccessor getAccessor() {
     return accessor;
   }
 
-  @NotNull
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public @NotNull Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     Element result = new Element(name);
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)o;
@@ -44,9 +42,8 @@ final class CompactCollectionBinding extends NotNullDeserializeBinding implement
     return result;
   }
 
-  @NotNull
   @Override
-  public Object deserialize(Object context, @NotNull Element element) {
+  public @NotNull Object deserialize(Object context, @NotNull Element element) {
     @SuppressWarnings("unchecked")
     List<String> list = (List<String>)context;
     list.clear();

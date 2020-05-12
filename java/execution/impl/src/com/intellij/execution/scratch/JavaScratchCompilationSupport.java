@@ -29,6 +29,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 /**
@@ -88,6 +89,10 @@ final class JavaScratchCompilationSupport implements CompileTask {
     try {
       final File scratchFile = new File(VirtualFileManager.extractPath(scratchUrl));
       File srcFile = scratchFile;
+
+      VirtualFile vFile = ReadAction.compute(() -> VirtualFileManager.getInstance().findFileByUrl(scratchUrl));
+      Charset charset = ReadAction.compute(() -> vFile == null ? null : vFile.getCharset());
+
       if (!StringUtil.endsWith(srcFile.getName(), ".java")) {
 
         final File srcDir = getScratchTempDirectory(project);
@@ -97,7 +102,6 @@ final class JavaScratchCompilationSupport implements CompileTask {
         FileUtil.delete(srcDir); // perform cleanup
 
         final String srcFileName = ReadAction.compute(() -> {
-          final VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(scratchUrl);
           if (vFile != null) {
             final PsiFile psiFile = PsiManager.getInstance(project).findFile(vFile);
             if (psiFile instanceof PsiJavaFile) {
@@ -160,7 +164,10 @@ final class JavaScratchCompilationSupport implements CompileTask {
         }
       }
       options.add("-proc:none"); // disable annotation processing
-
+      if (charset != null) {
+        options.add("-encoding");
+        options.add(charset.name());
+      }
       final Collection<ClassObject> result = CompilerManager.getInstance(project).compileJavaCode(
         options, platformCp, cp, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), files, outputDir
       );

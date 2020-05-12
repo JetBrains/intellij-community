@@ -28,6 +28,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class JavaIntroduceParameterObjectDelegate
   extends IntroduceParameterObjectDelegate<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor> {
 
   @Override
-  public  List<ParameterInfoImpl> getAllMethodParameters(PsiMethod sourceMethod) {
+  public  List<ParameterInfoImpl> getAllMethodParameters(@NotNull PsiMethod sourceMethod) {
     return new JavaMethodDescriptor(sourceMethod).getParameters();
   }
 
@@ -157,7 +158,7 @@ public class JavaIntroduceParameterObjectDelegate
   }
 
   @Override
-  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<ParameterInfoImpl> newParameterInfos, boolean delegate) {
+  public ChangeInfo createChangeSignatureInfo(PsiMethod method, List<? extends ParameterInfoImpl> newParameterInfos, boolean delegate) {
     PsiType returnType = method.getReturnType();
     return new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(method.getModifierList()),
                                   method,

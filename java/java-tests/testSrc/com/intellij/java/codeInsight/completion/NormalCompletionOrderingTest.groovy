@@ -91,6 +91,10 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems(0, "booleanMethod", "voidMethod", "AN_OBJECT", "BOOLEAN", "class")
   }
 
+  void testPreferClassLiteralWhenClassIsExpected() {
+    checkPreferredItems(0, "class")
+  }
+
   void testJComponentInstanceMembers() throws Throwable {
     checkPreferredItems(0, "getAccessibleContext", "getUI", "getUIClassID")
   }

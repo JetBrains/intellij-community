@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.util.ui.UIUtil
 
-class HideToolWindowAction : AnAction(), DumbAware {
+internal class HideToolWindowAction : AnAction(), DumbAware {
   companion object {
     internal fun shouldBeHiddenByShortCut(manager: ToolWindowManager, id: String): Boolean {
       val window = manager.getToolWindow(id)

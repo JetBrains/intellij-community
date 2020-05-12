@@ -45,6 +45,6 @@
     </action>
   </actions>
   <extensionPoints>
-    <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter"/>
+    <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

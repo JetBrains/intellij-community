@@ -188,7 +188,7 @@ public class IconUtil {
     }
     FileType fileType = vFile.getFileType();
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
-      return PlatformIcons.FOLDER_ICON;
+      return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
     return fileType.getIcon();
   }
@@ -281,24 +281,14 @@ public class IconUtil {
   }
 
   @NotNull
-  public static Icon getAddFolderIcon() {
-    return AllIcons.ToolbarDecorator.AddFolder;
-  }
-
-  @NotNull
   public static Icon getAnalyzeIcon() {
-    return getToolbarDecoratorIcon("analyze.png");
+    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + "analyze.png");
   }
 
   public static void paintInCenterOf(@NotNull Component c, @NotNull Graphics g, @NotNull Icon icon) {
     final int x = (c.getWidth() - icon.getIconWidth()) / 2;
     final int y = (c.getHeight() - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
-  }
-
-  @NotNull
-  private static Icon getToolbarDecoratorIcon(@NotNull String name) {
-    return IconLoader.getIcon(getToolbarDecoratorIconsFolder() + name);
   }
 
   @NotNull

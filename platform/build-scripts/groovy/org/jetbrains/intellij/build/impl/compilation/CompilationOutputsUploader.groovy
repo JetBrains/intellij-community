@@ -29,7 +29,6 @@ class CompilationOutputsUploader {
   private static final String COMMIT_HISTORY_FILE = "commit_history.json"
   private static final int COMMITS_LIMIT = 200
 
-  private final String agentPersistentStorage
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
@@ -53,9 +52,8 @@ class CompilationOutputsUploader {
     return commitHashBuilder.toString()
   }()
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash,
-                             String agentPersistentStorage, String tmpDir, boolean updateCommitHistory) {
-    this.agentPersistentStorage = agentPersistentStorage
+  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl, Map<String, String> remotePerCommitHash, String tmpDir,
+                             boolean updateCommitHistory) {
     this.tmpDir = tmpDir
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
@@ -64,7 +62,7 @@ class CompilationOutputsUploader {
     this.updateCommitHistory = updateCommitHistory
   }
 
-  def upload(Boolean publishCaches) {
+  def upload(Boolean publishTeamCityArtifacts) {
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     context.messages.info("$executorThreadsCount threads will be used for upload")
     NamedThreadPoolExecutor executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -86,7 +84,7 @@ class CompilationOutputsUploader {
         // not to perform any further compilations.
         if (updateCommitHistory) {
         // Upload jps caches started first because of the significant size of the output
-          if (!uploadCompilationCache(publishCaches)) return
+          uploadCompilationCache(publishTeamCityArtifacts)
         }
 
         uploadMetadata()
@@ -96,14 +94,13 @@ class CompilationOutputsUploader {
 
       executor.waitForAllComplete(messages)
       executor.reportErrors(messages)
+      def metadata = new File(tmpDir, "metadata/$commitHash")
+      if (!metadata.exists()) {
+        messages.error("$metadata.absolutePath doesn't exist")
+      }
       messages.reportStatisticValue("Compilation upload time, ms", String.valueOf(TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)))
       messages.reportStatisticValue("Total outputs", String.valueOf(sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).size()))
       messages.reportStatisticValue("Uploaded outputs", String.valueOf(uploadedOutputsCount.get()))
-
-      // Publish metadata file
-      def metadataFile = new File("$agentPersistentStorage/metadata.json")
-      FileUtil.rename(sourceStateFile, metadataFile)
-      messages.artifactBuilt(metadataFile.absolutePath)
 
       if (updateCommitHistory) {
         updateCommitHistory(uploader)
@@ -115,35 +112,29 @@ class CompilationOutputsUploader {
     }
   }
 
-  private boolean uploadCompilationCache(Boolean publishCaches) {
+  private void uploadCompilationCache(Boolean publishTeamCityArtifacts) {
     String cachePath = "caches/$commitHash"
-    if (uploader.isExist(cachePath)) return false
+    def exists = uploader.isExist(cachePath)
 
     File dataStorageRoot = context.compilationData.dataStorageRoot
     File zipFile = new File(dataStorageRoot.parent, commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
-    uploader.upload(cachePath, zipFile)
-
-    // Publish artifact for dependent configuration
-    if (publishCaches) {
-      File zipArtifact = new File(tmpDir, "caches.zip")
-      FileUtil.copy(zipFile, zipArtifact)
-      context.messages.artifactBuilt(zipArtifact.absolutePath)
+    if (!exists) {
+      uploader.upload(cachePath, zipFile)
     }
 
     File zipCopy = new File(tmpDir, cachePath)
-    FileUtil.rename(zipFile, zipCopy)
-    return true
+    move(zipFile, zipCopy)
+    // Publish artifact for dependent configuration
+    if (publishTeamCityArtifacts) context.messages.artifactBuilt(zipCopy.absolutePath)
   }
 
   private void uploadMetadata() {
     String metadataPath = "metadata/$commitHash"
-    if (uploader.isExist(metadataPath)) return
-
     File sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
     File sourceStateFileCopy = new File(tmpDir, metadataPath)
-    FileUtil.copy(sourceStateFile, sourceStateFileCopy)
+    move(sourceStateFile, sourceStateFileCopy)
   }
 
   void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
@@ -164,9 +155,9 @@ class CompilationOutputsUploader {
       if (!uploader.isExist(sourcePath, false)) {
         uploader.upload(sourcePath, zipFile)
         uploadedOutputsCount.incrementAndGet()
-        File zipCopy = new File(tmpDir, sourcePath)
-        FileUtil.rename(zipFile, zipCopy)
       }
+      File zipCopy = new File(tmpDir, sourcePath)
+      move(zipFile, zipCopy)
     }
   }
 
@@ -206,12 +197,15 @@ class CompilationOutputsUploader {
 
     // Upload and publish file with commits history
     def jsonAsString = new Gson().toJson(commitHistory)
-    def file = new File("$agentPersistentStorage/$COMMIT_HISTORY_FILE")
-    file.write(jsonAsString)
-    messages.artifactBuilt(file.absolutePath)
-    uploader.upload(COMMIT_HISTORY_FILE, file)
-    File commitHistoryFileCopy = new File(tmpDir, COMMIT_HISTORY_FILE)
-    FileUtil.rename(file, commitHistoryFileCopy)
+    File commitHistoryFile = new File(tmpDir, COMMIT_HISTORY_FILE)
+    commitHistoryFile.write(jsonAsString)
+    uploader.upload(COMMIT_HISTORY_FILE, commitHistoryFile)
+  }
+
+  private static move(File src, File dst) {
+    if (!src.exists()) throw new IllegalStateException("File $src doesn't exist.")
+
+    FileUtil.rename(src, dst)
   }
 
   @CompileStatic
@@ -241,7 +235,7 @@ class CompilationOutputsUploader {
         debug("GET " + url)
 
         def request = new HttpGet(url)
-        response = myHttpClient.execute(request)
+        response = executeWithRetry(request)
 
         return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
       }

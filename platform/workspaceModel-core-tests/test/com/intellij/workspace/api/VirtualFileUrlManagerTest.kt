@@ -7,10 +7,10 @@ import org.junit.Before
 import org.junit.Test
 
 class VirtualFileUrlManagerTest {
-  private lateinit var virtualFileManager: VirtualFileUrlManager
+  private lateinit var virtualFileManager: VirtualFileUrlManagerImpl
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager()
+    virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
   @Test

@@ -239,7 +239,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     if (file.getFileType().isBinary()) {
       GithubNotifications
-        .showWarning(project, GithubBundle.message("cannot.create.gist"), GithubBundle.message("create.gist.error.binary.file", file));
+        .showWarning(project, GithubBundle.message("cannot.create.gist"),
+                     GithubBundle.message("create.gist.error.binary.file", file.getName()));
       return Collections.emptyList();
     }
     String content = ReadAction.compute(() -> {
@@ -259,7 +260,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
     });
     if (content == null) {
       GithubNotifications
-        .showWarning(project, GithubBundle.message("cannot.create.gist"), GithubBundle.message("create.gist.error.content.read", file));
+        .showWarning(project, GithubBundle.message("cannot.create.gist"),
+                     GithubBundle.message("create.gist.error.content.read", file.getName()));
       return Collections.emptyList();
     }
     if (StringUtil.isEmptyOrSpaces(content)) {

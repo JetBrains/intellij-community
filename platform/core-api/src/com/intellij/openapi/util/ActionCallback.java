@@ -60,7 +60,7 @@ public class ActionCallback implements Disposable {
     myName = name;
 
     assert countToDone >= 0 : "count=" + countToDone;
-    myDone = new ExecutionCallback(countToDone >= 1 ? countToDone : 1);
+    myDone = new ExecutionCallback(Math.max(countToDone, 1));
     myRejected = new ExecutionCallback();
 
     if (countToDone < 1) {

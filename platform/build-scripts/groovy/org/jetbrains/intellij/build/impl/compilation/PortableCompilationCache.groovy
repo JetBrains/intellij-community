@@ -14,8 +14,11 @@ class PortableCompilationCache {
   private final CompilationContext context
   private static final String REMOTE_CACHE_URL_PROPERTY = 'intellij.jps.remote.cache.url'
   private static final String GIT_REPOSITORY_URL_PROPERTY = 'intellij.remote.url'
-  static final List<String> REQUIRED_PROPERTIES = [
+  private static final String AVAILABLE_FOR_HEAD_PROPERTY = 'intellij.jps.cache.availableForHeadCommit'
+  private static final String FORCE_DOWNLOAD_PROPERTY = 'intellij.jps.cache.download.force'
+  static final List<String> PROPERTIES = [
     REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
+    AVAILABLE_FOR_HEAD_PROPERTY, FORCE_DOWNLOAD_PROPERTY,
     JavaBackwardReferenceIndexWriter.PROP_KEY,
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
@@ -29,7 +32,7 @@ class PortableCompilationCache {
   private boolean uploadOnly = System.getProperty('intellij.jps.cache.uploadOnly')?.toBoolean() ?: false
   @Lazy
   private CompilationOutputsDownloader downloader = {
-    def availableForHeadCommit = System.getProperty('intellij.jps.cache.availableForHeadCommit')?.toBoolean() ?: false
+    def availableForHeadCommit = System.getProperty(AVAILABLE_FOR_HEAD_PROPERTY)?.toBoolean() ?: false
     new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
   }()
   private File cacheDir = context.compilationData.dataStorageRoot
@@ -59,10 +62,10 @@ class PortableCompilationCache {
 
   private def compileProject() {
     if (forceRebuild || !downloader.availableForHeadCommit) {
-      // At force rebuild, we should set incrementalCompilation to false otherwise backward-refs willn't be created.
-      // During rebuild JPS do this checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
-      // incremental compilation enabled it willn't create {@link JavaBackwardReferenceIndexWriter}. For more details
-      // check {@link JavaBackwardReferenceIndexWriter#initialize}
+      // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
+      // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
+      // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
+      // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
       context.options.incrementalCompilation = !forceRebuild
       CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
     }
@@ -74,7 +77,7 @@ class PortableCompilationCache {
    * Download latest available compilation cache from remote cache and perform compilation if necessary
    */
   def warmUp() {
-    def forceDownload = System.getProperty('intellij.jps.cache.download.force')?.toBoolean() ?: false
+    def forceDownload = System.getProperty(FORCE_DOWNLOAD_PROPERTY)?.toBoolean() ?: false
     if (forceRebuild) {
       clearJpsOutputs()
     }
@@ -97,25 +100,30 @@ class PortableCompilationCache {
   /**
    * Upload local compilation cache to remote cache
    */
-  def upload(Boolean publishCaches) {
+  def upload(Boolean publishTeamCityArtifacts) {
     if (!forceRebuild && downloader.availableForHeadCommit) {
       context.messages.info('Nothing new to upload')
     }
     else {
       def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
       def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
-      def agentPersistentStorage = require("agent.persistent.cache", "Agent persistent storage")
       def commitHash = require("build.vcs.number", "Repository commit")
       context.messages.buildStatus(commitHash)
       def updateCommitHistory = System.getProperty('intellij.jps.remote.cache.updateHistory')?.toBoolean() ?: true
-      context.messages.info("AWS sync folder $syncFolder")
       context.messages.info("Git remote url $remoteGitUrl")
       Map<String, String> remotePerCommitHash = [:]
       remotePerCommitHash[remoteGitUrl] = commitHash
       new CompilationOutputsUploader(
-        context, remoteCacheUrl, remotePerCommitHash,
-        agentPersistentStorage, syncFolder, updateCommitHistory
-      ).upload(publishCaches)
+        context, remoteCacheUrl, remotePerCommitHash, syncFolder, updateCommitHistory
+      ).upload(publishTeamCityArtifacts)
+      context.messages.block("AWS sync folder $syncFolder") {
+        def root = new File(syncFolder)
+        root.eachFileRecurse {
+          if (!it.isDirectory()) {
+            context.messages.info(root.toPath().relativize(it.toPath()).toString())
+          }
+        }
+      }
     }
   }
 }

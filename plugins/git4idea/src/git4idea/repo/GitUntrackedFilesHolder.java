@@ -232,7 +232,7 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
         break;
       }
       String path = event.getPath();
-      if (totalRefreshNeeded(path)) {
+      if (totalRefreshNeeded(myRepository, path)) {
         allChanged = true;
       }
       else {
@@ -261,35 +261,35 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
     }
   }
 
-  private boolean totalRefreshNeeded(@NotNull String path) {
-    return indexChanged(path) || externallyCommitted(path) || headMoved(path) ||
-           headChanged(path) || currentBranchChanged(path) || gitignoreChanged(path);
+  public static boolean totalRefreshNeeded(@NotNull GitRepository repository, @NotNull String path) {
+    return indexChanged(repository, path) || externallyCommitted(repository, path) || headMoved(repository, path) ||
+           headChanged(repository, path) || currentBranchChanged(repository, path) || gitignoreChanged(repository, path);
   }
 
-  private boolean headChanged(@NotNull String path) {
-    return myRepositoryFiles.isHeadFile(path);
+  private static boolean headChanged(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isHeadFile(path);
   }
 
-  private boolean currentBranchChanged(@NotNull String path) {
-    GitLocalBranch currentBranch = myRepository.getCurrentBranch();
-    return currentBranch != null && myRepositoryFiles.isBranchFile(path, currentBranch.getFullName());
+  private static boolean currentBranchChanged(@NotNull GitRepository repository, @NotNull String path) {
+    GitLocalBranch currentBranch = repository.getCurrentBranch();
+    return currentBranch != null && repository.getRepositoryFiles().isBranchFile(path, currentBranch.getFullName());
   }
 
-  private boolean headMoved(@NotNull String path) {
-    return myRepositoryFiles.isOrigHeadFile(path);
+  private static boolean headMoved(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isOrigHeadFile(path);
   }
 
-  private boolean indexChanged(@NotNull String path) {
-    return myRepositoryFiles.isIndexFile(path);
+  public static boolean indexChanged(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isIndexFile(path);
   }
 
-  private boolean externallyCommitted(@NotNull String path) {
-    return myRepositoryFiles.isCommitMessageFile(path);
+  private static boolean externallyCommitted(@NotNull GitRepository repository, @NotNull String path) {
+    return repository.getRepositoryFiles().isCommitMessageFile(path);
   }
 
-  private boolean gitignoreChanged(@NotNull String path) {
+  private static boolean gitignoreChanged(@NotNull GitRepository repository, @NotNull String path) {
     // TODO watch file stored in core.excludesfile
-    return path.endsWith(GitRepositoryFiles.GITIGNORE) || myRepositoryFiles.isExclude(path);
+    return path.endsWith(GitRepositoryFiles.GITIGNORE) || repository.getRepositoryFiles().isExclude(path);
   }
 
   private void rescanIgnoredFiles(@NotNull Runnable doAfterRescan) { //TODO move to ignore manager

@@ -18,6 +18,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.indexing.*;
@@ -208,38 +209,50 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       if (myDisposed) {
         return new ValueContainerImpl<>();
       }
-      DebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
+      IndexDebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
       return myStorage.read(key);
     }
     finally {
-      DebugAssertions.DEBUG_INDEX_ID.set(null);
+      IndexDebugAssertions.DEBUG_INDEX_ID.set(null);
       myLock.readLock().unlock();
     }
   }
 
   @Override
-  public final boolean update(int inputId, @Nullable Input content) {
-    final InputData<Key, Value> data = mapInput(inputId, content);
-    final UpdateData<Key, Value> updateData = new UpdateData<>(inputId,
-                                                               data.getKeyValues(),
-                                                               () -> getKeysDiffBuilder(inputId), myIndexId,
-                                                               () -> updateForwardIndex(inputId, data));
+  public final @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
+    InputData<Key, Value> data = mapInput(inputId, content);
 
-    try {
-      updateWithMap(updateData);
-    }
-    catch (StorageException | ProcessCanceledException ex) {
-      String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
-      //noinspection InstanceofCatchParameter
-      if (ex instanceof ProcessCanceledException) {
-        LOG.error(message, ex);
-      } else {
-        LOG.info(message, ex);
+    UpdateData<Key, Value> updateData = new UpdateData<>(
+      inputId,
+      data.getKeyValues(),
+      () -> getKeysDiffBuilder(inputId),
+      myIndexId,
+      () -> updateForwardIndex(inputId, data)
+    );
+
+    return () -> {
+      try {
+        updateWithMap(updateData);
       }
-      requestRebuild(ex);
-      return false;
+      catch (StorageException | ProcessCanceledException ex) {
+        String message = "An exception during updateWithMap(). Index " + myIndexId.getName() + " will be rebuilt.";
+        //noinspection InstanceofCatchParameter
+        if (ex instanceof ProcessCanceledException) {
+          LOG.error(message, ex);
+        } else {
+          LOG.info(message, ex);
+        }
+        requestRebuild(ex);
+        return false;
+      }
+      return true;
+    };
+  }
+
+  public static final class MapInputException extends RuntimeException {
+    public MapInputException(String message, Throwable cause) {
+      super(message, cause);
     }
-    return true;
   }
 
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
@@ -277,7 +290,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @NotNull
   protected Map<Key, Value> mapByIndexer(int inputId, @NotNull Input content) {
-    return myIndexer.map(content);
+    try {
+      return myIndexer.map(content);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new MapInputException("Failed to map data for input " + inputId, e);
+    }
   }
 
   public abstract void checkCanceled();
@@ -317,9 +338,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
     myLock.writeLock().lock();
     try {
-      IndexId<?, ?> oldIndexId = DebugAssertions.DEBUG_INDEX_ID.get();
+      IndexId<?, ?> oldIndexId = IndexDebugAssertions.DEBUG_INDEX_ID.get();
       try {
-        DebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
+        IndexDebugAssertions.DEBUG_INDEX_ID.set(myIndexId);
         boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
         if (hasDifference) updateData.updateForwardIndex();
       }
@@ -330,7 +351,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         throw new StorageException(e);
       }
       finally {
-        DebugAssertions.DEBUG_INDEX_ID.set(oldIndexId);
+        IndexDebugAssertions.DEBUG_INDEX_ID.set(oldIndexId);
       }
     }
     finally {
@@ -341,7 +362,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   public static <Key, Value> void checkValuesHaveProperEqualsAndHashCode(@NotNull Map<Key, Value> data,
                                                                          @NotNull IndexId<Key, Value> indexId,
                                                                          @NotNull DataExternalizer<Value> valueExternalizer) {
-    if (DebugAssertions.DEBUG) {
+    if (IndexDebugAssertions.DEBUG) {
       for (Map.Entry<Key, Value> e : data.entrySet()) {
         final Value value = e.getValue();
         if (!(Comparing.equal(value, value) && (value == null || value.hashCode() == value.hashCode()))) {

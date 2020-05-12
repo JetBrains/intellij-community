@@ -36,6 +36,9 @@ object ExtractMethodPipeline {
   ): ExtractOptions {
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
     var options = withMappedName(extractOptions, methodName)
+    if (isStatic && ! options.isStatic) {
+      options = withForcedStatic(analyzer, options) ?: options
+    }
     options = withMappedParametersInput(options, variableData.toList())
     val targetClass = extractOptions.anchor.containingClass!!
     options = if (targetClass.isInterface) {
@@ -44,12 +47,8 @@ object ExtractMethodPipeline {
       options.copy(visibility = visibility)
     }
 
-    if (isStatic && ! options.isStatic) {
-      options = withForcedStatic(analyzer, options) ?: throw PrepareFailedException("Fail", options.elements.first())
-    }
-
     if (isConstructor) {
-      options = asConstructor(analyzer, options)
+      options = asConstructor(analyzer, options) ?: options
     } else {
       options = options.copy(dataOutput = extractOptions.dataOutput.withType(returnType))
     }
@@ -145,7 +144,7 @@ object ExtractMethodPipeline {
     return AnonymousTargetClassPreselectionUtil.getPreselection(candidates, candidates.first()) ?: candidates.first()
   }
 
-  fun <T> selectTargetClass(options: ExtractOptions, onSelected: (ExtractOptions) -> T): ExtractOptions {
+  fun selectTargetClass(options: ExtractOptions, onSelect: (ExtractOptions) -> Unit): ExtractOptions {
     val analyzer = CodeFragmentAnalyzer(options.elements)
     val targetCandidates = findTargetCandidates(analyzer, options)
     val preselection = findDefaultTargetCandidate(targetCandidates)
@@ -154,7 +153,7 @@ object ExtractMethodPipeline {
 
     val processor = PsiElementProcessor<PsiClass> { selected ->
       val mappedOptions = withTargetClass(analyzer, options, selected)!!
-      onSelected(mappedOptions)
+      onSelect(mappedOptions)
       true
     }
 
@@ -201,8 +200,8 @@ object ExtractMethodPipeline {
     return extractOptions.copy(inputParameters = extractOptions.inputParameters - hidden.flatten() + folded)
   }
 
-  fun asConstructor(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions {
-    if (! canBeConstructor(analyzer)) throw PrepareFailedException("Can't be a constructor", extractOptions.elements.first()) //TODO
+  fun asConstructor(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
+    if (! canBeConstructor(analyzer)) return null
     return extractOptions.copy(isConstructor = true,
                                methodName = "this",
                                dataOutput = EmptyOutput(),

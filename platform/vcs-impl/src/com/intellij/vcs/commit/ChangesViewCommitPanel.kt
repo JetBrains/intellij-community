@@ -64,7 +64,13 @@ private val MAC_COMMIT_ACTION_SHORTCUT = CustomShortcutSet(getKeyStroke(KeyEvent
 
 private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
 
-private fun JBOptionButton.getBottomInset(): Int =
+fun showEmptyCommitMessageConfirmation() = Messages.YES == Messages.showYesNoDialog(
+  message("confirmation.text.check.in.with.empty.comment"),
+  message("confirmation.title.check.in.with.empty.comment"),
+  Messages.getWarningIcon()
+)
+
+fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
   ?: (components.firstOrNull() as? JComponent)?.insets?.bottom
   ?: 0
@@ -118,7 +124,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
-    editorField.setPlaceholder("Commit Message")
+    editorField.setPlaceholder(message("commit.message.placeholder"))
   }
   private val defaultCommitAction = object : AbstractAction() {
     override fun actionPerformed(e: ActionEvent) = fireDefaultExecutorCalled()
@@ -383,12 +389,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
     inclusionEventDispatcher.addListener(listener, parent)
 
-  override fun confirmCommitWithEmptyMessage(): Boolean =
-    Messages.YES == Messages.showYesNoDialog(
-      message("confirmation.text.check.in.with.empty.comment"),
-      message("confirmation.title.check.in.with.empty.comment"),
-      Messages.getWarningIcon()
-    )
+  override fun confirmCommitWithEmptyMessage(): Boolean = showEmptyCommitMessageConfirmation()
 
   override fun startBeforeCommitChecks() = Unit
   override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit

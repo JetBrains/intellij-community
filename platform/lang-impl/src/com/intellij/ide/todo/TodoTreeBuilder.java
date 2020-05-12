@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -94,7 +93,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
-    psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener());
+    psiManager.addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
 
     myFileStatusListener = new MyFileStatusListener();
 
@@ -122,7 +121,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
     catch (IndexNotReadyException ignore) {}
 
-    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
+    FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
   }
 
   public boolean isDisposed() {
@@ -132,7 +131,6 @@ public abstract class TodoTreeBuilder implements Disposable {
   @Override
   public final void dispose() {
     myDisposed = true;
-    FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
   }
 
   final boolean isUpdatable() {

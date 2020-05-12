@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsType
 import com.intellij.openapi.vcs.changes.ChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.messages.Topic
@@ -88,6 +89,7 @@ class CommitWorkflowManager(private val project: Project) {
     SETTINGS.subscribe(project, object : SettingsListener {
       override fun settingsChanged() = updateWorkflow()
     })
+    VcsEP.EP_NAME.addChangeListener(Runnable { updateWorkflow() }, project)
 
     project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdt { updateWorkflow() } })
   }

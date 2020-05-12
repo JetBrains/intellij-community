@@ -5,7 +5,6 @@ import com.intellij.ide.lightEdit.LightEditTabAttributesProvider
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.markup.TextAttributes
-import git4idea.index.color
 import java.awt.Color
 import java.awt.Font
 

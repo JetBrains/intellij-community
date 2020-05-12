@@ -1,32 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
-import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.value.DfaValue
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.controlFlow.*
 import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
-import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
-import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
-import com.intellij.util.containers.IntArrayList
 import com.siyeh.ig.psiutils.VariableAccessUtils
-import java.util.LinkedHashSet
-import kotlin.Comparator
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
@@ -37,15 +26,20 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   init {
     require(elements.isNotEmpty())
   }
+
   private val codeFragment = ControlFlowUtil.findCodeFragment(elements.first())
   private val flow: ControlFlow = createControlFlow(elements)
   private val flowRange = findFlowRange(flow, elements)
 
   private fun createControlFlow(elements: List<PsiElement>): ControlFlow {
-    val fragmentToAnalyze: PsiElement = codeFragment
-    val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
-    val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
-    return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
+    try {
+      val fragmentToAnalyze: PsiElement = codeFragment
+      val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
+      val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
+      return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
+    } catch (e: AnalysisCanceledException) {
+      throw ExtractException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.errorElement)
+    }
   }
 
   private fun findFlowRange(flow: ControlFlow, elements: List<PsiElement>): IntRange {
@@ -88,7 +82,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   fun findOutputVariables(): List<PsiVariable> {
     val exitPoints = IntArrayList()
     ControlFlowUtil.findExitPointsAndStatements(flow, flowRange.first, flowRange.last, exitPoints, *DEFAULT_EXIT_STATEMENTS_CLASSES)
-    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, exitPoints.toArray()).distinct()
+    return ControlFlowUtil.getOutputVariables(flow, flowRange.first, flowRange.last, exitPoints.toIntArray()).distinct()
   }
 
   fun findUndeclaredVariables(): List<PsiVariable> {
@@ -269,7 +263,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       }
     }
 
-    fun inferNullability(place: PsiStatement, probeExpression: String?): Nullability {
+    fun inferNullability(place: PsiElement, probeExpression: String?): Nullability {
       if (probeExpression == null) return Nullability.UNKNOWN
       val factory = PsiElementFactory.getInstance(place.project)
       val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN

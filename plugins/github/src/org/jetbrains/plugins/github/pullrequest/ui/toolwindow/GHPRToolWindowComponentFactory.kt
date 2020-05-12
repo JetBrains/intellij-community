@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubChooseAccountDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -33,6 +35,8 @@ import kotlin.properties.Delegates
 internal class GHPRToolWindowComponentFactory(private val project: Project,
                                               private val remoteUrl: GitRemoteUrlCoordinates,
                                               private val parentDisposable: Disposable) {
+
+  private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
   @CalledInAwt
   fun createComponent(): JComponent {
@@ -136,6 +140,7 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
       val dialog = GithubChooseAccountDialog(project, null, accounts, null, true, true)
       if (dialog.showAndGet()) {
         selectedAccount = dialog.account
+        if (dialog.setDefault) project.service<GithubProjectDefaultAccountHolder>().account = dialog.account
         update()
         GithubUIUtil.focusPanel(panel)
       }
@@ -185,22 +190,22 @@ internal class GHPRToolWindowComponentFactory(private val project: Project,
     private fun createDataContextLoadingPanel(account: GithubAccount,
                                               requestExecutor: GithubApiRequestExecutor,
                                               disposable: Disposable): JComponent {
-      Disposer.register(disposable, Disposable {
-        GHPRDataContextRepository.getInstance(project).clearContext(remoteUrl)
-      })
 
       val uiDisposable = Disposer.newDisposable()
-      Disposer.register(disposable, uiDisposable)
+      Disposer.register(disposable, Disposable {
+        Disposer.dispose(uiDisposable)
+        dataContextRepository.clearContext(remoteUrl)
+      })
 
       val loadingModel = GHCompletableFutureLoadingModel<GHPRDataContext>(uiDisposable).apply {
-        future = GHPRDataContextRepository.getInstance(project).acquireContext(remoteUrl, account, requestExecutor)
+        future = dataContextRepository.acquireContext(remoteUrl, account, requestExecutor)
       }
 
       return GHLoadingPanel.create(loadingModel,
                                    { GHPRComponentFactory(project).createComponent(loadingModel.result!!, uiDisposable) }, uiDisposable,
                                    errorPrefix = GithubBundle.message("cannot.load.data.from.github"),
                                    errorHandler = GHLoadingErrorHandlerImpl(project, account) {
-                                     val contextRepository = GHPRDataContextRepository.getInstance(project)
+                                     val contextRepository = dataContextRepository
                                      contextRepository.clearContext(remoteUrl)
                                      loadingModel.future = contextRepository.acquireContext(remoteUrl, account, requestExecutor)
                                    })

@@ -15,17 +15,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.LinkedListWithSum;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.ClipboardOwner;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This implementation attempts to limit memory occupied by clipboard history. To make it work, {@link Transferable} instances passed to
@@ -225,8 +221,8 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
     int maxMemory = Math.max(0, Registry.intValue("clipboard.history.max.memory"));
     int smallItemSizeLimit = maxMemory / maxCount / 10;
 
-    for (int i = myData.size() - 1; i >= maxCount; i--) {
-      myData.remove(i);
+    if (myData.size() > maxCount) {
+      myData.subList(maxCount, myData.size()).clear();
     }
 
     LinkedListWithSum<Transferable>.ListIterator it = myData.listIterator(myData.size());

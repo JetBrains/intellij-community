@@ -86,6 +86,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     return true;
   }
 
+  @NlsContexts.DialogTitle
   protected String subjDisplayName() {
     return "item";
   }
@@ -276,7 +277,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
-      final String profileName = askForProfileName(IdeBundle.message("dialog.title.copy"));
+      @SuppressWarnings("UnresolvedPropertyKey") final String profileName = askForProfileName(IdeBundle.message("dialog.title.copy"));
       if (profileName == null) return;
 
       @SuppressWarnings("unchecked") final T clone = myCloner.copyOf((T)getSelectedObject());
@@ -319,7 +320,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
   @Nullable
   protected T createItem() {
-    final String name = askForProfileName(IdeBundle.message("dialog.title.create.new"));
+    @SuppressWarnings("UnresolvedPropertyKey") final String name = askForProfileName(IdeBundle.message("dialog.title.create.new"));
     if (name == null) return null;
     final T newItem = myFactory.create();
     myNamer.setName(newItem, name);

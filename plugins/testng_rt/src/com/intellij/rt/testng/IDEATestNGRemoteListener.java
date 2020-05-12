@@ -44,7 +44,7 @@ public class IDEATestNGRemoteListener {
           for (ITestNGMethod method : allMethods) {
             if (method.isTest()) count += method.getInvocationCount();
           }
-          myPrintStream.println("##teamcity[testCount count = \'" + count + "\']");
+          myPrintStream.println("##teamcity[testCount count = '" + count + "']");
         }
       }
       catch (NoSuchMethodError ignore) {}
@@ -66,9 +66,9 @@ public class IDEATestNGRemoteListener {
             }
             if (!found) {
               final String fullEscapedMethodName = escapeName(getShortName(method.getTestClass().getName()) + "/" + method.getMethodName());
-              myPrintStream.println("##teamcity[testStarted name=\'" + fullEscapedMethodName + "\']");
-              myPrintStream.println("##teamcity[testIgnored name=\'" + fullEscapedMethodName + "\']");
-              myPrintStream.println("##teamcity[testFinished name=\'" + fullEscapedMethodName + "\']");
+              myPrintStream.println("##teamcity[testStarted name='" + fullEscapedMethodName + "']");
+              myPrintStream.println("##teamcity[testIgnored name='" + fullEscapedMethodName + "']");
+              myPrintStream.println("##teamcity[testFinished name='" + fullEscapedMethodName + "']");
               break;
             }
           }
@@ -182,7 +182,7 @@ public class IDEATestNGRemoteListener {
 
     for (int i = myCurrentSuites.size() - 1; i >= idx; i--) {
       currentClass = myCurrentSuites.remove(i);
-      myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(currentClass) + "\']");
+      myPrintStream.println("##teamcity[testSuiteFinished name='" + escapeName(currentClass) + "']");
     }
 
     for (int i = idx; i < parentsHierarchy.size(); i++) {
@@ -198,15 +198,15 @@ public class IDEATestNGRemoteListener {
           }
         }
       }
-      myPrintStream.println("\n##teamcity[testSuiteStarted name =\'" + escapeName(currentClassName) +
-                            (provideLocation ? "\' locationHint = \'" + location : "") + "\']");
+      myPrintStream.println("\n##teamcity[testSuiteStarted name ='" + escapeName(currentClassName) +
+                            (provideLocation ? "' locationHint = '" + location : "") + "']");
       myCurrentSuites.add(currentClassName);
     }
     return false;
   }
 
   public void onSuiteFinish(String suiteName) {
-    myPrintStream.println("##teamcity[testSuiteFinished name=\'" + escapeName(suiteName) + "\']");
+    myPrintStream.println("##teamcity[testSuiteFinished name='" + escapeName(suiteName) + "']");
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount, boolean config) {
@@ -215,8 +215,10 @@ public class IDEATestNGRemoteListener {
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
     final String location = className + "/" + result.getMethodName() + (invocationCount >= 0 ? "[" + invocationCount + "]" : "");
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
-                          "\' locationHint=\'java:test://" + escapeName(location) + (config ? "\' config=\'true" : "") + "\']");
+    myPrintStream.println(
+      "\n##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
+      "' locationHint='java:test://" + escapeName(location) + (config ? "' config='true" : "") +
+      "']");
   }
 
   public void onTestFailure(ExposedTestResult result) {
@@ -260,16 +262,16 @@ public class IDEATestNGRemoteListener {
       onTestStart(result);
       mySkipped++;
     }
-    myPrintStream.println("\n##teamcity[testIgnored name=\'" + escapeName(getTestMethodNameWithParams(result)) + "\']");
+    myPrintStream.println("\n##teamcity[testIgnored name='" + escapeName(getTestMethodNameWithParams(result)) + "']");
     onTestFinished(result);
   }
 
   public void onTestFinished(ExposedTestResult result) {
     final long duration = result.getDuration();
-    myPrintStream.println("\n##teamcity[testFinished name=\'" +
+    myPrintStream.println("\n##teamcity[testFinished name='" +
                           escapeName(getTestMethodNameWithParams(result)) +
-                          (duration > 0 ? "\' duration=\'" + duration : "") +
-                          "\']");
+                          (duration > 0 ? "' duration='" + duration : "") +
+                          "']");
   }
 
   private synchronized String getTestMethodNameWithParams(ExposedTestResult result) {

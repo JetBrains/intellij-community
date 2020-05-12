@@ -2,5 +2,5 @@
 package com.intellij.execution.ui
 
 interface FragmentedSettings {
-  var visibleFragments: MutableSet<String>
+  var selectedOptions: MutableSet<String>
 }

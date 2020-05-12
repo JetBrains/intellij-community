@@ -6,10 +6,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.extractMethod.PrepareFailedException
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase
 import com.intellij.refactoring.util.RefactoringUtil
-import kotlin.math.exp
 
 class ExtractSelector {
 
@@ -44,15 +42,14 @@ class ExtractSelector {
 
   fun suggestElementsToExtract(editor: Editor): List<PsiElement> {
     val selectedElements = findSelectedElements(editor)
-    val alignedElements = alignElements(selectedElements)
-    if (alignedElements.isEmpty()) throw PrepareFailedException("Fail", selectedElements.first())
-    return alignedElements
+    return alignElements(selectedElements)
   }
 
   private fun alignElements(elements: List<PsiElement>): List<PsiElement> {
     val singleElement = elements.singleOrNull()
     val alignedElements = when {
       elements.size > 1 -> alignStatements(elements)
+      singleElement is PsiIfStatement -> listOf(alignIfStatement(singleElement))
       singleElement is PsiBlockStatement -> if (singleElement.codeBlock.firstBodyElement != null) listOf(singleElement) else emptyList()
       singleElement is PsiCodeBlock -> alignCodeBlock(singleElement)
       singleElement is PsiExpression -> listOfNotNull(alignExpression(singleElement))
@@ -62,6 +59,18 @@ class ExtractSelector {
       alignedElements.isEmpty() -> emptyList()
       alignedElements.first() !== elements.first() || alignedElements.last() !== elements.last() -> alignElements(alignedElements)
       else -> alignedElements
+    }
+  }
+
+  private fun isControlFlowStatement(statement: PsiStatement?): Boolean {
+    return statement is PsiBreakStatement || statement is PsiContinueStatement || statement is PsiReturnStatement || statement is PsiYieldStatement
+  }
+
+  private fun alignIfStatement(ifStatement: PsiIfStatement): PsiElement {
+    return if (ifStatement.elseBranch == null && isControlFlowStatement(ifStatement.thenBranch)) {
+      ifStatement.condition ?: ifStatement
+    } else {
+      ifStatement
     }
   }
 

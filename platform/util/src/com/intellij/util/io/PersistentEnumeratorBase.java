@@ -23,6 +23,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.containers.ShareableKey;
+import com.intellij.util.io.keyStorage.AppendableObjectStorage;
+import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
+import com.intellij.util.io.keyStorage.InlinedKeyStorage;
+import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,7 +34,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,8 +53,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private static final CacheKey ourFlyweight = new FlyweightKey();
 
   protected final ResizeableMappedFile myStorage;
-  private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
-  private final AppendableStorageBackedByResizableMappedFile myKeyStorage;
+  @NotNull
+  private final AppendableObjectStorage<Data> myKeyStorage;
   final KeyDescriptor<Data> myDataDescriptor;
   protected final Path myFile;
   private final Version myVersion;
@@ -90,10 +93,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   private static class CacheKey implements ShareableKey {
-    public PersistentEnumeratorBase owner;
+    public PersistentEnumeratorBase<?> owner;
     public Object key;
 
-    private CacheKey(Object key, PersistentEnumeratorBase owner) {
+    private CacheKey(Object key, PersistentEnumeratorBase<?> owner) {
       this.key = key;
       this.owner = owner;
     }
@@ -231,11 +234,16 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
 
     if (dataDescriptor instanceof InlineKeyDescriptor) {
-      myKeyStorage = null;
+      myKeyStorage = new InlinedKeyStorage<>((InlineKeyDescriptor<Data>)dataDescriptor);
     }
     else {
       try {
-        myKeyStorage = new AppendableStorageBackedByResizableMappedFile(keyStreamFile(), initialSize, myStorage.getPagedFileStorage().getStorageLockContext(), PagedFileStorage.MB, false);
+        myKeyStorage = new AppendableStorageBackedByResizableMappedFile<>(keyStreamFile(),
+                                                                          initialSize,
+                                                                          myStorage.getPagedFileStorage().getStorageLockContext(),
+                                                                          PagedFileStorage.MB,
+                                                                          false,
+                                                                          dataDescriptor);
       }
       catch (Throwable e) {
         LOG.info(e);
@@ -243,7 +251,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         throw new CorruptedException(file);
       }
     }
-    myAssumeDifferentSerializedBytesMeansObjectsInequality = myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy;
   }
 
   void lockStorage() {
@@ -396,15 +403,16 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected abstract int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException;
 
   protected boolean isKeyAtIndex(final Data value, final int idx) throws IOException {
-    if (myKeyStorage == null) return false;
+    if (myKeyStorage instanceof InlinedKeyStorage) return false;
 
     // check if previous serialized state is the same as for value
     // this is much faster than myDataDescriptor.isEqualTo(valueOf(idx), value) for identical objects
     // TODO: key storage lock
     final int addr = indexToAddr(idx);
 
-    if (myKeyStorage.checkBytesAreTheSame(addr, value, myDataDescriptor)) return true;
-    if (myAssumeDifferentSerializedBytesMeansObjectsInequality) return false;
+    if (myKeyStorage.checkBytesAreTheSame(addr, value)) return true;
+
+    if (myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy) return false;
     return myDataDescriptor.isEqual(valueOf(idx), value);
   }
 
@@ -422,16 +430,11 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public int getLargestId() {
-    assert myKeyStorage != null;
     return myKeyStorage.getCurrentLength();
   }
 
   protected int doWriteData(Data value) throws IOException {
-    if (myKeyStorage != null) {
-      return myKeyStorage.append(value, myDataDescriptor);
-
-    }
-    return ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
+    return myKeyStorage.append(value);
   }
 
   protected int setupValueId(int hashCode, int dataOff) {
@@ -444,10 +447,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    if (myKeyStorage == null) {
-      throw new UnsupportedOperationException("Iteration over InlineIntegerKeyDescriptors is not supported");
-    }
-
     lockStorage(); // todo locking in key storage
     try {
       myKeyStorage.force();
@@ -456,7 +455,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       unlockStorage();
     }
 
-    return myKeyStorage.processAll(processor, myDataDescriptor);
+    return myKeyStorage.processAll(processor);
   }
 
   private Path keyStreamFile() {
@@ -472,8 +471,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       try {
         int addr = indexToAddr(idx);
 
-        if (myKeyStorage == null) return ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(addr);
-        return myKeyStorage.read(addr, myDataDescriptor);
+        return myKeyStorage.read(addr);
       }
       finally {
         unlockStorage();
@@ -520,9 +518,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
 
   protected void doClose() throws IOException {
     try {
-      if (myKeyStorage != null) {
-        myKeyStorage.close();
-      }
+      myKeyStorage.close();
       flush();
     }
     finally {
@@ -565,9 +561,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     lockStorage();
 
     try {
-      if (myKeyStorage != null) {
-        myKeyStorage.force();
-      }
+      myKeyStorage.force();
       flush();
     }
     catch (IOException e) {

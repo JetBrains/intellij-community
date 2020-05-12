@@ -33,7 +33,6 @@ import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -42,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public class EditorFactoryImpl extends EditorFactory {
   private static final ExtensionPointName<EditorFactoryListener> EP = new ExtensionPointName<>("com.intellij.editorFactoryListener");
@@ -107,28 +107,24 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public Document createDocument(char @NotNull [] text) {
+  public @NotNull Document createDocument(char @NotNull [] text) {
     return createDocument(new CharArrayCharSequence(text));
   }
 
   @Override
-  @NotNull
-  public Document createDocument(@NotNull CharSequence text) {
+  public @NotNull Document createDocument(@NotNull CharSequence text) {
     DocumentEx document = new DocumentImpl(text);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }
 
-  @NotNull
-  public Document createDocument(boolean allowUpdatesWithoutWriteAction) {
+  public @NotNull Document createDocument(boolean allowUpdatesWithoutWriteAction) {
     DocumentEx document = new DocumentImpl("", allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);
     return document;
   }
 
-  @NotNull
-  public Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
+  public @NotNull Document createDocument(@NotNull CharSequence text, boolean acceptsSlashR, boolean allowUpdatesWithoutWriteAction) {
     DocumentEx document = new DocumentImpl(text, acceptsSlashR, allowUpdatesWithoutWriteAction);
     myEditorEventMulticaster.registerDocument(document);
     return document;
@@ -172,7 +168,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  public Editor createEditor(@NotNull final Document document, final Project project, @NotNull final FileType fileType, final boolean isViewer) {
+  public Editor createEditor(final @NotNull Document document, final Project project, final @NotNull FileType fileType, final boolean isViewer) {
     EditorEx editor = createEditor(document, isViewer, project, EditorKind.UNTYPED);
     editor.setHighlighter(EditorHighlighterFactory.getInstance().createEditorHighlighter(project, fileType));
     return editor;
@@ -234,15 +230,8 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  public Editor @NotNull [] getEditors(@NotNull Document document, Project project) {
-    List<Editor> list = null;
-    for (Editor editor : myEditors) {
-      if (editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject()))) {
-        if (list == null) list = new SmartList<>();
-        list.add(editor);
-      }
-    }
-    return list == null ? Editor.EMPTY_ARRAY : list.toArray(Editor.EMPTY_ARRAY);
+  public @NotNull Stream<Editor> editors(@NotNull Document document, @Nullable Project project) {
+    return myEditors.stream().filter(editor -> editor.getDocument().equals(document) && (project == null || project.equals(editor.getProject())));
   }
 
   @Override
@@ -268,8 +257,7 @@ public class EditorFactoryImpl extends EditorFactory {
   }
 
   @Override
-  @NotNull
-  public EditorEventMulticaster getEventMulticaster() {
+  public @NotNull EditorEventMulticaster getEventMulticaster() {
     return myEditorEventMulticaster;
   }
 

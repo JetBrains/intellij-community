@@ -5,7 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.api.VirtualFileUrlManagerImpl
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test

@@ -16,7 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
 
-private val topic = Topic(GrazieStateLifecycle::class.java)
+private val topic = Topic(GrazieStateLifecycle::class.java, Topic.BroadcastDirection.NONE)
 
 interface GrazieStateLifecycle {
   /** Initialize Grazie with passed state */

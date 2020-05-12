@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree.project;
 
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -45,6 +47,7 @@ public interface ProjectFileNode {
   static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
     checkCanceled(); // ProcessCanceledException if current task is interrupted
     if (project == null || project.isDisposed() || !file.isValid()) return null;
+    if (ScratchFileService.getInstance().getRootType(file) != null) return ApplicationManager.getApplication();
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
     if (!is("projectView.show.base.dir")) return null;

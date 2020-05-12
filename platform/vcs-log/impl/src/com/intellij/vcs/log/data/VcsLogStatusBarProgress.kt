@@ -102,7 +102,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
 
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
 
-    override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip")
+    override fun getCancelTooltipText(): String = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.tooltip", vcsName.capitalize())
 
     override fun isCancellable(): Boolean = true
   }

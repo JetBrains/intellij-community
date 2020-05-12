@@ -1,9 +1,5 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -15,10 +11,10 @@ import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateWeigh;
 import org.jetbrains.plugins.textmate.regex.MatchData;
 import org.jetbrains.plugins.textmate.regex.RegexUtil;
 import org.jetbrains.plugins.textmate.regex.StringWithId;
+import org.jetbrains.plugins.textmate.regex.TextMateRange;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TextMateLexer {
   /**
@@ -42,8 +38,8 @@ public class TextMateLexer {
   private int myCurrentOffset = 0;
 
   private CharSequence myText ="";
-  private final Stack<TextMateLexerState> myStates = new Stack<>();
-  private final Stack<CharSequence> openedTags = new Stack<>();
+  private final Deque<TextMateLexerState> myStates = new LinkedList<>();
+  private final Deque<CharSequence> openedTags = new LinkedList<>();
 
   private final CharSequence myLanguageScopeName;
   private final int myLineLimit;
@@ -64,7 +60,7 @@ public class TextMateLexer {
     myStates.clear();
     myStates.push(myLanguageInitialState);
     openedTags.clear();
-    openedTags.push(myLanguageScopeName);
+    openedTags.offer(myLanguageScopeName);
     setLastSuccessState(null);
   }
 
@@ -99,11 +95,13 @@ public class TextMateLexer {
     int startLineOffset = myCurrentOffset;
     int linePosition = 0;
     int lineByteOffset = 0;
-    String line = StringUtil.endsWithChar(lineCharSequence, '\n') ? lineCharSequence.toString() : lineCharSequence.toString() + "\n";
+    String line = lineCharSequence.length() > 0 && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
+                  ? lineCharSequence.toString()
+                  : lineCharSequence.toString() + "\n";
 
     StringWithId string = new StringWithId(line);
     while (true) {
-      final TextMateLexerState lexerState = myStates.peek();
+      final TextMateLexerState lexerState = myStates.element();
       if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
           && !SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, lexerState).matched()) {
         closeScopeSelector(output, linePosition + startLineOffset);
@@ -117,7 +115,7 @@ public class TextMateLexer {
 
     final TObjectIntHashMap<List<TextMateLexerState>> localStates = new TObjectIntHashMap<>();
     while (true) {
-      TextMateLexerState lastState = myStates.peek();
+      TextMateLexerState lastState = myStates.element();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
       String currentScope = SyntaxMatchUtils.selectorsToScope(openedTags);
@@ -129,11 +127,11 @@ public class TextMateLexer {
       int endPosition;
       MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, lastState);
       if (endMatch.matched() && (!currentMatch.matched() ||
-                                 currentMatch.byteOffset().getStartOffset() >= endMatch.byteOffset().getStartOffset() ||
+                                 currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
         myStates.pop();
-        TextRange endRange = endMatch.charRange(line, string.bytes);
-        int startPosition = endPosition = endRange.getStartOffset();
+        TextMateRange endRange = endMatch.charRange(line, string.bytes);
+        int startPosition = endPosition = endRange.start;
         closeScopeSelector(output, startPosition + startLineOffset); // closing content scope
         if (lastRule.getCaptures(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.CAPTURES) == null
@@ -143,14 +141,14 @@ public class TextMateLexer {
             ||
             parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, startLineOffset)) {
           // move line position only if anything was captured or if there is nothing to capture at all
-          endPosition = endRange.getEndOffset();
+          endPosition = endRange.end;
         }
         closeScopeSelector(output, endPosition  + startLineOffset); // closing basic scope
       }
       else if (currentMatch.matched()) {
-        TextRange currentRange = currentMatch.charRange(line, string.bytes);
-        int startPosition = currentRange.getStartOffset();
-        endPosition = currentRange.getEndOffset();
+        TextMateRange currentRange = currentMatch.charRange(line, string.bytes);
+        int startPosition = currentRange.start;
+        endPosition = currentRange.end;
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
           openScopeSelector(output, currentRule.getStringAttribute(Constants.StringKey.NAME), startPosition + startLineOffset);
           parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
@@ -219,25 +217,31 @@ public class TextMateLexer {
     TIntObjectHashMap<CharSequence> captures = rule.getCaptures(capturesKey);
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
-      List<CaptureMatchData> nonEmptyMatches = ContainerUtil.filter(matches, m -> m.selectorName.length() > 0 && !m.range.isEmpty());
-      Stack<CaptureMatchData> starts = new Stack<>(ContainerUtil.sorted(nonEmptyMatches, CaptureMatchData.START_OFFSET_ORDERING));
-      Stack<CaptureMatchData> ends = new Stack<>(ContainerUtil.sorted(nonEmptyMatches, CaptureMatchData.END_OFFSET_ORDERING));
+      //noinspection SSBasedInspection
+      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty())
+        .collect(Collectors.toList());
+      LinkedList<CaptureMatchData> starts = new LinkedList<>(nonEmptyMatches);
+      Collections.sort(starts, CaptureMatchData.START_OFFSET_ORDERING);
+
+      LinkedList<CaptureMatchData> ends = new LinkedList<>(nonEmptyMatches);
+      Collections.sort(ends, CaptureMatchData.END_OFFSET_ORDERING);
+
       while (!starts.isEmpty() || !ends.isEmpty()) {
         if (starts.isEmpty()) {
-          CaptureMatchData end = ends.pop();
-          closeScopeSelector(output, end.range.getEndOffset() + startLineOffset);
+          CaptureMatchData end = ends.removeLast();
+          closeScopeSelector(output, end.range.end + startLineOffset);
         }
         else if (ends.isEmpty()) {
-          CaptureMatchData start = starts.pop();
-          openScopeSelector(output, start.selectorName, start.range.getStartOffset() + startLineOffset);
+          CaptureMatchData start = starts.removeLast();
+          openScopeSelector(output, start.selectorName, start.range.start + startLineOffset);
         }
-        else if (ends.peek().group < starts.peek().group) {
-          CaptureMatchData end = ends.pop();
-          closeScopeSelector(output, end.range.getEndOffset() + startLineOffset);
+        else if (ends.getLast().group < starts.getLast().group) {
+          CaptureMatchData end = ends.removeLast();
+          closeScopeSelector(output, end.range.end + startLineOffset);
         }
         else {
-          CaptureMatchData start = starts.pop();
-          openScopeSelector(output, start.selectorName, start.range.getStartOffset() + startLineOffset);
+          CaptureMatchData start = starts.removeLast();
+          openScopeSelector(output, start.selectorName, start.range.start + startLineOffset);
         }
       }
       return !matches.isEmpty();
@@ -248,18 +252,17 @@ public class TextMateLexer {
 
   private void openScopeSelector(@NotNull Queue<Token> output, @Nullable CharSequence name, int position) {
     addToken(output, position);
-    openedTags.push(name);
+    openedTags.offer(name);
   }
 
   private void closeScopeSelector(@NotNull Queue<Token> output, int position) {
     if (!openedTags.isEmpty()) {
-      if (!StringUtil.isEmpty(openedTags.peek())) {
+      CharSequence lastOpened = openedTags.peekLast();
+      if (lastOpened != null && lastOpened.length() > 0) {
         addToken(output, position);
       }
     }
-    if (!openedTags.empty()) {
-      openedTags.pop();
-    }
+    openedTags.pollLast();
   }
 
 
@@ -282,8 +285,8 @@ public class TextMateLexer {
    * we want to restore valid state in order to parse following line properly.
    */
   private void restoreValidStateBeforeNewLine() {
-    if (openedTags.empty()) {
-      openedTags.push(myLanguageScopeName);
+    if (openedTags.isEmpty()) {
+      openedTags.offer(myLanguageScopeName);
     }
   }
 

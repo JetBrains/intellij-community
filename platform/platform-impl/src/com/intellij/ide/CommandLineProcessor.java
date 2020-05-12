@@ -201,6 +201,7 @@ public final class CommandLineProcessor {
         if (!file.isAbsolute()) {
           file = currentDirectory == null ? file.toAbsolutePath() : Paths.get(currentDirectory).resolve(file);
         }
+        file = file.normalize();
       }
       catch (InvalidPathException e) {
         LOG.warn(e);

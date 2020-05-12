@@ -42,7 +42,7 @@ public class ColorUtil {
               final Object o = helper.computeConstantExpression(each);
               if (o instanceof Integer) {
                 values[i] = ((Integer) o).intValue();
-                values[i] = values[i] > 255 && expressions.length > 1 ? 255 : values[i] < 0 ? 0 : values[i];
+                values[i] = values[i] > 255 && expressions.length > 1 ? 255 : Math.max(values[i], 0);
                 i++;
               } else if (o instanceof Float) {
                 values2[j] = ((Float) o).floatValue();

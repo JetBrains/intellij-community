@@ -13,7 +13,6 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
-import git4idea.index.getPresentation
 import java.awt.Component
 import java.awt.event.MouseEvent
 

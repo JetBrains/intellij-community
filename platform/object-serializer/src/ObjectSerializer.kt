@@ -81,6 +81,10 @@ class ObjectSerializer {
   fun <T> readList(itemClass: Class<T>, input: InputStream, configuration: ReadConfiguration = defaultReadConfiguration): List<T> {
     return serializer.readList(itemClass, readerBuilder.build(input), configuration)
   }
+
+  fun clearBindingCache() {
+    serializer.clearBindingCache()
+  }
 }
 
 interface SerializationFilter {

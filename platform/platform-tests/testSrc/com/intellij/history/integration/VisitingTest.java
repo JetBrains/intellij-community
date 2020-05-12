@@ -150,7 +150,7 @@ public class VisitingTest extends IntegrationTestCase {
     assertEquals(expected, visitor.log);
   }
 
-  private class TestVisitor extends ChangeVisitor {
+  private static class TestVisitor extends ChangeVisitor {
     public String log = "";
 
     @Override

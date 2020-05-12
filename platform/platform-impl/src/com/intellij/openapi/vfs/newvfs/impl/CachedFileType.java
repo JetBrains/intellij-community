@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
-public class CachedFileType {
+public final class CachedFileType {
   private static final ConcurrentMap<FileType, CachedFileType> ourInterner = new ConcurrentHashMap<>();
 
   private @Nullable FileType fileType;
@@ -20,42 +20,30 @@ public class CachedFileType {
     this.fileType = fileType;
   }
 
-  @Nullable
-  FileType getUpToDateOrNull() {
+  @Nullable FileType getUpToDateOrNull() {
     return fileType;
   }
 
   static CachedFileType forType(@NotNull FileType fileType) {
-    CachedFileType cached = ourInterner.get(fileType);
-    return cached != null ? cached : computeSynchronized(fileType);
-  }
-
-  private static CachedFileType computeSynchronized(FileType fileType) {
-    synchronized (ourInterner) {
-      return ourInterner.computeIfAbsent(fileType, CachedFileType::new);
-    }
+    return ourInterner.computeIfAbsent(fileType, CachedFileType::new);
   }
 
   public static void clearCache() {
-    synchronized (ourInterner) {
-      for (CachedFileType value : ourInterner.values()) {
-        // clear references to file types to aid plugin unloading
-        value.fileType = null;
-      }
-      ourInterner.clear();
+    ourInterner.forEach((type, cachedType) -> {
+      // clear references to file types to aid plugin unloading
+      cachedType.fileType = null;
+    });
+    ourInterner.clear();
+  }
+
+  public static void remove(@NotNull FileType type) {
+    CachedFileType cached = ourInterner.remove(type);
+    if (cached != null) {
+      cached.fileType = null;
     }
   }
 
-  public static void remove(FileType type) {
-    synchronized (ourInterner) {
-      CachedFileType cached = ourInterner.get(type);
-      if (cached != null) {
-        cached.fileType = null;
-      }
-    }
-  }
-
-  public static class PsiListener implements PsiModificationTracker.Listener {
+  static final class PsiListener implements PsiModificationTracker.Listener {
     @Override
     public void modificationCountChanged() {
       clearCache();

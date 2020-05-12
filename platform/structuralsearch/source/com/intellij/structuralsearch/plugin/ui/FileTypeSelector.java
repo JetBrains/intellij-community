@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.structuralsearch.PatternContext;
 import com.intellij.structuralsearch.StructuralSearchProfile;

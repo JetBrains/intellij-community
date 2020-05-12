@@ -70,10 +70,10 @@ class FileId2ValueMapping<Value> {
     if (mapped != null) {
       valueContainer.removeValue(inputId, mapped);
     }
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
+    if (IndexDebugAssertions.EXTRA_SANITY_CHECKS && myOnePerFileValidationEnabled) {
       for (final InvertedIndexValueIterator<Value> valueIterator = valueContainer.getValueIterator(); valueIterator.hasNext();) {
         valueIterator.next();
-        DebugAssertions.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
+        IndexDebugAssertions.assertTrue(!valueIterator.getValueAssociationPredicate().contains(inputId));
       }
     }
     return mapped != null;

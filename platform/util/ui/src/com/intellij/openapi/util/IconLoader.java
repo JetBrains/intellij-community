@@ -1172,7 +1172,8 @@ public final class IconLoader {
      * To get disabled icon with paint it into the image. Some icons require
      * not null component to paint.
      */
-    private static final JComponent ourFakeComponent = new JLabel();
+    private static final JComponent ourFakeComponent = new JComponent() {
+    };
   }
 
   /**

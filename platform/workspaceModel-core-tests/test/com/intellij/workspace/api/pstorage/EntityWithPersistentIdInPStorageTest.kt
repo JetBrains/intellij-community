@@ -8,12 +8,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-internal class PNamedSampleEntityData : PEntityData<PNamedSampleEntity>() {
+internal class PNamedSampleEntityData : PEntityData.WithCalculatablePersistentId<PNamedSampleEntity>() {
   lateinit var name: String
   lateinit var next: PSampleEntityId
   override fun createEntity(snapshot: TypedEntityStorage): PNamedSampleEntity {
     return PNamedSampleEntity(name, next).also { addMetaData(it, snapshot) }
   }
+
+  override fun persistentId(): PSampleEntityId = PSampleEntityId(name)
 }
 
 internal class PNamedSampleEntity(
@@ -42,7 +44,7 @@ internal data class PChildEntityId(val childName: String,
     get() = childName
 }
 
-internal class PChildWithPersistentIdEntityData : PEntityData<PChildWithPersistentIdEntity>() {
+internal class PChildWithPersistentIdEntityData : PEntityData.WithPersistentId<PChildWithPersistentIdEntity>() {
   lateinit var parent: PNamedSampleEntity
   lateinit var childName: String
   override fun createEntity(snapshot: TypedEntityStorage): PChildWithPersistentIdEntity {

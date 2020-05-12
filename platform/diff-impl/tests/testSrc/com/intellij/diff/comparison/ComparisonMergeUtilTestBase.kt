@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
 import com.intellij.diff.fragments.MergeLineFragment
-import com.intellij.diff.util.IntPair
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
+import com.intellij.util.IntPair
 import java.util.*
 
 abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
@@ -215,8 +215,8 @@ abstract class ComparisonMergeUtilTestBase : DiffTestCase() {
     val starts = Trio(start1, start2, start3)
     val ends = Trio(end1, end2, end3)
 
-    fun start(side: ThreeSide): Int = this(side).val1
-    fun end(side: ThreeSide): Int = this(side).val2
+    fun start(side: ThreeSide): Int = this(side).first
+    fun end(side: ThreeSide): Int = this(side).second
 
     override fun toString(): String {
       return "($start1, $end1) - ($start2, $end2) - ($start3, $end3)"

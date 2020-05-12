@@ -20,6 +20,7 @@ import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.KeyboardModifierListener;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
@@ -278,6 +279,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       group.add(Separator.getInstance());
       group.addAll(myTextDiffProvider.getToolbarActions());
+      group.add(new MyToggleExpandByDefaultAction());
       group.add(new MyToggleAutoScrollAction());
       group.add(myEditorSettingsAction);
 
@@ -448,9 +450,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<MergeLineFragment> lineFragments = manager.mergeLines(sequences.get(0), sequences.get(1), sequences.get(2),
                                                                    ignorePolicy.getComparisonPolicy(), indicator);
 
-        List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy()));
+        List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment ->
+          DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy()));
 
-        return () -> apply(lineFragments, conflictTypes, ignorePolicy);
+        FoldingModelSupport.Data foldingState = myFoldingModel.createState(lineFragments, lineOffsets, getFoldingModelSettings());
+
+        return () -> apply(lineFragments, conflictTypes, foldingState, ignorePolicy);
       }
       catch (DiffTooBigException e) {
         return applyNotification(DiffNotifications.createDiffTooBig());
@@ -470,9 +475,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @CalledInAwt
     private void apply(@NotNull List<? extends MergeLineFragment> fragments,
                        @NotNull List<? extends MergeConflictType> conflictTypes,
+                       @Nullable FoldingModelSupport.Data foldingState,
                        @NotNull IgnorePolicy ignorePolicy) {
       if (isDisposed()) return;
-
+      myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
       clearDiffPresentation();
       resetChangeCounters();
 
@@ -495,6 +501,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myAllMergeChanges.add(change);
         onChangeAdded(change);
       }
+
+      myFoldingModel.install(foldingState, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 

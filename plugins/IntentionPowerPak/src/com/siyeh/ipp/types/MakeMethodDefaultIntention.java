@@ -24,7 +24,7 @@ public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionActio
   @NotNull
   @Override
   public String getFamilyName() {
-    return IntentionPowerPackBundle.message("make.method.вdefault.family.name");
+    return IntentionPowerPackBundle.message("make.method.default.family.name");
   }
 
   @Override

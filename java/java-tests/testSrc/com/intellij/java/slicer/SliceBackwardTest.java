@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
@@ -30,10 +31,14 @@ import java.util.Map;
  */
 public class SliceBackwardTest extends SliceTestCase {
   private void doTest() throws Exception {
+    doTest("");
+  }
+
+  private void doTest(@NotNull String filter) throws Exception {
     configureByFile("/codeInsight/slice/backward/"+getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    PsiElement element = new SliceHandler(true).getExpressionAtCaret(getEditor(), getFile());
+    PsiElement element = SliceHandler.create(true).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
     SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
     Collection<HighlightInfo> errors = highlightErrors();
@@ -41,8 +46,12 @@ public class SliceBackwardTest extends SliceTestCase {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = true;
+    SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
+    if (!filter.isEmpty()) {
+      params.valueFilter = provider.parseFilter(element, filter);
+    }
 
-    SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
+    SliceUsage usage = provider.createRootUsage(element, params);
     SliceTestUtil.checkUsages(usage, tree);
   }
 
@@ -83,4 +92,6 @@ public class SliceBackwardTest extends SliceTestCase {
   public void testSearchOverriddenMethodsInThisClassHierarchy() throws Exception { doTest();}
   public void testAppend() throws Exception { doTest();}
   public void testRequireNonNull() throws Exception { doTest();}
+  public void testFilterIntRange() throws Exception { doTest(">=0");}
+  public void testFilterNull() throws Exception { doTest("null");}
 }

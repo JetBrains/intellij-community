@@ -4,7 +4,6 @@ package com.intellij.execution.process
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
-import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentFactory
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
@@ -130,7 +129,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     filesToDelete = cmd.filesToDeleteOnTermination
 
     val actual = ParametersList()
-    actual.addParametersString(cmd.build().getCommandPresentation(LocalTargetEnvironment(request)))
+    actual.addAll(cmd.build().collectCommandsSynchronously())
     val toCompare = mutableListOf<String>()
     actual.parameters.forEachIndexed { i, arg ->
       if (i > 0 && !arg.startsWith("-Dfile.encoding=")) {

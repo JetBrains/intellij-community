@@ -62,11 +62,10 @@ public class TextFilter extends FilterAction {
   @Override
   protected void setLabel(SimpleColoredComponent component) {
     final MatchVariableConstraint constraint = (MatchVariableConstraint)myTable.getVariable();
-    myLabel.append("text=");
-    if (constraint.isInvertRegExp()) myLabel.append("!");
-    myLabel.append(constraint.getRegExp());
-    if (constraint.isWholeWordsOnly()) myLabel.append(", whole words", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    if (constraint.isWithinHierarchy()) myLabel.append(", within hierarchy", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    String value = constraint.isInvertRegExp() ? "!" + constraint.getRegExp() : constraint.getRegExp();
+    myLabel.append(SSRBundle.message("text.0.label", value));
+    if (constraint.isWholeWordsOnly()) myLabel.append(SSRBundle.message("whole.words.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    if (constraint.isWithinHierarchy()) myLabel.append(SSRBundle.message("within.hierarchy.label"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   @Override

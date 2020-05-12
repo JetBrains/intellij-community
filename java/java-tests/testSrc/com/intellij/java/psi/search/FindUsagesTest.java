@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -39,8 +39,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -242,7 +242,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
 
   }
 
-  private static class SearchResult implements Comparable<SearchResult> {
+  private static final class SearchResult implements Comparable<SearchResult> {
     String fileName;
     int startOffset;
     int endOffset;
@@ -293,7 +293,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
     for (int i = 0; i < filesList.size(); i++) {
       PsiFile psiFile = filesList.get(i);
       actual.add(
-        new SearchResult(psiFile.getName(), i < starts.length ? startsList.get(i) : -1, i < ends.length ? endsList.get(i) : -1));
+        new SearchResult(psiFile.getName(), i < starts.length ? startsList.getInt(i) : -1, i < ends.length ? endsList.getInt(i) : -1));
     }
 
     Collections.sort(expected);
@@ -350,7 +350,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
       while(!resolveStarted.get()) {
         UIUtil.dispatchAllInvocationEvents();
       }
-      
+
       WriteAction.run(() -> {
         toSleepMs.set(0);
       });

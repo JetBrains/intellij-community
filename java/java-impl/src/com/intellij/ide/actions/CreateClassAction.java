@@ -6,10 +6,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.core.JavaPsiBundle;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -48,9 +45,12 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       builder.addKind(JavaPsiBundle.message("node.annotation.tooltip"), PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
 
+    PsiDirectory[] dirs = {directory};
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
-      final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
-      if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
+      final @NotNull CreateFromTemplateHandler handler = FileTemplateUtil.findHandler(template);
+      if (handler instanceof JavaCreateFromTemplateHandler && 
+          handler.handlesTemplate(template) && 
+          handler.canCreate(dirs)) {
         builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());
       }
     }

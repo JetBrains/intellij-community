@@ -116,12 +116,12 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     }
   }
 
-  int getWordAtCaretStart() {
-    return getCurrentCaret().getWordAtCaretStart();
+  int getWordAtCaretStart(boolean camel) {
+    return getCurrentCaret().getWordAtCaretStart(camel);
   }
 
-  int getWordAtCaretEnd() {
-    return getCurrentCaret().getWordAtCaretEnd();
+  int getWordAtCaretEnd(boolean camel) {
+    return getCurrentCaret().getWordAtCaretEnd(camel);
   }
 
   @Override

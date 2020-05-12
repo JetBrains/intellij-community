@@ -10,7 +10,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspace.api.VirtualFileUrlManager
 import com.intellij.workspace.api.toVirtualFileUrl
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFileContainer
 import com.intellij.workspace.legacyBridge.intellij.LegacyBridgeFilePointerProviderImpl
 import org.junit.Assert
@@ -42,7 +42,7 @@ class LegacyBridgeFilePointerProviderTest {
   @Before
   fun prepareProject() {
     project = createEmptyTestProject(temporaryDirectoryRule, disposable)
-    virtualFileManager = VirtualFileUrlManagerImpl.getInstance(project)
+    virtualFileManager = VirtualFileUrlManager.getInstance(project)
   }
 
   @Test
@@ -75,7 +75,7 @@ class LegacyBridgeFilePointerProviderTest {
   fun `cache invalidated on move`() {
     val provider = LegacyBridgeFilePointerProviderImpl(project).also { Disposer.register(disposable.disposable, it) }
 
-    val targetFolder = tempDir.newFolder("target")
+    val targetFolder = tempDir.newDirectory("target")
     val targetFolderVirtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFolder)!!
 
     val file = tempDir.newFile("x.txt")

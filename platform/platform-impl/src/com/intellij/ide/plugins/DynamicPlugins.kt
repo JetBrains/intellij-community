@@ -51,7 +51,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
-import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
@@ -87,7 +87,7 @@ interface DynamicPluginListener {
   fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) { }
 
   companion object {
-    @JvmField val TOPIC = Topic.create("DynamicPluginListener", DynamicPluginListener::class.java)
+    @JvmField val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
   }
 }
 
@@ -118,6 +118,10 @@ object DynamicPlugins {
         return "ide.plugins.allow.unload is disabled and synchronous load/unload is not possible for ${descriptor.pluginId}"
       }
       return null
+    }
+
+    if (descriptor.isRequireRestart) {
+      return "Plugin ${descriptor.pluginId} is explicitly marked as requiring restart";
     }
 
     val loadedPluginDescriptor = if (descriptor.pluginId == null) null else PluginManagerCore.getPlugin(descriptor.pluginId) as? IdeaPluginDescriptorImpl
@@ -248,7 +252,7 @@ object DynamicPlugins {
       }
       val element = pathResolver.resolvePath(newBasePath, dependencyConfigFile, pluginXmlFactory)
       val subDescriptor = IdeaPluginDescriptorImpl(descriptor.pluginPath, newBasePath, false)
-      if (!subDescriptor.readExternal(element, pathResolver, context, descriptor)) {
+      if (!subDescriptor.readExternal(element, pathResolver, context.parentContext, descriptor)) {
         LOG.error("Can't read descriptor $dependencyConfigFile for optional dependency of plugin being loaded/unloaded")
         return null
       }
@@ -314,7 +318,7 @@ object DynamicPlugins {
       runInAutoSaveDisabledMode {
         val saveAndSyncHandler = SaveAndSyncHandler.getInstance()
         saveAndSyncHandler.saveSettingsUnderModalProgress(ApplicationManager.getApplication())
-        for (openProject in ProjectManager.getInstance().openProjects) {
+        for (openProject in ProjectUtil.getOpenProjects()) {
           saveAndSyncHandler.saveSettingsUnderModalProgress(openProject)
         }
       }
@@ -328,7 +332,13 @@ object DynamicPlugins {
 
   @JvmStatic
   @JvmOverloads
-  fun unloadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, disable: Boolean = false, isUpdate: Boolean = false, save: Boolean = true): Boolean {
+  fun unloadPlugin(
+    pluginDescriptor: IdeaPluginDescriptorImpl,
+    disable: Boolean = false,
+    isUpdate: Boolean = false,
+    save: Boolean = true,
+    requireMemorySnapshot: Boolean = false
+  ): Boolean {
     val application = ApplicationManager.getApplication() as ApplicationImpl
 
     // The descriptor passed to `unloadPlugin` is the full descriptor loaded from disk, it does not have a classloader.
@@ -383,16 +393,11 @@ object DynamicPlugins {
           @Suppress("DEPRECATION")
           com.intellij.openapi.util.DefaultJDOMExternalizer.clearFieldCache()
           application.getServiceIfCreated(TopHitCache::class.java)?.clear()
-          Disposer.clearDisposalTraces()  // ensure we don't have references to plugin classes in disposal backtraces
           PresentationFactory.clearPresentationCaches()
-          IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
 
-          for (project in ProjectUtil.getOpenProjects()) {
-            (project.messageBus as MessageBusImpl).clearPublisherCache()
-          }
-          (ApplicationManager.getApplication().messageBus as MessageBusImpl).clearPublisherCache()
+          (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
 
           if (disable) {
             // update list of disabled plugins
@@ -413,16 +418,20 @@ object DynamicPlugins {
     finally {
       IdeEventQueue.getInstance().flushQueue()
 
+      // do it after IdeEventQueue.flushQueue() to ensure that Disposer.isDisposed(...) works as expected in flushed tasks.
+      Disposer.clearDisposalTraces()   // ensure we don't have references to plugin classes in disposal backtraces
+      IdeaLogger.ourErrorsOccurred = null   // ensure we don't have references to plugin classes in exception stacktraces
+
       if (ApplicationManager.getApplication().isUnitTestMode && loadedPluginDescriptor.pluginClassLoader !is PluginClassLoader) {
         return true
       }
 
-      val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader()
+      val classLoaderUnloaded = loadedPluginDescriptor.unloadClassLoader(Registry.intValue("ide.plugins.unload.timeout", 5000))
       if (!classLoaderUnloaded) {
         InstalledPluginsState.getInstance().isRestartRequired = true
 
-        if (Registry.`is`("ide.plugins.snapshot.on.unload.fail") && MemoryDumpHelper.memoryDumpAvailable() && !ApplicationManager.getApplication().isUnitTestMode) {
-          val snapshotFolder = System.getProperty("snapshots.path", SystemProperties.getUserHome())
+        if (((Registry.`is`("ide.plugins.snapshot.on.unload.fail") && !ApplicationManager.getApplication().isUnitTestMode) || requireMemorySnapshot) && MemoryDumpHelper.memoryDumpAvailable()) {
+          val snapshotFolder = System.getProperty("memory.snapshots.path", SystemProperties.getUserHome())
           val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
           val snapshotPath = "$snapshotFolder/unload-${pluginDescriptor.pluginId}-$snapshotDate.hprof"
           MemoryDumpHelper.captureMemoryDump(snapshotPath)
@@ -488,7 +497,7 @@ object DynamicPlugins {
 
     val pluginId = pluginDescriptor.pluginId ?: loadedPluginDescriptor.pluginId
     application.unloadServices(pluginDescriptor.appContainerDescriptor.getServices(), pluginId)
-    (application.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
+    (application.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.appContainerDescriptor.getListeners())
 
     for (project in openProjects) {
       (project as ProjectImpl).unloadServices(pluginDescriptor.projectContainerDescriptor.getServices(), pluginId)
@@ -496,7 +505,7 @@ object DynamicPlugins {
       for (module in ModuleManager.getInstance(project).modules) {
         (module as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
       }
-      (project.messageBus as MessageBusImpl).unsubscribePluginListeners(pluginDescriptor)
+      (project.messageBus as MessageBusEx).unsubscribeLazyListeners(pluginId, pluginDescriptor.projectContainerDescriptor.getListeners())
     }
   }
 

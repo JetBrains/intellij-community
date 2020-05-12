@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.ArrayUtilRt
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.toVirtualFileUrl
 import com.intellij.workspace.virtualFile
 import java.util.*
@@ -20,7 +20,7 @@ class LegacyBridgeCompilerModuleExtension(
 ) : CompilerModuleExtension() {
 
   private var changed = false
-  private val virtualFileManager = VirtualFileUrlManagerImpl.getInstance(module.project)
+  private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
   private val javaSettingsValue: CachedValue<JavaModuleSettingsEntity?> = CachedValue {
     it.resolve(module.moduleEntityId)?.javaSettings
   }

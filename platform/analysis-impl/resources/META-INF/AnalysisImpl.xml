@@ -41,6 +41,9 @@
     <projectService serviceInterface="com.intellij.psi.impl.ResolveScopeManager"
                     serviceImplementation="com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.editor.LazyRangeMarkerFactory"
+                    serviceImplementation="com.intellij.openapi.editor.impl.LazyRangeMarkerFactoryImpl"/>
+
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PriorityWeigher" id="priority" order="first"/>
     <weigher key="completion" implementationClass="com.intellij.codeInsight.completion.PrefixMatchingWeigher" id="prefix"
              order="after priority"/>

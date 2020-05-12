@@ -10,7 +10,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.AdjustingTabSettingsEditor;
-import com.intellij.execution.ui.FragmentedSettingsEditor;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -185,10 +184,10 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return null;
   }
 
-  public ConfigurationSettingsEditor(@NotNull RunnerAndConfigurationSettings settings) {
+  public ConfigurationSettingsEditor(@NotNull RunnerAndConfigurationSettings settings, SettingsEditor<RunConfiguration> configurationEditor) {
     super(settings.createFactory());
 
-    myConfigurationEditor = (SettingsEditor<RunConfiguration>)settings.getConfiguration().getConfigurationEditor();
+    myConfigurationEditor = configurationEditor;
     myConfigurationEditor.addSettingsEditorListener(editor -> fireEditorStateChanged());
     Disposer.register(this, myConfigurationEditor);
     myConfiguration = settings.getConfiguration();
@@ -206,10 +205,6 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       applyTo(settings);
     }
     return settings;
-  }
-
-  public boolean isFragmented() {
-    return myConfigurationEditor instanceof FragmentedSettingsEditor;
   }
 
   private static final class RunnersEditorComponent {

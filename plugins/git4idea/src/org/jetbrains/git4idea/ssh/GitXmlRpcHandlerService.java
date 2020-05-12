@@ -3,6 +3,7 @@ package org.jetbrains.git4idea.ssh;
 
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -130,8 +131,10 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
 
   @Override
   public void dispose() {
-    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
-    xmlRpcServer.removeHandler(myHandlerName);
+    XmlRpcServer xmlRpcServer = ApplicationManager.getApplication().getServiceIfCreated(XmlRpcServer.class);
+    if (xmlRpcServer != null) {
+      xmlRpcServer.removeHandler(myHandlerName);
+    }
   }
 
   /**

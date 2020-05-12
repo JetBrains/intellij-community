@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import java.awt.event.InputEvent
+import kotlin.reflect.KProperty
 
 data class FusInputEvent(val inputEvent: InputEvent?, val place: String?) {
   companion object {
@@ -90,6 +91,104 @@ data class StringListEventField(override val name: String): EventField<List<Stri
   fun withCustomRule(id: String): StringListEventField {
     customRuleId = id
     return this
+  }
+}
+
+class ObjectEventField(override val name: String, vararg val fields: EventField<*>) : EventField<ObjectEventData>() {
+  constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
+
+  override fun addData(fuData: FeatureUsageData, value: ObjectEventData) {
+    fuData.addObjectData(name, value.buildObjectData(fields))
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ObjectEventField
+
+    if (name != other.name) return false
+    if (!fields.contentEquals(other.fields)) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = name.hashCode()
+    result = 31 * result + fields.contentHashCode()
+    return result
+  }
+}
+
+abstract class ObjectDescription {
+  private val eventDelegates = ArrayList<EventFieldDelegate<*>>()
+
+  fun <T> field(eventField: EventField<T>): EventFieldDelegate<T> {
+    val delegate = EventFieldDelegate(eventField)
+    eventDelegates.add(delegate)
+    return delegate
+  }
+
+  fun getPairs(): Array<EventPair<*>> {
+    return eventDelegates.mapNotNull { it.getPair() }.toTypedArray()
+  }
+
+  fun getFields(): Array<EventField<*>> {
+    return eventDelegates.map { it.eventField }.toTypedArray()
+  }
+
+  companion object {
+    inline fun <O : ObjectDescription> build(creator: () -> O, filler: O.() -> Unit): ObjectEventData {
+      val obj = creator()
+      filler(obj)
+      return ObjectEventData(*obj.getPairs())
+    }
+  }
+}
+
+class ObjectEventData(private vararg val values: EventPair<*>) {
+  fun buildObjectData(allowedFields: Array<out EventField<*>>): HashMap<String, Any> {
+    val map = hashMapOf<String, Any>()
+    for (eventPair in values) {
+      val eventField = eventPair.field
+      if (eventField !in allowedFields) throw IllegalArgumentException("Field ${eventField.name} is not in allowed object fields")
+      var data = eventPair.data
+      if (data is ObjectEventData && eventField is ObjectEventField) {
+        data = data.buildObjectData(eventField.fields)
+      }
+      if (data != null) {
+        map[eventField.name] = data
+      }
+    }
+    return map
+  }
+}
+
+class EventFieldDelegate<T>(val eventField: EventField<T>) {
+  private var fieldValue: T? = null
+
+  operator fun getValue(thisRef: ObjectDescription, property: KProperty<*>): T? = fieldValue
+
+  operator fun setValue(thisRef: ObjectDescription, property: KProperty<*>, value: T?) {
+    fieldValue = value
+  }
+
+  fun getPair(): EventPair<T>? {
+    val v = fieldValue
+    if (v != null) {
+      return EventPair(eventField, v)
+    }
+    else {
+      return null
+    }
+  }
+}
+
+class ObjectListEventField(override val name: String, vararg val fields: EventField<*>) : EventField<List<ObjectEventData>>() {
+  constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
+
+  override fun addData(fuData: FeatureUsageData, value: List<ObjectEventData>) {
+    fuData.addListObjectData(name, value.map { it.buildObjectData(fields) })
   }
 }
 
@@ -174,6 +273,21 @@ object EventFields {
     override fun addData(fuData: FeatureUsageData, value: String?) {
       fuData.addVersionByString(value)
     }
+  }
+
+  @JvmStatic
+  fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
+    val additionalFields = mutableListOf<EventField<*>>()
+    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
+      if (ext.groupId == groupId && ext.eventId == eventId) {
+        for (field in ext.extensionFields) {
+          if (field != null) {
+            additionalFields.add(field)
+          }
+        }
+      }
+    }
+    return ObjectEventField("additional", *additionalFields.toTypedArray())
   }
 }
 
@@ -307,21 +421,6 @@ class EventId3<T1, T2, T3>(private val group: EventLogGroup, eventId: String, pr
 
 class VarargEventId internal constructor(private val group: EventLogGroup, eventId: String, vararg fields: EventField<*>) : BaseEventId(eventId) {
   private val fields = fields.toMutableList()
-
-  init {
-    for (ext in FeatureUsageCollectorExtension.EP_NAME.extensions) {
-      if (ext.groupId == group.id && ext.eventId == eventId) {
-        for (field in ext.extensionFields) {
-          if (field == null) {
-            LOG.info("Null extension field returned from ${ext.javaClass.name}")
-          }
-          else {
-            this.fields.add(field)
-          }
-        }
-      }
-    }
-  }
 
   fun log(vararg pairs: EventPair<*>) {
     FeatureUsageLogger.log(group, eventId, buildUsageData(*pairs).build())

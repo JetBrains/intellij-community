@@ -18,7 +18,9 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
- * For project level extension points please use {@link ProjectExtensionPointName}.
+ * Provides access to an <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extension_points.html">extension point</a>. Instances of this class can be safely stored in static final fields.
+ * <p>For project-level and module-level extension points use {@link ProjectExtensionPointName} instead to make it evident that corresponding
+ * {@link AreaInstance} must be passed.</p>
  */
 public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ExtensionPointName(@NotNull @NonNls String name) {
@@ -96,9 +98,10 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   /**
-   * @deprecated Use application level extension point. Avoid project level - extension should be stateless and operate on passed context.
-   * @see {@link ProjectExtensionPointName}
+   * @deprecated use {@link #getPoint()} to access application-level extensions and {@link ProjectExtensionPointName#getPoint(AreaInstance)}
+   * to access project-level and module-level extensions
    */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public @NotNull ExtensionPoint<T> getPoint(@Nullable AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
@@ -121,6 +124,11 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
     return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO);
   }
 
+  /**
+   * @deprecated use {@link #findExtensionOrFail(Class)} to access application-level extensions and
+   * {@link ProjectExtensionPointName#findExtensionOrFail(Class, AreaInstance)} to access project-level and module-level extensions
+   */
+  @Deprecated
   public @NotNull <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf, @Nullable AreaInstance areaInstance) {
     //noinspection ConstantConditions
     return getPointImpl(areaInstance).findExtension(instanceOf, true, ThreeState.UNSURE);

@@ -369,7 +369,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                           @Nullable String commandName,
                           @Nullable Runnable postRunnable,
                           final boolean modal) {
-    codeCleanup(scope, profile, commandName, postRunnable, modal, d -> true);
+    codeCleanup(scope, profile, commandName, postRunnable, modal, __ -> true);
   }
 
   public static void modalCodeCleanup(@NotNull Project project, @NotNull AnalysisScope scope, @Nullable Runnable runnable) {

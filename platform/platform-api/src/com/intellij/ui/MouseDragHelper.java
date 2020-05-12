@@ -108,9 +108,9 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     if (myGlassPane != null) {
       Disposer.dispose(myGlassPaneListenersDisposable);
       myGlassPaneListenersDisposable = Disposer.newDisposable();
-      KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
       myGlassPane = null;
     }
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventDispatcher(this);
   }
 
   @Override

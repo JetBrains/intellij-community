@@ -17,3 +17,25 @@ public class EclipseDefaultTypeUse {
     a.add(<warning descr="Passing 'null' argument to parameter annotated as @NotNull">null</warning>); 
   }
 }
+@NonNullByDefault
+@FunctionalInterface
+interface DefNotNull {
+  String apply(String s);
+}
+@FunctionalInterface
+interface Plain {
+  String apply(String s);
+}
+@NonNullByDefault
+class UseNotNull {
+  void test() {
+    DefNotNull l1 = s -> <warning descr="Condition 's == null' is always 'false'">s == null</warning> ? "null" : s.isEmpty() ? <warning descr="'null' is returned by the method declared as @NonNullByDefault">null</warning> : s;
+    Plain l2 = s -> s == null ? "null" : s.isEmpty() ? null : s;
+  }
+}
+class UsePlain {
+  void test() {
+    DefNotNull l1 = s -> <warning descr="Condition 's == null' is always 'false'">s == null</warning> ? "null" : s.isEmpty() ? <warning descr="'null' is returned by the method declared as @NonNullByDefault">null</warning> : s;
+    Plain l2 = s -> s == null ? "null" : s.isEmpty() ? null : s;
+  }
+}

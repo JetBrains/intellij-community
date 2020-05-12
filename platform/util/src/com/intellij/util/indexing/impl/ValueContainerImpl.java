@@ -17,7 +17,6 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.IntIntFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
@@ -117,8 +116,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
           fileSetObjects = new SmartList<>();
           valueObjects = new SmartList<>();
         }
-        else if (DebugAssertions.DEBUG) {
-          LOG.error("Expected only one value per-inputId for " + DebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
+        else if (IndexDebugAssertions.DEBUG) {
+          LOG.error("Expected only one value per-inputId for " + IndexDebugAssertions.DEBUG_INDEX_ID.get(), String.valueOf(fileSetObjects.get(0)), String.valueOf(value));
         }
         fileSetObjects.add(valueIterator.getFileSetObject());
         valueObjects.add(value);
@@ -449,7 +448,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
         // serialize positive file ids with delta encoding
         ChangeBufferingList originalInput = (ChangeBufferingList)fileSetObject;
         IntIdsIterator intIterator = originalInput.sortedIntIterator();
-        if (DebugAssertions.DEBUG) DebugAssertions.assertTrue(intIterator.hasAscendingOrder());
+        if (IndexDebugAssertions.DEBUG) IndexDebugAssertions.assertTrue(intIterator.hasAscendingOrder());
 
         if (intIterator.size() == 1) {
           DataInputOutputUtil.writeINT(out, intIterator.next());

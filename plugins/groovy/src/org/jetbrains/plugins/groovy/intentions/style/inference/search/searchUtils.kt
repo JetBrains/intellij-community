@@ -10,7 +10,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Processor
-import com.intellij.util.containers.map2Array
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssign
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 
@@ -43,7 +43,8 @@ private fun SearchRequestCollector.adoptSearchRequest(request: PsiSearchRequest,
 private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod,
                                              private val delegateProcessor: RequestResultProcessor) : RequestResultProcessor() {
 
-  private class CollisionFinder(vararg val bannedIdentifiers: String) : GroovyRecursiveElementVisitor() {
+  private class CollisionFinder(val bannedIdentifiers: List<String>,
+                                val bannedElements: List<PsiElement>) : GroovyRecursiveElementVisitor() {
     var foundCollision = false
 
     override fun visitElement(element: GroovyPsiElement) {
@@ -51,7 +52,8 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
     }
 
     override fun visitReferenceExpression(referenceExpression: GrReferenceExpression) {
-      if (referenceExpression.referenceName in bannedIdentifiers) {
+      if (referenceExpression.referenceName in bannedIdentifiers ||
+          referenceExpression.staticReference.resolve() in bannedElements) {
         foundCollision = true
       }
       else {
@@ -66,19 +68,32 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
 
 
   override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
-    val enclosingClosure: GrFunctionalExpression? = element.parentOfType<GrFunctionalExpression>()
-    val call: GrMethodCall? = enclosingClosure?.parentOfType<GrMethodCall>()
-    val arguments: List<GrExpression>? = call?.closureArguments?.asList()?.plus(call.expressionArguments.asList())
-    if (arguments?.contains(enclosingClosure) == true && call.callReference?.methodName == anchorElement.name) {
+    if (element.findElementAt(offsetInElement)?.parentOfType<GrLiteral>() != null) {
       return true
     }
-    if (checkSelfReferencesInArguments(element)) {
+    val enclosingMethod: GrMethod? = element.parentOfType<GrMethod>()
+    val bannedElements: List<PsiElement> = enclosingMethod?.parameters?.filter { it.typeElement == null } ?: emptyList()
+    val collisionFinder = CollisionFinder(listOf(anchorElement.name), bannedElements)
+    if (hasSelfReferencesInCaller(element, collisionFinder) || hasSelfReferencesInArguments(element, collisionFinder)) {
       return true
     }
     return delegateProcessor.processTextOccurrence(element, offsetInElement, consumer)
   }
 
-  fun checkSelfReferencesInArguments(element: PsiElement): Boolean {
+  fun hasSelfReferencesInCaller(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
+    val enclosingClosure: GrFunctionalExpression = element.parentOfType<GrFunctionalExpression>() ?: return false
+    val call: GrMethodCall = enclosingClosure.parentOfType<GrMethodCall>() ?: return false
+    val arguments: List<GrExpression> = call.closureArguments?.asList()?.plus(call.expressionArguments.asList()) ?: emptyList()
+    if (enclosingClosure !in arguments) {
+      return false
+    }
+    if (collisionFinder.apply(call::accept).foundCollision) {
+      return true
+    }
+    return hasSelfReferencesInCaller(call, collisionFinder)
+  }
+
+  fun hasSelfReferencesInArguments(element: PsiElement, collisionFinder: CollisionFinder): Boolean {
     val expressionWithArguments: GrExpression? = element.parentOfTypes(GrMethodCall::class, GrAssignmentExpression::class) ?: return false
     val isCorrectlyPointing = when (expressionWithArguments) {
       is GrMethodCall -> expressionWithArguments.invokedExpression === element
@@ -86,9 +101,6 @@ private class ScopeFilteringRequestProcessor(private val anchorElement: GrMethod
       else -> return false
     }
     if (isCorrectlyPointing) {
-      val enclosingMethod: GrMethod? = expressionWithArguments.parentOfType<GrMethod>()?.takeIf { it.name == anchorElement.name }
-      val bannedIdentifiers: Array<String> = enclosingMethod?.parameters?.map2Array { it.name } ?: emptyArray()
-      val collisionFinder = CollisionFinder(anchorElement.name, *bannedIdentifiers)
       val arguments = when (expressionWithArguments) {
         is GrMethodCall -> expressionWithArguments.expressionArguments
         is GrAssignmentExpression -> arrayOf(expressionWithArguments.rValue)

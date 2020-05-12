@@ -77,6 +77,9 @@ private fun executeInitAppInEdt(args: List<String>,
           starter is IdeStarter -> ""
           commandName != null -> ", for command: $commandName"
           else -> ", for starter: " + starter.javaClass.name
+        } + when {
+          args.isNotEmpty() -> " (commandline: ${args.joinToString(" ")})"
+          else -> ""
         }
         Main.showMessage("Startup Error", message, true)
         exitProcess(Main.NO_GRAPHICS)
@@ -96,7 +99,7 @@ fun registerAppComponents(pluginFuture: CompletableFuture<List<IdeaPluginDescrip
                           app: ApplicationImpl): CompletableFuture<List<IdeaPluginDescriptor>> {
   return pluginFuture.thenApply {
     runActivity("app component registration", ActivityCategory.MAIN) {
-      app.registerComponents(it, false)
+      app.registerComponents(it)
     }
     it
   }

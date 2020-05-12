@@ -83,7 +83,12 @@
     <predefinedMigrationMapProvider implementation="org.jetbrains.plugins.javaFX.refactoring.migration.JavaFx9Migration"/>
     <postStartupActivity implementation="org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil$JavaFxDetectionStartupActivity"/>
     <runConfigurationExtension implementation="org.jetbrains.plugins.javaFX.execution.JavaFxRunConfigurationExtension"/>
+    <createFromTemplateHandler implementation="org.jetbrains.plugins.javaFX.actions.JavaFxCreateFromTemplateHandler" order="before java"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.javaFX.fxml.FxmlPresenceListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
 
   <actions>
     <action class="org.jetbrains.plugins.javaFX.actions.OpenInSceneBuilderAction" id="OpenInSceneBuilder">

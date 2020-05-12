@@ -12,7 +12,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +26,7 @@ public class ProjectProblemInlaySettingsProvider implements InlaySettingsProvide
   @NotNull
   @Override
   public List<InlayProviderSettingsModel> createModels(@NotNull Project project, @NotNull Language language) {
-    if (!Registry.is("project.problems.view")) return Collections.emptyList();
+    if (!getSupportedLanguages(project).contains(language)) return Collections.emptyList();
     InlayHintsSettings config = InlayHintsSettings.instance();
     boolean hintsEnabled = config.hintsEnabled(SettingsModel.SETTINGS_KEY, language);
     SettingsModel settingsModel = new SettingsModel(hintsEnabled, SettingsModel.SETTINGS_KEY.getId());

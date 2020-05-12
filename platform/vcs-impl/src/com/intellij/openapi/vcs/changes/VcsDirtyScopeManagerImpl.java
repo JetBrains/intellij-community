@@ -90,6 +90,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
 
     if (wasReady) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
+      myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).everythingDirty();
     }
   }
 
@@ -142,7 +143,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
       Set<FilePath> dirs = ContainerUtil.notNullize(dirsConverted.get(vcsRoot));
 
       synchronized (LOCK) {
-        if (!myReady) return;
+        if (!myReady || myDirtBuilder.isEverythingDirty()) return;
         VcsDirtyScopeImpl scope = myDirtBuilder.getScope(vcs);
 
         for (FilePath filePath : files) {
@@ -159,6 +160,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
     if (hasSomethingDirty) {
       ChangeListManager.getInstance(myProject).scheduleUpdate();
     }
+    myProject.getMessageBus().syncPublisher(VcsDirtyScopeManagerListener.VCS_DIRTY_SCOPE_UPDATED).filePathsDirty(filesConverted, dirsConverted);
   }
 
   @Override

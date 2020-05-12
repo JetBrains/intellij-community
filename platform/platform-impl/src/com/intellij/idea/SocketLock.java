@@ -19,6 +19,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,13 +152,13 @@ public final class SocketLock {
 
     lockPortFiles();
 
-    Map<Integer, List<String>> portToPath = new HashMap<>();
+    Int2ObjectOpenHashMap<List<String>> portToPath = new Int2ObjectOpenHashMap<>(2);
     readPort(myConfigPath, portToPath);
     readPort(mySystemPath, portToPath);
     if (!portToPath.isEmpty()) {
       args = JetBrainsProtocolHandler.checkForJetBrainsProtocolCommand(args);
-      for (Map.Entry<Integer, List<String>> entry : portToPath.entrySet()) {
-        Map.Entry<ActivationStatus, CliResult> status = tryActivate(entry.getKey(), entry.getValue(), args);
+      for (Int2ObjectMap.Entry<List<String>> entry : Int2ObjectMaps.fastIterable(portToPath)) {
+        Map.Entry<ActivationStatus, CliResult> status = tryActivate(entry.getIntKey(), entry.getValue(), args);
         if (status.getKey() != ActivationStatus.NO_INSTANCE) {
           log("exit: lock(): " + status.getValue());
           unlockPortFiles();
@@ -248,9 +251,15 @@ public final class SocketLock {
     }
   }
 
-  private static void readPort(@NotNull Path dir, @NotNull Map<Integer, List<String>> portToPath) {
+  private static void readPort(@NotNull Path dir, @NotNull Int2ObjectOpenHashMap<List<String>> portToPath) {
     try {
-      portToPath.computeIfAbsent(Integer.parseInt(readOneLine(dir.resolve(PORT_FILE))), it -> new ArrayList<>()).add(dir.toString());
+      int port = Integer.parseInt(readOneLine(dir.resolve(PORT_FILE)));
+      List<String> list = portToPath.get(port);
+      if (list == null) {
+        list = new ArrayList<>();
+        portToPath.put(port, list);
+      }
+      list.add(dir.toString());
     }
     catch (NoSuchFileException ignore) {
     }

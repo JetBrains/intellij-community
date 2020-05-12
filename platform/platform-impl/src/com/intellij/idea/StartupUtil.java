@@ -623,6 +623,7 @@ public final class StartupUtil {
 
   private static void logEssentialInfoAboutIde(@NotNull Logger log, @NotNull ApplicationInfo appInfo) {
     Activity activity = StartUpMeasurer.startActivity("essential IDE info logging");
+
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
@@ -645,18 +646,36 @@ public final class StartupUtil {
       }
     }
 
-    // report canonical paths
-    SocketLock socketLock = ourSocketLock;
+    logEnvVar(log, "_JAVA_OPTIONS");
+    logEnvVar(log, "JDK_JAVA_OPTIONS");
+    logEnvVar(log, "JAVA_TOOL_OPTIONS");
+
     log.info(
       "locale=" + Locale.getDefault() +
-      " jnu=" + System.getProperty("sun.jnu.encoding") +
+      " JNU=" + System.getProperty("sun.jnu.encoding") +
       " file.encoding=" + System.getProperty("file.encoding") +
-      "\n  " + PathManager.PROPERTY_CONFIG_PATH + "=" + socketLock.getConfigPath() +
-      "\n  " + PathManager.PROPERTY_SYSTEM_PATH + "=" + socketLock.getSystemPath() +
-      "\n  " + PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath() +
-      "\n  " + PathManager.PROPERTY_LOG_PATH + "=" + PathManager.getLogPath()
+      "\n  " + PathManager.PROPERTY_CONFIG_PATH + '=' + logPath(PathManager.getConfigPath()) +
+      "\n  " + PathManager.PROPERTY_SYSTEM_PATH + '=' + logPath(PathManager.getSystemPath()) +
+      "\n  " + PathManager.PROPERTY_PLUGINS_PATH + '=' + logPath(PathManager.getPluginsPath()) +
+      "\n  " + PathManager.PROPERTY_LOG_PATH + '=' + logPath(PathManager.getLogPath())
     );
+
     activity.end();
+  }
+
+  private static void logEnvVar(Logger log, String var) {
+    String value = System.getenv(var);
+    if (value != null) log.info(var + '=' + value);
+  }
+
+  public static String logPath(String path) {
+    try {
+      Path configured = Paths.get(path), real = configured.toRealPath();
+      if (!configured.equals(real)) return path + " -> " + real;
+    }
+    catch (IOException | InvalidPathException ignored) {
+    }
+    return path;
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {

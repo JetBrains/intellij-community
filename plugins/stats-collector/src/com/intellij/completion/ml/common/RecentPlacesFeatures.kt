@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import java.util.*
-import kotlin.collections.LinkedHashMap
 
 class RecentPlacesFeatures : ElementFeatureProvider {
   override fun getName(): String = "recent_places"
@@ -33,7 +32,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
     }
   }
 
-  class StoreRecentPlacesListener(private val project: Project) : IdeDocumentHistoryImpl.RecentPlacesListener {
+  internal class StoreRecentPlacesListener(private val project: Project) : IdeDocumentHistoryImpl.RecentPlacesListener {
     companion object {
       private val recentPlaces = createFixedSizeSet(20)
       private val childrenRecentPlaces = createFixedSizeSet(100)
@@ -51,7 +50,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
     }
 
     override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
-      if (ApplicationManager.getApplication().isUnitTestMode) return
+      if (ApplicationManager.getApplication().isUnitTestMode || !changePlace.file.isValid) return
       val provider = PsiManager.getInstance(project).findViewProvider(changePlace.file) ?: return
       val namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(provider.baseLanguage)
       val offset = changePlace.caretPosition?.startOffset ?: return

@@ -42,7 +42,7 @@ private fun loadDescriptors(dir: Path, buildNumber: BuildNumber): DescriptorList
   }
   context.use {
     for (file in paths) {
-      val descriptor = PluginManagerCore.loadDescriptor(file, false, context) ?: continue
+      val descriptor = PluginDescriptorLoader.loadDescriptor(file, false, context) ?: continue
       context.result.add(descriptor, false)
     }
   }
@@ -144,8 +144,8 @@ class PluginDescriptorTest {
   fun testDuplicateDependency() {
     val descriptor = loadDescriptorInTest("duplicateDependency")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.optionalDependentPluginIds).isEmpty()
-    assertThat(descriptor.dependentPluginIds).containsExactly(PluginId.getId("foo"))
+    assertThat(descriptor.pluginDependencies?.filter { it.isOptional }).isEmpty()
+    assertThat(descriptor.pluginDependencies?.map { it.id }).containsExactly(PluginId.getId("foo"))
   }
 
   @Test

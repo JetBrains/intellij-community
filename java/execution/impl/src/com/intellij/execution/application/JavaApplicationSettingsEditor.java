@@ -15,7 +15,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
-public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<ApplicationConfiguration> {
+public class JavaApplicationSettingsEditor extends RunConfigurationFragmentedEditor<ApplicationConfiguration> {
   private final Project myProject;
 
   public JavaApplicationSettingsEditor(Project project) {
@@ -29,6 +29,8 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
     fragments.add(CommonParameterFragments.createRedirectFragment());
 
     fragments.addAll(new CommonParameterFragments<ApplicationConfiguration>(myProject).getFragments());
+    fragments.add(CommonJavaFragments.createBuildBeforeRun());
+    fragments.add(CommonJavaFragments.createEnvParameters());
 
     JrePathEditor jrePathEditor = new JrePathEditor();
     jrePathEditor.getLabel().setVisible(false);
@@ -59,10 +61,5 @@ public class JavaApplicationSettingsEditor extends FragmentedSettingsEditor<Appl
                                     configuration -> configuration.isSwingInspectorEnabled(),
                                                    (configuration, enabled) -> configuration.setSwingInspectorEnabled(enabled)));
     return fragments;
-  }
-
-  @Override
-  protected String getTitle() {
-    return ExecutionBundle.message("application.configuration.title.build.and.run");
   }
 }

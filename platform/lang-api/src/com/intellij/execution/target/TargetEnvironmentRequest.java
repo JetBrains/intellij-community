@@ -38,6 +38,11 @@ public interface TargetEnvironmentRequest {
     return createUploadRoot(null, true);
   }
 
+  /**
+   * @param temporary If true, volume should be deleted after calling
+   *                  {@link com.intellij.execution.target.TargetEnvironment#shutdown() TargetEnvironment.shutdown()}
+   *                  of owning environment instance.
+   */
   @NotNull
   Volume createUploadRoot(@Nullable String remoteRootPath, boolean temporary);
 

@@ -11,6 +11,6 @@ class ColorConverter {
   }
 
   private static int fix(int value) {
-    return value < 0 ? 0 : value > 255 ? 255 : value;
+    return Math.max(0, Math.min(value, 255));
   }
 }

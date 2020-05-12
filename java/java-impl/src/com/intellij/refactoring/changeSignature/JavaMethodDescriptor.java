@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.changeSignature;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.AccessModifier;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -13,9 +15,10 @@ import java.util.List;
 
 public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl, String> {
 
+  @NotNull
   private final PsiMethod myMethod;
 
-  public JavaMethodDescriptor(PsiMethod method) {
+  public JavaMethodDescriptor(@NotNull PsiMethod method) {
     myMethod = method;
   }
 
@@ -25,7 +28,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
   }
 
   @Override
-  public List<ParameterInfoImpl> getParameters() {
+  public @NotNull List<ParameterInfoImpl> getParameters() {
     final ArrayList<ParameterInfoImpl> result = new ArrayList<>();
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -38,12 +41,12 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
   }
 
   @Override
-  public String getVisibility() {
+  public @NotNull String getVisibility() {
     return VisibilityUtil.getVisibilityModifier(myMethod.getModifierList());
   }
 
   @Override
-  public PsiMethod getMethod() {
+  public @NotNull PsiMethod getMethod() {
     return myMethod;
   }
 
@@ -76,7 +79,7 @@ public class JavaMethodDescriptor implements MethodDescriptor<ParameterInfoImpl,
   }
 
   @Override
-  public ReadWriteOption canChangeReturnType() {
+  public @NotNull ReadWriteOption canChangeReturnType() {
     return myMethod.isConstructor() ? ReadWriteOption.None : ReadWriteOption.ReadWrite;
   }
 

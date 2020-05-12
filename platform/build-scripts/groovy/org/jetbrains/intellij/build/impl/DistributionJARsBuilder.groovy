@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import groovy.io.FileType
+import groovy.transform.CompileStatic
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.Nullable
@@ -239,6 +240,7 @@ class DistributionJARsBuilder {
   }
 
   void buildJARs() {
+    validateModuleStructure()
     prebuildSVG()
     buildOrderFiles()
     buildSearchableOptions()
@@ -283,6 +285,18 @@ class DistributionJARsBuilder {
                                            ['jarOrder', modulesOrder, classesOrder],
                                            ["idea.log.classpath.info": true])
     })
+  }
+
+  /**
+   * Validates module structure to be ensure all module dependencies are included
+   */
+  @CompileStatic
+  void validateModuleStructure() {
+    if (!buildContext.options.validateModuleStructure)
+      return
+
+    def validator = new ModuleStructureValidator(buildContext, platform.moduleJars)
+    validator.validate()
   }
 
   /**

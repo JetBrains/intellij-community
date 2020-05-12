@@ -16,16 +16,14 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
   InterfaceExtensionPoint(@NotNull String name, @NotNull Class<T> clazz, @NotNull PluginDescriptor pluginDescriptor) {
-    super(name, clazz.getName(), pluginDescriptor, false);
-
-    myExtensionClass = clazz;
+    super(name, clazz.getName(), pluginDescriptor, clazz, false);
   }
 
   public InterfaceExtensionPoint(@NotNull String name,
                                  @NotNull String className,
                                  @NotNull PluginDescriptor pluginDescriptor,
                                  boolean dynamic) {
-    super(name, className, pluginDescriptor, dynamic);
+    super(name, className, pluginDescriptor, null, dynamic);
   }
 
   @Override

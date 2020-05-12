@@ -33,13 +33,13 @@ public class PyExceptPartImpl extends PyBaseElementImpl<PyExceptPartStub> implem
   @Override
   @Nullable
   public PyExpression getExceptClass() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 
   @Override
   @Nullable
   public PyExpression getTarget() {
-    return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
+    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 1);
   }
 
   @Override

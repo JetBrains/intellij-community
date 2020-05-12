@@ -1,0 +1,31 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+repositories {
+  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/jetbrains/golang' }
+}
+
+def buildDir = "../../../build"
+
+def pluginProperties = new Properties()
+def gradleProperties = file(buildDir + "/../goland/intellij-go/gradle.properties")
+if (gradleProperties.exists()) {
+  gradleProperties.withInputStream { pluginProperties.load(it) }
+}
+def delveVersion = pluginProperties.getProperty("delveVersion")
+
+configurations {
+  delve
+}
+dependencies {
+  delve "com.jetbrains:delve:$delveVersion@zip"
+}
+
+task setupDelve(dependsOn: configurations.delve) {
+  doLast {
+    copy {
+      from { zipTree(configurations.delve.singleFile) }
+      into(buildDir)
+    }
+  }
+  inputs.files(configurations.delve)
+  outputs.dir("$buildDir/dlv")
+}

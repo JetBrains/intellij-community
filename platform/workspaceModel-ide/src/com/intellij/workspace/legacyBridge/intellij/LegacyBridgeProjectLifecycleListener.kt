@@ -20,6 +20,7 @@ import com.intellij.workspace.ide.WorkspaceModelInitialTestContent
 import com.intellij.workspace.ide.WorkspaceModelTopics
 import com.intellij.workspace.jps.JpsProjectModelSynchronizer
 import com.intellij.workspace.legacyBridge.externalSystem.ExternalStorageConfigurationManagerForWorkspaceModel
+import com.intellij.workspace.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeProjectLibraryTableImpl
 import com.intellij.workspace.legacyBridge.libraries.libraries.LegacyBridgeRootsWatcher
 import org.jetbrains.annotations.ApiStatus
@@ -64,5 +65,6 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerForWorkspaceModel::class.java, pluginDescriptor, true)
     container.registerService(ModifiableModelCommitterService::class.java, LegacyBridgeModifiableModelCommitterService::class.java, pluginDescriptor, true)
     container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
+    container.registerService(FacetEntityChangeListener::class.java, FacetEntityChangeListener::class.java, pluginDescriptor, false)
   }
 }

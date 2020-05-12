@@ -4,6 +4,8 @@ package com.intellij.workspace.legacyBridge.libraries.libraries
 import com.google.common.io.Files
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
@@ -17,13 +19,17 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspace.api.*
 import com.intellij.workspace.bracket
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
 import com.intellij.workspace.ide.WorkspaceModel
 import com.intellij.workspace.ide.WorkspaceModelChangeListener
 import com.intellij.workspace.ide.WorkspaceModelTopics
+import com.intellij.workspace.ide.getInstance
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Future
 
 /**
  * Provides rootsChanged events if roots validity was changed.
@@ -40,9 +46,13 @@ class LegacyBridgeRootsWatcher(
     get() = ProjectRootManagerImpl.getInstanceImpl(project).rootsValidityChangedListener
 
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val rootFilePointers = LegacyModelRootsFilePointers(project)
+
+  private val myExecutor = if (ApplicationManager.getApplication().isUnitTestMode) ConcurrencyUtil.newSameThreadExecutorService()
+  else AppExecutorUtil.createBoundedApplicationPoolExecutor("Workspace Model Project Root Manager", 1)
+  private var myCollectWatchRootsFuture: Future<*> = CompletableFuture.completedFuture(null) // accessed in EDT only
 
   init {
     val messageBusConnection = project.messageBus.connect()
@@ -76,11 +86,17 @@ class LegacyBridgeRootsWatcher(
         s.entities(JavaModuleSettingsEntity::class.java).forEach { javaSettings -> javaSettings.compilerOutputForTests?.let { roots.add(it) } }
 
         rootFilePointers.onModelChange(s)
-        syncNewRootsToContainer(
-          newRoots = roots,
-          newJarDirectories = jarDirectories,
-          newRecursiveJarDirectories = recursiveJarDirectories
-        )
+
+        myCollectWatchRootsFuture.cancel(false)
+        myCollectWatchRootsFuture = myExecutor.submit {
+          ReadAction.run<Throwable> {
+            syncNewRootsToContainer(
+              newRoots = roots,
+              newJarDirectories = jarDirectories,
+              newRecursiveJarDirectories = recursiveJarDirectories
+            )
+          }
+        }
       }
     })
     messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
@@ -212,6 +228,9 @@ class LegacyBridgeRootsWatcher(
 
   override fun dispose() {
     clear()
+
+    myCollectWatchRootsFuture.cancel(false)
+    myExecutor.shutdownNow()
   }
 
   companion object {

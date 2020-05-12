@@ -489,6 +489,7 @@ public class JavaDocInfoGenerator {
       if (rendered) {
         generateAuthorAndVersionSections(buffer, comment);
       }
+      generateRecordParametersSection(buffer, aClass, comment);
       generateTypeParametersSection(buffer, aClass, rendered);
     }
     else {
@@ -501,12 +502,27 @@ public class JavaDocInfoGenerator {
     buffer.append(DocumentationMarkup.SECTIONS_END);
   }
 
+  private void generateRecordParametersSection(StringBuilder buffer, PsiClass recordClass, PsiDocComment comment) {
+    if (!recordClass.isRecord() || comment == null) return;
+    PsiDocTag[] localTags = comment.findTagsByName("param");
+    List<ParamInfo> collectedTags = new ArrayList<>();
+    for (PsiRecordComponent component : recordClass.getRecordComponents()) {
+      PsiDocTag localTag = getTagByName(localTags, component.getName());
+      if (localTag != null) {
+        collectedTags.add(new ParamInfo(component.getName(), localTag, ourEmptyProvider));
+      }
+    }
+    generateParametersSection(buffer, CodeInsightBundle.message("javadoc.parameters"), collectedTags);
+  }
+
+
   private static boolean generateClassSignature(StringBuilder buffer, PsiClass aClass, SignaturePlace place) {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
     buffer.append(JavaBundle.message(aClass.isInterface() ? "java.terms.interface"
-                                                          : aClass.isEnum() ? "java.terms.enum" : "java.terms.class"));
+                                                          : aClass.isEnum() ? "java.terms.enum" 
+                                                                            : aClass.isRecord() ? "java.terms.record" : "java.terms.class"));
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon;
 
@@ -59,7 +59,7 @@ public abstract class DaemonCodeAnalyzer {
 
   public abstract void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file);
 
-  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = Topic.create("DAEMON_EVENT_TOPIC", DaemonListener.class);
+  public static final Topic<DaemonListener> DAEMON_EVENT_TOPIC = new Topic<>("DAEMON_EVENT_TOPIC", DaemonListener.class, Topic.BroadcastDirection.NONE);
 
   public interface DaemonListener {
     /**

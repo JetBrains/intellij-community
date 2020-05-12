@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -133,7 +133,7 @@ public class PluginInstallOperation {
     }
   }
 
-  private boolean prepareToInstall(List<PluginNode> pluginsToInstall) {
+  private boolean prepareToInstall(@NotNull List<PluginNode> pluginsToInstall) {
     List<PluginId> pluginIds = new SmartList<>();
     for (PluginNode pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
@@ -305,7 +305,7 @@ public class PluginInstallOperation {
   private IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId) {
     IdeaPluginDescriptor pluginFromCustomRepos =
       myCustomReposPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
-    PluginNode pluginFromMarketplace = MarketplaceRequests.getLastCompatiblePluginUpdate(depPluginId.getIdString());
+    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(depPluginId.getIdString());
     if (pluginFromCustomRepos == null) {
       return pluginFromMarketplace;
     }

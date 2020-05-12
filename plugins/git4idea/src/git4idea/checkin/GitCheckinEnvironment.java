@@ -979,8 +979,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return file;
   }
 
-  private static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
-                                         @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
+  public static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
+                                        @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
     File messageFile;
     try {
       messageFile = createCommitMessageFile(project, root, message);

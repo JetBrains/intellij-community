@@ -7,10 +7,7 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.apache.http.Consts
 import org.apache.http.HttpStatus
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.client.methods.HttpPut
+import org.apache.http.client.methods.*
 import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
 import org.apache.http.entity.StringEntity
@@ -20,6 +17,7 @@ import org.apache.http.impl.client.LaxRedirectStrategy
 import org.apache.http.util.EntityUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.impl.retry.Retry
 
 @CompileStatic
 class CompilationPartsUploader implements Closeable {
@@ -107,7 +105,7 @@ class CompilationPartsUploader implements Closeable {
       def request = new HttpPost(url)
       request.setEntity(new StringEntity(metadataJson, ContentType.APPLICATION_JSON))
 
-      response = myHttpClient.execute(request)
+      response = executeWithRetry(request)
 
       responseString = EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_JSON.charset)
 
@@ -132,7 +130,7 @@ class CompilationPartsUploader implements Closeable {
       debug("HEAD " + url)
 
       def request = new HttpGet(url)
-      response = myHttpClient.execute(request)
+      response = executeWithRetry(request)
       return response.getStatusLine().getStatusCode()
     }
     catch (Exception e) {
@@ -153,7 +151,7 @@ class CompilationPartsUploader implements Closeable {
       def request = new HttpPut(url)
       request.setEntity(new FileEntity(file, ContentType.APPLICATION_OCTET_STREAM))
 
-      response = myHttpClient.execute(request)
+      response = executeWithRetry(request)
 
       def statusCode = response.statusLine.statusCode
       if (statusCode < 200  || statusCode >= 400) {
@@ -169,6 +167,12 @@ class CompilationPartsUploader implements Closeable {
     }
     finally {
       StreamUtil.closeStream(response)
+    }
+  }
+
+  CloseableHttpResponse executeWithRetry(HttpUriRequest request) {
+    return new Retry(myMessages).call {
+      myHttpClient.execute(request)
     }
   }
 

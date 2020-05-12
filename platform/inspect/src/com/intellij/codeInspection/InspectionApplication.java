@@ -9,6 +9,9 @@ import com.intellij.conversion.ConversionListener;
 import com.intellij.conversion.ConversionService;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.Range;
+import com.intellij.ide.CommandLineInspectionProgressReporter;
+import com.intellij.ide.CommandLineInspectionProjectConfigurator;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.PatchProjectUtil;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
@@ -29,7 +32,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -40,8 +42,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ConcurrentMultiMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -84,6 +85,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private InspectionProfileImpl myInspectionProfile;
 
   public boolean myErrorCodeRequired = true;
+  public String myScopePattern;
 
   public void startup() {
     if (myProjectPath == null) {
@@ -113,24 +115,21 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   public void execute() throws Exception {
-    ApplicationManager.getApplication().runReadAction((ThrowableComputable<Object, Exception>)() -> {
-      final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-      reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
-                                                            appInfo.getFullApplicationName() +
-                                                            " (build " +
-                                                            appInfo.getBuild().asString() +
-                                                            ")"));
-      reportMessage(1, InspectionsBundle.message("inspection.done"));
+    final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.starting.up",
+                                                          appInfo.getFullApplicationName() +
+                                                          " (build " +
+                                                          appInfo.getBuild().asString() +
+                                                          ")"));
+    reportMessage(1, InspectionsBundle.message("inspection.done"));
 
-      Disposable disposable = Disposer.newDisposable();
-      try {
-        run(Paths.get(FileUtil.toCanonicalPath(myProjectPath)), disposable);
-      }
-      finally {
-        Disposer.dispose(disposable);
-      }
-      return null;
-    });
+    Disposable disposable = Disposer.newDisposable();
+    try {
+      run(Paths.get(FileUtil.toCanonicalPath(myProjectPath)), disposable);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   private void printHelp() {
@@ -169,17 +168,15 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
     Disposer.register(parentDisposable, () -> closeProject(project));
 
-    ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
+    ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
-    PatchProjectUtil.patchProject(project);
+    ApplicationManager.getApplication().invokeAndWait(() -> PatchProjectUtil.patchProject(project));
 
     reportMessage(1, InspectionsBundle.message("inspection.done"));
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.initializing.project"));
 
     myInspectionProfile = loadInspectionProfile(project);
     if (myInspectionProfile == null) return;
-
-    GlobalInspectionContextEx context = createGlobalInspectionContext(project);
 
     final AnalysisScope scope;
     if (myAnalyzeChanges) {
@@ -200,7 +197,19 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }, InvokeAfterUpdateMode.SYNCHRONOUS_NOT_CANCELLABLE, null, null);
     }
     else {
-      if (mySourceDirectory == null) {
+      if (myScopePattern != null) {
+        try {
+          PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
+          NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
+          scope = new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project);
+        }
+        catch (ParsingException e) {
+          LOG.error("Error of scope parsing", e);
+          gracefulExit();
+          return;
+        }
+      }
+      else if (mySourceDirectory == null) {
         final String scopeName = System.getProperty("idea.analyze.scope");
         final NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
         scope = namedScope != null ? new AnalysisScope(GlobalSearchScopesCore.filterScope(project, namedScope), project)
@@ -214,10 +223,13 @@ public final class InspectionApplication implements CommandLineInspectionProgres
           reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
           printHelp();
         }
-
-        PsiDirectory psiDirectory = PsiManager.getInstance(project).findDirectory(vfsDir);
+        PsiDirectory psiDirectory = ReadAction.compute(() -> {
+          assert vfsDir != null;
+          return PsiManager.getInstance(project).findDirectory(vfsDir);
+        });
         scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
       }
+      LOG.info("Used scope: " + scope.toString());
       runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
     }
   }
@@ -551,9 +563,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   }
 
   private static void closeProject(@NotNull Project project) {
-    if (!project.isDisposed()) {
-      ProjectManagerEx.getInstanceEx().forceCloseProject(project);
-    }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (!project.isDisposed()) {
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project);
+      }
+    });
   }
 
   private @Nullable InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {

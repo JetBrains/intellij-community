@@ -1,11 +1,10 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <extensionPoints>
-    <!--@formatter:off-->
-    <xi:include href="/META-INF/CompletionExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-    <xi:include href="/META-INF/RefactoringExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-    <xi:include href="/META-INF/FormatterExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
-    <xi:include href="/META-INF/EditorExtensionPoints.xml" xpointer="xpointer(/idea-plugin/extensionPoints/*)"/>
+  <xi:include href="/META-INF/CompletionExtensionPoints.xml"/>
+  <xi:include href="/META-INF/RefactoringExtensionPoints.xml"/>
+  <xi:include href="/META-INF/FormatterExtensionPoints.xml"/>
+  <xi:include href="/META-INF/EditorExtensionPoints.xml"/>
 
+  <extensionPoints>
     <extensionPoint name="highlightingPassFactory" interface="com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar" dynamic="true"/>
 
     <!--configurables?-->
@@ -46,10 +45,6 @@
     <extensionPoint name="pathReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
     <extensionPoint name="anchorReferenceProvider" interface="com.intellij.openapi.paths.PathReferenceProvider" dynamic="true"/>
     <extensionPoint name="dynamicContextProvider" interface="com.intellij.openapi.paths.DynamicContextProvider" dynamic="true"/>
-
-    <extensionPoint name="intentionAction" beanClass="com.intellij.codeInsight.intention.IntentionActionBean" dynamic="true">
-      <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
-    </extensionPoint>
 
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider" interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider" dynamic="true"/>
 
@@ -210,8 +205,8 @@
     <extensionPoint name="internalFileTemplate" beanClass="com.intellij.ide.fileTemplates.InternalTemplateBean" dynamic="true"/>
     <extensionPoint name="saveFileAsTemplateHandler" interface="com.intellij.ide.actions.SaveFileAsTemplateHandler" dynamic="true"/>
 
-    <extensionPoint name="favoriteNodeProvider" interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider" area="IDEA_PROJECT"/>
-    <extensionPoint name="favoritesListProvider" interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider" area="IDEA_PROJECT"/>
+    <extensionPoint name="favoriteNodeProvider" interface="com.intellij.ide.favoritesTreeView.FavoriteNodeProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="favoritesListProvider" interface="com.intellij.ide.favoritesTreeView.FavoritesListProvider" area="IDEA_PROJECT" dynamic="true"/>
 
     <!-- File-Based Index-->
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider" dynamic="true"/>
@@ -222,6 +217,10 @@
     <extensionPoint name="symbolPresentation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="forClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.model.presentation.SymbolPresentationProvider"/>
+    </extensionPoint>
+    <extensionPoint name="symbolNavigation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="forClass" implements="com.intellij.model.Symbol"/>
+      <with attribute="implementationClass" implements="com.intellij.navigation.SymbolNavigationProvider"/>
     </extensionPoint>
     <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
@@ -427,6 +426,9 @@
     <extensionPoint name="projectTemplateFileProcessor" interface="com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor" dynamic="true"/>
 
     <extensionPoint name="facetType" interface="com.intellij.facet.FacetType" dynamic="true"/>
+    <extensionPoint name="projectFacetListener" beanClass="com.intellij.facet.impl.ProjectFacetListenerEP" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.facet.ProjectFacetListener"/>
+    </extensionPoint>
 
     <extensionPoint name="facet.toolWindow" beanClass="com.intellij.facet.ui.FacetDependentToolWindow" dynamic="true">
       <with attribute="factoryClass" implements="com.intellij.openapi.wm.ToolWindowFactory"/>
@@ -551,7 +553,7 @@
 
     <extensionPoint name="inspectionElementsMerger" interface="com.intellij.codeInspection.ex.InspectionElementsMerger" dynamic="true"/>
 
-    <extensionPoint name="scratch.rootType" interface="com.intellij.ide.scratch.RootType"/>
+    <extensionPoint name="scratch.rootType" interface="com.intellij.ide.scratch.RootType" dynamic="true"/>
     <extensionPoint name="scratch.creationHelper" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.ide.scratch.ScratchFileCreationHelper"/>
     </extensionPoint>
@@ -586,10 +588,11 @@
     <extensionPoint name="implementationViewDocumentFactory" interface="com.intellij.codeInsight.hint.ImplementationViewDocumentFactory" dynamic="true"/>
 
     <extensionPoint name="highlightInfoPostFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoPostFilter" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.codeInspection.CommandLineInspectionProjectConfigurator" dynamic="true"/>
+    <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.ide.CommandLineInspectionProjectConfigurator" dynamic="true"/>
 
     <extensionPoint name="fileTypeStatisticProvider" interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider" dynamic="true"/>
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>
+    <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
   </extensionPoints>
 </idea-plugin>
 

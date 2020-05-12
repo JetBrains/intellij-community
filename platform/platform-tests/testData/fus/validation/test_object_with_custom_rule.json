@@ -1,0 +1,18 @@
+{
+  "groups": [
+    {
+      "id": "object.group",
+      "builds": [
+        {
+          "from": "191.4811"
+        }
+      ],
+      "rules": {
+        "event_data": {
+          "obj.id_1": ["{util#existing_rule}"],
+          "obj.id_2": ["{util#existing_rule}"]
+        }
+      }
+    }
+  ]
+}

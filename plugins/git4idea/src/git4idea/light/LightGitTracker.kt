@@ -17,11 +17,15 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
+import com.intellij.vcs.log.sendRequests
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionIdentificationException
-import git4idea.index.GitFileStatus
+import git4idea.index.LightFileStatus
 import git4idea.index.getFileStatus
+import git4idea.util.lastInstance
+import git4idea.util.toShortenedString
+import git4idea.util.without
 import java.util.*
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
@@ -45,7 +49,7 @@ class LightGitTracker : Disposable {
   private var state: State = State.Blank
   val currentLocation: String?
     get() = state.location
-  val statuses: Map<VirtualFile, GitFileStatus>
+  val statuses: Map<VirtualFile, LightFileStatus>
     get() = state.statuses
 
   init {
@@ -59,20 +63,20 @@ class LightGitTracker : Disposable {
 
     singleTaskController.request(Request.CheckGit)
     runInEdt(this) {
-      sendRequests(locationRequest(lightEditService.selectedFile),
-                   statusRequest(lightEditorManager.openFiles))
+      singleTaskController.sendRequests(locationRequest(lightEditService.selectedFile),
+                                        statusRequest(lightEditorManager.openFiles))
     }
   }
 
-  fun getFileStatus(file: VirtualFile): GitFileStatus {
-    return state.statuses[file] ?: GitFileStatus.Blank
+  fun getFileStatus(file: VirtualFile): LightFileStatus {
+    return state.statuses[file] ?: LightFileStatus.Blank
   }
 
   private fun updateCurrentState(updater: StateUpdater) {
     when (updater) {
       StateUpdater.Clear -> {
         val previousStatuses = state.statuses
-        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != GitFileStatus.Blank }
+        val statusesChanged = previousStatuses.isNotEmpty() && previousStatuses.values.any { it != LightFileStatus.Blank }
         val changed = statusesChanged || !(state.location.isNullOrBlank())
 
         state = State.Blank
@@ -83,7 +87,7 @@ class LightGitTracker : Disposable {
       is StateUpdater.Update -> {
         val newState = updater.state
         val statusesMap = lightEditorManager.openFiles.associateWith {
-          newState.statuses[it] ?: state.statuses[it] ?: GitFileStatus.Blank
+          newState.statuses[it] ?: state.statuses[it] ?: LightFileStatus.Blank
         }
         val location = if (updater.updateLocation) newState.location else state.location
 
@@ -124,15 +128,6 @@ class LightGitTracker : Disposable {
     return Request.Status(filesForRequest)
   }
 
-  private fun sendRequests(vararg requests: Request?): Boolean {
-    val notNullRequests = requests.filterNotNullTo(mutableListOf())
-    if (notNullRequests.isNotEmpty()) {
-      singleTaskController.request(*notNullRequests.toTypedArray())
-      return true
-    }
-    return false
-  }
-
   fun addUpdateListener(listener: LightGitTrackerListener, parent: Disposable) {
     eventDispatcher.addListener(listener, parent)
   }
@@ -145,15 +140,15 @@ class LightGitTracker : Disposable {
       if (!hasGit) return
 
       val targetFiles = events.filter { it.isFromSave || it.isFromRefresh }.mapNotNullTo(mutableSetOf()) { it.file }
-      sendRequests(statusRequest(lightEditorManager.openFiles.intersect(targetFiles)))
+      singleTaskController.sendRequests(statusRequest(lightEditorManager.openFiles.intersect(targetFiles)))
     }
   }
 
   private inner class MyFrameStateListener : FrameStateListener {
     override fun onFrameActivated() {
-      sendRequests(Request.CheckGit,
-                   locationRequest(lightEditService.selectedFile),
-                   statusRequest(lightEditorManager.openFiles))
+      singleTaskController.sendRequests(Request.CheckGit,
+                                        locationRequest(lightEditService.selectedFile),
+                                        statusRequest(lightEditorManager.openFiles))
     }
   }
 
@@ -164,7 +159,7 @@ class LightGitTracker : Disposable {
       state = state.copy(location = null)
 
       val selectedFile = editorInfo?.file
-      if (!sendRequests(locationRequest(selectedFile), statusRequest(listOf(selectedFile)))) {
+      if (!singleTaskController.sendRequests(locationRequest(selectedFile), statusRequest(listOf(selectedFile)))) {
         runInEdt(this@LightGitTracker) { eventDispatcher.multicaster.update() }
       }
     }
@@ -175,7 +170,7 @@ class LightGitTracker : Disposable {
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, StateUpdater>("Light Git Tracker", this::updateCurrentState, this) {
+    BaseSingleTaskController<Request, StateUpdater>("light.tracker", this::updateCurrentState, this) {
     override fun process(requests: List<Request>, previousResult: StateUpdater?): StateUpdater {
       if (requests.contains(Request.CheckGit)) {
         checkGit()
@@ -196,7 +191,7 @@ class LightGitTracker : Disposable {
       else previousResult?.state?.location
       val updateLocation = locationFile != null || (previousResult as? StateUpdater.Update)?.updateLocation ?: false
 
-      val statuses = mutableMapOf<VirtualFile, GitFileStatus>()
+      val statuses = mutableMapOf<VirtualFile, LightFileStatus>()
       previousResult?.state?.statuses?.let { statuses.putAll(it) }
       for (file in files) {
         try {
@@ -212,7 +207,7 @@ class LightGitTracker : Disposable {
     }
   }
 
-  private data class State(val location: String?, val statuses: Map<VirtualFile, GitFileStatus>) {
+  private data class State(val location: String?, val statuses: Map<VirtualFile, LightFileStatus>) {
     private constructor() : this(null, emptyMap())
 
     companion object {
@@ -263,38 +258,4 @@ class LightGitTracker : Disposable {
 
 interface LightGitTrackerListener : EventListener {
   fun update()
-}
-
-fun <K, V> Map<K, V>.without(removed: K): Map<K, V> {
-  val result = this.toMutableMap()
-  result.remove(removed)
-  return result
-}
-
-fun <R> List<*>.lastInstance(klass: Class<R>): R? {
-  val iterator = this.listIterator(size)
-  while (iterator.hasPrevious()) {
-    val element = iterator.previous()
-    @Suppress("UNCHECKED_CAST")
-    if (klass.isInstance(element)) return element as R
-  }
-  return null
-}
-
-private fun <T> Collection<T>.toShortenedString(num: Int = 20): String {
-  if (size < num) return toString()
-  return "${take(num)} ... +${size - num} more"
-}
-
-private fun <K, V> Map<K, V>.toShortenedString(num: Int = 20): String {
-  if (size < num) return toString()
-  return "${asIterable().take(num).toMap()} ... +${size - num} more"
-}
-
-private fun <K, V> Iterable<Map.Entry<K, V>>.toMap(): Map<K, V> {
-  val result = mutableMapOf<K, V>()
-  for (entry in this) {
-    result[entry.key] = entry.value
-  }
-  return result
 }

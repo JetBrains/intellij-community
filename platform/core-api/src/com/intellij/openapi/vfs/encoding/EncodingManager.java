@@ -50,6 +50,12 @@ public abstract class EncodingManager extends EncodingRegistry {
 
   public abstract void setDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile, @Nullable Charset charset);
 
+  /**
+   * @return encoding used by default in {@link com.intellij.execution.configurations.GeneralCommandLine}
+   */
+  @Override
+  public abstract @NotNull Charset getDefaultConsoleEncoding();
+
   @Nullable
   public abstract Charset getCachedCharsetFromContent(@NotNull Document document);
 

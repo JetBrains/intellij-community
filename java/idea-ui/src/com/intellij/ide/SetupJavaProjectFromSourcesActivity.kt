@@ -46,6 +46,9 @@ private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 class SetupJavaProjectFromSourcesActivity : StartupActivity {
 
   override fun runActivity(project: Project) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      return
+    }
     if (project.hasBeenOpenedBySpecificProcessor()) {
       return
     }

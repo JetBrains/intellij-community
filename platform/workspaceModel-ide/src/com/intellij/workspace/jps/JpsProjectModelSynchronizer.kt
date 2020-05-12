@@ -41,7 +41,7 @@ import kotlin.collections.LinkedHashSet
 
 internal class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private val incomingChanges = Collections.synchronizedList(ArrayList<JpsConfigurationFilesChange>())
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(project)
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private lateinit var fileContentReader: StorageJpsConfigurationReader
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
@@ -123,6 +123,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
 
   internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
+    var childActivity = activity.startChild("(wm) Prepare serializers")
     val baseDirUrl = configLocation.baseDirectoryUrlString
     fileContentReader = StorageJpsConfigurationReader(project, baseDirUrl)
     val externalStoragePath = project.getExternalConfigurationDir()
@@ -131,15 +132,19 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     registerListener()
     val builder = TypedEntityStorageBuilder.create()
 
+    childActivity = childActivity.endAndStart("(wm) Load state of unloaded modules")
     loadStateOfUnloadedModules(serializers.getAllModulePaths())
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
+      childActivity = childActivity.endAndStart("(wm) Read serializers")
       serializers.loadAll(fileContentReader, builder)
+      childActivity = childActivity.endAndStart("(wm) Add changes to store")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
           updater.replaceBySource({ it is JpsFileEntitySource }, builder.toStorage())
         }
       }
+      childActivity.end()
     }
     activity.end()
   }

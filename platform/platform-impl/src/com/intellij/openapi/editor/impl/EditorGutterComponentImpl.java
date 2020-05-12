@@ -71,10 +71,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterable;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +139,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
-  @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  @Nullable private Int2ObjectOpenHashMap<List<GutterMark>> myLineToGutterRenderers;
   private boolean myLineToGutterRenderersCacheForLogicalLines;
   private boolean myHasInlaysWithGutterIcons;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH.get();
@@ -149,7 +149,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @NotNull private List<FoldRegion> myActiveFoldRegions = Collections.emptyList();
   private int myTextAnnotationGuttersSize;
   private int myTextAnnotationExtraSize;
-  final TIntArrayList myTextAnnotationGutterSizes = new TIntArrayList();
+  final IntArrayList myTextAnnotationGutterSizes = new IntArrayList();
   final ArrayList<TextAnnotationGutterProvider> myTextAnnotationGutters = new ArrayList<>();
   private boolean myGapAfterAnnotations;
   private final Map<TextAnnotationGutterProvider, EditorGutterAction> myProviderToListener = new HashMap<>();
@@ -465,7 +465,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           break;
         }
 
-        int annotationSize = myTextAnnotationGutterSizes.get(i);
+        int annotationSize = myTextAnnotationGutterSizes.getInt(i);
 
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
@@ -834,7 +834,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private void buildGutterRenderersCache() {
     myLineToGutterRenderersCacheForLogicalLines = logicalLinesMatchVisualOnes();
-    myLineToGutterRenderers = new TIntObjectHashMap<>();
+    myLineToGutterRenderers = new Int2ObjectOpenHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
       if (renderer == null) {
@@ -856,17 +856,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       renderers.add(renderer);
     });
 
-    myLineToGutterRenderers.transformValues(value -> {
-      List<GutterMark> newValue = value;
-      for (GutterMarkPreprocessor preprocessor : GutterMarkPreprocessor.EP_NAME.getExtensions()) {
-        newValue = preprocessor.processMarkers(value);
+    List<GutterMarkPreprocessor> gutterMarkPreprocessors = GutterMarkPreprocessor.EP_NAME.getExtensionList();
+    for (Int2ObjectMap.Entry<List<GutterMark>> entry : Int2ObjectMaps.fastIterable(myLineToGutterRenderers)) {
+      List<GutterMark> newValue = entry.getValue();
+      for (GutterMarkPreprocessor preprocessor : gutterMarkPreprocessors) {
+        newValue = preprocessor.processMarkers(entry.getValue());
       }
-
-      // Don't allow more than 4 icons per line
-      newValue = ContainerUtil.getFirstItems(newValue, 4);
-
-      return newValue;
-    });
+      // don't allow more than 4 icons per line
+      entry.setValue(ContainerUtil.getFirstItems(newValue, 4));
+    }
   }
 
   private void calcLineMarkerAreaWidth(boolean canShrink) {
@@ -885,8 +883,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
-    processGutterRenderers((line, renderers) -> {
+    for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
       int width = 1;
+      List<GutterMark> renderers = entry.getValue();
       for (int i = 0; i < renderers.size(); i++) {
         GutterMark renderer = renderers.get(i);
         if (!checkDumbAware(renderer)) continue;
@@ -896,8 +895,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (myIconsAreaWidth < width) {
         myIconsAreaWidth = width + 1;
       }
-      return true;
-    });
+    }
 
     myHasInlaysWithGutterIcons = false;
     myEditor.getInlayModel().getBlockElementsInRange(0, myEditor.getDocument().getTextLength()).forEach(inlay -> {
@@ -937,11 +935,11 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     return marks != null ? marks : Collections.emptyList();
   }
 
-  private void processGutterRenderers(@NotNull TIntObjectProcedure<List<GutterMark>> processor) {
+  private @NotNull ObjectIterable<Int2ObjectMap.Entry<List<GutterMark>>> processGutterRenderers() {
     if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
-    myLineToGutterRenderers.forEachEntry(processor);
+    return Int2ObjectMaps.fastIterable(myLineToGutterRenderers);
   }
 
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
@@ -1827,7 +1825,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     int current = getAnnotationsAreaOffset();
     if (clickPoint.x < current) return null;
     for (int i = 0; i < myTextAnnotationGutterSizes.size(); i++) {
-      current += myTextAnnotationGutterSizes.get(i);
+      current += myTextAnnotationGutterSizes.getInt(i);
       if (clickPoint.x <= current) return myTextAnnotationGutters.get(i);
     }
 
@@ -1973,13 +1971,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   public void closeTextAnnotations(@NotNull Collection<? extends TextAnnotationGutterProvider> annotations) {
     if (!myCanCloseAnnotations) return;
 
-    THashSet<TextAnnotationGutterProvider> toClose = new THashSet<>(annotations, ContainerUtil.identityStrategy());
+    ReferenceOpenHashSet<TextAnnotationGutterProvider> toClose = new ReferenceOpenHashSet<>(annotations);
     for (int i = myTextAnnotationGutters.size() - 1; i >= 0; i--) {
       TextAnnotationGutterProvider provider = myTextAnnotationGutters.get(i);
       if (toClose.contains(provider)) {
         provider.gutterClosed();
         myTextAnnotationGutters.remove(i);
-        myTextAnnotationGutterSizes.remove(i);
+        myTextAnnotationGutterSizes.removeInt(i);
         myProviderToListener.remove(provider);
       }
     }
@@ -2001,29 +1999,28 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   @Nullable
   public Point getCenterPoint(final GutterIconRenderer renderer) {
-    final Ref<Point> result = Ref.create();
     if (!areIconsShown()) {
-      processGutterRenderers((line, renderers) -> {
-        if (ContainerUtil.find(renderers, renderer) != null) {
-          result.set(new Point(getIconAreaOffset(), getLineCenterY(line)));
-          return false;
+      for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
+        if (ContainerUtil.find(entry.getValue(), renderer) != null) {
+          return new Point(getIconAreaOffset(), getLineCenterY(entry.getIntKey()));
         }
-        return true;
-      });
+      }
     }
     else {
-      processGutterRenderers((line, renderers) -> {
-        processIconsRow(line, renderers, (x, y, r) -> {
+      Ref<Point> result = Ref.create();
+      for (Int2ObjectMap.Entry<List<GutterMark>> entry : processGutterRenderers()) {
+        processIconsRow(entry.getIntKey(), entry.getValue(), (x, y, r) -> {
           if (result.isNull() && r.equals(renderer)) {
             Icon icon = scaleIcon(r.getIcon());
             result.set(new Point(x + icon.getIconWidth() / 2, y + icon.getIconHeight() / 2));
           }
         });
-
-        return result.isNull();
-      });
+        if (!result.isNull()) {
+          return result.get();
+        }
+      }
     }
-    return result.get();
+    return null;
   }
 
   @Override
@@ -2183,7 +2180,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (p.y >= startY && p.y < endY) {
       List<GutterMark> renderers = getGutterRenderers(line);
       final PointInfo[] result = {null};
-      Map<Integer, Integer> xPos = new TreeMap<>();
+      Int2IntRBTreeMap xPos = new Int2IntRBTreeMap();
       processIconsRowForY(startY, renderers, (x, y, renderer) -> {
         Icon icon = scaleIcon(renderer.getIcon());
         int iconWidth = icon.getIconWidth();
@@ -2202,7 +2199,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
     if (myHasInlaysWithGutterIcons) {
       if (p.y < startY) {
-        List<Inlay> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, true);
+        List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, true);
         int yDiff = startY - p.y;
         for (int i = inlays.size() - 1; i >= 0; i--) {
           Inlay inlay = inlays.get(i);
@@ -2214,7 +2211,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
       else {
-        List<Inlay> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, false);
+        List<Inlay<?>> inlays = myEditor.getInlayModel().getBlockElementsForVisualLine(line, false);
         int yDiff = p.y - endY;
         for (Inlay inlay : inlays) {
           int height = inlay.getHeightInPixels();
@@ -2246,7 +2243,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Nullable
   private GutterIconRenderer getGutterRenderer(final MouseEvent e) {
-    return (GutterIconRenderer)getGutterRenderer(e.getPoint());
+    return getGutterRenderer(e.getPoint());
   }
 
   @NotNull
@@ -2297,7 +2294,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private static class ClickInfo {
+  private static final class ClickInfo {
     final int myLogicalLineAtCursor;
     final Point myIconCenterPosition;
 
@@ -2307,7 +2304,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private static class PointInfo {
+  private static final class PointInfo {
     private final @NotNull GutterIconRenderer renderer;
     private final @NotNull Point iconCenterPosition;
     private int renderersInLine;

@@ -25,7 +25,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.ObjectIntHashMap;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
@@ -33,6 +32,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public class FSRecords {
+public final class FSRecords {
   private static final Logger LOG = Logger.getInstance(FSRecords.class);
 
   public static final boolean WE_HAVE_CONTENT_HASHES = SystemProperties.getBooleanProperty("idea.share.contents", true);
@@ -171,7 +171,7 @@ public class FSRecords {
     return msg;
   }
 
-  private static class DbConnection {
+  private static final class DbConnection {
     private static boolean ourInitialized;
 
     private static PersistentStringEnumerator myNames;
@@ -1645,7 +1645,7 @@ public class FSRecords {
     return stream;
   }
 
-  private static class ContentOutputStream extends DataOutputStream {
+  private static final class ContentOutputStream extends DataOutputStream {
     final int myFileId;
     final boolean myFixedSize;
 
@@ -1753,7 +1753,7 @@ public class FSRecords {
     }
   }
 
-  private static class AttributeOutputStream extends DataOutputStream {
+  private static final class AttributeOutputStream extends DataOutputStream {
     @NotNull
     private final FileAttribute myAttribute;
     private final int myFileId;

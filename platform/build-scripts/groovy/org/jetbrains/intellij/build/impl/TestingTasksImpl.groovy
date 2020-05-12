@@ -361,7 +361,7 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    PortableCompilationCache.REQUIRED_PROPERTIES.each { systemProperties.putIfAbsent(it, System.getProperty(it)) }
+    PortableCompilationCache.PROPERTIES.each { systemProperties.putIfAbsent(it, System.getProperty(it)) }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
     if (isPerformanceRun()) {

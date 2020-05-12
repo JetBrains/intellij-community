@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.ApiStatus
 
 abstract class SaveAndSyncHandler {
@@ -16,6 +18,8 @@ abstract class SaveAndSyncHandler {
       return ApplicationManager.getApplication().getService(SaveAndSyncHandler::class.java)
     }
   }
+
+  protected val externalChangesModificationTracker = SimpleModificationTracker()
 
   /**
    * Schedule to save documents, all opened projects (or only passed project if not null) and application.
@@ -74,4 +78,11 @@ abstract class SaveAndSyncHandler {
 
   @ApiStatus.Experimental
   abstract fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean
+
+  /**
+   * @return a modification tracker incrementing when external commands are likely run.
+   *         Currently it happens on IDE frame deactivation and/or [scheduleRefresh] invocation.
+   */
+  @ApiStatus.Experimental
+  fun getExternalChangesTracker(): ModificationTracker = externalChangesModificationTracker
 }

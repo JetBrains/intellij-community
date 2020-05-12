@@ -56,11 +56,19 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += ' ' + properties.getProperty("java.vendor", "unknown");
     output += '\n';
 
-    output += PathManager.PROPERTY_CONFIG_PATH + "=" + StartupUtil.canonicalPath(PathManager.getConfigPath()) + "\n";
-    output += PathManager.PROPERTY_SYSTEM_PATH + "=" + StartupUtil.canonicalPath(PathManager.getSystemPath()) + "\n";
-    output += PathManager.PROPERTY_PLUGINS_PATH + "=" + PathManager.getPluginsPath() + "\n";
-    output += PathManager.PROPERTY_LOG_PATH + "=" + PathManager.getLogPath() + "\n";
-
+    output += PathManager.PROPERTY_CONFIG_PATH + "=" + StartupUtil.logPath(PathManager.getConfigPath()) + "\n";
+    output += PathManager.PROPERTY_SYSTEM_PATH + "=" + StartupUtil.logPath(PathManager.getSystemPath()) + "\n";
+    output += PathManager.PROPERTY_PLUGINS_PATH + "=" + StartupUtil.logPath(PathManager.getPluginsPath()) + "\n";
+    output += PathManager.PROPERTY_LOG_PATH + "=" + StartupUtil.logPath(PathManager.getLogPath()) + "\n";
+    output += logEnvVar("_JAVA_OPTIONS");
+    output += logEnvVar("JDK_JAVA_OPTIONS");
+    output += logEnvVar("JAVA_TOOL_OPTIONS");
     return output;
+  }
+
+  private static String logEnvVar(String var) {
+    String value = System.getenv(var);
+    if (value != null) return var + '=' + value + "\n";
+    return "";
   }
 }

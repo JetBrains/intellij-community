@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
@@ -899,7 +900,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
     getSyncConsole().startImport(myProgressListener);
-    MavenServerManager.getInstance().showMavenNotifications(getSyncConsole());
+    if (!MavenServerManager.getInstance().checkMavenSettings(myProject, getSyncConsole())) {
+      getSyncConsole().finishImport();
+      return Promises.resolvedPromise();
+    }
     MavenSyncConsole console = getSyncConsole();
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
@@ -907,6 +911,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       completeMavenSyncOnImportCompletion(console);
     });
     return promise;
+  }
+
+  public void showServerException(Throwable e) {
+    getSyncConsole().addException(e, myProgressListener);
   }
 
   public void terminateImport(int exitCode) {

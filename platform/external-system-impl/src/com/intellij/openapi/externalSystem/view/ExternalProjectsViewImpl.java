@@ -214,14 +214,14 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
     getShortcutsManager().addListener(() -> {
       scheduleTaskAndRunConfigUpdate();
-    });
+    }, this);
 
     getTaskActivator().addListener(new ExternalSystemTaskActivator.Listener() {
       @Override
       public void tasksActivationChanged() {
         scheduleTaskAndRunConfigUpdate();
       }
-    });
+    }, this);
 
     busConnection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private void changed() {
@@ -284,7 +284,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
       if (gearAction instanceof ExternalSystemViewGearAction) {
         ((ExternalSystemViewGearAction)gearAction).setView(this);
         group.add(gearAction);
-        Disposer.register(myProject, new Disposable() {
+        Disposer.register(this, new Disposable() {
           @Override
           public void dispose() {
             ((ExternalSystemViewGearAction)gearAction).setView(null);

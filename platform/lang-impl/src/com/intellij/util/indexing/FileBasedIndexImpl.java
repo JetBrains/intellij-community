@@ -49,11 +49,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.caches.CachedFileContent;
 import com.intellij.util.indexing.diagnostic.FileIndexingStatistics;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.indexing.snapshot.IndexedHashesSupport;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappings;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
-import com.intellij.util.indexing.snapshot.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
@@ -263,6 +263,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   void setUpShutDownTask() {
     myShutDownTask = new MyShutDownTask();
     ShutDownTracker.getInstance().registerShutdownTask(myShutDownTask);
+  }
+
+  @ApiStatus.Internal
+  public void dumpIndexStatistics() {
+    IndexConfiguration state = getRegisteredIndexes().getState();
+    for (ID<?, ?> id : state.getIndexIDs()) {
+      state.getIndex(id).dumpStatistics();
+    }
   }
 
   static class MyShutDownTask implements Runnable {
@@ -618,11 +626,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   @Override
-  public void ignoreDumbMode(@NotNull Runnable command,
-                             @NotNull Project project,
-                             @NotNull DumbModeAccessType dumbModeAccessType) {
+  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
+                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
     assert ApplicationManager.getApplication().isReadAccessAllowed();
-    if (DumbService.isDumb(project) && FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
       boolean setAccessType = true;
       DumbModeAccessType currentAccessType = ourDumbModeAccessType.get();
       if (currentAccessType != null) {
@@ -635,13 +642,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
       if (setAccessType) ourDumbModeAccessType.set(dumbModeAccessType);
       try {
-        command.run();
+        return computable.compute();
       }
       finally {
         if (setAccessType) ourDumbModeAccessType.set(null);
       }
     } else {
-      command.run();
+      return computable.compute();
     }
   }
 
@@ -805,11 +812,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
       return null;
     }
-    if (e instanceof ProcessCanceledException) return null;
+    if (e instanceof ProcessCanceledException) {
+      return null;
+    }
+    if (e instanceof MapReduceIndex.MapInputException) {
+      // If exception has happened on input mapping (DataIndexer.map),
+      // it is handled as the indexer exception and must not lead to index rebuild.
+      return null;
+    }
     if (e instanceof IndexOutOfBoundsException) return e; // something wrong with direct byte buffer
     Throwable cause = e.getCause();
-    if (cause instanceof StorageException || cause instanceof IOException ||
-        cause instanceof IllegalArgumentException) return cause;
+    if (cause instanceof StorageException
+        || cause instanceof IOException
+        || cause instanceof IllegalArgumentException
+    ) {
+      return cause;
+    }
     return null;
   }
 
@@ -958,9 +976,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
           else {
             newFc = new FileContentImpl(vFile, contentText, currentDocStamp);
-            if (FileBasedIndex.ourSnapshotMappingsEnabled) {
-              newFc.putUserData(UpdatableSnapshotInputMappingIndex.FORCE_IGNORE_MAPPING_INDEX_UPDATE, Boolean.TRUE);
-            }
             document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
           }
 
@@ -974,7 +989,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
           markFileIndexed(vFile);
           try {
-            getIndex(requestedIndexId).update(inputId, newFc);
+            getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc).compute();
           }
           finally {
             unmarkBeingIndexed();
@@ -982,7 +997,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
         else { // effectively wipe the data from the indices
-          getIndex(requestedIndexId).update(inputId, null);
+          getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, null).compute();
         }
       }
 
@@ -1012,6 +1027,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   void cleanupMemoryStorage(boolean skipPsiBasedIndices) {
     myLastIndexedDocStamps.clear();
+    if (myRegisteredIndexes == null) {
+      // unsaved doc is dropped while plugin load/unload-ing
+      return;
+    }
     IndexConfiguration state = myRegisteredIndexes.getState();
     if (state == null) {
       // avoid waiting for end of indices initialization (IDEA-173382)
@@ -1191,7 +1210,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       initFileContent(fc, project == null ? ProjectUtil.guessProjectForFile(file) : project, psiFile);
 
       if (FileBasedIndex.ourSnapshotMappingsEnabled) {
-        IndexedHashesSupport.initIndexedHash(fc);
+        IndexedHashesSupport.getOrInitIndexedHash(fc);
       }
       ProgressManager.checkCanceled();
 
@@ -1284,18 +1303,23 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     assert index != null;
 
     markFileIndexed(file);
-    boolean updateCalculated = false;
     try {
-      // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
-      // important: update is called out of try since possible indexer extension is HANDLED as single file fail / restart indexing policy
-      final Computable<Boolean> update = () -> index.update(inputId, currentFC);
-      updateCalculated = true;
-
-      runIndexUpdate(indexId, update, currentFC, inputId);
+      // Propagate MapReduceIndex.MapInputException and ProcessCancelledException happening on input mapping.
+      Computable<Boolean> storageUpdate = index.mapInputAndPrepareUpdate(inputId, currentFC);
+      if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
+        ConcurrencyUtil.withLock(myReadLock, () -> {
+          if (currentFC != null) {
+            index.setIndexedStateForFile(inputId, currentFC);
+          }
+          else {
+            index.resetIndexedStateForFile(inputId);
+          }
+        });
+      }
     }
     catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
-      if (causeToRebuildIndex != null && (updateCalculated || causeToRebuildIndex instanceof IOException)) {
+      if (causeToRebuildIndex != null) {
         requestRebuild(indexId, exception);
         return false;
       }
@@ -1355,23 +1379,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (includeFilesFromOtherProjects) {
         myLastOtherProjectInclusionStamp = System.currentTimeMillis();
       }
-    }
-  }
-
-  private void runIndexUpdate(@NotNull ID<?, ?> indexId,
-                              @NotNull Computable<Boolean> update,
-                              @Nullable IndexedFile file,
-                              int inputId) {
-    if (myStorageBufferingHandler.runUpdate(false, update)) {
-      ConcurrencyUtil.withLock(myReadLock, () -> {
-        UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
-        if (file != null) {
-          index.setIndexedStateForFile(inputId, file);
-        }
-        else {
-          index.resetIndexedStateForFile(inputId);
-        }
-      });
     }
   }
 

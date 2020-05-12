@@ -230,7 +230,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     String replacement;
   }
 
-  class CollectedInfo {
+  static class CollectedInfo {
     private final String fileContent;
     private final long modificationStamp;
     private final List<String> executionParams;

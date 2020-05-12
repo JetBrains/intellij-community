@@ -4,7 +4,11 @@ package org.jetbrains.plugins.groovy.codeInspection.confusing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.*;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
+import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -75,7 +79,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
 
   @Override
   protected String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("unnecessary.qualified.reference");
+    return GroovyBundle.message("inspection.display.name.unnecessary.qualified.reference");
   }
 
   @Override

@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ResizeToolWindowAction extends AnAction implements DumbAware, FusAwareAction {
@@ -134,14 +135,15 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   }
 
   @Override
-  public void addAdditionalUsageData(@NotNull AnActionEvent event, @NotNull List<EventPair> data) {
+  public @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event) {
     Project project = event.getProject();
     if (project != null) {
       ToolWindow toolWindow = getToolWindow(project);
       if (toolWindow != null) {
-        data.add(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
+        return Collections.singletonList(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));
       }
     }
+    return Collections.emptyList();
   }
 
   @Nullable

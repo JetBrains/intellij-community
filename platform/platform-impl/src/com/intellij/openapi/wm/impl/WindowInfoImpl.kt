@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.facet.ui.FacetDependentToolWindow
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.*
+import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
@@ -100,7 +102,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override val isDocked: Boolean
     get() = type == ToolWindowType.DOCKED
 
-  fun normalizeAfterRead() {
+  internal fun normalizeAfterRead() {
     setTypeAndCheck(type)
 
     if (isVisible && id != null && !canActivateOnStart(id!!)) {
@@ -148,10 +150,12 @@ private class ToolWindowAnchorConverter : Converter<ToolWindowAnchor>() {
 }
 
 private fun canActivateOnStart(id: String): Boolean {
-  for (ep in ToolWindowEP.EP_NAME.extensionList) {
-    if (id == ep.id) {
-      return !ep.isDoNotActivateOnStart
-    }
-  }
-  return true
+  val ep = findEp(ToolWindowEP.EP_NAME.iterable, id)
+           ?: findEp(FacetDependentToolWindow.EXTENSION_POINT_NAME.iterable, id)
+           ?: findEp(LibraryDependentToolWindow.EXTENSION_POINT_NAME.iterable, id)
+  return ep == null || !ep.isDoNotActivateOnStart
+}
+
+private fun findEp(list: Iterable<ToolWindowEP>, id: String): ToolWindowEP? {
+  return list.firstOrNull { id == it.id }
 }

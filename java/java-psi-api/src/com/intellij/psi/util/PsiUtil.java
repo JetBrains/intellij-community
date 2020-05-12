@@ -864,38 +864,6 @@ public final class PsiUtil extends PsiUtilCore {
     return type;
   }
 
-  /**
-   * Opens top level captured wildcards and remap them according to the context.
-   * The only valid purpose: allow to speculate on non-physical expressions about types, e.g. to detect redundant casts with 'wildcards'
-   */
-  static PsiType recaptureWildcards(PsiType type, PsiElement context) {
-    if (type instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
-      if (aClass != null) {
-        final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-
-        PsiSubstitutor resultSubstitution = null;
-        for (PsiTypeParameter parameter : substitutor.getSubstitutionMap().keySet()) {
-          final PsiType substitute = substitutor.substitute(parameter);
-          if (substitute instanceof PsiCapturedWildcardType) {
-            if (resultSubstitution == null) resultSubstitution = substitutor;
-            resultSubstitution = resultSubstitution.put(parameter, ((PsiCapturedWildcardType)substitute).getWildcard());
-          }
-        }
-
-        if (resultSubstitution != null) {
-          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-          return captureToplevelWildcards(factory.createType(aClass, resultSubstitution), context);
-        }
-      }
-    }
-    else if (type instanceof PsiArrayType) {
-      return recaptureWildcards(((PsiArrayType)type).getComponentType(), context).createArrayType();
-    }
-    return type;
-  }
-
   public static boolean isInsideJavadocComment(PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiDocComment.class, true) != null;
   }

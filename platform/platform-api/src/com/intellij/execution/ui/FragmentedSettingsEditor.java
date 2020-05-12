@@ -28,28 +28,26 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
   protected abstract Collection<SettingsEditorFragment<Settings, ?>> createFragments();
 
-  protected Collection<SettingsEditorFragment<Settings, ?>> getFragments() {
+  protected List<SettingsEditorFragment<Settings, ?>> getFragments() {
     return new ArrayList<>(myFragments.getValue());
   }
-
-  protected abstract String getTitle();
 
   @Override
   public void resetEditorFrom(@NotNull Settings settings) {
     super.resetEditorFrom(settings);
-    @Nullable Set<String> visibleFragments = settings.getVisibleFragments();
+    @Nullable Set<String> visibleFragments = settings.getSelectedOptions();
     for (SettingsEditorFragment<Settings, ?> fragment : getFragments()) {
-      fragment.setVisible(visibleFragments.isEmpty() ?
-                          fragment.isInitiallyVisible(settings) :
-                          visibleFragments.contains(fragment.getId()));
+      fragment.setSelected(visibleFragments.isEmpty() ?
+                           fragment.isInitiallyVisible(settings) :
+                           visibleFragments.contains(fragment.getId()));
     }
   }
 
   @Override
   public void applyEditorTo(@NotNull Settings settings) throws ConfigurationException {
     super.applyEditorTo(settings);
-    settings.setVisibleFragments(
-      getFragments().stream().filter(fragment -> fragment.isVisible()).map(fragment -> fragment.getId()).collect(Collectors.toSet()));
+    settings.setSelectedOptions(
+      getFragments().stream().filter(fragment -> fragment.isSelected()).map(fragment -> fragment.getId()).collect(Collectors.toSet()));
   }
 
   @Override
@@ -70,18 +68,15 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
       public JComponent createCompoundEditor() {
         result.setBorder(JBUI.Borders.emptyLeft(5));
         addLine(new JSeparator());
-        addLine(buildHeader());
+        List<SettingsEditorFragment<Settings, ?>> fragments = getFragments();
+        fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
+        addLine(buildHeader(fragments));
 
-        List<SettingsEditorFragment<Settings, ?>> commandLineFragments =
-          ContainerUtil.filter(getFragments(), fragment -> fragment.getCommandLinePosition() >= 0);
-        commandLineFragments.sort(Comparator.comparingInt(SettingsEditorFragment::getCommandLinePosition));
-        JComponent commandLinePanel = buildCommandLinePanel(commandLineFragments);
+        JComponent commandLinePanel = buildCommandLinePanel(fragments);
         addLine(commandLinePanel);
 
         JPanel tagsPanel = new JPanel(new FlowLayout(FlowLayout.LEADING));
         tagsPanel.setBorder(JBUI.Borders.empty(5, 0));
-        Collection<SettingsEditorFragment<Settings, ?>> fragments = getFragments();
-        fragments.removeAll(commandLineFragments);
         for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
           if (fragment.isTag()) {
             tagsPanel.add(fragment.getComponent());
@@ -101,12 +96,14 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
         c.gridy++;
       }
 
-      private JComponent buildHeader() {
+      private JComponent buildHeader(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(JBUI.Borders.empty(5, 0));
-        JLabel label = new JLabel(getTitle());
-        label.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-        panel.add(label, BorderLayout.WEST);
+        SettingsEditorFragment<Settings, ?> label = ContainerUtil.find(fragments, fragment -> fragment.getCommandLinePosition() == -1);
+        if (label != null) {
+          panel.add(label.getComponent(), BorderLayout.WEST);
+          fragments.remove(label);
+        }
 
         linkLabel = LinkLabel.create(OptionsBundle.message("settings.editor.modify.options"), () -> showOptions());
         linkLabel.setIcon(FindAndShowNextMatches);
@@ -134,15 +131,18 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).showInBestPositionFor(dataContext);
       }
 
-      private JComponent buildCommandLinePanel(List<SettingsEditorFragment<Settings, ?>> fragments) {
+      private JComponent buildCommandLinePanel(Collection<SettingsEditorFragment<Settings, ?>> fragments) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(JBUI.Borders.emptyBottom(5));
         GridBagConstraints c =
           new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0);
-        for (SettingsEditorFragment<Settings, ?> fragment : fragments) {
+        for (Iterator<SettingsEditorFragment<Settings, ?>> iterator = fragments.iterator(); iterator.hasNext(); ) {
+          SettingsEditorFragment<Settings, ?> fragment = iterator.next();
+          if (fragment.getCommandLinePosition() <= 0) continue;
           JComponent editor = fragment.createEditor();
           panel.add(editor, c.clone());
           c.gridx++;
+          iterator.remove();
         }
         return panel;
       }
@@ -160,12 +160,12 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
-      return myFragment.isVisible();
+      return myFragment.isSelected();
     }
 
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      myFragment.setVisible(state);
+      myFragment.setSelected(state);
     }
   }
 }

@@ -1,16 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -112,9 +112,12 @@ public class EditorScrollingPositionKeeper implements Disposable {
     private final List<EditorScrollingPositionKeeper> myKeepers;
 
     public ForDocument(@Nullable Document document) {
-      myKeepers = document == null ? Collections.emptyList()
-                                   : ContainerUtil.map(EditorFactory.getInstance().getEditors(document),
-                                                       EditorScrollingPositionKeeper::new);
+      if (document == null) {
+        myKeepers = Collections.emptyList();
+      }
+      else {
+        myKeepers = EditorFactory.getInstance().editors(document).map(EditorScrollingPositionKeeper::new).collect(Collectors.toList());
+      }
     }
 
     public void savePosition() {

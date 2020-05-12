@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -26,9 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
-import com.intellij.util.FilteringProcessor;
+import com.intellij.util.*;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,17 +290,18 @@ public class EditorHyperlinkSupport {
   }
 
   void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
-    Document document = myEditor.getDocument();
+    int length = myEditor.getDocument().getTextLength();
+    List<InlayProvider> inlays = new SmartList<>();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
       int start = resultItem.getHighlightStartOffset() + offsetDelta;
       int end = resultItem.getHighlightEndOffset() + offsetDelta;
-      if (start < 0 || end < start || end > document.getTextLength()) {
+      if (start < 0 || end < start || end > length) {
         continue;
       }
 
       TextAttributes attributes = resultItem.getHighlightAttributes();
       if (resultItem instanceof InlayProvider) {
-        myEditor.getInlayModel().addInlineElement(end, ((InlayProvider)resultItem).createInlayRenderer(myEditor));
+        inlays.add((InlayProvider)resultItem);
       }
       else if (resultItem.getHyperlinkInfo() != null) {
         createHyperlink(start, end, attributes, resultItem.getHyperlinkInfo(), resultItem.getFollowedHyperlinkAttributes(),
@@ -311,6 +310,15 @@ public class EditorHyperlinkSupport {
       else if (attributes != null) {
         addHighlighter(start, end, attributes, resultItem.getHighlighterLayer());
       }
+    }
+    // add inlays in a batch if needed
+    if (!inlays.isEmpty()) {
+      myEditor.getInlayModel().execute(inlays.size() > 100, () -> {
+        for (InlayProvider item : inlays) {
+          myEditor.getInlayModel().addInlineElement(((Filter.ResultItem)item).getHighlightEndOffset() + offsetDelta,
+                                                    item.createInlayRenderer(myEditor));
+        }
+      });
     }
   }
 

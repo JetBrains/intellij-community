@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -138,16 +139,21 @@ public abstract class FileBasedIndex {
    * {@link com.intellij.openapi.project.IndexNotReadyException} are not expected to be happen here.
    *
    * <p> In smart mode, the behavior is similar to direct command execution
-   *
    * @param command - a command to execute
-   * @param project - project where dumb mode will be ignored
    * @param dumbModeAccessType - defines in which manner command should be executed. Does a client expect only reliable data
-   *                           or any data from index is fine (even outdated and not yet updated)?
    */
   @ApiStatus.Experimental
   public void ignoreDumbMode(@NotNull Runnable command,
-                             @NotNull Project project,
                              @NotNull DumbModeAccessType dumbModeAccessType) {
+    ignoreDumbMode(dumbModeAccessType, () -> {
+      command.run();
+      return null;
+    });
+  }
+
+  @ApiStatus.Experimental
+  public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
+                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
     throw new UnsupportedOperationException();
   }
 

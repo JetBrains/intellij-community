@@ -467,6 +467,9 @@
       <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
     </group>
 
+    <!-- VCS -->
+    <group id="VersionControlsGroup"/>
+
     <!-- Toolbar -->
     <group id="ToolbarFindGroup">
       <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
@@ -555,7 +558,6 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <action id="ProjectViewEditSource" use-shortcut-of="EditSource" class="com.intellij.ide.actions.ProjectViewEditSourceAction"/>
-      <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
@@ -593,7 +595,6 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
-      <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="ViewNavigationBar"/>
       <reference ref="ViewMembersInNavigationBar"/>
@@ -624,7 +625,6 @@
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <reference ref="EditSource"/>
-      <reference ref="ChangesView.ApplyPatch"/>
       <separator/>
       <reference ref="FindUsages"/>
       <reference ref="FindInPath"/>
@@ -1060,37 +1060,6 @@
       <action id="LocalHistory.PutLabel" class="com.intellij.history.integration.ui.actions.PutLabelAction"/>
 
       <add-to-group group-id="VersionControlsGroup" anchor="first"/>
-      <add-to-group group-id="VcsGroups" anchor="first"/>
-    </group>
-
-    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup">
-      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
-    </action>
-
-    <group id="Vcs.Operations.Popup">
-      <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
-        <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
-        <reference id="ChangesView.AddUnversioned"/>
-        <reference id="CheckinProject"/>
-        <reference ref="ChangesView.ToggleCommitUi"/>
-        <reference id="CheckinFiles"/>
-        <reference id="ChangesView.Revert"/>
-        <separator/>
-        <reference id="Vcs.ShowTabbedFileHistory"/>
-        <reference id="Annotate"/>
-        <reference id="Compare.SameVersion"/>
-      </group>
-      <separator/>
-      <group id="Vcs.Operations.Popup.Vcs.Providers"
-             class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$Providers"/>
-      <group id="Vcs.Operations.Popup.NonVcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$NonVcsAware">
-        <reference id="Start.Use.Vcs"/>
-      </group>
-      <separator/>
-      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" popup="true" id="ShowAnnotateOperationsPopupGroup"/>
-      <separator text="Local History"/>
-      <reference id="LocalHistory.ShowHistory"/>
-      <reference id="LocalHistory.PutLabel"/>
     </group>
 
     <group id="TestTreePopupMenu">
@@ -1319,11 +1288,7 @@
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <separator text="type.large"/>
-        <group id="TouchBarDefaultOptionalGroup">
-          <reference ref="Vcs.UpdateProject"/>
-          <reference ref="CheckinProject"/>
-          <reference ref="ChangesView.ToggleCommitUi"/>
-        </group>
+        <group id="TouchBarDefaultOptionalGroup" />
         <group id="TouchBarDefault_ctrl">
           <separator/>
         </group>

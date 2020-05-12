@@ -35,7 +35,7 @@ internal fun TypedEntityStorageBuilder.addPSampleEntity(stringProperty: String,
                                                         source: EntitySource = PSampleEntitySource("test"),
                                                         booleanProperty: Boolean = false,
                                                         stringListProperty: MutableList<String> = ArrayList(),
-                                                        virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager(),
+                                                        virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
                                                         fileProperty: VirtualFileUrl = virtualFileManager.fromUrl(
                                                           "file:///tmp")): PSampleEntity {
   return addEntity(ModifiablePSampleEntity::class.java, source) {
@@ -54,7 +54,7 @@ class PSimplePropertiesInProxyBasedStorageTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
   @Before
   fun setUp() {
-    virtualFileManager = VirtualFileUrlManager()
+    virtualFileManager = VirtualFileUrlManagerImpl()
   }
 
   @Test

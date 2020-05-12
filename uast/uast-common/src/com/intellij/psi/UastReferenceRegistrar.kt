@@ -14,7 +14,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.toUElementOfExpectedTypes
-import java.util.concurrent.ConcurrentHashMap
+import java.util.*
 
 /**
  * Groups all UAST-based reference providers by chunks with the same priority and supported UElement types.
@@ -22,8 +22,8 @@ import java.util.concurrent.ConcurrentHashMap
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
-  val adapter = UastReferenceProviderAdapter(provider.supportedUElementTypes, pattern, provider)
-  this.registerReferenceProvider(uastTypePattern(provider.supportedUElementTypes), adapter, priority)
+  val adapter = UastReferenceProviderAdapter(provider.supportedUElementTypes, provider)
+  this.registerReferenceProvider(adaptPattern(pattern, provider.supportedUElementTypes), adapter, priority)
 }
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
@@ -53,44 +53,53 @@ fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement
 inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   uastReferenceProvider(T::class.java, provider)
 
-private val CACHED_UAST_ELEMENTS : Key<MutableMap<List<Class<out UElement>>, UElement>> = Key.create("CACHED_UAST_ELEMENTS")
-internal val REQUESTED_PSI_ELEMENT : Key<PsiElement> = Key.create("REQUESTED_PSI_ELEMENT")
-internal val USAGE_PSI_ELEMENT : Key<PsiElement> = Key.create("USAGE_PSI_ELEMENT")
+private val CACHED_UAST_INJECTION_HOST: Key<Optional<UInjectionHost>> = Key.create("CACHED_UAST_INJECTION_HOST")
+private val CACHED_UAST_EXPRESSION: Key<Optional<UExpression>> = Key.create("CACHED_UAST_EXPRESSION")
+
+internal val REQUESTED_PSI_ELEMENT: Key<PsiElement> = Key.create("REQUESTED_PSI_ELEMENT")
+internal val USAGE_PSI_ELEMENT: Key<PsiElement> = Key.create("USAGE_PSI_ELEMENT")
 
 internal fun getOrCreateCachedElement(element: PsiElement,
                                       context: ProcessingContext,
                                       supportedUElementTypes: List<Class<out UElement>>): UElement? {
   if (element is UElement) return element
 
-  val cachedUastElements = getCachedUastElements(context)
-  val existingValue = cachedUastElements[supportedUElementTypes]
-  if (existingValue != null) return existingValue
-
-  val newValue = element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray())
-  if (newValue != null) {
-    cachedUastElements[supportedUElementTypes] = newValue
+  if (supportedUElementTypes.size == 1) {
+    val requiredType = supportedUElementTypes[0]
+    if (requiredType == UInjectionHost::class.java) {
+      return getCachedUElement(context, element, UInjectionHost::class.java, CACHED_UAST_INJECTION_HOST)
+    } else if (requiredType == UExpression::class.java) {
+      return getCachedUElement(context, element, UExpression::class.java, CACHED_UAST_EXPRESSION)
+    }
   }
-  return newValue
+
+  return element.toUElementOfExpectedTypes(*supportedUElementTypes.toTypedArray())
 }
 
-private fun getCachedUastElements(context: ProcessingContext): MutableMap<List<Class<out UElement>>, UElement> {
-  val map = context.sharedContext.get(CACHED_UAST_ELEMENTS)
-  if (map != null) return map
+private fun <T : UElement> getCachedUElement(context: ProcessingContext,
+                                             element: PsiElement,
+                                             clazz: Class<T>,
+                                             cacheKey: Key<Optional<T>>): T? {
+  val sharedContext = context.sharedContext
 
-  val newMap = ConcurrentHashMap<List<Class<out UElement>>, UElement>()
-  context.sharedContext.put(CACHED_UAST_ELEMENTS, newMap)
-  return newMap
+  val uElementRef = sharedContext.get(cacheKey)
+  if (uElementRef != null) return uElementRef.orElse(null)
+
+  val newUElement = element.toUElementOfExpectedTypes(clazz)
+  sharedContext.put(cacheKey, Optional.ofNullable(newUElement))
+  return newUElement
 }
 
-internal fun uastTypePattern(supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
-  val uastTypePattern = UElementTypePatternAdapter(supportedUElementTypes)
+private fun adaptPattern(pattern: (UElement, ProcessingContext) -> Boolean,
+                         supportedUElementTypes: List<Class<out UElement>>): ElementPattern<out PsiElement> {
+  val uastPatternAdapter = UastPatternAdapter(pattern, supportedUElementTypes)
 
   // optimisation until IDEA-211738 is implemented
-  if (supportedUElementTypes == listOf(UInjectionHost::class.java)) {
-    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastTypePattern)
+  if (supportedUElementTypes.size == 1 && supportedUElementTypes[0] == UInjectionHost::class.java) {
+    return StandardPatterns.instanceOf(PsiLanguageInjectionHost::class.java).and(uastPatternAdapter)
   }
 
-  return uastTypePattern
+  return uastPatternAdapter
 }
 
 /**

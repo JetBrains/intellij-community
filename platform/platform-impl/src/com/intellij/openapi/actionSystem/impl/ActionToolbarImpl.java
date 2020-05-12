@@ -117,6 +117,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myForceShowFirstComponent;
   private boolean mySkipWindowAdjustments;
   private boolean myMinimalMode;
+  private boolean myNoGapMode;//if true secondary actions button would be layout side-by-side with other buttons
 
   public ActionButton getSecondaryActionsButton() {
     return mySecondaryActionsButton;
@@ -565,7 +566,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
           if (inside) {
             if (eachComp == mySecondaryActionsButton) {
               assert isLast;
-              if (sizeToFit.width != Integer.MAX_VALUE) {
+              if (sizeToFit.width != Integer.MAX_VALUE && !myNoGapMode) {
                 eachBound.x = sizeToFit.width - insets.right - eachBound.width;
                 eachX = (int)eachBound.getMaxX() - insets.left;
               }
@@ -1374,6 +1375,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = mySecondaryActions.getTemplatePresentation();
     presentation.setIcon(icon);
     presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, hideDropdownIcon ? Boolean.TRUE : null);
+  }
+
+  public void setNoGapMode() {
+    myNoGapMode = true;
   }
 
   @Override

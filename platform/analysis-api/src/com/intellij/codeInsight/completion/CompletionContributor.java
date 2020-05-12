@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
@@ -239,7 +240,9 @@ public abstract class CompletionContributor {
 
   @NotNull
   public static List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
-    return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
+    return CompletionIgnoreDumbnessEP.isIgnoringDumbnessAllowed(language) ?
+           DumbUtil.getInstance(project).filterByDumbAwarenessHonoringIgnoring(forLanguage(language)) :
+           DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 
   private static final LanguageExtension<CompletionContributor> INSTANCE = new CompletionExtension<>(EP.getName());

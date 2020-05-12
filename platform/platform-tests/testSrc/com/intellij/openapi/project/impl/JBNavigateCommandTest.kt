@@ -49,7 +49,7 @@ class JBNavigateCommandTest {
 
   @Rule
   @JvmField
-  val busConnection = RecentProjectManagerListenerRule()
+  internal val busConnection = RecentProjectManagerListenerRule()
 
   fun getTestDataPath(): String {
     return "${PlatformTestUtil.getPlatformTestDataPath()}/commands/navigate/"

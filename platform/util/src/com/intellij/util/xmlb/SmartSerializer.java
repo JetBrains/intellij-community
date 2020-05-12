@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ThreeState;
@@ -38,8 +38,7 @@ public final class SmartSerializer {
     this(true, false);
   }
 
-  @NotNull
-  public static SmartSerializer skipEmptySerializer() {
+  public static @NotNull SmartSerializer skipEmptySerializer() {
     return new SmartSerializer(true, true);
   }
 
@@ -82,8 +81,7 @@ public final class SmartSerializer {
     }
   }
 
-  @NotNull
-  private static BeanBinding getBinding(@NotNull Object bean) {
+  private static @NotNull BeanBinding getBinding(@NotNull Object bean) {
     return (BeanBinding)XmlSerializerImpl.serializer.getRootBinding(bean.getClass());
   }
 }

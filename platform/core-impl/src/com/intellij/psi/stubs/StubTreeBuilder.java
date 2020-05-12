@@ -21,10 +21,12 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.TreeBackedLighterAST;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
@@ -75,9 +77,11 @@ public class StubTreeBuilder {
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
       if (!(elementType instanceof IStubFileElementType)) return null;
-      boolean shouldBuildStubFor = ((IStubFileElementType)elementType).shouldBuildStubFor(file.getFile());
+      VirtualFile vFile = file.getFile();
+      boolean shouldBuildStubFor = ((IStubFileElementType)elementType).shouldBuildStubFor(vFile);
       if (toBuild && !shouldBuildStubFor) return null;
-      return new StubBuilderType((IStubFileElementType)elementType);
+      @NotNull List<String> properties = PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(vFile);
+      return new StubBuilderType((IStubFileElementType)elementType, properties);
     }
 
     return null;

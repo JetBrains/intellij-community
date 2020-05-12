@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
-class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl> {
+final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, AfterLineEndInlayImpl<?>> {
   private static int ourGlobalCounter = 0;
   final int myOrder;
 
@@ -21,7 +21,7 @@ class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   }
 
   @Override
-  RangeMarkerTree<AfterLineEndInlayImpl> getTree() {
+  RangeMarkerTree<AfterLineEndInlayImpl<?>> getTree() {
     return myEditor.getInlayModel().myAfterLineEndElementsTree;
   }
 
@@ -54,7 +54,7 @@ class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
     int lineEndOffset = myEditor.getDocument().getLineEndOffset(logicalLine);
     VisualPosition position = myEditor.offsetToVisualPosition(lineEndOffset, true, true);
     if (myEditor.getFoldingModel().isOffsetCollapsed(lineEndOffset)) return position;
-    List<Inlay> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
+    List<Inlay<?>> inlays = myEditor.getInlayModel().getAfterLineEndElementsForLogicalLine(logicalLine);
     int order = inlays.indexOf(this);
     return new VisualPosition(position.line, position.column + 1 + order);
   }

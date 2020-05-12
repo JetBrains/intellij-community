@@ -3,6 +3,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -23,6 +25,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +37,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.lang.ref.WeakReference;
+
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
   private final Comp myComponent;
@@ -80,6 +87,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
     }
+    new LazyDisposable(this);
   }
 
   @NotNull
@@ -272,4 +280,21 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     addActionListener(actionListener);
   }
 
+  private static final class LazyDisposable implements Activatable {
+    private final WeakReference<ComponentWithBrowseButton<?>> reference;
+
+    private LazyDisposable(ComponentWithBrowseButton<?> component) {
+      reference = new WeakReference<>(component);
+      new UiNotifyConnector.Once(component, this);
+    }
+
+    @Override
+    public void showNotify() {
+      ComponentWithBrowseButton<?> component = reference.get();
+      if (component == null) return; // component is collected
+      Disposable disposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(component));
+      if (disposable == null) return; // parent disposable not found
+      Disposer.register(disposable, component);
+    }
+  }
 }

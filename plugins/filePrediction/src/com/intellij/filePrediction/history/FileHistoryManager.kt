@@ -1,6 +1,6 @@
 package com.intellij.filePrediction.history
 
-data class FileHistoryFeatures(val position: Int, val uniGram: NextFileProbability, val biGram: NextFileProbability)
+data class FileHistoryFeatures(val position: Int?, val uniGram: NextFileProbability, val biGram: NextFileProbability)
 
 data class NextFileProbability(
   val mle: Double, val minMle: Double, val maxMle: Double, val mleToMin: Double, val mleToMax: Double
@@ -67,7 +67,7 @@ class FileHistoryManager(private var state: FilePredictionHistoryState, private 
 
     val fileWasPreviouslyOpened = index in 0 until size
     val entry = if (fileWasPreviouslyOpened) state.recentFiles[index] else null
-    val position = if (fileWasPreviouslyOpened) size - index - 1 else -1
+    val position = if (fileWasPreviouslyOpened) size - index - 1 else null
     val uniGram = helper.calculateUniGramProb(state.root, entry?.code)
     val biGram = helper.calculateBiGramProb(state.root, entry?.code, state.prevFile)
     return FileHistoryFeatures(position, uniGram, biGram)

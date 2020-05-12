@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.PluggableLafInfo;
@@ -60,10 +61,13 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
+
 public class EditorTextField extends NonOpaquePanel implements EditorTextComponent, DocumentListener, DataProvider, TextAccessor,
                                                                FocusListener, MouseListener {
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
   private static final Key<LineSeparator> LINE_SEPARATOR_KEY = Key.create("ETF_LINE_SEPARATOR");
+  private static final Key<Boolean> MANAGED_BY_FIELD = Key.create("MANAGED_BY_FIELD");
 
   private Document myDocument;
   private final Project myProject;
@@ -230,7 +234,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
       boolean isFocused = isFocusOwner();
       EditorEx newEditor = createEditor();
-      releaseEditor(myEditor);
+      releaseEditorNow();
       myEditor = newEditor;
       add(myEditor.getComponent(), BorderLayout.CENTER);
 
@@ -353,14 +357,21 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void addNotify() {
+    Disposable uiDisposable = UI_DISPOSABLE.getData(DataManager.getInstance().getDataContext(this));
+    if (uiDisposable != null) {
+      // If this component is added to a dialog (for example, the settings dialog),
+      // then we have to release the editor simultaneously on close.
+      // Otherwise, a corresponding dynamic plugin cannot be unloaded.
+      Disposer.register(uiDisposable, this::releaseEditorNow);
+    }
+
     myDisposable = Disposer.newDisposable("ETF dispose");
     Disposer.register(myDisposable, this::releaseEditorLater);
     if (myProject != null) {
       ProjectManagerListener listener = new ProjectManagerListener() {
         @Override
         public void projectClosing(@NotNull Project project) {
-          releaseEditor(myEditor);
-          myEditor = null;
+          releaseEditorNow();
         }
       };
       ProjectManager.getInstance().addProjectManagerListener(myProject, listener);
@@ -409,9 +420,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
-  private void releaseEditor(Editor editor) {
-    if (editor == null) return;
-
+  private void releaseEditor(@NotNull Editor editor) {
     // todo IMHO this should be removed completely
     if (myProject != null && !myProject.isDisposed() && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -430,6 +439,13 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
   }
 
+  private void releaseEditorNow() {
+    EditorEx editor = myEditor;
+    if (editor == null) return;
+    myEditor = null;
+    releaseEditor(editor);
+  }
+
   void releaseEditorLater() {
     // releasing an editor implies removing it from a component hierarchy
     // invokeLater is required because releaseEditor() may be called from
@@ -437,6 +453,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     // and only then execute another removal from the hierarchy. Otherwise
     // swing goes nuts because of nested removals and indices get corrupted
     EditorEx editor = myEditor;
+    if (editor == null) return;
     ApplicationManager.getApplication().invokeLater(() -> releaseEditor(editor), ModalityState.stateForComponent(this));
     myEditor = null;
   }
@@ -492,6 +509,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
     EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
+    editor.putUserData(MANAGED_BY_FIELD, Boolean.TRUE);
 
     setupTextFieldEditor(editor);
     editor.setCaretEnabled(!myIsViewer);
@@ -550,6 +568,10 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     return editor;
+  }
+
+  public static boolean managesEditor(@NotNull Editor editor) {
+    return editor.getUserData(MANAGED_BY_FIELD) == Boolean.TRUE;
   }
 
   public static void setupTextFieldEditor(@NotNull EditorEx editor) {
@@ -693,8 +715,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     }
 
     if (toReleaseEditor) {
-      releaseEditor(myEditor);
-      myEditor = null;
+      releaseEditorNow();
       myPassivePreferredSize = size;
     }
 

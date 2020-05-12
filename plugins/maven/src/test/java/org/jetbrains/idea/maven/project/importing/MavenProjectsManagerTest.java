@@ -566,7 +566,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                               "  </properties>" +
                               "</profile>");
 
-    MavenServerManager.getInstance().setUseMaven2();
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_2);
     importProjectWithErrors(); // structure warning, new style of profiles.xml expected
 
     List<MavenProject> roots = myProjectsTree.getRootProjects();

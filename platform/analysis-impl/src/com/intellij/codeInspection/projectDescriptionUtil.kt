@@ -28,7 +28,7 @@ fun writeProjectDescription(path: Path, project: Project) {
   }
 }
 
-fun writeProjectDescription(project: Project, writer: JsonWriter) {
+private fun writeProjectDescription(project: Project, writer: JsonWriter) {
   val modules = ModuleManager.getInstance(project).modules
   val macroManager = PathMacroManager.getInstance(project)
   writer.beginObject()
@@ -41,9 +41,9 @@ fun writeProjectDescription(project: Project, writer: JsonWriter) {
   writer.endObject()
 }
 
-fun writeModuleDescription(module: Module,
-                           writer: JsonWriter,
-                           macroManager: PathMacroManager) {
+private fun writeModuleDescription(module: Module,
+                                   writer: JsonWriter,
+                                   macroManager: PathMacroManager) {
   val rootManager = ModuleRootManager.getInstance(module)
 
   writer.beginObject()
@@ -56,9 +56,9 @@ fun writeModuleDescription(module: Module,
   writer.endObject()
 }
 
-fun writeContentEntry(contentEntry: ContentEntry,
-                      writer: JsonWriter,
-                      macroManager: PathMacroManager) {
+private fun writeContentEntry(contentEntry: ContentEntry,
+                              writer: JsonWriter,
+                              macroManager: PathMacroManager) {
   writer.beginObject()
   writer.name("Path").value(macroManager.collapsePath(contentEntry.url))
   writer.name("SourceFolders").beginArray()
@@ -78,7 +78,7 @@ fun writeContentEntry(contentEntry: ContentEntry,
   writer.endObject()
 }
 
-fun SourceFolder.type(): String {
+private fun SourceFolder.type(): String {
   return when (rootType) {
     RESOURCE -> "Resource"
     TEST_RESOURCE -> "TestResource"

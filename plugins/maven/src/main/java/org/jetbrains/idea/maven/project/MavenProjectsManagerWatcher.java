@@ -2,11 +2,10 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
-import com.intellij.execution.Executor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
@@ -63,9 +62,8 @@ public class MavenProjectsManagerWatcher {
     MessageBusConnection busConnection = myProject.getMessageBus().connect(myDisposable);
     busConnection.subscribe(ProjectTopics.MODULES, new MavenIgnoredModulesWatcher());
     busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyRootChangesListener());
-    myManager.addManagerListener(new MavenProjectWatcher());
     registerGeneralSettingsWatcher(myManager, this, myBackgroundExecutor, myDisposable);
-    myProjectTracker.register(myProjectsAware);
+    myProjectTracker.register(myProjectsAware, myManager);
     myProjectTracker.activate(myProjectsAware.getProjectId());
   }
 
@@ -200,18 +198,6 @@ public class MavenProjectsManagerWatcher {
       // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
       MavenProject mavenProject = myManager.findProject(module);
       if (mavenProject != null) myManager.setIgnoredState(Collections.singletonList(mavenProject), false);
-    }
-  }
-
-  private class MavenProjectWatcher implements MavenProjectsManager.Listener {
-    @Override
-    public void projectsScheduled() {
-      scheduleReloadNotificationUpdate();
-    }
-
-    @Override
-    public void importAndResolveScheduled() {
-      scheduleReloadNotificationUpdate();
     }
   }
 }

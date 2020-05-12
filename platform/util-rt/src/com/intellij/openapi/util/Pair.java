@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.util.Function;
@@ -13,8 +13,8 @@ public class Pair<A, B> {
   public final B second;
 
   @NotNull
-  @SuppressWarnings("DontUsePairConstructor")
   public static <A, B> Pair<A, B> create(A first, B second) {
+    //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
 
@@ -24,14 +24,15 @@ public class Pair<A, B> {
   }
 
   @NotNull
-  @SuppressWarnings("DontUsePairConstructor")
   public static <A, B> Pair<A, B> pair(A first, B second) {
+    //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
   }
 
   @NotNull
   public static <A, B> Function<A, Pair<A, B>> createFunction(final B value) {
     return new Function<A, Pair<A, B>>() {
+      @Override
       public Pair<A, B> fun(A a) {
         return create(a, value);
       }
@@ -49,8 +50,9 @@ public class Pair<A, B> {
   @SuppressWarnings("rawtypes")
   private static final Pair EMPTY = create(null, null);
 
-  @SuppressWarnings("unchecked")
+  @NotNull
   public static <A, B> Pair<A, B> empty() {
+    //noinspection unchecked
     return EMPTY;
   }
 

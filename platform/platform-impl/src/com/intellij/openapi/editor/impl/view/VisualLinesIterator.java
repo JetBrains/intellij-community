@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
@@ -17,7 +17,7 @@ import java.util.List;
  * If one needs to perform some actions for a continuous range of visual lines, using this class would be most surely faster than
  * calculating various values (e.g. start/end offsets) for all visual lines in the range individually.
  */
-public class VisualLinesIterator {
+public final class VisualLinesIterator {
   private static final int UNSET = -1;
 
   private final EditorImpl myEditor;
@@ -26,8 +26,8 @@ public class VisualLinesIterator {
   private final List<? extends SoftWrap> mySoftWraps;
   private final int myLineHeight;
 
-  private final List<Inlay> myInlaysAbove = new ArrayList<>();
-  private final List<Inlay> myInlaysBelow = new ArrayList<>();
+  private final List<Inlay<?>> myInlaysAbove = new ArrayList<>();
+  private final List<Inlay<?>> myInlaysBelow = new ArrayList<>();
   private boolean myInlaysSet;
 
   @NotNull
@@ -49,7 +49,7 @@ public class VisualLinesIterator {
   public boolean atEnd() {
     return myLocation.atEnd();
   }
-  
+
   public void advance() {
     checkEnd();
     if (y != UNSET) {
@@ -140,13 +140,13 @@ public class VisualLinesIterator {
     return myLocation.softWrap < mySoftWraps.size() && mySoftWraps.get(myLocation.softWrap).getStart() == getVisualLineEndOffset();
   }
 
-  public List<Inlay> getBlockInlaysAbove() {
+  public List<Inlay<?>> getBlockInlaysAbove() {
     checkEnd();
     setInlays();
     return myInlaysAbove;
   }
 
-  public List<Inlay> getBlockInlaysBelow() {
+  public List<Inlay<?>> getBlockInlaysBelow() {
     checkEnd();
     setInlays();
     return myInlaysBelow;
@@ -169,9 +169,9 @@ public class VisualLinesIterator {
     myInlaysAbove.clear();
     myInlaysBelow.clear();
     setNextLocation();
-    List<Inlay> inlays = myEditor.getInlayModel()
+    List<Inlay<?>> inlays = myEditor.getInlayModel()
       .getBlockElementsInRange(myLocation.offset, myNextLocation.atEnd() ? myDocument.getTextLength() : myNextLocation.offset - 1);
-    for (Inlay inlay : inlays) {
+    for (Inlay<?> inlay : inlays) {
       int inlayOffset = inlay.getOffset() - (inlay.isRelatedToPrecedingText() ? 0 : 1);
       int foldIndex = myLocation.foldRegion;
       while (foldIndex < myFoldRegions.length && myFoldRegions[foldIndex].getEndOffset() <= inlayOffset) foldIndex++;
@@ -239,7 +239,7 @@ public class VisualLinesIterator {
       }
       return false;
     }
-    
+
     private boolean atEnd() {
       return offset == -1;
     }

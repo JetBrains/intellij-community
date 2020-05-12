@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspace.api.*
-import com.intellij.workspace.ide.VirtualFileUrlManagerImpl
+import com.intellij.workspace.ide.getInstance
 import com.intellij.workspace.legacyBridge.typedModel.library.LibraryViaTypedEntity
 import org.jdom.Element
 
@@ -26,8 +26,9 @@ internal class LegacyBridgeLibraryModifiableModelImpl(
   private val committer: (LegacyBridgeLibraryModifiableModelImpl, TypedEntityStorageDiffBuilder) -> Unit
 ) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
 
-  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl.getInstance(originalLibrary.project)
-  private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+  private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
+  internal var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
+    private set
   private var reloadKind = false
 
   private val currentLibraryValue = CachedValue { storage ->

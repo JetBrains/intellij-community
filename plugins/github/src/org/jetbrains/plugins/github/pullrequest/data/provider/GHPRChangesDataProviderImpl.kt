@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
+import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 
 class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService,
@@ -44,20 +46,17 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
 
   private val changesProviderValue = LazyCancellableBackgroundProcessValue.create { indicator ->
     val commitsRequest = apiCommitsRequestValue.value
-    val baseFetch = baseBranchFetchRequestValue.value
-    val headFetch = headBranchFetchRequestValue.value
+    val fetchFuture = CompletableFuture.allOf(baseBranchFetchRequestValue.value, headBranchFetchRequestValue.value)
 
-    detailsData.loadDetails().thenCompose {
-      changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid)
-    }.thenCombine<Unit, String>(baseFetch, BiFunction { mergeBase, _ ->
-      mergeBase
-    }).thenCombine<Unit, String>(headFetch, BiFunction { mergeBase, _ ->
-      mergeBase
-    }).thenCompose { mergeBase ->
-      commitsRequest.thenCompose {
-        changesService.createChangesProvider(indicator, mergeBase, it)
+    detailsData.loadDetails()
+      .thenCombine<Void, GHPullRequest>(fetchFuture, BiFunction { details, _ -> details })
+      .thenCompose {
+        changesService.loadMergeBaseOid(indicator, it.baseRefOid, it.headRefOid)
+      }.thenCompose { mergeBase ->
+        commitsRequest.thenCompose {
+          changesService.createChangesProvider(indicator, mergeBase, it)
+        }
       }
-    }
   }
 
   override fun loadChanges() = changesProviderValue.value

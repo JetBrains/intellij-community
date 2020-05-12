@@ -1,9 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.ide.IconLayerProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
@@ -14,16 +20,20 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class CoreIconManager implements IconManager {
   private static final List<IconLayer> ourIconLayers  = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final int FLAGS_LOCKED = 0x800;
+  private static final Logger LOG = Logger.getInstance(CoreIconManager.class);
 
   @NotNull
   @Override
   public Icon getIcon(@NotNull String path, @NotNull Class aClass) {
-    return IconLoader.getIcon(path, aClass);
+    Icon icon = IconLoader.getIcon(path, aClass);
+    return IconWithToolTip.create(icon, new IconDescriptionLoader(path));
   }
 
   @NotNull
@@ -123,6 +133,44 @@ public final class CoreIconManager implements IconManager {
       BitUtil.assertOneBitMask(flagMask);
       this.flagMask = flagMask;
       this.icon = icon;
+    }
+  }
+
+  private static class IconDescriptionLoader implements Supplier<String> {
+    private final String myPath;
+    private String myResult;
+    private boolean myCalculated;
+
+    private IconDescriptionLoader(String path) {
+      myPath = path;
+    }
+
+    @Override
+    public String get() {
+      if (!myCalculated) {
+        myResult = findIconDescription();
+        myCalculated = true;
+      }
+      return myResult;
+    }
+
+    private String findIconDescription() {
+      String basePath = StringUtil.trimStart(StringUtil.trimEnd(myPath, ".svg"), "/");
+      String key = "icon." + basePath.replace('/', '.') + ".tooltip";
+      Ref<String> result = new Ref<>();
+      IconDescriptionBundleEP.EP_NAME.processWithPluginDescriptor((ep, descriptor) -> {
+        ClassLoader classLoader = descriptor == null ? null : descriptor.getPluginClassLoader();
+        if (classLoader == null) classLoader = getClass().getClassLoader();
+        ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(ep.qualifiedName, classLoader);
+        String description = AbstractBundle.messageOrNull(bundle, key);
+        if (description != null) {
+          result.set(description);
+        }
+      });
+      if (result.get() == null && Registry.is("ide.icon.tooltips.trace.missing")) {
+        LOG.info("Icon tooltip requested but not found for " + myPath);
+      }
+      return result.get();
     }
   }
 }

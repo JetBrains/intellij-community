@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.psi;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -12,7 +12,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.util.containers.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 

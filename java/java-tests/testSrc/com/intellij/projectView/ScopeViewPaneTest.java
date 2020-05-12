@@ -272,6 +272,7 @@ public class ScopeViewPaneTest extends TestSourceBasedTestCase {
     }
   }
 
+  @Bombed(user = "Sergey Malenkov", year = 2020, month = Calendar.DECEMBER, day = 10)
   public void testInScopeNoCompacting() {
      ScopeTreeViewPanel pane = null;
      try {

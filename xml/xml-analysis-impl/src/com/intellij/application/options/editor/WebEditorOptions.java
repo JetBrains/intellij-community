@@ -3,7 +3,6 @@ package com.intellij.application.options.editor;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -36,7 +35,7 @@ public final class WebEditorOptions implements PersistentStateComponent<WebEdito
   }
 
   public static WebEditorOptions getInstance() {
-    return ServiceManager.getService(WebEditorOptions.class);
+    return ApplicationManager.getApplication().getService(WebEditorOptions.class);
   }
 
   public boolean isShowCssInlineColorPreview() {
@@ -110,8 +109,7 @@ public final class WebEditorOptions implements PersistentStateComponent<WebEdito
   }
 
   @Override
-  @Nullable
-  public Object clone() {
+  public @Nullable Object clone() {
     try {
       return super.clone();
     }
@@ -126,7 +124,7 @@ public final class WebEditorOptions implements PersistentStateComponent<WebEdito
   }
 
   @Override
-  public void loadState(@NotNull final WebEditorOptions state) {
+  public void loadState(final @NotNull WebEditorOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

@@ -83,18 +83,16 @@ public final class PluginEnabler {
     return result;
   }
 
-  @Nullable
-  public static IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
+  public static @Nullable IdeaPluginDescriptorImpl tryLoadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     PathBasedJdomXIncluder.PathResolver<?> resolver = createPathResolverForPlugin(descriptor, null);
     return PluginManager.loadDescriptor(descriptor.getPluginPath(), PluginManagerCore.PLUGIN_XML, Collections.emptySet(), descriptor.isBundled(), resolver);
   }
 
-  @NotNull
-  static PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                            @Nullable DescriptorLoadingContext context) {
+  static @NotNull PathBasedJdomXIncluder.PathResolver<?> createPathResolverForPlugin(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                                                     @Nullable DescriptorLoadingContext context) {
     if (PluginManagerCore.isRunningFromSources() &&
         descriptor.getPluginPath().getFileSystem().equals(FileSystems.getDefault()) &&
-        descriptor.getPath().toString().contains("out/classes")) {
+        descriptor.getPluginPath().toString().contains("out/classes")) {
       return new ClassPathXmlPathResolver(descriptor.getPluginClassLoader());
     }
 
@@ -107,12 +105,11 @@ public final class PluginEnabler {
     return PathBasedJdomXIncluder.DEFAULT_PATH_RESOLVER;
   }
 
-  @NotNull
-  public static IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
+  public static @NotNull IdeaPluginDescriptorImpl loadFullDescriptor(@NotNull IdeaPluginDescriptorImpl descriptor) {
     // PluginDescriptor fields are cleaned after the plugin is loaded, so we need to reload the descriptor to check if it's dynamic
     IdeaPluginDescriptorImpl fullDescriptor = tryLoadFullDescriptor(descriptor);
     if (fullDescriptor == null) {
-      LOG.error("Could not load full descriptor for plugin " + descriptor.getPath());
+      LOG.error("Could not load full descriptor for plugin " + descriptor.getPluginPath());
       fullDescriptor = descriptor;
     }
     return fullDescriptor;

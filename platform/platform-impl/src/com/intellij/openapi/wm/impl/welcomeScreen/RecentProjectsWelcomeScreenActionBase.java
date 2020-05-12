@@ -76,7 +76,7 @@ public abstract class RecentProjectsWelcomeScreenActionBase extends DumbAwareAct
 
   public static void rebuildRecentProjectDataModel(@NotNull DefaultListModel model) {
     model.clear();
-    for (AnAction action : RecentProjectListActionProvider.getInstance().getActions(false, FlatWelcomeFrame.isUseProjectGroups())) {
+    for (AnAction action : RecentProjectListActionProvider.getInstance().getActions(false, true)) {
       //noinspection unchecked
       model.addElement(action);
     }

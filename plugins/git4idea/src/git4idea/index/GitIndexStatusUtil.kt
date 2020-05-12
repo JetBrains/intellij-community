@@ -2,22 +2,20 @@
 package git4idea.index
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitExecutableManager
+import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
-import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.Nls
-import java.awt.Color
 
 const val NUL = "\u0000"
 private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
@@ -55,33 +53,65 @@ private val LOG = Logger.getInstance("#git4idea.index.GitIndexStatusUtil")
  * -------------------------------------------------
  */
 
+fun getStatus(project: Project, root: VirtualFile, files: List<FilePath> = emptyList(),
+              withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false): List<LightFileStatus.StatusRecord> {
+  val result = mutableListOf<LightFileStatus.StatusRecord>()
+
+  val pathsChunks = if (files.isNotEmpty()) VcsFileUtil.chunkPaths(root, files) else listOf(emptyList()) // empty list to read everything
+  for (pathsChunk in pathsChunks) {
+    val h = GitLineHandler(project, root, GitCommand.STATUS)
+    h.setSilent(true)
+    h.appendParameters(GitExecutableManager.getInstance().tryGetVersion(project) ?: GitVersion.NULL,
+                       withRenames = withRenames, withUntracked = withUntracked, withIgnored = withIgnored)
+    h.endOptions()
+    h.addParameters(pathsChunk)
+
+    val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
+    parseGitStatusOutput(output, result=result)
+  }
+
+  return result
+}
+
 @Throws(VcsException::class)
-fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): GitFileStatus {
+fun getFileStatus(root: VirtualFile, filePath: FilePath, executable: String): LightFileStatus {
   val h = GitLineHandler(null, VfsUtilCore.virtualToIoFile(root), executable, GitCommand.STATUS, emptyList())
   h.setSilent(true)
-  h.addParameters("--porcelain", "-z")
-
-  val gitVersion = GitExecutableManager.getInstance().getVersion(executable)
-  if (GitVersionSpecialty.STATUS_SUPPORTS_NO_RENAMES.existsIn(gitVersion)) {
-    h.addParameters("--no-renames")
-  }
-  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(gitVersion)) {
-    h.addParameters("--ignored=matching")
-  }
-  else {
-    h.addParameters("--ignored")
-  }
+  h.appendParameters(GitExecutableManager.getInstance().getVersion(executable),
+                     withRenames = false, withUntracked = true, withIgnored = true)
   h.endOptions()
   h.addRelativePaths(filePath)
 
   val output: String = Git.getInstance().runCommand(h).getOutputOrThrow()
   if (output.isNotBlank()) {
     val gitStatusOutput = parseGitStatusOutput(output)
-    return gitStatusOutput.firstOrNull() ?: GitFileStatus.Blank
+    return gitStatusOutput.firstOrNull() ?: LightFileStatus.Blank
   }
-  
-  val repositoryPath = getFilePath(root, filePath, executable) ?: return GitFileStatus.Blank
-  return GitFileStatus.NotChanged(repositoryPath)
+
+  val repositoryPath = getFilePath(root, filePath, executable) ?: return LightFileStatus.Blank
+  return LightFileStatus.NotChanged(repositoryPath)
+}
+
+private fun GitLineHandler.appendParameters(gitVersion: GitVersion,
+                                            withRenames: Boolean = true, withUntracked: Boolean = true, withIgnored: Boolean = false) {
+  addParameters("--porcelain", "-z")
+  if (!withRenames) {
+    if (GitVersionSpecialty.STATUS_SUPPORTS_NO_RENAMES.existsIn(gitVersion)) {
+      addParameters("--no-renames")
+    }
+  }
+  addParameters("--untracked-files=${if (withUntracked) "all" else "no"}")
+  if (GitVersionSpecialty.STATUS_SUPPORTS_IGNORED_MODES.existsIn(gitVersion)) {
+    if (withIgnored) {
+      addParameters("--ignored=matching")
+    }
+    else {
+      addParameters("--ignored=no")
+    }
+  }
+  else if (withIgnored) {
+    addParameters("--ignored")
+  }
 }
 
 @Throws(VcsException::class)
@@ -95,11 +125,11 @@ fun getFilePath(root: VirtualFile, filePath: FilePath, executable: String): Stri
 }
 
 @Throws(VcsException::class)
-fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
-  val result = mutableListOf<GitFileStatus.StatusRecord>()
-
+private fun parseGitStatusOutput(output: String, result: MutableList<LightFileStatus.StatusRecord> = mutableListOf()): List<LightFileStatus.StatusRecord> {
   val split = output.split(NUL).toTypedArray()
-  for (line in split) {
+  val it = split.iterator()
+  while (it.hasNext()) {
+    val line = it.next()
     if (StringUtil.isEmptyOrSpaces(line)) continue
     if (line.length < 4 || line[2] != ' ') {
       LOG.error("Could not parse status line '$line'")
@@ -109,15 +139,24 @@ fun parseGitStatusOutput(output: String): List<GitFileStatus.StatusRecord> {
     val xStatus = line[0]
     val yStatus = line[1]
     val pathPart = line.substring(3) // skipping the space
-
-    result.add(GitFileStatus.StatusRecord(xStatus, yStatus, pathPart))
+    if (isRenamed(xStatus) || isRenamed(yStatus)) {
+      if (!it.hasNext()) {
+        LOG.error("Missing original path for status line '$line'")
+        continue
+      }
+      val origPath = it.next()
+      result.add(LightFileStatus.StatusRecord(xStatus, yStatus, pathPart, origPath = origPath))
+    }
+    else {
+      result.add(LightFileStatus.StatusRecord(xStatus, yStatus, pathPart))
+    }
   }
 
-  return result;
+  return result
 }
 
 @Throws(VcsException::class)
-private fun getFileStatus(status: StatusCode): FileStatus? {
+internal fun getFileStatus(status: StatusCode): FileStatus? {
   return when (status) {
     ' ' -> null
     'M', 'R', 'C', 'T' -> FileStatus.MODIFIED
@@ -132,97 +171,52 @@ private fun getFileStatus(status: StatusCode): FileStatus? {
 
 typealias StatusCode = Char
 
-sealed class GitFileStatus {
+internal fun isIgnored(status: StatusCode) = status == '!'
+internal fun isUntracked(status: StatusCode) = status == '?'
+fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
+internal fun isAdded(status: StatusCode) = status == 'A'
+internal fun isDeleted(status: StatusCode) = status == 'D'
+internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
+  return (index == 'D' && workTree == 'D') ||
+         (index == 'A' && workTree == 'A') ||
+         (index == 'U' || workTree == 'U')
+}
+
+sealed class LightFileStatus {
   internal abstract fun getFileStatus(): FileStatus
 
-  object Blank : GitFileStatus() {
+  object Blank : LightFileStatus() {
     override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
   }
 
-  data class NotChanged(val path: String) : GitFileStatus() {
+  data class NotChanged(val path: String) : LightFileStatus() {
     override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
   }
 
   data class StatusRecord(val index: StatusCode,
                           val workTree: StatusCode,
                           val path: String,
-                          val origPath: String? = null) : GitFileStatus() {
+                          val origPath: String? = null) : LightFileStatus() {
     override fun getFileStatus(): FileStatus {
       if (isConflicted()) return FileStatus.MERGED_WITH_CONFLICTS
       return getFileStatus(index) ?: getFileStatus(workTree) ?: FileStatus.NOT_CHANGED
     }
 
-    internal fun isConflicted(): Boolean {
-      return (index == 'D' && workTree == 'D') ||
-             (index == 'A' && workTree == 'A') ||
-             (index == 'U' || workTree == 'U')
-    }
+    internal fun isConflicted(): Boolean = isConflicted(index, workTree)
   }
 }
 
-fun GitFileStatus.isTracked(): Boolean {
+fun LightFileStatus.isTracked(): Boolean {
   return when (this) {
-    GitFileStatus.Blank -> false
-    is GitFileStatus.NotChanged -> true
-    is GitFileStatus.StatusRecord -> !setOf('?', '!').contains(index)
+    LightFileStatus.Blank -> false
+    is LightFileStatus.NotChanged -> true
+    is LightFileStatus.StatusRecord -> !isIgnored(index) && !isUntracked(index)
   }
 }
 
-val GitFileStatus.repositoryPath: String?
+val LightFileStatus.repositoryPath: String?
   get() = when (this) {
-    GitFileStatus.Blank -> null
-    is GitFileStatus.NotChanged -> path
-    is GitFileStatus.StatusRecord -> if (!isTracked() || index == 'A' || workTree == 'A') null else origPath ?: path
+    LightFileStatus.Blank -> null
+    is LightFileStatus.NotChanged -> path
+    is LightFileStatus.StatusRecord -> if (!isTracked() || index == 'A' || workTree == 'A') null else origPath ?: path
   }
-
-val GitFileStatus.color: Color?
-  get() = getFileStatus().color
-
-@Nls
-fun GitFileStatus.getPresentation(): String {
-  return when (this) {
-    GitFileStatus.Blank, is GitFileStatus.NotChanged -> ""
-    is GitFileStatus.StatusRecord -> getPresentation()
-  }
-}
-
-@Nls
-private fun GitFileStatus.StatusRecord.getPresentation(): String {
-  val fileName = PathUtil.getFileName(path)
-  if (index == '!' || workTree == '!' || index == '?' || workTree == '?') return "$fileName: ${getPresentation(index)}"
-  if (isConflicted()) {
-    val status = if (index == workTree) {
-      GitBundle.message("git.status.unmerged.both", getFileStatus(if (index == 'U') 'M' else index)!!.text.toLowerCase())
-    }
-    else {
-      val indexPresentation = if (index == 'U') ""
-      else GitBundle.message("git.status.unmerged.index", getPresentation(index).toLowerCase())
-      val workTreePresentation = if (workTree == 'U') ""
-      else GitBundle.message("git.status.unmerged.work.tree", getPresentation(workTree).toLowerCase())
-      when {
-        indexPresentation.isBlank() -> workTreePresentation
-        workTreePresentation.isBlank() -> indexPresentation
-        else -> "$indexPresentation, $workTreePresentation"
-      }
-    }
-    return "$fileName: ${getPresentation('U')} ($status)"
-  }
-  val indexPresentation = if (index == ' ') "" else GitBundle.message("git.status.index", getPresentation(index))
-  val workTreePresentation = if (workTree == ' ') "" else GitBundle.message("git.status.work.tree", getPresentation(workTree))
-  if (indexPresentation.isBlank()) return "$fileName: $workTreePresentation"
-  if (workTreePresentation.isBlank()) return "$fileName: $indexPresentation"
-  return "$fileName:${UIUtil.BR}$indexPresentation${UIUtil.BR}$workTreePresentation"
-}
-
-@Nls
-private fun getPresentation(status: StatusCode): String {
-  return when (status) {
-    ' ' -> GitBundle.message("git.status.not.changed")
-    'R' -> GitBundle.message("git.status.renamed")
-    'C' -> GitBundle.message("git.status.copied")
-    'T' -> GitBundle.message("git.status.type.changed")
-    'U' -> GitBundle.message("git.status.unmerged")
-    '?' -> GitBundle.message("git.status.untracked")
-    else -> getFileStatus(status)!!.text
-  }
-}

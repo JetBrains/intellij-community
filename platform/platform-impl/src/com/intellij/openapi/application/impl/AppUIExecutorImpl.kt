@@ -201,7 +201,16 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, modality)
   }
 
-  override fun toString() = "withDocumentsCommitted"
+  override fun toString(): String {
+    val isCorrectContext = isCorrectContext()
+    val details = if (!isCorrectContext) {
+      val manager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+      ", isCommitInProgress()=${manager.isCommitInProgress}" +
+      ", hasEventSystemEnabledUncommittedDocuments()=${manager.hasEventSystemEnabledUncommittedDocuments()}"
+    }
+    else ""
+    return "withDocumentsCommitted {isCorrectContext()=$isCorrectContext$details}"
+  }
 }
 
 internal class InSmartMode(private val project: Project) : ContextConstraint {

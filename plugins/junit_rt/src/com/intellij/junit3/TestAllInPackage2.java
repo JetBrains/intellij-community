@@ -56,7 +56,7 @@ public class TestAllInPackage2 extends TestSuite {
         }
       }
     }
-    String message = TestRunnerUtil.testsFoundInPackageMesage(testClassCount, name);
+    String message = TestRunnerUtil.testsFoundInPackageMessage(testClassCount, name);
     System.out.println(message);
   }
 

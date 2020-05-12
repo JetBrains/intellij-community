@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.capitalization;
 
 import com.intellij.codeInspection.*;
@@ -95,7 +95,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return Value.of((PsiLiteralExpression)arg);
     }
     if (arg instanceof PsiMethodCallExpression) {
-      PsiMethod psiMethod = ((PsiMethodCallExpression)arg).resolveMethod();
+      PsiMethodCallExpression call = (PsiMethodCallExpression)arg;
+      PsiMethod psiMethod = call.resolveMethod();
       PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(psiMethod);
       if (arg == returnValue) {
         return null;
@@ -103,7 +104,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       if (returnValue != null && processed.add(returnValue)) {
         return getTitleValue(returnValue, processed);
       }
-      return Value.of(getPropertyArgument((PsiMethodCallExpression)arg));
+      return Value.of(getPropertyArgument(call), call.getArgumentList().getExpressionCount() > 1);
     }
     if (arg instanceof PsiReferenceExpression) {
       PsiElement result = ((PsiReferenceExpression)arg).resolve();
@@ -165,18 +166,18 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         if (value == null) return;
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiExpression newExpression =
-          factory.createExpressionFromText('"' + value.fixCapitalization(myCapitalization) + '"', element);
+          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"', element);
         element.replace(newExpression);
       }
       else if (element instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
-        final PsiMethod method = methodCallExpression.resolveMethod();
+        final PsiMethodCallExpression call = (PsiMethodCallExpression)element;
+        final PsiMethod method = call.resolveMethod();
         final PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(method);
         if (returnValue != null) {
           doFix(project, returnValue);
         }
-        final Property property = getPropertyArgument(methodCallExpression);
-        Value value = Value.of(property);
+        final Property property = getPropertyArgument(call);
+        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
         if (value == null) return;
         property.setValue(value.fixCapitalization(myCapitalization));
       }
@@ -211,19 +212,20 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     default boolean canFix() { return true; }
 
-    @Contract("null -> null")
+    @Contract("null, _ -> null")
     @Nullable
-    static Value of(@Nullable Property property) {
+    static Value of(@Nullable Property property, boolean useFormat) {
       if (property == null) return null;
       String value = property.getUnescapedValue();
       if (value == null) return null;
-      try {
-        MessageFormat format = new MessageFormat(value);
-        return new PropertyValue(value, format);
+      if (useFormat) {
+        try {
+          MessageFormat format = new MessageFormat(value);
+          return new PropertyValue(value, format);
+        }
+        catch (IllegalArgumentException ignore) {}
       }
-      catch (IllegalArgumentException e) {
-        return new TextValue(value);
-      }
+      return new TextValue(value);
     }
 
     @Nullable

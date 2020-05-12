@@ -16,6 +16,7 @@
 
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +28,12 @@ public interface InvertedIndex<Key, Value, Input> {
   ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
 
   /**
-   * Update the current index with the given content.
-   *
-   * @param inputId *positive* id of content.
-   * @return true if success, false if error occurred.
+   * Maps input as the first stage and returns a computation that does actual index data structure update.
+   * It may be used to separate long-running input mapping from writing data to disk.
+   * Computable returns `true` if data has been saved without errors, otherwise - `false`.
    */
-  boolean update(int inputId, @Nullable Input content);
+  @NotNull
+  Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
 
   void flush() throws StorageException;
 

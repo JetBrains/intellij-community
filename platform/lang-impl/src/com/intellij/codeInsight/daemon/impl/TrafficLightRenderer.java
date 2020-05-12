@@ -187,33 +187,33 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) {
-      status.reasonWhyDisabled = "No file";
+      status.reasonWhyDisabled = DaemonBundle.message("process.title.no.file");
       status.errorAnalyzingFinished = true;
       return status;
     }
     if (myProject.isDisposed()) {
-      status.reasonWhyDisabled = "Project is disposed";
+      status.reasonWhyDisabled = DaemonBundle.message("process.title.project.is.disposed");
       status.errorAnalyzingFinished = true;
       return status;
     }
     if (!myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
       if (!psiFile.isPhysical()) {
-        status.reasonWhyDisabled = "File is generated";
+        status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.generated");
         status.errorAnalyzingFinished = true;
         return status;
       }
       if (psiFile instanceof PsiCompiledElement) {
-        status.reasonWhyDisabled = "File is decompiled";
+        status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.decompiled");
         status.errorAnalyzingFinished = true;
         return status;
       }
       final FileType fileType = psiFile.getFileType();
       if (fileType.isBinary()) {
-        status.reasonWhyDisabled = "File is binary";
+        status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.binary");
         status.errorAnalyzingFinished = true;
         return status;
       }
-      status.reasonWhyDisabled = "Highlighting is disabled for this file";
+      status.reasonWhyDisabled = DaemonBundle.message("process.title.highlighting.is.disabled.for.this.file");
       status.errorAnalyzingFinished = true;
       return status;
     }
@@ -228,7 +228,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       shouldHighlight |= level != FileHighlightingSetting.SKIP_HIGHLIGHTING;
     }
     if (!shouldHighlight) {
-      status.reasonWhyDisabled = "Highlighting level is None";
+      status.reasonWhyDisabled = DaemonBundle.message("process.title.highlighting.level.is.none");
       status.errorAnalyzingFinished = true;
       return status;
     }
@@ -240,7 +240,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         status.heavyProcessType = processEntry.getValue();
       }
       else {
-        status.reasonWhySuspended = "Heavy operation is running";
+        status.reasonWhySuspended = DaemonBundle.message("process.title.heavy.operation.is.running");
         status.heavyProcessType = HeavyProcessLatch.Type.Paused;
       }
       status.errorAnalyzingFinished = true;
@@ -253,7 +253,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
                                          p -> !StringUtil.isEmpty(p.getPresentableName()) && p.getProgress() >= 0);
 
     status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile);
-    status.reasonWhySuspended = myDaemonCodeAnalyzer.isUpdateByTimerEnabled() ? null : "Highlighting is paused temporarily";
+    status.reasonWhySuspended =
+      myDaemonCodeAnalyzer.isUpdateByTimerEnabled() ? null : DaemonBundle.message("process.title.highlighting.is.paused.temporarily");
     fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
 
     return status;
@@ -301,13 +302,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     if (PowerSaveMode.isEnabled()) {
-      statusLabel = "Code analysis is disabled in power save mode";
+      statusLabel = DaemonBundle.message("label.code.analysis.is.disabled.in.power.save.mode");
       status.errorAnalyzingFinished = true;
       icon = AllIcons.General.InspectionsPowerSaveMode;
       return result;
     }
     if (status.reasonWhyDisabled != null) {
-      statusLabel = "No analysis has been performed";
+      statusLabel = DaemonBundle.message("label.no.analysis.has.been.performed");
       statusExtraLine = "(" + status.reasonWhyDisabled + ")";
       passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
@@ -315,7 +316,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return result;
     }
     if (status.reasonWhySuspended != null) {
-      statusLabel = "Code analysis has been suspended";
+      statusLabel = DaemonBundle.message("label.code.analysis.has.been.suspended");
       statusExtraLine = "(" + status.reasonWhySuspended + ")";
       passStatusesVisible = true;
       progressBarsCompleted = Boolean.FALSE;
@@ -329,8 +330,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (status.errorAnalyzingFinished) {
       boolean isDumb = DumbService.isDumb(myProject);
       if (isDumb) {
-        statusLabel = "Shallow analysis completed";
-        statusExtraLine = "Complete results will be available after indexing";
+        statusLabel = DaemonBundle.message("label.shallow.analysis.completed");
+        statusExtraLine = DaemonBundle.message("label.complete.results.will.be.available.after.indexing");
       }
       else {
         statusLabel = "";
@@ -440,29 +441,24 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       if (StringUtil.isNotEmpty(status.reasonWhyDisabled)) {
         return new AnalyzerStatus(AllIcons.General.InspectionsTrafficOff,
                                   DaemonBundle.message("no.analysis.performed"),
-                                  status.reasonWhyDisabled, () -> createUIController(editor)).
-          withExpandedStatus(new StatusItem(DaemonBundle.message("iw.status.off")));
+                                  status.reasonWhyDisabled, () -> createUIController(editor)).withTextStatus(DaemonBundle.message("iw.status.off"));
       }
       if (StringUtil.isNotEmpty(status.reasonWhySuspended)) {
         return new AnalyzerStatus(AllIcons.General.InspectionsPause,
                                   DaemonBundle.message("analysis.suspended"),
                                   status.reasonWhySuspended, () -> createUIController(editor)).
-          withExpandedStatus(new StatusItem(status.heavyProcessType != null ?
-                                            status.heavyProcessType.toString() :
-                                            DaemonBundle.message("iw.status.paused")));
+          withTextStatus(status.heavyProcessType != null ? status.heavyProcessType.toString() : DaemonBundle.message("iw.status.paused"));
       }
       if (status.errorAnalyzingFinished) {
         return isDumb ?
           new AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, () -> createUIController(editor)).
-            withExpandedStatus(new StatusItem(UtilBundle.message("heavyProcess.type.indexing"))) :
-          new AnalyzerStatus(AllIcons.General.InspectionsOK, DaemonBundle.message("no.errors.or.warnings.found"),
-                                  details, () -> createUIController(editor));
+            withTextStatus(UtilBundle.message("heavyProcess.type.indexing")) :
+          new AnalyzerStatus(AllIcons.General.InspectionsOK, DaemonBundle.message("no.errors.or.warnings.found"), details, () -> createUIController(editor));
       }
 
       //noinspection ConstantConditions
-      return new AnalyzerStatus(AllIcons.General.InspectionsEye, title,
-                                details, () -> createUIController(editor)).
-        withExpandedStatus(new StatusItem(DaemonBundle.message("iw.status.analyzing"))).
+      return new AnalyzerStatus(AllIcons.General.InspectionsEye, title, details, () -> createUIController(editor)).
+        withTextStatus(DaemonBundle.message("iw.status.analyzing")).
         withAnalyzingType(AnalyzingType.EMPTY).
         withPasses(ContainerUtil.map(status.passes, p -> new PassWrapper(p.getPresentableName(), p.getProgress(), p.isFinished())));
     }
@@ -477,7 +473,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   protected abstract class AbstractUIController implements UIController {
     private final boolean inLibrary;
     private final List<LanguageHighlightLevel> myLevelsList;
-    private final List<HectorComponentPanel> myAdditionalPanels;
+    private List<HectorComponentPanel> myAdditionalPanels = Collections.emptyList();
 
     AbstractUIController() {
       PsiFile psiFile = getPsiFile();
@@ -486,12 +482,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         VirtualFile virtualFile = psiFile.getVirtualFile();
         assert virtualFile != null;
         inLibrary = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile);
-        myAdditionalPanels = HectorComponentPanelsProvider.EP_NAME.extensions(getProject()).
-          map(hp -> hp.createConfigurable(psiFile)).filter(p -> p != null).collect(Collectors.toList());
       }
       else {
         inLibrary = false;
-        myAdditionalPanels = Collections.emptyList();
       }
 
       myLevelsList = initLevels();
@@ -552,22 +545,28 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     @Override
     public void fillHectorPanels(@NotNull Container container, @NotNull GridBag gc) {
-      for (HectorComponentPanel p : myAdditionalPanels) {
-        JComponent c;
-        try {
-          p.reset();
-          c = p.createComponent();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          Logger.getInstance(TrafficLightRenderer.class).error(e);
-          continue;
-        }
+      PsiFile psiFile = getPsiFile();
+      if (psiFile != null) {
+        myAdditionalPanels = HectorComponentPanelsProvider.EP_NAME.extensions(getProject()).
+          map(hp -> hp.createConfigurable(psiFile)).filter(p -> p != null).collect(Collectors.toList());
 
-        if (c != null) {
-          container.add(c, gc.nextLine().next().fillCellHorizontally().coverLine().weightx(1.0));
+        for (HectorComponentPanel p : myAdditionalPanels) {
+          JComponent c;
+          try {
+            p.reset();
+            c = p.createComponent();
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            Logger.getInstance(TrafficLightRenderer.class).error(e);
+            continue;
+          }
+
+          if (c != null) {
+            container.add(c, gc.nextLine().next().fillCellHorizontally().coverLine().weightx(1.0));
+          }
         }
       }
     }
@@ -593,6 +592,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     @Override
     public void onClosePopup() {
       myAdditionalPanels.forEach(p -> p.disposeUIResources());
+      myAdditionalPanels = Collections.emptyList();
     }
 
     @Override

@@ -64,6 +64,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   static final class State {
     @NotNull
     private Charset myDefaultEncoding = StandardCharsets.UTF_8;
+    private @NotNull Charset myDefaultConsoleEncoding = ChooseFileEncodingAction.NO_ENCODING;
 
     @Attribute("default_encoding")
     @NotNull
@@ -75,6 +76,17 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
       myDefaultEncoding = name.isEmpty()
                           ? ChooseFileEncodingAction.NO_ENCODING
                           : ObjectUtils.notNull(CharsetToolkit.forName(name), CharsetToolkit.getDefaultSystemCharset());
+    }
+
+    @Attribute("default_console_encoding")
+    public @NotNull String getDefaultConsoleEncodingName() {
+      return myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? "" : myDefaultConsoleEncoding.name();
+    }
+
+    public void setDefaultConsoleEncodingName(@NotNull String name) {
+      myDefaultConsoleEncoding = name.isEmpty()
+                                 ? ChooseFileEncodingAction.NO_ENCODING
+                                 : ObjectUtils.notNull(CharsetToolkit.forName(name), ChooseFileEncodingAction.NO_ENCODING);
     }
   }
 
@@ -328,6 +340,25 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);
+  }
+
+  @Override
+  public @NotNull Charset getDefaultConsoleEncoding() {
+    return myState.myDefaultConsoleEncoding == ChooseFileEncodingAction.NO_ENCODING ? CharsetToolkit.getDefaultSystemCharset() : myState.myDefaultConsoleEncoding;
+  }
+
+  /**
+   * @return default console encoding or {@link ChooseFileEncodingAction#NO_ENCODING} for system-default
+   */
+  public @NotNull Charset getDefaultConsoleEncodingInternal() {
+    return myState.myDefaultConsoleEncoding;
+  }
+
+  /**
+   * @param encoding default console encoding or {@link ChooseFileEncodingAction#NO_ENCODING} for system-default
+   */
+  public void setDefaultConsoleEncodingInternal(@NotNull Charset encoding) {
+    myState.myDefaultConsoleEncoding = encoding;
   }
 
   void firePropertyChange(@Nullable Document document,

@@ -58,6 +58,29 @@ class Test {
       }
   }
 
+  void nestedFlatMapWithOuterFlatMapParam(String param0) {
+      if (param0 == null) throw new NullPointerException();
+      String var1 = "foo";
+      String result = param0;
+  }
+
+  void nestedOr(String param0) {
+    boolean result;
+      result = true;
+      String s = null;
+      if (param0 == null) throw new NullPointerException();
+      String empty = null;
+      s = param0;
+      result = false;
+  }
+
+  void flatMapsWithSameParamName(String param0) {
+      if (param0 == null) throw new NullPointerException();
+      String s = "foo";
+      String toLowerCase = ("foo").toLowerCase();
+      String bar = "bar";
+  }
+
   String flatMapWithOrInside() {
       Object o1 = null;
       String empty = null;

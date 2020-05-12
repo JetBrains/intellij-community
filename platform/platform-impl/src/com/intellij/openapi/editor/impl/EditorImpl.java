@@ -524,7 +524,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
+    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm) {
       new MacGestureSupportForEditor(getComponent());
     }
 
@@ -2348,6 +2348,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       getFoldingModel().runBatchFoldingOperation(() -> {
         region.setExpanded(true);
       }, true, false);
+      validateMousePointer(e, null);
     }
 
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
@@ -2402,13 +2403,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private void validateMousePointer(@NotNull MouseEvent e) {
+  private void validateMousePointer(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
     if (e.getSource() == myGutterComponent) {
       myGutterComponent.validateMousePointer(e);
     }
     else {
       myGutterComponent.setActiveFoldRegions(Collections.emptyList());
-      myDefaultCursor = getDefaultCursor(e);
+      myDefaultCursor = getDefaultCursor(e, editorMouseEvent);
       updateEditorCursor();
     }
   }
@@ -2430,14 +2431,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCursorSetExternally = false;
   }
 
-  private Cursor getDefaultCursor(@NotNull MouseEvent e) {
+  private Cursor getDefaultCursor(@NotNull MouseEvent e, @Nullable EditorMouseEvent editorMouseEvent) {
+    Cursor result = null;
     if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
-      int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
+      int offset = editorMouseEvent == null ? logicalPositionToOffset(xyToLogicalPosition(e.getPoint())) : editorMouseEvent.getOffset();
       if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
-        return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+        result = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
       }
     }
-    return UIUtil.getTextCursor(getBackgroundColor());
+    if (result == null) {
+      FoldRegion foldRegion = editorMouseEvent == null ? myFoldingModel.getFoldingPlaceholderAt(e.getPoint())
+                                                       : editorMouseEvent.getCollapsedFoldRegion();
+      if (foldRegion != null) {
+        result = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+      }
+    }
+    return result == null ? UIUtil.getTextCursor(getBackgroundColor()) : result;
   }
 
   private void runMouseDraggedCommand(@NotNull final MouseEvent e) {
@@ -2546,32 +2555,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         else {
           if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-            int newSelection = newCaretOffset;
-            if (caretShift < 0) {
-              if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                newSelection = myCaretModel.getWordAtCaretStart();
-              }
-              else {
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                  newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line, 0));
-                }
-              }
-              if (newSelection < 0) newSelection = newCaretOffset;
-              selectionModel.setSelection(mySavedSelectionEnd, newSelection);
-            }
-            else {
-              if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                newSelection = myCaretModel.getWordAtCaretEnd();
-              }
-              else {
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                  newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0));
-                }
-              }
-              if (newSelection < 0) newSelection = newCaretOffset;
-              selectionModel.setSelection(mySavedSelectionStart, newSelection);
-            }
-            getCaretModel().moveToOffset(newSelection);
+            setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
             cancelAutoResetForMouseSelectionState();
             return;
           }
@@ -2630,6 +2614,38 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingTimer.start(dx, dy);
       onSubstantialDrag(e);
     }
+  }
+
+  private void setupSpecialSelectionOnMouseDrag(int newCaretOffset, int caretShift) {
+    int newSelectionStart;
+    int newSelectionEnd = newCaretOffset;
+    if (caretShift < 0) {
+      if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+        newSelectionEnd = myCaretModel.getWordAtCaretStart(mySettings.isCamelWords() && mySettings.isMouseClickSelectionHonorsCamelWords());
+      }
+      else if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+        newSelectionEnd = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line, 0));
+      }
+      newSelectionStart = validateOffset(mySavedSelectionEnd);
+    }
+    else {
+      if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
+        newSelectionEnd = myCaretModel.getWordAtCaretEnd(mySettings.isCamelWords() && mySettings.isMouseClickSelectionHonorsCamelWords());
+      }
+      else if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
+        newSelectionEnd = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0));
+      }
+      newSelectionStart = validateOffset(mySavedSelectionStart);
+    }
+    if (newSelectionEnd < 0) newSelectionEnd = newCaretOffset;
+    mySelectionModel.setSelection(newSelectionStart, newSelectionEnd);
+    myCaretModel.moveToOffset(newSelectionEnd);
+  }
+
+  private int validateOffset(int offset) {
+    if (offset < 0) return 0;
+    if (offset > myDocument.getTextLength()) return myDocument.getTextLength();
+    return offset;
   }
 
   private void clearDnDContext() {
@@ -3012,34 +3028,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             int caretShift = newCaretOffset - mySavedSelectionStart;
 
             if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
-              if (caretShift < 0) {
-                int newSelection = newCaretOffset;
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                  newSelection = myCaretModel.getWordAtCaretStart();
-                }
-                else {
-                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line, 0));
-                  }
-                }
-                if (newSelection < 0) newSelection = newCaretOffset;
-                mySelectionModel.setSelection(validateOffset(mySavedSelectionEnd), newSelection);
-                getCaretModel().moveToOffset(newSelection);
-              }
-              else {
-                int newSelection = newCaretOffset;
-                if (getMouseSelectionState() == MOUSE_SELECTION_STATE_WORD_SELECTED) {
-                  newSelection = myCaretModel.getWordAtCaretEnd();
-                }
-                else {
-                  if (getMouseSelectionState() == MOUSE_SELECTION_STATE_LINE_SELECTED) {
-                    newSelection = visualPositionToOffset(new VisualPosition(getCaretModel().getVisualPosition().line + 1, 0));
-                  }
-                }
-                if (newSelection < 0) newSelection = newCaretOffset;
-                mySelectionModel.setSelection(validateOffset(mySavedSelectionStart), newSelection);
-                getCaretModel().moveToOffset(newSelection);
-              }
+              setupSpecialSelectionOnMouseDrag(newCaretOffset, caretShift);
               return;
             }
 
@@ -3065,12 +3054,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myTimer.stop();
         myTimer = null;
       }
-    }
-
-    private int validateOffset(int offset) {
-      if (offset < 0) return 0;
-      if (offset > myDocument.getTextLength()) return myDocument.getTextLength();
-      return offset;
     }
   }
 
@@ -3367,19 +3350,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myMouseSelectionStateAlarm.cancelAllRequests();
     if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE) {
       if (myMouseSelectionStateResetRunnable == null) {
-        myMouseSelectionStateResetRunnable = () -> resetMouseSelectionState(null);
+        myMouseSelectionStateResetRunnable = () -> resetMouseSelectionState(null, null);
       }
       myMouseSelectionStateAlarm.addRequest(myMouseSelectionStateResetRunnable, Registry.intValue("editor.mouseSelectionStateResetTimeout"),
                                             ModalityState.stateForComponent(myEditorComponent));
     }
   }
 
-  private void resetMouseSelectionState(@Nullable MouseEvent event) {
+  private void resetMouseSelectionState(@Nullable MouseEvent event, @Nullable EditorMouseEvent editorMouseEvent) {
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
     MouseEvent e = event != null ? event : myMouseMovedEvent;
     if (e != null) {
-      validateMousePointer(e);
+      validateMousePointer(e, editorMouseEvent);
     }
   }
 
@@ -3923,7 +3906,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
           System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
             "editor.mouseSelectionStateResetTimeout")) {
-        resetMouseSelectionState(e);
+        resetMouseSelectionState(e, null);
       }
 
       int x = e.getX();
@@ -3955,7 +3938,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             EditorUtil.runWithAnimationDisabled(EditorImpl.this, () -> myScrollingModel.scrollVertically(newY - scrollShift));
           }
           myGutterComponent.updateSize();
-          validateMousePointer(e);
+          validateMousePointer(e, null);
           e.consume();
           return false;
         }
@@ -4267,7 +4250,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         // on Mac we receive events even if drag-n-drop is in progress
         return;
       }
-      validateMousePointer(e);
+      validateMousePointer(e, null);
       ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
@@ -4283,26 +4266,27 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @DirtyUI
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
+      EditorMouseEvent event = createEditorMouseEvent(e);
+
       if (getMouseSelectionState() != MOUSE_SELECTION_STATE_NONE) {
         if (myMousePressedEvent != null && myMousePressedEvent.getComponent() == e.getComponent()) {
           Point lastPoint = myMousePressedEvent.getPoint();
           Point point = e.getPoint();
           int deadZone = Registry.intValue("editor.mouseSelectionStateResetDeadZone");
           if (Math.abs(lastPoint.x - point.x) >= deadZone || Math.abs(lastPoint.y - point.y) >= deadZone) {
-            resetMouseSelectionState(e);
+            resetMouseSelectionState(e, event);
           }
         }
         else {
-          validateMousePointer(e);
+          validateMousePointer(e, event);
         }
       }
       else {
-        validateMousePointer(e);
+        validateMousePointer(e, event);
       }
 
       myMouseMovedEvent = e;
 
-      EditorMouseEvent event = createEditorMouseEvent(e);
       if (e.getSource() == myGutterComponent) {
         myGutterComponent.mouseMoved(e);
       }
@@ -4601,9 +4585,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         editor.putUserData(LAST_PASTED_REGION, null);
 
-        EditorActionHandler pasteHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_PASTE);
-        LOG.assertTrue(pasteHandler instanceof EditorTextInsertHandler, String.valueOf(pasteHandler));
-        ((EditorTextInsertHandler)pasteHandler).execute(editor, editor.getDataContext(), () -> t);
+        AnAction pasteAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_PASTE);
+        if (pasteAction instanceof EditorAction) {
+          EditorTextInsertHandler handler = ((EditorAction)pasteAction).getHandlerOfType(EditorTextInsertHandler.class);
+          if (handler == null) {
+            LOG.error("No suitable paste handler found");
+          }
+          else {
+            handler.execute(editor, editor.getDataContext(), () -> t);
+          }
+        }
+        else {
+          LOG.error("Couldn't find paste action: " + pasteAction);
+        }
 
         TextRange range = editor.getUserData(LAST_PASTED_REGION);
         if (range != null) {

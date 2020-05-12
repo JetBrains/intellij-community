@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -43,10 +42,10 @@ class JarLoader extends Loader {
   private volatile Map<Resource.Attribute, String> myAttributes;
   private volatile String myClassPathManifestAttribute;
 
-  JarLoader(@NotNull URL url, @NotNull File file, int index, @NotNull ClassPath configuration) throws IOException {
+  JarLoader(@NotNull URL url, @NotNull String filePath, int index, @NotNull ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
-    myFilePath = file.getPath();
+    myFilePath = filePath;
     myConfiguration = configuration;
     myUrl = url;
 

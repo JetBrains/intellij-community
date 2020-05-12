@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.textmate.plist;
 
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -31,7 +30,7 @@ public class XmlPlistReader implements PlistReader {
   @Override
   public Plist read(@NotNull File file) throws IOException {
     try {
-      return internalRead(JDOMUtil.load(FileUtilRt.loadFile(file)));
+      return internalRead(JDOMUtil.load(file));
     }
     catch (JDOMException e) {
       throw new IOException("Error while parsing plist", e);

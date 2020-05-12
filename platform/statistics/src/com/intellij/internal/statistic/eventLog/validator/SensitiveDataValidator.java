@@ -152,8 +152,7 @@ public class SensitiveDataValidator {
       String key = entry.getKey();
       Object entryValue = entry.getValue();
 
-      ValidationResultType resultType = validateEventData(context, whiteListRule, key, entryValue);
-      validatedData.put(key, resultType == ACCEPTED ? entryValue : resultType.getDescription());
+      validatedData.put(key, validateEventData(context, whiteListRule, key, entryValue));
     }
 
     boolean containsPluginInfo = validatedData.containsKey("plugin") ||
@@ -183,13 +182,12 @@ public class SensitiveDataValidator {
     return whiteListRule.validateEventId(context);
   }
 
-  private ValidationResultType validateEventData(@NotNull EventContext context,
-                                                 @Nullable WhiteListGroupRules whiteListRule,
-                                                 @NotNull String key,
-                                                 @NotNull Object entryValue) {
+  private Object validateEventData(@NotNull EventContext context,
+                                   @Nullable WhiteListGroupRules whiteListRule,
+                                   @NotNull String key,
+                                   @NotNull Object entryValue) {
     if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_WHITELIST;
     if (whiteListRule == null) return UNDEFINED_RULE;
-    if (FeatureUsageData.Companion.getPlatformDataKeys().contains(key)) return ACCEPTED;
     return whiteListRule.validateEventData(key, entryValue, context);
   }
 

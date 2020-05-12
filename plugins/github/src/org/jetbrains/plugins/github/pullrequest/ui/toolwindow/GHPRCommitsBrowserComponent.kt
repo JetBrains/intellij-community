@@ -133,9 +133,9 @@ internal object GHPRCommitsBrowserComponent {
         commitDetailsScrollPane.isVisible = true
         commitDetailsPanel.scrollRectToVisible(Rectangle(0, 0, 0, 0))
         invokeLater {
-          // JDK bug - need to force height recalculation
-          messagePane.setSize(messagePane.width, Int.MAX_VALUE)
-          hashAndAuthorPane.setSize(hashAndAuthorPane.width, Int.MAX_VALUE)
+          // JDK bug - need to force height recalculation (see JBR-2256)
+          messagePane.setSize(messagePane.width, Int.MAX_VALUE / 2)
+          hashAndAuthorPane.setSize(hashAndAuthorPane.width, Int.MAX_VALUE / 2)
         }
       }
     }

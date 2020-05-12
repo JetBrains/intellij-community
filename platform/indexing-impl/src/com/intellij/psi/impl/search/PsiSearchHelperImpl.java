@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -503,7 +503,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       ApplicationUtil.tryRunReadAction(() -> {
         Project project = myManager.getProject();
         if (project.isDisposed()) throw new ProcessCanceledException();
-        if (DumbService.isDumb(project)) throw ApplicationUtil.CannotRunReadActionException.create();
+        if (DumbService.isDumb(project) && FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
+          throw ApplicationUtil.CannotRunReadActionException.create();
+        }
 
         List<PsiFile> psiRoots = file.getViewProvider().getAllFiles();
         Set<PsiFile> processed = new THashSet<>(psiRoots.size() * 2, (float)0.5);
@@ -1148,10 +1150,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker, processor);
 
     Boolean[] result = {null};
-    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+    if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled() && FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
       ReadAction.nonBlocking(() ->
-        FileBasedIndex.getInstance().ignoreDumbMode(() -> result[0] = query.compute(), project, DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE)
+        FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> result[0] = query.compute())
       ).executeSynchronously();
+    }
+    else if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
+      ReadAction.nonBlocking(() -> {
+        result[0] = query.compute();
+      }).executeSynchronously();
     }
     return result[0] != null ? result[0] : DumbService.getInstance(project).runReadActionInSmartMode(query);
   }

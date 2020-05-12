@@ -326,7 +326,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public final void load(@Nullable String configPath) {
     @SuppressWarnings("unchecked")
     List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
-    registerComponents(plugins, false);
+    registerComponents(plugins);
     ApplicationLoader.initConfigurationStore(this, configPath);
     Executor executor = ApplicationLoader.createExecutorToPreloadServices();
     preloadServices(plugins, executor, false).getSyncPreloadedServices().join();

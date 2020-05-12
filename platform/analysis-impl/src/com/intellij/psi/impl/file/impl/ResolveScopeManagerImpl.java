@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.ide.scratch.ScratchFileHelper;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -157,7 +158,7 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager {
       if (virtualFile instanceof VirtualFileWindow) {
         return GlobalSearchScope.fileScope(myProject, ((VirtualFileWindow)virtualFile).getDelegate());
       }
-      if ("Scratch".equals(virtualFile.getFileType().getName())) {
+      if (ScratchFileHelper.isScratchFile(virtualFile)) {
         return GlobalSearchScope.fileScope(myProject, virtualFile);
       }
       vDirectory = virtualFile.getParent();

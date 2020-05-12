@@ -6,7 +6,6 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
-import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
 
 abstract class PTypedEntity : ReferableTypedEntity, Any() {
@@ -79,7 +78,25 @@ internal data class PId<E : TypedEntity>(val arrayId: Int, val clazz: KClass<E>)
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
 
-  override fun toString(): String = clazz.simpleName + "-:-"+ arrayId.toString()
+  override fun toString(): String = clazz.simpleName + "-:-" + arrayId.toString()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as PId<*>
+
+    if (arrayId != other.arrayId) return false
+    if (clazz.java != other.clazz.java) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = arrayId
+    result = 31 * result + clazz.java.hashCode()
+    return result
+  }
 }
 
 interface PSoftLinkable {
@@ -127,11 +144,29 @@ abstract class PEntityData<E : TypedEntity>: Cloneable {
   }
 
   override fun hashCode(): Int {
-    return this::class.memberProperties
-      .filter { it.name != PEntityData<*>::id.name }
-      .map { it.getter.call(this).hashCode() }
+    return this.javaClass.declaredFields.filterNot { it.name == PEntityData<*>::id.name }
+      .onEach { it.isAccessible = true }
+      .mapNotNull { it.get(this)?.hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
   }
+
+  /**
+   * Temporally solution.
+   * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.
+   * But it doesn't everywhere. E.g. FacetEntity where we should resolve module before creating persistent id.
+   */
+  abstract class WithCalculatablePersistentId<E : TypedEntity> : PEntityData<E>() {
+    abstract fun persistentId(): PersistentEntityId<*>
+  }
+
+  abstract class WithPersistentId<E : TypedEntity> : PEntityData<E>() {
+  }
+}
+
+fun PEntityData<*>.persistentId(snapshot: TypedEntityStorage): PersistentEntityId<*>? = when (this) {
+  is PEntityData.WithCalculatablePersistentId -> this.persistentId()
+  is PEntityData.WithPersistentId -> (this.createEntity(snapshot) as TypedEntityWithPersistentId).persistentId()
+  else -> null
 }
 
 class EntityDataDelegation<A : PModifiableTypedEntity<*>, B> : ReadWriteProperty<A, B> {

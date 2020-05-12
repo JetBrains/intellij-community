@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.textmate.language.preferences;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.TestUtil;
@@ -11,6 +10,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -33,9 +33,9 @@ public class ShellVariablesTest {
     assertNotNull(bundle);
     final ShellVariablesRegistry variablesRegistry = new ShellVariablesRegistry();
     for (File file : bundle.getPreferenceFiles()) {
-      for (Pair<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
+      for (Map.Entry<String, Plist> settingsPair : bundle.loadPreferenceFile(file, new CompositePlistReader())) {
         if (settingsPair != null) {
-          variablesRegistry.fillVariablesFromPlist(settingsPair.first, settingsPair.second);
+          variablesRegistry.fillVariablesFromPlist(settingsPair.getKey(), settingsPair.getValue());
         }
       }
     }

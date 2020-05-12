@@ -1,11 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.StructuralSearchException;
+import com.intellij.structuralsearch.StructuralSearchProfile;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -23,18 +28,28 @@ class SSBasedInspectionCompiledPatternsCache {
 
   private static final Logger LOG = Logger.getInstance(SSBasedInspectionCompiledPatternsCache.class);
   private static final Key<Map<Configuration, Matcher>> COMPILED_OPTIONS_KEY = Key.create("SSR_INSPECTION_COMPILED_OPTIONS_KEY");
+  private final Project myProject;
+
+  public static SSBasedInspectionCompiledPatternsCache getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, SSBasedInspectionCompiledPatternsCache.class);
+  }
+
+  private SSBasedInspectionCompiledPatternsCache(Project project) {
+    myProject = project;
+    StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
+      // clear cache
+      project.putUserData(COMPILED_OPTIONS_KEY, null);
+    }, project);
+  }
 
   @NotNull
-  static Map<Configuration, Matcher> getCompiledOptions(@NotNull List<Configuration> configurations, @NotNull Project project) {
-    final Map<Configuration, Matcher> cache =
-      getCompiledOptions(configurations, project, project.getUserData(COMPILED_OPTIONS_KEY));
-    project.putUserData(COMPILED_OPTIONS_KEY, cache);
+  Map<Configuration, Matcher> getCompiledOptions(@NotNull List<Configuration> configurations) {
+    final Map<Configuration, Matcher> cache = getCompiledOptions(configurations, myProject.getUserData(COMPILED_OPTIONS_KEY));
+    myProject.putUserData(COMPILED_OPTIONS_KEY, cache);
     return cache;
   }
 
-  static Map<Configuration, Matcher> getCompiledOptions(@NotNull List<Configuration> configurations,
-                                                        @NotNull Project project,
-                                                        @Nullable Map<Configuration, Matcher> cache) {
+  Map<Configuration, Matcher> getCompiledOptions(@NotNull List<Configuration> configurations, @Nullable Map<Configuration, Matcher> cache) {
     if (areConfigurationsInCache(configurations, cache)) {
       return cache;
     }
@@ -49,7 +64,9 @@ class SSBasedInspectionCompiledPatternsCache {
           continue;
         }
         try {
-          final Matcher matcher = new Matcher(project, configuration.getMatchOptions());
+          final MatchOptions matchOptions = configuration.getMatchOptions();
+          final CompiledPattern compiledPattern = PatternCompiler.compilePattern(myProject, matchOptions, false, true);
+          final Matcher matcher = (compiledPattern == null) ? null : new Matcher(myProject, matchOptions, compiledPattern);
           newCache.put(configuration, matcher);
         }
         catch (StructuralSearchException e) {

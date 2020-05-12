@@ -210,6 +210,13 @@ public final class HistoryEntry {
     return new EntryData(url, providerStates, selectedProvider);
   }
 
+  void onProviderRemoval(@NotNull FileEditorProvider provider) {
+    if (mySelectedProvider == provider) {
+      mySelectedProvider = null;
+    }
+    myProviderToState.remove(provider);
+  }
+
   static class EntryData {
     @NotNull private final String url;
     @NotNull private final List<Pair<FileEditorProvider, FileEditorState>> providerStates;

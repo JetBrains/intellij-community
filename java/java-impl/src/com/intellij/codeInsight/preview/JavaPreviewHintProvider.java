@@ -90,7 +90,7 @@ public class JavaPreviewHintProvider implements PreviewHintProvider {
                 if (o instanceof Integer) {
                   values[i] = ((Integer)o).intValue();
                   if (expressions.length != 1) {
-                    values[i] = values[i] > 255 ? 255 : values[i] < 0 ? 0 : values[i];
+                    values[i] = values[i] > 255 ? 255 : Math.max(values[i], 0);
                   }
 
                   i++;

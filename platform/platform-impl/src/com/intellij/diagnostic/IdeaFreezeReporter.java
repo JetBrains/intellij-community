@@ -15,8 +15,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,15 +29,16 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 15 : 25; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
-  public static final String MESSAGE_FILE_NAME = ".message";
-  public static final String THROWABLE_FILE_NAME = ".throwable";
+  private static final String MESSAGE_FILE_NAME = ".message";
+  private static final String THROWABLE_FILE_NAME = ".throwable";
   public static final String APPINFO_FILE_NAME = ".appinfo";
 
-  @SuppressWarnings("FieldMayBeFinal") private static boolean DEBUG = false;
+  @SuppressWarnings("FieldMayBeFinal")
+  private static boolean DEBUG = false;
 
   private SamplingTask myDumpTask;
-  final List<ThreadDump> myCurrentDumps = new ArrayList<>();
-  List<StackTraceElement> myStacktraceCommonPart = null;
+  private final List<ThreadDump> myCurrentDumps = new ArrayList<>();
+  private List<StackTraceElement> myStacktraceCommonPart = null;
   private volatile boolean myAppClosing;
 
   IdeaFreezeReporter() {
@@ -46,14 +47,14 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       throw ExtensionNotApplicableException.INSTANCE;
     }
 
-    app.getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appWillBeClosed(boolean isRestart) {
-        myAppClosing = true;
-      }
-    });
+    NonUrgentExecutor.getInstance().execute(() -> {
+      app.getMessageBus().simpleConnect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+        @Override
+        public void appWillBeClosed(boolean isRestart) {
+          myAppClosing = true;
+        }
+      });
 
-    app.executeOnPooledThread(() -> {
       PerformanceWatcher.getInstance().processUnfinishedFreeze((dir, duration) -> {
         try {
           // report deadly freeze
@@ -61,7 +62,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           if (files != null) {
             if (duration > FREEZE_THRESHOLD) {
               List<Attachment> attachments = new ArrayList<>();
-              String message = null, appinfo = null;
+              String message = null;
+              String appInfo = null;
               Throwable throwable = null;
               List<String> dumps = new ArrayList<>();
               for (File file : files) {
@@ -78,7 +80,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
                   }
                 }
                 else if (APPINFO_FILE_NAME.equals(name)) {
-                  appinfo = text;
+                  appInfo = text;
                 }
                 else if (name.startsWith(REPORT_PREFIX)) {
                   attachments.add(createReportAttachment(duration, text));
@@ -92,7 +94,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
               if (message != null && throwable != null && !attachments.isEmpty()) {
                 IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
-                setAppInfo(event, appinfo);
+                setAppInfo(event, appInfo);
                 report(event);
               }
             }
@@ -105,10 +107,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     });
   }
 
-  static void setAppInfo(IdeaLoggingEvent event, String appinfo) {
+  static void setAppInfo(IdeaLoggingEvent event, String appInfo) {
     Object data = event.getData();
     if (data instanceof AbstractMessage) {
-      ((AbstractMessage)data).setAppInfo(appinfo);
+      ((AbstractMessage)data).setAppInfo(appInfo);
     }
   }
 
@@ -273,22 +275,21 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     return read;
   }
 
-  @Nullable
-  private IdeaLoggingEvent createEvent(int lengthInSeconds,
-                                       List<Attachment> attachments,
-                                       @NotNull SamplingTask dumpTask,
-                                       @Nullable File reportDir,
-                                       boolean finished) {
+  private @Nullable IdeaLoggingEvent createEvent(int lengthInSeconds,
+                                                 List<Attachment> attachments,
+                                                 @NotNull SamplingTask dumpTask,
+                                                 @Nullable File reportDir,
+                                                 boolean finished) {
     List<ThreadInfo[]> infos = dumpTask.getThreadInfos();
     long dumpInterval = dumpTask.getDumpInterval();
     long sampledTime = dumpTask.getSampledTime();
     if (infos.isEmpty()) {
-      infos = StreamEx.of(myCurrentDumps).map(ThreadDump::getThreadInfos).toList();
+      infos = ContainerUtil.map(myCurrentDumps, ThreadDump::getThreadInfos);
       dumpInterval = PerformanceWatcher.getDumpInterval();
       sampledTime = infos.size() * dumpInterval;
     }
 
-    List<ThreadInfo> causeThreads = StreamEx.of(infos).map(IdeaFreezeReporter::getCauseThread).nonNull().toList();
+    List<ThreadInfo> causeThreads = ContainerUtil.mapNotNull(infos, IdeaFreezeReporter::getCauseThread);
     boolean allInEdt = causeThreads.stream().allMatch(ThreadDumper::isEDT);
 
     CallTreeNode root = CallTreeNode.buildTree(causeThreads, dumpInterval);
@@ -375,8 +376,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       myThreadInfo = info;
     }
 
-    @NotNull
-    public static CallTreeNode buildTree(List<ThreadInfo> threadInfos, long time) {
+    public static @NotNull CallTreeNode buildTree(List<ThreadInfo> threadInfos, long time) {
       CallTreeNode root = new CallTreeNode(null, null, 0, null);
       for (ThreadInfo thread : threadInfos) {
         CallTreeNode node = root;
@@ -443,8 +443,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
       return res;
     }
 
-    @Nullable
-    private CallTreeNode findDominantCommonStack(long threshold) {
+    private @Nullable CallTreeNode findDominantCommonStack(long threshold) {
       // find dominant
       CallTreeNode node = getMostHitChild();
       if (node == null) {

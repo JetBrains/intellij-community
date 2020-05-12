@@ -1,6 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-
     <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
 
     <keymapExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension"/>
@@ -28,6 +27,8 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker"
                     serviceImplementation="com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker"/>
+    <projectService serviceInterface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings"
+                    serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectTrackerSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware"/>
     <editorFloatingToolbarProvider implementation="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider"/>
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
@@ -91,6 +92,5 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector"/>
     <notificationWhitelist groupIds="Gradle Import;Unindexed maven repositories gradle detection;Build sync orphan modules;Content root duplicates"/>
   </extensions>
-
 </idea-plugin>
-  
+

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
-import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -99,7 +98,6 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
-    if (file instanceof VirtualFileWindow) return true;
     DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
     if (!info.isInProject(file)) return false;
     if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;
