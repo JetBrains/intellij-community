@@ -113,7 +113,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), JComponent.WHEN_FOCUSED);
