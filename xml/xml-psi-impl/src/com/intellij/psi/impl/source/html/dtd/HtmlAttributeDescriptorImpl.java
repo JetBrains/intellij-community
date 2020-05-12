@@ -17,8 +17,8 @@ package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
@@ -113,20 +113,22 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
 
   @Override
   public PsiElement getValueDeclaration(XmlElement attributeValue, String value) {
-    String s = myCaseSensitive ? value : StringUtil.toLowerCase(value);
+    String searchValue = null;
+    if (!myCaseSensitive) {
+      String[] enumeratedValues = isEnumerated() ? getEnumeratedValues() : null;
+      if (enumeratedValues != null) {
+        searchValue = ContainerUtil.find(getEnumeratedValues(), v -> v.equalsIgnoreCase(value));
+      }
+      if (searchValue == null) {
+        searchValue = StringUtil.toLowerCase(value);
+      }
+    } else {
+      searchValue = value;
+    }
     //noinspection unchecked
     return delegate instanceof XmlEnumerationDescriptor ?
-           ((XmlEnumerationDescriptor<XmlElement>)delegate).getValueDeclaration(attributeValue, s) :
+           ((XmlEnumerationDescriptor<XmlElement>)delegate).getValueDeclaration(attributeValue, searchValue) :
            super.getValueDeclaration(attributeValue, value);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Override
-  public PsiReference[] getValueReferences(XmlElement element, @NotNull String text) {
-    if (delegate instanceof XmlEnumerationDescriptor) {
-      return ((XmlEnumerationDescriptor<XmlElement>)delegate).getValueReferences(element, text);
-    }
-    return super.getValueReferences(element, text);
   }
 
   public boolean isCaseSensitive() {
