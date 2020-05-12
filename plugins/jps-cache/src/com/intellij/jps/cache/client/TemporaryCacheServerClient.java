@@ -6,10 +6,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.jps.cache.JpsCachesPluginUtil;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.OutputLoadResult;
+import com.intellij.jps.cache.ui.JpsLoaderNotifications;
 import com.intellij.jps.cache.ui.SegmentedProgressIndicatorManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -47,8 +52,8 @@ public class TemporaryCacheServerClient implements JpsServerClient {
 
   @NotNull
   @Override
-  public Set<String> getAllCacheKeys() {
-    Map<String, List<String>> response = doGetRequest();
+  public Set<String> getAllCacheKeys(@NotNull Project project) {
+    Map<String, List<String>> response = doGetRequest(project);
     if (response == null) return Collections.emptySet();
     return response.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
   }
@@ -147,7 +152,7 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     }
   }
 
-  private Map<String, List<String>> doGetRequest() {
+  private Map<String, List<String>> doGetRequest(@NotNull Project project) {
     try {
       return HttpRequests.request(stringThree + REPOSITORY_NAME + "/commit_history.json")
         .connect(it -> {
@@ -171,6 +176,9 @@ public class TemporaryCacheServerClient implements JpsServerClient {
     }
     catch (IOException e) {
       LOG.warn("Failed request to cache server", e);
+      Notification notification = JpsLoaderNotifications.NONE_NOTIFICATION_GROUP
+        .createNotification("Compiler Caches Loader", "Failed request to cache server: " + e.getMessage(), NotificationType.ERROR, null);
+      Notifications.Bus.notify(notification, project);
     }
     return null;
   }
