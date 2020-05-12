@@ -319,28 +319,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     if (isSynchronousTaskExecution()) {
-      runTaskSynchronously(task);
+      myProject.getService(DumbServiceSyncTaskQueue.class).runTaskSynchronously(task);
     }
     else {
       queueAsynchronousTask(task);
-    }
-  }
-
-  private static void runTaskSynchronously(@NotNull DumbModeTask task) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator == null) {
-      indicator = new EmptyProgressIndicator();
-    }
-
-    indicator.pushState();
-    ((CoreProgressManager)ProgressManager.getInstance()).suppressPrioritizing();
-    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task", HeavyProcessLatch.Type.Indexing)) {
-      task.performInDumbMode(indicator);
-    }
-    finally {
-      ((CoreProgressManager)ProgressManager.getInstance()).restorePrioritizing();
-      indicator.popState();
-      Disposer.dispose(task);
     }
   }
 
