@@ -46,6 +46,7 @@ class MavenSyncConsole(private val myProject: Project) {
   private var hasErrors = false
   private var hasUnresolved = false
   private val JAVADOC_AND_SOURCE_CLASSIFIERS = setOf("javadoc", "sources", "test-javadoc", "test-sources")
+  private val delayedActions = ArrayList<() -> Unit>()
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
@@ -84,6 +85,9 @@ class MavenSyncConsole(private val myProject: Project) {
                            runDescr
                          }.withRestartAction(restartAction))
     debugLog("maven sync: started importing $myProject")
+
+    delayedActions.forEach { it() }
+    delayedActions.clear()
   }
 
   @Synchronized
@@ -128,6 +132,19 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  fun startWrapperResolving() = delayUntilImportInProcess {
+    startTask(mySyncId, SyncBundle.message("maven.sync.wrapper"))
+  }
+
+  @Synchronized
+  fun finishWrapperResolving(e: Throwable? = null) = delayUntilImportInProcess {
+    if (e != null) {
+      addWarning(SyncBundle.message("maven.sync.wrapper.failure"), e.localizedMessage)
+    }
+    completeTask(mySyncId, SyncBundle.message("maven.sync.wrapper"), SuccessResultImpl())
+  }
+
+  @Synchronized
   fun notifyReadingProblems(file: VirtualFile) = doIfImportInProcess {
     debugLog("reading problems in $file")
     hasErrors = true
@@ -144,11 +161,11 @@ class MavenSyncConsole(private val myProject: Project) {
       MavenLog.LOG.warn(e)
       hasErrors = true
       mySyncView.onEvent(mySyncId,
-                         MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, "Error", e.localizedMessage, ExceptionUtil.getThrowableText(e)));
+                         MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, "Error", e.localizedMessage, ExceptionUtil.getThrowableText(e)))
     } else {
-      this.startImport(progressListener);
+      this.startImport(progressListener)
       this.addException(e, progressListener)
-      this.finishImport();
+      this.finishImport()
     }
   }
 
@@ -309,6 +326,16 @@ class MavenSyncConsole(private val myProject: Project) {
     if (!started || finished) return
     action.invoke()
   }
+
+  private fun delayUntilImportInProcess(action: () -> Unit) {
+    if (!started || finished) {
+      delayedActions.add(action)
+    }
+    else {
+      action.invoke()
+    }
+  }
+
 
   private inner class ArtifactSyncListenerImpl(val keyPrefix: String) : ArtifactSyncListener {
     override fun downloadStarted(dependency: String) {

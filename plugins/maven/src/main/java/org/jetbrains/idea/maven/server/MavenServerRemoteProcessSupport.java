@@ -9,7 +9,9 @@ import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.security.TokenReader;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -19,13 +21,17 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
 class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, MavenServer, Object> {
-  private final MavenServerConnector myServerConnector;
+  private final Sdk myJdk;
+  private final String myOptions;
+  private final MavenDistribution myDistribution;
   private final Project myProject;
 
-  public MavenServerRemoteProcessSupport(MavenServerConnector mavenServerConnector,
+  MavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution,
                                          @NotNull Project project) {
     super(MavenServer.class);
-    myServerConnector = mavenServerConnector;
+    myJdk = jdk;
+    myOptions = vmOptions;
+    myDistribution = mavenDistribution;
     myProject = project;
   }
 
@@ -41,7 +47,7 @@ class MavenServerRemoteProcessSupport extends RemoteProcessSupport<Object, Maven
 
   @Override
   protected RunProfileState getRunProfileState(@NotNull Object target, @NotNull Object configuration, @NotNull Executor executor) {
-    return new MavenServerCMDState(myServerConnector, myProject);
+    return new MavenServerCMDState(myJdk, myOptions,myDistribution,myProject);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

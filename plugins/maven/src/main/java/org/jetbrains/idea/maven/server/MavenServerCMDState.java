@@ -18,6 +18,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -48,19 +49,23 @@ public class MavenServerCMDState extends CommandLineState {
   @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
 
 
-  private final MavenServerConnector myServerConnector;
+  private final Sdk myJdk;
+  private final String myVmOptions;
+  private final MavenDistribution myDistribution;
   private final Project myProject;
 
-  public MavenServerCMDState(MavenServerConnector serverConnector, Project project) {
+  public MavenServerCMDState(@NotNull Sdk jdk, @Nullable String vmOptions, @Nullable MavenDistribution mavenDistribution, Project project) {
     super(null);
-    myServerConnector = serverConnector;
+    myJdk = jdk;
+    myVmOptions = vmOptions;
+    myDistribution = mavenDistribution;
     myProject = project;
   }
 
   SimpleJavaParameters createJavaParameters() {
     final SimpleJavaParameters params = new SimpleJavaParameters();
 
-    params.setJdk(myServerConnector.getJdk());
+    params.setJdk(myJdk);
 
     params.setWorkingDirectory(PathManager.getBinPath());
 
@@ -86,9 +91,9 @@ public class MavenServerCMDState extends CommandLineState {
 
     boolean xmxSet = false;
 
-    if (myServerConnector.getVMOptions() != null) {
+    if (myVmOptions != null) {
       ParametersList mavenOptsList = new ParametersList();
-      mavenOptsList.addParametersString(myServerConnector.getVMOptions());
+      mavenOptsList.addParametersString(myVmOptions);
 
       for (String param : mavenOptsList.getParameters()) {
         if (param.startsWith("-Xmx")) {
@@ -100,7 +105,7 @@ public class MavenServerCMDState extends CommandLineState {
 
     final File mavenHome;
     final String mavenVersion;
-    final MavenDistribution distribution = myServerConnector.getMavenDistribution();
+    final MavenDistribution distribution = myDistribution;
 
     if (distribution == null) {
       MavenLog.LOG.warn("Not found maven at ");
@@ -190,7 +195,7 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   private void showInvalidMavenNotification(@Nullable String mavenVersion) {
-    String message = invalidHomeMessageToShow(myServerConnector.getMavenDistribution(), mavenVersion, myProject);
+    String message = invalidHomeMessageToShow(myDistribution, mavenVersion, myProject);
 
     NotificationListener listener = new NotificationListener() {
       @Override

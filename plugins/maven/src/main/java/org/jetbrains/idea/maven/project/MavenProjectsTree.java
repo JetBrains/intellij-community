@@ -88,10 +88,6 @@ public class MavenProjectsTree {
     return myProject;
   }
 
-  public MavenWrapperConfiguration getWrapperConfiguration(MavenProject project) {
-    return null;
-
-  }
 
   public MavenProjectReaderProjectLocator getProjectLocator() {
     return myProjectLocator;

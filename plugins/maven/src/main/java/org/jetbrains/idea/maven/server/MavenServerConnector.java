@@ -4,14 +4,21 @@ package org.jetbrains.idea.maven.server;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.File;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
@@ -24,6 +31,7 @@ public class MavenServerConnector implements @NotNull Disposable {
   private final RemoteMavenServerDownloadListener
     myDownloadListener = new RemoteMavenServerDownloadListener();
 
+  private final Project myProject;
   private final MavenServerManager myManager;
 
   private boolean myLoggerExported;
@@ -36,12 +44,78 @@ public class MavenServerConnector implements @NotNull Disposable {
                               @NotNull MavenServerManager manager,
                               @NotNull MavenWorkspaceSettings settings,
                               @NotNull Sdk jdk) {
+    myProject = project;
     myManager = manager;
-    myDistribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
-    myVmOptions = settings.importingSettings.getVmOptionsForImporter();
+    myDistribution = findMavenDistribution(project, settings);
+    settings.generalSettings.setMavenHome(myDistribution.getMavenHome().getAbsolutePath());
+    myVmOptions = readVmOptions(project, settings);
     myJdk = jdk;
-    mySupport = new MavenServerRemoteProcessSupport(this, project);
+    mySupport = new MavenServerRemoteProcessSupport(myJdk, myVmOptions, myDistribution, project);
     myMavenServer = connect();
+  }
+
+  public boolean isSettingsStillValid(MavenWorkspaceSettings settings) {
+    if (myProject.isDefault()) {
+      return true;
+    }
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(myProject.getBaseDir());
+    if (distributionUrl != null && !distributionUrl.equals(myDistribution.getName())) { //new maven url in maven-wrapper.properties
+      return false;
+    }
+    String newVmOptions = readVmOptions(myProject, settings);
+    return StringUtil.equals(newVmOptions, myVmOptions);
+  }
+
+  private static String readVmOptions(Project project, MavenWorkspaceSettings settings) {
+
+    VirtualFile baseDir = project.getBaseDir();
+    if (baseDir == null) return settings.importingSettings.getVmOptionsForImporter();
+    VirtualFile mvn = baseDir.findChild(".mvn");
+    if (mvn == null) return settings.importingSettings.getVmOptionsForImporter();
+    VirtualFile jdkOpts = mvn.findChild("jvm.config");
+    if (jdkOpts == null) return settings.importingSettings.getVmOptionsForImporter();
+    try {
+      return new String(jdkOpts.contentsToByteArray(true), CharsetToolkit.UTF8_CHARSET);
+    }
+    catch (IOException e) {
+      MavenLog.LOG.warn(e);
+      return settings.importingSettings.getVmOptionsForImporter();
+    }
+  }
+
+  private static MavenDistribution findMavenDistribution(Project project, MavenWorkspaceSettings settings) {
+    if (project.isDefault()) {
+      return MavenServerManager.resolveEmbeddedMavenHome();
+    }
+    //in future we should get rid of Project and create connector per each root maven project,
+    // in case if different maven projects are imported into idea project
+
+    MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
+    //noinspection deprecation
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(project.getBaseDir());
+
+    if (distributionUrl == null) {
+      MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
+      if (distribution == null) {
+        console.addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
+          .message("is.not.correct.maven.home.reverting.to.embedded", settings.generalSettings.getMavenHome()));
+        return MavenServerManager.resolveEmbeddedMavenHome();
+      }
+      return distribution;
+    }
+    else {
+      try {
+        console.startWrapperResolving();
+        MavenDistribution distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl);
+        console.finishWrapperResolving(null);
+        return distribution;
+      }
+      catch (RuntimeException | IOException e) {
+        MavenLog.LOG.info(e);
+        console.finishWrapperResolving(e);
+        return MavenServerManager.resolveEmbeddedMavenHome();
+      }
+    }
   }
 
   private MavenServer connect() {
@@ -114,7 +188,8 @@ public class MavenServerConnector implements @NotNull Disposable {
                                                 final File basedir,
                                                 final MavenExplicitProfiles explicitProfiles,
                                                 final Collection<String> alwaysOnProfiles) {
-    return perform(() -> myMavenServer.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles, MavenRemoteObjectWrapper.ourToken));
+    return perform(
+      () -> myMavenServer.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles, MavenRemoteObjectWrapper.ourToken));
   }
 
   public void shutdown(boolean wait) {

@@ -53,7 +53,6 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
   public static final String BUNDLED_MAVEN_3 = "Bundled (Maven 3)";
-  public static final String WRAPPER_MAVEN = "Defined by wrapper";
 
   private static final String DEFAULT_VM_OPTIONS =
     "-Xmx768m";
@@ -137,15 +136,8 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
 
   public MavenServerConnector getConnector(@NotNull Project project) {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-    MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
-    if (distribution == null) {
-      throw new RuntimeException("Maven not found Version"); //TODO
-    }
     Sdk jdk = getJdk(project);
 
-    if (!verifyMavenSdkRequirements(jdk, distribution.getVersion())) {
-      throw new RuntimeException("Wrong JDK Version"); //TODO
-    }
     MavenServerConnector connector = myServerConnectors.get(project);
     if (connector == null) {
       connector = myServerConnectors.computeIfAbsent(project, p -> new MavenServerConnector(p, this, settings,  jdk));
@@ -154,7 +146,7 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
       return connector;
     }
 
-    if (!compatibleParameters(connector, jdk, settings.importingSettings.getVmOptionsForImporter())) {
+    if (!compatibleParameters(connector, jdk, settings)) {
       connector.shutdown(false);
       connector = new MavenServerConnector(project, this, settings, jdk);
       registerDisposable(project, connector);
@@ -185,8 +177,11 @@ public class MavenServerManager implements PersistentStateComponent<MavenServerM
     }
   }
 
-  private boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, String vmOptions) {
-    return StringUtil.equals(connector.getJdk().getName(), jdk.getName()) && StringUtil.equals(vmOptions, connector.getVMOptions());
+  private boolean compatibleParameters(MavenServerConnector connector, Sdk jdk, MavenWorkspaceSettings settings) {
+    if (!StringUtil.equals(connector.getJdk().getName(), jdk.getName())) {
+      return false;
+    }
+    return connector.isSettingsStillValid(settings);
   }
 
   public MavenServerConnector getDefaultConnector() {

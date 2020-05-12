@@ -242,15 +242,21 @@ public class MavenUtil {
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {
-    File baseDir = VfsUtilCore.virtualToIoFile(file.isDirectory() || file.getParent() == null ? file : file.getParent());
-    File dir = baseDir;
+    return VfsUtilCore.virtualToIoFile(getVFileBaseDir(file));
+  }
+
+  public static VirtualFile getVFileBaseDir(@NotNull VirtualFile file) {
+    VirtualFile baseDir = file.isDirectory() || file.getParent() == null ? file : file.getParent();
+    VirtualFile dir = baseDir;
     do {
-      if (new File(dir, ".mvn").isDirectory()) {
+      VirtualFile child = dir.findChild(".mvn");
+
+      if (child != null && child.isDirectory()) {
         baseDir = dir;
         break;
       }
     }
-    while ((dir = dir.getParentFile()) != null);
+    while ((dir = dir.getParent()) != null);
     return baseDir;
   }
 

@@ -900,10 +900,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
    */
   public Promise<List<Module>> scheduleImportAndResolve() {
     getSyncConsole().startImport(myProgressListener);
-    if (!MavenServerManager.getInstance().checkMavenSettings(myProject, getSyncConsole())) {
-      getSyncConsole().finishImport();
-      return Promises.resolvedPromise();
-    }
     MavenSyncConsole console = getSyncConsole();
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
