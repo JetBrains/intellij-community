@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Date;
 
 public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
@@ -70,6 +71,11 @@ public final class DefaultPluginDescriptor implements IdeaPluginDescriptor {
   @Override
   public boolean isLicenseOptional() {
     return false;
+  }
+
+  @Override
+  public @NotNull List<PluginId> getIncompatibleModuleIds() {
+    return Collections.emptyList();
   }
 
   @Override

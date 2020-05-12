@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -58,6 +59,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private String myCategory;
   String myUrl;
   @Nullable List<PluginDependency> pluginDependencies;
+  @Nullable private List<PluginId> myIncompatibilities;
 
   transient List<Path> jarFiles;
 
@@ -260,6 +262,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           }
           break;
 
+        case "incompatible-with":
+          readPluginIncompatibility(child);
+          break;
+
         case "category":
           myCategory = StringUtil.nullize(child.getTextTrim());
           break;
@@ -316,6 +322,16 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myReleaseDate = parseReleaseDate(child.getAttributeValue("release-date"), context);
     myReleaseVersion = StringUtil.parseInt(child.getAttributeValue("release-version"), 0);
     myIsLicenseOptional = Boolean.parseBoolean(child.getAttributeValue("optional", "false"));
+  }
+
+  private void readPluginIncompatibility(@NotNull Element child) {
+    String pluginId = child.getTextTrim();
+    if (pluginId.isEmpty()) return;
+
+    if (myIncompatibilities == null) {
+      myIncompatibilities = new ArrayList<>();
+    }
+    myIncompatibilities.add(PluginId.getId(pluginId));
   }
 
   private boolean readPluginDependency(@NotNull Path basePath, @NotNull DescriptorListLoadingContext context, @NotNull Element child) {
@@ -635,6 +651,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   @Override
   public boolean isLicenseOptional() {
     return myIsLicenseOptional;
+  }
+
+  @Override
+  public @NotNull List<PluginId> getIncompatibleModuleIds() {
+    return ContainerUtil.notNullize(myIncompatibilities);
   }
 
   @SuppressWarnings("deprecation")

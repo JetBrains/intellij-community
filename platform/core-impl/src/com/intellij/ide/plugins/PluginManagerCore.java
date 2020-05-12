@@ -596,13 +596,14 @@ public final class PluginManagerCore {
     boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
-      List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
+      List<PluginDependency> dependencies = rootDescriptor.pluginDependencies; //ContainerUtil.newArrayList(rootDescriptor.getDependentPluginIds())
+      List<PluginId> incompatibleModuleIds = rootDescriptor.getIncompatibleModuleIds();
       if (dependencies == null) {
         dependencies = Collections.emptyList();
       }
 
       IdeaPluginDescriptorImpl implicitDep = getImplicitDependency(rootDescriptor, javaDep, hasAllModules);
-      int capacity = dependencies.size();
+      int capacity = dependencies.size() + incompatibleModuleIds.size();
       if (!withOptional) {
         for (PluginDependency dependency : dependencies) {
           if (dependency.isOptional) {
@@ -627,6 +628,7 @@ public final class PluginManagerCore {
         }
       }
 
+      //dependencies.addAll(incompatibleModuleIds);
       for (PluginDependency dependency : dependencies) {
         if (!withOptional && dependency.isOptional) {
           continue;
@@ -1137,15 +1139,16 @@ public final class PluginManagerCore {
     // topological sort based on required dependencies only
     IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap, false));
 
-    Set<PluginId> enabledIds = new LinkedHashSet<>();
+    Set<PluginId> enabledPluginIds = new LinkedHashSet<>();
+    Set<PluginId> enabledModuleIds = new LinkedHashSet<>();
     Map<PluginId, String> disabledIds = new LinkedHashMap<>();
     Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired) {
       boolean wasEnabled = descriptor.isEnabled();
-      if (wasEnabled && computePluginEnabled(descriptor, enabledIds, idMap, disabledRequiredIds, context.disabledPlugins, errors)) {
-        enabledIds.add(descriptor.getPluginId());
-        enabledIds.addAll(descriptor.getModules());
+      if (wasEnabled && computePluginEnabled(descriptor, enabledPluginIds, enabledModuleIds, idMap, disabledRequiredIds, context.disabledPlugins, errors)) {
+        enabledPluginIds.add(descriptor.getPluginId());
+        enabledModuleIds.addAll(descriptor.getModules());
       }
       else {
         descriptor.setEnabled(false);
@@ -1294,7 +1297,8 @@ public final class PluginManagerCore {
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                              @NotNull Set<PluginId> loadedIds,
+                                              @NotNull Set<PluginId> loadedPluginIds,
+                                              @NotNull Set<PluginId> loadedModuleIds,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
@@ -1303,15 +1307,24 @@ public final class PluginManagerCore {
       return true;
     }
 
+    boolean result = true;
+
+    for (PluginId incompatibleId : descriptor.getIncompatibleModuleIds()) {
+      if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
+
+      result = false;
+      String presentableName = toPresentableName(incompatibleId.getIdString());
+      errors.add(descriptor.formatErrorMessage("is incompatible with the IDE containing module " + presentableName));
+    }
+
     // no deps at all
-    if (descriptor.pluginDependencies == null) {
+    if (result && descriptor.pluginDependencies == null) {
       return true;
     }
 
-    boolean result = true;
     for (PluginDependency dependency : descriptor.pluginDependencies) {
       PluginId depId = dependency.id;
-      if (dependency.isOptional || loadedIds.contains(depId)) {
+      if (dependency.isOptional || loadedPluginIds.contains(depId)) {
         continue;
       }
 

@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -112,6 +113,11 @@ public final class PluginNode implements IdeaPluginDescriptor {
   @Override
   public boolean isLicenseOptional() {
     return licenseOptional;
+  }
+
+  @Override
+  public @NotNull List<PluginId> getIncompatibleModuleIds() {
+    return Collections.emptyList();
   }
 
   public void setLicenseOptional(boolean optional) {
