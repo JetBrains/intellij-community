@@ -488,22 +488,10 @@
   <item name="javax.swing.TransferHandler java.awt.datatransfer.Transferable createTransferable(javax.swing.JComponent)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
-  <item name="javax.swing.UIDefaults java.lang.Object put(java.lang.Object, java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
+  <item name='javax.swing.UIDefaults'>
+    <annotation name="org.jetbrains.annotations.NonNls"/>
   </item>
   <item name="javax.swing.UIManager">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager boolean getBoolean(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager java.awt.Color getColor(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager java.awt.Font getFont(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager java.lang.Object get(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name='javax.swing.UIManager java.lang.String getCrossPlatformLookAndFeelClassName()'>
@@ -511,12 +499,6 @@
   </item>
   <item name='javax.swing.UIManager java.lang.String getSystemLookAndFeelClassName()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name="javax.swing.UIManager javax.swing.Icon getIcon(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
-  </item>
-  <item name="javax.swing.UIManager javax.swing.border.Border getBorder(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
 </root>
 
