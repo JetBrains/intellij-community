@@ -259,7 +259,7 @@ internal class JdkCommandLineSetup(private val request: TargetEnvironmentRequest
   }
 
   @JvmName("getClassPathValues")
-  fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
+  internal fun getClassPathValues(javaParameters: SimpleJavaParameters, classPath: PathsList): List<TargetValue<String>> {
     val localJdkPath = javaParameters.jdk?.homePath
     val remoteJdkPath = languageRuntime?.homePath
     val result = ArrayList<TargetValue<String>>()

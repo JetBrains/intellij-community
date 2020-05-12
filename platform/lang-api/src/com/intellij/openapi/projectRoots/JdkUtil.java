@@ -191,11 +191,8 @@ public final class JdkUtil {
                                boolean dynamicParameters,
                                Charset cs) throws CantRunException {
     try {
-      ArgFile argFile = new ArgFile(setup, dynamicVMOptions, dynamicParameters, cs);
+      ArgFile argFile = new ArgFile(dynamicVMOptions, dynamicParameters, cs, setup.getPlatform());
       commandLine.addFileToDeleteOnTermination(argFile.getFile());
-
-      Platform platform = request.getTargetPlatform().getPlatform();
-      String pathSeparator = String.valueOf(platform.pathSeparator);
 
       PathsList classPath = javaParameters.getClassPath();
       if (!classPath.isEmpty() && !explicitClassPath(vmParameters)) {
@@ -211,6 +208,10 @@ public final class JdkUtil {
         for (TargetValue<String> nextMainClassParam : setup.getMainClassParams(javaParameters)) {
           argFile.addPromisedParameter(nextMainClassParam);
         }
+      }
+
+      if (!dynamicVMOptions) { // dynamic options will be handled later by ArgFile
+        setup.appendVmParameters(vmParameters);
       }
 
       argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters);
@@ -231,7 +232,7 @@ public final class JdkUtil {
   static class ArgFile {
     private final File myFile;
     private final Charset myCharset;
-    private final JdkCommandLineSetup mySetup;
+    private final Platform myPlatform;
     private final boolean myDynamicVMOptions;
     private final boolean myDynamicParameters;
 
@@ -239,11 +240,11 @@ public final class JdkUtil {
     private final List<TargetValue<String>> myPromisedParameters = new LinkedList<>();
     private final List<Promise<String>> myAllPromises = new LinkedList<>();
 
-    ArgFile(JdkCommandLineSetup setup, boolean dynamicVMOptions, boolean dynamicParameters, Charset charset) throws IOException {
-      mySetup = setup;
+    ArgFile(boolean dynamicVMOptions, boolean dynamicParameters, Charset charset, Platform platform) throws IOException {
       myDynamicVMOptions = dynamicVMOptions;
       myDynamicParameters = dynamicParameters;
       myCharset = charset;
+      myPlatform = platform;
 
       myFile = FileUtil.createTempFile("idea_arg_file" + new Random().nextInt(Integer.MAX_VALUE), null);
     }
@@ -283,9 +284,6 @@ public final class JdkUtil {
       if (myDynamicVMOptions) {
         fileArgs.addAll(vmParameters.getList());
       }
-      else {
-        mySetup.appendVmParameters(vmParameters);
-      }
 
       for (Map.Entry<String, TargetValue<String>> entry : myPromisedOptionValues.entrySet()) {
         String nextOption = entry.getKey();
@@ -303,7 +301,7 @@ public final class JdkUtil {
         fileArgs.addAll(javaParameters.getProgramParametersList().getList());
       }
 
-      CommandLineWrapperUtil.writeArgumentsFile(myFile, fileArgs, mySetup.getPlatform().lineSeparator, myCharset);
+      CommandLineWrapperUtil.writeArgumentsFile(myFile, fileArgs, myPlatform.lineSeparator, myCharset);
     }
 
     private void registerPromise(TargetValue<String> value) {
