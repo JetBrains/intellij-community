@@ -84,7 +84,7 @@ class CompilationOutputsUploader {
         // not to perform any further compilations.
         if (updateCommitHistory) {
         // Upload jps caches started first because of the significant size of the output
-          if (!uploadCompilationCache(publishTeamCityArtifacts)) return
+          uploadCompilationCache(publishTeamCityArtifacts)
         }
 
         uploadMetadata()
@@ -112,7 +112,7 @@ class CompilationOutputsUploader {
     }
   }
 
-  private boolean uploadCompilationCache(Boolean publishTeamCityArtifacts) {
+  private void uploadCompilationCache(Boolean publishTeamCityArtifacts) {
     String cachePath = "caches/$commitHash"
     def exists = uploader.isExist(cachePath)
 
@@ -127,7 +127,6 @@ class CompilationOutputsUploader {
     move(zipFile, zipCopy)
     // Publish artifact for dependent configuration
     if (publishTeamCityArtifacts) context.messages.artifactBuilt(zipCopy.absolutePath)
-    return !exists
   }
 
   private void uploadMetadata() {
