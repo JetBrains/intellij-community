@@ -85,7 +85,7 @@ public class CopyrightFormattingConfigurable extends SearchableConfigurable.Pare
 
   @Override
   protected Configurable[] buildConfigurables() {
-    final FileType[] types = FileTypeUtil.getInstance().getSupportedTypes().toArray(FileType.EMPTY_ARRAY);
+    final FileType[] types = FileTypeUtil.getSupportedTypes().toArray(FileType.EMPTY_ARRAY);
     final Configurable[] children = new Configurable[types.length];
     Arrays.sort(types, new FileTypeUtil.SortByName());
     for (int i = 0; i < types.length; i++) {

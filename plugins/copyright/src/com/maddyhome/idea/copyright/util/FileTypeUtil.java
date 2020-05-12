@@ -4,8 +4,11 @@ package com.maddyhome.idea.copyright.util;
 
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,9 +19,12 @@ import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
-public class FileTypeUtil {
+public class FileTypeUtil implements Disposable {
+
   public static synchronized FileTypeUtil getInstance() {
     return ServiceManager.getService(FileTypeUtil.class);
   }
@@ -177,7 +183,7 @@ public class FileTypeUtil {
     return preview.substring(0, preview.length() - 1);
   }
 
-  public boolean isSupportedFile(@NotNull VirtualFile file) {
+  public static boolean isSupportedFile(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       return false;
     }
@@ -196,7 +202,7 @@ public class FileTypeUtil {
     return isSupportedType(virtualFile.getFileType());
   }
 
-  public Set<FileType> getSupportedTypes() {
+  public static Set<FileType> getSupportedTypes() {
     return CopyrightUpdaters.INSTANCE.getAllRegisteredExtensions().keySet();
   }
 
@@ -248,4 +254,6 @@ public class FileTypeUtil {
   }
 
   private final Set<FileType> noSeparators = new HashSet<>();
+  @Override
+  public void dispose() { }
 }
